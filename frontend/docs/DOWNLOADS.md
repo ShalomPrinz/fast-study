@@ -22,6 +22,27 @@ action). States are tints: accent while downloading, `--ok` once the target is i
 `In course` chip plus an icon-only `Download again`, always visible so it is keyboard- and
 touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
 
+## Course sources
+
+A course's source is the course page URL (`…/course/view.php?id=N`) — what Load recordings and auto's
+`/list` read. `CoursePicker` sets it: the pencil, "+ add source URL" and `AddCourseRow`'s "+ Add course from
+Moodle" open it under their row. It fetches auto's `GET /courses` once per open (`useEnrolledCourses`,
+through the Moodle lock with `{ wait: true }`, one request even across StrictMode's remount — the site walls
+a second call seconds after the first) and lists current courses, then the `past` ones (hidden or ended)
+behind "Show past courses". `pickerView` opens it straight on the paste input when the account is known to be
+not connected (with the Load-recordings hint), when the list is `available: false` (the site closes it to
+the Moodle app) or empty, or after a failed fetch, which first gets the page's usual word: the reconnect
+hint, the block toast, or the service's reason.
+
+A picked course saves its `url` unchecked — Moodle built it. A pasted one is checked first with `POST
+/courses/check` (`useCourseUrlCheck`); any refusal — not a course page, off the site, not accessible,
+reconnect, blocked, busy — shows its reason under the input (`CourseCheckFailure`, `.course-check-failure`)
+with "Save anyway" (saves unchecked) and "Edit". An empty paste saves with no check: it clears the source.
+`needsCheck` is that one rule. In the add form, a picked course prefills the name (editable) and fixes the
+URL (`addFormDraft`); a typed URL is checked on Create the same way. A URL saved anyway that `/list` then
+refuses reads as the service's reason on Load recordings — `invalid_request` with `field: courseUrl` has its
+own branch in the catalog row, so it never reads as the bare generic line.
+
 ## Manual download
 
 A collapsible section above the course sources (`ManualDownload`): paste a video link, type a course

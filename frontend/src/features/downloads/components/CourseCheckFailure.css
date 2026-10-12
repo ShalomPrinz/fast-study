@@ -1,0 +1,18 @@
+/* A refused course URL: the reason in the danger tone, its two ways out beside it. */
+.course-check-failure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-meta);
+}
+
+.course-check-failure-actions {
+  display: flex;
+  gap: var(--space-3);
+}

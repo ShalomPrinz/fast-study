@@ -116,8 +116,8 @@ into another `path`**. The browser route is `/{course}/{lecture}` (`lectureRoute
 
 ## `features/downloads/services/autoDownloader.ts` → auto-downloader (:3053)
 
-Discovery and auth. An `Item`'s `ref` is opaque — round-trip it, never parse it. `/list` and `/list/expand`
-go through `postReconnectAware`, which uses the client's raw `send` because its JSON path discards the body
+Discovery and auth. An `Item`'s `ref` is opaque — round-trip it, never parse it. `/list`, `/list/expand`,
+`/courses` and `/courses/check` go through `postReconnectAware` (or its GET twin), which uses the client's raw `send` because its JSON path discards the body
 and these encode meaning in it:
 
 | HTTP | body                  | thrown                                                                    |

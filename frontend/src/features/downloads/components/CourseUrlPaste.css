@@ -1,0 +1,16 @@
+.course-url-paste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.course-url-paste-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* The address takes the line; its buttons keep their own width. */
+.course-url-paste-input {
+  flex: 1;
+}

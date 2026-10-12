@@ -139,10 +139,11 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   file_delete_failed: msg({ message: 'Could not delete {file}.' }),
 
   // downloader/server
-  // Only `name`/`course` are reachable by the user (a typed row name); any other field is a caller bug.
+  // `name`/`course` are reachable by the user (a typed row name), and auto's `courseUrl` by a course URL saved
+  // unchecked; any other field is a caller bug.
   invalid_request: msg({
     message:
-      "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} lecture {That lecture name can't be used as a folder name.} url {That link isn't valid. Paste a full address starting with http:// or https://.} other {Something went wrong.}}",
+      "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} lecture {That lecture name can't be used as a folder name.} url {That link isn't valid. Paste a full address starting with http:// or https://.} courseUrl {That course link isn't a full address. Paste one starting with http:// or https://.} other {Something went wrong.}}",
   }),
   autodl_unreachable: msg({
     message: "The part of FastStudy that downloads recordings isn't responding. Restart the app.",
@@ -209,6 +210,14 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   moodle_site_unsupported: msg({
     message:
       "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} videostream_unavailable {This university's Moodle doesn't let the Moodle app open its lecture videos. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}",
+  }),
+  course_url_not_course_page: msg({
+    message:
+      "That link isn't a course's main page. Copy the address that ends in course/view.php?id= and a number: {url}.",
+  }),
+  course_not_accessible: msg({
+    message:
+      "Your university account can't open that course. It may not exist, or you may not be enrolled in it: {url}.",
   }),
   course_url_no_id: msg({ message: "That course link doesn't point to a specific course: {url}." }),
   link_not_a_video: msg({

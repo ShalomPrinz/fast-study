@@ -328,7 +328,7 @@ services; `state` stays as the developer-facing reason.
 | `http/server.js` `/moodle/file` | `moodle_file_unknown`         | —                        | dev   |
 | `moodle/gate.js`                | `moodle_call_ungated`         | `target`                 | dev   |
 | `app.js` backstop               | `internal_error`              | `detail`                 | user  |
-| `http/server.js`, request checks| `invalid_request`             | `field`                  | dev   |
+| `http/server.js`, request checks| `invalid_request`             | `field`                  | user  |
 
 `UnsupportedError` and `PasscodeError` extend `CodedError` (`src/lib/errors.js`), so the code survives
 the throw up to `handleResolve` and the backstop and the four typed refusals (401/409/422/503) relay
@@ -372,8 +372,9 @@ signal for whoever debugs it — the English stays in the body and the service l
 rows marked `dev` above, which have no catalog row.
 
 The exception is the `storedName` family: a name typed into a downloads row (`a/b`) reaches it, so the
-server's `invalid_request` row is `user`. Its one catalog row names the problem for `field` `name` and
-`course`, and reads as a generic failure for any other field, which is still a caller bug.
+server's `invalid_request` row is `user`. So is auto's: a course URL saved anyway without a scheme
+reaches `/list`'s `courseUrl` check. The one catalog row names the problem for `field` `name`, `course`
+and `courseUrl`, and reads as a generic failure for any other field, which is still a caller bug.
 
 **Third-party text is never translated.** ffmpeg's stderr, a tectonic log tail, Moodle's own error
 message, an `OSError` string — these are often the only string that identifies the failure, and no

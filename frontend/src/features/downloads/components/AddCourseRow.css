@@ -34,3 +34,26 @@
 .source-add-url {
   flex: 1;
 }
+
+/* The two ways to start a course, side by side, each taking half the row. */
+.source-add-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.source-add-actions .source-add-btn {
+  flex: 1;
+}
+
+/* The form and, when its URL was refused, the reason under it. */
+.source-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* A URL Moodle supplied reads as fixed. */
+.source-add-url:read-only {
+  color: var(--text-3);
+  background: var(--surface-sunken);
+}

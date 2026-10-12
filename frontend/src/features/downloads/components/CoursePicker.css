@@ -1,0 +1,78 @@
+/* The course picker, a panel under its row: the enrolled courses as a list of choices, or the paste input. */
+.course-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-sunken);
+}
+
+.course-picker-hint,
+.course-picker-note {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.course-picker-hint {
+  color: var(--warn);
+}
+
+.course-picker-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A course is a full-width choice; the name hugs the start whatever its script. */
+.course-picker-item {
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+.course-picker-item:hover {
+  background: var(--surface);
+  color: var(--accent);
+}
+
+/* The course this row already points at. */
+.course-picker-item.course-picker-item--current {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.course-picker-list--past .course-picker-item:not(:hover) {
+  color: var(--text-3);
+}
+
+.course-picker-past-toggle {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-meta);
+  cursor: pointer;
+}
+
+.course-picker-past-toggle:hover {
+  color: var(--accent);
+}
+
+.course-picker-actions {
+  display: flex;
+  gap: var(--space-3);
+}

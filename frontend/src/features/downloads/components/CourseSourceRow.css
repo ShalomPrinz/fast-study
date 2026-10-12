@@ -26,11 +26,10 @@
   color: var(--text);
 }
 
-/* The URL column, in each of its three shapes — a real link, the invitation to set one, and the
-   field that edits it. All three own the middle track, centred in it. */
+/* The URL column, in each of its two shapes — a real link and the invitation to set one. Both own
+   the middle track, centred in it. */
 .source-row-url-text,
-.source-row-url,
-.source-row-url-input {
+.source-row-url {
   min-width: 0;
   text-align: center;
 }
@@ -78,4 +77,9 @@
 .source-row.source-row--selected {
   border-color: var(--accent);
   background: var(--surface-sunken);
+}
+
+/* The course picker spans the whole row, on its own line under name, URL and actions. */
+.source-row-picker {
+  grid-column: 1 / -1;
 }

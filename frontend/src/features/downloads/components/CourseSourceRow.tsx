@@ -3,7 +3,6 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import type { Course } from '@/types'
 import { setCourseSourceUrl } from '@/services/database'
 import { openExternalUrl } from '@/services/open'
-import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { useMoodleLockState } from '@/features/downloads/contexts/MoodleLockContext'
@@ -11,7 +10,7 @@ import { moodleLocked } from '@/features/downloads/utils/moodleLock'
 import { moodleBusyMessage } from '@/features/downloads/utils/downloadErrors'
 import { sourceChangeAction } from '@/features/downloads/utils/sourceChange'
 import { useDownloadsActions } from '@/features/downloads/contexts/DownloadsSessionContext'
-import InlineEditInput from '@/features/lectures/components/InlineEditInput'
+import CoursePicker from './CoursePicker'
 import Icon from '@/shared/components/Icon'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
@@ -26,8 +25,8 @@ interface Props {
   discovering?: boolean
 }
 
-// One course: name, source URL (pencil to edit; with none, "+ add source URL" opens edit mode) and
-// Load recordings, a Loaded chip on the open course.
+// One course: name, source URL and Load recordings, a Loaded chip on the open course. The pencil, or
+// "+ add source URL" with none, opens the course picker under the row.
 export default function CourseSourceRow({ course, onDiscover, selected, discovering }: Props) {
   const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
@@ -41,15 +40,13 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
   const [editing, setEditing] = useState(false)
   // A const, not the prop: the click handler below closes over it, and TS narrows only a const.
   const sourceUrl = course.source_url
-  const edit = useInlineEdit(editing ? (course.source_url ?? '') : null)
 
   function start() {
     setEditing(true)
-    edit.setValue(course.source_url ?? '')
   }
 
-  async function commit() {
-    const url = edit.value.trim()
+  // A course picked from Moodle's list is saved as is; a pasted one arrives already checked or saved anyway.
+  async function save(url: string) {
     const oldUrl = course.source_url ?? ''
     setEditing(false)
     if (url === oldUrl) return
@@ -65,15 +62,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
       <span className="source-row-name" title={course.name} dir="auto">
         {course.name}
       </span>
-      {editing ? (
-        <InlineEditInput
-          edit={edit}
-          onCommit={commit}
-          onCancel={() => setEditing(false)}
-          placeholder="https://…"
-          className="source-row-input source-row-url-input"
-        />
-      ) : sourceUrl ? (
+      {sourceUrl ? (
         <a
           className="source-row-url-text"
           href={sourceUrl}
@@ -87,7 +76,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
           {sourceUrl}
         </a>
       ) : (
-        <button className="source-row-url" onClick={start} dir="auto">
+        <button className="source-row-url" onClick={start} disabled={editing} dir="auto">
           <Trans>+ add source URL</Trans>
         </button>
       )}
@@ -122,6 +111,16 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
               </button>
             )
           )}
+        </div>
+      )}
+      {editing && (
+        <div className="source-row-picker">
+          <CoursePicker
+            currentUrl={sourceUrl ?? ''}
+            onChoose={(c) => void save(c.url)}
+            onPaste={(url) => void save(url)}
+            onCancel={() => setEditing(false)}
+          />
         </div>
       )}
     </div>

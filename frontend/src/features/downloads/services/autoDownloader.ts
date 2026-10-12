@@ -138,7 +138,16 @@ export async function postReconnectAware<T>(
   path: string,
   body: unknown,
 ): Promise<T> {
-  const res = await client.send(path, 'POST', { json: body })
+  return sendReconnectAware<T>(client, path, 'POST', body)
+}
+
+async function sendReconnectAware<T>(
+  client: Client,
+  path: string,
+  method: string,
+  body?: unknown,
+): Promise<T> {
+  const res = await client.send(path, method, body === undefined ? {} : { json: body })
   if (!res.ok) {
     // Read from a clone, so a body that is none of these still reaches `failureError` unread.
     const data = await res
@@ -168,6 +177,29 @@ export async function listRecordings(courseUrl: string): Promise<Item[]> {
     courseUrl,
   })
   return items
+}
+
+// One course the connected account is enrolled in; `url` is `{site}/course/view.php?id=N`, and `past` is
+// a hidden or ended course.
+export interface EnrolledCourse {
+  id: number
+  name: string
+  url: string
+  past: boolean
+}
+
+// `available: false` is an answer: the login found the site's course list closed to the Moodle app.
+export type EnrolledCourses = { available: false } | { available: true; courses: EnrolledCourse[] }
+
+// The account's courses, sorted by name — one Moodle call, so it goes through the Moodle lock.
+export async function fetchEnrolledCourses(): Promise<EnrolledCourses> {
+  return sendReconnectAware<EnrolledCourses>(autoDownloader, '/courses', 'GET')
+}
+
+// Vets a pasted course URL before it is saved: strictly a course page the account can open. A refusal
+// throws `course_url_not_course_page`, `course_url_unsupported_site` or `course_not_accessible`.
+export async function checkCourseUrl(courseUrl: string): Promise<void> {
+  await postReconnectAware<{ ok: true }>(autoDownloader, '/courses/check', { courseUrl })
 }
 
 // Resolve one expandable item into its downloadable children.
