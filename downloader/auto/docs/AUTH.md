@@ -12,8 +12,7 @@ the location. `siteAuthFor(url)` is the same, for a URL that must live under the
 
 `POST /config {moodle_site}` with a different site (`setSite`) deletes nothing: it ends the old
 instance's pending login (its headed window closes, its Moodle lock is released), drops the cached
-instance, and closes the challenge window and the plain browser session under its lock, so no
-browser carries anything across sites. The same site is a no-op, and a blank one leaves no site configured.
+instance, and closes the challenge window, so no browser carries anything across sites. The same site is a no-op, and a blank one leaves no site configured.
 There is one token slot: the record names its `site`, and `loadToken()` treats a record for any other
 site as absent, so it is never sent to the wrong host and setting its site back makes it valid again
 with no login. The token and the challenge window's profile are deleted only

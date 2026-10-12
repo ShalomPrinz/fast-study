@@ -6,7 +6,6 @@ import { CodedError } from '../lib/errors.js';
 import { MoodleToken, storedSiteOf } from '../auth/moodleToken.js';
 import { currentSite, setCurrentSite, underSite } from '../moodle/site.js';
 import { challengeEvents, closeChallenge } from '../moodle/challenge.js';
-import { getSession } from '../browser/browserSession.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
 import { GoogleDriveExtractor } from '../extractors/GoogleDriveExtractor.js';
@@ -76,8 +75,8 @@ export function siteAuthFor(url) {
 
 /**
  * Switch to another site (null clears it), deleting nothing: the stored token reads as absent until
- * its site is set again. The old site's pending login ends, and the challenge window and the plain
- * browser close so no session cookie carries across. The same site is a no-op.
+ * its site is set again. The old site's pending login ends, and the challenge window closes so no
+ * session cookie carries across. The same site is a no-op.
  * @returns {Promise<boolean>}  whether anything changed
  */
 export async function setSite(site) {
@@ -89,8 +88,6 @@ export async function setSite(site) {
   if (auth) await auth.abandonLogin();
   await closeChallenge();
   publish();
-  const session = getSession('plain');
-  await session.withLock(() => session.close());
   return true;
 }
 

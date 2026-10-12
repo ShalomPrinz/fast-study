@@ -6,7 +6,7 @@ A Playwright HTTP service that, given a **course URL** on the one configured Moo
 
 ```bash
 npm --prefix downloader/auto start   # HTTP service, app.js
-npx playwright install chromium      # once, as the plain profile's fallback browser
+npx playwright install chromium      # once, as the token grab's and challenge window's fallback browser
 npm --prefix downloader/auto test    # node --test, pure logic only (no browser, no network; test/sandbox.js is preloaded)
 ```
 

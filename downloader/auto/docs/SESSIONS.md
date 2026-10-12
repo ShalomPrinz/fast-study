@@ -5,8 +5,8 @@ request. Model in `src/browser/browserSession.js`.
 
 - **Per-profile DI.** `BrowserSession` takes an injected launcher and never hardcodes one.
   `getSession(profile)` lazily builds one browser+context+page per profile, each with its own idle
-  timer; an extractor's `browserProfile` picks the profile (`'plain'` default, `ZoomExtractor` →
-  `'zoom'`). No session holds a Moodle login: the `'zoom'` profile is passcode-gated, and Moodle is
+  timer; an extractor's `browserProfile` picks the profile, and only `ZoomExtractor` has one
+  (`'zoom'`). No session holds a Moodle login: the `'zoom'` profile is passcode-gated, and Moodle is
   reached over the WS API ([MOODLE.md](MOODLE.md#videostream)).
 - **`withLock(fn)`** serializes only the quick navigate+sniff, so one call's navigation can't abort
   another's; the heavy download runs afterward in `server/`, so downloads still overlap. `open()` is
@@ -19,9 +19,8 @@ request. Model in `src/browser/browserSession.js`.
 
 | Profile / path                                           | Browser                                                              | Display                                    | Visible            |
 | -------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ | ------------------ |
-| `'plain'` — the default profile, which no current extractor picks (`browser/browserLaunch.js`) | resolved channel → bundled Chromium on launch failure, no stealth  | none (headless)                            | no                 |
 | `'zoom'` — `ZoomExtractor` (`browser/zoomBrowser.js`)    | resolved channel + stealth, `headless:false`, no fallback            | Xvfb (Linux) / off-screen window (Windows) | no                 |
-| Token grab (`MoodleToken.connect()`)                     | resolved channel → bundled Chromium on launch failure                | real desktop                               | **yes — MFA once** |
+| Token grab (`MoodleToken.connect()`, `browser/browserLaunch.js`) | resolved channel → bundled Chromium on launch failure, no stealth | real desktop                               | **yes — MFA once** |
 | Challenge window (`moodle/challenge.js`)                 | resolved channel, persistent profile `moodle-profile` under the state root, UA = the probe's + ` MoodleMobile`; no installed channel (no UA) → no launch; bundled Chromium only when the probe worked and the channel's persistent launch failed, still with that UA | real desktop, launched off-screen; opened by a wall | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
 
 Every launch passes `--mute-audio`: recordings autoplay, and nobody is watching.

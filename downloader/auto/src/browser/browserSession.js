@@ -1,11 +1,10 @@
-import { launchBrowser } from './browserLaunch.js';
 import { launchZoomBrowser, stopXvfb } from './zoomBrowser.js';
 
 // Leak-safety valve only — a browser is meant to stay open; it re-opens lazily next call.
 const IDLE_TIMEOUT_MS = 45 * 60 * 1000;
 
 /**
- * A persistent browser+context+page with its launcher INJECTED (plain vs zoom profile),
+ * A persistent browser+context+page with its launcher INJECTED (per browser profile),
  * kept open across requests. Page ops are serialized by withLock. See docs/SESSIONS.md.
  */
 export class BrowserSession {
@@ -74,10 +73,8 @@ export class BrowserSession {
   }
 }
 
-// Per-extractor browser choice. 'plain' = headless Chrome; 'zoom' = headed chrome+stealth,
-// hidden per platform (docs/ZOOM.md).
+// Per-extractor browser choice. 'zoom' = headed chrome+stealth, hidden per platform (docs/ZOOM.md).
 const LAUNCHERS = {
-  plain: () => launchBrowser({ headless: true }),
   zoom: () => launchZoomBrowser(),
 };
 
@@ -85,10 +82,10 @@ const LAUNCHERS = {
 // idle timer). An extractor's `browserProfile` selects which one it runs on.
 const sessions = new Map();
 
-export function getSession(profile = 'plain') {
-  const key = LAUNCHERS[profile] ? profile : 'plain';
-  if (!sessions.has(key)) sessions.set(key, new BrowserSession(LAUNCHERS[key]));
-  return sessions.get(key);
+export function getSession(profile) {
+  if (!LAUNCHERS[profile]) throw new Error(`no browser profile '${profile}'`);
+  if (!sessions.has(profile)) sessions.set(profile, new BrowserSession(LAUNCHERS[profile]));
+  return sessions.get(profile);
 }
 
 /** Close every session and stop the managed Xvfb, if any (on /close and shutdown signals). */

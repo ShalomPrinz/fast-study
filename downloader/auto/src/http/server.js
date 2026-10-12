@@ -679,7 +679,7 @@ async function resolveItem(req, res) {
   // Zoom shares are gated by a passcode, not the Moodle login — no university and no login; the
   // extractor picks its own browser profile (DI), captureVideo clears the gate on a blank session.
   // See docs/ZOOM.md.
-  const session = getSession(resolveExtractorForRecording(recording)?.browserProfile ?? 'plain');
+  const session = getSession(resolveExtractorForRecording(recording).browserProfile);
   // Per-course default with an optional per-lecture override; null → the gate throws
   // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
   const passcode = passcodes.lookup(course, name);
