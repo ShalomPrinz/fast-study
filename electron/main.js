@@ -402,8 +402,9 @@ async function runBoot() {
     // The site root, never `/index.html`, which no route matches. Not awaited, to stay off the boot
     // path; the `app loaded` line is what delivery/smoke times boot by.
     const appUrl = `${APP_ORIGIN}/`;
+    // `?.` short-circuits the whole chain: a window closed during boot leaves nothing to navigate.
     mainWindow
-      .loadURL(appUrl)
+      ?.loadURL(appUrl)
       .then(() => log('main', `app loaded ${appUrl}`))
       .catch((error) => log('main', `app load failed ${appUrl}: ${error.message}`));
     // After the window navigates, never before, so it stays off the path that decides whether the
@@ -577,7 +578,7 @@ function createWindow(checks) {
     restartToUpdate(
       stopChildren,
       () => {
-        mainWindow.loadFile(path.join(__dirname, 'boot.html'));
+        mainWindow?.loadFile(path.join(__dirname, 'boot.html'));
         runBoot();
       },
       log,
@@ -592,6 +593,11 @@ function createWindow(checks) {
     return { action: 'deny' };
   });
   mainWindow.once('ready-to-show', () => mainWindow.show());
+  // Nulled so every `mainWindow?.` guard holds: a boot that fails after a close, as quitting
+  // mid-boot does, must not send to a destroyed webContents.
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
   mainWindow.loadFile(path.join(__dirname, 'boot.html'));
 }
 
