@@ -109,7 +109,7 @@ msgid "{0} API key"
 msgstr "{0} API key"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:109
+#: src/features/downloads/DownloadsView.tsx:115
 msgid "{0} found"
 msgstr "{0} found"
 
@@ -310,7 +310,7 @@ msgstr "{tool} is missing, so the parts of FastStudy that need it will fail. Rei
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} no longer exists. Check the course page for a new link."
 
-#: src/features/downloads/DownloadsView.tsx:66
+#: src/features/downloads/DownloadsView.tsx:67
 msgid "{withSource} courses with a source"
 msgstr "{withSource} courses with a source"
 
@@ -547,7 +547,7 @@ msgstr "Choose folder"
 msgid "Choose your university above to connect its account."
 msgstr "Choose your university above to connect its account."
 
-#: src/features/downloads/DownloadsView.tsx:75
+#: src/features/downloads/DownloadsView.tsx:76
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
@@ -584,7 +584,7 @@ msgstr "Click <0>Get a key</0> and sign in with Google or your email."
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "Click <0>Get a key</0> and sign in with your Google account."
 
-#: src/features/downloads/DownloadsView.tsx:113
+#: src/features/downloads/DownloadsView.tsx:119
 msgid "Close"
 msgstr "Close"
 
@@ -757,7 +757,7 @@ msgstr "Course name…"
 msgid "Course overview"
 msgstr "Course overview"
 
-#: src/features/downloads/DownloadsView.tsx:86
+#: src/features/downloads/DownloadsView.tsx:87
 msgid "Course sources"
 msgstr "Course sources"
 
@@ -766,6 +766,7 @@ msgid "Course URL"
 msgstr "Course URL"
 
 #: src/App.tsx:37
+#: src/features/downloads/DownloadsView.tsx:94
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:236
 msgid "Courses failed to load."
@@ -878,7 +879,7 @@ msgstr "Downloading update…"
 msgid "Downloading…"
 msgstr "Downloading…"
 
-#: src/features/downloads/DownloadsView.tsx:59
+#: src/features/downloads/DownloadsView.tsx:60
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "Downloads"
@@ -1268,7 +1269,7 @@ msgstr "Match whole word"
 msgid "Material"
 msgstr "Material"
 
-#: src/features/downloads/DownloadsView.tsx:45
+#: src/features/downloads/DownloadsView.tsx:46
 #: src/features/lectures/MainView.tsx:379
 msgid "Materials"
 msgstr "Materials"
@@ -1317,7 +1318,7 @@ msgstr "No current courses."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "No data folder is set. Choose one in Settings."
 
-#: src/features/downloads/DownloadsView.tsx:52
+#: src/features/downloads/DownloadsView.tsx:53
 msgid "No files of unknown type found."
 msgstr "No files of unknown type found."
 
@@ -1341,7 +1342,7 @@ msgstr "No login is in progress. Connect again."
 msgid "no material found"
 msgstr "no material found"
 
-#: src/features/downloads/DownloadsView.tsx:51
+#: src/features/downloads/DownloadsView.tsx:52
 msgid "No materials found."
 msgstr "No materials found."
 
@@ -1365,7 +1366,7 @@ msgstr "No PDF yet — use \"Save & update PDF\" to create one."
 msgid "No Recitations"
 msgstr "No Recitations"
 
-#: src/features/downloads/DownloadsView.tsx:50
+#: src/features/downloads/DownloadsView.tsx:51
 msgid "No recordings found."
 msgstr "No recordings found."
 
@@ -1617,7 +1618,7 @@ msgstr "Recitations {0}-{1}"
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: src/features/downloads/DownloadsView.tsx:107
+#: src/features/downloads/DownloadsView.tsx:113
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
 
@@ -2195,7 +2196,7 @@ msgstr "University account connected"
 msgid "University saved"
 msgstr "University saved"
 
-#: src/features/downloads/DownloadsView.tsx:46
+#: src/features/downloads/DownloadsView.tsx:47
 msgid "Unknown"
 msgstr "Unknown"
 
@@ -2252,7 +2253,7 @@ msgstr "Video"
 msgid "Video link"
 msgstr "Video link"
 
-#: src/features/downloads/DownloadsView.tsx:44
+#: src/features/downloads/DownloadsView.tsx:45
 msgid "Videos"
 msgstr "Videos"
 

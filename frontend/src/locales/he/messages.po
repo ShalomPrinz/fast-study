@@ -109,7 +109,7 @@ msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:109
+#: src/features/downloads/DownloadsView.tsx:115
 msgid "{0} found"
 msgstr "נמצאו {0}"
 
@@ -310,7 +310,7 @@ msgstr "הכלי {tool} חסר, ולכן חלקים ב-FastStudy שזקוקים 
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
-#: src/features/downloads/DownloadsView.tsx:66
+#: src/features/downloads/DownloadsView.tsx:67
 msgid "{withSource} courses with a source"
 msgstr "{withSource} קורסים עם מקור"
 
@@ -547,7 +547,7 @@ msgstr "בחירת תיקייה"
 msgid "Choose your university above to connect its account."
 msgstr "בחר את האוניברסיטה שלך למעלה כדי לחבר את החשבון שלה."
 
-#: src/features/downloads/DownloadsView.tsx:75
+#: src/features/downloads/DownloadsView.tsx:76
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי להוריד מ-Moodle."
 
@@ -584,7 +584,7 @@ msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם Google או עם 
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם חשבון Google שלך."
 
-#: src/features/downloads/DownloadsView.tsx:113
+#: src/features/downloads/DownloadsView.tsx:119
 msgid "Close"
 msgstr "סגירה"
 
@@ -757,7 +757,7 @@ msgstr "שם הקורס…"
 msgid "Course overview"
 msgstr "סקירת קורס"
 
-#: src/features/downloads/DownloadsView.tsx:86
+#: src/features/downloads/DownloadsView.tsx:87
 msgid "Course sources"
 msgstr "מקורות קורסים"
 
@@ -766,6 +766,7 @@ msgid "Course URL"
 msgstr "כתובת הקורס"
 
 #: src/App.tsx:37
+#: src/features/downloads/DownloadsView.tsx:94
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:236
 msgid "Courses failed to load."
@@ -878,7 +879,7 @@ msgstr "מוריד עדכון…"
 msgid "Downloading…"
 msgstr "מוריד…"
 
-#: src/features/downloads/DownloadsView.tsx:59
+#: src/features/downloads/DownloadsView.tsx:60
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "הורדות"
@@ -1268,7 +1269,7 @@ msgstr "התאמת מילה שלמה"
 msgid "Material"
 msgstr "חומר"
 
-#: src/features/downloads/DownloadsView.tsx:45
+#: src/features/downloads/DownloadsView.tsx:46
 #: src/features/lectures/MainView.tsx:379
 msgid "Materials"
 msgstr "חומרים"
@@ -1317,7 +1318,7 @@ msgstr "אין קורסים נוכחיים."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקיית נתונים. בחר אחת בהגדרות."
 
-#: src/features/downloads/DownloadsView.tsx:52
+#: src/features/downloads/DownloadsView.tsx:53
 msgid "No files of unknown type found."
 msgstr "לא נמצאו קבצים מסוג לא ידוע."
 
@@ -1341,7 +1342,7 @@ msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 msgid "no material found"
 msgstr "לא נמצא חומר"
 
-#: src/features/downloads/DownloadsView.tsx:51
+#: src/features/downloads/DownloadsView.tsx:52
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
@@ -1365,7 +1366,7 @@ msgstr "אין עדיין PDF — השתמש ב\"שמירה ועדכון PDF\" �
 msgid "No Recitations"
 msgstr "אין תרגולים"
 
-#: src/features/downloads/DownloadsView.tsx:50
+#: src/features/downloads/DownloadsView.tsx:51
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
@@ -1617,7 +1618,7 @@ msgstr "תרגולים {0}-{1}"
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
-#: src/features/downloads/DownloadsView.tsx:107
+#: src/features/downloads/DownloadsView.tsx:113
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
@@ -2195,7 +2196,7 @@ msgstr "חשבון האוניברסיטה מחובר"
 msgid "University saved"
 msgstr "האוניברסיטה נשמרה"
 
-#: src/features/downloads/DownloadsView.tsx:46
+#: src/features/downloads/DownloadsView.tsx:47
 msgid "Unknown"
 msgstr "לא ידוע"
 
@@ -2252,7 +2253,7 @@ msgstr "וידאו"
 msgid "Video link"
 msgstr "קישור לווידאו"
 
-#: src/features/downloads/DownloadsView.tsx:44
+#: src/features/downloads/DownloadsView.tsx:45
 msgid "Videos"
 msgstr "וידאו"
 

@@ -9,6 +9,7 @@ import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import AccountStatus from '@/features/downloads/components/AccountStatus'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { ROUTES } from '@/shared/utils/routes'
+import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
 import CourseSourceRow from '@/features/downloads/components/CourseSourceRow'
 import AddCourseRow from '@/features/downloads/components/AddCourseRow'
 import ManualDownload from '@/features/downloads/components/ManualDownload'
@@ -28,7 +29,7 @@ import './DownloadsView.css'
 // Downloads page: university account, course source URLs, discovery. See docs/DOWNLOADS.md.
 export default function DownloadsView() {
   const { t } = useLingui()
-  const { courses } = useCourseTreeContext()
+  const { courses, loaded, loadFailed } = useCourseTreeContext()
   const active = courses.filter((c) => !c.archived)
   const withSource = active.filter((c) => c.source_url).length
 
@@ -88,6 +89,11 @@ export default function DownloadsView() {
             </div>
 
             <div className="source-list">
+              {courseLoadNotice(courses, loaded, loadFailed) === 'failed' && (
+                <p className="source-list-failed">
+                  <Trans>Courses failed to load.</Trans>
+                </p>
+              )}
               {active.map((course) => (
                 <CourseSourceRow
                   key={course.name}

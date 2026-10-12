@@ -9,7 +9,8 @@ section's "Download all" is [BULK.md](BULK.md).
 ## Layout
 
 A `PageHeader` (account chip, count of courses with a source) over one `CourseSourceRow` per active
-course plus `AddCourseRow`, then — once a course is loaded — the `.recordings-panel`. The 880px measure
+course plus `AddCourseRow` (alone with no courses; under a `.source-list-failed` danger note when
+`courseLoadNotice` says the load failed, still usable since a create reports its own failure), then — once a course is loaded — the `.recordings-panel`. The 880px measure
 fits a recording's second line: kind toggle, name input and action side by side.
 
 A source row is three grid tracks with the side ones equal, so every row's URL sits at the midpoint and

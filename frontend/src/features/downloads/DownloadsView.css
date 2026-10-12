@@ -22,6 +22,17 @@
   margin-bottom: var(--space-7);
 }
 
+/* A failed course load, where the course rows would be; AddCourseRow stays below it. */
+.source-list-failed {
+  margin: 0;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  font-size: var(--fs-meta);
+  color: var(--danger);
+}
+
 /* The discovered recordings of the one open course. `ModeToggle` emits its segments and its body as
    siblings, so the panel places them itself: the segments share the first row with the close
    control, and everything the body renders spans both columns beneath. */
