@@ -24,6 +24,7 @@ export type IconName =
   | 'warning'
   | 'check'
   | 'folder'
+  | 'home'
 
 const ExternalLinkIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -355,6 +356,20 @@ const FolderIcon = () => (
   </svg>
 )
 
+// A house: pitched roof over a body with a door.
+const HomeIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M1.5 6 6.5 1.8 11.5 6M2.8 5v6.2h7.4V5"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M5.3 11.2V8h2.4v3.2" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+  </svg>
+)
+
 const icons: Record<IconName, () => JSX.Element> = {
   'external-link': ExternalLinkIcon,
   edit: EditIcon,
@@ -381,6 +396,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   warning: WarningIcon,
   check: CheckIcon,
   folder: FolderIcon,
+  home: HomeIcon,
 }
 
 export default function Icon({ icon }: { icon: IconName }) {

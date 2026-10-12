@@ -1,6 +1,7 @@
 import { Trans } from '@lingui/react/macro'
 import { Link } from 'react-router-dom'
 import Icon from '@/shared/components/Icon'
+import '@/styles/button.css'
 import '@/styles/panel.css'
 import './NotFoundPanel.css'
 
@@ -25,7 +26,8 @@ export default function NotFoundPanel({
         <p className="empty-state-title" dir="auto">
           {message}
         </p>
-        <Link className="empty-state-link" to="/">
+        <Link className="btn btn--ghost empty-state-home" to="/">
+          <Icon icon="home" />
           <Trans>Home</Trans>
         </Link>
       </div>

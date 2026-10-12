@@ -1,5 +1,12 @@
-.empty-state-link {
-  color: var(--accent);
-  font-size: var(--fs-meta);
-  font-weight: 500;
+/* A ghost button with a resting gray fill, so it reads as a button on the white card; the compound
+   selectors outrank .btn and .btn--ghost:hover whatever order the stylesheets load in. */
+.btn.empty-state-home {
+  margin-top: var(--space-3);
+  background: var(--line-soft);
+  text-decoration: none;
+}
+
+.btn.btn--ghost.empty-state-home:hover {
+  background: var(--line);
+  color: var(--text);
 }
