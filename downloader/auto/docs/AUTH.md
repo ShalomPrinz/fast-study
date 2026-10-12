@@ -64,7 +64,7 @@ auth state's `storedSite` names that site beforehand so the frontend can confirm
   browser, so the verification passes only because it goes out from that window. A successful verification leaves the window open as the transport; a new `connect()`
   or a site switch closes it (keeping its profile) and `disconnect()`, or a `connect()` replacing
   another site's token, closes it and deletes the profile.
-- Lazy verification: every WS caller (`/list`, both `/resolve` paths) gets its token from
+- Lazy verification: every WS caller (`/list`, `/courses`, `/courses/check`, both `/resolve` paths) gets its token from
   `verifiedToken()` (`tokenOr` in `http/server.js`), which verifies an unverified token first
   (concurrent callers share one call) and maps its failure like any WS error.
 - Token file: when the launcher sets `FASTSTUDY_TOKEN_KEY` (standard base64 of 32 bytes) it is
@@ -81,7 +81,7 @@ auth state's `storedSite` names that site beforehand so the frontend can confirm
 ## Expiry is only knowable at call time
 
 There is no expiry heuristic — a token's validity shows only when the WS API is called. Moodle
-answers a dead token with HTTP 200 + an `invalidtoken` body, which `/list`, the moodle-file resolve
+answers a dead token with HTTP 200 + an `invalidtoken` body, which `/list`, `/courses`, `/courses/check`, the moodle-file resolve
 and the videostream resolve map (`invalidToken(err)`) to `markExpired()` + `401 {status:'reconnect'}`
 (`moodle_reconnect_required`).
 A fresh login or a successful verification clears the flag. A bot-protection challenge (`blocked(err)`) is deliberately _not_ that

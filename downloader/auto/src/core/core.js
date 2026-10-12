@@ -76,6 +76,22 @@ export function listRecordings(sections, courseId) {
   return recordings;
 }
 
+/**
+ * core_enrol_get_users_courses → the picker's rows, sorted by name. `past`: hidden from the user,
+ * or its end date has gone by — the picker sets those apart rather than dropping them.
+ * @returns {Array<{ id: number, name: string, url: string, past: boolean }>}
+ */
+export function toCourses(courses, site, now = Date.now()) {
+  return (courses ?? [])
+    .map((c) => ({
+      id: c.id,
+      name: stripTags(c.displayname || c.fullname || ''),
+      url: `${site}/course/view.php?id=${c.id}`,
+      past: !!c.hidden || c.visible === 0 || (c.enddate > 0 && c.enddate * 1000 < now),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // A filename's extension without its dot, or null when it has none — `link_not_a_video`'s `ext`,
 // where null means the link served a web page rather than a file.
 function extOf(filename) {

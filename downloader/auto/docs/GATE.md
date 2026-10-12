@@ -7,7 +7,7 @@ so the site sees a slow, human-paced trickle instead of the bursts a bot manager
 
 ## Tickets
 
-Every route that can reach Moodle (`/list`, `/list/expand`, `/resolve`, `/site/probe`,
+Every route that can reach Moodle (`/list`, `/courses`, `/courses/check`, `/list/expand`, `/resolve`, `/site/probe`,
 `/auth/connect`, `/auth/complete`, `GET /moodle/file/:id`) runs inside `gated()` in
 `http/server.js`, which starts an `AsyncLocalStorage` context holding one **ticket**. The lock is
 taken lazily, at the ticket's first `enterMoodle()`, so a `/resolve` of a Zoom, Drive or YouTube row

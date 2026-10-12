@@ -62,11 +62,13 @@ refuses the login as `moodle_site_unsupported` `reason:'missing_function'` (`par
 both `422 {status:'unsupported'}` from `/auth/complete` (and as the login's `moodle_site_unsupported` error on the stream). Lacking only `tool_mobile_get_content`
 still connects: discovery and PDFs work, and a `videostream` resolve is refused later as
 `422 {status:'unsupported'}`, `moodle_site_unsupported` `reason:'videostream_unavailable'` ([Videostream](#videostream)).
+Lacking `core_enrol_get_users_courses` also connects, saving `coursesAvailable:false` in the token
+record ([The course picker](#the-course-picker)); it is reported as `reason:'courses_unavailable'`.
 
 **Telemetry.** `siteReport.js` sends one Sentry warning, `moodle_site_unsupported`, tagged
 `moodle_host` / `moodle_stage` (`probe`|`login`) / `moodle_reason` with the site's `release` as
 extra, per `(host, reason)` per process — the probe runs on every blur. It fires on a definitive
-`unsupported` and on `videostream_unavailable`, never on `unverified` and never on `maintenance`, which
+`unsupported` and on `videostream_unavailable` and `courses_unavailable`, never on `unverified` and never on `maintenance`, which
 says nothing about support. Without `FASTSTUDY_SENTRY_DSN` (every dev run) it is a no-op.
 
 ## Token acquisition (the one headed step)
@@ -92,9 +94,9 @@ navigation to the scheme) and `page.on('framenavigated')`.
 **Decoding.** Base64 of the `decodeURIComponent`d string first, then of the raw one, the first with
 `:::` winning (something on the path can percent-encode `+ / =`): Node's lenient base64 decodes a raw
 `%3D` form too, leaving a stray character on `privatetoken`. The payload is `md5(wwwroot + passport) ::: wstoken ::: privatetoken`
-(`privatetoken` may be absent). We persist `{ site, wstoken, privatetoken, userid, savedAt }`;
-`wstoken` authenticates every REST call and `userid` (from the post-login site info) rides in the
-videostream handler call; nothing reads `privatetoken`, kept so the token file's format stays put.
+(`privatetoken` may be absent). We persist `{ site, wstoken, privatetoken, userid, coursesAvailable, savedAt }`;
+`wstoken` authenticates every REST call, `userid` (from the post-login site info) rides in the
+videostream handler call and the course list, and `coursesAvailable` is the post-login check's verdict; nothing reads `privatetoken`, kept so the token file's format stays put.
 
 ## The REST API
 
@@ -185,7 +187,31 @@ Identity + capability probe, read once, by the post-login check: `userid` (store
 The whole course as an array of sections — `{ section, name, summary, modules[] }`, where `name` and
 `summary` are HTML strings and each module carries `modname`, `name`, `url` (its view page) and, for
 `resource`/`url` modules, `contents[]`. `courseIdFrom(courseUrl)` parses the numeric `id=` from
-`…/course/view.php?id=N`.
+`…/course/view.php?id=N`, leniently (any path). A Moodle exception here other than a dead token
+(not enrolled, no such course) is `422 course_not_accessible {url, detail}` on `/list` and
+`/courses/check`, `detail` Moodle's own message.
+
+### `core_enrol_get_users_courses(userid)`
+
+The account's enrolled courses — `{ id, fullname, displayname, visible, hidden?, enddate, … }`.
+
+## The course picker
+
+`GET /courses` lists the enrolled courses as `{ available:true, courses:[{ id, name, url, past }] }`:
+`name` is `displayname` (else `fullname`) through `stripTags`, `url` is `{site}/course/view.php?id=N`,
+and `past` is `hidden`, `visible:0` or an `enddate` already gone by; sorted by name. It is **one WS
+call per picker open**: BIU's Radware walled a second call made 2 s after the first. So availability
+is never discovered by calling the function — a function missing from the token's service answers
+`accessexception`, which `invalidToken()` reads as a dead token — but saved at login as
+`coursesAvailable`. Anything but `true` (a record saved before the flag existed included) answers
+`{ available:false }` with no call; a reconnect refreshes it. An unverified token is verified first
+in the same gated request, as on `/list`.
+
+`POST /courses/check {courseUrl}` vets a pasted URL before it is saved. Strictly an http(s)
+`{site}/course/view.php` with an all-digit `id`, else `400 course_url_not_course_page {url}` (off the
+site: `course_url_unsupported_site`); then one `core_course_get_contents` → `{ ok:true }`, or `401`
+reconnect, `503` blocked, `422 course_not_accessible`. `/list` keeps its lenient parsing, so a URL the
+user saved anyway still lists.
 
 ## Module → strategy
 

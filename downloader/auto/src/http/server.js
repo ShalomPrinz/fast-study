@@ -22,6 +22,7 @@ import { resolveBrowserChannel } from '../browser/browserChannel.js';
 import { loadStealthChromium } from '../browser/zoomBrowser.js';
 import {
   listRecordings,
+  toCourses,
   resolveRecording,
   resolveMoodleFile,
   resolveVideostream,
@@ -34,12 +35,14 @@ import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
 import { getProbedMedia } from '../core/probeCache.js';
 import { probeKeyForUrl } from '../lib/probeUrl.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
-import { UnsupportedError, PasscodeError, failureOf } from '../lib/errors.js';
+import { CodedError, UnsupportedError, PasscodeError, failureOf } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
 import {
   courseIdFrom,
   getCourseContents,
+  getUserCourses,
   invalidToken,
+  WsError,
   blocked,
   openPluginfile,
   openMoodleFile,
@@ -404,6 +407,104 @@ export function handleWarmup(req, res) {
 
 // ── Browsing endpoints ──────────────────────────────────────────────────────
 
+// Answer a failed WS call on a course: a dead token → mark expired + 401 reconnect, a wall → 503,
+// any other Moodle exception (with `courseUrl`) → 422 course_not_accessible. → whether it answered.
+async function sentWsFailure(res, e, auth, route, courseUrl) {
+  if (invalidToken(e)) {
+    auth.markExpired();
+    logResult(route, 'reconnect (401)');
+    sendReconnect(res);
+    return true;
+  }
+  if (blocked(e)) {
+    logResult(route, `blocked (503): ${e.message}`);
+    await sendBlocked(res, e);
+    return true;
+  }
+  if (courseUrl !== undefined && e instanceof WsError) {
+    logResult(route, `not accessible (422): ${e.message}`);
+    const err = new CodedError(
+      'course_not_accessible',
+      { url: courseUrl, detail: e.params.detail },
+      `${courseUrl} could not be read: ${e.message}`,
+    );
+    send(res, 422, failureOf(err));
+    return true;
+  }
+  return false;
+}
+
+// The connected account's enrolled courses — one WS call, or none when the login found the
+// function missing from the token's service (docs/MOODLE.md § The course picker).
+export const handleCourses = gated('/courses', async (req, res) => {
+  logReq('GET', '/courses');
+  const found = siteOr(res);
+  if (!found) return;
+  const { site, auth } = found;
+  const stored = await tokenOr(res, auth, '/courses');
+  if (!stored) return;
+  if (stored.coursesAvailable !== true) {
+    logResult('/courses', 'unavailable');
+    return send(res, 200, { available: false });
+  }
+  let courses;
+  try {
+    courses = await getUserCourses(site, stored.wstoken, stored.userid);
+  } catch (e) {
+    if (await sentWsFailure(res, e, auth, '/courses')) return;
+    throw e;
+  }
+  const rows = toCourses(courses, site);
+  logResult('/courses', `${rows.length} courses`);
+  send(res, 200, { available: true, courses: rows });
+});
+
+// A course page on the configured site, strictly: `{site}/course/view.php?id=<digits>`, nothing else.
+function isCoursePage(url, site) {
+  const u = new URL(url);
+  const id = u.searchParams.get('id');
+  return (
+    u.pathname === `${new URL(site).pathname.replace(/\/+$/, '')}/course/view.php` &&
+    /^\d+$/.test(id ?? '')
+  );
+}
+
+// Check a pasted course URL before it is saved: strictly a course page, then one contents call.
+export const handleCourseCheck = gated('/courses/check', async (req, res) => {
+  const { courseUrl } = req.body ?? {};
+  logReq('POST', '/courses/check', courseUrl);
+  if (typeof courseUrl !== 'string') {
+    return send(res, 400, invalid('courseUrl', 'courseUrl required'));
+  }
+  const notCoursePage = () =>
+    send(
+      res,
+      400,
+      failureOf(
+        new CodedError(
+          'course_url_not_course_page',
+          { url: courseUrl },
+          `${courseUrl} is not a course page (…/course/view.php?id=N)`,
+        ),
+      ),
+    );
+  if (!/^https?:\/\//i.test(courseUrl) || !URL.canParse(courseUrl)) return notCoursePage();
+  const found = siteOr(res, courseUrl);
+  if (!found) return;
+  const { site, auth } = found;
+  if (!isCoursePage(courseUrl, site)) return notCoursePage();
+  const stored = await tokenOr(res, auth, '/courses/check');
+  if (!stored) return;
+  try {
+    await getCourseContents(site, stored.wstoken, new URL(courseUrl).searchParams.get('id'));
+  } catch (e) {
+    if (await sentWsFailure(res, e, auth, '/courses/check', courseUrl)) return;
+    throw e;
+  }
+  logResult('/courses/check', 'ok');
+  send(res, 200, { ok: true });
+});
+
 export const handleList = gated('/list', async (req, res) => {
   const { courseUrl } = req.body;
   logReq('POST', '/list', courseUrl);
@@ -423,22 +524,12 @@ export const handleList = gated('/list', async (req, res) => {
     return send(res, 400, failureOf(e));
   }
 
-  // Stateless WS: no browser needed. A dead token comes back as an invalidToken
-  // WS exception → mark expired + steer to Reconnect; any other WS fault falls to 500.
-  const token = stored.wstoken;
+  // Stateless WS: no browser needed.
   let sections;
   try {
-    sections = await getCourseContents(site, token, courseId);
+    sections = await getCourseContents(site, stored.wstoken, courseId);
   } catch (e) {
-    if (invalidToken(e)) {
-      auth.markExpired();
-      logResult('/list', 'reconnect (401)');
-      return sendReconnect(res);
-    }
-    if (blocked(e)) {
-      logResult('/list', `blocked (503): ${e.message}`);
-      return sendBlocked(res, e);
-    }
+    if (await sentWsFailure(res, e, auth, '/list', courseUrl)) return;
     throw e;
   }
   const recordings = listRecordings(sections, courseId);

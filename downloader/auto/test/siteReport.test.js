@@ -9,6 +9,7 @@ const Sentry = await import('@sentry/node');
 await import('../instrument.js');
 const { handleSiteProbe } = await import('../src/http/server.js');
 const { reportUnsupportedSite } = await import('../siteReport.js');
+const { MoodleToken } = await import('../src/auth/moodleToken.js');
 await import('./gated.js'); // no cooldown between the probes below
 
 const events = [];
@@ -82,4 +83,21 @@ test('a login-stage report carries the site release', async () => {
   assert.equal(sent[0].tags.moodle_stage, 'login');
   assert.equal(sent[0].tags.moodle_host, 'login.ac.il');
   assert.equal(sent[0].extra.release, '4.5.10 (Build: 20250414)');
+});
+
+test('a login whose service lacks the course list connects and reports courses_unavailable', async () => {
+  const auth = new MoodleToken({
+    tokenPath: '/nonexistent/token.json',
+    site: 'https://nocourses.ac.il',
+  });
+  const functions = ['core_course_get_contents', 'tool_mobile_get_content'].map((name) => ({
+    name,
+  }));
+  const checked = auth._checkSiteInfo({ downloadfiles: 1, release: '4.5', functions });
+  assert.deepEqual(checked, { coursesAvailable: false });
+  await Sentry.flush(2000);
+  const sent = byReason('courses_unavailable');
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].tags.moodle_stage, 'login');
+  assert.equal(sent[0].tags.moodle_host, 'nocourses.ac.il');
 });

@@ -21,6 +21,8 @@ import {
   handleBrowserPrereq,
   handleWarmup,
   handleList,
+  handleCourses,
+  handleCourseCheck,
   handleListExpand,
   handleResolve,
   handleZoomPasscode,
@@ -62,6 +64,8 @@ app.get('/auth/events', handleAuthEvents);
 app.post('/auth/connect', handleAuthConnect);
 app.post('/auth/complete', handleAuthComplete);
 app.post('/auth/disconnect', handleAuthDisconnect);
+app.get('/courses', handleCourses);
+app.post('/courses/check', handleCourseCheck);
 app.post('/list', handleList);
 app.post('/list/expand', handleListExpand);
 app.post('/resolve', handleResolve);

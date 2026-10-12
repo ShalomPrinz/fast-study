@@ -304,6 +304,8 @@ services; `state` stays as the developer-facing reason.
 | `core/registry.js`              | `moodle_site_not_configured`  | —                        | user  |
 | `moodle/probe.js`, `auth/moodleToken.js`, `core/core.js` | `moodle_site_unsupported` | `site`, `reason`, `function` | user |
 | `moodle/wsClient.js`            | `course_url_no_id`            | `url`                    | user  |
+| `http/server.js` `/courses/check` | `course_url_not_course_page` | `url`                  | user  |
+| `http/server.js` `/list`, `/courses/check` | `course_not_accessible` | `url`, `detail`       | user  |
 | `core/core.js`                  | `link_not_a_video`            | `source`, `url`, `ext`   | user  |
 | `core/core.js`                  | `link_dead`                   | `url`                    | user  |
 | `core/core.js`                  | `link_probe_inconclusive`     | `url`                    | user  |
@@ -341,7 +343,7 @@ of `/prereqs/browser` and the 500 backstop — and is one code in both.
 `mobile_service_off` and `maintenance` come from `POST /site/probe` (a 200 verdict, not an error body;
 `maintenance` is retry-later), `missing_function` (with `function`) and `downloads_disabled` from
 `/auth/complete`'s 422. `videostream_unavailable` — the token's service lacks `tool_mobile_get_content`,
-so the login connects (and reports it to Sentry) and a videostream row's `/resolve` answers it as a 422. An `unverified` probe carries no code — only `params.detail` (`site_blocked`,
+so the login connects (and reports it to Sentry) and a videostream row's `/resolve` answers it as a 422. `courses_unavailable` — the service lacks `core_enrol_get_users_courses`; Sentry-only, never on the wire: the login connects and `GET /courses` answers `{available:false}`. An `unverified` probe carries no code — only `params.detail` (`site_blocked`,
 `timeout`, `network`), plus `challengeWindow` beside a `site_blocked`.
 
 `site_blocked`'s `challengeWindow` is present only on a block from a call the challenge window can

@@ -16,6 +16,9 @@ export const CAPTURE_TIMEOUT_MS = 600_000;
 // What discovery and PDFs need from the token's service; videostream also needs the app's content call.
 const REQUIRED_FUNCTION = 'core_course_get_contents';
 const VIDEOSTREAM_FUNCTION = 'tool_mobile_get_content';
+// The course picker's list; saved at login as `coursesAvailable`, since asking for a disallowed
+// function answers accessexception, which reads as a dead token.
+const COURSES_FUNCTION = 'core_enrol_get_users_courses';
 
 // The apptoken arrives as base64 in a moodlemobile://token=<b64> redirect, possibly percent-encoded.
 // Decode it to Moodle's ':::'-joined payload. URI-decoded first: Node's lenient base64 reads a raw
@@ -50,7 +53,7 @@ function safeURIDecode(s) {
 
 /**
  * Moodle Web-Services token auth for one site: one headed launch.php grab (MFA by hand), then a
- * persisted { site, wstoken, privatetoken, userid } for the stateless WS API. See docs/AUTH.md.
+ * persisted { site, wstoken, privatetoken, userid, coursesAvailable } for the stateless WS API. See docs/AUTH.md.
  */
 export class MoodleToken extends AuthProvider {
   /**
@@ -89,7 +92,7 @@ export class MoodleToken extends AuthProvider {
   /**
    * The stored token, or null when there is none or it was minted for another site — a token is
    * only good on the site that issued it, so one kept across a site switch reads as absent here.
-   * @returns {{ site: string, wstoken: string, privatetoken: string|null, userid: number, savedAt: string }|null}
+   * @returns {{ site: string, wstoken: string, privatetoken: string|null, userid: number, coursesAvailable?: boolean, savedAt: string }|null}
    */
   loadToken() {
     const tok = readTokenFile(this.tokenPath);
@@ -402,9 +405,10 @@ export class MoodleToken extends AuthProvider {
     const tok = candidate ?? this.loadToken();
     if (!tok) throw new CodedError('moodle_login_not_pending', {}, 'no token to verify');
     let info;
+    let checked;
     try {
       info = await getSiteInfo(this.site, tok.wstoken);
-      this._checkSiteInfo(info);
+      checked = this._checkSiteInfo(info);
     } catch (err) {
       const refused = invalidToken(err) || err instanceof UnsupportedError;
       if (candidate) {
@@ -420,7 +424,7 @@ export class MoodleToken extends AuthProvider {
     }
     // A disconnect or a newer login while the call was out wins over this result.
     if (candidate ? gen !== this._gen : this.loadToken()?.wstoken !== tok.wstoken) return tok;
-    const record = { ...tok, userid: info.userid };
+    const record = { ...tok, userid: info.userid, coursesAvailable: checked.coursesAvailable };
     delete record.unverified;
     writeTokenFile(this.tokenPath, record);
     this._invalidated = false;
@@ -428,7 +432,8 @@ export class MoodleToken extends AuthProvider {
   }
 
   // The post-login check: refuse a site whose token service can't list a course or serve its
-  // files; a missing tool_mobile_get_content only costs videostream, so it connects and is reported.
+  // files; a missing tool_mobile_get_content or course list only costs that feature, so it connects
+  // and is reported. → { coursesAvailable }
   _checkSiteInfo(info) {
     const functions = new Set((info?.functions ?? []).map((f) => f.name));
     const refuse = (reason, extra = {}) => {
@@ -443,13 +448,11 @@ export class MoodleToken extends AuthProvider {
       throw refuse('missing_function', { function: REQUIRED_FUNCTION });
     }
     if (Number(info?.downloadfiles) !== 1) throw refuse('downloads_disabled');
-    if (!functions.has(VIDEOSTREAM_FUNCTION)) {
-      reportUnsupportedSite({
-        site: this.site,
-        stage: 'login',
-        reason: 'videostream_unavailable',
-        release: info?.release,
-      });
-    }
+    const report = (reason) =>
+      reportUnsupportedSite({ site: this.site, stage: 'login', reason, release: info?.release });
+    if (!functions.has(VIDEOSTREAM_FUNCTION)) report('videostream_unavailable');
+    const coursesAvailable = functions.has(COURSES_FUNCTION);
+    if (!coursesAvailable) report('courses_unavailable');
+    return { coursesAvailable };
   }
 }

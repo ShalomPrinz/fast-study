@@ -271,6 +271,18 @@ test('a login connects when only the videostream content call is missing', async
   assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: false });
 });
 
+for (const [has, functions] of [
+  [true, [...FULL, ...fn('core_enrol_get_users_courses')]],
+  [false, FULL],
+]) {
+  test(`a login saves coursesAvailable:${has} from the site's function list`, async (t) => {
+    stubSiteInfo(t, { userid: 7, downloadfiles: 1, functions });
+    const { auth, tokenPath } = await capturedLogin(`moodle-courses-${has}-`);
+    assert.equal(readTokenFile(tokenPath).coursesAvailable, has);
+    assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: false });
+  });
+}
+
 test('a token minted for another site reads as not connected', () => {
   const tokenPath = tokenPathIn('moodle-othersite-');
   fs.mkdirSync(path.dirname(tokenPath), { recursive: true });
