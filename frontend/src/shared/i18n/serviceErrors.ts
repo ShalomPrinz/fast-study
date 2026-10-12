@@ -208,7 +208,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
   moodle_site_unsupported: msg({
     message:
-      "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}",
+      "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} videostream_unavailable {This university's Moodle doesn't let the Moodle app open its lecture videos. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}",
   }),
   course_url_no_id: msg({ message: "That course link doesn't point to a specific course: {url}." }),
   link_not_a_video: msg({
@@ -231,22 +231,13 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
   playlist_list_failed: msg({ message: 'Could not list the playlist.' }),
   playlist_empty: msg({ message: 'That playlist has no entries.' }),
-  videostream_no_media_request: msg({
-    message: 'No video was captured on that page. Play it once by hand and try again.',
-  }),
-  videostream_login_required: msg({
-    message:
-      'The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle.',
-  }),
+  videostream_no_mp4: msg({ message: "This lecture's video isn't a downloadable MP4 file." }),
   zoom_no_media_request: msg({
     message:
       'No video was captured on that Zoom page. The passcode or the player may need a manual start.',
   }),
   recording_strategy_unsupported: msg({ message: "This recording type can't be downloaded." }),
   xvfb_unavailable: msg({ message: "Couldn't start capturing the Zoom recording. Try again." }),
-  moodle_token_no_privatetoken: msg({
-    message: "This Moodle connection can't download these recordings. Reconnect the account.",
-  }),
   moodle_login_timeout: msg({ message: 'The Moodle login timed out. Try connecting again.' }),
   moodle_login_abandoned: msg({
     message: 'The login window was closed before login finished. Connect again.',

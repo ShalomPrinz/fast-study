@@ -262,8 +262,8 @@ msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} 
 msgstr "{reason, select, incorrect {קוד הגישה של Zoom שגוי. הזן אותו שוב.} other {ההקלטה הזו ב-Zoom דורשת קוד גישה.}}"
 
 #: src/shared/i18n/serviceErrors.ts:209
-msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
-msgstr "{reason, select, not_moodle {הכתובת הזו אינה אתר Moodle. בדוק אותה ונסה שוב.} mobile_service_off {ה-Moodle של האוניברסיטה הזו לא מאפשר התחברות מאפליקציית Moodle, ו-FastStudy נשענת עליה.} maintenance {ה-Moodle של האוניברסיטה הזו בתחזוקה כרגע. נסה שוב מאוחר יותר.} missing_function {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle לקרוא את תוכן הקורסים ({function}), ולכן FastStudy לא יכולה לעבוד איתו.} downloads_disabled {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle להוריד קבצים, ולכן FastStudy לא יכולה לעבוד איתו.} autologin_unavailable {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציה לפתוח וידאו שמאוחסן ב-Moodle עצמו. שאר ההקלטות וקובצי הקורס עדיין עובדים.} other {אי אפשר להשתמש ב-Moodle של האוניברסיטה הזו עם FastStudy.}}"
+msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} videostream_unavailable {This university's Moodle doesn't let the Moodle app open its lecture videos. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
+msgstr "{reason, select, not_moodle {הכתובת הזו אינה אתר Moodle. בדוק אותה ונסה שוב.} mobile_service_off {ה-Moodle של האוניברסיטה הזו לא מאפשר התחברות מאפליקציית Moodle, ו-FastStudy נשענת עליה.} maintenance {ה-Moodle של האוניברסיטה הזו בתחזוקה כרגע. נסה שוב מאוחר יותר.} missing_function {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle לקרוא את תוכן הקורסים ({function}), ולכן FastStudy לא יכולה לעבוד איתו.} downloads_disabled {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle להוריד קבצים, ולכן FastStudy לא יכולה לעבוד איתו.} videostream_unavailable {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle לפתוח את סרטוני ההרצאות. שאר ההקלטות וקובצי הקורס עדיין עובדים.} other {אי אפשר להשתמש ב-Moodle של האוניברסיטה הזו עם FastStudy.}}"
 
 #: src/features/search/components/SearchResult.tsx:64
 msgid "{remaining, plural, one {Show # more} other {Show # more}}"
@@ -712,7 +712,7 @@ msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastS
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:246
+#: src/shared/i18n/serviceErrors.ts:240
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נסה שוב."
 
@@ -1236,7 +1236,7 @@ msgstr "חומר"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:255
+#: src/shared/i18n/serviceErrors.ts:246
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1292,7 +1292,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:254
+#: src/shared/i18n/serviceErrors.ts:245
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
@@ -1336,11 +1336,7 @@ msgstr "לא נבחרה אוניברסיטה"
 msgid "No university is chosen yet. Choose yours in Settings."
 msgstr "עדיין לא נבחרה אוניברסיטה. בחר אותה בהגדרות."
 
-#: src/shared/i18n/serviceErrors.ts:234
-msgid "No video was captured on that page. Play it once by hand and try again."
-msgstr "לא זוהה וידאו בדף הזה. הפעל אותו פעם אחת ידנית ונסה שוב."
-
-#: src/shared/i18n/serviceErrors.ts:241
+#: src/shared/i18n/serviceErrors.ts:235
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
@@ -1924,19 +1920,15 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייווצרו מחדש:"
 
-#: src/shared/i18n/serviceErrors.ts:237
-msgid "The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle."
-msgstr "עמוד ההרצאה עדיין מבקש להתחבר ל-Moodle, גם אחרי התחברות אוטומטית. נסה שוב מאוחר יותר, או חבר מחדש את Moodle."
-
 #: src/features/downloads/components/AccountStatus.tsx:62
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:251
+#: src/shared/i18n/serviceErrors.ts:242
 msgid "The login window was closed before login finished. Connect again."
 msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:250
+#: src/shared/i18n/serviceErrors.ts:241
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
 
@@ -2065,9 +2057,9 @@ msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:247
-msgid "This Moodle connection can't download these recordings. Reconnect the account."
-msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקלטות האלה. חבר מחדש את החשבון."
+#: src/shared/i18n/serviceErrors.ts:234
+msgid "This lecture's video isn't a downloadable MP4 file."
+msgstr "הווידאו של ההרצאה הזו אינו קובץ MP4 שאפשר להוריד."
 
 #: src/features/settings/components/DataRootField.tsx:103
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
@@ -2081,7 +2073,7 @@ msgstr "צריך לעשות את זה רק פעם אחת."
 msgid "This recording needs a passcode."
 msgstr "ההקלטה הזו דורשת קוד גישה."
 
-#: src/shared/i18n/serviceErrors.ts:245
+#: src/shared/i18n/serviceErrors.ts:239
 msgid "This recording type can't be downloaded."
 msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 

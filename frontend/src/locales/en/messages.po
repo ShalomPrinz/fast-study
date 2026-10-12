@@ -262,8 +262,8 @@ msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} 
 msgstr "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 
 #: src/shared/i18n/serviceErrors.ts:209
-msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
-msgstr "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
+msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} videostream_unavailable {This university's Moodle doesn't let the Moodle app open its lecture videos. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
+msgstr "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} videostream_unavailable {This university's Moodle doesn't let the Moodle app open its lecture videos. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
 
 #: src/features/search/components/SearchResult.tsx:64
 msgid "{remaining, plural, one {Show # more} other {Show # more}}"
@@ -712,7 +712,7 @@ msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."
 
-#: src/shared/i18n/serviceErrors.ts:246
+#: src/shared/i18n/serviceErrors.ts:240
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "Couldn't start capturing the Zoom recording. Try again."
 
@@ -1236,7 +1236,7 @@ msgstr "Material"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/shared/i18n/serviceErrors.ts:255
+#: src/shared/i18n/serviceErrors.ts:246
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
@@ -1292,7 +1292,7 @@ msgstr "No Lectures"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
-#: src/shared/i18n/serviceErrors.ts:254
+#: src/shared/i18n/serviceErrors.ts:245
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
 
@@ -1336,11 +1336,7 @@ msgstr "no university chosen"
 msgid "No university is chosen yet. Choose yours in Settings."
 msgstr "No university is chosen yet. Choose yours in Settings."
 
-#: src/shared/i18n/serviceErrors.ts:234
-msgid "No video was captured on that page. Play it once by hand and try again."
-msgstr "No video was captured on that page. Play it once by hand and try again."
-
-#: src/shared/i18n/serviceErrors.ts:241
+#: src/shared/i18n/serviceErrors.ts:235
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 
@@ -1924,19 +1920,15 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
-#: src/shared/i18n/serviceErrors.ts:237
-msgid "The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle."
-msgstr "The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle."
-
 #: src/features/downloads/components/AccountStatus.tsx:62
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
-#: src/shared/i18n/serviceErrors.ts:251
+#: src/shared/i18n/serviceErrors.ts:242
 msgid "The login window was closed before login finished. Connect again."
 msgstr "The login window was closed before login finished. Connect again."
 
-#: src/shared/i18n/serviceErrors.ts:250
+#: src/shared/i18n/serviceErrors.ts:241
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "The Moodle login timed out. Try connecting again."
 
@@ -2065,9 +2057,9 @@ msgstr "This error was reported automatically. Reference: <0>{eventId}</0>"
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 
-#: src/shared/i18n/serviceErrors.ts:247
-msgid "This Moodle connection can't download these recordings. Reconnect the account."
-msgstr "This Moodle connection can't download these recordings. Reconnect the account."
+#: src/shared/i18n/serviceErrors.ts:234
+msgid "This lecture's video isn't a downloadable MP4 file."
+msgstr "This lecture's video isn't a downloadable MP4 file."
 
 #: src/features/settings/components/DataRootField.tsx:103
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
@@ -2081,7 +2073,7 @@ msgstr "This only needs to be done once."
 msgid "This recording needs a passcode."
 msgstr "This recording needs a passcode."
 
-#: src/shared/i18n/serviceErrors.ts:245
+#: src/shared/i18n/serviceErrors.ts:239
 msgid "This recording type can't be downloaded."
 msgstr "This recording type can't be downloaded."
 
