@@ -7,26 +7,38 @@ import { fileURLToPath } from 'node:url';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-// Dev-only weight that would otherwise ride along in the two Node service trees.
+// Dev-only weight that would otherwise ride along in the downloader trees.
 const SKIP = new Set(['test', 'docs', 'CLAUDE.md', 'README.md', '.gitignore', 'package-lock.json']);
 // Source maps and type declarations, dropped everywhere — `@sentry/*` alone is ~40MB per service.
 const SKIP_EXT = /\.(map|d\.[cm]?ts)$/;
 
+const WORKSPACE = path.join(REPO, 'downloader');
+// The workspace install links each workspace into node_modules by its package name; staged, those
+// links would point back into the repo, and nothing resolves a workspace by name.
+const WORKSPACE_LINKS = new Set(
+  JSON.parse(fs.readFileSync(path.join(WORKSPACE, 'package.json'), 'utf8')).workspaces.map(
+    (dir) => JSON.parse(fs.readFileSync(path.join(WORKSPACE, dir, 'package.json'), 'utf8')).name,
+  ),
+);
+
 const COPIES = [
   ['backend/dist/services', 'services'],
-  ['downloader/auto', 'auto'],
-  ['downloader/server', 'server'],
+  ['downloader/auto', 'downloader/auto'],
+  ['downloader/server', 'downloader/server'],
+  // One hoisted copy beside both services, so each resolves its dependencies by walking up.
+  ['downloader/node_modules', 'downloader/node_modules'],
   ['frontend/dist', 'frontend'],
 ];
 
 function copy(from, to, prune) {
+  const modules = path.basename(from) === 'node_modules';
   fs.cpSync(from, to, {
     recursive: true,
     // node_modules is exempt from SKIP: a dependency of its own named `docs` or `test` is not ours to drop.
     filter: (src) => {
       if (!prune) return true;
       if (SKIP_EXT.test(src)) return false;
-      if (src.includes(`${path.sep}node_modules${path.sep}`)) return true;
+      if (modules) return !WORKSPACE_LINKS.has(path.relative(from, src));
       return !SKIP.has(path.relative(from, src));
     },
   });
@@ -43,12 +55,10 @@ for (const [from, to] of COPIES) {
 }
 
 // A symlinked `@faststudy/*` would be a dangling link the moment the tree is copied into the
-// installer, so the workflow installs with `--install-links` and this is the check that it did.
-for (const service of ['auto', 'server']) {
-  for (const name of ['runtime', 'tools', 'sentry']) {
-    const dep = path.join(stage, service, 'node_modules', '@faststudy', name);
-    if (fs.lstatSync(dep).isSymbolicLink()) {
-      throw new Error(`${service}: @faststudy/${name} is a symlink — install with --install-links`);
-    }
+// installer, so downloader/.npmrc sets `install-links` and this is the check that it held.
+for (const name of ['runtime', 'tools', 'sentry']) {
+  const dep = path.join(stage, 'downloader', 'node_modules', '@faststudy', name);
+  if (fs.lstatSync(dep).isSymbolicLink()) {
+    throw new Error(`@faststudy/${name} is a symlink — install with install-links`);
   }
 }

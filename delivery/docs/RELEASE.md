@@ -140,6 +140,8 @@ rules are [`delivery/CLAUDE.md`](../CLAUDE.md#the-frozen-bundles-invariants); th
 are not its business: the workflow downloads the binaries and primes the cache straight into
 `stage/`, so nothing is copied twice.
 
-It refuses to finish if either Node service's `@faststudy/*` dependency is a symlink: `file:` deps
-install as links by default, and a link into `lib/` dangles once the tree leaves the repo — so both
-services install with `npm ci --install-links`.
+`auto` and `server` stage under `downloader/` beside the workspace's one hoisted `node_modules`, so
+the installer carries a single copy of their shared dependencies; the workspace's links to its own
+packages are dropped. It refuses to finish if a `@faststudy/*` dependency is a symlink: `file:` deps
+install as links by default, and a link into `lib/` dangles once the tree leaves the repo — so
+`downloader/.npmrc` sets `install-links`.

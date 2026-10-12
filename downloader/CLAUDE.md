@@ -15,6 +15,7 @@ Three packages that capture lecture videos and PDFs and hand them to the databas
 ## Running
 
 ```bash
+(cd downloader && npm ci)              # installs both services into the one shared downloader/node_modules
 npm --prefix downloader/server start   # starts the express server on port 3052
 npm --prefix downloader/auto start     # starts auto/app.js on port 3053 (the HTTP service; needs Playwright)
 ```
@@ -81,7 +82,9 @@ HTTP body or a job message.
 ## Conventions
 
 - The Node packages (`server/`, `auto/`) use npm freely; **only the Chrome extension** (`extension/`) must avoid dependencies (MV3 constraint).
-- `stub/sentry-bundler-plugins` is an empty package both Node packages override `@sentry/bundler-plugins` with (a direct `file:` dep plus a `$` override), so `@sentry/node`'s bundler-plugin tree (babel, oxc-parser, the `sentry` CLI) stays out of the installer; it is only reached from the `./vite`/`./rollup`/`./webpack`/`./esbuild` subpaths. On a `@sentry/node` upgrade, re-check its main entry still never imports it.
+- `downloader/` is an npm workspace (`auto`, `server`) with one `package-lock.json` and one hoisted `node_modules`, so the installer ships and scans one copy of `@sentry/node`, express and the rest. Install only from `downloader/`: a per-service `npm install` would create a stray lock.
+- `downloader/.npmrc` sets `install-links=true`, so the `file:` deps are real copies (as `delivery/stage.mjs` requires), not symlinks; a `lib/*/js` edit reaches the services only after a reinstall. `downloader/package.json` re-declares the three `@faststudy/*` deps because, under `install-links`, npm otherwise nests a copy inside each workspace.
+- `stub/sentry-bundler-plugins` is an empty package the workspace root overrides `@sentry/bundler-plugins` with (a root `file:` dep plus a `$` override; npm honors overrides only at the root), so `@sentry/node`'s bundler-plugin tree (babel, oxc-parser, the `sentry` CLI) stays out of the installer; it is only reached from the `./vite`/`./rollup`/`./webpack`/`./esbuild` subpaths. On a `@sentry/node` upgrade, re-check its main entry still never imports it.
 - `suggestLectureName` / `suggestRecitationName` in `popup.js` duplicate logic from `frontend/src/features/lectures/utils/nextName.ts`. If the naming convention changes, update both.
 - Per-page isolation is by **exact URL match** (full URL including query and hash), not by domain or path prefix — navigating anywhere else in the same tab hides prior captures.
 - Server-specific conventions (argv-array spawn, always `video.mp4`, database-allocated material names, name canonicalization) live in [server/CLAUDE.md](server/CLAUDE.md).

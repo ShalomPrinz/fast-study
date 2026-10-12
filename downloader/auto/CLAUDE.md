@@ -1,6 +1,6 @@
 # CLAUDE.md — auto (auto-downloader)
 
-A Playwright HTTP service that, given a **course URL** on the one configured Moodle site (`MOODLE_SITE`, live-updated by `POST /config`), authenticates to Moodle's Web-Services API (one headed token grab, then a long-lived stateless token), discovers the course's recordings and PDF handouts, and resolves any of them into download targets (`POST /resolve`) that `server/` fetches and turns into jobs. A **separate package** with its own `node_modules` so Playwright and its browsers never leak into `server/`'s lighter dependency set. User-facing setup: [README.md](README.md).
+A Playwright HTTP service that, given a **course URL** on the one configured Moodle site (`MOODLE_SITE`, live-updated by `POST /config`), authenticates to Moodle's Web-Services API (one headed token grab, then a long-lived stateless token), discovers the course's recordings and PDF handouts, and resolves any of them into download targets (`POST /resolve`) that `server/` fetches and turns into jobs. A **separate workspace package** so Playwright is only ever imported here, never by `server/`; both share `downloader/`'s one `node_modules` ([downloader CLAUDE.md](../CLAUDE.md#conventions)). User-facing setup: [README.md](README.md).
 
 ## Run
 

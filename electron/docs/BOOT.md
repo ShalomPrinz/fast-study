@@ -122,7 +122,7 @@ One `isPackaged` branch in the child spec table, and nothing else in the file kn
 | `server`   | `node src/index.js`              | Electron's own exe, `ELECTRON_RUN_AS_NODE=1` |
 
 Each child's cwd branches with its command — its package in the repo tree in dev, its own staged
-directory under `resources/` packaged. A cwd that does not exist fails the spawn outright, and in a
+directory under `resources/` packaged (`resources/downloader/<dir>` for the Node services, as in the repo). A cwd that does not exist fails the spawn outright, and in a
 package the repo tree is not there: `__dirname` is inside `app.asar`.
 
 Dev spawns the repo sources, which makes the whole launch path runnable without an installer.
@@ -134,8 +134,9 @@ The packaged tree main assumes, staged by the build as `electron`'s `extraResour
 
 ```
 resources/services/services(.exe)   the PyInstaller one-dir bundle, service picked by argv[1]
-resources/auto/app.js               the auto-downloader, run on Electron-as-node
-resources/server/src/index.js       the download server, likewise
+resources/downloader/auto/app.js    the auto-downloader, run on Electron-as-node
+resources/downloader/server/src/index.js  the download server, likewise
+resources/downloader/node_modules/  the workspace's one hoisted node_modules — not `resources/node_modules`, which `app.asar` would resolve into
 resources/frontend/                 the built frontend, served over app://bundle
 resources/bin/                      ffmpeg, pandoc, tectonic, yt-dlp → FASTSTUDY_BIN_DIR
 resources/latex/                    the primed tectonic cache → TECTONIC_CACHE_DIR

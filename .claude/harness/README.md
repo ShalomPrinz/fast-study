@@ -257,7 +257,7 @@ services; a link off the machine fails as `failed … ERR_NAME_NOT_RESOLVED` in 
 
 The browser is the newest `chromium_headless_shell-*` (else `chromium-*`) in `~/.cache/ms-playwright`
 (or `PLAYWRIGHT_BROWSERS_PATH`), not the revision downloader/auto's Playwright pins, which is often
-not installed. Playwright itself is loaded from `downloader/auto/node_modules`.
+not installed. Playwright itself is resolved from `downloader/auto`, which finds it in the shared `downloader/node_modules`.
 
 **Nothing a run shows you is real.** Transcripts, summaries, downloads, course listings and Drive
 uploads are fixtures. A conclusion about how the app behaves against a real provider, a real lecture

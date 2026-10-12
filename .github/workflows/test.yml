@@ -86,25 +86,19 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            downloader/server/package-lock.json
-            downloader/auto/package-lock.json
+          cache-dependency-path: downloader/package-lock.json
 
-      # The two packages install separately — each has its own lock and its own file: deps on
-      # ../../lib/*/js, which the full checkout provides. --install-links copies those as real
-      # directories, the shape delivery/stage.mjs ships: a symlinked lib package resolves its own
-      # dependencies from its real path, so @faststudy/tools would not find @faststudy/runtime.
-      - name: Install server dependencies
+      # One workspace install for both packages — one lock, one hoisted node_modules. Their file: deps
+      # on ../../lib/*/js come from the full checkout; --install-links (also set in downloader/.npmrc)
+      # copies them as real directories, the shape delivery/stage.mjs ships: a symlinked lib package
+      # resolves its own dependencies from its real path, so @faststudy/tools would not find @faststudy/runtime.
+      - name: Install downloader dependencies
         run: npm ci --install-links
-        working-directory: downloader/server
+        working-directory: downloader
 
       - name: Run server tests
         run: npm test
         working-directory: downloader/server
-
-      - name: Install auto dependencies
-        run: npm ci --install-links
-        working-directory: downloader/auto
 
       - name: Run auto tests
         run: npm test

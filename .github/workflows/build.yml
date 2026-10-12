@@ -140,18 +140,17 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
         run: npm ci && npm run build
 
-      # --install-links, not the default symlink: the file:../../lib/*/js deps have to be real
-      # directories or they dangle the moment the tree is copied into the installer.
+      # One workspace install, so auto and server share one hoisted node_modules. downloader/.npmrc's
+      # install-links makes the file:../lib/*/js deps real directories, not links that dangle once
+      # the tree is copied into the installer.
       # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD keeps a 364MB Chromium the app never launches — every
       # launch resolves channel:'chrome' or 'msedge' — out of the installer.
       - name: Install the Node services
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-        run: |
-          # Each in a subshell rather than `npm --prefix`: run from the repo root, npm would pick up
-          # the root package.json's `lib/*/js` workspaces instead of the service's own tree.
-          (cd downloader/auto && npm ci --install-links --omit=dev --no-audit --no-fund)
-          (cd downloader/server && npm ci --install-links --omit=dev --no-audit --no-fund)
+        # A subshell rather than `npm --prefix`: run from the repo root, npm would pick up the root
+        # package.json's `lib/*/js` workspaces instead of downloader's.
+        run: (cd downloader && npm ci --omit=dev --no-audit --no-fund)
 
       # Network-bound, ~7.5 minutes. tectonic fetches each LaTeX package on first use and the
       # shipped app renders --only-cached, so anything missing here is an unfixable failed render

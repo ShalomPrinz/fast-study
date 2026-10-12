@@ -5,13 +5,13 @@ Given a **course URL**, this service authenticates to Moodle's Web-Services API
 the course's recordings, and resolves them into the download targets `server/`
 then fetches.
 
-A **separate package** with its own `node_modules` so Playwright and its browser
-binaries never leak into `server/`'s much lighter dependency set.
+A **separate package** so Playwright is imported only here, never by `server/`. Both are
+workspaces of `downloader/`, which installs them into one shared `node_modules`.
 
 ## Setup
 
 ```bash
-npm install
+(cd .. && npm ci)   # from downloader/: installs auto and server together
 npx playwright install chromium
 ```
 

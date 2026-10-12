@@ -161,7 +161,7 @@ function childSpecs() {
   const services = path.join(process.resourcesPath, 'services', exe('services'));
   // Packaged, the Node services run on Electron's own binary as node — nothing else ships one.
   const node = (dir, entry) => {
-    const staged = path.join(process.resourcesPath, dir);
+    const staged = path.join(process.resourcesPath, 'downloader', dir);
     return dev
       ? { cwd: path.join(REPO_ROOT, 'downloader', dir), command: 'node', args: [entry] }
       : {

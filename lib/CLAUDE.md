@@ -31,10 +31,10 @@ Duplicating a helper is cheap; duplicating a contract is not.
   HTTP, so it cannot create a cycle and needs no port, secret or spawn slot.
 - **Consumers declare a path dep** — an editable `[tool.uv.sources]` path dep on `../lib/<name>/py`,
   or `file:…/lib/<name>/js`. Python consumers, `electron/` and `frontend/` get a link, so an edit is
-  live there. Both `downloader/` packages install with `npm ci --install-links` (as CI and
-  `delivery/stage.mjs` require, so the staged tree has real files), which copies `@faststudy/*`: a
-  `js/` edit reaches them only after rerunning that in each. `readlink -f
-  downloader/*/node_modules/@faststudy/<pkg>` shows which you have.
+  live there. `downloader/` is one npm workspace installed once with `npm ci` from `downloader/`;
+  its `.npmrc` sets `install-links=true` (so the staged tree has real files), which copies
+  `@faststudy/*` into `downloader/node_modules/`: a `js/` edit reaches it only after rerunning that
+  install. `readlink -f downloader/node_modules/@faststudy/<pkg>` shows which you have.
 
 ## Adding a `js/` package
 

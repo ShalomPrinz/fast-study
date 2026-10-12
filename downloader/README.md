@@ -67,7 +67,7 @@ This is the full pipeline integration: the extension talks to a small local Node
 | **yt-dlp**        | YouTube downloads                           | `winget install yt-dlp` (or download `yt-dlp.exe` from <https://github.com/yt-dlp/yt-dlp/releases> and add it to PATH) |
 | **Google Chrome** | The extension                               | <https://www.google.com/chrome/>                                                                                       |
 
-The Node server uses a few npm packages (express, cors, dotenv) — run `npm install` in `downloader\server` once.
+The Node server uses a few npm packages (express, cors, dotenv) — run `npm ci` in `downloader` once (it installs both Node services).
 
 ### Install — one time
 

@@ -1,0 +1,18 @@
+{
+  "name": "downloader-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "auto",
+    "server"
+  ],
+  "overrides": {
+    "@sentry/bundler-plugins": "$@sentry/bundler-plugins"
+  },
+  "dependencies": {
+    "@faststudy/runtime": "file:../lib/runtime/js",
+    "@faststudy/sentry": "file:../lib/sentry/js",
+    "@faststudy/tools": "file:../lib/tools/js",
+    "@sentry/bundler-plugins": "file:stub/sentry-bundler-plugins"
+  }
+}

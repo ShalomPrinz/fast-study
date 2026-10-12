@@ -264,8 +264,9 @@ test('1. fresh install', async () => {
       'services/_internal/googleapiclient/discovery_cache/documents/drive.v3.json',
       // The Google OAuth client, the one uncommitted build input; missing, Drive connect fails.
       'services/_internal/credentials.json',
-      'auto/app.js',
-      'server/src/index.js',
+      'downloader/auto/app.js',
+      'downloader/server/src/index.js',
+      'downloader/node_modules/@faststudy/runtime/package.json',
       'frontend/index.html',
       'latex/bundles',
       // Not in the tree, but what the update check rewrites: electron-builder's publish config.
@@ -274,6 +275,12 @@ test('1. fresh install', async () => {
     for (const entry of shipped) {
       expect(fs.existsSync(path.join(paths.resourcesDir(), entry)), `resources/${entry}`).toBe(
         true,
+      );
+    }
+    // A node_modules at resources/ would be the one app.asar's own requires resolve into.
+    for (const entry of ['auto', 'server', 'node_modules']) {
+      expect(fs.existsSync(path.join(paths.resourcesDir(), entry)), `resources/${entry}`).toBe(
+        false,
       );
     }
     // bin/ as a set, not as existence checks: a binary nothing spawns any more still installs
