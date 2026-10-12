@@ -8,7 +8,7 @@ import { targetLanded } from './existingItems'
 // `unsupported` is a permanent verdict, not a run failure; `pending` is a row the queue has not
 // reached, where no job means "not started". See docs/BULK.md.
 export type TargetStatus =
-  'downloaded' | 'failed' | 'unsupported' | 'skipped' | 'in-flight' | 'pending'
+  'downloaded' | 'failed' | 'cancelled' | 'unsupported' | 'skipped' | 'in-flight' | 'pending'
 
 // This target's jobs: course-, ref-, name- and kind-scoped.
 function targetJobs(
@@ -33,8 +33,8 @@ export function collidingNames(targets: readonly RunTarget[]): string[] {
   return [...clashes]
 }
 
-// One target's outcome, derived on every render: running job, then tree, then `error` job, else
-// still going. The order's reasoning is in docs/BULK.md §Deriving the outcome.
+// One target's outcome, derived on every render: running job, then tree, then `error` job, then
+// `cancelled` job, else still going. The order's reasoning is in docs/BULK.md §Deriving the outcome.
 export function targetStatus(
   target: RunTarget,
   courses: Course[],
@@ -49,6 +49,7 @@ export function targetStatus(
   if (jobs.some((j) => j.status === 'running')) return 'in-flight'
   if (targetLanded(target, courses, course)) return 'downloaded'
   if (jobs.some((j) => j.status === 'error')) return 'failed'
+  if (jobs.some((j) => j.status === 'cancelled')) return 'cancelled'
   return 'in-flight'
 }
 
@@ -97,6 +98,7 @@ export function summarize(
   const count = (s: TargetStatus) => status.filter((x) => x === s).length
   const parts = [plural(count('downloaded'), { other: '# downloaded' })]
   if (count('failed')) parts.push(plural(count('failed'), { other: '# failed' }))
+  if (count('cancelled')) parts.push(plural(count('cancelled'), { other: '# cancelled' }))
   if (count('unsupported')) parts.push(plural(count('unsupported'), { other: '# unsupported' }))
   if (count('skipped')) parts.push(plural(count('skipped'), { other: '# already there' }))
   return parts.join(', ')

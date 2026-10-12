@@ -4,6 +4,7 @@ import {
   coursesWithActiveJobs,
   groupJobsByRef,
   indexJobsById,
+  jobState,
   jobsForRef,
   jobsForTarget,
   reconcileVanished,
@@ -136,6 +137,25 @@ describe('jobsForTarget', () => {
   })
 })
 
+describe('rowStatus', () => {
+  const progress = (over: Partial<DownloadJob> & Pick<DownloadJob, 'id'>) => ({
+    ...jobState(job(over)),
+    ref: 'r1',
+  })
+
+  it('passes a cancelled job through as cancelled, not as an error or still running', () => {
+    expect(jobState(job({ id: 'a', status: 'cancelled' })).status).toBe('cancelled')
+    expect(rowStatus([progress({ id: 'a', status: 'cancelled' })])).toBe('cancelled')
+  })
+
+  it('lets a running clip win, then a failed one, over a cancelled one', () => {
+    const cancelled = progress({ id: 'a', lecture: 'l.1', status: 'cancelled' })
+    expect(rowStatus([cancelled, progress({ id: 'b', lecture: 'l.2' })])).toBe('running')
+    expect(rowStatus([cancelled, progress({ id: 'b', status: 'error' })])).toBe('error')
+    expect(rowStatus([cancelled, progress({ id: 'b', status: 'done' })])).toBe('cancelled')
+  })
+})
+
 describe('coursesWithActiveJobs', () => {
   it('names every course a queued or running job writes into, extension jobs included', () => {
     const active = coursesWithActiveJobs([
@@ -143,6 +163,7 @@ describe('coursesWithActiveJobs', () => {
       job({ id: 'b', course: 'Logic', status: 'queued', ref: null }),
       job({ id: 'c', course: 'Done', status: 'done' }),
       job({ id: 'd', course: 'Failed', status: 'error' }),
+      job({ id: 'e', course: 'Cancelled', status: 'cancelled' }),
     ])
     expect([...active].sort()).toEqual(['Algo', 'Logic'])
   })
@@ -174,6 +195,14 @@ describe('reconcileVanished', () => {
     const first = reconcileVanished(empty, [job({ id: 'a' }), job({ id: 'b', status: 'error' })])
     const second = reconcileVanished(first, [job({ id: 'a', status: 'done' })])
     expect(second.jobs.map((j) => j.status)).toEqual(['done'])
+  })
+
+  it('never turns a cancelled job into an error, whether it stays or leaves', () => {
+    const first = reconcileVanished(empty, [job({ id: 'a' })], 'b1')
+    const cancelled = reconcileVanished(first, [job({ id: 'a', status: 'cancelled' })], 'b1')
+    expect(cancelled.jobs.map((j) => j.status)).toEqual(['cancelled'])
+    expect(cancelled.active.size).toBe(0)
+    expect(reconcileVanished(cancelled, [], 'b2').jobs).toEqual([])
   })
 
   it('drops the failure once a new job for the same target appears', () => {

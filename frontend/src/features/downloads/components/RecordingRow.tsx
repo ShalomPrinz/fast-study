@@ -176,7 +176,7 @@ const RecordingRow = memo(function RecordingRow({
   }
 
   // A per-clip button in a split row: a done clip overwrites, so confirm naming that clip; an
-  // errored clip downloaded nothing to overwrite, so retry straight away (mirrors the main button).
+  // errored or cancelled clip left nothing to overwrite, so start it straight away (mirrors the main button).
   const onClipAction = (job: JobProgress) =>
     job.status === 'done'
       ? setConfirm({
@@ -287,7 +287,13 @@ const RecordingRow = memo(function RecordingRow({
         {split ? (
           // Per-clip buttons own re-download/retry, so the main button is just a status label here.
           <span className="btn recording-download-btn recording-download-btn--label">
-            {downloading ? t`Downloading…` : status === 'error' ? t`Failed ✗` : t`Downloaded ✓`}
+            {downloading
+              ? t`Downloading…`
+              : status === 'error'
+                ? t`Failed ✗`
+                : status === 'cancelled'
+                  ? t`Cancelled`
+                  : t`Downloaded ✓`}
           </span>
         ) : downloading ? (
           // The bars below say how far along it is, so the action reduces to naming the state.
@@ -313,28 +319,36 @@ const RecordingRow = memo(function RecordingRow({
             </button>
           </span>
         ) : (
-          <button
-            className="btn btn--ghost recording-download-btn"
-            onClick={onDownloadClick}
-            disabled={pending || unsupported || inPipeline || locked}
-            title={
-              unsupported
-                ? t`The downloader can't fetch this file`
-                : inPipeline
-                  ? busyTitle
-                  : lockedTitle
-            }
-          >
-            {action === 'pending' ? (
-              <span className="recording-spinner" />
-            ) : action === 'retry' ? (
-              t`Retry ✗`
-            ) : action === 'done' ? (
-              t`Downloaded ✓`
-            ) : (
-              t`Download`
+          <>
+            {/* A cancelled download is a neutral outcome: a chip naming it, with the plain Download. */}
+            {status === 'cancelled' && !failed && (
+              <span className="chip chip--neutral recording-cancelled">
+                <Trans>Cancelled</Trans>
+              </span>
             )}
-          </button>
+            <button
+              className="btn btn--ghost recording-download-btn"
+              onClick={onDownloadClick}
+              disabled={pending || unsupported || inPipeline || locked}
+              title={
+                unsupported
+                  ? t`The downloader can't fetch this file`
+                  : inPipeline
+                    ? busyTitle
+                    : lockedTitle
+              }
+            >
+              {action === 'pending' ? (
+                <span className="recording-spinner" />
+              ) : action === 'retry' ? (
+                t`Retry ✗`
+              ) : action === 'done' ? (
+                t`Downloaded ✓`
+              ) : (
+                t`Download`
+              )}
+            </button>
+          </>
         )}
       </div>
 

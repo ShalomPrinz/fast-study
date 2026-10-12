@@ -77,6 +77,12 @@ describe('targetStatus', () => {
     expect(status(target(), tree([]), jobs)).toBe('failed')
   })
 
+  it('is cancelled, not failed, when the ref holds a cancelled job and nothing landed', () => {
+    const jobs = groupJobsByRef([job({ id: 'a', status: 'cancelled' })])
+    expect(status(target(), tree([]), jobs)).toBe('cancelled')
+    expect(status(target(), tree([node('Lecture 1', true)]), jobs)).toBe('downloaded')
+  })
+
   it('is in flight while no job is visible yet — the window right after the POST', () => {
     expect(status(target(), tree([]))).toBe('in-flight')
   })
@@ -251,6 +257,17 @@ describe('summarize', () => {
     ])
     expect(summarize(targets, tree([node('Lecture 1', true)]), 'Algebra', jobs)).toBe(
       '1 downloaded, 1 failed',
+    )
+  })
+
+  it('counts a cancelled row apart from the failed ones', () => {
+    const targets = [target(), target({ ref: 'r2', name: 'Lecture 2' })]
+    const jobs = groupJobsByRef([
+      job({ id: 'a', status: 'cancelled' }),
+      job({ id: 'b', ref: 'r2', lecture: 'Lecture 2', status: 'error' }),
+    ])
+    expect(summarize(targets, tree([]), 'Algebra', jobs)).toBe(
+      '0 downloaded, 1 failed, 1 cancelled',
     )
   })
 

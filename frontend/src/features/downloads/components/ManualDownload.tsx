@@ -320,6 +320,11 @@ function ManualJobRow({ entry }: { entry: ManualEntry }) {
             <Trans>Downloaded ✓</Trans>
           </span>
         )}
+        {status === 'cancelled' && (
+          <span className="chip chip--neutral recording-cancelled">
+            <Trans>Cancelled</Trans>
+          </span>
+        )}
         {status === 'error' && (
           <button
             className="btn btn--ghost recording-download-btn"

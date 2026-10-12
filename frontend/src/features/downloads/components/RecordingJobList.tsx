@@ -1,4 +1,4 @@
-import { useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import type { TimingStats } from '@/types'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ProgressBar from '@/shared/components/ProgressBar'
@@ -7,6 +7,7 @@ import '@/styles/source-row.css'
 import '@/styles/button.css'
 import '@/shared/components/ProgressBar.css'
 import './RecordingRow.css'
+import '@/styles/chip.css'
 import './RecordingJobList.css'
 
 const NO_ESTIMATE: TimingStats = { message: 'not-enough-data' }
@@ -32,12 +33,18 @@ export function JobProgressBar({
     </span>
   )
   // Terminal: offer a per-clip retry when the row wants one (a multi-clip recording); a lone job's
-  // retry lives on the main row button instead, so it renders nothing here.
+  // retry lives on the main row button instead, so it renders nothing here. A cancelled clip is
+  // neutral: a chip naming it and a plain Download, never a Retry.
   if (job.status !== 'running') {
     if (!retry) return null
     return (
       <div className="recording-progress-job recording-progress-job--action">
         {title}
+        {job.status === 'cancelled' && (
+          <span className="chip chip--neutral recording-cancelled">
+            <Trans>Cancelled</Trans>
+          </span>
+        )}
         <button
           className="btn btn--ghost recording-job-btn"
           onClick={retry.onRetry}
@@ -48,6 +55,8 @@ export function JobProgressBar({
             <span className="recording-spinner" />
           ) : job.status === 'error' ? (
             t`Retry ✗`
+          ) : job.status === 'cancelled' ? (
+            t`Download`
           ) : (
             t`Re-download ↻`
           )}

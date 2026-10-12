@@ -54,6 +54,7 @@ describe('manualStatus', () => {
     expect(manualStatus(job('running'), true)).toBe('running')
     expect(manualStatus(job('done'), false)).toBe('done')
     expect(manualStatus(job('error'), true)).toBe('error')
+    expect(manualStatus(job('cancelled'), false)).toBe('cancelled')
   })
 
   it('reads an evicted job as done once the video is in the tree, else as not yet seen', () => {

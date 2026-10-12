@@ -49,8 +49,8 @@ downloads themselves overlap. A 401 stops the run at `reconnect`, a 409 parks it
 
 **Nothing about the outcome is stored.** `utils/runStatus.ts` derives each target on every render, in
 order: `pending` stops there; a non-`queued` disposition wins; a `running` job → `in-flight`; the tree has
-it → `downloaded`; an `error` job → `failed`; else `in-flight`. `summarize` counts the result into
-`N downloaded, N failed, N unsupported, N already there`. Both are pure and unit-tested; the run, the
+it → `downloaded`; an `error` job → `failed`; a `cancelled` job → `cancelled`; else `in-flight`.
+`summarize` counts the result into `N downloaded, N failed, N cancelled, N unsupported, N already there`. Both are pure and unit-tested; the run, the
 tree and the jobs are all live reflections a remount simply re-reads.
 
 - A running job outranks the tree because a zoom share lands `name.1` while `name.2` is still going.

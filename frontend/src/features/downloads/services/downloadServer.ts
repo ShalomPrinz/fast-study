@@ -57,7 +57,7 @@ export type DownloadTool = 'curl' | 'yt-dlp' | null
 // means the file reached the database service, not merely that the tool exited.
 export interface DownloadJob {
   id: string
-  status: 'queued' | 'running' | 'done' | 'error'
+  status: 'queued' | 'running' | 'done' | 'error' | 'cancelled'
   course: string
   lecture: string
   kind: Kind
@@ -66,7 +66,7 @@ export interface DownloadJob {
   ref: string | null
   expectedBytes: number | null
   startedAt: number | null
-  // The protocol's failure fields on a terminal `error` job (repo-root docs/ERROR-CODES.md).
+  // The protocol's failure fields on a terminal `error` job; null on `cancelled`, a status, not a failure (repo-root docs/ERROR-CODES.md).
   message: string | null
   code?: string | null
   params?: ErrorParams | null

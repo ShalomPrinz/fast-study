@@ -23,14 +23,14 @@ export function matchCourse(active: readonly Course[], typed: string): string | 
   return active.find((c) => c.name.toLowerCase() === key)?.name ?? null
 }
 
-export type ManualStatus = 'queued' | 'running' | 'done' | 'error'
+export type ManualStatus = 'queued' | 'running' | 'done' | 'error' | 'cancelled'
 
 // A manual job's state. Off `/jobs` it is either not refetched yet or a `done` job past its eviction
 // bridge — which waits for the tree, so the video already being in the course tells them apart.
 export function manualStatus(job: DownloadJob | null, landed: boolean): ManualStatus {
   if (!job) return landed ? 'done' : 'queued'
   // A queued job is 'running' here: its bar already reads "Estimating…" until it starts.
-  return job.status === 'done' || job.status === 'error' ? job.status : 'running'
+  return job.status === 'queued' ? 'running' : job.status
 }
 
 // The tree's next free name, also skipping names this session's manual downloads already claimed —

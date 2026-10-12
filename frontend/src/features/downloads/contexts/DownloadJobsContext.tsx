@@ -21,7 +21,7 @@ export interface JobState {
   title: string
   course: string
   kind: Kind
-  status: 'running' | 'done' | 'error'
+  status: 'running' | 'done' | 'error' | 'cancelled'
   startedAt: number | null
   expectedBytes: number | null
   operation: DownloadOperation | null
@@ -34,7 +34,7 @@ export interface JobProgress extends JobState {
 }
 
 function isTerminal(job: DownloadJob): boolean {
-  return job.status === 'done' || job.status === 'error'
+  return job.status === 'done' || job.status === 'error' || job.status === 'cancelled'
 }
 
 // A snapshot job as a bar's display state; queued reads as running, with no start time yet.
@@ -46,7 +46,7 @@ export function jobState(j: DownloadJob): JobState {
     title: j.lecture,
     course: j.course,
     kind: j.kind,
-    status: isTerminal(j) ? (j.status as 'done' | 'error') : 'running',
+    status: j.status === 'queued' ? 'running' : j.status,
     startedAt: j.startedAt,
     expectedBytes: j.expectedBytes,
     operation: j.operation,
@@ -54,11 +54,13 @@ export function jobState(j: DownloadJob): JobState {
 }
 
 // The whole-row aggregate the Download/Retry button and the section summary share: running if any
-// job is non-terminal, else error if any failed, else done, else null (no jobs). Retry-if-any-failed.
-export function rowStatus(jobs: readonly JobProgress[]): 'running' | 'done' | 'error' | null {
+// job is non-terminal, else error if any failed, else cancelled if any was, else done, else null (no
+// jobs). Retry-if-any-failed; a cancelled job is no failure, so it never asks for a retry.
+export function rowStatus(jobs: readonly JobProgress[]): JobState['status'] | null {
   if (!jobs.length) return null
   if (jobs.some((j) => j.status === 'running')) return 'running'
   if (jobs.some((j) => j.status === 'error')) return 'error'
+  if (jobs.some((j) => j.status === 'cancelled')) return 'cancelled'
   return 'done'
 }
 

@@ -39,7 +39,7 @@ rows, but still counts for `useCourseDownloading`, the course-rename lock.
 
 The server guarantees **one job per target**: `createJob` evicts any prior terminal job for the same
 `(course, lecture, kind, ref)`, so the client trusts the snapshot with no dedupe. A `done` job is evicted
-after a short bridge until the tree SSE arrives; an `error` is evicted only by a retry.
+after a short bridge until the tree SSE arrives; an `error` or `cancelled` job is evicted only by a retry.
 
 Each snapshot is grouped once into a map keyed by course **and** `ref`, read through `useSyncExternalStore`
 — a ref names a Moodle item, so two courses listing the same page share refs and must not see or retry
@@ -61,8 +61,10 @@ bar. The `.1`/`.2` title shows only with more than one bar. The bar is `MainView
 the same states. `startedAt` is the server's clock compared to the browser's `Date.now()`, which assumes
 the two agree.
 
-`rowStatus(jobs)`: running if any job is non-terminal, else error if any failed, else done. On a split row
-(more than one job) each terminal clip gets its own **Retry ✗** or **Re-download ↻** (`only: true`
+`rowStatus(jobs)`: running if any job is non-terminal, else error if any failed, else cancelled if any
+was, else done. `cancelled` (a section run's cancel ended the job) is a status, not a failure: no
+toast, no Retry — a neutral **Cancelled** chip (`.recording-cancelled`) beside the plain Download. On a split row
+(more than one job) each terminal clip gets its own **Retry ✗**, **Re-download ↻** or (cancelled) **Download** (`only: true`
 re-triggers just that clip; a done clip confirms overwrite first), and the main control becomes a
 non-clickable status label so it can never overwrite the whole row. A lone job retries from the main
 button.
