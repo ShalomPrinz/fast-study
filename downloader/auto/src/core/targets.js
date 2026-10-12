@@ -14,7 +14,7 @@ export function toolFor(strategy, media) {
   if (strategy === 'youtube-playlist') return 'ytdlp';
   if (strategy === 'google-drive' || strategy === 'direct-url')
     return media === 'video' ? 'ytdlp' : 'fetch';
-  return 'curl'; // videostream, zoom — browser capture
+  return 'curl'; // videostream (a plain .mp4 URL), zoom (a browser capture)
 }
 
 /**

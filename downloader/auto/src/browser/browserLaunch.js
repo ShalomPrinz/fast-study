@@ -5,7 +5,7 @@ import { resolveBrowserChannel } from './browserChannel.js';
 export const COMMON_LAUNCH_ARGS = ['--mute-audio'];
 
 /**
- * The PLAIN launcher (no stealth): videostream capture with no Moodle browser, and the headed token grab. The user's
+ * The PLAIN launcher (no stealth): the headed token grab and the 'plain' session profile. The user's
  * Chrome or Edge, falling back to bundled Chromium. The zoom launcher is zoomBrowser.js.
  * @param {{ headless: boolean }} opts
  * @returns {Promise<import('playwright').Browser>}
