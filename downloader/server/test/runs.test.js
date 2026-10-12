@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cancelRun, createRun, drive, listRuns, outcomeFor, startRun } from '../src/runs.js';
+import { createJob, finishJob, jobSignal } from '../src/jobs.js';
 
 test('a 2xx queues the target', () => {
   assert.deepEqual(outcomeFor(200), { disposition: 'queued' });
@@ -167,4 +168,31 @@ test('cancelling a run aborts the row it is waiting on, and the run triggers not
   await driving;
   assert.deepEqual(triggered, ['a']);
   assert.equal(run.status, 'cancelled');
+});
+
+// Jobs an earlier row started keep downloading (or waiting at auto's lock) unless the cancel stops them.
+test('cancelling a run aborts every live job its rows started, and never a finished one', async () => {
+  const run = createRun({
+    sectionId: 'c:video:jobs',
+    course: 'c',
+    targets: [target('a'), target('b'), target('c')],
+  });
+  const job = (name) => createJob({ course: 'c', lecture: name, kind: 'lecture', tool: 'curl' });
+  const started = { a: [job('a.1'), job('a.2')], b: [job('b')] };
+  const driving = drive(run, 0, ({ name, signal }) => {
+    if (started[name]) return Promise.resolve({ status: 200, body: { jobIds: started[name] } });
+    return new Promise((resolve) =>
+      signal.addEventListener('abort', () => resolve({ status: 0, body: null })),
+    );
+  });
+  await new Promise((r) => setImmediate(r));
+  finishJob(started.b[0], 'done');
+  assert.equal(cancelRun(run.id), null);
+  await driving;
+
+  assert.deepEqual(
+    [...started.a, ...started.b].map((id) => jobSignal(id).aborted),
+    [true, true, false],
+  );
+  assert.ok(!('jobIds' in JSON.parse(JSON.stringify(run))), 'job ids stay off the wire');
 });

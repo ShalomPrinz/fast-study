@@ -10,7 +10,7 @@ discovery row into download targets — and to re-resolve one whose cached token
 
 ```bash
 npm --prefix downloader/server start   # node src/index.js, loopback-only on port 3052
-npm --prefix downloader/server test    # node --test, pure logic only (no network, no subprocess)
+npm --prefix downloader/server test    # node --test, pure logic plus loopback fakes (the only child is node)
 ```
 
 A dev run needs `yt-dlp` and `curl` on PATH. Both resolve through
@@ -72,7 +72,7 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim, `429 moodle_busy` included) |
 | `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives or joins that section's bulk run                      |
 | `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                 |
-| `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                         |
+| `POST /runs/:id/cancel`                   | abandon the rest of a run and cancel every job it started (each ends `cancelled`)                                 |
 | `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition                                                  |
 | `GET  /jobs`                              | `{boot, jobs}` — every live download job plus a per-process boot id; the resync for `job:change`                  |
 | `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                      |

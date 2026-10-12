@@ -43,9 +43,10 @@ function recaptureFailed(detail) {
 
 // Re-resolve ONE target fresh → `{downloader, input}` or `{error}`. `only`+`forceCapture` makes
 // the cap fresh (non-cached), which is what stops a second retry — see docs/JOBS.md. Nobody pressed
-// anything, so it waits its turn at the Moodle lock. A pasted link passes `url` in place of `ref`.
+// anything, so it waits its turn at the Moodle lock, until the job's `signal` aborts it. A pasted
+// link passes `url` in place of `ref`.
 function makeReresolve({ ref, url, course, name, kind }) {
-  return async () => {
+  return async (signal) => {
     const { status, body } = await resolve({
       ref,
       url,
@@ -55,6 +56,7 @@ function makeReresolve({ ref, url, course, name, kind }) {
       only: true,
       forceCapture: true,
       wait: true,
+      signal,
     });
     if (!resolved(status)) return { failure: reresolveFailure(status, body) };
     const fresh = body?.targets?.find((t) => t.name === name) ?? body?.targets?.[0];

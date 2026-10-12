@@ -6,7 +6,14 @@ import { EventEmitter } from 'node:events';
 import express from 'express';
 import { subscribe } from '../src/events.js';
 import jobsRouter from '../src/routes/jobs.js';
-import { createJob, DONE_BRIDGE_MS, finishJob, listJobs } from '../src/jobs.js';
+import {
+  cancelJob,
+  createJob,
+  DONE_BRIDGE_MS,
+  finishJob,
+  jobSignal,
+  listJobs,
+} from '../src/jobs.js';
 
 // A stand-in SSE response that counts `job:change` frames.
 function fakeStream() {
@@ -66,4 +73,38 @@ test('GET /jobs carries a boot id that is stable across calls', async (t) => {
   assert.ok(a.boot.length > 0);
   assert.equal(a.boot, b.boot);
   assert.ok(Array.isArray(a.jobs));
+});
+
+// A cancel only asks; the runner ends the job `cancelled`, which stays until a retry supersedes it.
+test('a cancelled job is terminal, carries no failure and is superseded by a retry', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const id = createJob({ course: 'C', lecture: 'L3', kind: 'video', tool: 'curl' });
+  cancelJob(id);
+  assert.equal(jobSignal(id).aborted, true);
+  assert.equal(listJobs().find((j) => j.id === id).status, 'queued');
+
+  finishJob(id, 'cancelled');
+  finishJob(id, 'error', 'late', 'download_tool_failed', {});
+  t.mock.timers.tick(DONE_BRIDGE_MS);
+  const job = listJobs().find((j) => j.id === id);
+  assert.deepEqual(
+    { status: job.status, message: job.message, code: job.code, params: job.params },
+    { status: 'cancelled', message: null, code: null, params: null },
+  );
+  assert.ok(!('abort' in job), 'the controller stays off the wire');
+
+  const retry = createJob({ course: 'C', lecture: 'L3', kind: 'video', tool: 'curl' });
+  assert.deepEqual(
+    listJobs()
+      .filter((j) => j.lecture === 'L3')
+      .map((j) => j.id),
+    [retry],
+  );
+});
+
+test('cancelling a finished job leaves it alone', () => {
+  const id = createJob({ course: 'C', lecture: 'L4', kind: 'video', tool: 'curl' });
+  finishJob(id, 'error', 'x', 'download_tool_failed', {});
+  cancelJob(id);
+  assert.equal(jobSignal(id).aborted, false);
 });

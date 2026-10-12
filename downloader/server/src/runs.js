@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { broadcastRuns } from './events.js';
+import { cancelJob } from './jobs.js';
 import { downloadItem } from './routes/downloadItem.js';
 
 // The section-run registry (docs/RUNS.md): one bulk "download all" per section, keyed by the
@@ -44,6 +45,8 @@ export function createRun({ sectionId, course, targets }) {
   };
   // Not on the wire: aborts the row in flight, which may sit in auto's Moodle queue indefinitely.
   Object.defineProperty(run, 'stop', { value: new AbortController() });
+  // Not on the wire either: every job the run's rows started, so a cancel can stop them too.
+  Object.defineProperty(run, 'jobIds', { value: [] });
   runs.get(sectionId)?.stop.abort();
   runs.set(sectionId, run);
   broadcastRuns();
@@ -88,8 +91,17 @@ export function cancelRun(id) {
   run.status = 'cancelled';
   run.paused = null;
   run.stop.abort();
+  for (const jobId of run.jobIds) cancelJob(jobId);
   broadcastRuns();
   return null;
+}
+
+// Record the jobs a row started; one that lands after its run was cancelled is stopped at once.
+function adoptJobs(run, jobIds) {
+  for (const jobId of jobIds ?? []) {
+    run.jobIds.push(jobId);
+    if (run.status === 'cancelled') cancelJob(jobId);
+  }
 }
 
 // A run stops the moment it is cancelled or replaced by a newer run for the same section — checked
@@ -130,6 +142,7 @@ export async function drive(run, from, trigger = downloadItem) {
         });
         body = res.body;
         outcome = outcomeFor(res.status);
+        if (outcome.disposition === 'queued') adoptJobs(run, body?.jobIds);
       } catch {
         /* keep the queue-failed default */
       }

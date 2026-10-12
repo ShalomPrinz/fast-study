@@ -13,7 +13,7 @@ import {
 } from '../progress.js';
 import { recordDownloadTiming } from '../services/timing.js';
 import { onAutodl } from '../services/autodl.js';
-import { setExpectedBytes, startJob, freezeJobBytes, finishJob } from '../jobs.js';
+import { setExpectedBytes, startJob, freezeJobBytes, finishJob, jobSignal } from '../jobs.js';
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'fast-study-dl-'));
@@ -70,14 +70,21 @@ export function recovery({ fromCache, reresolve, rerun }, url, exitCode, refusal
   return null;
 }
 
+function cancelled(jobId, tool, tempDir) {
+  removeTempDir(tempDir);
+  emitLog(`🛑 ${tool} cancelled`);
+  finishJob(jobId, 'cancelled');
+}
+
 // Source-agnostic runner (docs/DOWNLOAD.md). Every exit path must terminate `jobId`; `reresolve`
-// (null without a ref) drives the one silent auth recovery (docs/JOBS.md).
+// (null without a ref) drives the one silent auth recovery, and the job's signal cancels it (docs/JOBS.md).
 export async function runDownloadJob(
   downloader,
   input,
   { course, lecture, kind, jobId, fromCache = false, reresolve = null, rerun = false },
 ) {
   const label = `${course}/${lecture}`;
+  const signal = jobSignal(jobId);
   const tempDir = makeTempDir();
   try {
     // Leading blank line is a TTY-only spacer for the in-place render. Under concurrently
@@ -87,6 +94,10 @@ export async function runDownloadJob(
     const bytes = await downloader.probeSize(input);
     emitLog(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
     setExpectedBytes(jobId, bytes);
+    if (signal?.aborted) {
+      cancelled(jobId, downloader.tool, tempDir);
+      return;
+    }
 
     // `env` is a downloader's own additions to this process's environment, never a replacement:
     // yt-dlp needs ELECTRON_RUN_AS_NODE set on its spawn to accept the launcher as a JS runtime.
@@ -97,6 +108,7 @@ export async function runDownloadJob(
       cwd: tempDir,
       stdio: ['ignore', 'ignore', 'pipe'],
       env: { ...process.env, ...env },
+      signal,
       ...NO_WINDOW,
     });
     const tail = makeStderrTail(child);
@@ -114,6 +126,8 @@ export async function runDownloadJob(
     startJob(jobId, entry); // the job reads bytes off the same entry the renderer polls
 
     child.on('error', (err) => {
+      // An abort kills the child and surfaces here as an AbortError; `close` ends it as cancelled.
+      if (signal?.aborted) return;
       deregisterDownload(tempDir);
       emitError(`❌ ${downloader.tool} failed: ${err.message}`);
       finishJob(jobId, 'error', err.message, 'download_tool_spawn_failed', {
@@ -125,6 +139,11 @@ export async function runDownloadJob(
     child.on('close', async (code) => {
       deregisterDownload(tempDir);
       const finalBytes = freezeJobBytes(jobId); // last measurement before the upload deletes the temp dir
+      // Killed by a cancel: whatever reached the temp dir is partial, so nothing is uploaded or timed.
+      if (signal?.aborted) {
+        cancelled(jobId, downloader.tool, tempDir);
+        return;
+      }
       const refusal = downloader.refusal?.(tempDir) ?? null;
       const failure = exitFailure(downloader.tool, code, code !== 0 ? tail() : '', refusal);
       if (failure) {
@@ -147,7 +166,11 @@ export async function runDownloadJob(
         }
         if (next?.step === 'reresolve') {
           emitError(`♻️  ${downloader.tool} auth failed on a cached token — re-capturing fresh`);
-          const fresh = await reresolve();
+          const fresh = await reresolve(signal);
+          if (signal?.aborted) {
+            finishJob(jobId, 'cancelled');
+            return;
+          }
           if (fresh.failure) {
             const { error, code, params } = fresh.failure;
             finishJob(jobId, 'error', error, code, params);

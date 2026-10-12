@@ -35,6 +35,12 @@ terminal status is replaced.
 being refused `429 moodle_busy` as a button press is. A cancelled or replaced run aborts that request
 (`run.stop`), so auto drops it from the queue and `downloadItem` starts no job for it.
 
+**A cancel also stops every job the run started.** The run records the `jobIds` each queued row
+answered (off the wire) and `cancelRun` cancels them all ([JOBS.md](JOBS.md#cancel)): a downloading
+child is killed, a `/moodle/file` fetch still waiting at auto's lock leaves the queue, and each ends
+`cancelled`. A job already uploading finishes. Replacing a run cancels none of its jobs — only a run
+in a terminal status is ever replaced, and its downloads are the user's.
+
 The driver holds its own reference to the run and re-checks the registry around every await, so a
 run cancelled or replaced mid-flight stops where it is and writes nothing further.
 

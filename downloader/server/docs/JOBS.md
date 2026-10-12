@@ -18,13 +18,24 @@ would find nothing. `createJob` runs synchronously in the route, before any awai
 
 ## Lifecycle
 
-`queued` → `running` (child spawned) → `done` | `error`.
+`queued` → `running` (child spawned) → `done` | `error` | `cancelled`.
 
 `done` means the file reached the **database**, not that the child exited 0 — in between the bytes
 sit in a private temp dir nobody else can see, and a failed upload is an `error` like any other.
 First terminal call wins, so a spawn failure (which fires both `error` and `close`) keeps the
 informative reason. `message` carries the child's stderr tail, the upload's error, or the thrown
 message, and `code`/`params` carry the same failure in machine form (below).
+
+## Cancel
+
+Each job holds an `AbortController` (off the wire); `cancelJob` aborts it and the runner ends the job
+`cancelled` — a status, not a failure, so `message`/`code`/`params` stay `null`. The only caller is a
+run's cancel ([RUNS.md](RUNS.md)); there is no per-job route. The signal goes to `spawn`, so a running
+child is killed — and a curl waiting at auto's Moodle lock hangs up, which drops it from auto's queue.
+Aborted before the spawn (during the size probe), the child never starts; aborted during a silent
+re-resolve, that waiting `/resolve` is abandoned. A cancelled job's temp dir — the partial file — is
+removed, and nothing is uploaded or timed. A job already uploading is past the signal: the upload
+finishes and the job ends `done` or `error`.
 
 ## Silent auth recovery
 
@@ -77,7 +88,8 @@ Terminal jobs are kept asymmetrically:
   ping. Eviction is deferred, never synchronous: a client resyncing on the `done` ping must still
   find it. The eviction itself pings `job:change`, so a live client drops it just as a fresh load would.
 - **`error`** is the ONLY carrier of "this failed" — a failed download leaves no file, so the tree
-  can't tell it from never-attempted. It stays with no timeout until a retry supersedes it.
+  can't tell it from never-attempted. It stays with no timeout until a retry supersedes it, and so
+  does **`cancelled`**, for the same reason.
 
 `createJob` evicts **any terminal predecessor** for the same target (course + lecture + kind + ref),
 so `/jobs` holds at most one job per target and the frontend does no client-side dedupe. A pending
@@ -97,7 +109,7 @@ params }`. `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `t
 ## Failure codes
 
 `message` is English and developer-facing; `code`/`params` are what a client renders from (repo-root
-[`docs/ERROR-CODES.md`](../../../docs/ERROR-CODES.md)). All three are `null` on a job that succeeded.
+[`docs/ERROR-CODES.md`](../../../docs/ERROR-CODES.md)). All three are `null` on a job that succeeded or was cancelled.
 
 | code                          | params                       | when                                            |
 | ----------------------------- | ---------------------------- | ----------------------------------------------- |
@@ -120,5 +132,5 @@ On a clean exit the runner posts `{operation, file_size_bytes, duration_seconds}
 - `duration_seconds` is wall-clock spawn → exit; the upload is a separate concern.
 - `file_size_bytes` is the bytes measured on disk, falling back to the probed size. The backend
   rejects a non-positive size, so a job with neither sends nothing.
-- A non-zero exit sends nothing — a truncated download is not a valid sample. Fire-and-forget and
+- A non-zero exit or a cancel sends nothing — a truncated download is not a valid sample. Fire-and-forget and
   fully swallowed; it must never fail a download.

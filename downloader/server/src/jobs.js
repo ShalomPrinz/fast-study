@@ -36,6 +36,8 @@ export function createJob({ course, lecture, kind, tool, ref = null, fromCache =
     code: null,
     params: null,
     entry: null,
+    // Not on the wire: a cancel aborts it, and the runner kills the child or skips the spawn.
+    abort: new AbortController(),
   });
   broadcastJobs(); // a queued job must ping so the frontend row flips to in-flight
   return id;
@@ -58,6 +60,18 @@ export function startJob(id, entry) {
   broadcastJobs();
 }
 
+// The signal the runner hands to `spawn` and to a re-resolve; null for an unknown job.
+export function jobSignal(id) {
+  return jobs.get(id)?.abort.signal ?? null;
+}
+
+// Ask a live job to stop. The runner owns the terminal transition (`cancelled`) — a job already
+// uploading never checks the signal again, so its upload finishes and it ends `done` or `error`.
+export function cancelJob(id) {
+  const job = jobs.get(id);
+  if (!terminal(job)) job.abort.abort();
+}
+
 // Take the final measurement while the temp dir still exists — the upload deletes it.
 export function freezeJobBytes(id) {
   const job = jobs.get(id);
@@ -67,13 +81,13 @@ export function freezeJobBytes(id) {
   return job.receivedBytes;
 }
 
-// done/error are terminal; a missing (already-reaped) job counts as terminal too.
+// done/error/cancelled are terminal; a missing (already-reaped) job counts as terminal too.
 function terminal(job) {
-  return !job || job.status === 'done' || job.status === 'error';
+  return !job || job.status === 'done' || job.status === 'error' || job.status === 'cancelled';
 }
 
 // A failure terminates with its machine `code` and flat `params` beside the English `message`
-// (repo-root `docs/ERROR-CODES.md`); a `done` job carries none of the three.
+// (repo-root `docs/ERROR-CODES.md`); a `done` or `cancelled` job carries none of the three.
 export function finishJob(id, status, message = null, code = null, params = null) {
   const job = jobs.get(id);
   if (terminal(job)) return;
@@ -83,12 +97,12 @@ export function finishJob(id, status, message = null, code = null, params = null
   job.code = code;
   job.params = params;
   broadcastJobs();
-  // Only `done` is evicted on a timer; `error` stays until a retry supersedes it (docs/JOBS.md).
+  // Only `done` is evicted on a timer; `error`/`cancelled` stay until a retry supersedes them.
   // Ids are fresh UUIDs, so a late timer for a superseded job finds nothing and stays silent.
   if (status === 'done') setTimeout(() => evict(id), DONE_BRIDGE_MS).unref();
 }
 
-// Evict any terminal predecessor (`done` or `error`) to guarantee one job per target
+// Evict any terminal predecessor (`done`, `error` or `cancelled`) to guarantee one job per target
 function supersedeTerminal({ course, lecture, kind, ref }) {
   for (const [id, job] of jobs) {
     if (
