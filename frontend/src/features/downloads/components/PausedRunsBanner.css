@@ -16,7 +16,7 @@
   text-align: start;
 }
 
-/* Only an entry in the open course can jump to its segment; the rest stay plain text. */
+/* Only an entry in the open course can open its prompt; the rest stay plain text. */
 .recordings-paused-entry--link {
   cursor: pointer;
   text-decoration: underline;

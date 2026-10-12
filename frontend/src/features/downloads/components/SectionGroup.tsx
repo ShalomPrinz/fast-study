@@ -26,7 +26,11 @@ import {
   patchExpansion,
   useAllExpansions,
 } from '@/features/downloads/contexts/RowExpansionsContext'
-import { useSectionRun } from '@/features/downloads/contexts/SectionRunsContext'
+import {
+  dismissPasscode,
+  usePasscodeDismissed,
+  useSectionRun,
+} from '@/features/downloads/contexts/SectionRunsContext'
 import {
   useMoodleLockState,
   useWithMoodleLock,
@@ -107,6 +111,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
 
   const targets = run?.targets ?? NO_TARGETS
   const paused = run?.status === 'paused' ? run.paused : null
+  const dismissed = usePasscodeDismissed(run?.id ?? null)
   const open = useSectionOpen(collapseKey)
   const bodyId = useId()
 
@@ -229,7 +234,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
     setSaving(false)
   }
 
-  // Cancelling abandons the rest of the queue, not just the gated item.
+  // Cancelling abandons the rest of the queue and stops the downloads the run already started.
   async function cancelPasscode() {
     if (!run) return
     try {
@@ -346,12 +351,13 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
           />
         ))}
 
-        {paused && (
+        {paused && run && !dismissed && (
           <PasscodePrompt
             reason={paused.reason}
             busy={saving}
             onSubmit={submitPasscode}
             onCancel={() => void cancelPasscode()}
+            onDismiss={() => dismissPasscode(run.id)}
           />
         )}
       </div>

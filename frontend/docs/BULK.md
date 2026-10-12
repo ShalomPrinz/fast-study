@@ -84,18 +84,21 @@ run already aborted before load is history.
 ## Zoom passcode
 
 `PasscodePrompt` mirrors `ConfirmModal`'s portal and Escape/overlay cancel (`ConfirmModal` cannot host an
-input); the parent unmounts it between openings so a wrong-passcode re-prompt starts empty. Scope defaults
-to course-wide.
+input); `onDismiss` overrides what Escape and an overlay click do. The parent unmounts it between openings
+so a wrong-passcode re-prompt starts empty. Scope defaults to course-wide.
 
 A run's pause is a **rendered status, not held state**: the prompt renders whenever the reflected run
 reads `paused`, so a gate hit on another page or before a reload still asks, and the server holds the
 queue meanwhile. Submit saves the passcode through auto, then `POST /runs/:id/resume` retries that row; a
-failed save resumes with `{skip:true}`. Cancel abandons the rest of the queue. A double submit is the
-server's to reject (409), not a race the component guards.
+failed save resumes with `{skip:true}`. Cancel abandons the rest of the queue and stops the downloads the
+run already started. Escape and an overlay click only close the prompt — the run stays parked, since a
+stray key must not kill running downloads; `SectionRunsContext` holds that closed state per run id and
+drops it once the run leaves its gate. A double submit is the server's to reject (409), not a race the
+component guards.
 
 `PausedRunsBanner`, inside the open course panel, lists every paused run. An entry is a button only when
-its section is in the open course on **another** segment (it calls `ModeToggle`'s `selectMode`); anything
-else has nowhere to jump. `usePausedRuns` caches its array **keyed by run id only** — a consumer reading
+its section is in the open course: it reopens a closed prompt, expands the section and, on another
+segment, calls `ModeToggle`'s `selectMode`; anything else has nowhere to go. `usePausedRuns` caches its array **keyed by run id only** — a consumer reading
 anything beyond `id`/`sectionId`/`course` must widen that comparison first.
 
 In a single row the passcode prompt and the overwrite confirm never co-render; submit saves and resumes

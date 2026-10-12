@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest'
+// @vitest-environment jsdom
+import { createElement } from 'react'
+import type { ReactNode } from 'react'
+import { describe, it, expect, vi } from 'vitest'
+import { act, renderHook } from '@testing-library/react'
 import type { SectionRun } from '../services/downloadServer'
 import { coursesWithActiveRuns } from './SectionRunsContext'
+
+const noop = () => {}
 
 function run(course: string, status: SectionRun['status']): SectionRun {
   return {
@@ -25,5 +31,40 @@ describe('coursesWithActiveRuns', () => {
       run('Cancelled', 'cancelled'),
     ])
     expect([...active].sort()).toEqual(['Algo', 'Logic'])
+  })
+})
+
+describe('passcode dismissal', () => {
+  it('forgets a dismissal once its run leaves the gate', async () => {
+    vi.resetModules()
+    let snapshot: SectionRun[] = [run('Logic', 'paused')]
+    let ping = () => {}
+    vi.doMock('../services/downloadServer', () => ({
+      fetchRuns: () => Promise.resolve(snapshot),
+      subscribeRuns: (onChange: () => void) => {
+        ping = onChange
+        onChange()
+        return () => {}
+      },
+    }))
+    vi.doMock('./DownloadsSessionContext', () => ({
+      useDownloadsActions: () => ({ reconnectHint: noop }),
+    }))
+    const ctx = await import('./SectionRunsContext')
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(ctx.SectionRunsProvider, null, children)
+    const { result } = renderHook(() => ctx.usePasscodeDismissed('Logic-paused'), { wrapper })
+    await act(async () => {})
+    expect(result.current).toBe(false)
+    act(() => ctx.dismissPasscode('Logic-paused'))
+    expect(result.current).toBe(true)
+    act(() => ctx.reopenPasscode('Logic-paused'))
+    expect(result.current).toBe(false)
+    act(() => ctx.dismissPasscode('Logic-paused'))
+    snapshot = [run('Logic', 'running')]
+    await act(async () => ping())
+    snapshot = [run('Logic', 'paused')]
+    await act(async () => ping())
+    expect(result.current).toBe(false)
   })
 })

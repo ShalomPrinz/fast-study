@@ -17,6 +17,8 @@ import { useDownloadsActions } from './DownloadsSessionContext'
 let runsBySection: ReadonlyMap<string, SectionRun> = new Map()
 let pausedRuns: readonly SectionRun[] = []
 let activeCourses: ReadonlySet<string> = new Set()
+// Paused run ids whose passcode prompt the user closed without cancelling; the banner reopens it.
+let dismissedRuns: ReadonlySet<string> = new Set()
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void): () => void {
@@ -40,7 +42,27 @@ function publish(snapshot: SectionRun[]) {
   // alone: a consumer reading a mutable field must widen this comparison first.
   if (paused.length !== pausedRuns.length || paused.some((run, i) => run.id !== pausedRuns[i].id))
     pausedRuns = paused
+  // A run that left its gate forgets the dismissal, so its next gate prompts again.
+  if ([...dismissedRuns].some((id) => !paused.some((run) => run.id === id)))
+    dismissedRuns = new Set([...dismissedRuns].filter((id) => paused.some((run) => run.id === id)))
+  notify()
+}
+
+function notify() {
   for (const listener of listeners) listener()
+}
+
+// Closes a paused run's prompt without cancelling the run, which keeps waiting at its gate.
+export function dismissPasscode(runId: string) {
+  if (dismissedRuns.has(runId)) return
+  dismissedRuns = new Set([...dismissedRuns, runId])
+  notify()
+}
+
+export function reopenPasscode(runId: string) {
+  if (!dismissedRuns.has(runId)) return
+  dismissedRuns = new Set([...dismissedRuns].filter((id) => id !== runId))
+  notify()
 }
 
 // Guard only — the runs themselves come from the module store, not from the context value.
@@ -66,6 +88,13 @@ export function usePausedRuns(): readonly SectionRun[] {
   if (!useContext(SectionRunsContext))
     throw new Error('usePausedRuns must be used inside <SectionRunsProvider>')
   return useSyncExternalStore(subscribe, () => pausedRuns)
+}
+
+// Whether the user closed this run's passcode prompt; false for no run.
+export function usePasscodeDismissed(runId: string | null): boolean {
+  if (!useContext(SectionRunsContext))
+    throw new Error('usePasscodeDismissed must be used inside <SectionRunsProvider>')
+  return useSyncExternalStore(subscribe, () => runId !== null && dismissedRuns.has(runId))
 }
 
 // Whether a section run is still walking this course; read through `useCourseDownloading`, the one
@@ -104,6 +133,7 @@ export function SectionRunsProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
       close()
+      dismissedRuns = new Set()
       publish([])
       primed.current = false
       reported.current.clear()

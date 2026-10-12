@@ -12,22 +12,30 @@ export interface PasscodePromptProps {
   busy: boolean
   onSubmit: (passcode: string, scope: 'course' | 'lecture') => void
   onCancel: () => void
+  // Escape and an overlay click; omitted, they cancel like the Cancel button.
+  onDismiss?: () => void
 }
 
 // Masked passcode modal — ConfirmModal's portal/Escape shape, which can't host an input.
 // The parent unmounts it between openings, so a re-prompt mounts fresh with an empty field.
-export default function PasscodePrompt({ reason, busy, onSubmit, onCancel }: PasscodePromptProps) {
+export default function PasscodePrompt({
+  reason,
+  busy,
+  onSubmit,
+  onCancel,
+  onDismiss = onCancel,
+}: PasscodePromptProps) {
   const { t } = useLingui()
   const [value, setValue] = useState('')
   const [justThisLecture, setJustThisLecture] = useState(false)
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onCancel()
+      if (e.key === 'Escape') onDismiss()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onCancel])
+  }, [onDismiss])
 
   const message =
     reason === 'incorrect'
@@ -35,7 +43,7 @@ export default function PasscodePrompt({ reason, busy, onSubmit, onCancel }: Pas
       : t`Enter the zoom passcode for this recording`
 
   return ReactDOM.createPortal(
-    <div className="modal-overlay" onClick={onCancel}>
+    <div className="modal-overlay" onClick={onDismiss}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <p className="modal-message">{message}</p>
         <form
