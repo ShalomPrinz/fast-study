@@ -7,16 +7,15 @@ import { CodedError, UnsupportedError, failureOf } from '../lib/errors.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
 import { moodleGate, enterMoodle, gateError } from '../moodle/gate.js';
 import { reportBlock, closeChallenge } from '../moodle/challenge.js';
-import { forgetSessionCookies } from './sessionCookies.js';
 
 const SERVICE = 'moodle_mobile_app';
 const URLSCHEME = 'moodlemobile';
 const TOKEN_PREFIX = `${URLSCHEME}://token=`;
 // Bounded wait from Connect for the user to finish a first Microsoft login plus SMS in the headed window.
 export const CAPTURE_TIMEOUT_MS = 600_000;
-// What discovery and PDFs need from the token's service; videostream capture also needs autologin.
+// What discovery and PDFs need from the token's service; videostream also needs the app's content call.
 const REQUIRED_FUNCTION = 'core_course_get_contents';
-const AUTOLOGIN_FUNCTION = 'tool_mobile_get_autologin_key';
+const VIDEOSTREAM_FUNCTION = 'tool_mobile_get_content';
 
 // The apptoken arrives as base64 in a moodlemobile://token=<b64> redirect, possibly percent-encoded.
 // Decode it to Moodle's ':::'-joined payload. URI-decoded first: Node's lenient base64 reads a raw
@@ -188,17 +187,15 @@ export class MoodleToken extends AuthProvider {
     if (gen !== this._gen) return lease.release();
     this._error = null;
     // A token stored for another site is replaced by this login, so it goes with that site's
-    // challenge profile and saved session, as on disconnect.
+    // challenge profile, as on disconnect.
     const foreign = readTokenFile(this.tokenPath);
     if (foreign && foreign.site !== this.site) {
       fs.rmSync(this.tokenPath, { force: true });
       this._onChange(); // storedSite clears now, not only once the window opens
       await closeChallenge({ forget: true });
     }
-    // A new login ends block mode; the window's profile, and its clearance, is kept, but the saved
-    // Moodle session goes, since the login may be another account.
+    // A new login ends block mode; the window's profile, and its clearance, is kept.
     await closeChallenge();
-    forgetSessionCookies();
     let pending;
     try {
       pending = await lease.run(() => this._openLogin());
@@ -431,7 +428,7 @@ export class MoodleToken extends AuthProvider {
   }
 
   // The post-login check: refuse a site whose token service can't list a course or serve its
-  // files; a missing autologin only costs videostream capture, so it connects and is reported.
+  // files; a missing tool_mobile_get_content only costs videostream, so it connects and is reported.
   _checkSiteInfo(info) {
     const functions = new Set((info?.functions ?? []).map((f) => f.name));
     const refuse = (reason, extra = {}) => {
@@ -446,11 +443,11 @@ export class MoodleToken extends AuthProvider {
       throw refuse('missing_function', { function: REQUIRED_FUNCTION });
     }
     if (Number(info?.downloadfiles) !== 1) throw refuse('downloads_disabled');
-    if (!functions.has(AUTOLOGIN_FUNCTION)) {
+    if (!functions.has(VIDEOSTREAM_FUNCTION)) {
       reportUnsupportedSite({
         site: this.site,
         stage: 'login',
-        reason: 'autologin_unavailable',
+        reason: 'videostream_unavailable',
         release: info?.release,
       });
     }

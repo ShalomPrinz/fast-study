@@ -76,16 +76,16 @@ says nothing on its own.
 ## Resolve entry points
 
 `core/core.js` exports one function per resolve shape: `resolveRecording(page, …)` (browser capture:
-`videostream`, `zoom`), and the browserless `resolveMoodleFile`, `resolveYtDlp`, `resolveDriveFile`,
-`resolveDirectUrl`, plus `resolvePastedLink` for the manual form's `{url}` body, which shares
+`zoom`), and the browserless `resolveMoodleFile`, `resolveVideostream`
+([MOODLE.md](MOODLE.md#videostream)), `resolveYtDlp`, `resolveDriveFile`, `resolveDirectUrl`, plus `resolvePastedLink` for the manual form's `{url}` body, which shares
 `resolveDirectUrl`'s probe and refusals but never the replay cache ([GATE.md](GATE.md#files)).
 The split is by _needs a browser_: a browserless strategy has no page to carry
-its credential, so it takes one explicitly (`resolveMoodleFile`'s required `wstoken`). The browserless
+its credential, so it takes one explicitly (`resolveMoodleFile`'s `wstoken`, `resolveVideostream`'s token). The browserless
 ones resolve exactly one target, so `only` doesn't apply; all but the pasted link share the replay cache and stamp
 `fromCache`. Each returns targets (`core/targets.js`), and `toolFor` picks `server/`'s downloader:
 `curl` replays captured headers, `ytdlp` resolves a YouTube/Drive/direct video page, `fetch` takes a
 plain URL (for a Moodle file, a path on auto). A row none of these takes is refused `422`
-`recording_strategy_unsupported {strategy}`, never sent to videostream's autologin.
+`recording_strategy_unsupported {strategy}`, never sent to a browser.
 
 Only `kind` (`lecture`/`recitation`) picks the folder; the database names the file, so a second PDF
 into one lecture appends (`material.2.pdf`).

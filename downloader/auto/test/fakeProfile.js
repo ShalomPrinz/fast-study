@@ -27,56 +27,6 @@ function fakeDocument() {
   return doc;
 }
 
-export const MP4_URL = 'https://bucket.objectstorage.test/lecture.mp4';
-
-// Where Moodle sends a page load with no live session, and how a fake browser gets one: an autologin
-// navigation, or the session cookie put back.
-export const loginUrlOf = (u) => `${new URL(u).origin}/login/index.php`;
-export const isAutologin = (u) => u.includes('/autologin.php');
-export const hasSession = (cookies) => cookies.some((c) => c.name === 'MoodleSessionprod');
-
-// A second page of the window, as a capture opens one: it sees the player's .mp4 request on load,
-// or lands on the login when the browser holds no Moodle session.
-function fakeCapturePage(context) {
-  const page = {
-    visited: [],
-    landed: null,
-    closed: false,
-    url: () => page.landed ?? 'about:blank',
-    goto: async (u) => {
-      if (context.closed) throw closedError();
-      page.visited.push(u);
-      page.landed = context.loggedIn ? u : loginUrlOf(u);
-    },
-    evaluate: async () => {},
-    waitForRequest: async () =>
-      context.closed
-        ? null
-        : {
-            url: () => MP4_URL,
-            headers: () => ({ referer: page.url(), 'user-agent': context.opts.userAgent }),
-            response: async () => null,
-          },
-    close: async () => {
-      page.closed = true;
-    },
-  };
-  context.capturePages.push(page);
-  return page;
-}
-
-export const closedError = () =>
-  Object.assign(new Error('Target page, context or browser has been closed'), {
-    name: 'TargetClosedError',
-  });
-
-export const SESSION_COOKIE = {
-  name: 'MoodleSessionprod',
-  value: 's',
-  domain: 'moodle.test',
-  path: '/',
-};
-
 export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
   const launches = [];
   const state = { lands };
@@ -89,7 +39,6 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
       goto: async (u) => {
         context.visited.push(u);
         url = state.lands === 'site' ? u : CAPTCHA_URL;
-        if (state.lands === 'site' && isAutologin(u)) context.loggedIn = true;
         context.document = fakeDocument();
       },
       evaluate: async (fn, arg) => {
@@ -105,23 +54,6 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
       opts,
       page,
       document: fakeDocument(),
-      cookieQueries: [],
-      added: [],
-      capturePages: [],
-      loggedIn: false,
-      addCookies: async (cookies) => {
-        context.addedBeforeVisit ??= context.visited.length === 0;
-        context.added.push(...cookies);
-        if (hasSession(cookies)) context.loggedIn = true;
-      },
-      newPage: async () => {
-        if (context.closed) throw closedError();
-        return fakeCapturePage(context);
-      },
-      cookies: async (u) => {
-        context.cookieQueries.push(u);
-        return [SESSION_COOKIE];
-      },
       visited: [],
       bounds: [],
       fronted: 0,

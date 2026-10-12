@@ -313,11 +313,9 @@ services; `state` stays as the developer-facing reason.
 | `extractors/YoutubePlaylistExtractor.js` | `expand_unsupported_host` | `host`             | user  |
 | `extractors/YoutubePlaylistExtractor.js` | `playlist_list_failed` | `detail`              | user  |
 | `extractors/YoutubePlaylistExtractor.js` | `playlist_empty`     | `url`                    | user  |
-| `extractors/VideostreamExtractor.js` | `videostream_no_media_request` | `url`              | user  |
-| `extractors/VideostreamExtractor.js` | `videostream_login_required` | `url`               | user  |
+| `core/core.js` `resolveVideostream` | `videostream_no_mp4`   | `url`                    | user  |
 | `extractors/ZoomExtractor.js`   | `zoom_no_media_request`       | `url`                    | user  |
 | `browser/zoomBrowser.js`        | `xvfb_unavailable`            | `detail`                 | user  |
-| `http/server.js`                | `moodle_token_no_privatetoken`| —                        | user  |
 | `http/server.js` `resolveItem`  | `recording_strategy_unsupported` | `strategy`            | user  |
 | `auth/moodleToken.js`           | `moodle_login_timeout`        | —                        | user  |
 | `auth/moodleToken.js`           | `moodle_login_abandoned`      | —                        | user  |
@@ -342,7 +340,8 @@ of `/prereqs/browser` and the 500 backstop — and is one code in both.
 `moodle_site_unsupported` is one code whose `reason` picks the sentence: `not_moodle`,
 `mobile_service_off` and `maintenance` come from `POST /site/probe` (a 200 verdict, not an error body;
 `maintenance` is retry-later), `missing_function` (with `function`) and `downloads_disabled` from
-`/auth/complete`'s 422. An `unverified` probe carries no code — only `params.detail` (`site_blocked`,
+`/auth/complete`'s 422. `videostream_unavailable` — the token's service lacks `tool_mobile_get_content`,
+so the login connects and only videostream rows will fail — is sent to Sentry only, never in a body. An `unverified` probe carries no code — only `params.detail` (`site_blocked`,
 `timeout`, `network`), plus `challengeWindow` beside a `site_blocked`.
 
 `site_blocked`'s `challengeWindow` is present only on a block from a call the challenge window can
@@ -350,9 +349,8 @@ carry (a WS call, a Moodle PDF): `'captcha'` when the window is on screen showin
 when no browser could launch. A window that opens hidden with its clearance still valid carries the
 call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
 `/site/probe` or from a call already going through the window whose reload landed on the site. A block
-from any other path (a pasted link, a link probe) leaves it absent; videostream's autologin runs in
-the window, so its block carries it, while a wall on its module page is not detected and surfaces as
-`videostream_no_media_request`.
+from any other path (a pasted link, a link probe) leaves it absent. The videostream handler call is a
+WS call, so its block carries it.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`

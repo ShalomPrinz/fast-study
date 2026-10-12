@@ -1,8 +1,8 @@
 # Zoom recording capture
 
 Zoom cloud recordings (`zoom.us/rec/share/…` links in course-section summaries) are passcode-gated
-and serve a direct `.mp4`, captured like `videostream`. The player is picky, so this is the only
-path on the heavyweight `'zoom'` profile.
+and serve a direct `.mp4`, sniffed from the player's request in a browser — the only strategy that
+still captures. The player is picky, so it runs on the heavyweight `'zoom'` profile.
 
 ## Why the heavyweight browser (`browser/zoomBrowser.js`)
 

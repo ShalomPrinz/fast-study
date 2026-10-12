@@ -59,13 +59,13 @@ Every authenticated call still treats a redirect as the bot wall.
 `core_webservice_get_site_info` with the new token. `functions[]` lacking `core_course_get_contents`
 refuses the login as `moodle_site_unsupported` `reason:'missing_function'` (`params.function`), and
 `downloadfiles` other than `1` (it is `VALUE_OPTIONAL`, so absent counts) as `downloads_disabled` —
-both `422 {status:'unsupported'}` from `/auth/complete` (and as the login's `moodle_site_unsupported` error on the stream). Lacking only `tool_mobile_get_autologin_key`
+both `422 {status:'unsupported'}` from `/auth/complete` (and as the login's `moodle_site_unsupported` error on the stream). Lacking only `tool_mobile_get_content`
 still connects: discovery and PDFs work, and a `videostream` resolve fails later with its own error.
 
 **Telemetry.** `siteReport.js` sends one Sentry warning, `moodle_site_unsupported`, tagged
 `moodle_host` / `moodle_stage` (`probe`|`login`) / `moodle_reason` with the site's `release` as
 extra, per `(host, reason)` per process — the probe runs on every blur. It fires on a definitive
-`unsupported` and on `autologin_unavailable`, never on `unverified` and never on `maintenance`, which
+`unsupported` and on `videostream_unavailable`, never on `unverified` and never on `maintenance`, which
 says nothing about support. Without `FASTSTUDY_SENTRY_DSN` (every dev run) it is a no-op.
 
 ## Token acquisition (the one headed step)
@@ -92,18 +92,18 @@ navigation to the scheme) and `page.on('framenavigated')`.
 `:::` winning (something on the path can percent-encode `+ / =`): Node's lenient base64 decodes a raw
 `%3D` form too, leaving a stray character on `privatetoken`. The payload is `md5(wwwroot + passport) ::: wstoken ::: privatetoken`
 (`privatetoken` may be absent). We persist `{ site, wstoken, privatetoken, userid, savedAt }`;
-`wstoken` authenticates every REST call, `privatetoken` and `userid` (from the post-login site info)
-only autologin.
+`wstoken` authenticates every REST call and `userid` (from the post-login site info) rides in the
+videostream handler call; nothing reads `privatetoken`, kept so the token file's format stays put.
 
 ## The REST API
 
 Every call goes to `{site}/webservice/rest/server.php?wstoken=…&moodlewsrestformat=json&wsfunction=<fn>`,
-GET with params in the query — except `tool_mobile_get_autologin_key` (below). Every call from Node
+GET with params in the query — except `tool_mobile_get_content` (below), a form-encoded POST. Every call from Node
 sends `User-Agent: MoodleMobile 4.4.0 (44000)`: Moodle gates app-only functions on
 `core_useragent::is_moodle_app()`, a case-insensitive substring match for `moodlemobile` in the UA
 (`lib/classes/useragent.php`). In block mode
 (below) calls carry the window's launch UA instead — the browser's real UA plus ` MoodleMobile` — so
-app-only functions, `tool_mobile_get_autologin_key` included, pass through it too.
+app-only functions, `tool_mobile_get_content` included, pass through it too.
 
 **Error shape.** A _failed_ call — a dead token included — answers **HTTP 200** with
 `{ exception, errorcode, message }`, never an HTTP error. `callWs` throws a `WsError` carrying
@@ -161,11 +161,9 @@ are made from inside that browser:
   A call through the page that still meets the wall reloads the root (`reportBlock`), so the
   page itself may land on a captcha and the 503 says `'captcha'` or `'ready'` (repeat the action). A window closed mid-call fails that call as an unrouted `site_blocked`
   (no window reopens; the user's repeat goes out on Node). Not routed, so still
-  `site_blocked` during a block: `openMoodleFile` (it replays captured cookies, which a page cannot
+  `site_blocked` during a block: `openMoodleFile` (it replays a file's recorded headers, which a page cannot
   set) and `lib/probeUrl.js`. A block there opens no window and its 503 carries no `challengeWindow`
-  (`WsBlockedError.routed` is false; `reportBlock` skips it). The videostream capture's module page
-  is a navigation, not a fetch, and nothing checks it for a wall: one there sniffs no `.mp4` and ends
-  as `videostream_no_media_request`.
+  (`WsBlockedError.routed` is false; `reportBlock` skips it).
 - **Off.** Block mode ends when the browser closes: the user closing it, `disconnect()` (which then
   deletes the profile), a new `connect()`, a site switch, or 60 s with no call through it — 10 minutes while a
   captcha is on screen (a user mid-solve) or a body is open, unfinished and uncancelled (a paused
@@ -177,7 +175,7 @@ are made from inside that browser:
 
 ### `core_webservice_get_site_info`
 
-Identity + capability probe, read once, by the post-login check: `userid` (stored for autologin),
+Identity + capability probe, read once, by the post-login check: `userid` (stored for the videostream call),
 `functions[]` (`{ name, version }`), `downloadfiles` (`1` = pluginfile downloads permitted),
 `release` (`4.5.10` on BIU).
 
@@ -192,7 +190,7 @@ The whole course as an array of sections — `{ section, name, summary, modules[
 
 | `modname`       | Strategy                                              | Target comes from                                                              |
 | --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `videostream`   | `videostream`                                         | `module.url`; the `.mp4` is sniffed there — it is **not** in the WS response   |
+| `videostream`   | `videostream`                                         | `module.url`'s `id` (the cmid) + the course id → the plugin's app handler      |
 | `url`           | `youtube-playlist`, `google-drive` or `direct-url`    | `contents[0].fileurl`, the **external** target — no redirect hop needed        |
 | `resource`      | `moodle-file` (PDF files only)                        | each `contents[]` entry with `type:'file'` — one module can hold several       |
 | (section summary) | `zoom`                                              | `rec/share` links in `section.summary` HTML, not modules                        |
@@ -217,53 +215,46 @@ the size `HEAD` answers. `openPluginfile` applies the same checks when the strea
   PDF → an HTML (or redirected) answer is `WsBlockedError`. Keying on HTML is safe because only files
   the WS declared `application/pdf` are routed here (`MoodleFileExtractor.canHandle`).
 
-## Autologin
+## Videostream
 
-A `videostream` `.mp4` URL is in no WS response — `mod_videostream` (openapp1) has no WS functions and
-no `db/mobile.php` — so only the module page, loaded logged in, reveals it, and it is sniffed there. The capture reuses the saved Moodle session; when none is saved, or it is dead, the
-`privatetoken` mints a one-shot login with **no MFA**:
+No WS function names a `videostream` `.mp4`, but BIU's `mod_videostream` (a private build; the public
+openapp1 repo has no mobile support) ships a Moodle-app handler, `view_videostream`. Called through
+`tool_mobile_get_content` with the stored token it returns the page the app renders, and that page
+names the `.mp4` — no browser, no session, no login. `getVideostreamContent` (`wsClient.js`) sends
+exactly what the Moodle app sends (`moodleapp` `siteplugins.ts` `getContent` + `addDefaultArgs`):
 
 ```
-POST tool_mobile_get_autologin_key   (privatetoken in a form-encoded body — as a GET param
-                                      Moodle rejects it: invalidprivatetoken)
-  → { key, autologinurl }
-navigate to {autologinurl}?userid=<userid>&key=<key>   → sets the Moodle session cookie
-navigate to module.url and sniff the .mp4
+POST {site}/webservice/rest/server.php?wstoken=…&moodlewsrestformat=json&wsfunction=tool_mobile_get_content
+  moodlewssettingfilter=true  moodlewssettingfileurl=true  moodlewssettinglang=he
+  component=mod_videostream   method=view_videostream
+  args[i][name]/args[i][value] for: courseid, cmid, userid, appid=com.moodle.moodlemobile,
+    appversioncode=45000, appversionname=4.5.0, applang=he, appcustomurlscheme=moodlemobile,
+    appisdesktop=0, appismobile=1, appiswide=0, appplatform=android
+  → { templates: [{ id:'main', html }], javascript, otherdata, files, restrict, disabled }
 ```
 
-On Moodle 4.5 (`admin/tool/mobile/classes/external.php`) the key call runs, in order:
-`validate_parameters` (`privatetoken` is `PARAM_ALPHANUM`, else `invalidparameter`) →
-`validate_context` → `is_moodle_app()` (else `apprequired`) → the `privatetoken` match → the
-rate limit. The key is bound to the requesting IP (`classes/api.php`). `autologin.php`, the
-navigation, checks no UA; only the key call does.
+Send every one of them. A GET without `userid` and the `moodlewssetting*` flags (or `cmid` alone)
+crashes the handler (`rawurlencode(): Argument #1 ($string) must be of type string, array given`);
+`id`=cmid is `invalidrecordunknown`, `id`=the instance crashes or answers `502`. Never send `id`.
+`cmid` is `module.url`'s `id`; `courseid` rides on the listed row (`courseId`), and a row listed
+before it did is resolved with one `core_course_get_course_module(cmid)` call → `cm.course` first.
 
-Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**, so it
-runs at most once per resolve, its session cookies saved. With no saved session it runs before the
-capture, which then runs once; on a saved session it runs only when the module page lands logged out
-— on `/login/`, or rendered for a guest or anonymous — then the capture is retried once. Still logged
-out is `videostream_login_required {url}` ([AUTH.md](AUTH.md#videostream-reuses-the-moodle-session)).
+`resolveVideostream` (`core/core.js`) takes the first `<source … type="video/mp4">` of the templates'
+HTML (`&amp;` decoded, an https URL whose path ends `.mp4`). The plugin also has HLS, Vimeo and
+symlink templates; a player with no MP4 source is `videostream_no_mp4 {url}`, the types it did find
+named in the prose only. A replay-cache hit answers with no call (`forceCapture` bypasses it).
 
-`captureVideostream` (`http/server.js`) captures — and logs in when it must — in the Moodle browser, the
-challenge window, opening it hidden first, block or not (a replay-cache hit answers before any of it: no window, no key), so a captcha there (`503 site_blocked`, `challengeWindow:'captcha'`)
-costs no rate-limited key. The key call is an ordinary routed WS call: through the window while it is
-up, else Node with the window on a wall. Moodle answers it only to a `MoodleMobile` UA
-(`is_moodle_app()`, else `apprequired`), which both carry; a key Node mints is valid in the window,
-since both share the machine's IP. The navigation then runs in the window's root page, and the module
-page loads in a second, off-screen page of the window, closed after, where the `.mp4` request is
-sniffed. That file is off-site: BIU plays it from Oracle object storage
-(`*.compat.objectstorage.il-jerusalem-1.oraclecloud.com`), `206 video/mp4` with no query parameters
-and no cookies, which plain Node fetches while a page `fetch` fails cross-origin (verified
-2026-10-11). So it stays a plain `curl` target with the request's headers
-([GATE.md](GATE.md#files)).
-With no window (`false`: no browser could launch), or one closed between the key and the navigation,
-the plain headless session spends the key and captures; a window closed under the capture leaves it
-to the plain session with the saved cookies. A navigation that fails any other way throws and saves
-nothing.
+On BIU the `.mp4` lives on Oracle object storage
+(`*.compat.objectstorage.il-jerusalem-1.oraclecloud.com/video_bucket/<2 hex>/<sha1>.mp4`): no query
+token, no cookies, `206 video/mp4` to a bare curl, permanent. So it is a plain `curl` target with no
+headers, never proxied, and `server/` probes its size itself; a site that hosts the `.mp4` on Moodle
+gets it streamed through auto ([GATE.md](GATE.md#files)). The call goes through `moodleFetch` like
+every WS call — gated, and through the challenge window in block mode — so a wall is `503
+site_blocked` and `invalidtoken` is `401 reconnect`.
 
-Only a `videostream` row reaches autologin: `/resolve` refuses any row its earlier branches did not
-take and that is not `zoom` or `videostream` (an unexpanded playlist, a strategy this build does not
-know) as `422 {status:'unsupported'}`, `recording_strategy_unsupported {strategy}`, before any Moodle
-call.
+Only a `videostream` row reaches the handler: `/resolve` refuses any row its earlier branches did not
+take and that is not `zoom` (an unexpanded playlist, a strategy this build does not know) as
+`422 {status:'unsupported'}`, `recording_strategy_unsupported {strategy}`, before any Moodle call.
 
 ## Bot protection: what was learned
 
@@ -301,25 +292,44 @@ app. It survives a headed relaunch on the same profile (`MoodleSessionprod` is d
 clearance kept); headless never passes. A UA set at launch to the real UA plus ` MoodleMobile` passes
 (2026-10-11, Chrome 154, `sec-ch-ua` unchanged: one captcha, then every page call reached Moodle), so
 the window launches with it. The same run confirmed the site's scripts replace the page's `fetch` and
-`XMLHttpRequest.prototype.send`, and that the hidden iframe's native `fetch` carries the WS GET and
-the `tool_mobile_get_autologin_key` POST, after which the autologin navigation logs the window in.
-`MoodleSessionprod` and the `block-fcl_*` cookies are session cookies, gone on relaunch (the page
-loads with no captcha but logged out), hence the saved session ([AUTH.md](AUTH.md#videostream-reuses-the-moodle-session)).
+`XMLHttpRequest.prototype.send`, and that the hidden iframe's native `fetch` carries both a WS GET
+and a form-encoded WS POST.
+
+**Run 3 — the WS API from plain Node** (2026-10-12, no cookies, no browser, `tool_mobile_get_content`):
+
+| Headers                                                                  | Result                       |
+| ------------------------------------------------------------------------ | ---------------------------- |
+| none (Node's default UA)                                                 | PASS                         |
+| `User-Agent: MoodleMobile 4.4.0 (44000)` (FastStudy's)                   | PASS                         |
+| the Android app WebView's UA only                                        | PASS                         |
+| `X-Requested-With: com.moodle.moodlemobile` + `Origin: http://localhost` | **WALLED** (302 → perfdrive) |
+| every Android app header                                                 | PASS                         |
+| Windows `curl.exe` with the Android headers (×2)                         | PASS                         |
+| Node with a solved window's Radware cookies                              | PASS                         |
+
+So Node keeps `APP_USER_AGENT` and adds no headers (the WebView's made it worse). Radware's verdicts
+change over time — plain Node was walled on the WS API before and is not now — which is why every
+call still goes through `moodleFetch`, Node first and the challenge window on a wall.
+
+**Why no autologin.** `tool_mobile_get_autologin_key` succeeds on BIU, but its `autologin.php`
+navigation answers `404` with Moodle's `ipmismatch`: the key is bound to `getremoteaddr()`, which
+behind Radware's proxy sees varying egress IPs. That is server-side, and BIU's Microsoft Entra
+tenant forces a fresh sign-in after a browser restart, so no browser holds a Moodle session for long;
+the handler call above needs neither.
 
 **Rejected.** TLS impersonation (curl_cffi, curl-impersonate): field reports say Radware still blocks
-it, and it adds an installer binary. Switching the UA mid-session: walled (run 1). Streaming the
-`.mp4` through the page: it is public and off-site, so Node fetches it directly.
+it, and it adds an installer binary. Switching the UA mid-session: walled (run 1). Posing as the
+Android app in headers: walled (run 3); only the handler's args name the app, since it crashes when
+fed less. Spoofing `X-Forwarded-For` around `ipmismatch`: out of bounds.
 
-**Prior art.** moodle-dl (C0D3D3V/Moodle-DL) has no `videostream` or Radware support; the saved
-session with autologin only when it is missing or dead, and a browser UA with `MoodleMobile` appended, come from
-it.
+**Prior art.** moodle-dl (C0D3D3V/Moodle-DL) has no `videostream` or Radware support; a browser UA
+with `MoodleMobile` appended comes from it.
 
 **Live checks.** Only the user runs them, on Windows, never this repo's tests (they stub `fetch` and
 Playwright, see `test/challenge.test.js`). A check closes FastStudy first, uses a fresh temporary
 profile rather than `moodle-profile`, runs as `ELECTRON_RUN_AS_NODE=1` FastStudy.exe importing the
 installed `resources\auto\node_modules\playwright`, waits 30 s between requests with no loops or
-retries, makes at most one `tool_mobile_get_autologin_key` call (the rate limit), and never prints or
-writes a token, key, cookie value or full `.mp4` URL.
+retries, and never prints or writes a token, key or cookie value.
 
 **Run 2 — window state** (Chrome 154 via `launchPersistentContext`, headed, `viewport:null`):
 
@@ -362,17 +372,10 @@ An uncommitted attempt that routed every WS call through a Chrome page parked on
 
 ## Left out deliberately
 
-- **A session liveness probe** (moodle-dl GETs the root): the module page landing logged out already
-  says so. Add one if a dead session starts costing a visible extra page load.
-- **Matching Node's UA to the window's**: Radware never clears Node anyway. Revisit if an unblocked
-  Node call fails on its UA.
-- **`--headless=new` capture**: the only evidence it passes Radware is third-party. Revisit if the
-  off-screen headed window proves visible or slow.
-- **Re-adding saved cookies to a window already open**: they go in at launch only. Revisit if a capture
-  in a long-open window lands on `/login/` while the saved session is alive.
-- **Persistent cookies for the plain fallback**: a window closed mid-capture leaves the plain session
-  only the saved no-expiry cookies, not Radware's. Revisit if that fallback starts meeting the wall.
-- **A wall check on the capture page**: a wall there reads as `videostream_no_media_request`. Revisit
-  if users report that error during a block.
+- **Caching the `.mp4` URL across restarts** (it is permanent): add if re-resolving the same lectures
+  shows up as Radware walls.
+- **HLS/Vimeo sources via yt-dlp**: add when a `videostream_no_mp4` report names such a source.
+- **Moodle's own subtitles** (`local/video_directory/subs.php`, in the same reply): add if the
+  pipeline ever wants them over Whisper.
 - **Whether `context.newPage()` flashes a visible window** in headed persistent Chrome is unverified on
   Windows. Open it off-screen explicitly if users see one.

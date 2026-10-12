@@ -1,6 +1,11 @@
 import { resolveExtractor, resolveExtractorForRecording } from './registry.js';
 import { toolFor, toTarget } from './targets.js';
-import { assertPluginfileReadable, pluginfileUrl } from '../moodle/wsClient.js';
+import {
+  assertPluginfileReadable,
+  pluginfileUrl,
+  getCourseModule,
+  getVideostreamContent,
+} from '../moodle/wsClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
 import { probeDriveFile } from '../extractors/GoogleDriveExtractor.js';
@@ -14,13 +19,13 @@ import { onMoodleHost } from '../moodle/site.js';
 
 // Flatten the WS section tree into activities: one per module, except a `resource`, which yields
 // one per file. Names arrive as HTML and are flattened first. See docs/BROWSING.md.
-function mapModules(sections) {
+function mapModules(sections, courseId) {
   const activities = [];
   for (const section of sections ?? []) {
     const sectionName = stripTags(section.name || '');
     for (const module of section.modules ?? []) {
       const title = stripTags(module.name || '');
-      const base = { modType: module.modname, viewUrl: module.url, sectionName };
+      const base = { modType: module.modname, viewUrl: module.url, sectionName, courseId };
       if (module.modname === 'resource') {
         const files = (module.contents ?? []).filter((c) => c.type === 'file');
         for (const file of files) {
@@ -55,10 +60,11 @@ function mapModules(sections) {
  * section summary, then routes each activity to its extractor. See docs/BROWSING.md.
  * @param {Array<{ name?: string, summary?: string, modules?: object[] }>} sections
  *   core_course_get_contents result
+ * @param {string} [courseId]  the listed course, carried on a videostream row for its resolve
  * @returns {import('../extractors/VideoExtractor.js').Recording[]}
  */
-export function listRecordings(sections) {
-  const activities = [...mapModules(sections), ...parseZoomSummaries(sections)];
+export function listRecordings(sections, courseId) {
+  const activities = [...mapModules(sections, courseId), ...parseZoomSummaries(sections)];
   const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
@@ -82,45 +88,29 @@ function baseName(name) {
   return m ? m[1] : name;
 }
 
-// Capture the whole recording fresh → [{ name, cap }], caching each. `name` is the BASE name:
-// a zoom share with a distinct second .mp4 yields `<name>.1`/`<name>.2`, anything else one.
-async function captureTargets(
-  page,
-  recording,
-  extractor,
-  { name, course, kind, passcode, userid, ref },
-) {
-  let targets;
-  if (recording.strategy === 'zoom') {
-    const caps = await extractor.captureVideo(page, recording, { passcode });
-    const names = caps.length === 2 ? [splitName(name, 1), splitName(name, 2)] : [name];
-    targets = caps.map((cap, i) => ({ name: names[i], cap }));
-  } else {
-    const cap = await extractor.captureVideo(page, recording, { userid });
-    // A .mp4 on the Moodle host streams through auto, its captured cookies staying here.
-    targets = [{ name, cap: onMoodleHost(cap.url) ? proxyCap(cap) : cap }];
-  }
+// Capture the zoom share fresh → [{ name, cap }], caching each. `name` is the BASE name: a share
+// with a distinct second .mp4 yields `<name>.1`/`<name>.2`, anything else one.
+async function captureTargets(page, recording, extractor, { name, course, kind, passcode, ref }) {
+  const caps = await extractor.captureVideo(page, recording, { passcode });
+  const names = caps.length === 2 ? [splitName(name, 1), splitName(name, 2)] : [name];
+  const targets = caps.map((cap, i) => ({ name: names[i], cap }));
   for (const t of targets) cacheCap(course, t.name, kind, 'video', t.cap, ref);
   return targets;
 }
 
-// Every download target of a whole recording resolved from the cache, or null if any is
-// missing — a partial hit still needs a fresh capture (one zoom share sniffs both clips).
-function cachedTargets(recording, course, name, kind) {
-  if (recording.strategy === 'zoom') {
-    const single = getCap(course, name, kind, 'video');
-    if (single) return [{ name, cap: single.cap }];
-    const c1 = getCap(course, splitName(name, 1), kind, 'video');
-    const c2 = getCap(course, splitName(name, 2), kind, 'video');
-    if (c1 && c2)
-      return [
-        { name: splitName(name, 1), cap: c1.cap },
-        { name: splitName(name, 2), cap: c2.cap },
-      ];
-    return null;
-  }
-  const hit = getCap(course, name, kind, 'video');
-  return hit ? [{ name, cap: hit.cap }] : null;
+// Every download target of a whole zoom share resolved from the cache, or null if any is
+// missing — a partial hit still needs a fresh capture (one share sniffs both clips).
+function cachedTargets(course, name, kind) {
+  const single = getCap(course, name, kind, 'video');
+  if (single) return [{ name, cap: single.cap }];
+  const c1 = getCap(course, splitName(name, 1), kind, 'video');
+  const c2 = getCap(course, splitName(name, 2), kind, 'video');
+  if (c1 && c2)
+    return [
+      { name: splitName(name, 1), cap: c1.cap },
+      { name: splitName(name, 2), cap: c2.cap },
+    ];
+  return null;
 }
 
 /**
@@ -151,6 +141,71 @@ export async function resolveMoodleFile({
     cacheCap(course, name, kind, 'material', cap, ref);
   }
   return [toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache })];
+}
+
+// The first `<source … type="video/mp4">` of the handler's templates, `&amp;` decoded, or null;
+// `types` collects every source type seen, for the refusal's prose.
+function mp4Source(content, types) {
+  for (const { html } of content?.templates ?? []) {
+    for (const [tag] of String(html ?? '').matchAll(/<source\b[^>]*>/gi)) {
+      const type = /\btype="([^"]*)"/i.exec(tag)?.[1] ?? '';
+      const src = /\bsrc="([^"]*)"/i.exec(tag)?.[1];
+      types.push(type || '(none)');
+      if (type.toLowerCase() !== 'video/mp4' || !src) continue;
+      const url = src.replaceAll('&amp;', '&');
+      try {
+        const u = new URL(url);
+        if (u.protocol === 'https:' && u.pathname.toLowerCase().endsWith('.mp4')) return url;
+      } catch {}
+    }
+  }
+  return null;
+}
+
+/**
+ * RESOLVE PATH (HTTP), no browser: a videostream module's .mp4, read from the page mod_videostream's
+ * Moodle-app handler renders (one gated WS call, plus one for a row listed with no `courseId`).
+ * An off-site .mp4 is a public file, so the target is a plain curl URL. See docs/MOODLE.md § Videostream.
+ * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
+ *           course: string, name: string, kind: string, site: string,
+ *           token: { wstoken: string, userid: number },
+ *           ref?: string|null, forceCapture?: boolean }} args
+ * @returns {Promise<object[]>} one download target for server/ to run.
+ */
+export async function resolveVideostream({
+  recording,
+  course,
+  name,
+  kind,
+  site,
+  token,
+  ref,
+  forceCapture = false,
+}) {
+  let cap = forceCapture ? null : getCap(course, name, kind, 'video')?.cap;
+  const fromCache = Boolean(cap);
+  if (!cap) {
+    const cmid = new URL(recording.pageUrl).searchParams.get('id');
+    const courseid =
+      recording.courseId ?? (await getCourseModule(site, token.wstoken, cmid)).cm?.course;
+    const content = await getVideostreamContent(site, token.wstoken, {
+      courseid,
+      cmid,
+      userid: token.userid,
+    });
+    const types = [];
+    const url = mp4Source(content, types);
+    if (!url)
+      throw new CodedError(
+        'videostream_no_mp4',
+        { url: recording.pageUrl },
+        `${recording.pageUrl} has no MP4 source (found: ${types.join(', ') || 'none'})`,
+      );
+    // A site that hosts the .mp4 itself gets it streamed through auto, under the gate (docs/GATE.md).
+    cap = onMoodleHost(url) ? proxyCap({ url }) : { url, headers: [] };
+    cacheCap(course, name, kind, 'video', cap, ref);
+  }
+  return [toTarget({ name, cap, tool: 'curl', fromCache })];
 }
 
 /**
@@ -290,14 +345,13 @@ export async function resolveDirectUrl({
 }
 
 /**
- * RESOLVE PATH (HTTP), browser capture (videostream, zoom): one echoed-back recording on the
- * shared page → its target(s), each cap kept in the replay cache. See docs/BROWSING.md.
+ * RESOLVE PATH (HTTP), browser capture (zoom): one echoed-back recording on the shared page → its
+ * target(s), each cap kept in the replay cache. See docs/BROWSING.md.
  * @param {import('playwright').Page} page  live shared page
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, passcode?: string|null,
- *           userid?: number, ref?: string|null, only?: boolean, forceCapture?: boolean }} args
- *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
- *   userid is the stored token's user; videostream reads a page rendered for anyone else as logged out.
+ *           ref?: string|null, only?: boolean, forceCapture?: boolean }} args
+ *   passcode is looked up per course/lecture upstream.
  *   ref is the discovery-row id that spawned this download — cached with every cap so a zoom
  *   before/after-break split pair groups under the one parent row.
  *   only = operate on just the single (course,name,kind) target (name may be a zoom split
@@ -307,7 +361,7 @@ export async function resolveDirectUrl({
  */
 export async function resolveRecording(
   page,
-  { recording, course, name, kind, passcode, userid, ref, only = false, forceCapture = false },
+  { recording, course, name, kind, passcode, ref, only = false, forceCapture = false },
 ) {
   const extractor = resolveExtractorForRecording(recording);
   if (!extractor) throw new Error(`no extractor for strategy ${recording.strategy}`);
@@ -324,7 +378,6 @@ export async function resolveRecording(
       course,
       kind,
       passcode,
-      userid,
       ref,
     });
     const chosen =
@@ -340,32 +393,21 @@ export async function resolveRecording(
     course,
     kind,
     passcode,
-    userid,
     ref,
   });
   return targets.map((t) => toTarget({ name: t.name, cap: t.cap, tool, fromCache: false }));
 }
 
-/**
- * A browser-capture recording's targets from the replay cache, or null when it must be captured, so a
- * caller can answer a hit before opening any browser. `only`: just the one named target (a zoom split
- * name keys the cache directly); else the whole recording, every target cached.
- */
-export function replayRecording({
-  recording,
-  course,
-  name,
-  kind,
-  only = false,
-  forceCapture = false,
-}) {
+// A zoom share's targets from the replay cache, or null when it must be captured. `only`: just the
+// one named target (a zoom split name keys the cache directly); else the whole share, every target cached.
+function replayRecording({ recording, course, name, kind, only = false, forceCapture = false }) {
   if (forceCapture) return null;
   const tool = toolFor(recording.strategy);
   if (only) {
     const hit = getCap(course, name, kind, 'video');
     return hit ? [toTarget({ name, cap: hit.cap, tool, fromCache: true })] : null;
   }
-  const cached = cachedTargets(recording, course, name, kind);
+  const cached = cachedTargets(course, name, kind);
   return cached
     ? cached.map((t) => toTarget({ name: t.name, cap: t.cap, tool, fromCache: true }))
     : null;

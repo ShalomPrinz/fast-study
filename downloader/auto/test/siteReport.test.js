@@ -68,16 +68,16 @@ test('a login-stage report carries the site release', async () => {
   reportUnsupportedSite({
     site: 'https://login.ac.il/moodle',
     stage: 'login',
-    reason: 'autologin_unavailable',
+    reason: 'videostream_unavailable',
     release: '4.5.10 (Build: 20250414)',
   });
   reportUnsupportedSite({
     site: 'https://login.ac.il/moodle',
     stage: 'login',
-    reason: 'autologin_unavailable',
+    reason: 'videostream_unavailable',
   });
   await Sentry.flush(2000);
-  const sent = byReason('autologin_unavailable');
+  const sent = byReason('videostream_unavailable');
   assert.equal(sent.length, 1);
   assert.equal(sent[0].tags.moodle_stage, 'login');
   assert.equal(sent[0].tags.moodle_host, 'login.ac.il');

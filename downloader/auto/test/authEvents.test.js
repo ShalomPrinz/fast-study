@@ -23,7 +23,7 @@ const TOKEN_FILE = path.join(STATE_DIR, 'auth', 'moodle-token.json');
 const GOOD = {
   userid: 7,
   downloadfiles: 1,
-  functions: [{ name: 'core_course_get_contents' }, { name: 'tool_mobile_get_autologin_key' }],
+  functions: [{ name: 'core_course_get_contents' }, { name: 'tool_mobile_get_content' }],
 };
 
 async function serve(t) {

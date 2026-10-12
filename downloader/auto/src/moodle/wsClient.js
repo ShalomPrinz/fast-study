@@ -162,7 +162,7 @@ async function callWs(site, token, fn, params = {}, { post = false } = {}) {
 
   const res = await moodleFetch(url, init);
   const body = await jsonOrBlocked(res);
-  if (body && body.exception) throw wsFault(body, res, fn, [token, ...Object.values(params)]);
+  if (body && body.exception) throw wsFault(body, res, fn, [token]);
   return body;
 }
 
@@ -251,12 +251,44 @@ export function getCourseContents(site, token, courseId) {
   return callWs(site, token, 'core_course_get_contents', { courseid: courseId });
 }
 
-// Mint a one-shot no-MFA browser login; rate-limited (~1/user/6 min) and IP-bound. POST only:
-// Moodle rejects the privatetoken in a query string (invalidprivatetoken). It needs a MoodleMobile
-// UA, which both Node and the challenge window send. See docs/MOODLE.md.
-/** @returns {Promise<{ key: string, autologinurl: string, warnings: unknown[] }>} */
-export function getAutologinKey(site, wstoken, privatetoken) {
-  return callWs(site, wstoken, 'tool_mobile_get_autologin_key', { privatetoken }, { post: true });
+/** core_course_get_course_module(cmid) → { cm, warnings }; `cm.course` is the module's course id. */
+export function getCourseModule(site, token, cmid) {
+  return callWs(site, token, 'core_course_get_course_module', { cmid });
+}
+
+// What the Moodle app adds to every site-plugin call (moodleapp siteplugins.ts addDefaultArgs).
+const APP_ARGS = {
+  appid: 'com.moodle.moodlemobile',
+  appversioncode: 45000,
+  appversionname: '4.5.0',
+  applang: 'he',
+  appcustomurlscheme: 'moodlemobile',
+  appisdesktop: 0,
+  appismobile: 1,
+  appiswide: 0,
+  appplatform: 'android',
+};
+
+/**
+ * mod_videostream's Moodle-app handler through tool_mobile_get_content → { templates: [{ id, html }], … },
+ * the page the app renders, its `<video>` naming the .mp4. Sent exactly as the app does: a POST with
+ * the `moodlewssetting*` flags, `userid` among the args and never `id` — less crashes the handler.
+ * See docs/MOODLE.md § Videostream.
+ */
+export function getVideostreamContent(site, token, { courseid, cmid, userid }) {
+  const args = { courseid, cmid, userid, ...APP_ARGS };
+  const params = {
+    moodlewssettingfilter: 'true',
+    moodlewssettingfileurl: 'true',
+    moodlewssettinglang: 'he',
+    component: 'mod_videostream',
+    method: 'view_videostream',
+  };
+  Object.entries(args).forEach(([name, value], i) => {
+    params[`args[${i}][name]`] = name;
+    params[`args[${i}][value]`] = value;
+  });
+  return callWs(site, token, 'tool_mobile_get_content', params, { post: true });
 }
 
 // Pluginfile authenticates by a query-string token. Set via the URL API: fileurl may already
@@ -333,7 +365,7 @@ const UNREPLAYED = new Set([
   'content-length',
 ]);
 
-// Open a non-pluginfile file on the Moodle host for streaming — a media link, a videostream capture —
+// Open a non-pluginfile file on the Moodle host for streaming — a media link —
 // with its captured `[{name, value}]` headers (cookies included) and `range` → the Response, body
 // unread. An HTML answer where a file was due is the bot challenge.
 export async function openMoodleFile(url, { headers = [], range, signal } = {}) {

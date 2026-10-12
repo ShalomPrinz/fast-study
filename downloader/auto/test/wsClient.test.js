@@ -6,7 +6,6 @@ import assert from 'node:assert/strict';
 import {
   assertPluginfileReadable,
   getCourseContents,
-  getAutologinKey,
   blocked,
   invalidToken,
   WsError,
@@ -132,20 +131,19 @@ test('a dead token on the pluginfile preflight still raises WsError, not blocked
 });
 
 // A WsError is logged with its errorcode, debuginfo and route; Sentry sees only the message, so the
-// errorcode rides there too. debuginfo can echo a rejected param verbatim, so secrets are blanked.
+// errorcode rides there too. debuginfo can echo the wstoken verbatim, so it is blanked.
 test('a WS fault logs errorcode, redacted debuginfo and route, and names the errorcode', async (t) => {
-  const PRIV = 'p'.repeat(64);
   const TOK = 'w'.repeat(32);
   stubFetch(t, {
     body: JSON.stringify({
       exception: 'invalid_parameter_exception',
       errorcode: 'invalidparameter',
       message: 'ערך פרמטר לא חוקי',
-      debuginfo: `privatetoken => the value is "${PRIV}" (wstoken ${TOK})`,
+      debuginfo: `courseid => the value is "x" (wstoken ${TOK})`,
     }),
   });
   const warn = t.mock.method(console, 'warn', () => {});
-  const err = await gated(() => getAutologinKey(SITE, TOK, PRIV)).then(
+  const err = await gated(() => getCourseContents(SITE, TOK, 'x')).then(
     () => null,
     (e) => e,
   );
@@ -153,9 +151,9 @@ test('a WS fault logs errorcode, redacted debuginfo and route, and names the err
   assert.equal(err.params.errorcode, 'invalidparameter');
   assert.match(err.message, /\(invalidparameter\)$/);
   const line = warn.mock.calls.map((c) => c.arguments.join(' ')).join('\n');
-  assert.match(line, /tool_mobile_get_autologin_key: invalidparameter via node/);
-  assert.match(line, /debuginfo: privatetoken => the value is "<redacted>" \(wstoken <redacted>\)/);
-  assert.equal(line.includes(PRIV), false);
+  assert.match(line, /core_course_get_contents: invalidparameter via node/);
+  assert.match(line, /debuginfo: courseid => the value is "x" \(wstoken <redacted>\)/);
+  assert.equal(line.includes(TOK), false);
 });
 
 test('a WS fault without debuginfo logs no debuginfo', async (t) => {

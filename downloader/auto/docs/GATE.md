@@ -21,8 +21,6 @@ context's work ends (`finally`, so a throw, an aborted stream or a cancelled log
 | `wsClient.js` `moodleFetch`                 | every WS call (`callWs`), `getPublicConfig`, `assertPluginfileReadable`, `openPluginfile`, `openMoodleFile` — from Node, or in block mode from the challenge window's page (never `openMoodleFile`) ([MOODLE.md](MOODLE.md#the-rest-api)) |
 | `moodleToken.js` `_openLogin`               | the headed `launch.php` login window                 |
 | `challenge.js` `land`                       | the challenge window loading the site root           |
-| `http/server.js` `autologin`                | the autologin navigation, in the challenge window (the plain session with none) |
-| `VideostreamExtractor._captureVideo`        | the module's view page, in a second page of the challenge window (the plain session with none) |
 | `lib/probeUrl.js` `fetchFollowing`          | any hop of a link probe on the Moodle host — redirects are followed by hand so an off-site link that lands there is caught too |
 
 A gate refusal is never a verdict and never auth state: the probes rethrow it, `MoodleToken` keeps
@@ -66,7 +64,7 @@ hangs up leaves the queue.
 
 Every byte on the Moodle host reaches `server/` through auto: a target there is `/moodle/file/<id>`,
 relative to auto, and `proxyCap` (`moodle/files.js`, memory only) keeps what it stands for under a
-random id. Three kinds land there:
+random id. These kinds land there:
 
 - a `moodle-file` PDF — `{ fileurl, size }`; the WS token is added at stream time, never handed out;
 - a `direct-url` link on the Moodle host, or one whose redirects end there — `{ url, size }`, fetched
@@ -76,13 +74,13 @@ random id. Three kinds land there:
   pasted URL is keyed by nothing stable). Only a video passes; anything else is `422
   link_not_a_video`. A pasted link off the host is a `ytdlp` target on the URL itself with no
   network call at all — one that only redirects onto the host is not caught;
-- a videostream `.mp4` capture on the Moodle host — `{ url, headers, size }`, its captured cookies
-  replayed from here (minus `Range`, validators and `Host`). A capture on another host (a separate
-  streaming server) is not Moodle traffic and stays a plain `curl` target with its headers.
+- a videostream `.mp4` the plugin's handler names on the Moodle host — `{ url }`. One on another host
+  (BIU's object storage) is not Moodle traffic and stays a plain `curl` target with no headers
+  ([MOODLE.md](MOODLE.md#videostream)).
 
 `GET` streams the file under the lock with `Range` passed through; an HTML answer where a file was
 due is `503 site_blocked`. `HEAD` answers from the size the resolve learned (the preflight's
-`Content-Range`, the link probe's answer, the player's own response) with no Moodle call. An unknown id
+`Content-Range`, the link probe's answer) with no Moodle call. An unknown id
 — auto restarted — is `401 moodle_file_unknown`; since a proxied target always says `fromCache:true`,
 `server/` re-resolves it once instead of saving a body.
 

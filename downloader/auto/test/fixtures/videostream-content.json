@@ -1,0 +1,13 @@
+{
+  "templates": [
+    {
+      "id": "main",
+      "html": "<div class=\"mod-videostream-mobile\">\n    <video oncontextmenu=\"return false;\"\n      id=\"my-player\"\n      class=\"video-js vjs-fluid vjs-default-skin vjs-big-play-centered nomediaplugin\"\n      controls\n      preload=\"auto\"\n      width=\"100%\"\n      height=\"auto\"\n      poster=\"https://lemida.biu.ac.il/local/video_directory/thumb.php?id=387695\"\n      title=\"387695\"\n      data-setup=\"{}\"\n    >\n    <source src=\"https://axt1t2yu790u.compat.objectstorage.il-jerusalem-1.oraclecloud.com/video_bucket/3d/3dac113ed4a4b0299883cc4dca27d65008f266f4.mp4\" type=\"video/mp4\" />\n    <p class=\"vjs-no-js\">\n      To view this video please enable JavaScript, and consider upgrading to a\n      web browser that\n      <a href=\"https://videojs.com/html5-video-support/\" target=\"_blank\"\n        >supports HTML5 video</a\n      >\n    </p>\n\n    <track\n      label=\"עברית\"\n      kind=\"subtitles\"\n      srclang=\"he\"\n      src=\"https://lemida.biu.ac.il/local/video_directory/subs.php?video_id=387695&amp;language=he\"\n      default />\n\n    </video>\n</div>"
+    }
+  ],
+  "javascript": "",
+  "otherdata": [],
+  "files": [],
+  "restrict": [],
+  "disabled": false
+}

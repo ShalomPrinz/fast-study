@@ -29,7 +29,6 @@ import {
   sendUnsupported,
 } from '../src/http/server.js';
 import { encodeRef } from '../src/lib/ref.js';
-import { getSession } from '../src/browser/browserSession.js';
 import { gated } from './gated.js';
 
 // Imports are hoisted past any env write, so the configured site is set through its module.
@@ -342,7 +341,7 @@ test('503 carries what the site served instead of an answer', async (t) => {
   fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
   fs.writeFileSync(
     TOKEN_FILE,
-    JSON.stringify({ site: 'https://lemida.biu.ac.il', wstoken: 'tok', privatetoken: 'p' }),
+    JSON.stringify({ site: 'https://lemida.biu.ac.il', wstoken: 'tok' }),
   );
   t.after(() => fs.rmSync(TOKEN_FILE, { force: true }));
   stubFetch(t, async () => ({
@@ -404,7 +403,7 @@ test('409 fills in the course and lecture the gate itself never knew', () => {
 
 const MODULE_URL = 'https://lemida.biu.ac.il/mod/url/view.php?id=7';
 
-test('a row no branch handles is 422 recording_strategy_unsupported, never autologin', async (t) => {
+test('a row no branch handles is 422 recording_strategy_unsupported, never a browser', async (t) => {
   const calls = [];
   stubFetch(t, async (url) => {
     calls.push(url);
@@ -429,34 +428,14 @@ test('a row no branch handles is 422 recording_strategy_unsupported, never autol
   assert.ok(lines.includes(`→ POST /resolve  C/L (lecture) mystery ${MODULE_URL}`));
 });
 
-// No browser to open (the sandbox's): the plain session logs in itself, and its walled key says so.
-test('a walled videostream autologin with no browser is 503 site_blocked, never a 500', async (t) => {
+// No browser to open (the sandbox's), so a wall on the handler call is reported, not resent.
+test('a walled videostream content call with no browser is 503 site_blocked, never a 500', async (t) => {
   fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
   fs.writeFileSync(
     TOKEN_FILE,
-    JSON.stringify({
-      site: 'https://lemida.biu.ac.il',
-      wstoken: 'tok',
-      privatetoken: 'p',
-      userid: 7,
-    }),
+    JSON.stringify({ site: 'https://lemida.biu.ac.il', wstoken: 'tok', userid: 7 }),
   );
   t.after(() => fs.rmSync(TOKEN_FILE, { force: true }));
-  // A stand-in page, so the plain session never launches a browser.
-  const session = getSession('plain');
-  // It holds no Moodle session, so the module page lands on the login and the autologin runs.
-  t.mock.method(session, 'open', async () => {
-    session.context = { addCookies: async () => {}, cookies: async () => [] };
-    session.page = {
-      goto: async () => {},
-      url: () => 'https://lemida.biu.ac.il/login/index.php',
-      waitForRequest: async () => null,
-      evaluate: async () => {},
-    };
-  });
-  t.after(() => {
-    session.page = session.context = null;
-  });
   stubFetch(t, async () => ({
     status: 200,
     headers: { get: () => 'text/html' },
@@ -467,6 +446,7 @@ test('a walled videostream autologin with no browser is 503 site_blocked, never 
   const ref = encodeRef({
     strategy: 'videostream',
     pageUrl: 'https://lemida.biu.ac.il/mod/videostream/view.php?id=3031600',
+    courseId: '108106',
   });
   await handleResolve({ body: { ref, course: 'C', name: 'L' } }, res);
   assert.equal(res.code, 503);

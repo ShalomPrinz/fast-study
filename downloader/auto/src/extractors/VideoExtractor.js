@@ -3,18 +3,20 @@
  * a `url` module (from contents[].fileurl) — the direct link a youtube playlist expands.
  * `fileurl`/`filename`/`mimetype` describe ONE file of a `resource` module (which can hold
  * several, hence one activity per file).
+ * `courseId` is the listed course's id, which a videostream resolve needs.
  * @typedef {{ title: string, modType: string, viewUrl: string, externalUrl?: string,
  *             fileurl?: string, filename?: string, mimetype?: string,
- *             sectionName: string, kind: 'lecture'|'recitation' }} Activity
+ *             sectionName: string, courseId?: string, kind: 'lecture'|'recitation' }} Activity
  *
  * A listed recording — cheap metadata + which download strategy resolves it.
  * `section` is the Moodle course section heading (display metadata for grouping; '' when unnamed).
  * `likelyRecording` is the keyword hint (see `isRecording`); only a `url` module carries it, and
  * only the frontend's grouping reads it — nothing gates on it.
  * Every strategy but `moodle-file` carries a `pageUrl`; `moodle-file` carries the Moodle
- * `fileurl` the tokened download URL is built from instead.
+ * `fileurl` the tokened download URL is built from instead. A `videostream` row carries its
+ * `courseId`, absent on a row listed by an older build.
  * @typedef {{ title: string, pageUrl?: string, fileurl?: string, filename?: string,
- *             kind: 'lecture'|'recitation',
+ *             courseId?: string, kind: 'lecture'|'recitation',
  *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file'|'direct-url',
  *             section: string, likelyRecording?: boolean }} Recording
  *
@@ -32,8 +34,7 @@ export class VideoExtractor {
   /**
    * Which browser profile this extractor's captureVideo needs (dependency injection
    * for the session registry). Default 'plain' = headless Chrome; the zoom player needs
-   * 'zoom' (headed chrome+stealth, hidden per platform); videostream 'moodle' (the challenge
-   * window, docs/SESSIONS.md). @returns {'plain'|'zoom'|'moodle'}
+   * 'zoom' (headed chrome+stealth, hidden per platform). @returns {'plain'|'zoom'}
    */
   get browserProfile() {
     return 'plain';

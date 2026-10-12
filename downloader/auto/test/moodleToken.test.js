@@ -195,7 +195,7 @@ function stubSiteInfo(t, info) {
 }
 
 const fn = (...names) => names.map((name) => ({ name, version: '2024100700' }));
-const FULL = fn('core_course_get_contents', 'tool_mobile_get_autologin_key');
+const FULL = fn('core_course_get_contents', 'tool_mobile_get_content');
 
 // A headed login whose token redirect was captured and whose background run has finished.
 async function capturedLogin(dir) {
@@ -247,7 +247,7 @@ test('a login announces pending then connected', async (t) => {
 for (const [reason, info, extra] of [
   [
     'missing_function',
-    { userid: 7, downloadfiles: 1, functions: fn('tool_mobile_get_autologin_key') },
+    { userid: 7, downloadfiles: 1, functions: fn('tool_mobile_get_content') },
     { function: 'core_course_get_contents' },
   ],
   ['downloads_disabled', { userid: 7, downloadfiles: 0, functions: FULL }, {}],
@@ -265,9 +265,9 @@ for (const [reason, info, extra] of [
   });
 }
 
-test('a login connects when only autologin is missing', async (t) => {
+test('a login connects when only the videostream content call is missing', async (t) => {
   stubSiteInfo(t, { userid: 7, downloadfiles: 1, functions: fn('core_course_get_contents') });
-  const { auth } = await capturedLogin('moodle-noautologin-');
+  const { auth } = await capturedLogin('moodle-novideostream-');
   assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: false });
 });
 
@@ -584,7 +584,7 @@ test('a refused new login keeps the stored token', async (t) => {
   withKey(t, undefined);
   stubSequence(
     t,
-    jsonRes({ userid: 7, downloadfiles: 1, functions: fn('tool_mobile_get_autologin_key') }),
+    jsonRes({ userid: 7, downloadfiles: 1, functions: fn('tool_mobile_get_content') }),
   );
   const { auth, tokenPath } = await loginOverStored('over-refused-');
   assert.equal(auth.state().error.code, 'moodle_site_unsupported');

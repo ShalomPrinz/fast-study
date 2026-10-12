@@ -7,7 +7,6 @@ import { statePath } from '@faststudy/runtime';
 import { launchPersistentBrowser } from '../browser/browserLaunch.js';
 import { resolveUserAgent } from '../browser/browserChannel.js';
 import { moodleGate, enterMoodle } from './gate.js';
-import { loadSessionCookies, forgetSessionCookies } from '../auth/sessionCookies.js';
 
 // Chrome clamps it to about -13107, still far off-screen; the flag beats the profile's saved position.
 const OFF_SCREEN = { left: -32000, top: -32000 };
@@ -267,43 +266,6 @@ class ChallengeWindow {
     await this._bounds(OFF_SCREEN);
   }
 
-  /**
-   * Navigate the page to `url` on the site (under the caller's Moodle lock) → settle()'s state, or
-   * false when the window went away under it; any other navigation failure throws.
-   */
-  async visit(url) {
-    this.busy++;
-    this.touch();
-    try {
-      await this.page.goto(url, { waitUntil: 'load' });
-    } catch (err) {
-      if (this.gone(err)) return false;
-      throw err;
-    } finally {
-      this.busy--;
-    }
-    return this.settle();
-  }
-
-  /**
-   * `fn(page)` on a second page of the window, off-screen and closed after (also on a throw), so the
-   * root page stays put; counted busy throughout, so the idle close never cuts it off.
-   */
-  async withPage(fn) {
-    this.busy++;
-    this.touch();
-    let page;
-    try {
-      page = await this.context.newPage();
-      await this._bounds(OFF_SCREEN, page);
-      return await fn(page);
-    } finally {
-      await page?.close().catch(() => {});
-      this.busy--;
-      this.touch();
-    }
-  }
-
   // Load the site root (under the caller's Moodle lock) and show the window only on a captcha.
   async land() {
     await enterMoodle(this.site);
@@ -357,9 +319,9 @@ class ChallengeWindow {
   }
 
   // Window position through CDP; cosmetic, so a failure never fails the call.
-  async _bounds(bounds, page = this.page) {
+  async _bounds(bounds) {
     try {
-      const cdp = await this.context.newCDPSession(page);
+      const cdp = await this.context.newCDPSession(this.page);
       const { windowId } = await cdp.send('Browser.getWindowForTarget');
       await cdp.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
       await cdp.send('Browser.setWindowBounds', { windowId, bounds });
@@ -409,9 +371,6 @@ async function openOnce(site) {
       args: LAUNCH_ARGS,
       userAgent: ua + MOODLE_APP_UA,
     });
-    // The Moodle session cookies died with the last browser; put them back before the first page loads.
-    const saved = loadSessionCookies(site);
-    if (saved) await context.addCookies(saved).catch(() => {});
     const page = context.pages()[0] ?? (await context.newPage());
     const w = new ChallengeWindow(site, context, page);
     win = w;
@@ -445,14 +404,10 @@ async function closeWindow() {
   await closing;
 }
 
-/**
- * End block mode: close the window and wait for it to be gone; `forget` also deletes the profile and
- * the saved Moodle session cookies with it.
- */
+/** End block mode: close the window and wait for it to be gone; `forget` also deletes its profile. */
 export async function closeChallenge({ forget = false } = {}) {
   while (opening) await opening;
   await closeWindow();
   if (!forget) return;
   fs.rmSync(profileDir(), { recursive: true, force: true });
-  forgetSessionCookies();
 }

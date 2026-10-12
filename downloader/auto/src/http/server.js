@@ -11,7 +11,6 @@ import { normalizeSite, currentSite } from '../moodle/site.js';
 import {
   reportBlock,
   openChallenge,
-  challengeRoute,
   challengeState,
   challengeEvents,
 } from '../moodle/challenge.js';
@@ -24,8 +23,8 @@ import { loadStealthChromium } from '../browser/zoomBrowser.js';
 import {
   listRecordings,
   resolveRecording,
-  replayRecording,
   resolveMoodleFile,
+  resolveVideostream,
   resolveYtDlp,
   resolveDriveFile,
   resolveDirectUrl,
@@ -35,24 +34,21 @@ import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
 import { getProbedMedia } from '../core/probeCache.js';
 import { probeKeyForUrl } from '../lib/probeUrl.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
-import { CodedError, UnsupportedError, PasscodeError, failureOf } from '../lib/errors.js';
+import { UnsupportedError, PasscodeError, failureOf } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
 import {
   courseIdFrom,
   getCourseContents,
-  getAutologinKey,
   invalidToken,
   blocked,
-  WsBlockedError,
   openPluginfile,
   openMoodleFile,
   pluginfileUrl,
 } from '../moodle/wsClient.js';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { moodleGate, enterMoodle, MoodleBusyError, WAIT_HEADER } from '../moodle/gate.js';
+import { moodleGate, MoodleBusyError, WAIT_HEADER } from '../moodle/gate.js';
 import { fileById } from '../moodle/files.js';
-import { saveSessionCookies, loadSessionCookies } from '../auth/sessionCookies.js';
 
 // Strategies whose row type is only knowable from a download-time probe — the WS payload names
 // no file for an off-site link, so 'unknown' is the honest stamp until one runs.
@@ -445,7 +441,7 @@ export const handleList = gated('/list', async (req, res) => {
     }
     throw e;
   }
-  const recordings = listRecordings(sections);
+  const recordings = listRecordings(sections, courseId);
   logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
 });
@@ -588,6 +584,43 @@ async function resolveItem(req, res) {
     return send(res, 200, { media: 'material', targets });
   }
 
+  // videostream needs no browser either: the plugin's Moodle-app handler names the .mp4 in one WS
+  // call (docs/MOODLE.md § Videostream).
+  if (recording.strategy === 'videostream') {
+    if (!recording.pageUrl) return send(res, 400, invalid('ref', 'ref is not downloadable'));
+    const found = siteOr(res, recording.pageUrl);
+    if (!found) return;
+    const { site, auth } = found;
+    const token = await tokenOr(res, auth, '/resolve');
+    if (!token) return;
+    let targets;
+    try {
+      targets = await resolveVideostream({
+        recording,
+        course,
+        name,
+        kind,
+        site,
+        token,
+        ref: rowRef,
+        forceCapture: opts.forceCapture,
+      });
+    } catch (e) {
+      if (invalidToken(e)) {
+        auth.markExpired();
+        logResult('/resolve', 'reconnect (401)');
+        return sendReconnect(res);
+      }
+      if (blocked(e)) {
+        logResult('/resolve', `blocked (503): ${e.message}`);
+        return sendBlocked(res, e);
+      }
+      throw e;
+    }
+    logResult('/resolve', `ok (${targets.length} target, video)`);
+    return send(res, 200, { media: 'video', targets });
+  }
+
   // A Drive file needs no browser either, but only the filename probe knows whether it lands
   // as a video or as a material — it reports back which.
   if (recording.strategy === 'google-drive') {
@@ -618,8 +651,7 @@ async function resolveItem(req, res) {
     return send(res, 200, { media, targets });
   }
 
-  // An expanded youtube entry carries its direct url, so it needs no browser either;
-  // videostream must sniff the .mp4 fresh.
+  // An expanded youtube entry carries its direct url, so it needs no browser either.
   if (recording.strategy === 'youtube-playlist' && recording.url) {
     const targets = await resolveYtDlp({
       recording,
@@ -632,9 +664,9 @@ async function resolveItem(req, res) {
     logResult('/resolve', `ok (${targets.length} target, video)`);
     return send(res, 200, { media: 'video', targets });
   }
-  // Strict: only zoom and videostream remain, so any other row (an unexpanded playlist, a strategy
-  // this build does not know) is refused here rather than falling into videostream's autologin.
-  if (recording.strategy !== 'zoom' && recording.strategy !== 'videostream') {
+  // Strict: only zoom remains, so any other row (an unexpanded playlist, a strategy this build does
+  // not know) is refused here.
+  if (recording.strategy !== 'zoom') {
     const strategy = typeof recording.strategy === 'string' ? recording.strategy : null;
     throw new UnsupportedError(
       'recording_strategy_unsupported',
@@ -644,168 +676,28 @@ async function resolveItem(req, res) {
   }
   if (!recording.pageUrl) return send(res, 400, invalid('ref', 'ref is not downloadable'));
 
-  // The extractor picks its own browser profile (DI): zoom runs on the headed chrome+stealth
-  // session, videostream in the Moodle browser (the plain headless session when there is none).
-  const profile = resolveExtractorForRecording(recording)?.browserProfile ?? 'plain';
-
-  // Zoom shares are gated by a passcode, not the Moodle login — no university and no login; captureVideo
-  // clears the gate on a blank session. See docs/ZOOM.md.
-  if (recording.strategy === 'zoom') {
-    const session = getSession(profile);
-    // Per-course default with an optional per-lecture override; null → the gate throws
-    // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
-    const passcode = passcodes.lookup(course, name);
-    await session.open();
-    // A zoom share can hold a before/after-break pair → one target per captured .mp4.
-    const targets = await session.withLock(() =>
-      resolveRecording(session.page, {
-        recording,
-        course,
-        name,
-        kind,
-        passcode,
-        ref: rowRef,
-        ...opts,
-      }),
-    );
-    logResult('/resolve', `ok (${targets.length} targets, video)`);
-    return send(res, 200, { media: 'video', targets });
-  }
-
-  // videostream: sniff the in-site .mp4 in a browser holding the saved Moodle session, autologin
-  // (privatetoken → one-shot cookie, no MFA) only when it is missing or dead. See docs/MOODLE.md § Autologin.
-  const found = siteOr(res, recording.pageUrl);
-  if (!found) return;
-  const { site, auth } = found;
-  const token = await tokenOr(res, auth, '/resolve');
-  if (!token) return;
-
-  let targets;
-  try {
-    targets = await captureVideostream(site, token, profile, {
+  // Zoom shares are gated by a passcode, not the Moodle login — no university and no login; the
+  // extractor picks its own browser profile (DI), captureVideo clears the gate on a blank session.
+  // See docs/ZOOM.md.
+  const session = getSession(resolveExtractorForRecording(recording)?.browserProfile ?? 'plain');
+  // Per-course default with an optional per-lecture override; null → the gate throws
+  // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
+  const passcode = passcodes.lookup(course, name);
+  await session.open();
+  // A zoom share can hold a before/after-break pair → one target per captured .mp4.
+  const targets = await session.withLock(() =>
+    resolveRecording(session.page, {
       recording,
-      userid: token.userid,
       course,
       name,
       kind,
+      passcode,
       ref: rowRef,
       ...opts,
-    });
-  } catch (e) {
-    // The autologin surfaces a dead token (→ 401) or a wall the Moodle browser could not pass (→ 503,
-    // with its challengeWindow); other faults (rate-limit lockout, no .mp4, still logged out after
-    // the autologin) fall to 500.
-    if (invalidToken(e)) {
-      auth.markExpired();
-      logResult('/resolve', 'reconnect (401)');
-      return sendReconnect(res);
-    }
-    if (blocked(e)) {
-      logResult('/resolve', `blocked (503): ${e.message}`);
-      return sendBlocked(res, e);
-    }
-    throw e;
-  }
-  logResult('/resolve', `ok (${targets.length} target, video)`);
-  send(res, 200, { media: 'video', targets });
-}
-
-// A routed site_blocked for a Moodle browser left on the captcha: the user solves it and repeats.
-function captchaBlock(detail) {
-  const err = new WsBlockedError(detail, { routed: true });
-  err.params = { ...err.params, challengeWindow: 'captcha' };
-  return err;
-}
-
-const noPrivatetoken = () =>
-  new CodedError(
-    'moodle_token_no_privatetoken',
-    {},
-    'token has no privatetoken; Reconnect to enable videostream capture',
+    }),
   );
-
-// The module page landed on the login or as guest: the browser's Moodle session is dead.
-const loggedOut = (err) => err?.code === 'videostream_login_required';
-
-// Autologin, navigated in the Moodle browser, its session cookies saved → null once logged in there,
-// or the autologin URL for the plain session to spend (no window, or it closed after the key).
-async function autologin(site, token) {
-  // userid was stored at login, from the same site info the post-login check read.
-  const { userid } = token;
-  // Through the window while it is up; the key is IP-bound, and Node and the window share the IP.
-  const { key, autologinurl } = await getAutologinKey(site, token.wstoken, token.privatetoken);
-  // autologinurl is a bare endpoint; add userid+key via the URL API (it may already carry a query).
-  const u = new URL(autologinurl);
-  u.searchParams.set('userid', userid);
-  u.searchParams.set('key', key);
-  await enterMoodle(autologinurl);
-  const win = challengeRoute(site);
-  const landed = win ? await win.visit(u.toString()) : false;
-  if (landed === 'captcha') throw captchaBlock('the autologin landed on the captcha');
-  if (landed !== 'ready') return u.toString();
-  saveSessionCookies(site, await win.context.cookies(site));
-  return null;
-}
-
-// Capture the module once: in a second page of the Moodle browser, or in the plain session with no
-// window (or it closed under the capture), which takes the saved session cookies or spends `loginUrl`.
-async function captureOnce(site, useWindow, args, loginUrl) {
-  const win = useWindow && !loginUrl ? challengeRoute(site) : null;
-  if (win) {
-    try {
-      return await win.withPage((page) => resolveRecording(page, args));
-    } catch (err) {
-      if (!win.gone(err)) throw err;
-    }
-  }
-  const session = getSession('plain');
-  await session.open();
-  return session.withLock(async () => {
-    try {
-      // The key is IP-bound, and the plain session shares the window's IP, so it can spend it.
-      if (loginUrl) {
-        await session.goto(loginUrl);
-        saveSessionCookies(site, await session.context.cookies(site));
-      } else {
-        const saved = loadSessionCookies(site);
-        if (saved) await session.context.addCookies(saved);
-      }
-      return await resolveRecording(session.page, args);
-    } finally {
-      // Off the Moodle page before the lock frees, so the idle session sends the site nothing.
-      await session.page?.goto('about:blank').catch(() => {});
-    }
-  });
-}
-
-// Capture on the saved session, autologin and retry once if it lands logged out; with none saved,
-// autologin first and capture once, sparing a load that could only land logged out. See docs/AUTH.md.
-async function captureVideostream(site, token, profile, args) {
-  // A replay-cache hit needs no browser: no window opens and no key is spent.
-  const replayed = replayRecording(args);
-  if (replayed) return replayed;
-  const hasSession = !!loadSessionCookies(site);
-  if (!token?.privatetoken && !hasSession) throw noPrivatetoken();
-  const useWindow = profile === 'moodle';
-  if (useWindow) {
-    // The window opens first, so a captcha there costs no key. An open window already on the site is
-    // used as is: openChallenge would reload its root.
-    const opened = challengeRoute(site)?.onSite() ? 'ready' : await openChallenge(site);
-    if (opened === 'captcha') throw captchaBlock('the Moodle browser is on the captcha');
-  }
-  if (hasSession) {
-    try {
-      return await captureOnce(site, useWindow, args);
-    } catch (err) {
-      if (!loggedOut(err)) throw err;
-    }
-    if (!token?.privatetoken) throw noPrivatetoken();
-    logResult('/resolve', 'Moodle session dead, autologin');
-  } else {
-    logResult('/resolve', 'no saved Moodle session, autologin');
-  }
-  const loginUrl = await autologin(site, token);
-  return captureOnce(site, useWindow, args, loginUrl);
+  logResult('/resolve', `ok (${targets.length} targets, video)`);
+  send(res, 200, { media: 'video', targets });
 }
 
 // HEAD of a resolved Moodle file, answered from the size its resolve learned — no Moodle call, so
