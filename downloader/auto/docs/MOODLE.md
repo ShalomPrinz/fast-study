@@ -60,7 +60,8 @@ Every authenticated call still treats a redirect as the bot wall.
 refuses the login as `moodle_site_unsupported` `reason:'missing_function'` (`params.function`), and
 `downloadfiles` other than `1` (it is `VALUE_OPTIONAL`, so absent counts) as `downloads_disabled` —
 both `422 {status:'unsupported'}` from `/auth/complete` (and as the login's `moodle_site_unsupported` error on the stream). Lacking only `tool_mobile_get_content`
-still connects: discovery and PDFs work, and a `videostream` resolve fails later with its own error.
+still connects: discovery and PDFs work, and a `videostream` resolve is refused later as
+`422 {status:'unsupported'}`, `moodle_site_unsupported` `reason:'videostream_unavailable'` ([Videostream](#videostream)).
 
 **Telemetry.** `siteReport.js` sends one Sentry warning, `moodle_site_unsupported`, tagged
 `moodle_host` / `moodle_stage` (`probe`|`login`) / `moodle_reason` with the site's `release` as
@@ -250,7 +251,11 @@ token, no cookies, `206 video/mp4` to a bare curl, permanent. So it is a plain `
 headers, never proxied, and `server/` probes its size itself; a site that hosts the `.mp4` on Moodle
 gets it streamed through auto ([GATE.md](GATE.md#files)). The call goes through `moodleFetch` like
 every WS call — gated, and through the challenge window in block mode — so a wall is `503
-site_blocked` and `invalidtoken` is `401 reconnect`.
+site_blocked` and `invalidtoken` is `401 reconnect`. Moodle answers `accessexception` both for an
+expired token and for a function outside the token's service (`webservice/lib.php`), so on that code
+one site-info call decides: a live token whose `functions[]` lacks `tool_mobile_get_content` is `422
+{status:'unsupported'}`, `moodle_site_unsupported {site, reason:'videostream_unavailable'}`; anything
+else stays `401 reconnect`.
 
 Only a `videostream` row reaches the handler: `/resolve` refuses any row its earlier branches did not
 take and that is not `zoom` (an unexpanded playlist, a strategy this build does not know) as

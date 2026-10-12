@@ -225,3 +225,43 @@ test('a listed videostream row carries its course id', () => {
   assert.equal(row.strategy, 'videostream');
   assert.equal(row.courseId, '108106');
 });
+
+// Moodle answers a function outside the token's service and an expired token alike with
+// `accessexception` (webservice/lib.php), so site info tells them apart.
+const ACCESS = {
+  exception: 'webservice_access_exception',
+  errorcode: 'accessexception',
+  message: 'x',
+};
+
+test('a service without tool_mobile_get_content is 422 moodle_site_unsupported videostream_unavailable', async (t) => {
+  plantToken(t);
+  t.mock.method(console, 'warn', () => {});
+  const calls = stubFetch(t, (url) =>
+    url.searchParams.get('wsfunction') === 'core_webservice_get_site_info'
+      ? json({
+          userid: 185036,
+          downloadfiles: 1,
+          functions: [{ name: 'core_course_get_contents' }],
+        })
+      : json(ACCESS),
+  );
+  const res = await resolve(t, { name: 'nofn', forceCapture: true });
+  assert.equal(res.code, 422);
+  assert.equal(res.body.status, 'unsupported');
+  assert.equal(res.body.code, 'moodle_site_unsupported');
+  assert.deepEqual(res.body.params, { site: SITE, reason: 'videostream_unavailable' });
+  assert.deepEqual(
+    calls.map((c) => c.url.searchParams.get('wsfunction')),
+    ['tool_mobile_get_content', 'core_webservice_get_site_info'],
+  );
+});
+
+test('an accessexception on an expired token stays 401 reconnect', async (t) => {
+  plantToken(t);
+  t.mock.method(console, 'warn', () => {});
+  stubFetch(t, () => json(ACCESS));
+  const res = await resolve(t, { name: 'expired', forceCapture: true });
+  assert.equal(res.code, 401);
+  assert.equal(res.body.code, 'moodle_reconnect_required');
+});

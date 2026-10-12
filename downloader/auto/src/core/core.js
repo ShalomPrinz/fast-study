@@ -5,6 +5,8 @@ import {
   pluginfileUrl,
   getCourseModule,
   getVideostreamContent,
+  getSiteInfo,
+  WsError,
 } from '../moodle/wsClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
@@ -162,6 +164,19 @@ function mp4Source(content, types) {
   return null;
 }
 
+// Moodle answers both an expired token and a function outside the token's service with
+// `accessexception`, so site info decides: a live token lacking the function is the site's refusal.
+async function refusedVideostream(err, site, wstoken) {
+  if (!(err instanceof WsError) || err.errorcode !== 'accessexception') throw err;
+  const info = await getSiteInfo(site, wstoken);
+  if ((info?.functions ?? []).some((f) => f.name === 'tool_mobile_get_content')) throw err;
+  throw new UnsupportedError(
+    'moodle_site_unsupported',
+    { site, reason: 'videostream_unavailable' },
+    `${site} cannot resolve videostream: its token service lacks tool_mobile_get_content`,
+  );
+}
+
 /**
  * RESOLVE PATH (HTTP), no browser: a videostream module's .mp4, read from the page mod_videostream's
  * Moodle-app handler renders (one gated WS call, plus one for a row listed with no `courseId`).
@@ -192,7 +207,7 @@ export async function resolveVideostream({
       courseid,
       cmid,
       userid: token.userid,
-    });
+    }).catch((err) => refusedVideostream(err, site, token.wstoken));
     const types = [];
     const url = mp4Source(content, types);
     if (!url)
