@@ -92,6 +92,7 @@ export function writeMoodleToken(paths) {
       wstoken: FAKE_WSTOKEN,
       privatetoken: 'harness-private',
       userid: 7,
+      coursesAvailable: true,
       savedAt: new Date().toISOString(),
     }),
   );

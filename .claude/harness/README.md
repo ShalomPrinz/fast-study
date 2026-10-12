@@ -371,17 +371,19 @@ curl -s $P/control -d '{"gemini":"invalidkey"}'  # gemini also: invalidkey
 curl -s $P/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
 curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/שיעור 4"}}'  # held, then ok
 curl -s $P/control -d '{"reset":true}'     # every provider back to ok
-curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | blocked_ws | radware | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled
+curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | blocked_ws | radware | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled | no_enrol_function
 curl -s $S/control -d '{"solve":true}'     # radware: the open captcha page solves itself
 curl -s $S/control -d '{"downloadMs":60000}' # how long each download takes (3000)
 curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, every /die/ re-armed
 ```
 
-The site's last four modes are a site auto/ must refuse. `not_moodle` answers the probe's
+The four modes after `invalidtoken` are a site auto/ must refuse. `not_moodle` answers the probe's
 `service-nologin.php` with a 404 page and `mobile_service_off` with `enablemobilewebservice: 0` — the
 pre-login probe (the settings field) says `unsupported`. `missing_function` drops
 `core_course_get_contents` from site info and `downloads_disabled` sets `downloadfiles: 0`, which only
-the post-login check reads — Settings → University account → Connect shows its refusal. An unknown mode is answered 400.
+the post-login check reads — Settings → University account → Connect shows its refusal. `no_enrol_function`
+drops `core_enrol_get_users_courses`: the site still connects, and the next Connect saves the course
+picker as unavailable, so Downloads offers only the paste input. An unknown mode is answered 400.
 
 A provider's rule is `{mode, match, times}`; a bare string is `{mode}`, every call. Nothing the
 SDKs send names the lecture, so the shim stamps each call a pipeline step or an overview makes with
@@ -405,6 +407,11 @@ key; type one into the settings screen for the rejected-key path.
 Each fake's fields set only themselves; `hb reseed` sends both resets, and the providers' also
 restarts the fake transcript at its first paragraph. `downloadMs` is read by the
 fake tool as each download starts, so a slow download for "reload mid-download" needs no restart.
+
+The account is enrolled in three courses (`core_enrol_get_users_courses`): the fake course, one ended
+(`enddate` a year ago) and one hidden, so Downloads' course picker shows a current course and two
+under "Show past courses". `core_course_get_contents` answers the fake course's rows for any enrolled
+id and `invalidrecord` for any other, so a pasted unknown id reads as not accessible.
 
 The fake course has a row per failure, each a URL switch (titles in `FAILURE_ROWS`, `lib/env.mjs`;
 the self-check proves all three are listed):

@@ -141,6 +141,27 @@ function hash(value) {
   return out;
 }
 
+// The account's enrolments, shaped like core_enrol_get_users_courses: the fake course, one ended
+// course and one hidden one, so the picker's "past" group has a row per rule. Each lists the fake course's contents.
+function enrolledCourses() {
+  const yearAgo = Math.floor(Date.now() / 1000) - 365 * 24 * 3600;
+  const course = (id, fullname, extra = {}) => ({
+    id,
+    shortname: `C${id}`,
+    fullname,
+    displayname: fullname,
+    visible: 1,
+    hidden: false,
+    enddate: 0,
+    ...extra,
+  });
+  return [
+    course(COURSE_ID, 'מבני נתונים &amp; אלגוריתמים'),
+    course(COURSE_ID + 1, 'חדו״א 1', { enddate: yearAgo }),
+    course(COURSE_ID + 2, 'Old Seminar', { hidden: true }),
+  ];
+}
+
 // Moodle's answer to a record that does not exist, under HTTP 200 like every WS fault.
 function invalidRecord(table) {
   return {
@@ -345,7 +366,12 @@ function handle(req, res) {
         'core_course_get_contents',
         'core_course_get_course_module',
         'tool_mobile_get_content',
-      ].filter((name) => state.mode !== 'missing_function' || name !== 'core_course_get_contents');
+        'core_enrol_get_users_courses',
+      ]
+        .filter((name) => state.mode !== 'missing_function' || name !== 'core_course_get_contents')
+        .filter(
+          (name) => state.mode !== 'no_enrol_function' || name !== 'core_enrol_get_users_courses',
+        );
       return json(res, {
         sitename: 'harness Moodle',
         siteurl: SITE,
@@ -356,7 +382,23 @@ function handle(req, res) {
         functions: functions.map((name) => ({ name, version: '2024042200' })),
       });
     }
-    if (fn === 'core_course_get_contents') return json(res, courseContents());
+    if (fn === 'core_enrol_get_users_courses') {
+      // A function outside the token's service: Moodle's answer, which auto reads as a dead token.
+      if (state.mode === 'no_enrol_function') {
+        return json(res, {
+          exception: 'webservice_access_exception',
+          errorcode: 'accessexception',
+          message: 'Access control exception',
+        });
+      }
+      return json(res, enrolledCourses());
+    }
+    if (fn === 'core_course_get_contents') {
+      const enrolled = enrolledCourses().some(
+        (c) => c.id === Number(url.searchParams.get('courseid')),
+      );
+      return json(res, enrolled ? courseContents() : invalidRecord('course'));
+    }
     if (fn === 'core_course_get_course_module') {
       const cmid = Number(url.searchParams.get('cmid'));
       if (cmid !== VIDEOSTREAM_CMID) return json(res, invalidRecord('course_modules'));
