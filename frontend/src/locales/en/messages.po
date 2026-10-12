@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:270
+#: src/features/search/SearchView.tsx:260
 msgid " — showing {shownFindings}"
 msgstr " — showing {shownFindings}"
 
@@ -69,12 +69,12 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:268
+#: src/features/search/SearchView.tsx:258
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
 #. placeholder {0}: past.length
-#: src/features/downloads/components/CoursePicker.tsx:84
+#: src/features/downloads/components/CoursePicker.tsx:83
 msgid "{0, plural, one {Show # past course} other {Show # past courses}}"
 msgstr "{0, plural, one {Show # past course} other {Show # past courses}}"
 
@@ -206,7 +206,7 @@ msgstr "{leaves, plural, one {# item} other {# items}}"
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
-#: src/features/search/SearchView.tsx:269
+#: src/features/search/SearchView.tsx:259
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
@@ -314,11 +314,11 @@ msgstr "{url} no longer exists. Check the course page for a new link."
 msgid "{withSource} courses with a source"
 msgstr "{withSource} courses with a source"
 
-#: src/features/downloads/components/AddCourseRow.tsx:74
+#: src/features/downloads/components/AddCourseRow.tsx:77
 msgid "+ Add a course source URL"
 msgstr "+ Add a course source URL"
 
-#: src/features/downloads/components/AddCourseRow.tsx:71
+#: src/features/downloads/components/AddCourseRow.tsx:74
 msgid "+ Add course from Moodle"
 msgstr "+ Add course from Moodle"
 
@@ -366,7 +366,11 @@ msgstr "A section is waiting for a passcode"
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 
-#: src/features/search/SearchView.tsx:242
+#: src/App.tsx:31
+msgid "Add a course from Downloads or New course to get started"
+msgstr "Add a course from Downloads or New course to get started"
+
+#: src/features/search/SearchView.tsx:229
 msgid "Add a course to search its summaries."
 msgstr "Add a course to search its summaries."
 
@@ -499,8 +503,8 @@ msgstr "Can't rename while something in this course is being processed, download
 msgid "Can't replace the video while it's being processed or waiting in line"
 msgstr "Can't replace the video while it's being processed or waiting in line"
 
-#: src/features/downloads/components/AddCourseRow.tsx:131
-#: src/features/downloads/components/CoursePicker.tsx:101
+#: src/features/downloads/components/AddCourseRow.tsx:134
+#: src/features/downloads/components/CoursePicker.tsx:100
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
 #: src/features/downloads/components/PasscodePrompt.tsx:66
 msgid "Cancel"
@@ -522,7 +526,7 @@ msgstr "checking account…"
 msgid "checking Drive…"
 msgstr "checking Drive…"
 
-#: src/features/downloads/components/AddCourseRow.tsx:128
+#: src/features/downloads/components/AddCourseRow.tsx:131
 #: src/features/downloads/components/CourseUrlPaste.tsx:58
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
@@ -547,7 +551,7 @@ msgstr "Choose your university above to connect its account."
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
-#: src/features/downloads/components/CoursePicker.tsx:55
+#: src/features/downloads/components/CoursePicker.tsx:54
 #: src/features/downloads/components/CourseSourceRow.tsx:102
 msgid "Choose your university in Settings first"
 msgstr "Choose your university in Settings first"
@@ -623,7 +627,7 @@ msgstr "Connect anyway?"
 msgid "Connect Google Drive now?"
 msgstr "Connect Google Drive now?"
 
-#: src/features/downloads/components/CoursePicker.tsx:57
+#: src/features/downloads/components/CoursePicker.tsx:56
 #: src/features/downloads/components/CourseSourceRow.tsx:104
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
@@ -736,7 +740,7 @@ msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
 #: src/features/downloads/components/ManualDownload.tsx:178
-#: src/features/search/SearchView.tsx:196
+#: src/features/search/SearchView.tsx:182
 msgid "Course"
 msgstr "Course"
 
@@ -744,7 +748,7 @@ msgstr "Course"
 msgid "Course \"{course}\" doesn't exist."
 msgstr "Course \"{course}\" doesn't exist."
 
-#: src/features/downloads/components/AddCourseRow.tsx:102
+#: src/features/downloads/components/AddCourseRow.tsx:105
 #: src/features/lectures/sidebar/NewCourseRow.tsx:44
 msgid "Course name…"
 msgstr "Course name…"
@@ -761,11 +765,12 @@ msgstr "Course sources"
 msgid "Course URL"
 msgstr "Course URL"
 
-#: src/features/search/SearchView.tsx:247
+#: src/App.tsx:33
+#: src/features/search/SearchView.tsx:236
 msgid "Courses failed to load."
 msgstr "Courses failed to load."
 
-#: src/features/downloads/components/AddCourseRow.tsx:128
+#: src/features/downloads/components/AddCourseRow.tsx:131
 msgid "Create"
 msgstr "Create"
 
@@ -1129,7 +1134,7 @@ msgstr "Groq's rate limit was reached. Try again in a few minutes."
 msgid "Hebrew University"
 msgstr "Hebrew University"
 
-#: src/features/downloads/components/CoursePicker.tsx:82
+#: src/features/downloads/components/CoursePicker.tsx:81
 msgid "Hide past courses"
 msgstr "Hide past courses"
 
@@ -1210,7 +1215,7 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
-#: src/features/search/SearchView.tsx:219
+#: src/features/search/SearchView.tsx:205
 #: src/shared/sidebar/Sidebar.tsx:75
 msgid "Lectures"
 msgstr "Lectures"
@@ -1237,11 +1242,11 @@ msgstr "Load recordings"
 msgid "Loaded"
 msgstr "Loaded"
 
-#: src/features/search/SearchView.tsx:255
+#: src/features/search/SearchView.tsx:245
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
-#: src/features/downloads/components/CoursePicker.tsx:63
+#: src/features/downloads/components/CoursePicker.tsx:62
 msgid "Loading your courses…"
 msgstr "Loading your courses…"
 
@@ -1254,7 +1259,7 @@ msgstr "Loading…"
 msgid "Manual download"
 msgstr "Manual download"
 
-#: src/features/search/SearchView.tsx:234
+#: src/features/search/SearchView.tsx:220
 msgid "Match whole word"
 msgstr "Match whole word"
 
@@ -1303,7 +1308,7 @@ msgstr "No Chrome or Edge found on this computer."
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "No Chrome or Edge was found on this computer. Install Chrome and try again."
 
-#: src/features/downloads/components/CoursePicker.tsx:72
+#: src/features/downloads/components/CoursePicker.tsx:71
 msgid "No current courses."
 msgstr "No current courses."
 
@@ -1405,7 +1410,7 @@ msgstr "Not queued"
 msgid "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 msgstr "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 
-#: src/features/search/SearchView.tsx:277
+#: src/features/search/SearchView.tsx:268
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
@@ -1514,7 +1519,7 @@ msgstr "Part of FastStudy isn't responding. Restart the app."
 msgid "Passcode"
 msgstr "Passcode"
 
-#: src/features/downloads/components/CoursePicker.tsx:98
+#: src/features/downloads/components/CoursePicker.tsx:97
 msgid "Paste a URL instead"
 msgstr "Paste a URL instead"
 
@@ -1597,7 +1602,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
-#: src/features/search/SearchView.tsx:227
+#: src/features/search/SearchView.tsx:213
 msgid "Recitations"
 msgstr "Recitations"
 
@@ -1653,7 +1658,7 @@ msgstr "Restart now"
 msgid "Restore original"
 msgstr "Restore original"
 
-#: src/features/search/SearchView.tsx:263
+#: src/features/search/SearchView.tsx:253
 msgid "Results"
 msgstr "Results"
 
@@ -1735,15 +1740,15 @@ msgstr "Scroll to the end to confirm."
 msgid "Search"
 msgstr "Search"
 
-#: src/features/search/SearchView.tsx:162
+#: src/features/search/SearchView.tsx:148
 msgid "Search summaries"
 msgstr "Search summaries"
 
-#: src/features/search/SearchView.tsx:182
+#: src/features/search/SearchView.tsx:168
 msgid "Search this course's summaries…"
 msgstr "Search this course's summaries…"
 
-#: src/features/search/SearchView.tsx:165
+#: src/features/search/SearchView.tsx:151
 msgid "Searches the summaries of the course picked in the field"
 msgstr "Searches the summaries of the course picked in the field"
 
@@ -1752,7 +1757,7 @@ msgstr "Searches the summaries of the course picked in the field"
 msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
-#: src/App.tsx:29
+#: src/App.tsx:35
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
@@ -1778,7 +1783,7 @@ msgstr "Settings saved"
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "Several rows would download into the same lecture ({names}). Rename them, then run again."
 
-#: src/features/search/SearchView.tsx:305
+#: src/features/search/SearchView.tsx:297
 msgid "Show more"
 msgstr "Show more"
 
@@ -1802,7 +1807,7 @@ msgstr "Something went wrong."
 msgid "Sorry about that. Go home to keep working, or copy the details below to report it."
 msgstr "Sorry about that. Go home to keep working, or copy the details below to report it."
 
-#: src/features/downloads/components/AddCourseRow.tsx:119
+#: src/features/downloads/components/AddCourseRow.tsx:122
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
@@ -2278,7 +2283,7 @@ msgstr "When something fails, FastStudy sends a report to Sentry. It contains th
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
-#: src/features/search/SearchView.tsx:236
+#: src/features/search/SearchView.tsx:222
 msgid "Whole word only"
 msgstr "Whole word only"
 

@@ -12,23 +12,33 @@ import DownloadsView from '@/features/downloads/DownloadsView'
 import SearchView from '@/features/search/SearchView'
 import RunnerView from '@/features/runner/RunnerView'
 import SettingsView from '@/features/settings/SettingsView'
-import Icon from '@/shared/components/Icon'
+import EmptyCard from '@/shared/components/EmptyCard'
+import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
 import { ToastContainer } from '@/services/toaster'
 import { isRtl } from '@/services/i18n'
 import { ROUTES } from '@/shared/utils/routes'
 import '@/styles/panel.css'
 
+// The lectures home: a lecture to pick, or — with no active course — how to add one or why none loaded.
 function EmptyState() {
+  const { courses, loaded, loadFailed } = useCourseTreeContext()
+  const notice = courseLoadNotice(courses, loaded, loadFailed)
   return (
-    <main className="main-view main-view--empty">
-      <div className="empty-state">
-        <span className="empty-state-icon">
-          <Icon icon="lecture" />
-        </span>
-        <p className="empty-state-title">
+    <main
+      className={
+        notice ? `main-view main-view--empty main-view--${notice}` : 'main-view main-view--empty'
+      }
+    >
+      <EmptyCard icon="lecture" error={notice === 'failed'}>
+        {notice === 'no-courses' ? (
+          <Trans>Add a course from Downloads or New course to get started</Trans>
+        ) : notice === 'failed' ? (
+          <Trans>Courses failed to load.</Trans>
+        ) : (
           <Trans>Select a lecture to get started</Trans>
-        </p>
-      </div>
+        )}
+      </EmptyCard>
     </main>
   )
 }

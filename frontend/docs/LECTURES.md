@@ -113,6 +113,10 @@ page) while the tree still has it, else `/`.
 `CourseGroup`s, `ArchivedSection` and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
 lecture row can prompt. With no course at all after a successful load (`isTreeEmpty`, archived courses count) the nav shows a centred `.tree-pane-empty` note pointing at Downloads and `New course`; a failed load (`loadFailed`) never shows it. An expanded course opens with an Overview row; the course header only toggles.
 
+The home route `/` is an `EmptyCard` asking to pick a lecture. With no active course, `courseLoadNotice`
+(`shared/utils/`, shared with Search) swaps it for a hint to add one (`.main-view--no-courses`) once a load
+succeeds, or the danger-bordered "Courses failed to load." (`.main-view--failed`) whenever the latest load failed.
+
 `utils/lectureProgress.ts`: `isLectureComplete` (the last pipeline output exists, mirroring the backend's
 `final_output()`, whatever earlier file is gone) colours each lecture's dot and reads `Complete` on its page; `courseProgress` gives the header's `N/M`, `0/0` for an
 archived course so the badge stays off.

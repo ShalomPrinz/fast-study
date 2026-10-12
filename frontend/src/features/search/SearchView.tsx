@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import EmptyCard from '@/shared/components/EmptyCard'
 import Icon from '@/shared/components/Icon'
 import PageHeader from '@/shared/components/PageHeader'
+import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
 import type { CourseSummary } from '@/types'
 import { useCourseSummaries } from './hooks/useCourseSummaries'
 import { buildHit, findMatches, groupMatches, type MatchGroup } from './utils/search'
@@ -43,20 +45,6 @@ function takeGroups(groups: MatchGroup[], limit: number): MatchGroup[] {
   return out
 }
 
-// The page's centered nothing-to-show card; `error` marks it with the danger palette, title unchanged.
-function EmptyCard({ error = false, children }: { error?: boolean; children: ReactNode }) {
-  return (
-    <div className="search-empty">
-      <div className={error ? 'empty-state search-empty-card--error' : 'empty-state'}>
-        <span className="empty-state-icon">
-          <Icon icon="search" />
-        </span>
-        <p className="empty-state-title">{children}</p>
-      </div>
-    </div>
-  )
-}
-
 // Client-side search over one course's summaries. See docs/SEARCH.md.
 export default function SearchView() {
   const { t } = useLingui()
@@ -64,9 +52,7 @@ export default function SearchView() {
   const active = courses.filter((c) => !c.archived)
   // No picker without options, whatever the reason; only a tree that loaded can say "no courses".
   const hasCourses = active.length > 0
-  const noCourses = loaded && !loadFailed && !hasCourses
-  // Whenever the latest course load failed and there are no courses to show.
-  const coursesFailed = loadFailed && !hasCourses
+  const notice = courseLoadNotice(courses, loaded, loadFailed)
 
   const [chosen, setChosen] = useState(() => localStorage.getItem(COURSE_STORAGE_KEY))
   const [query, setQuery] = useState('')
@@ -237,15 +223,19 @@ export default function SearchView() {
             </button>
           </div>
 
-          {noCourses && (
-            <EmptyCard>
-              <Trans>Add a course to search its summaries.</Trans>
-            </EmptyCard>
+          {notice === 'no-courses' && (
+            <div className="search-empty">
+              <EmptyCard icon="search">
+                <Trans>Add a course to search its summaries.</Trans>
+              </EmptyCard>
+            </div>
           )}
-          {coursesFailed && (
-            <EmptyCard error>
-              <Trans>Courses failed to load.</Trans>
-            </EmptyCard>
+          {notice === 'failed' && (
+            <div className="search-empty">
+              <EmptyCard icon="search" error>
+                <Trans>Courses failed to load.</Trans>
+              </EmptyCard>
+            </div>
           )}
 
           {/* Only while a query is waiting on the corpus — switching course with an empty box is
@@ -273,9 +263,11 @@ export default function SearchView() {
           )}
 
           {searched && matches.length === 0 && (
-            <EmptyCard>
-              <Trans>Nothing matched this search</Trans>
-            </EmptyCard>
+            <div className="search-empty">
+              <EmptyCard icon="search">
+                <Trans>Nothing matched this search</Trans>
+              </EmptyCard>
+            </div>
           )}
 
           <div className="search-results">

@@ -66,6 +66,16 @@
   color: var(--text);
 }
 
+/* The same card reporting a failure; compound so it beats .empty-state's border in any load order. */
+.empty-state.empty-state--error {
+  border-color: var(--danger);
+}
+
+.empty-state--error .empty-state-icon {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 /* Lives here, not beside ErrorBoundary: `.main-view error-view` overrides .main-view at equal
    specificity, so the two rules must stay in one file in this order. */
 /* The boundary replaces the whole tree, so this is not a flex child of .layout and has no height. */

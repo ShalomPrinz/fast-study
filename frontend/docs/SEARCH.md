@@ -76,8 +76,8 @@ scope. The picker stays a real `<select>` (keyboard-accessible, options are the 
 focus ring suppressed in favour of the field's `:focus-within`. Options exclude archived courses; the
 choice is derived — the stored name if it still exists, else the first active course.
 With no active courses, for any reason, the divider and picker drop out and no search runs. In their place,
-query or not, the "Nothing matched" card carries a hint to add a course once the tree has loaded, or — bordered in
-the danger color — an error whenever the latest course load failed.
+query or not, the shared `EmptyCard` carries a hint to add a course once the tree has loaded, or — its
+`.empty-state--error` variant — an error whenever the latest course load failed (`courseLoadNotice`).
 
 Three toggle pills (Lectures, Recitations, Whole word only) are `<button role="switch" aria-checked>`.
 No match-case (Hebrew has none) and no regex. A card's Show more is a seam across the card's foot, not a
