@@ -118,7 +118,8 @@ The repo-root `.env` is permission-denied — it holds the Groq/Gemini keys, so 
 
 ## Always ask user for clarifications
 
-For every architecture decision, small or big, ask the user to clarify his intention.
+For every architecture or product decision, small or big, ask the user to clarify his intention — what the user sees, a cross-service contract, the shape of the system.
+Code-level choices with a clear best practice (where a fix lives, fixing a shared helper at its root rather than patching a caller) are yours: decide, and name the choice in one line of the final report.
 When you catch yourself reading a phrase like "if possible I'd like X" or "what do you recommend" as approval to implement X — it isn't. Answer the question, then wait.
 I prefer being sure of what's going to happen before you actually do it, so no redundant work is ever done by you.
 
@@ -138,7 +139,7 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 
 ## Workflow
 
-- For non-trivial changes: ground yourself in the actual code first, present 2-3 options with tradeoffs, and wait for a decision before implementing. Don't start editing on an ambiguous request.
+- For non-trivial changes: ground yourself in the actual code first, present 2-3 options with tradeoffs for any architecture or product choice, and wait for a decision before implementing. Don't start editing on an ambiguous request.
 - Send no status updates mid-task. Report once, after the main session and every subagent it started have finished.
 - When a workaround fails twice, stop implementing and research the root cause — official docs, the API surface, community threads — instead of trying a third variant.
 - Before surfacing an incidental finding — git history, branch state, earlier attempts, side effects — ask whether the user would decide or act differently knowing it. If yes, say it in one line with what it changes; if not, drop it, from replies and prompt files alike.
