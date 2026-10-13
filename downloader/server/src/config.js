@@ -9,9 +9,9 @@ dotenv.config({ path: path.resolve(__dirname, '../../..', '.env'), quiet: true }
 
 export const PORT = Number(process.env.DOWNLOADER_PORT) || 3052;
 
-// Unset allowlists no extension origin at all, which is what a packaged build always is.
-// A dev loading the unpacked extension sets this to the ID Chrome assigned it.
-export const EXTENSION_ID = process.env.DOWNLOADER_EXTENSION_ID;
+// The extension's ID, pinned by the `key` in extension/manifest.json, so it is the same in dev and
+// packaged runs on every machine; electron/'s native host allowlists the same origin.
+export const EXTENSION_ID = 'hknnjgdhokbapjodjklfodhobjekjlnn';
 
 export const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 export const DATABASE_URL = process.env.DATABASE_URL ?? 'http://localhost:8001';

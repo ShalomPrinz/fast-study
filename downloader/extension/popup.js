@@ -1,4 +1,13 @@
-const SERVER = 'http://localhost:3052';
+/* global discoverServer */
+// Set on open by bridge.js's discoverServer(): {base, secret}, or {running: false} when the app is closed.
+let server = null;
+
+// Every call to our server carries the launch secret when the bridge gave one; the PDF fetch does not.
+function api(path, init = {}) {
+  const headers = { ...init.headers };
+  if (server.secret) headers['X-FastStudy-Secret'] = server.secret;
+  return fetch(`${server.base}${path}`, { ...init, headers });
+}
 
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
 
@@ -123,7 +132,7 @@ function refreshLectureSuggestions() {
 // False when the server is unreachable, which the status line then says.
 async function loadCourses() {
   try {
-    const res = await fetch(`${SERVER}/courses`);
+    const res = await api('/courses');
     if (!res.ok) throw new Error();
     courses = await res.json();
     fillDatalist(
@@ -174,7 +183,7 @@ function formatSize(bytes) {
 // Node http can replay it.
 async function probeSize(url, headers) {
   try {
-    const res = await fetch(`${SERVER}/probe-size`, {
+    const res = await api('/probe-size', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, headers: headers ?? [] }),
@@ -246,7 +255,7 @@ async function startVideo(course, lecture, kind) {
   const payload = youtubeUrl
     ? { url: youtubeUrl, course, lecture, kind }
     : { url: capture.url, headers: capture.headers, course, lecture, kind };
-  const res = await fetch(`${SERVER}${endpoint}`, {
+  const res = await api(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -267,7 +276,7 @@ async function uploadPdf(course, lecture, kind) {
     return showResult(msg('errPdfFetch'), { detail: e.message });
   }
   const qs = new URLSearchParams({ course, lecture, kind }).toString();
-  const res = await fetch(`${SERVER}/upload-pdf?${qs}`, {
+  const res = await api(`/upload-pdf?${qs}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/pdf' },
     body: blob,
@@ -301,6 +310,8 @@ async function submit(event) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   translateStatic();
+  server = await discoverServer();
+  if (server.running === false) return setStatus(msg('statusAppClosed'), true);
   const [online, status] = await Promise.all([loadCourses(), loadSource()]);
   const hasSource = !!(youtubeUrl || capture || pdfUrl);
   if (!online) setStatus(msg('statusOffline'), true);

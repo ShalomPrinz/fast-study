@@ -1,5 +1,7 @@
 // MV3 service worker: an observational (non-blocking) webRequest listener, registered synchronously
 // at top level so Chrome re-wakes the worker for it; every capture lives in chrome.storage.local.
+/* global importScripts, askBridge, reloadIfOutdated */
+importScripts('bridge.js');
 const MAX_ENTRIES = 50;
 
 // The app's --accent, so the badge reads as FastStudy's.
@@ -59,3 +61,10 @@ chrome.webRequest.onSendHeaders.addListener(
   // extraHeaders exposes Cookie/Referer/Origin, which the server's header replay needs.
   ['requestHeaders', 'extraHeaders'],
 );
+
+// A browser start is when an app update has most likely refreshed this folder underneath us.
+chrome.runtime.onStartup.addListener(() => {
+  askBridge()
+    .then(reloadIfOutdated)
+    .catch(() => {});
+});

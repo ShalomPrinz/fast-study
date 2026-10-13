@@ -2,14 +2,17 @@
 
 ## Status
 
-Maintained. The capture path for users whose university keeps the Moodle web service closed (so `auto/`'s WS-token flow can't reach it). Dev-only and unpackaged: load `downloader/extension` unpacked in `chrome://extensions` (Developer mode), with `downloader/server` running on `localhost:3052`.
+Maintained. The capture path for users whose university keeps the Moodle web service closed (so `auto/`'s WS-token flow can't reach it). Loaded unpacked in `chrome://extensions` (Developer mode): packaged users load the copy the app ships, devs load `downloader/extension`.
+
+Extension ID: **`hknnjgdhokbapjodjklfodhobjekjlnn`**, pinned by the public `key` in `manifest.json` (its private half was discarded; load-unpacked never needs it). `server/src/config.js` and `electron/`'s native host `allowed_origins` spell this ID; regenerating the key changes it in both.
 
 ## Files
 
 | File                          | What it is                                                                                       |
 | ----------------------------- | ------------------------------------------------------------------------------------------------ |
-| `manifest.json`               | MV3; `webRequest` + `storage`, host `<all_urls>`; name/description from `_locales`               |
-| `background.js`               | service worker: observational `webRequest.onSendHeaders` capture of `.mp4` requests              |
+| `manifest.json`               | MV3; `webRequest` + `storage` + `nativeMessaging`, host `<all_urls>`, pinned `key`; name/description from `_locales` |
+| `bridge.js`                   | server discovery through the native host; loaded by the popup and `importScripts`ed by the worker |
+| `background.js`               | service worker: observational `webRequest.onSendHeaders` capture of `.mp4` requests; the `onStartup` version check |
 | `popup.html` / `.css` / `.js` | the toolbar popup: source, course, kind, name, Download                                          |
 | `_locales/{en,he}/`           | every user-facing string; Hebrew wording copied from `frontend/src/locales/he/messages.po`       |
 | `icons/`                      | 16/32/48/128 PNGs extracted from `electron/assets/icon.ico`                                      |
@@ -17,6 +20,8 @@ Maintained. The capture path for users whose university keeps the Moodle web ser
 
 ## How it works
 
+- **Server discovery** (`bridge.js`, popup open): `chrome.runtime.sendNativeMessage('com.faststudy.bridge', {})`. A `{port, secret}` reply means `http://127.0.0.1:<port>` with `X-FastStudy-Secret` on every server call; `{running: false}` shows "Open the FastStudy app" and calls nothing; no host registered (dev, WSL) falls back to `http://localhost:3052` with no secret. The host and its registration are `electron/`'s.
+- **Self-update**: a reply's `extensionVersion` that differs from the manifest's triggers `chrome.runtime.reload()`, from the popup and from the worker's `onStartup`, at most once per shipped version (`reloadedFor` in storage), so a folder the app never refreshes cannot reload on every open.
 - **Capture** (`background.js`): every request whose URL path ends in `.mp4` is stored as `{url, headers, capturedAt, pageUrl}`, `pageUrl` being its tab's URL (no tab URL, no capture). The store is one ring of 50 across all tabs, deduped by `url`; the badge is set per tab and counts only that page's captures.
 - **Source** (popup, on open): clears the tab's badge and shows exactly one source — a YouTube page (`/download-youtube`), else this page's captures (`/download` with the raw URL + captured headers), else a `.pdf` tab (`/upload-pdf`).
 - **Per-page isolation** is by exact `pageUrl === activeTab.url` (query and hash included), so captures from other tabs never leak in and navigating away hides earlier ones.
@@ -27,7 +32,7 @@ Maintained. The capture path for users whose university keeps the Moodle web ser
 
 - Non-blocking `webRequest` with `extraHeaders` is allowed in MV3 (only `webRequestBlocking` is policy-only); `extraHeaders` is what exposes `Cookie`/`Referer`/`Origin` for the server's header replay.
 - The listener is registered synchronously at top level, so Chrome re-wakes a suspended worker for it; all state is in `chrome.storage.local`. Captures are written through one promise chain so a burst can't lose an entry to a racing read-modify-write.
-- The `<all_urls>` host permission exempts the popup's `fetch`es from CORS (server calls and the PDF fetch alike), so `DOWNLOADER_EXTENSION_ID` is not needed for it.
+- The `<all_urls>` host permission exempts the popup's `fetch`es from CORS (server calls and the PDF fetch alike): measured, a POST with `X-FastStudy-Secret` to a server sending no CORS headers succeeds with no preflight. The server's allowlisted extension origin is only a backstop.
 
 ## Conventions
 
@@ -37,8 +42,7 @@ Maintained. The capture path for users whose university keeps the Moodle web ser
 - Light theme only; `popup.css` copies the tokens it uses from `frontend/src/styles/tokens.css` and the `.btn--primary` rules from `button.css`.
 - `suggestName` in `popup.js` is a port of `frontend/src/features/lectures/utils/nextName.ts` (prefix inferred from the course's own names; `next` for a video, `latest` for a PDF). The fallback prefix comes from `_locales` (`dirLecture`/`dirRecitation`). Change both together.
 - A brand-new course needs nothing here: the server creates it before the job starts.
-- `SERVER` is hardcoded to `http://localhost:3052` and calls carry no `X-FastStudy-Secret`: the extension can't learn an ephemeral port or receive `FASTSTUDY_SECRET`, which is why it isn't packaged.
 
 ## Testing
 
-No suite. Load it into a Playwright persistent Chromium context (`--load-extension`, `--disable-extensions-except`, `--headless=new`) against a local server. Playwright can't attach to the toolbar popup, so open `popup.html` as a tab created with `active: false` in the lecture tab's window — its "active tab" is then still the lecture page. To aim at another server port, use a temp copy of this folder with `SERVER` rewritten.
+No suite. Load it into a Playwright persistent Chromium context (`--load-extension`, `--disable-extensions-except`, `--headless=new`) against a local server. Playwright can't attach to the toolbar popup, so open `popup.html` as a tab created with `active: false` in the lecture tab's window — its "active tab" is then still the lecture page. Chromium reads native hosts from `<user-data-dir>/NativeMessagingHosts/com.faststudy.bridge.json`, so a fake host there (any executable speaking the 4-byte length framing) drives the bridge paths. Headless Chromium never fires `onStartup` and doesn't bring a command-line extension back after `chrome.runtime.reload()`; call the handler from `sw.evaluate` instead.

@@ -37,6 +37,10 @@
     "message": "No video or PDF on this page. Play the video for a few seconds, then open this again.",
     "description": "Popup status when nothing was captured."
   },
+  "statusAppClosed": {
+    "message": "Open the FastStudy app.",
+    "description": "FastStudy is installed but not running, so there is no server to reach."
+  },
   "statusOffline": {
     "message": "Can't reach FastStudy. Open the FastStudy app, then try again.",
     "description": "The local FastStudy server is not answering."

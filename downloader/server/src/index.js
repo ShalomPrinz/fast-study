@@ -21,13 +21,10 @@ const app = express();
 
 app.use(
   cors({
-    // 'app://bundle' is frozen with no trailing slash (see the root CLAUDE.md). The extension
-    // origin appears only for a dev who set DOWNLOADER_EXTENSION_ID; dev also allows any localhost port.
-    origin: corsOrigins([
-      ...(EXTENSION_ID ? [`chrome-extension://${EXTENSION_ID}`] : []),
-      FRONTEND_URL,
-      'app://bundle',
-    ]),
+    // 'app://bundle' is frozen with no trailing slash (see the root CLAUDE.md); dev also allows any
+    // localhost port. The extension's <all_urls> host permission already exempts its calls from CORS,
+    // so its pinned origin is listed only as a backstop should that permission ever narrow.
+    origin: corsOrigins([`chrome-extension://${EXTENSION_ID}`, FRONTEND_URL, 'app://bundle']),
     methods: ['GET', 'POST', 'OPTIONS'],
     // A pinned allowedHeaders list is exhaustive: without X-FastStudy-Secret named here the
     // preflight strips it and every call fails as a CORS error rather than an auth one.

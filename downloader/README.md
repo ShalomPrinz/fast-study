@@ -1,6 +1,6 @@
 # Downloader — Install Guide (Windows)
 
-A Chrome extension that grabs lecture videos (and PDFs) off the page you're watching and saves them straight into FastStudy — for universities whose Moodle web service is closed, so the app's own Downloads page can't reach them. It is a developer setup: not part of the installer, and its popup speaks Hebrew or English, following Chrome's language.
+A Chrome extension that grabs lecture videos (and PDFs) off the page you're watching and saves them straight into FastStudy — for universities whose Moodle web service is closed, so the app's own Downloads page can't reach them. The FastStudy app ships it as a folder you load unpacked in Chrome, and the extension finds the running app by itself, with nothing to configure; it reloads itself when the app brings a newer version. Its popup speaks Hebrew or English, following Chrome's language. The rest of this page is the developer setup, running from the repo.
 
 ## Setup (with Node.js)
 
@@ -35,7 +35,7 @@ From a PowerShell or Command Prompt in the repo root:
 npm run dev
 ```
 
-That boots backend + frontend + downloader + database together. Logs prefixed `Downloader` show on port `3052`.
+That boots backend + frontend + downloader + database together. Logs prefixed `Downloader` show on port `3052`, which is where the extension looks when no FastStudy app is installed.
 
 Or, downloader-only:
 
@@ -63,6 +63,7 @@ npm start
 
 ### Troubleshooting
 
+- **Popup says "Open the FastStudy app"** — FastStudy is installed but not running; start it and reopen the popup.
 - **Popup says "Can't reach FastStudy"** — open the FastStudy app (`npm run dev` at the repo root), or start the server alone with `npm start` in `downloader\server\`.
 - **"No video or PDF on this page"** — reload the lecture page and let the video play a few seconds before opening the popup.
 - **YouTube downloads fail** — confirm `yt-dlp --version` works in your terminal. Recent versions also need Node.js on PATH for YouTube's player script (which you already have).

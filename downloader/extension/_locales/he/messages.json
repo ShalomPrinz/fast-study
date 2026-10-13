@@ -37,6 +37,10 @@
     "message": "לא נמצא וידאו או PDF בדף הזה. הפעל את הווידאו לכמה שניות ופתח שוב.",
     "description": "Popup status when nothing was captured."
   },
+  "statusAppClosed": {
+    "message": "פתח את אפליקציית FastStudy.",
+    "description": "FastStudy is installed but not running, so there is no server to reach."
+  },
   "statusOffline": {
     "message": "אין חיבור ל-FastStudy. פתח את אפליקציית FastStudy ונסה שוב.",
     "description": "The local FastStudy server is not answering."

@@ -23,16 +23,15 @@ alone seeds and self-updates the writable yt-dlp copy ([DOWNLOAD.md](docs/DOWNLO
 | Key                       | Default                 | Meaning                                                                                  |
 | ------------------------- | ----------------------- | ---------------------------------------------------------------------------------------- |
 | `DOWNLOADER_PORT`         | `3052`                  | default listen port (`FASTSTUDY_PORT` in the environment wins)                           |
-| `DOWNLOADER_EXTENSION_ID` | none                    | extension CORS origin; the extension's host permission already exempts it from CORS     |
 | `FRONTEND_URL`            | `http://localhost:5173` | frontend CORS origin; `app://bundle` always, and any `http://localhost:<port>` in dev, beside it |
 | `DATABASE_URL`            | `http://localhost:8001` | database base URL                                                                        |
 | `BACKEND_URL`             | `http://localhost:8000` | backend base URL — timing samples and the video-arrived report                          |
 | `AUTODL_URL`              | `http://localhost:3053` | auto/ base URL — `POST /resolve`, for `/download-item`, `/download-url` and silent re-resolve, and the Moodle files auto/ streams |
 
-`DOWNLOADER_EXTENSION_ID` has no default, so a packaged build allowlists no `chrome-extension://`
-origin. The extension doesn't depend on it: its `<all_urls>` host permission exempts the popup's
-calls from CORS. It is dev-only because it hardcodes `http://localhost:3052` and has no way to
-receive `FASTSTUDY_SECRET`.
+CORS always allowlists `chrome-extension://<EXTENSION_ID>`, the ID the extension's manifest `key`
+pins (`config.js`). That is a backstop: the extension's `<all_urls>` host permission already exempts
+its calls from CORS. It learns this service's port and `FASTSTUDY_SECRET` from `electron/`'s native
+host ([extension/CLAUDE.md](../extension/CLAUDE.md)).
 
 Launch contract — the `FASTSTUDY_SECRET` check (`requireSecret`, every route but `/health`), the
 secret on outbound peer calls (`peerHeaders`) and the state root (`statePath`, where yt-dlp's cache

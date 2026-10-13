@@ -2,7 +2,7 @@
 
 ## What this is
 
-Three packages that capture lecture videos and PDFs and hand them to the database service, which writes `{DATA_ROOT}/{course}/{lecture}/video.mp4` (or a material PDF) for the backend's pipeline to pick up: a dev-only Chrome extension (Manifest V3, `extension/`), the express helper server (`server/`) and the Playwright auto-downloader (`auto/`). End-user install guide: [README.md](README.md).
+Three packages that capture lecture videos and PDFs and hand them to the database service, which writes `{DATA_ROOT}/{course}/{lecture}/video.mp4` (or a material PDF) for the backend's pipeline to pick up: a Chrome extension (Manifest V3, `extension/`), the express helper server (`server/`) and the Playwright auto-downloader (`auto/`). End-user install guide: [README.md](README.md).
 
 ## Source paths
 
@@ -20,7 +20,7 @@ npm --prefix downloader/auto start     # starts auto/app.js on port 3053 (the HT
 
 Both services implement the launch contract — loopback bind, the `FASTSTUDY_PORT` handshake, the `FASTSTUDY_SECRET` check with `GET /health` exempt, the state root — through [`@faststudy/runtime`](../lib/runtime/CLAUDE.md), and resolve their binaries through [`@faststudy/tools`](../lib/tools/CLAUDE.md). Unset `FASTSTUDY_SECRET` (every manual run) means no enforcement and no secret on `server/`'s peer calls.
 
-The Chrome extension (`extension/`, loaded unpacked) is the capture path for users whose university keeps the Moodle web service closed; it is **dev-only, not part of the packaged build** — [extension/CLAUDE.md](extension/CLAUDE.md). Server config and internals live in **`server/CLAUDE.md`**.
+The Chrome extension (`extension/`, loaded unpacked) is the capture path for users whose university keeps the Moodle web service closed; it finds the server's port and launch secret through the `com.faststudy.bridge` native messaging host and falls back to `localhost:3052` in dev — [extension/CLAUDE.md](extension/CLAUDE.md). Server config and internals live in **`server/CLAUDE.md`**.
 
 ## The two services
 
