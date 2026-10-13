@@ -1,7 +1,7 @@
 {
   "name": "downloader",
   "version": "1.0.0",
-  "description": "Local server for the Video MP4 Interceptor Chrome extension.",
+  "description": "FastStudy downloader: captures lecture videos and PDFs for the database service.",
   "type": "module",
   "private": true,
   "scripts": {

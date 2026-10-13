@@ -3,6 +3,7 @@ import { downloaders, runDownloadJob } from '../downloaders/index.js';
 import { YTDLP_HOST_RE } from '../downloaders/ytdlp.js';
 import { invalidRequest, storedName, validateKind } from '../validate.js';
 import { createJob } from '../jobs.js';
+import { ensureCourse } from '../services/database.js';
 
 const router = Router();
 
@@ -50,7 +51,15 @@ function startAndAnswer(res, downloader, input, { course, lecture, kind }) {
   res.json({ status: 'Downloading in background...', target: `${course}/${lecture}`, jobId });
 }
 
-router.post('/download', (req, res) => {
+// The extension's routes may name a course that doesn't exist yet: create it first, or answer the
+// database's refusal (502) instead of starting a job doomed to `course_not_found`.
+async function ensureThenStart(res, downloader, input, meta) {
+  const failure = await ensureCourse(meta.course);
+  if (failure) return res.status(502).json(failure);
+  startAndAnswer(res, downloader, input, meta);
+}
+
+router.post('/download', async (req, res) => {
   const { url, headers, course, lecture, kind = 'lecture' } = req.body ?? {};
   if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
     return res.status(400).json(invalidRequest('url', 'valid url required'));
@@ -62,7 +71,7 @@ router.post('/download', (req, res) => {
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  startAndAnswer(res, downloaders.curl, { url, headers }, { ...names, kind });
+  await ensureThenStart(res, downloaders.curl, { url, headers }, { ...names, kind });
 });
 
 // Plain URL (no header replay) added to the lecture's materials.
@@ -81,7 +90,7 @@ router.post('/download-file', (req, res) => {
   startAndAnswer(res, downloaders.fetch, { url }, { ...names, kind });
 });
 
-router.post('/download-youtube', (req, res) => {
+router.post('/download-youtube', async (req, res) => {
   const { url, course, lecture, kind = 'lecture' } = req.body ?? {};
   let host = '';
   try {
@@ -99,7 +108,7 @@ router.post('/download-youtube', (req, res) => {
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  startAndAnswer(res, downloaders.ytdlp, { url }, { ...names, kind });
+  await ensureThenStart(res, downloaders.ytdlp, { url }, { ...names, kind });
 });
 
 export default router;

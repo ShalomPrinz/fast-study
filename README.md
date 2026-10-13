@@ -60,9 +60,8 @@ npm run app     # builds the frontend, then runs everything under the Electron l
 `npm run app` runs the services the way the installed app does — ephemeral ports, a launch secret —
 so a UI change needs it rerun; `npm run dev` is the edit loop.
 
-The Chrome extension is dev-only: load `downloader/extension/regular` unpacked, then set
-`DOWNLOADER_EXTENSION_ID` in `.env` to the ID Chrome assigned. Full guide:
-[`downloader/README.md`](downloader/README.md).
+The Chrome extension is dev-only: load `downloader/extension` unpacked, with `npm run dev` running.
+Full guide: [`downloader/README.md`](downloader/README.md).
 
 ## Tests
 

@@ -1,0 +1,160 @@
+{
+  "extName": {
+    "message": "FastStudy",
+    "description": "Extension name; the product name, never translated."
+  },
+  "extDescription": {
+    "message": "Save lecture videos and PDFs from the page you're watching into FastStudy.",
+    "description": "Extension description in the Chrome Web Store and chrome://extensions."
+  },
+  "statusLoading": {
+    "message": "Looking for a video on this page…",
+    "description": "Popup status while it reads the page."
+  },
+  "statusOneVideo": {
+    "message": "Found a video on this page.",
+    "description": "Popup status: exactly one captured .mp4."
+  },
+  "statusManyVideos": {
+    "message": "Found $COUNT$ videos on this page.",
+    "description": "Popup status: several captured .mp4s.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "statusYoutube": {
+    "message": "YouTube video on this page.",
+    "description": "Popup status on a YouTube page."
+  },
+  "statusPdf": {
+    "message": "PDF on this page.",
+    "description": "Popup status on a PDF page."
+  },
+  "statusNothing": {
+    "message": "No video or PDF on this page. Play the video for a few seconds, then open this again.",
+    "description": "Popup status when nothing was captured."
+  },
+  "statusOffline": {
+    "message": "Can't reach FastStudy. Open the FastStudy app, then try again.",
+    "description": "The local FastStudy server is not answering."
+  },
+  "labelVideo": {
+    "message": "Video",
+    "description": "Label of the captured-video picker."
+  },
+  "labelVideoLink": {
+    "message": "Video link",
+    "description": "Label of the YouTube page URL field."
+  },
+  "labelPdf": {
+    "message": "PDF",
+    "description": "Label of the PDF URL field."
+  },
+  "labelCourse": {
+    "message": "Course",
+    "description": "Label of the course field."
+  },
+  "placeholderCourse": {
+    "message": "Course name…",
+    "description": "Placeholder of the course field."
+  },
+  "labelKind": {
+    "message": "Type",
+    "description": "Label of the lecture/recitation choice."
+  },
+  "kindLecture": {
+    "message": "Lecture",
+    "description": "Radio: save as a lecture."
+  },
+  "kindRecitation": {
+    "message": "Recitation",
+    "description": "Radio: save as a recitation."
+  },
+  "labelName": {
+    "message": "Name in the course",
+    "description": "Label of the lecture/recitation name field."
+  },
+  "placeholderLecture": {
+    "message": "Lecture name…",
+    "description": "Placeholder of the name field for a lecture."
+  },
+  "placeholderRecitation": {
+    "message": "Recitation name…",
+    "description": "Placeholder of the name field for a recitation."
+  },
+  "dirLecture": {
+    "message": "Lecture",
+    "description": "Suggested folder name prefix for a course with no lectures yet; lands on disk."
+  },
+  "dirRecitation": {
+    "message": "Recitation",
+    "description": "Suggested folder name prefix for a course with no recitations yet; lands on disk."
+  },
+  "btnDownload": {
+    "message": "Download",
+    "description": "The download button."
+  },
+  "btnDownloading": {
+    "message": "Downloading…",
+    "description": "The download button while the request is in flight."
+  },
+  "doneVideo": {
+    "message": "Downloading to $TARGET$. Follow it in FastStudy's Downloads.",
+    "description": "Shown once the server accepted a video download.",
+    "placeholders": {
+      "target": {
+        "content": "$1",
+        "example": "Calculus/Lecture 3"
+      }
+    }
+  },
+  "donePdf": {
+    "message": "Saved to $TARGET$",
+    "description": "Shown once the PDF was stored.",
+    "placeholders": {
+      "target": {
+        "content": "$1",
+        "example": "Calculus/Lecture 3"
+      }
+    }
+  },
+  "errMissingTarget": {
+    "message": "Pick a course and a name first.",
+    "description": "Submit with an empty course or name."
+  },
+  "errStart": {
+    "message": "Couldn't start the download.",
+    "description": "Headline when the server refused a download; its own text shows beneath."
+  },
+  "errPdfFetch": {
+    "message": "Couldn't read the PDF from this page.",
+    "description": "Headline when the popup could not fetch the PDF itself."
+  },
+  "errPdfStore": {
+    "message": "Couldn't save the PDF.",
+    "description": "Headline when the server refused the PDF; its own text shows beneath."
+  },
+  "sizeMb": {
+    "message": "$SIZE$ MB",
+    "description": "A video size in megabytes.",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "412.3"
+      }
+    }
+  },
+  "sizeGb": {
+    "message": "$SIZE$ GB",
+    "description": "A video size in gigabytes.",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "1.25"
+      }
+    }
+  }
+}

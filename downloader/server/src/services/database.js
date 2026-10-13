@@ -38,6 +38,25 @@ export async function listCourses() {
     }));
 }
 
+// Create the course so the extension can target a new one; 409 `name_taken` means it exists, also success.
+// Null on success, else the refusal body. Throws on a network error.
+export async function ensureCourse(course) {
+  const res = await fetch(`${DATABASE_URL}/courses`, {
+    method: 'POST',
+    headers: peerHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ name: course, source_url: null }),
+  });
+  if (res.ok) {
+    emitLog(`📁 Created course ${course}`);
+    return null;
+  }
+  const body = await res.json().catch(() => null);
+  if (res.status === 409 && body?.code === 'name_taken') return null;
+  const failure = refused(body, res.status);
+  emitError(`❌ Creating course ${course} failed: ${failure.error}`);
+  return failure;
+}
+
 // Stream the temp video.mp4 to the database (a PUT that wipes derived artifacts), removing the
 // temp dir either way. Never throws: null on success, else the job's failure.
 export async function uploadVideo(tempDir, course, lecture, kind, tool) {

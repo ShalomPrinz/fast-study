@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import express from 'express';
-import { uploadPdf } from '../services/database.js';
+import { ensureCourse, uploadPdf } from '../services/database.js';
 import { emitLog, formatBytes } from '../progress.js';
 import { invalidRequest, storedName, validateKind } from '../validate.js';
 
@@ -35,6 +35,8 @@ router.post('/upload-pdf', express.raw({ type: '*/*', limit: '1gb' }), async (re
   }
 
   // Network error throws -> 500 (error middleware); database-level failure -> 502.
+  const courseError = await ensureCourse(course);
+  if (courseError) return res.status(502).json(courseError);
   const uploadError = await uploadPdf(buf, course, lecture, kind);
   if (uploadError) return res.status(502).json(uploadError);
   res.json({ status: 'PDF uploaded', target: `${course}/${lecture}` });

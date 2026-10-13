@@ -23,16 +23,16 @@ alone seeds and self-updates the writable yt-dlp copy ([DOWNLOAD.md](docs/DOWNLO
 | Key                       | Default                 | Meaning                                                                                  |
 | ------------------------- | ----------------------- | ---------------------------------------------------------------------------------------- |
 | `DOWNLOADER_PORT`         | `3052`                  | default listen port (`FASTSTUDY_PORT` in the environment wins)                           |
-| `DOWNLOADER_EXTENSION_ID` | none                    | extension CORS origin — required to use the dev-only extension                          |
+| `DOWNLOADER_EXTENSION_ID` | none                    | extension CORS origin; the extension's host permission already exempts it from CORS     |
 | `FRONTEND_URL`            | `http://localhost:5173` | frontend CORS origin; `app://bundle` always, and any `http://localhost:<port>` in dev, beside it |
 | `DATABASE_URL`            | `http://localhost:8001` | database base URL                                                                        |
 | `BACKEND_URL`             | `http://localhost:8000` | backend base URL — timing samples and the video-arrived report                          |
 | `AUTODL_URL`              | `http://localhost:3053` | auto/ base URL — `POST /resolve`, for `/download-item`, `/download-url` and silent re-resolve, and the Moodle files auto/ streams |
 
 `DOWNLOADER_EXTENSION_ID` has no default, so a packaged build allowlists no `chrome-extension://`
-origin. The extension is dev-only — it hardcodes `http://localhost:3052` and has no way to receive
-`FASTSTUDY_SECRET` — so a dev sets this to the ID Chrome assigned (it changes on reload) or CORS
-blocks the popup.
+origin. The extension doesn't depend on it: its `<all_urls>` host permission exempts the popup's
+calls from CORS. It is dev-only because it hardcodes `http://localhost:3052` and has no way to
+receive `FASTSTUDY_SECRET`.
 
 Launch contract — the `FASTSTUDY_SECRET` check (`requireSecret`, every route but `/health`), the
 secret on outbound peer calls (`peerHeaders`) and the state root (`statePath`, where yt-dlp's cache
@@ -65,9 +65,9 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `POST /config`                            | `{error_reports?}` → `{status:'ok', applied}`; 400 `invalid_request` on a non-boolean — the launcher's live switch |
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                        |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged GET)                                                                  |
-| `POST /download`                          | curl header-replay capture; 200 at once with a `jobId`, runs in the background                                    |
+| `POST /download`                          | curl header-replay capture; creates a missing course first; 200 with a `jobId`, runs in the background           |
 | `POST /download-file`                     | plain-URL capture added to the lecture's materials; 200 at once with a `jobId`                                    |
-| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); 200 at once with a `jobId`                             |
+| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); creates a missing course first; 200 with a `jobId`     |
 | `POST /download-url`                      | any http(s) URL (the Downloads page's manual entry) → auto/ `/resolve`, then one job: plain yt-dlp off the Moodle site, curl on auto's proxy on it; auto's refusals forwarded verbatim; 200 with a `jobId` ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim, `429 moodle_busy` included) |
 | `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives or joins that section's bulk run                      |
@@ -76,7 +76,7 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition                                                  |
 | `GET  /jobs`                              | `{boot, jobs}` — every live download job plus a per-process boot id; the resync for `job:change`                  |
 | `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                      |
-| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                    |
+| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`; creates a missing course first                    |
 
 `kind` is `lecture` (default) or `recitation`.
 
