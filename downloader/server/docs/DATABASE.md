@@ -10,6 +10,15 @@ the latter.
 reshaped here to `[{name, lectures, recitations}]` rather than changing a `/tree` contract the
 frontend depends on. Archived courses are dropped so finished ones don't clutter suggestions.
 
+## `ensureCourse()` — the extension may name a new course
+
+The database's video PUT and `/materials` POST answer 404 `course_not_found` for a missing course,
+and its `POST /courses` refuses an existing one (409 `name_taken`). So `/download`,
+`/download-youtube` and `/upload-pdf` — the extension's routes, whose course field is free text —
+first read `/tree` (archived included) and create the course only when it's absent. A 409
+`name_taken` counts as success: two popups racing to create one course both proceed. Any other
+refusal is answered as a 502 with the database's own `code`, and no job starts.
+
 ## `uploadVideo` — the video PUT wipes derived artifacts
 
 Streams the temp `video.mp4` to `PUT /courses/{course}/lectures/{lecture}/video?kind=`, which **also
