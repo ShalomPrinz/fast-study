@@ -1,6 +1,5 @@
-// The extension may name a course that doesn't exist yet, so the routes it calls create it first.
-// The database is a loopback stand-in whose create is atomic like its mkdir: a second create of the
-// same name answers 409 `name_taken`, which must read as success.
+// The routes create the extension's course first; a loopback stand-in database answers 409
+// `name_taken` for an existing one, which must read as success, and `/tree` is never read.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -19,12 +18,6 @@ const db = http.createServer((req, res) => {
       res.writeHead(status, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(body));
     };
-    if (req.method === 'GET' && req.url === '/tree') {
-      return json(
-        200,
-        [...courses].map((name) => ({ name, lectures: [], recitations: [] })),
-      );
-    }
     if (req.method === 'POST' && req.url === '/courses') {
       const { name } = JSON.parse(raw);
       if (createAnswer) return createAnswer(res, json);
@@ -67,10 +60,15 @@ test.beforeEach(() => {
 
 const posts = () => seen.filter((s) => s.method === 'POST' && s.path === '/courses');
 
-test('an existing course is left alone — no create', async () => {
+test.afterEach(() => {
+  assert.equal(seen.filter((s) => s.path === '/tree').length, 0);
+});
+
+test('an existing course answers 409 name_taken, which counts as success', async () => {
   courses.add('Calculus');
   assert.equal(await ensureCourse('Calculus'), null);
-  assert.equal(posts().length, 0);
+  assert.equal(posts().length, 1);
+  assert.ok(courses.has('Calculus'));
 });
 
 test('a missing course is created with the stored name', async () => {
@@ -112,6 +110,34 @@ test('/upload-pdf into a brand-new course creates it, then stores the PDF', asyn
     );
     assert.equal(res.status, 200);
     assert.ok(courses.has('New'));
+    assert.deepEqual(
+      seen.map((s) => `${s.method} ${s.path.split('?')[0]}`).filter((s) => !s.endsWith('/notify')),
+      ['POST /courses', 'POST /courses/New/lectures/L1/materials'],
+    );
+  } finally {
+    server.closeAllConnections();
+    server.close();
+  }
+});
+
+test('/upload-pdf answers 502 with the refusal and stores nothing when the create is refused', async () => {
+  createAnswer = (res, json) =>
+    json(500, { error: 'disk full', code: 'disk_full', params: { detail: 'x' } });
+  const app = express().use(pdfRouter);
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise((r) => server.once('listening', r));
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:${server.address().port}/upload-pdf?course=New&lecture=L1`,
+      { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: '%PDF-1.4' },
+    );
+    assert.equal(res.status, 502);
+    assert.deepEqual(await res.json(), {
+      error: 'disk full',
+      code: 'disk_full',
+      params: { detail: 'x' },
+    });
+    assert.equal(seen.filter((s) => s.path.includes('/materials')).length, 0);
   } finally {
     server.closeAllConnections();
     server.close();

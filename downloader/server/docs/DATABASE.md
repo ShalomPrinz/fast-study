@@ -15,9 +15,9 @@ frontend depends on. Archived courses are dropped so finished ones don't clutter
 The database's video PUT and `/materials` POST answer 404 `course_not_found` for a missing course,
 and its `POST /courses` refuses an existing one (409 `name_taken`). So `/download`,
 `/download-youtube` and `/upload-pdf` — the extension's routes, whose course field is free text —
-first read `/tree` (archived included) and create the course only when it's absent. A 409
-`name_taken` counts as success: two popups racing to create one course both proceed. Any other
-refusal is answered as a 502 with the database's own `code`, and no job starts.
+first `POST /courses` unconditionally, so no download pays for a full `/tree` scan. A 409
+`name_taken` means the folder exists (archived, a race, or a case-only match on Windows) and counts
+as success. Any other refusal is answered as a 502 with the database's own `code`, and no job starts.
 
 ## `uploadVideo` — the video PUT wipes derived artifacts
 

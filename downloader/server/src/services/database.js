@@ -38,14 +38,9 @@ export async function listCourses() {
     }));
 }
 
-// Create the course unless /tree (archived included) already lists it, so the extension can target a
-// brand-new course. Null when it exists afterwards — a concurrent create's 409 `name_taken` included —
-// else the refusal body. Throws on a network error.
+// Create the course so the extension can target a new one; 409 `name_taken` means it exists, also success.
+// Null on success, else the refusal body. Throws on a network error.
 export async function ensureCourse(course) {
-  const treeRes = await fetch(`${DATABASE_URL}/tree`, { headers: peerHeaders() });
-  if (!treeRes.ok) return refused(await treeRes.json().catch(() => null), treeRes.status);
-  const tree = await treeRes.json();
-  if (tree.some((c) => c.name === course)) return null;
   const res = await fetch(`${DATABASE_URL}/courses`, {
     method: 'POST',
     headers: peerHeaders({ 'Content-Type': 'application/json' }),
