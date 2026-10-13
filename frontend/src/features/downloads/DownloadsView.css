@@ -33,9 +33,8 @@
   color: var(--danger);
 }
 
-/* The discovered recordings of the one open course. `ModeToggle` emits its segments and its body as
-   siblings, so the panel places them itself: the segments share the first row with the close
-   control, and everything the body renders spans both columns beneath. */
+/* The open course's recordings. `ModeToggle` emits segments and body as siblings, so the panel puts
+   the segments beside the close control on row 1 and lets the body span both columns beneath. */
 .recordings-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

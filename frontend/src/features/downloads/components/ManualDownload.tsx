@@ -35,9 +35,8 @@ import './RecordingRow.css'
 import './RecordingJobList.css'
 import './ManualDownload.css'
 
-// The Downloads page's Manual tab: a "paste a link" form for any video URL reachable without
-// credentials. A link on the Moodle site is proxied through auto under the Moodle lock; any other runs
-// yt-dlp. See docs/DOWNLOADS.md.
+// The Downloads page's Manual tab: a "paste a link" form for any video that opens without signing in.
+// auto routes it (Moodle-site links under the Moodle lock, others through yt-dlp); see docs/DOWNLOADS.md.
 export default function ManualDownload() {
   return (
     <section className="manual-download">
