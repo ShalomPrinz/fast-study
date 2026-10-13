@@ -94,3 +94,26 @@
 .recordings-status.recordings-status--error {
   color: var(--danger);
 }
+
+/* The tab row rides in the header's secondary row, which `.main-view--page` keeps frozen above the
+   scrolling body, and spans its full width; `.mode-toggle-btn`'s `flex: 1` shares it out equally. */
+.downloads-page .downloads-tabs {
+  flex: 1;
+}
+
+/* Each tab's header facts stacked in one cell; the hidden ones still claim their height. */
+.downloads-meta {
+  display: grid;
+}
+
+.downloads-meta-item {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+.downloads-meta-item.downloads-meta-item--hidden {
+  visibility: hidden;
+}

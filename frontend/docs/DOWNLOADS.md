@@ -8,8 +8,18 @@ section's "Download all" is [BULK.md](BULK.md).
 
 ## Layout
 
-A `PageHeader` (account chip, count of courses with a source) over one `CourseSourceRow` per active
-course plus `AddCourseRow` (alone with no courses; under a `.source-list-failed` danger note when
+Three tabs, University, Extension and Manual (`DownloadsTabs`, the light segmented switch at full width), ride in the
+`PageHeader`'s secondary row, so title and tabs stay frozen while `.page-body` scrolls; the body is keyed
+by tab, so each opens at its top. The header meta is per tab: University the account chip and the count
+of courses with a source, Extension the setup time, Manual none; all three share one grid cell, the inactive hidden, so the header's height and the tab row never move on a switch. Extension is the guide
+([EXTENSION.md](EXTENSION.md)), Manual is `ManualDownload` (below).
+
+`useDownloadsTab` picks the tab through the pure `defaultTab`: a valid stored choice
+(`fastStudyDownloadsTab`, written only on a click), else University when the account is connected and
+Extension when not. While the account is unknown University stands in, unstored; the account default is
+fixed the first time the account is known, so a later sign-out never moves the page.
+
+The University tab is the unconfigured-site nudge, then one `CourseSourceRow` per active course plus `AddCourseRow` (alone with no courses; under a `.source-list-failed` danger note when
 `courseLoadNotice` says the load failed, still usable since a create reports its own failure), then — once a course is loaded — the `.recordings-panel`. The 880px measure
 fits a recording's second line: kind toggle, name input and action side by side.
 
@@ -46,7 +56,7 @@ own branch in the catalog row, so it never reads as the bare generic line.
 
 ## Manual download
 
-A collapsible section above the course sources (`ManualDownload`): paste a video link, type a course
+The Manual tab, a collapsible section (`ManualDownload`): paste a video link, type a course
 (the active ones are suggestions; any other name is created first, an archived one answers `name_taken`),
 kind and name, and `POST /download-url` queues it. auto decides the route: a link on the configured
 Moodle site's origin is proxied through auto under the Moodle lock (below), any other runs yt-dlp; both

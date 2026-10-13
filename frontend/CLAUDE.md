@@ -28,8 +28,8 @@ back to those overrides, then the dev ports — see
 | [LECTURES.md](docs/LECTURES.md)            | pipeline constants, lecture view, materials, runner state, sidebar, tree pane     |
 | [EDITOR.md](docs/EDITOR.md)                | the summary editor: save cycle, `PdfViewer`, `MarkdownEditor`                     |
 | [OVERVIEW.md](docs/OVERVIEW.md)            | course overview: extractors, generate/continue/re-generate, per-slug gating       |
-| [DOWNLOADS.md](docs/DOWNLOADS.md)          | downloads page: auth, the Moodle lock, session, discovery, row edits, already-downloaded rule |
-| [EXTENSION.md](docs/EXTENSION.md)          | the Chrome extension guide page: steps, bridge-absent state, screenshot drop-in   |
+| [DOWNLOADS.md](docs/DOWNLOADS.md)          | downloads page: tabs, auth, the Moodle lock, session, discovery, row edits, already-downloaded rule |
+| [EXTENSION.md](docs/EXTENSION.md)          | the Downloads Extension tab's guide: steps, bridge-absent state, screenshot drop-in |
 | [JOBS.md](docs/JOBS.md)                    | following a download: the jobs reflection, grouping by `ref`, bars, retry         |
 | [BULK.md](docs/BULK.md)                    | a section's "Download all": the reflected run, derived outcome, passcode          |
 | [SETTINGS.md](docs/SETTINGS.md)            | the settings, the store, the first-run wall, prerequisites, accounts, Drive consent |
