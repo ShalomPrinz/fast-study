@@ -2,10 +2,139 @@ const SERVER = 'http://localhost:3052';
 
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
 
+const msg = (key, ...subs) => chrome.i18n.getMessage(key, subs.map(String));
+
+// Direction and language follow Chrome's UI language, as the _locales folder Chrome picked does.
+document.documentElement.dir = msg('@@bidi_dir');
+document.documentElement.lang = msg('@@ui_locale').replace('_', '-');
+
 let courses = [];
-let interceptedRequest = null;
-let pdfPageUrl = null;
+let capture = null;
 let youtubeUrl = null;
+let pdfUrl = null;
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+function translateStatic() {
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = msg(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-placeholder]')) {
+    el.placeholder = msg(el.dataset.i18nPlaceholder);
+  }
+}
+
+function getKind() {
+  return document.querySelector('input[name="kind"]:checked').value;
+}
+
+function setStatus(text, danger = false) {
+  const el = $('status');
+  el.textContent = text;
+  el.classList.toggle('status--danger', danger);
+}
+
+// The one line under the button: a translated headline, plus the server's own prose verbatim.
+function showResult(headline, { detail = '', ok = false } = {}) {
+  $('resultHeadline').textContent = headline;
+  $('resultDetail').textContent = detail;
+  $('resultDetail').hidden = !detail;
+  $('result').className = `result ${ok ? 'result--ok' : 'result--danger'}`;
+  $('result').hidden = false;
+}
+
+function clearResult() {
+  $('result').hidden = true;
+}
+
+// A user-typed name kept as one directional run inside a translated sentence.
+const isolate = (text) => `⁨${text}⁩`;
+
+// ── Name suggestions: a port of frontend/src/features/lectures/utils/nextName.ts ──
+
+const PATTERN = /^(.+?)\s+(\d+)(?:\.(\d+))?$/;
+
+function latestName(names, kind) {
+  const parsed = names
+    .map((name) => {
+      const m = name.match(PATTERN);
+      if (!m) return null;
+      if (kind === 'recitation' && m[3]) return null;
+      return { name, prefix: m[1], n: parseInt(m[2], 10), sub: m[3] ? parseInt(m[3], 10) : 0 };
+    })
+    .filter(Boolean);
+  if (!parsed.length) return null;
+  return parsed.reduce((a, b) => (a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b));
+}
+
+function fallbackPrefix(kind) {
+  return msg(kind === 'recitation' ? 'dirRecitation' : 'dirLecture');
+}
+
+function nextLectureName(course) {
+  if (!course) return '';
+  const latest = latestName(course.lectures, 'lecture');
+  if (!latest) return `${fallbackPrefix('lecture')} 1`;
+  if (latest.sub === 1) return `${latest.prefix} ${latest.n}.2`;
+  return `${latest.prefix} ${latest.n + 1}`;
+}
+
+function nextRecitationName(course) {
+  const latest = course ? latestName(course.recitations ?? [], 'recitation') : null;
+  return latest ? `${latest.prefix} ${latest.n + 1}` : `${fallbackPrefix('recitation')} 1`;
+}
+
+// mode 'next' names a fresh session (a video); 'latest' the newest existing one (a PDF attaches to
+// the lecture just watched), empty when there is none.
+function suggestName(courseName, kind, mode) {
+  const course = courses.find((c) => c.name === courseName);
+  if (mode === 'latest') {
+    const items = kind === 'recitation' ? (course?.recitations ?? []) : (course?.lectures ?? []);
+    return latestName(items, kind)?.name ?? '';
+  }
+  return kind === 'recitation' ? nextRecitationName(course) : nextLectureName(course);
+}
+
+function fillDatalist(list, names) {
+  list.replaceChildren(
+    ...names.map((name) => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      return opt;
+    }),
+  );
+}
+
+function refreshLectureSuggestions() {
+  const courseName = $('course').value;
+  const course = courses.find((c) => c.name === courseName);
+  const kind = getKind();
+  fillDatalist(
+    $('lectures-list'),
+    kind === 'recitation' ? (course?.recitations ?? []) : (course?.lectures ?? []),
+  );
+  $('lecture').placeholder = msg(
+    kind === 'recitation' ? 'placeholderRecitation' : 'placeholderLecture',
+  );
+  const isPdfMode = !youtubeUrl && !capture && !!pdfUrl;
+  $('lecture').value = suggestName(courseName, kind, isPdfMode ? 'latest' : 'next');
+}
+
+// False when the server is unreachable, which the status line then says.
+async function loadCourses() {
+  try {
+    const res = await fetch(`${SERVER}/courses`);
+    if (!res.ok) throw new Error();
+    courses = await res.json();
+    fillDatalist(
+      $('courses-list'),
+      courses.map((c) => c.name),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function isYouTubeUrl(url) {
   try {
@@ -15,170 +144,8 @@ function isYouTubeUrl(url) {
   }
 }
 
-function $(id) {
-  return document.getElementById(id);
-}
-
-function getKind() {
-  return document.querySelector('input[name="kind"]:checked').value;
-}
-
-function setStatus(text, color) {
-  const el = $('status');
-  el.innerText = text;
-  if (color) el.style.color = color;
-}
-
-// Mirrors nextName.ts::suggestName for English-named courses only — the app infers the prefix from
-// the course's own children, this regex still requires the word "Lecture". A Hebrew course therefore
-// gets 'Lecture 1' from mode='next' and '' from mode='latest'.
-// mode='next' suggests the next-to-create name (video flow — fresh lecture).
-// mode='latest' returns the most recent existing name (PDF flow — attach material
-// to the lecture the user just watched).
-function suggestLectureName(course, mode) {
-  const names = course?.lectures ?? [];
-  const matches = names
-    .map((n) => {
-      const m = n.match(/^Lecture\s+(\d+)(?:\.(\d+))?$/i);
-      return m ? { n: +m[1], sub: m[2] ? +m[2] : 0, raw: n } : null;
-    })
-    .filter(Boolean);
-  if (!matches.length) return mode === 'latest' ? '' : 'Lecture 1';
-  const latest = matches.reduce((a, b) => (a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b));
-  if (mode === 'latest') return latest.raw;
-  if (latest.sub === 0) return `Lecture ${latest.n + 1}`;
-  if (latest.sub === 1) return `Lecture ${latest.n}.2`;
-  return `Lecture ${latest.n + 1}.1`;
-}
-
-function suggestRecitationName(course, mode) {
-  const entries = (course?.recitations ?? [])
-    .map((n) => {
-      const m = n.match(/^Recitation\s+(\d+)$/i);
-      return m ? { n: +m[1], raw: n } : null;
-    })
-    .filter(Boolean);
-  if (!entries.length) return mode === 'latest' ? '' : 'Recitation 1';
-  const latest = entries.reduce((a, b) => (a.n > b.n ? a : b));
-  if (mode === 'latest') return latest.raw;
-  return `Recitation ${latest.n + 1}`;
-}
-
-function suggestName(courseName, kind, mode) {
-  const course = courses.find((c) => c.name === courseName);
-  return kind === 'recitation'
-    ? suggestRecitationName(course, mode)
-    : suggestLectureName(course, mode);
-}
-
-function refreshLectureSuggestions() {
-  const courseName = $('course').value;
-  const course = courses.find((c) => c.name === courseName);
-  const kind = getKind();
-  const items = kind === 'recitation' ? (course?.recitations ?? []) : (course?.lectures ?? []);
-  $('lectures-list').innerHTML = items.map((n) => `<option value="${n}"></option>`).join('');
-  const isPdfMode = !youtubeUrl && !interceptedRequest && !!pdfPageUrl;
-  $('lecture').value = suggestName(courseName, kind, isPdfMode ? 'latest' : 'next');
-}
-
-async function loadCourses() {
-  try {
-    const res = await fetch(`${SERVER}/courses`);
-    if (!res.ok) throw new Error();
-    courses = await res.json();
-    $('courses-list').innerHTML = courses
-      .map((c) => `<option value="${c.name}"></option>`)
-      .join('');
-  } catch {
-    setStatus('Server offline - start `npm start` in downloader/', '#ff6666');
-  }
-}
-
-function shortenUrl(url) {
-  try {
-    const u = new URL(url);
-    const file = u.pathname.split('/').pop();
-    return `${u.hostname} … ${file}`;
-  } catch {
-    return url.slice(0, 80);
-  }
-}
-
-function formatSize(bytes) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '?';
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1024) return `${(mb / 1024).toFixed(2)} GB`;
-  return `${mb.toFixed(1)} MB`;
-}
-
-// Cookie is a forbidden header — the browser silently strips it from fetch(),
-// so auth-gated CDNs (e.g. Zoom) return no Content-Length from the popup.
-// Before: fetch(url, {method:'HEAD'}) -> Cookie stripped -> 401/no size -> [?]
-// After:  POST /probe-size -> server uses Node http (no header restrictions) -> size
-async function probeSize(url, capturedHeaders) {
-  try {
-    const res = await fetch(`${SERVER}/probe-size`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, headers: capturedHeaders ?? [] }),
-    });
-    const { bytes } = await res.json();
-    return bytes ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function selectVideo(req) {
-  interceptedRequest = req;
-}
-
-async function loadIntercepted() {
-  const { videoRequests: allRequests = [] } = await chrome.storage.local.get(['videoRequests']);
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const pageUrl = tab?.url ?? null;
-
-  if (pageUrl && isYouTubeUrl(pageUrl)) {
-    youtubeUrl = pageUrl;
-    $('videoSelectLabel').style.display = 'none';
-    $('videoSelect').style.display = 'none';
-    $('youtubeUrlLabel').style.display = '';
-    $('youtubeUrl').style.display = '';
-    $('youtubeUrl').value = pageUrl;
-    setStatus('YouTube page detected - yt-dlp will be used.', '#00ff66');
-    if (tab?.id != null) chrome.action.setBadgeText({ tabId: tab.id, text: '' });
-    return;
-  }
-
-  const videoRequests = allRequests.filter((r) => r.pageUrl === pageUrl);
-  const select = $('videoSelect');
-  select.innerHTML = '';
-
-  if (!videoRequests.length) return;
-
-  setStatus(`${videoRequests.length} video request(s) intercepted.`, '#00ff66');
-  if (tab?.id != null) chrome.action.setBadgeText({ tabId: tab.id, text: '' });
-
-  const opts = [];
-  for (const [i, req] of videoRequests.entries()) {
-    const opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = `[…] ${shortenUrl(req.url)}`;
-    select.appendChild(opt);
-    opts.push(opt);
-  }
-  select.addEventListener('change', () => selectVideo(videoRequests[+select.value]));
-  selectVideo(videoRequests[0]);
-
-  videoRequests.forEach(async (req, i) => {
-    const bytes = await probeSize(req.url, req.headers);
-    opts[i].textContent = `[${formatSize(bytes)}] ${shortenUrl(req.url)}`;
-  });
-}
-
-// PDFs aren't gated like .mp4 streams — Chrome just renders them at the tab
-// URL, so we can grab the URL straight off the active tab instead of sniffing
-// network requests + replaying headers.
+// PDFs aren't gated like .mp4 streams — Chrome renders them at the tab URL, so the URL comes straight
+// off the active tab instead of from sniffed requests.
 function isPdfUrl(url) {
   try {
     return new URL(url).pathname.toLowerCase().endsWith('.pdf');
@@ -187,114 +154,162 @@ function isPdfUrl(url) {
   }
 }
 
-async function loadActivePagePdf() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const pageUrl = tab?.url ?? null;
-  if (!pageUrl || !isPdfUrl(pageUrl)) return;
-  pdfPageUrl = pageUrl;
-  $('pdfUrl').value = pageUrl;
-}
-
-// Show exactly one of {video, pdf, empty}. Video wins if both exist — captured
-// `.mp4` requests are rarer / harder to get than a public PDF URL.
-function applyVisibility() {
-  const hasVideo = !!youtubeUrl || !!interceptedRequest;
-  const hasPdf = !!pdfPageUrl;
-  $('videoSection').style.display = hasVideo ? '' : 'none';
-  $('pdfSection').style.display = !hasVideo && hasPdf ? '' : 'none';
-  $('targetSection').style.display = hasVideo || hasPdf ? '' : 'none';
-  $('emptyMsg').style.display = !hasVideo && !hasPdf ? '' : 'none';
-  if (!hasVideo && hasPdf) setStatus('PDF detected on this page.', '#00ff66');
-  if (!hasVideo && !hasPdf) setStatus('Nothing to download here.', '#aaaaaa');
-}
-
-async function sendToServer() {
-  const course = $('course').value.trim();
-  const lecture = $('lecture').value.trim();
-  const kind = getKind();
-  const btn = $('nodeBtn');
-
-  if (!youtubeUrl && !interceptedRequest) return alert('No video intercepted yet.');
-  if (!course || !lecture) return alert('Pick a course and lecture first.');
-
-  const endpoint = youtubeUrl ? '/download-youtube' : '/download';
-  const payload = youtubeUrl
-    ? { url: youtubeUrl, course, lecture, kind }
-    : { url: interceptedRequest.url, headers: interceptedRequest.headers, course, lecture, kind };
-
-  btn.disabled = true;
-  btn.innerText = 'Sending...';
+function shortenUrl(url) {
   try {
-    const res = await fetch(`${SERVER}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error((await res.json()).error ?? 'Server rejected');
-    btn.innerText = 'Downloading in background!';
-    btn.style.background = '#00cc52';
-    setTimeout(() => {
-      btn.innerText = 'Download';
-      btn.style.background = '';
-      btn.disabled = false;
-    }, 2000);
-  } catch (e) {
-    alert(`Could not start download: ${e.message ?? e}`);
-    btn.innerText = 'Download';
-    btn.disabled = false;
+    const u = new URL(url);
+    return `${u.hostname} … ${u.pathname.split('/').pop()}`;
+  } catch {
+    return url.slice(0, 80);
   }
 }
 
-async function sendPdfToServer() {
+function formatSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '?';
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1024) return msg('sizeGb', (mb / 1024).toFixed(2));
+  return msg('sizeMb', mb.toFixed(1));
+}
+
+// Cookie is a forbidden fetch() header, so an auth-gated CDN answers the popup no size; the server's
+// Node http can replay it.
+async function probeSize(url, headers) {
+  try {
+    const res = await fetch(`${SERVER}/probe-size`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, headers: headers ?? [] }),
+    });
+    const { bytes } = await res.json();
+    return bytes ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Reads the active tab and this page's captures; shows exactly one source. A video wins over a PDF —
+// a captured .mp4 is the rarer, harder thing to get.
+async function loadSource() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const pageUrl = tab?.url ?? null;
+  if (tab?.id != null) chrome.action.setBadgeText({ tabId: tab.id, text: '' }).catch(() => {});
+  if (!pageUrl) return msg('statusNothing');
+
+  if (isYouTubeUrl(pageUrl)) {
+    youtubeUrl = pageUrl;
+    $('youtubeUrl').value = pageUrl;
+    $('youtubeField').hidden = false;
+    return msg('statusYoutube');
+  }
+
+  const { videoRequests = [] } = await chrome.storage.local.get('videoRequests');
+  // Exact-URL match, so captures from another page or tab never leak in.
+  const onPage = videoRequests.filter((r) => r.pageUrl === pageUrl);
+  if (onPage.length) {
+    const select = $('videoSelect');
+    const opts = onPage.map((req, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = `[…] ${shortenUrl(req.url)}`;
+      return opt;
+    });
+    select.replaceChildren(...opts);
+    select.addEventListener('change', () => (capture = onPage[+select.value]));
+    capture = onPage[0];
+    $('videoField').hidden = false;
+    onPage.forEach(async (req, i) => {
+      const bytes = await probeSize(req.url, req.headers);
+      opts[i].textContent = `[${formatSize(bytes)}] ${shortenUrl(req.url)}`;
+    });
+    return onPage.length === 1 ? msg('statusOneVideo') : msg('statusManyVideos', onPage.length);
+  }
+
+  if (isPdfUrl(pageUrl)) {
+    pdfUrl = pageUrl;
+    $('pdfUrl').value = pageUrl;
+    $('pdfField').hidden = false;
+    return msg('statusPdf');
+  }
+  return msg('statusNothing');
+}
+
+// The server's failure body is {error, code, params}; its English `error` rides verbatim.
+async function serverError(res) {
+  try {
+    return (await res.json()).error ?? `HTTP ${res.status}`;
+  } catch {
+    return `HTTP ${res.status}`;
+  }
+}
+
+async function startVideo(course, lecture, kind) {
+  const endpoint = youtubeUrl ? '/download-youtube' : '/download';
+  const payload = youtubeUrl
+    ? { url: youtubeUrl, course, lecture, kind }
+    : { url: capture.url, headers: capture.headers, course, lecture, kind };
+  const res = await fetch(`${SERVER}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return showResult(msg('errStart'), { detail: await serverError(res) });
+  const { target } = await res.json();
+  showResult(msg('doneVideo', isolate(target)), { ok: true });
+}
+
+async function uploadPdf(course, lecture, kind) {
+  // Fetched here so Chrome attaches the user's own session cookies for the site.
+  let blob;
+  try {
+    const pdfRes = await fetch(pdfUrl, { credentials: 'include' });
+    if (!pdfRes.ok) throw new Error(`HTTP ${pdfRes.status}`);
+    blob = await pdfRes.blob();
+  } catch (e) {
+    return showResult(msg('errPdfFetch'), { detail: e.message });
+  }
+  const qs = new URLSearchParams({ course, lecture, kind }).toString();
+  const res = await fetch(`${SERVER}/upload-pdf?${qs}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/pdf' },
+    body: blob,
+  });
+  if (!res.ok) return showResult(msg('errPdfStore'), { detail: await serverError(res) });
+  const { target } = await res.json();
+  showResult(msg('donePdf', isolate(target)), { ok: true });
+}
+
+async function submit(event) {
+  event.preventDefault();
+  clearResult();
   const course = $('course').value.trim();
   const lecture = $('lecture').value.trim();
-  const kind = getKind();
-  const btn = $('pdfBtn');
+  if (!course || !lecture) return showResult(msg('errMissingTarget'));
 
-  if (!pdfPageUrl) return alert('Open a PDF page first.');
-  if (!course || !lecture) return alert('Pick a course and lecture first.');
-
+  const btn = $('submit');
   btn.disabled = true;
-  btn.innerText = 'Sending...';
+  btn.textContent = msg('btnDownloading');
   try {
-    // Fetch the PDF here in the popup so Chrome includes the user's session
-    // cookies automatically — works for any site the user is logged into,
-    // and avoids re-implementing auth/header-replay on the server.
-    const pdfRes = await fetch(pdfPageUrl, { credentials: 'include' });
-    if (!pdfRes.ok) throw new Error(`Fetch PDF failed: HTTP ${pdfRes.status}`);
-    const blob = await pdfRes.blob();
-    console.log('[downloader] PDF blob', { size: blob.size, type: blob.type });
-    const qs = new URLSearchParams({ course, lecture, kind }).toString();
-    const res = await fetch(`${SERVER}/upload-pdf?${qs}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/pdf' },
-      body: blob,
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      throw new Error(`HTTP ${res.status}: ${txt || 'no body'}`);
-    }
-    btn.innerText = 'Downloading in background!';
-    btn.style.background = '#00cc52';
-    setTimeout(() => {
-      btn.innerText = 'Download PDF';
-      btn.style.background = '';
-      btn.disabled = false;
-    }, 2000);
-  } catch (e) {
-    alert(`Could not start PDF download: ${e.message ?? e}`);
-    btn.innerText = 'Download PDF';
+    if (youtubeUrl || capture) await startVideo(course, lecture, getKind());
+    else await uploadPdf(course, lecture, getKind());
+  } catch {
+    // fetch() itself threw: the local server is not answering.
+    showResult(msg('statusOffline'));
+  } finally {
     btn.disabled = false;
+    btn.textContent = msg('btnDownload');
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await Promise.all([loadCourses(), loadIntercepted(), loadActivePagePdf()]);
-  applyVisibility();
+  translateStatic();
+  const [online, status] = await Promise.all([loadCourses(), loadSource()]);
+  const hasSource = !!(youtubeUrl || capture || pdfUrl);
+  if (!online) setStatus(msg('statusOffline'), true);
+  else setStatus(status);
+  $('form').hidden = !hasSource;
+  refreshLectureSuggestions();
   $('course').addEventListener('input', refreshLectureSuggestions);
-  document
-    .querySelectorAll('input[name="kind"]')
-    .forEach((el) => el.addEventListener('change', refreshLectureSuggestions));
-  $('nodeBtn').addEventListener('click', sendToServer);
-  $('pdfBtn').addEventListener('click', sendPdfToServer);
+  for (const el of document.querySelectorAll('input[name="kind"]')) {
+    el.addEventListener('change', refreshLectureSuggestions);
+  }
+  $('form').addEventListener('submit', submit);
 });

@@ -6,8 +6,6 @@ Three packages that capture lecture videos and PDFs and hand them to the databas
 
 ## Source paths
 
-`extension/simple/` is an extension-only variant that needs no server and saves to `Downloads/`.
-
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
 - **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links whose filename says they're video (`auto/`'s `google-drive` strategy, which probes the name first and sends a Drive PDF down the material path instead).
 - **PDF** — when the active tab is a `.pdf`, the popup fetches it directly (with the user's cookies) and uploads it as one of the lecture's materials; no header replay needed since PDFs aren't token-gated.
@@ -22,22 +20,20 @@ npm --prefix downloader/auto start     # starts auto/app.js on port 3053 (the HT
 
 Both services implement the launch contract — loopback bind, the `FASTSTUDY_PORT` handshake, the `FASTSTUDY_SECRET` check with `GET /health` exempt, the state root — through [`@faststudy/runtime`](../lib/runtime/CLAUDE.md), and resolve their binaries through [`@faststudy/tools`](../lib/tools/CLAUDE.md). Unset `FASTSTUDY_SECRET` (every manual run) means no enforcement and no secret on `server/`'s peer calls.
 
-The Chrome extension is loaded unpacked from `downloader/extension/regular` (the simple variant from `downloader/extension/simple`). It is **dev-only and not part of the packaged build**: `popup.js` hardcodes `http://localhost:3052`, which it cannot learn when the launcher binds an ephemeral port, and it has no bridge to receive `FASTSTUDY_SECRET`, so its calls carry no `X-FastStudy-Secret`. `auto/`'s extractors cover the same sources for a packaged user. Status and known issues: [extension/CLAUDE.md](extension/CLAUDE.md).
-
-Accordingly the server allowlists an extension origin only when `DOWNLOADER_EXTENSION_ID` is set: a dev must set it to the ID Chrome assigned (there is no default, and it changes when the extension is reloaded), and unset — every packaged run — means the popup is blocked by CORS. Server config and internals live in **`server/CLAUDE.md`**.
+The Chrome extension is loaded unpacked from `downloader/extension`. It is the capture path for users whose university keeps the Moodle web service closed, and it is **dev-only and not part of the packaged build**: `popup.js` hardcodes `http://localhost:3052`, which it cannot learn when the launcher binds an ephemeral port, and it has no bridge to receive `FASTSTUDY_SECRET`, so its calls carry no `X-FastStudy-Secret`. Its `<all_urls>` host permission exempts its calls from CORS, so `DOWNLOADER_EXTENSION_ID` is not needed for it. Details: [extension/CLAUDE.md](extension/CLAUDE.md). Server config and internals live in **`server/CLAUDE.md`**.
 
 ## Architecture
 
 The extension has two pieces; the server they hand off to is covered separately (see the pointer section below).
 
-1. **`background.js`** (extension service worker) — listens to `webRequest.onSendHeaders` on `<all_urls>`, captures any request whose URL path ends in `.mp4`, resolves the originating tab's URL via `chrome.tabs.get(details.tabId)`, and stashes `{url, headers, capturedAt, pageUrl}` in `chrome.storage.local`. Captures without a resolvable `pageUrl` are dropped. The store is a deduped ring of up to 50 entries (across all tabs); the toolbar badge count is set **per tab** (`setBadgeText({ tabId, text })`) and reflects only that page's captures.
+1. **`background.js`** (extension service worker) — listens to `webRequest.onSendHeaders` on `<all_urls>`, captures any request whose URL path ends in `.mp4`, resolves the originating tab's URL via `chrome.tabs.get(details.tabId)`, and stashes `{url, headers, capturedAt, pageUrl}` in `chrome.storage.local` (writes chained, so a burst loses nothing). Captures without a resolvable `pageUrl` are dropped. The store is a deduped ring of up to 50 entries (across all tabs); the toolbar badge count is set **per tab** (`setBadgeText({ tabId, text })`) and reflects only that page's captures.
 
 2. **`popup.html` + `popup.js`** — on open:
-   - `GET /courses` populates course/lecture autocomplete and pre-fills the lecture name via `suggestLectureName` (mirrors `frontend/src/features/lectures/utils/nextName.ts`).
+   - `GET /courses` populates course/lecture autocomplete and pre-fills the name via `suggestName` (a port of `frontend/src/features/lectures/utils/nextName.ts`). A course that doesn't exist yet is fine: the server creates it before the job starts.
    - Hostname-checks `activeTab.url` against `{youtube.com, www.youtube.com, m.youtube.com, youtu.be}`.
      - **YouTube path:** hides the captured-requests `<select>`, shows the page URL as a readonly field, POSTs `{url, course, lecture, kind}` to `/download-youtube`.
      - **Generic path:** reads `videoRequests` from storage and **filters by exact-match `pageUrl === activeTab.url`** so captures from other pages/tabs never leak in. Renders each capture in a `<select>` prefixed with its size (`[412.3 MB] host … file.mp4`). Sizes are probed lazily via `POST /probe-size` (the server uses Node `http`, which can send the captured `Cookie` header that `fetch` forbids); the probe does HEAD then falls back to a `Range: bytes=0-0` GET reading `Content-Range`. Failures render `[?]`; pending probes show `[…]`. On submit, POSTs `{url, headers, course, lecture, kind}` (raw URL + captured headers — not a prebuilt curl string) to `/download`.
-   - **PDF path:** if `activeTab.url` ends in `.pdf`, shows the URL readonly; on submit the popup `fetch`es the PDF itself (`credentials: 'include'`, so the user's session cookies authenticate) and POSTs the bytes to `/upload-pdf?course=&lecture=&kind=`. Only one of {video, PDF, empty} is shown — video wins; PDF mode pre-fills the _latest_ existing lecture name (attach material), not the next one.
+   - **PDF path:** if `activeTab.url` ends in `.pdf`, shows the URL readonly; on submit the popup `fetch`es the PDF itself (`credentials: 'include'`, so the user's session cookies authenticate) and POSTs the bytes to `/upload-pdf?course=&lecture=&kind=`. Only one of {video, PDF, nothing} is shown — video wins; PDF mode pre-fills the _latest_ existing lecture name (attach material), not the next one.
 
 ## The two services
 
@@ -85,7 +81,7 @@ HTTP body or a job message.
 - `downloader/` is an npm workspace (`auto`, `server`) with one `package-lock.json` and one hoisted `node_modules`, so the installer ships and scans one copy of `@sentry/node`, express and the rest. Install only from `downloader/`: a per-service `npm install` would create a stray lock.
 - `downloader/.npmrc` sets `install-links=true`, so the `file:` deps are real copies (as `delivery/stage.mjs` requires), not symlinks; a `lib/*/js` edit reaches the services only after a reinstall. `downloader/package.json` re-declares the three `@faststudy/*` deps because, under `install-links`, npm otherwise nests a copy inside each workspace.
 - `stub/sentry-bundler-plugins` is an empty package the workspace root overrides `@sentry/bundler-plugins` with (a root `file:` dep plus a `$` override; npm honors overrides only at the root), so `@sentry/node`'s bundler-plugin tree (babel, oxc-parser, the `sentry` CLI) stays out of the installer; it is only reached from the `./vite`/`./rollup`/`./webpack`/`./esbuild` subpaths. On a `@sentry/node` upgrade, re-check its main entry still never imports it.
-- `suggestLectureName` / `suggestRecitationName` in `popup.js` duplicate logic from `frontend/src/features/lectures/utils/nextName.ts`. If the naming convention changes, update both.
+- `suggestName` in `extension/popup.js` ports `frontend/src/features/lectures/utils/nextName.ts`. If the naming convention changes, update both.
 - Per-page isolation is by **exact URL match** (full URL including query and hash), not by domain or path prefix — navigating anywhere else in the same tab hides prior captures.
 - Server-specific conventions (argv-array spawn, always `video.mp4`, database-allocated material names, name canonicalization) live in [server/CLAUDE.md](server/CLAUDE.md).
 - Only pure logic is unit-tested (`npm --prefix downloader/auto test`, `npm --prefix downloader/server test`, node's built-in runner, no deps); the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior no diff review can predict — exercise the real _endpoint_, but never against real _data_.

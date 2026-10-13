@@ -1,0 +1,160 @@
+{
+  "extName": {
+    "message": "FastStudy",
+    "description": "Extension name; the product name, never translated."
+  },
+  "extDescription": {
+    "message": "שמירת הקלטות הרצאות וקובצי PDF מהדף שבו אתה צופה ישירות ל-FastStudy.",
+    "description": "Extension description in the Chrome Web Store and chrome://extensions."
+  },
+  "statusLoading": {
+    "message": "מחפש וידאו בדף הזה…",
+    "description": "Popup status while it reads the page."
+  },
+  "statusOneVideo": {
+    "message": "נמצא וידאו בדף הזה.",
+    "description": "Popup status: exactly one captured .mp4."
+  },
+  "statusManyVideos": {
+    "message": "נמצאו $COUNT$ קטעי וידאו בדף הזה.",
+    "description": "Popup status: several captured .mp4s.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "statusYoutube": {
+    "message": "וידאו של YouTube בדף הזה.",
+    "description": "Popup status on a YouTube page."
+  },
+  "statusPdf": {
+    "message": "קובץ PDF בדף הזה.",
+    "description": "Popup status on a PDF page."
+  },
+  "statusNothing": {
+    "message": "לא נמצא וידאו או PDF בדף הזה. הפעל את הווידאו לכמה שניות ופתח שוב.",
+    "description": "Popup status when nothing was captured."
+  },
+  "statusOffline": {
+    "message": "אין חיבור ל-FastStudy. פתח את אפליקציית FastStudy ונסה שוב.",
+    "description": "The local FastStudy server is not answering."
+  },
+  "labelVideo": {
+    "message": "וידאו",
+    "description": "Label of the captured-video picker."
+  },
+  "labelVideoLink": {
+    "message": "קישור לווידאו",
+    "description": "Label of the YouTube page URL field."
+  },
+  "labelPdf": {
+    "message": "PDF",
+    "description": "Label of the PDF URL field."
+  },
+  "labelCourse": {
+    "message": "קורס",
+    "description": "Label of the course field."
+  },
+  "placeholderCourse": {
+    "message": "שם הקורס…",
+    "description": "Placeholder of the course field."
+  },
+  "labelKind": {
+    "message": "סוג",
+    "description": "Label of the lecture/recitation choice."
+  },
+  "kindLecture": {
+    "message": "הרצאה",
+    "description": "Radio: save as a lecture."
+  },
+  "kindRecitation": {
+    "message": "תרגול",
+    "description": "Radio: save as a recitation."
+  },
+  "labelName": {
+    "message": "השם בקורס",
+    "description": "Label of the lecture/recitation name field."
+  },
+  "placeholderLecture": {
+    "message": "שם ההרצאה…",
+    "description": "Placeholder of the name field for a lecture."
+  },
+  "placeholderRecitation": {
+    "message": "שם התרגול…",
+    "description": "Placeholder of the name field for a recitation."
+  },
+  "dirLecture": {
+    "message": "הרצאה",
+    "description": "Suggested folder name prefix for a course with no lectures yet; lands on disk."
+  },
+  "dirRecitation": {
+    "message": "תרגול",
+    "description": "Suggested folder name prefix for a course with no recitations yet; lands on disk."
+  },
+  "btnDownload": {
+    "message": "הורדה",
+    "description": "The download button."
+  },
+  "btnDownloading": {
+    "message": "מוריד…",
+    "description": "The download button while the request is in flight."
+  },
+  "doneVideo": {
+    "message": "מוריד אל $TARGET$. אפשר לעקוב בהורדות ב-FastStudy.",
+    "description": "Shown once the server accepted a video download.",
+    "placeholders": {
+      "target": {
+        "content": "$1",
+        "example": "Calculus/Lecture 3"
+      }
+    }
+  },
+  "donePdf": {
+    "message": "נשמר ב$TARGET$",
+    "description": "Shown once the PDF was stored.",
+    "placeholders": {
+      "target": {
+        "content": "$1",
+        "example": "Calculus/Lecture 3"
+      }
+    }
+  },
+  "errMissingTarget": {
+    "message": "בחר קורס ושם קודם.",
+    "description": "Submit with an empty course or name."
+  },
+  "errStart": {
+    "message": "לא ניתן להתחיל את ההורדה.",
+    "description": "Headline when the server refused a download; its own text shows beneath."
+  },
+  "errPdfFetch": {
+    "message": "לא ניתן לקרוא את ה-PDF מהדף הזה.",
+    "description": "Headline when the popup could not fetch the PDF itself."
+  },
+  "errPdfStore": {
+    "message": "לא ניתן לשמור את ה-PDF.",
+    "description": "Headline when the server refused the PDF; its own text shows beneath."
+  },
+  "sizeMb": {
+    "message": "$SIZE$ MB",
+    "description": "A video size in megabytes.",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "412.3"
+      }
+    }
+  },
+  "sizeGb": {
+    "message": "$SIZE$ GB",
+    "description": "A video size in gigabytes.",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "1.25"
+      }
+    }
+  }
+}

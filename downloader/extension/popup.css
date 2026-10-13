@@ -1,0 +1,259 @@
+/* Heebo, the app's UI face, bundled since an extension page loads nothing remote. */
+@font-face {
+  font-family: 'Heebo';
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/heebo-hebrew-400-normal.woff2) format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: 'Heebo';
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/heebo-hebrew-500-normal.woff2) format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: 'Heebo';
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/heebo-hebrew-600-normal.woff2) format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: 'Heebo';
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/heebo-latin-400-normal.woff2) format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Heebo';
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/heebo-latin-500-normal.woff2) format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Heebo';
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/heebo-latin-600-normal.woff2) format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Copied from frontend/src/styles/tokens.css — only the tokens this popup uses; keep in step. */
+:root {
+  --bg: #fbfbfd;
+  --surface: #ffffff;
+  --text: #17171f;
+  --text-2: #55596b;
+  --text-4: #a4a8b8;
+  --line: #e8e9ef;
+  --control-line: #dcdee7;
+  --ink: #17171f;
+  --accent: #4f5bd5;
+  --ok: #2f7d54;
+  --danger: #c0392f;
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 14px;
+  --space-6: 18px;
+  --r-sm: 8px;
+  --r: 9px;
+  --font-ui: 'Heebo', 'Noto Sans Hebrew', system-ui, sans-serif;
+  --fs-section: 17px;
+  --fs-body: 13px;
+  --fs-meta: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  inline-size: 340px;
+  padding: var(--space-6);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-end: var(--space-2);
+}
+
+.head h1 {
+  font-size: var(--fs-section);
+  font-weight: 600;
+}
+
+.status {
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.status--danger {
+  color: var(--danger);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-block-start: var(--space-5);
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--line);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  border: 0;
+}
+
+.field > label,
+.field > legend {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.control {
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-body);
+  outline: none;
+}
+
+.control:focus {
+  border-color: var(--accent);
+}
+
+.control[readonly] {
+  color: var(--text-2);
+}
+
+/* URLs and capture labels are LTR whatever the UI language; they must not be reordered. */
+.control--ltr {
+  direction: ltr;
+  text-align: start;
+}
+
+/* An empty dir="auto" input resolves LTR; follow the page while the placeholder shows. */
+input[dir='auto']:placeholder-shown {
+  direction: inherit;
+}
+
+.kinds {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.kinds > legend {
+  float: inline-start;
+  margin-inline-end: var(--space-2);
+}
+
+.kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+
+.kind input {
+  accent-color: var(--accent);
+}
+
+/* After the app's button.css: .btn plus the one filled --primary variant. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+
+.btn--primary {
+  padding: var(--space-4) var(--space-6);
+  border-color: var(--ink);
+  border-radius: var(--r);
+  background: var(--ink);
+  color: var(--surface);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--text-2);
+  border-color: var(--text-2);
+}
+
+.btn--primary:disabled {
+  border-color: var(--text-4);
+  background: var(--text-4);
+  cursor: not-allowed;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+}
+
+.result--ok {
+  color: var(--ok);
+}
+
+.result--danger .result-headline {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+/* Third-party or server prose, shown verbatim beneath the translated headline. */
+.result-detail {
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
