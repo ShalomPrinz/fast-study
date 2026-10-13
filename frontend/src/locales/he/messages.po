@@ -114,7 +114,7 @@ msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:141
+#: src/features/downloads/DownloadsView.tsx:155
 msgid "{0} found"
 msgstr "נמצאו {0}"
 
@@ -207,7 +207,7 @@ msgstr "{generated} מתוך {0} נוצרו"
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:183
+#: src/features/downloads/components/ManualDownload.tsx:182
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -315,7 +315,7 @@ msgstr "הכלי {tool} חסר, ולכן חלקים ב-FastStudy שזקוקים 
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
-#: src/features/downloads/DownloadsView.tsx:80
+#: src/features/downloads/DownloadsView.tsx:88
 msgid "{withSource} courses with a source"
 msgstr "{withSource} קורסים עם מקור"
 
@@ -363,7 +363,7 @@ msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
-#: src/features/downloads/DownloadsView.tsx:83
+#: src/features/downloads/DownloadsView.tsx:91
 msgid "A one-time setup of about three minutes."
 msgstr "הגדרה חד־פעמית של כשלוש דקות."
 
@@ -523,7 +523,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/downloads/components/ManualDownload.tsx:270
+#: src/features/downloads/components/ManualDownload.tsx:269
 #: src/features/downloads/components/RecordingJobList.tsx:45
 #: src/features/downloads/components/RecordingRow.tsx:295
 #: src/features/downloads/components/RecordingRow.tsx:326
@@ -567,7 +567,7 @@ msgstr "בחירת תיקייה"
 msgid "Choose your university above to connect its account."
 msgstr "בחר את האוניברסיטה שלך למעלה כדי לחבר את החשבון שלה."
 
-#: src/features/downloads/DownloadsView.tsx:104
+#: src/features/downloads/DownloadsView.tsx:118
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי להוריד מ-Moodle."
 
@@ -612,7 +612,7 @@ msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם חשבון Google
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "לחץ על סמל חלק הפאזל שליד שורת הכתובת, ואז על הנעץ שליד FastStudy. הסמל שלה יישאר מעכשיו בסרגל הכלים."
 
-#: src/features/downloads/DownloadsView.tsx:145
+#: src/features/downloads/DownloadsView.tsx:159
 msgid "Close"
 msgstr "סגירה"
 
@@ -743,7 +743,7 @@ msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר תשובה ברורה."
 
-#: src/features/downloads/components/ManualDownload.tsx:299
+#: src/features/downloads/components/ManualDownload.tsx:298
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "לא ניתן להוריד את \"{lecture}\". נסה שוב."
 
@@ -780,7 +780,7 @@ msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נס�
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "לא הצלחנו לזהות מאיפה להוריד את הקובץ. נסה שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:123
+#: src/features/downloads/components/ManualDownload.tsx:122
 #: src/features/search/SearchView.tsx:182
 msgid "Course"
 msgstr "קורס"
@@ -798,7 +798,7 @@ msgstr "שם הקורס…"
 msgid "Course overview"
 msgstr "סקירת קורס"
 
-#: src/features/downloads/DownloadsView.tsx:113
+#: src/features/downloads/DownloadsView.tsx:127
 msgid "Course sources"
 msgstr "מקורות קורסים"
 
@@ -807,7 +807,7 @@ msgid "Course URL"
 msgstr "כתובת הקורס"
 
 #: src/App.tsx:37
-#: src/features/downloads/DownloadsView.tsx:120
+#: src/features/downloads/DownloadsView.tsx:134
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:236
 #: src/shared/utils/notFound.ts:35
@@ -872,7 +872,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "הושלם"
 
-#: src/features/downloads/components/ManualDownload.tsx:178
+#: src/features/downloads/components/ManualDownload.tsx:177
 #: src/features/downloads/components/RecordingJobList.tsx:59
 #: src/features/downloads/components/RecordingRow.tsx:348
 msgid "Download"
@@ -891,13 +891,17 @@ msgstr "הורדה מחדש"
 msgid "Download all {leaves}"
 msgstr "הורדת הכול ({leaves})"
 
-#: src/features/downloads/components/ManualDownload.tsx:265
+#: src/features/downloads/DownloadsView.tsx:94
+msgid "Download any open video on the internet"
+msgstr "הורד כל וידאו שפתוח לצפייה באינטרנט"
+
+#: src/features/downloads/components/ManualDownload.tsx:264
 #: src/features/downloads/components/RecordingRow.tsx:296
 #: src/features/downloads/components/RecordingRow.tsx:346
 msgid "Downloaded ✓"
 msgstr "הורד ✓"
 
-#: src/features/downloads/components/ManualDownload.tsx:260
+#: src/features/downloads/components/ManualDownload.tsx:259
 #: src/features/downloads/components/RecordingRow.tsx:301
 msgid "Downloading"
 msgstr "מוריד"
@@ -926,7 +930,7 @@ msgstr "מוריד עדכון…"
 msgid "Downloading…"
 msgstr "מוריד…"
 
-#: src/features/downloads/DownloadsView.tsx:70
+#: src/features/downloads/DownloadsView.tsx:71
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "הורדות"
@@ -1249,7 +1253,7 @@ msgstr "השגיאה האחרונה:"
 msgid "lecture"
 msgstr "הרצאה"
 
-#: src/features/downloads/components/ManualDownload.tsx:150
+#: src/features/downloads/components/ManualDownload.tsx:149
 #: src/features/downloads/components/RecordingRow.tsx:253
 msgid "Lecture"
 msgstr "הרצאה"
@@ -1311,6 +1315,10 @@ msgstr "טוען סיכומים…"
 msgid "Loading your courses…"
 msgstr "טוען את הקורסים שלך…"
 
+#: src/features/downloads/DownloadsView.tsx:97
+msgid "Loading your data…"
+msgstr "טוען את הנתונים שלך…"
+
 #: src/features/downloads/components/CourseSourceRow.tsx:110
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
@@ -1328,7 +1336,7 @@ msgstr "התאמת מילה שלמה"
 msgid "Material"
 msgstr "חומר"
 
-#: src/features/downloads/DownloadsView.tsx:56
+#: src/features/downloads/DownloadsView.tsx:57
 #: src/features/lectures/MainView.tsx:379
 msgid "Materials"
 msgstr "חומרים"
@@ -1341,7 +1349,7 @@ msgstr "Moodle דחה את הבקשה."
 msgid "More actions"
 msgstr "פעולות נוספות"
 
-#: src/features/downloads/components/ManualDownload.tsx:162
+#: src/features/downloads/components/ManualDownload.tsx:161
 msgid "Name in the course"
 msgstr "השם בקורס"
 
@@ -1377,7 +1385,7 @@ msgstr "אין קורסים נוכחיים."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקיית נתונים. בחר אחת בהגדרות."
 
-#: src/features/downloads/DownloadsView.tsx:63
+#: src/features/downloads/DownloadsView.tsx:64
 msgid "No files of unknown type found."
 msgstr "לא נמצאו קבצים מסוג לא ידוע."
 
@@ -1401,7 +1409,7 @@ msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 msgid "no material found"
 msgstr "לא נמצא חומר"
 
-#: src/features/downloads/DownloadsView.tsx:62
+#: src/features/downloads/DownloadsView.tsx:63
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
@@ -1425,7 +1433,7 @@ msgstr "אין עדיין PDF — השתמש ב\"שמירה ועדכון PDF\" �
 msgid "No Recitations"
 msgstr "אין תרגולים"
 
-#: src/features/downloads/DownloadsView.tsx:61
+#: src/features/downloads/DownloadsView.tsx:62
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
@@ -1641,7 +1649,7 @@ msgstr "מדיניות פרטיות"
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-GitHub: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
-#: src/features/downloads/components/ManualDownload.tsx:255
+#: src/features/downloads/components/ManualDownload.tsx:254
 #: src/features/runner/RunnerView.tsx:318
 msgid "Queued"
 msgstr "בתור"
@@ -1663,7 +1671,7 @@ msgstr "יצירה מחדש משלב {stepLabel}"
 msgid "recitation"
 msgstr "תרגול"
 
-#: src/features/downloads/components/ManualDownload.tsx:156
+#: src/features/downloads/components/ManualDownload.tsx:155
 #: src/features/downloads/components/RecordingRow.tsx:259
 msgid "Recitation"
 msgstr "תרגול"
@@ -1697,7 +1705,7 @@ msgstr "תרגולים {0}-{1}"
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
-#: src/features/downloads/DownloadsView.tsx:139
+#: src/features/downloads/DownloadsView.tsx:153
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
@@ -1747,7 +1755,7 @@ msgstr "תוצאות"
 msgid "Retry"
 msgstr "ניסיון חוזר"
 
-#: src/features/downloads/components/ManualDownload.tsx:280
+#: src/features/downloads/components/ManualDownload.tsx:279
 #: src/features/downloads/components/RecordingJobList.tsx:57
 #: src/features/downloads/components/RecordingRow.tsx:344
 msgid "Retry ✗"
@@ -2259,7 +2267,7 @@ msgstr "לנסות שוב"
 msgid "Turn on Developer mode"
 msgstr "הפעלת מצב מפתח"
 
-#: src/features/downloads/components/ManualDownload.tsx:143
+#: src/features/downloads/components/ManualDownload.tsx:142
 msgid "Type"
 msgstr "סוג"
 
@@ -2288,7 +2296,7 @@ msgstr "חשבון האוניברסיטה מחובר"
 msgid "University saved"
 msgstr "האוניברסיטה נשמרה"
 
-#: src/features/downloads/DownloadsView.tsx:57
+#: src/features/downloads/DownloadsView.tsx:58
 msgid "Unknown"
 msgstr "לא ידוע"
 
@@ -2345,11 +2353,11 @@ msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או �
 msgid "Video"
 msgstr "וידאו"
 
-#: src/features/downloads/components/ManualDownload.tsx:108
+#: src/features/downloads/components/ManualDownload.tsx:107
 msgid "Video link"
 msgstr "קישור לווידאו"
 
-#: src/features/downloads/DownloadsView.tsx:55
+#: src/features/downloads/DownloadsView.tsx:56
 msgid "Videos"
 msgstr "וידאו"
 
@@ -2397,7 +2405,7 @@ msgstr "בלי אחד מהם, FastStudy לא תוכל להוריד הקלטות 
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "עבודה שבתהליך תיעצר. להפעיל מחדש בכל זאת?"
 
-#: src/features/downloads/components/ManualDownload.tsx:45
+#: src/features/downloads/components/ManualDownload.tsx:44
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "עובד רק עבור קישורי וידאו, ורק אם הם נגישים ללא פרטי התחברות."
 

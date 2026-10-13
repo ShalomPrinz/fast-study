@@ -70,8 +70,8 @@ export default function DownloadsView() {
         <PageHeader
           title={t`Downloads`}
           meta={
-            // Every tab's meta shares one grid cell, the others hidden, so the header keeps the
-            // tallest one's height and the tab row never moves on a switch.
+            // Every tab's meta, and the loading line, share one grid cell with the others hidden, so the
+            // header keeps the tallest one's height and the tab row never moves.
             <div className="downloads-meta">
               {/* A button's height, held while the account chip is still loading and shows none. */}
               <span
@@ -89,6 +89,12 @@ export default function DownloadsView() {
               </div>
               <div className={metaClass(tab === 'extension')}>
                 <Trans>A one-time setup of about three minutes.</Trans>
+              </div>
+              <div className={metaClass(tab === 'manual')}>
+                <Trans>Download any open video on the internet</Trans>
+              </div>
+              <div className={metaClass(tab === null)}>
+                <Trans>Loading your data…</Trans>
               </div>
             </div>
           }
