@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-// Dev-only weight that would otherwise ride along in the downloader trees.
+// Dev-only weight that would otherwise ride along in the downloader trees and the extension.
 const SKIP = new Set(['test', 'docs', 'CLAUDE.md', 'README.md', '.gitignore', 'package-lock.json']);
 // Source maps and type declarations, dropped everywhere — `@sentry/*` alone is ~40MB per service.
 const SKIP_EXT = /\.(map|d\.[cm]?ts)$/;
@@ -28,6 +28,9 @@ const COPIES = [
   // One hoisted copy beside both services, so each resolves its dependencies by walking up.
   ['downloader/node_modules', 'downloader/node_modules'],
   ['frontend/dist', 'frontend'],
+  // Loaded unpacked by Chrome once main copies it to the state root; its CLAUDE.md is dropped.
+  ['downloader/extension', 'extension'],
+  ['electron/bridge/host.js', 'bridge/host.js'],
 ];
 
 function copy(from, to, prune) {

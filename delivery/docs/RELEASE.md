@@ -145,3 +145,7 @@ the installer carries a single copy of their shared dependencies; the workspace'
 packages are dropped. It refuses to finish if a `@faststudy/*` dependency is a symlink: `file:` deps
 install as links by default, and a link into `lib/` dangles once the tree leaves the repo — so
 `downloader/.npmrc` sets `install-links`.
+
+It also stages the Chrome extension (`downloader/extension/`, minus its `CLAUDE.md`) as `extension/`
+and the native host script `electron/bridge/host.js` as `bridge/host.js`, both read by main at launch
+([`electron/docs/EXTENSION.md`](../../electron/docs/EXTENSION.md)) — about 100KB, no binary.

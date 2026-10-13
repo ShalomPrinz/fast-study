@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import net from 'node:net';
@@ -101,6 +102,41 @@ async function stop() {
   session = null;
   services = null;
   if (closing) await quit(closing);
+}
+
+/** Send the shipped native host one framed `{}` the way Chrome does, and return its framed reply. */
+function askNativeHost(bridgeFile) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(paths.appExe(), [paths.nativeHost(), bridgeFile], {
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+    const out = [];
+    const err = [];
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error('the native host did not exit within 30s'));
+    }, 30_000);
+    child.stdout.on('data', (chunk) => out.push(chunk));
+    child.stderr.on('data', (chunk) => err.push(chunk));
+    child.on('error', reject);
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      const reply = Buffer.concat(out);
+      const length = reply.length >= 4 ? reply.readUInt32LE(0) : -1;
+      if (code !== 0 || reply.length !== 4 + length) {
+        reject(new Error(`host exited ${code} with ${reply.length} bytes: ${Buffer.concat(err)}`));
+        return;
+      }
+      resolve(JSON.parse(reply.subarray(4).toString('utf8')));
+    });
+    // Chrome keeps stdin open until the host exits, so the host must answer without an 'end'.
+    const body = Buffer.from('{}', 'utf8');
+    const header = Buffer.alloc(4);
+    header.writeUInt32LE(body.length, 0);
+    child.stdin.write(Buffer.concat([header, body]));
+  });
 }
 
 async function openLecture(page, course, lecture) {
@@ -269,6 +305,8 @@ test('1. fresh install', async () => {
       'downloader/node_modules/@faststudy/runtime/package.json',
       'frontend/index.html',
       'latex/bundles',
+      'extension/manifest.json',
+      'bridge/host.js',
       // Not in the tree, but what the update check rewrites: electron-builder's publish config.
       'app-update.yml',
     ];
@@ -295,6 +333,11 @@ test('1. fresh install', async () => {
     expect(fs.existsSync(paths.formatsDir()), 'latex/formats/ shipped; it is per-machine').toBe(
       false,
     );
+  });
+
+  await test.step('the native host answers a framed request with no bridge file', async () => {
+    const missing = path.join(paths.workDir(), 'no-such-bridge.json');
+    expect(await askNativeHost(missing)).toEqual({ running: false });
   });
 
   await test.step('every shipped program is blocked from the network', async () => {

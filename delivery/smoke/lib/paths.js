@@ -26,6 +26,7 @@ export const resourcesDir = () => path.join(installDir(), 'resources');
 export const binDir = () => path.join(resourcesDir(), 'bin');
 export const servicesExe = () => path.join(resourcesDir(), 'services', 'services.exe');
 export const formatsDir = () => path.join(resourcesDir(), 'latex', 'formats');
+export const nativeHost = () => path.join(resourcesDir(), 'bridge', 'host.js');
 export const appUpdateYml = () => path.join(resourcesDir(), 'app-update.yml');
 
 /** Where electron-updater parks a downloaded installer until the app quits, named after the feed

@@ -57,6 +57,9 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
   rcedit stamps a four-component ProductVersion, and the `0.1.0.0` a tidied line would hide is what
   names the defect.
 - **The launch secret is enforced**: every service answers 401 without it.
+- **The native host answers without the app**: test 1 sends the shipped `bridge/host.js`, on
+  `FastStudy.exe` as node, one framed `{}` with stdin left open and a missing bridge file, and expects
+  `{ "running": false }` — what Chrome gets before the app has ever booted.
 - **A Hebrew temp path is proven used.** The audio and PDF steps run with `TEMP` on a Hebrew folder,
   watched to prove each workspace landed there; the backend's line naming it must reach `launch.log`
   as UTF-8, not lost or `\u05..`-escaped.
