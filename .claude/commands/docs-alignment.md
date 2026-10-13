@@ -64,8 +64,8 @@ A new cross-service doc link changes the order: add the service to the wave afte
 Most services keep one `docs/` next to their `CLAUDE.md`. These instead keep docs per sub-package,
 with a parent `CLAUDE.md` that points at the children and does not restate them:
 
-- **`downloader/`** — `auto/` and `server/` each own a `CLAUDE.md` and a `docs/`. `extension/` is
-  out of scope: leave its code, comments and its section of `downloader/CLAUDE.md` untouched.
+- **`downloader/`** — `auto/` and `server/` each own a `CLAUDE.md` and a `docs/`; `extension/` owns
+  a `CLAUDE.md` only, and a `docs/` only when Step 1's sizing rule earns one.
 - **`lib/`** — `runtime/`, `tools/` and `logging/` each own a `CLAUDE.md`, shared by their `py/` and
   `js/` halves, and a `docs/` only when Step 1's sizing rule earns one. `lib/CLAUDE.md` covers what
   holds across packages.
