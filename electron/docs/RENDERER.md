@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, updates, open, pickFolder, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, updates, open, pickFolder, extension, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -43,6 +43,10 @@ result is current ([error reporting](#error-reporting-sentry)).
 
 `packaged` is `app.isPackaged`; `updates` is the sidebar's update row —
 `snapshot()`, `subscribe(callback)` (returns its unsubscribe) and `restart()` ([`UPDATES.md`](UPDATES.md)).
+
+`extension` is `{ path, reveal() }`: the folder Chrome loads the extension unpacked from (the
+state-root copy packaged, the repo's `downloader/extension` in dev) and opening it in the file manager
+([`EXTENSION.md`](EXTENSION.md)).
 
 `boot` belongs to the launch screen alone, which loads in the same window and so through the same
 preload. The frontend ignores it, and the launch screen ignores everything else — while it renders

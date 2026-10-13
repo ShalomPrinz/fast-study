@@ -11,17 +11,19 @@
 4. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
    sit inline in the boot path, so each has to be cheap — no network, no spawn, no real disk work —
    and their duration is logged to catch one that stops being so.
-5. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below.
-6. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
+5. Packaged, the extension's stable copy is refreshed and, on Windows, the native host is registered
+   — both logged, neither able to fail the boot ([`EXTENSION.md`](EXTENSION.md)).
+6. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below.
+7. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
    alongside them because it calls no peer. `server` starts once all three are healthy. Each child is
    spawned, its port read off stdout, and its `/health` waited on before anything that needs it
    starts. The first failure on either track fails the boot, and the other track spawns nothing
-   more.
-7. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
+   more. Once `server` is healthy, main writes `bridge.json` for the native host.
+8. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
    that: a renderer that loaded first would build its service clients at module scope against URLs
    that do not exist yet. The load is not awaited; when it finishes main logs `[main] app loaded
    app://bundle/` (or `app load failed app://bundle/: <reason>`), which `delivery/smoke/` times boot by.
-8. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
+9. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
    rather than on the user's first browser action; its result is one log line and a failure surfaces
    nowhere, since `auto` loads on demand anyway.
 
@@ -140,6 +142,8 @@ resources/downloader/node_modules/  the workspace's one hoisted node_modules —
 resources/frontend/                 the built frontend, served over app://bundle
 resources/bin/                      ffmpeg, pandoc, tectonic, yt-dlp → FASTSTUDY_BIN_DIR
 resources/latex/                    the primed tectonic cache → TECTONIC_CACHE_DIR
+resources/extension/                the Chrome extension, copied to <state root>/extension
+resources/bridge/host.js            the native host script, run on Electron-as-node by a generated .bat
 ```
 
 ## Teardown
@@ -148,7 +152,8 @@ Children are spawned in their own process group (POSIX), so the kill reaches the
 — ffmpeg, chrome, yt-dlp — and not just the service. Quit sends the group `SIGTERM`, then `SIGKILL`
 after a 3s grace (longer than a service's ~2s Sentry flush) to any child still alive, and main waits
 for that before it exits, or the timer would die with it. Windows has no process groups, so it is
-`taskkill /T /F` there. `process.on('exit')` cannot wait, so it only sends the `SIGTERM`.
+`taskkill /T /F` there. `process.on('exit')` cannot wait, so it only sends the `SIGTERM`. The same
+kill removes `bridge.json`, so the native host answers `{ "running": false }` once the services are gone.
 
 The kill runs from `will-quit`, `process.on('exit')`, `SIGINT`/`SIGTERM`, a failed boot before its
 retry, and an uncaught exception, because an orphaned service keeps a port and keeps writing

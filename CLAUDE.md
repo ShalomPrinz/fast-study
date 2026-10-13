@@ -46,6 +46,7 @@ Every service carries its own module named `runtime` (`runtime.py` / `runtime.js
 | Binary join              | `toolPath(name)` / `tool_path(name)` — adds `.exe` on Windows only              |
 | Preload bridge           | `window.faststudy`                                                              |
 | Packaged frontend origin | `app://bundle` — exactly, no trailing slash                                     |
+| Native messaging host    | `com.faststudy.bridge` — the Chrome host the extension asks for the server port |
 
 A service that spells any of these differently cannot be launched or called by its peers, so treat a change to a name or a rule as a cross-service change and surface it rather than editing one service's `runtime` alone. Per-service specifics (which routes, which files) live in each service's `CLAUDE.md` and `docs/`.
 

@@ -17,8 +17,10 @@ everything on quit.
 | `teardown.js` | Stopping the children — SIGTERM, then SIGKILL after the grace (POSIX)           |
 | `updater.js`  | The update check — electron-updater against GitHub Releases; the app's update state and Restart now |
 | `updatePhases.js` | Mapping updater events to the phases the launch screen shows (pure, tested)   |
+| `extension.js` | The Chrome extension's shipped copy, the bridge file, the native host's registration |
+| `bridge/host.js` | The native host Chrome runs — staged to `resources/bridge/`, not in the asar |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
-| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, updates, open, folder picker |
+| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, updates, open, folder picker, extension |
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 
@@ -27,6 +29,7 @@ everything on quit.
 | [BOOT.md](docs/BOOT.md)            | The launch sequence, launch screen, child env, spawns, teardown, the log |
 | [RENDERER.md](docs/RENDERER.md)    | `app://bundle`, `window.faststudy`, open, folder picker, Sentry, checks, settings store |
 | [UPDATES.md](docs/UPDATES.md)      | How a packaged app updates itself                                        |
+| [EXTENSION.md](docs/EXTENSION.md)  | The extension copy, `bridge.json`, the `com.faststudy.bridge` host and its registry key |
 
 ## Run
 
@@ -72,7 +75,7 @@ failure.
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
 covering `resolveWithin`'s path containment, the store's tables and refusal rules, the error-reports
 switch's env and its push to each service's `/config` (against local HTTP stubs), and the teardown's
-SIGTERM→SIGKILL escalation against real `sh` process groups. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
+SIGTERM→SIGKILL escalation against real `sh` process groups, and the native host driven over framed stdin/stdout with its registration and the extension copy. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
 `electron` in the module cache before the module under test is required, which is also how the
 unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns a service is in it.
 
@@ -93,8 +96,9 @@ Electron's own default. `eslint.config.js` gives `electron/**/*.js` its own
   disk through `database/`, and main only passes the root down as an env var.
 - **No spelling of its own for the launch contract.** `FASTSTUDY_PORT`, `FASTSTUDY_SECRET`,
   `FASTSTUDY_STATE_DIR`, `FASTSTUDY_BIN_DIR`, `X-FastStudy-Secret`, `app://bundle` and the
-  `^FASTSTUDY_PORT=(\d+)$` line are the same names `lib/runtime/` implements on the service side. A
-  change to any of them is a cross-service change, not an edit here.
+  `^FASTSTUDY_PORT=(\d+)$` line are the same names `lib/runtime/` implements on the service side, and
+  the native host `com.faststudy.bridge` is spelled independently by the extension. A change to any
+  of them is a cross-service change, not an edit here.
 
 ## Packaging
 
@@ -139,4 +143,6 @@ the `build` block in `package.json`.
   the same file already covers.
 - **`assets/installer.nsh` (`nsis.include`) recreates a missing Start menu shortcut on every install
   and update**, since a one-click reinstall keeps shortcuts and never recreates a lost one; the
-  Desktop shortcut keeps electron-builder's behavior, so a user's deliberate deletion stands.
+  Desktop shortcut keeps electron-builder's behavior, so a user's deliberate deletion stands. Its
+  `customUnInstall` deletes the native host's HKCU key on uninstall, not on update
+  ([`EXTENSION.md`](docs/EXTENSION.md)).

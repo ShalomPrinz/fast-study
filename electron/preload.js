@@ -44,6 +44,11 @@ contextBridge.exposeInMainWorld('faststudy', {
     },
     restart: () => ipcRenderer.invoke('faststudy:update-restart'),
   },
+  // The folder Chrome loads the extension unpacked from, and `reveal()` opening it in the file manager.
+  extension: {
+    path: config.extensionPath,
+    reveal: () => ipcRenderer.invoke('faststudy:extension-reveal'),
+  },
   // The launch screen only: a snapshot first, since main's first push can beat the listener.
   boot: {
     snapshot: () => ipcRenderer.invoke('faststudy:boot-state'),

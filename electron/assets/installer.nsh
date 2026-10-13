@@ -10,3 +10,11 @@
     ${endIf}
   !endif
 !macroend
+
+; Unregisters the Chrome native host main registers each launch. Skipped on an update, whose
+; uninstall of the old version runs first; the new version's launch re-registers it anyway.
+!macro customUnInstall
+  ${ifNot} ${isUpdated}
+    DeleteRegKey HKCU "Software\Google\Chrome\NativeMessagingHosts\com.faststudy.bridge"
+  ${endIf}
+!macroend

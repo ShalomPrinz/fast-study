@@ -12,6 +12,13 @@ const { reportsOn, sentryEnv, writeSettings } = require('./reports');
 const store = require('./store');
 const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
 const { reapChildren, signalChildren } = require('./teardown');
+const {
+  registerHost,
+  removeBridge,
+  syncExtension,
+  writeBridge,
+  manifestVersion,
+} = require('./extension');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 // One secret per launch, in every child's environment and in the renderer's bridge. 32 bytes of
@@ -37,6 +44,16 @@ const STATE_DIR = app.isPackaged
 const LOG_FILE = path.join(STATE_DIR, 'logs', 'launch.log');
 // The init wall's prefilled data folder: a suggestion only — nothing creates it until the user saves.
 const DEFAULT_DATA_ROOT = path.join(STATE_DIR, 'data');
+
+// Where Chrome reads the running server's port and secret from, through the native host
+// (docs/EXTENSION.md). Present only while `server` is up: removed on teardown and if it dies.
+const BRIDGE_FILE = path.join(STATE_DIR, 'bridge.json');
+// The extension as shipped, and the folder Chrome loads it from: a stable copy under the state root
+// packaged, since `resources/` is replaced by every update; the repo's own folder in dev.
+const EXTENSION_SOURCE = app.isPackaged
+  ? path.join(process.resourcesPath, 'extension')
+  : path.join(REPO_ROOT, 'downloader', 'extension');
+const EXTENSION_DIR = app.isPackaged ? path.join(STATE_DIR, 'extension') : EXTENSION_SOURCE;
 
 const LOG_TAIL_BYTES = 200_000;
 // The values the scrub reads from env that main holds elsewhere: the secret in a constant, the
@@ -301,6 +318,8 @@ function startChild(spec, env) {
     child.on('error', (error) => reject(spawnFailure(spec, error)));
     child.on('exit', (code, signal) => {
       log(spec.name, `exited (${code ?? signal})`);
+      // Still listed means nobody killed it: a dead `server` must not leave its port in the bridge.
+      if (spec.name === 'server' && children.includes(child)) removeBridge(BRIDGE_FILE);
       // Ignored once the port has arrived — a resolved promise cannot reject.
       reject(new Error(`${spec.name} exited (${code ?? signal}) before reporting its port`));
     });
@@ -333,6 +352,8 @@ async function waitForHealth(spec, url, live) {
 /** Start the four, each handed only the peers it calls as plain env vars — valid only while the
  *  call graph stays acyclic (docs/BOOT.md). `auto` calls nobody, so it starts alongside `database`. */
 async function boot() {
+  // A crash of the last launch can leave one behind, pointing the extension at a dead port.
+  removeBridge(BRIDGE_FILE);
   const specs = childSpecs();
   bootState = {
     services: specs.map((spec) => ({ name: spec.name, state: 'pending' })),
@@ -373,12 +394,47 @@ async function boot() {
     // Only `auto` gets the token key, so no other service can read the token it protects.
     up('auto', tokenKeyEnv()),
   ]);
-  await up('server', {
+  const server = await up('server', {
     DATABASE_URL: urls.database,
     BACKEND_URL: urls.backend,
     AUTODL_URL: urls.autoDownloader,
   });
+  publishBridge(new URL(server).port);
   return urls;
+}
+
+/** Write the bridge file for the native host. A failure costs only the extension's connection, so it
+ *  is logged and the boot goes on. Its contents carry the secret and are never logged. */
+function publishBridge(port) {
+  try {
+    writeBridge(BRIDGE_FILE, {
+      port: Number(port),
+      secret: SECRET,
+      extensionVersion: manifestVersion(EXTENSION_SOURCE),
+    });
+    log('main', `bridge file written: ${BRIDGE_FILE}`);
+  } catch (error) {
+    log('main', `bridge file not written: ${error.message}`);
+  }
+}
+
+/** Packaged only: refresh the extension Chrome loads, and on Windows register the native host. Both
+ *  run every launch and neither can fail the boot. */
+function prepareExtension() {
+  if (!app.isPackaged) return;
+  try {
+    log('main', syncExtension(EXTENSION_SOURCE, EXTENSION_DIR));
+  } catch (error) {
+    log('main', `extension not copied: ${error.message}`);
+  }
+  if (process.platform !== 'win32') return;
+  registerHost({
+    stateDir: STATE_DIR,
+    exe: process.execPath,
+    script: path.join(process.resourcesPath, 'bridge', 'host.js'),
+    bridgeFile: BRIDGE_FILE,
+    log,
+  });
 }
 
 /** Ask `auto` to load Playwright now, so the first browser action skips that cost. Fire and forget:
@@ -438,6 +494,8 @@ async function runBoot() {
 /** SIGTERM every child now — synchronous, for `process.on('exit')`, which cannot wait. Idempotent:
  *  the list is emptied as it goes. Returns the children still to reap. */
 function killChildren() {
+  // Here because every exit path and a failed boot pass through it: no service, no bridge file.
+  removeBridge(BRIDGE_FILE);
   return signalChildren(children.splice(0));
 }
 
@@ -553,7 +611,13 @@ function createWindow(checks) {
       defaultDataRoot: DEFAULT_DATA_ROOT,
       errorReports: reportsOn(),
       packaged: app.isPackaged,
+      extensionPath: EXTENSION_DIR,
     };
+  });
+  // Resolves either way: a folder that cannot open is logged, and the guide shows the path anyway.
+  ipcMain.handle('faststudy:extension-reveal', async () => {
+    const failure = await shell.openPath(EXTENSION_DIR);
+    if (failure) log('main', `could not open ${EXTENSION_DIR}: ${failure}`);
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
   ipcMain.handle('faststudy:open-external', (event, url) => openExternalUrl(url));
@@ -640,6 +704,7 @@ if (!app.requestSingleInstanceLock()) {
     const took = Number(process.hrtime.bigint() - started) / 1e6;
     log('main', `startup checks in ${took.toFixed(2)}ms — ${JSON.stringify(checks)}`);
     log('main', `error reports ${reportsOn() ? 'on' : 'off'} at launch`);
+    prepareExtension();
     createWindow(checks);
     // The frontend loads only once all four are healthy: it builds its service clients at module
     // scope, against URLs that do not exist until then.
