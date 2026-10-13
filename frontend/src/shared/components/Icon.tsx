@@ -9,6 +9,7 @@ export type IconName =
   | 'nav-lectures'
   | 'nav-running'
   | 'nav-downloads'
+  | 'nav-extension'
   | 'nav-search'
   | 'nav-settings'
   | 'overview'
@@ -129,7 +130,7 @@ const LectureIcon = () => (
   </svg>
 )
 
-// The five sidebar nav glyphs share a 16px box so they line up down the rail, one size above the
+// The six sidebar nav glyphs share a 16px box so they line up down the rail, one size above the
 // 13px row icons that sit inside text.
 const NavLecturesIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -162,6 +163,18 @@ const NavDownloadsIcon = () => (
       strokeLinejoin="round"
     />
     <path d="M3 13h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+)
+
+// A puzzle piece, echoing Chrome's own extensions button.
+const NavExtensionIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M3 5h2.5a1.5 1.5 0 1 1 3 0H11v2.5a1.5 1.5 0 1 1 0 3V13H8.5a1.5 1.5 0 1 0-3 0H3z"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinejoin="round"
+    />
   </svg>
 )
 
@@ -381,6 +394,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   'nav-lectures': NavLecturesIcon,
   'nav-running': NavRunningIcon,
   'nav-downloads': NavDownloadsIcon,
+  'nav-extension': NavExtensionIcon,
   'nav-search': NavSearchIcon,
   'nav-settings': NavSettingsIcon,
   overview: OverviewIcon,

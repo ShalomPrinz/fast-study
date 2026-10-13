@@ -60,10 +60,11 @@ export default function Sidebar() {
 
   const onRunning = pathname.startsWith('/running')
   const onDownloads = pathname.startsWith('/downloads')
+  const onExtension = pathname.startsWith('/extension')
   const onSearch = pathname.startsWith('/search')
   const onSettings = pathname.startsWith('/settings')
   // Every path the other rows don't claim is `/`, `/course/:c/overview` or `/:c/:l[/edit]` — a lectures page.
-  const onLectures = !(onRunning || onDownloads || onSearch || onSettings)
+  const onLectures = !(onRunning || onDownloads || onExtension || onSearch || onSettings)
 
   return (
     <aside className="sidebar">
@@ -79,6 +80,9 @@ export default function Sidebar() {
         </Link>
         <Link className={rowClass(onDownloads)} to="/downloads">
           <NavBody icon="nav-downloads" label={t`Downloads`} badge={runningDownloads} />
+        </Link>
+        <Link className={rowClass(onExtension)} to="/extension">
+          <NavBody icon="nav-extension" label={t`Chrome extension`} />
         </Link>
         <Link className={rowClass(onSearch)} to="/search">
           <NavBody icon="nav-search" label={t`Search`} />

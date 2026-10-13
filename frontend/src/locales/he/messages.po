@@ -203,7 +203,7 @@ msgstr "{file} לא נמצא."
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
-#: src/features/downloads/components/SectionGroup.tsx:280
+#: src/features/downloads/components/SectionGroup.tsx:285
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
 
@@ -235,7 +235,7 @@ msgstr "{name} שימש"
 msgid "{name} will be used"
 msgstr "{name} ישמש"
 
-#: src/features/downloads/components/SectionGroup.tsx:321
+#: src/features/downloads/components/SectionGroup.tsx:326
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {ההורדה של הקלטה אחת לא התחילה — {stoppedBecause}} two {ההורדה של # הקלטות לא התחילה — {stoppedBecause}} other {ההורדה של # הקלטות לא התחילה — {stoppedBecause}}}"
 
@@ -287,7 +287,7 @@ msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. �
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stepCount}"
 
-#: src/features/downloads/components/SectionGroup.tsx:330
+#: src/features/downloads/components/SectionGroup.tsx:335
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.}}"
 
@@ -363,7 +363,11 @@ msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
-#: src/features/downloads/components/PausedRunsBanner.tsx:26
+#: src/features/extension/ExtensionView.tsx:174
+msgid "A one-time setup of about three minutes."
+msgstr "הגדרה חד־פעמית של כשלוש דקות."
+
+#: src/features/downloads/components/PausedRunsBanner.tsx:27
 msgid "A section is waiting for a passcode"
 msgstr "יחידה ממתינה לקוד גישה"
 
@@ -371,7 +375,7 @@ msgstr "יחידה ממתינה לקוד גישה"
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "נפתח חלון באתר האוניברסיטה. פתור שם את החידה, והחיבור יושלם מעצמו."
 
-#: src/App.tsx:35
+#: src/App.tsx:36
 msgid "Add a course from Downloads or New course to get started"
 msgstr "הוסף קורס דרך \"הורדות\" או \"קורס חדש\" כדי להתחיל"
 
@@ -438,6 +442,10 @@ msgstr "ארכיון ({archivedCount})"
 #: src/features/course-overview/components/StepRow.tsx:74
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שאתה רוצה ליצור מחדש?"
+
+#: src/features/extension/ExtensionView.tsx:107
+msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
+msgstr "בראש הדף, הפעל את המתג \"מצב מפתח\". תופיע שורה של כפתורים חדשים."
 
 #: src/features/downloads/components/RecordingRow.tsx:271
 msgid "Attach material to"
@@ -511,7 +519,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/AddCourseRow.tsx:134
 #: src/features/downloads/components/CoursePicker.tsx:100
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
-#: src/features/downloads/components/PasscodePrompt.tsx:66
+#: src/features/downloads/components/PasscodePrompt.tsx:74
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -572,6 +580,11 @@ msgstr "יש לבחור תחילה אוניברסיטה בהגדרות"
 msgid "Choose your university…"
 msgstr "בחר את האוניברסיטה שלך…"
 
+#: src/features/extension/ExtensionView.tsx:173
+#: src/shared/sidebar/Sidebar.tsx:85
+msgid "Chrome extension"
+msgstr "תוסף Chrome"
+
 #: src/features/settings/components/ApiKeyField.tsx:62
 msgid "Click \"Copy key\" and paste the key here."
 msgstr "לחץ על \"Copy key\" והדבק את המפתח כאן."
@@ -588,6 +601,10 @@ msgstr "לחץ על \"Create API key\"."
 msgid "Click \"Create API Key\"."
 msgstr "לחץ על \"Create API Key\"."
 
+#: src/features/extension/ExtensionView.tsx:120
+msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
+msgstr "לחץ על \"טעינת פריט לא ארוז\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
+
 #: src/features/settings/components/ApiKeyField.tsx:67
 msgid "Click <0>Get a key</0> and sign in with Google or your email."
 msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם Google או עם כתובת האימייל שלך."
@@ -595,6 +612,10 @@ msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם Google או עם 
 #: src/features/settings/components/ApiKeyField.tsx:55
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם חשבון Google שלך."
+
+#: src/features/extension/ExtensionView.tsx:134
+msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
+msgstr "לחץ על סמל חלק הפאזל שליד שורת הכתובת, ואז על הנעץ שליד FastStudy. הסמל שלה יישאר מעכשיו בסרגל הכלים."
 
 #: src/features/downloads/DownloadsView.tsx:119
 msgid "Close"
@@ -665,16 +686,29 @@ msgid "Continue transcription"
 msgstr "המשך תמלול"
 
 #: src/app/ErrorBoundary.tsx:37
+#: src/features/extension/ExtensionView.tsx:42
 msgid "Copied!"
 msgstr "הועתק!"
+
+#: src/features/extension/ExtensionView.tsx:96
+msgid "Copy address"
+msgstr "העתקת הכתובת"
 
 #: src/app/ErrorBoundary.tsx:37
 msgid "Copy details"
 msgstr "העתקת פרטים"
 
+#: src/features/extension/ExtensionView.tsx:63
+msgid "Copy path"
+msgstr "העתקת הנתיב"
+
 #: src/shared/i18n/serviceErrors.ts:81
 msgid "Could not convert the summary for printing."
 msgstr "לא ניתן להמיר את הסיכום להדפסה."
+
+#: src/features/extension/ExtensionView.tsx:34
+msgid "Could not copy. Select the text and copy it by hand."
+msgstr "לא הצלחנו להעתיק. סמן את הטקסט והעתק אותו ידנית."
 
 #: src/shared/i18n/serviceErrors.ts:131
 msgid "Could not create \"{path}\"."
@@ -777,7 +811,7 @@ msgstr "מקורות קורסים"
 msgid "Course URL"
 msgstr "כתובת הקורס"
 
-#: src/App.tsx:37
+#: src/App.tsx:38
 #: src/features/downloads/DownloadsView.tsx:94
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:236
@@ -849,12 +883,16 @@ msgstr "הושלם"
 msgid "Download"
 msgstr "הורדה"
 
+#: src/features/extension/ExtensionView.tsx:143
+msgid "Download a lecture"
+msgstr "הורדת הרצאה"
+
 #: src/features/downloads/components/RecordingRow.tsx:315
 #: src/features/downloads/components/RecordingRow.tsx:316
 msgid "Download again"
 msgstr "הורדה מחדש"
 
-#: src/features/downloads/components/SectionGroup.tsx:312
+#: src/features/downloads/components/SectionGroup.tsx:317
 msgid "Download all {leaves}"
 msgstr "הורדת הכול ({leaves})"
 
@@ -871,11 +909,11 @@ msgstr "מוריד"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:284
+#: src/features/downloads/components/SectionGroup.tsx:289
 msgid "Downloading {0}/{1}…"
 msgstr "מוריד {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:291
+#: src/features/downloads/components/SectionGroup.tsx:296
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
@@ -889,12 +927,12 @@ msgid "Downloading update…"
 msgstr "מוריד עדכון…"
 
 #: src/features/downloads/components/RecordingRow.tsx:291
-#: src/features/downloads/components/SectionGroup.tsx:312
+#: src/features/downloads/components/SectionGroup.tsx:317
 msgid "Downloading…"
 msgstr "מוריד…"
 
 #: src/features/downloads/DownloadsView.tsx:60
-#: src/shared/sidebar/Sidebar.tsx:81
+#: src/shared/sidebar/Sidebar.tsx:82
 msgid "Downloads"
 msgstr "הורדות"
 
@@ -930,7 +968,7 @@ msgstr "עריכת כתובת מקור"
 msgid "Edit summary"
 msgstr "עריכת סיכום"
 
-#: src/features/downloads/components/PasscodePrompt.tsx:35
+#: src/features/downloads/components/PasscodePrompt.tsx:43
 msgid "Enter the zoom passcode for this recording"
 msgstr "הזן את קוד הגישה של Zoom להקלטה הזו"
 
@@ -968,7 +1006,7 @@ msgstr "רמזים למבחן"
 msgid "Expand"
 msgstr "טעינת פלייליסט"
 
-#: src/features/downloads/components/SectionGroup.tsx:306
+#: src/features/downloads/components/SectionGroup.tsx:311
 msgid "Expand every playlist in this section first"
 msgstr "טען קודם כל פלייליסט ביחידה הזו"
 
@@ -1171,6 +1209,10 @@ msgstr "אישרתי, לנסות שוב"
 msgid "I solved the captcha"
 msgstr "פתרתי את החידה"
 
+#: src/features/extension/ExtensionView.tsx:200
+msgid "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
+msgstr "אם Chrome מציג את FastStudy עם שגיאה, פתח את <0>{EXTENSIONS_URL}</0> ולחץ על חץ הטעינה מחדש בכרטיס של FastStudy."
+
 #: src/features/downloads/components/RecordingRow.tsx:309
 msgid "In course"
 msgstr "כבר בקורס"
@@ -1183,7 +1225,7 @@ msgstr "ברשימת הפרויקטים, בחר \"Create project\"."
 msgid "Install Chrome"
 msgstr "התקנת Chrome"
 
-#: src/features/downloads/components/PasscodePrompt.tsx:62
+#: src/features/downloads/components/PasscodePrompt.tsx:70
 msgid "just this lecture"
 msgstr "רק להרצאה הזו"
 
@@ -1232,7 +1274,7 @@ msgid "Lecture name…"
 msgstr "שם ההרצאה…"
 
 #: src/features/search/SearchView.tsx:205
-#: src/shared/sidebar/Sidebar.tsx:75
+#: src/shared/sidebar/Sidebar.tsx:76
 msgid "Lectures"
 msgstr "הרצאות"
 
@@ -1253,6 +1295,10 @@ msgstr "טעינת הגרסה החדשה"
 #: src/features/downloads/components/CourseSourceRow.tsx:110
 msgid "Load recordings"
 msgstr "טעינת הקלטות"
+
+#: src/features/extension/ExtensionView.tsx:116
+msgid "Load the FastStudy folder"
+msgstr "טעינת התיקייה של FastStudy"
 
 #: src/features/downloads/components/CourseSourceRow.tsx:92
 msgid "Loaded"
@@ -1462,6 +1508,22 @@ msgstr "נשלחים רק פרטים טכניים על שגיאות, אף פעם
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {host}."
 
+#: src/features/extension/ExtensionView.tsx:146
+msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". The download shows on the <0>Downloads</0> page."
+msgstr "פתח הרצאה באתר הקורס והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". ההורדה תופיע בדף <0>הורדות</0>."
+
+#: src/features/extension/ExtensionView.tsx:82
+msgid "Open Chrome's extensions page"
+msgstr "פתיחת דף התוספים של Chrome"
+
+#: src/features/extension/ExtensionView.tsx:65
+msgid "Open folder"
+msgstr "פתיחת התיקייה"
+
+#: src/features/extension/ExtensionView.tsx:86
+msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
+msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת הכתובת שבראש החלון והקש Enter:"
+
 #: src/features/lectures/MainView.tsx:228
 msgid "Open in Drive"
 msgstr "פתיחה ב-Drive"
@@ -1507,7 +1569,7 @@ msgstr "לא חובה"
 msgid "Other"
 msgstr "אחר"
 
-#: src/features/downloads/components/SectionGroup.tsx:98
+#: src/features/downloads/components/SectionGroup.tsx:102
 msgid "Other links"
 msgstr "קישורים אחרים"
 
@@ -1531,7 +1593,7 @@ msgstr "יצירת הסקירה כבר מתבצעת בקורס הזה"
 msgid "Part of FastStudy isn't responding. Restart the app."
 msgstr "חלק מ-FastStudy לא מגיב. הפעל מחדש את האפליקציה."
 
-#: src/features/downloads/components/PasscodePrompt.tsx:52
+#: src/features/downloads/components/PasscodePrompt.tsx:60
 msgid "Passcode"
 msgstr "קוד גישה"
 
@@ -1554,6 +1616,10 @@ msgstr "ה-PDF ישן יותר מהסיכום הזה"
 #: src/features/lectures/EditSummaryView.tsx:257
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
+
+#: src/features/extension/ExtensionView.tsx:131
+msgid "Pin FastStudy to the toolbar"
+msgstr "הצמדת FastStudy לסרגל הכלים"
 
 #: src/features/lectures/MainView.tsx:281
 msgid "Pipeline"
@@ -1715,7 +1781,7 @@ msgid "Running · lecture {0} of {1}"
 msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 
 #: src/features/runner/RunnerView.tsx:247
-#: src/shared/sidebar/Sidebar.tsx:78
+#: src/shared/sidebar/Sidebar.tsx:79
 msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
 
@@ -1748,11 +1814,15 @@ msgstr "שומר…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "צילום מסך של {name}, שלב {step}"
 
+#: src/features/extension/ExtensionView.tsx:163
+msgid "Screenshot of step {step}"
+msgstr "צילום מסך של שלב {step}"
+
 #: src/features/settings/components/PrivacyPolicyModal.tsx:171
 msgid "Scroll to the end to confirm."
 msgstr "גלול עד הסוף כדי לאשר."
 
-#: src/shared/sidebar/Sidebar.tsx:84
+#: src/shared/sidebar/Sidebar.tsx:88
 msgid "Search"
 msgstr "חיפוש"
 
@@ -1769,11 +1839,11 @@ msgid "Searches the summaries of the course picked in the field"
 msgstr "מחפש בסיכומים של הקורס שנבחר בשדה"
 
 #. placeholder {0}: sectionTitle(parsed.title)
-#: src/features/downloads/components/PausedRunsBanner.tsx:25
+#: src/features/downloads/components/PausedRunsBanner.tsx:26
 msgid "Section {0} is waiting for a passcode"
 msgstr "היחידה {0} ממתינה לקוד גישה"
 
-#: src/App.tsx:39
+#: src/App.tsx:40
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
@@ -1787,7 +1857,7 @@ msgstr "תוקף החיבור פג"
 
 #: src/features/settings/SettingsView.tsx:128
 #: src/features/settings/SettingsView.tsx:201
-#: src/shared/sidebar/Sidebar.tsx:87
+#: src/shared/sidebar/Sidebar.tsx:91
 msgid "Settings"
 msgstr "הגדרות"
 
@@ -1795,7 +1865,7 @@ msgstr "הגדרות"
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
-#: src/features/downloads/components/SectionGroup.tsx:187
+#: src/features/downloads/components/SectionGroup.tsx:192
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה את השמות והרץ שוב."
 
@@ -1851,7 +1921,7 @@ msgstr "אחסון"
 msgid "Student QA"
 msgstr "שאלות סטודנטים"
 
-#: src/features/downloads/components/PasscodePrompt.tsx:69
+#: src/features/downloads/components/PasscodePrompt.tsx:77
 msgid "Submit"
 msgstr "שליחה"
 
@@ -1925,7 +1995,7 @@ msgstr "ההרצאה הזו כבר לא בתור"
 msgid "That link isn't a course's main page. Copy the address that ends in course/view.php?id= and a number: {url}."
 msgstr "הקישור הזה אינו העמוד הראשי של קורס. העתק את הכתובת שמסתיימת ב-⁦course/view.php?id=⁩ ובמספר: ⁦{url}⁩."
 
-#: src/features/downloads/components/PasscodePrompt.tsx:34
+#: src/features/downloads/components/PasscodePrompt.tsx:42
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
@@ -1985,6 +2055,10 @@ msgstr "אי אפשר להוריד את הקובץ הזה"
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא נוצרת אם אינה קיימת."
 
+#: src/features/extension/ExtensionView.tsx:53
+msgid "The folder path and its buttons are available in the FastStudy desktop app."
+msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
+
 #: src/features/lectures/MainView.tsx:423
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
@@ -2030,7 +2104,7 @@ msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור 
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
 
-#: src/features/downloads/components/SectionGroup.tsx:260
+#: src/features/downloads/components/SectionGroup.tsx:265
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -2038,7 +2112,7 @@ msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה ש
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:259
+#: src/features/downloads/components/SectionGroup.tsx:264
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -2058,7 +2132,7 @@ msgstr "הסיכום ריק"
 msgid "The university is checking the connection."
 msgstr "האוניברסיטה בודקת את החיבור."
 
-#: src/features/downloads/components/SectionGroup.tsx:257
+#: src/features/downloads/components/SectionGroup.tsx:262
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "תוקף החיבור לאוניברסיטה פג. התחבר מחדש והרץ את היחידה שוב."
 
@@ -2182,6 +2256,10 @@ msgstr "תמלול"
 msgid "Try again"
 msgstr "לנסות שוב"
 
+#: src/features/extension/ExtensionView.tsx:104
+msgid "Turn on Developer mode"
+msgstr "הפעלת מצב מפתח"
+
 #: src/features/downloads/components/ManualDownload.tsx:198
 msgid "Type"
 msgstr "סוג"
@@ -2229,6 +2307,10 @@ msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:141
 msgid "Updates"
 msgstr "עדכונים"
+
+#: src/features/extension/ExtensionView.tsx:194
+msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
+msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 
 #: src/features/lectures/EditSummaryView.tsx:283
 msgid "Updating PDF…"

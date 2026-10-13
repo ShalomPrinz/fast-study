@@ -40,6 +40,8 @@ declare global {
       errorReports?: boolean
       // The native folder dialog, opened at `defaultPath`; `null` on cancel. Absent on older launchers.
       pickFolder?: (defaultPath?: string) => Promise<string | null>
+      // The folder Chrome loads the extension unpacked from; `reveal()` opens it and always resolves.
+      extension?: { path: string; reveal: () => Promise<void> }
       // Not optional: the bridge's absence is the browser-dev test. Identifiers only — `database/`
       // resolves the path; a `target` without `lecture` is a course-level `overview/` file.
       open: {

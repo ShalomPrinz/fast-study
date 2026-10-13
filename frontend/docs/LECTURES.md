@@ -93,7 +93,7 @@ server-side, so no frontend path clears it.
 
 ## Sidebar
 
-The brand, then five route rows — Lectures, Running pipelines, Downloads, Search, Settings — exactly one
+The brand, then six route rows — Lectures, Running pipelines, Downloads, Chrome extension, Search, Settings — exactly one
 active per page ([ARCHITECTURE.md](ARCHITECTURE.md) §Routes). Running pipelines shows `current/total`
 while the runner is on; Downloads counts running jobs. Every glyph is inline SVG from `Icon`.
 

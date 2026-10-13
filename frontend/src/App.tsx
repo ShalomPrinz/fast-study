@@ -9,6 +9,7 @@ import LecturesLayout from '@/features/lectures/LecturesLayout'
 import EditSummaryView from '@/features/lectures/EditSummaryView'
 import CourseView from '@/features/course-overview/CourseView'
 import DownloadsView from '@/features/downloads/DownloadsView'
+import ExtensionView from '@/features/extension/ExtensionView'
 import SearchView from '@/features/search/SearchView'
 import RunnerView from '@/features/runner/RunnerView'
 import SettingsView from '@/features/settings/SettingsView'
@@ -65,6 +66,7 @@ export default function App() {
               <Route path={ROUTES.lecture} element={<MainView />} />
             </Route>
             <Route path={ROUTES.downloads} element={<DownloadsView />} />
+            <Route path={ROUTES.extension} element={<ExtensionView />} />
             <Route path={ROUTES.search} element={<SearchView />} />
             <Route path={ROUTES.running} element={<RunnerView />} />
             <Route path={ROUTES.settings} element={<SettingsView />} />
