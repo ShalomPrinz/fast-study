@@ -4,7 +4,8 @@ import type { DownloadsTab } from '@/features/downloads/utils/downloadsTab'
 import '@/styles/segmented.css'
 
 interface Props {
-  tab: DownloadsTab
+  // Null while the default is still settling: no segment is selected.
+  tab: DownloadsTab | null
   onSelect: (tab: DownloadsTab) => void
 }
 

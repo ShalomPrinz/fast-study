@@ -7,6 +7,8 @@ import { MoodleLockProvider } from './MoodleLockContext'
 interface AuthStatusValue {
   // null means "unknown", never "disconnected": nothing has landed yet, or the one-shot read failed.
   status: AuthStatus | null
+  // The first answer has landed: a pushed frame, or a one-shot read that finished or failed.
+  settled: boolean
   refresh: () => Promise<void>
 }
 
@@ -19,6 +21,7 @@ const AuthStatusContext = createContext<AuthStatusValue | null>(null)
 export function AuthStatusProvider({ children }: { children: ReactNode }) {
   const [pushed, setPushed] = useState<AuthStatus | null>(null)
   const [probed, setProbed] = useState<AuthStatus | null>(null)
+  const [probeDone, setProbeDone] = useState(false)
 
   useEffect(() => subscribeAuth(setPushed), [])
 
@@ -29,6 +32,7 @@ export function AuthStatusProvider({ children }: { children: ReactNode }) {
       // Connection errors are toasted centrally.
       setProbed(null)
     }
+    setProbeDone(true)
   }, [])
 
   const status = useMemo(() => {
@@ -38,7 +42,8 @@ export function AuthStatusProvider({ children }: { children: ReactNode }) {
       : pushed
   }, [pushed, probed])
 
-  const value = useMemo(() => ({ status, refresh }), [status, refresh])
+  const settled = pushed !== null || probeDone
+  const value = useMemo(() => ({ status, settled, refresh }), [status, settled, refresh])
   return (
     <AuthStatusContext.Provider value={value}>
       <MoodleLockProvider frame={pushed}>{children}</MoodleLockProvider>

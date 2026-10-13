@@ -16,8 +16,10 @@ of courses with a source, Extension the setup time, Manual none; all three share
 
 `useDownloadsTab` picks the tab through the pure `defaultTab`: a valid stored choice
 (`fastStudyDownloadsTab`, written only on a click), else University when the account is connected and
-Extension when not. While the account is unknown University stands in, unstored; the account default is
-fixed the first time the account is known, so a later sign-out never moves the page.
+Extension when signed out or the account read failed. Until the first account answer settles
+(`AuthStatusContext`'s `settled`: a pushed frame, or `AccountStatus`'s one-shot read finishing or failing —
+it is mounted on every tab, so that read always runs) the body is a spinner and no tab is selected. The
+account default is then fixed for the app session, so a later sign-out or a return to the page never moves it.
 
 The University tab is the unconfigured-site nudge, then one `CourseSourceRow` per active course plus `AddCourseRow` (alone with no courses; under a `.source-list-failed` danger note when
 `courseLoadNotice` says the load failed, still usable since a create reports its own failure), then — once a course is loaded — the `.recordings-panel`. The 880px measure
@@ -56,17 +58,15 @@ own branch in the catalog row, so it never reads as the bare generic line.
 
 ## Manual download
 
-The Manual tab, a collapsible section (`ManualDownload`): paste a video link, type a course
+The Manual tab (`ManualDownload`), always open: paste a video link, type a course
 (the active ones are suggestions; any other name is created first, an archived one answers `name_taken`),
 kind and name, and `POST /download-url` queues it. auto decides the route: a link on the configured
 Moodle site's origin is proxied through auto under the Moodle lock (below), any other runs yt-dlp; both
-fetch with no session or cookies, so the link must open without signing in. Collapsed by default, its open state is per-viewer
-`localStorage` like the media segment. The name is `suggestName`'s next free one, also skipping names
+fetch with no session or cookies, so the link must open without signing in. The name is `suggestName`'s next free one, also skipping names
 this session's manual downloads already claimed (`suggestManualName`), since an in-flight one is not in
 the tree yet; replacing a stored video confirms first. The link is never cleared for the user, whether
 the download starts, lands or fails. Its jobs are [JOBS.md](JOBS.md) §Manual jobs.
 The whole draft (link, course, kind, name) is a module store, so it survives leaving the page but not an app restart.
-Its title takes the accent while the account is known to be not connected (`status.connected === false`).
 
 ## Auth
 

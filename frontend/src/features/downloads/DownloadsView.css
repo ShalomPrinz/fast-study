@@ -117,3 +117,10 @@
 .downloads-meta-item.downloads-meta-item--hidden {
   visibility: hidden;
 }
+
+/* No tab is chosen yet: the first account answer decides the default, and it is still on its way. */
+.downloads-tab-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8) 0;
+}

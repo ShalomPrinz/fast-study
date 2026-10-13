@@ -27,6 +27,8 @@ import {
 import '@/styles/panel.css'
 import '@/styles/pipeline-card.css'
 import '@/styles/segmented.css'
+import '@/styles/spinner.css'
+import '@/styles/button.css'
 import './DownloadsView.css'
 
 function metaClass(shown: boolean): string {
@@ -71,6 +73,13 @@ export default function DownloadsView() {
             // Every tab's meta shares one grid cell, the others hidden, so the header keeps the
             // tallest one's height and the tab row never moves on a switch.
             <div className="downloads-meta">
+              {/* A button's height, held while the account chip is still loading and shows none. */}
+              <span
+                className="btn downloads-meta-item downloads-meta-item--hidden"
+                aria-hidden="true"
+              >
+                &nbsp;
+              </span>
               <div className={metaClass(tab === 'university')}>
                 {/* Remounting on a reconnect hint forces a fresh probe: the cached status predates
                     the 401 that raised the hint and would still read "connected". */}
@@ -87,8 +96,13 @@ export default function DownloadsView() {
         />
 
         {/* Keyed by tab so each one opens at its own top rather than the last tab's scroll offset. */}
-        <div className="page-body" key={tab}>
+        <div className="page-body" key={tab ?? 'loading'}>
           <div className="page-column">
+            {tab === null && (
+              <div className="downloads-tab-loading">
+                <div className="spinner" />
+              </div>
+            )}
             {tab === 'extension' && <ExtensionGuide />}
             {tab === 'manual' && <ManualDownload />}
             {tab === 'university' && (
