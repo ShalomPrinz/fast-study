@@ -11,46 +11,50 @@
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
   background: var(--surface-sunken);
-  font-size: var(--fs-meta);
+  font-size: var(--fs-body);
   color: var(--text-3);
 }
 
-/* Link, course, kind, name, action — one row of captioned fields that wraps on a narrow window, the
-   link taking the most room. Fields stretch to the line's height and keep their caption on top and
-   their control at the bottom, so captions and controls each line up despite the shorter toggle. */
+/* Link and course a full row each, then kind beside name, then the centred action. */
 .manual-download-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-5);
 }
 
-.manual-download-form > .btn {
-  align-self: flex-end;
+.manual-download-url,
+.manual-download-course {
+  grid-column: 1 / -1;
 }
 
+/* Kind and name share a row; each caption on top and control at the bottom despite the shorter toggle. */
 .manual-download-field {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: var(--space-1);
+  gap: var(--space-2);
   min-width: 0;
 }
 
 .manual-download-label {
-  font-size: var(--fs-meta);
+  font-size: var(--fs-body);
   color: var(--text-3);
 }
 
-.manual-download-url {
-  flex: 3 1 220px;
+/* Each outspecifies its shared base (`.source-row-input`, the light toggle, `.btn--primary`). */
+.manual-download-form .source-row-input {
+  font-size: var(--fs-row);
 }
 
-.manual-download-course {
-  flex: 1 1 120px;
+.manual-download-form .mode-toggle--light .mode-toggle-btn {
+  font-size: var(--fs-body);
 }
 
-.manual-download-name {
-  flex: 1 1 120px;
+.manual-download-form > .btn {
+  grid-column: 1 / -1;
+  justify-self: center;
+  padding-inline: var(--space-8);
+  font-size: var(--fs-row);
 }
 
 .manual-download-jobs {
