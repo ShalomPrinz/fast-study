@@ -4,17 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
-import { MemoryRouter } from 'react-router-dom'
-import ExtensionView, { EXTENSIONS_URL } from './ExtensionView'
+import ExtensionGuide, { EXTENSIONS_URL } from './ExtensionGuide'
 
 function mount() {
-  return render(
-    createElement(
-      I18nProvider,
-      { i18n },
-      createElement(MemoryRouter, null, createElement(ExtensionView)),
-    ),
-  )
+  return render(createElement(I18nProvider, { i18n }, createElement(ExtensionGuide)))
 }
 
 function stubClipboard() {
@@ -28,7 +21,7 @@ afterEach(() => {
   delete window.faststudy
 })
 
-describe('ExtensionView', () => {
+describe('ExtensionGuide', () => {
   it('shows the folder path with Copy and Open folder when the bridge has the extension', () => {
     const reveal = vi.fn().mockResolvedValue(undefined)
     window.faststudy = {

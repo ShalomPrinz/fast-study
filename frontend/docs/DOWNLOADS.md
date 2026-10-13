@@ -8,8 +8,23 @@ section's "Download all" is [BULK.md](BULK.md).
 
 ## Layout
 
-A `PageHeader` (account chip, count of courses with a source) over one `CourseSourceRow` per active
-course plus `AddCourseRow` (alone with no courses; under a `.source-list-failed` danger note when
+Three tabs, University, Extension and Manual (`DownloadsTabs`, the light segmented switch at full width), ride in the
+`PageHeader`'s secondary row, so title and tabs stay frozen while `.page-body` scrolls; the body is keyed
+by tab, so each opens at its top. The header meta is per tab: University the account chip and the count
+of courses with a source, Extension the setup time, Manual a one-line description, and "Loading your data…"
+while no tab is chosen; all share one grid cell with the rest hidden (plus a hidden button-height
+placeholder for the chip still loading), so the header's height and the tab row never move. Extension is the guide
+([EXTENSION.md](EXTENSION.md)), Manual is `ManualDownload` (below).
+
+`useDownloadsTab` picks the tab through the pure `defaultTab`: a valid stored choice
+(`fastStudyDownloadsTab`, written only on a click), else University when the account is connected and
+Extension when signed out or the account read failed. Only with no valid stored choice does the page wait
+for the first account answer (`AuthStatusContext`'s `settled`: a pushed frame, or `AccountStatus`'s
+one-shot read finishing or failing — it is mounted on every tab, so that read always runs); meanwhile the
+body is a spinner and no tab is selected. That default is then fixed for the app session, so a later
+sign-out or a return to the page never moves it.
+
+The University tab is the unconfigured-site nudge, then one `CourseSourceRow` per active course plus `AddCourseRow` (alone with no courses; under a `.source-list-failed` danger note when
 `courseLoadNotice` says the load failed, still usable since a create reports its own failure), then — once a course is loaded — the `.recordings-panel`. The 880px measure
 fits a recording's second line: kind toggle, name input and action side by side.
 
@@ -46,17 +61,17 @@ own branch in the catalog row, so it never reads as the bare generic line.
 
 ## Manual download
 
-A collapsible section above the course sources (`ManualDownload`): paste a video link, type a course
+The Manual tab (`ManualDownload`), always open: paste a video link, type a course
 (the active ones are suggestions; any other name is created first, an archived one answers `name_taken`),
 kind and name, and `POST /download-url` queues it. auto decides the route: a link on the configured
 Moodle site's origin is proxied through auto under the Moodle lock (below), any other runs yt-dlp; both
-fetch with no session or cookies, so the link must open without signing in. Collapsed by default, its open state is per-viewer
-`localStorage` like the media segment. The name is `suggestName`'s next free one, also skipping names
+fetch with no session or cookies, so the link must open without signing in. The name is `suggestName`'s next free one, also skipping names
 this session's manual downloads already claimed (`suggestManualName`), since an in-flight one is not in
 the tree yet; replacing a stored video confirms first. The link is never cleared for the user, whether
 the download starts, lands or fails. Its jobs are [JOBS.md](JOBS.md) §Manual jobs.
 The whole draft (link, course, kind, name) is a module store, so it survives leaving the page but not an app restart.
-Its title takes the accent while the account is known to be not connected (`status.connected === false`).
+The form is a two-column grid in reading order: link and course a full row each, kind beside name, then
+the wide Download button centred; its text and controls are one type step above the page's other forms.
 
 ## Auth
 

@@ -1,11 +1,9 @@
 import { useId, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import Chevron from '@/shared/components/Chevron'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ServiceError from '@/shared/components/ServiceError'
 import { createCourse } from '@/services/database'
-import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { jobState, useJobById } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { ManualEntry } from '@/features/downloads/contexts/ManualDownloadsContext'
 import {
@@ -37,70 +35,16 @@ import './RecordingRow.css'
 import './RecordingJobList.css'
 import './ManualDownload.css'
 
-const OPEN_STORAGE_KEY = 'fastStudyDownloadsManualOpen'
-
-// Stored like the page's media segment; access throws with site data blocked, which reads as closed.
-function readOpen(): boolean {
-  try {
-    return localStorage.getItem(OPEN_STORAGE_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-function writeOpen(open: boolean) {
-  try {
-    localStorage.setItem(OPEN_STORAGE_KEY, open ? '1' : '0')
-  } catch {
-    // Not remembered this time; the toggle itself still works.
-  }
-}
-
-// A collapsible "paste a link" form: any video URL reachable without credentials. A link on the Moodle
-// site is proxied through auto under the Moodle lock; any other runs yt-dlp. See docs/DOWNLOADS.md.
+// The Downloads page's Manual tab: a "paste a link" form for any video that opens without signing in.
+// auto routes it (Moodle-site links under the Moodle lock, others through yt-dlp); see docs/DOWNLOADS.md.
 export default function ManualDownload() {
-  const [open, setOpen] = useState(readOpen)
-  const bodyId = useId()
-  // Without the account this is the only way in, so its title draws the eye; unknown stays plain.
-  const { status } = useAuthStatus()
-  const offline = status !== null && !status.connected
-
-  function toggle() {
-    setOpen(!open)
-    writeOpen(!open)
-  }
-
   return (
     <section className="manual-download">
-      <div className="section-head">
-        <h2 className="section-title">
-          <button
-            type="button"
-            className={
-              offline
-                ? 'manual-download-toggle manual-download-toggle--offline'
-                : 'manual-download-toggle'
-            }
-            aria-expanded={open}
-            aria-controls={bodyId}
-            onClick={toggle}
-          >
-            <span className="manual-download-caret" aria-hidden="true">
-              <Chevron open={open} />
-            </span>
-            <Trans>Manual download</Trans>
-          </button>
-        </h2>
-      </div>
-
-      {/* Hidden, not unmounted: a half-typed link survives a collapse. */}
-      <div id={bodyId} className="manual-download-body" hidden={!open}>
-        <p className="manual-download-warning">
-          <Trans>Works only for video links, and only if they open without signing in.</Trans>
-        </p>
-        <ManualForm />
-        <ManualJobList />
-      </div>
+      <p className="manual-download-warning">
+        <Trans>Works only for video links, and only if they open without signing in.</Trans>
+      </p>
+      <ManualForm />
+      <ManualJobList />
     </section>
   )
 }

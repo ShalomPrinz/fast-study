@@ -1,13 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { Link } from 'react-router-dom'
-import PageHeader from '@/shared/components/PageHeader'
 import { runtimeBridge } from '@/services/runtime'
 import { toast } from '@/services/toaster'
-import { ROUTES } from '@/shared/utils/routes'
-import '@/styles/panel.css'
 import '@/styles/button.css'
-import './ExtensionView.css'
+import './ExtensionGuide.css'
 
 // Chrome's own extensions page; the bridge's `open.external` refuses it, so the user pastes it.
 export const EXTENSIONS_URL = 'chrome://extensions'
@@ -145,8 +141,8 @@ function steps(): Step[] {
         <p>
           <Trans>
             Open a lecture on the course site and press play. Click the FastStudy icon, choose the
-            course and the lecture, then click "Download". The download shows on the{' '}
-            <Link to={ROUTES.downloads}>Downloads</Link> page.
+            course and the lecture, then click "Download". Once it finishes, the lecture appears
+            under its course.
           </Trans>
         </p>
       ),
@@ -164,48 +160,39 @@ function Shot({ name, step }: { name: string; step: number }) {
   )
 }
 
-// A one-time walkthrough for loading the shipped Chrome extension unpacked — see docs/EXTENSION.md.
-export default function ExtensionView() {
-  const { t } = useLingui()
+// A one-time walkthrough for loading the shipped Chrome extension unpacked: the Downloads page's
+// Extension tab — see docs/EXTENSION.md.
+export default function ExtensionGuide() {
   return (
-    <main className="main-view main-view--page extension-page">
-      <PageHeader
-        title={t`Chrome extension`}
-        meta={<Trans>A one-time setup of about three minutes.</Trans>}
-      />
-      <div className="page-body">
-        <div className="page-column">
-          <ol className="extension-steps">
-            {steps().map((s, i) => (
-              <li key={s.shot} className="extension-step">
-                <span className="extension-step-num" aria-hidden="true">
-                  {i + 1}
-                </span>
-                <div className="extension-step-body">
-                  <h2 className="extension-step-title">{s.title}</h2>
-                  {s.body}
-                  <Shot name={s.shot} step={i + 1} />
-                </div>
-              </li>
-            ))}
-          </ol>
-          <aside className="extension-notes">
-            <p>
-              <Trans>
-                Updates arrive with the app: when FastStudy updates, the extension updates itself,
-                so you set it up only once.
-              </Trans>
-            </p>
-            <p>
-              <Trans>
-                If Chrome shows FastStudy with an error, open{' '}
-                <code dir="ltr">{EXTENSIONS_URL}</code> and click the reload arrow on the FastStudy
-                card.
-              </Trans>
-            </p>
-          </aside>
-        </div>
-      </div>
-    </main>
+    <>
+      <ol className="extension-steps">
+        {steps().map((s, i) => (
+          <li key={s.shot} className="extension-step">
+            <span className="extension-step-num" aria-hidden="true">
+              {i + 1}
+            </span>
+            <div className="extension-step-body">
+              <h2 className="extension-step-title">{s.title}</h2>
+              {s.body}
+              <Shot name={s.shot} step={i + 1} />
+            </div>
+          </li>
+        ))}
+      </ol>
+      <aside className="extension-notes">
+        <p>
+          <Trans>
+            Updates arrive with the app: when FastStudy updates, the extension updates itself, so
+            you set it up only once.
+          </Trans>
+        </p>
+        <p>
+          <Trans>
+            If Chrome shows FastStudy with an error, open <code dir="ltr">{EXTENSIONS_URL}</code>{' '}
+            and click the reload arrow on the FastStudy card.
+          </Trans>
+        </p>
+      </aside>
+    </>
   )
 }

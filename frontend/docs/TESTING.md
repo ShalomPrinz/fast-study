@@ -16,7 +16,7 @@ with any one service.
 A hook whose logic is its async ordering or its providers is tested with `renderHook` under a
 `// @vitest-environment jsdom` docblock, providers built with `createElement` so the file stays `.ts`.
 A page whose decision is which controls a bridge shape renders is rendered whole the same way
-(`ExtensionView.test.ts`), asserting by selector, never copy. Everything else runs in `node`, where `window` does not exist — why `runtimeBridge()` guards it. The only
+(`ExtensionGuide.test.ts`), asserting by selector, never copy. Everything else runs in `node`, where `window` does not exist — why `runtimeBridge()` guards it. The only
 shared setup is `src/test-setup.ts`, which activates the English catalog.
 
 ## Verifying layout against the real page

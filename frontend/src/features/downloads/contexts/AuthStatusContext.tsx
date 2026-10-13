@@ -7,18 +7,19 @@ import { MoodleLockProvider } from './MoodleLockContext'
 interface AuthStatusValue {
   // null means "unknown", never "disconnected": nothing has landed yet, or the one-shot read failed.
   status: AuthStatus | null
+  // The first answer has landed: a pushed frame, or a one-shot read that finished or failed.
+  settled: boolean
   refresh: () => Promise<void>
 }
 
 const AuthStatusContext = createContext<AuthStatusValue | null>(null)
 
-// The university account, one answer for every chip and gate: the service's pushed state, with `refresh`'s
-// one-shot read kept for what the stream cannot say — no site configured reads as idle there. The stream
-// never toasts, so a route with no account control never reports the auto-downloader as down. The same
-// stream's `moodleBusy` feeds the Moodle lock, so every account consumer has one too.
+// The university account for every chip and gate: the pushed state, plus `refresh`'s one-shot read for
+// "no site configured", which the stream reads as idle. It never toasts; its `moodleBusy` feeds the lock.
 export function AuthStatusProvider({ children }: { children: ReactNode }) {
   const [pushed, setPushed] = useState<AuthStatus | null>(null)
   const [probed, setProbed] = useState<AuthStatus | null>(null)
+  const [probeDone, setProbeDone] = useState(false)
 
   useEffect(() => subscribeAuth(setPushed), [])
 
@@ -29,6 +30,7 @@ export function AuthStatusProvider({ children }: { children: ReactNode }) {
       // Connection errors are toasted centrally.
       setProbed(null)
     }
+    setProbeDone(true)
   }, [])
 
   const status = useMemo(() => {
@@ -38,7 +40,8 @@ export function AuthStatusProvider({ children }: { children: ReactNode }) {
       : pushed
   }, [pushed, probed])
 
-  const value = useMemo(() => ({ status, refresh }), [status, refresh])
+  const settled = pushed !== null || probeDone
+  const value = useMemo(() => ({ status, settled, refresh }), [status, settled, refresh])
   return (
     <AuthStatusContext.Provider value={value}>
       <MoodleLockProvider frame={pushed}>{children}</MoodleLockProvider>

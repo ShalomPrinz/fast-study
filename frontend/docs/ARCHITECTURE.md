@@ -59,7 +59,6 @@ every answer is overtaken before it arrives and latest-only never settles.
 | `/`                        | empty state       |
 | `/course/:course/overview` | `CourseView`      |
 | `/downloads`               | `DownloadsView`   |
-| `/extension`               | `ExtensionView`   |
 | `/search`                  | `SearchView`      |
 | `/running`                 | `RunnerView`      |
 | `/settings`                | `SettingsView`    |
@@ -77,7 +76,7 @@ outrank `/:course/:lecture` in v7 ranking, and a pathless layout adds no segment
 segments rather than `/course/:course`, which would outrank `/:course/:lecture` and hide every lecture of a
 course named `course`.
 
-The sidebar's six rows are all routes and exactly one is active per page: the five static routes claim
+The sidebar's five rows are all routes and exactly one is active per page: the four static routes claim
 their own, Lectures claims the rest. Leaving `/downloads` unmounts its view, so `Layout` also mounts the
 downloads providers, and discovery, edits, jobs and runs outlive the route ([DOWNLOADS.md](DOWNLOADS.md)).
 

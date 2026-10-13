@@ -4,7 +4,6 @@ export const ROUTES = {
   lecture: '/:course/:lecture',
   editor: '/:course/:lecture/edit',
   downloads: '/downloads',
-  extension: '/extension',
   search: '/search',
   running: '/running',
   settings: '/settings',
