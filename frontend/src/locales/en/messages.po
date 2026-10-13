@@ -114,7 +114,7 @@ msgid "{0} API key"
 msgstr "{0} API key"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:135
+#: src/features/downloads/DownloadsView.tsx:141
 msgid "{0} found"
 msgstr "{0} found"
 
@@ -207,7 +207,7 @@ msgstr "{generated} of {0} generated"
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {# item} other {# items}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:238
+#: src/features/downloads/components/ManualDownload.tsx:183
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
@@ -315,7 +315,7 @@ msgstr "{tool} is missing, so the parts of FastStudy that need it will fail. Rei
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} no longer exists. Check the course page for a new link."
 
-#: src/features/downloads/DownloadsView.tsx:79
+#: src/features/downloads/DownloadsView.tsx:80
 msgid "{withSource} courses with a source"
 msgstr "{withSource} courses with a source"
 
@@ -363,7 +363,7 @@ msgstr "A key is saved — type to replace it"
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "A lecture running now would save some files in the old folder and the rest in the new one."
 
-#: src/features/downloads/DownloadsView.tsx:82
+#: src/features/downloads/DownloadsView.tsx:83
 msgid "A one-time setup of about three minutes."
 msgstr "A one-time setup of about three minutes."
 
@@ -523,7 +523,7 @@ msgstr "Can't replace the video while it's being processed or waiting in line"
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/features/downloads/components/ManualDownload.tsx:325
+#: src/features/downloads/components/ManualDownload.tsx:270
 #: src/features/downloads/components/RecordingJobList.tsx:45
 #: src/features/downloads/components/RecordingRow.tsx:295
 #: src/features/downloads/components/RecordingRow.tsx:326
@@ -567,7 +567,7 @@ msgstr "Choose folder"
 msgid "Choose your university above to connect its account."
 msgstr "Choose your university above to connect its account."
 
-#: src/features/downloads/DownloadsView.tsx:98
+#: src/features/downloads/DownloadsView.tsx:104
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
@@ -612,7 +612,7 @@ msgstr "Click <0>Get a key</0> and sign in with your Google account."
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 
-#: src/features/downloads/DownloadsView.tsx:139
+#: src/features/downloads/DownloadsView.tsx:145
 msgid "Close"
 msgstr "Close"
 
@@ -743,7 +743,7 @@ msgstr "Could not rename \"{from}\" to \"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "Could not tell what {url} is — the site didn't answer usefully."
 
-#: src/features/downloads/components/ManualDownload.tsx:354
+#: src/features/downloads/components/ManualDownload.tsx:299
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
@@ -780,7 +780,7 @@ msgstr "Couldn't start capturing the Zoom recording. Try again."
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
-#: src/features/downloads/components/ManualDownload.tsx:178
+#: src/features/downloads/components/ManualDownload.tsx:123
 #: src/features/search/SearchView.tsx:182
 msgid "Course"
 msgstr "Course"
@@ -798,7 +798,7 @@ msgstr "Course name…"
 msgid "Course overview"
 msgstr "Course overview"
 
-#: src/features/downloads/DownloadsView.tsx:107
+#: src/features/downloads/DownloadsView.tsx:113
 msgid "Course sources"
 msgstr "Course sources"
 
@@ -807,7 +807,7 @@ msgid "Course URL"
 msgstr "Course URL"
 
 #: src/App.tsx:37
-#: src/features/downloads/DownloadsView.tsx:114
+#: src/features/downloads/DownloadsView.tsx:120
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:236
 #: src/shared/utils/notFound.ts:35
@@ -872,7 +872,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/ManualDownload.tsx:233
+#: src/features/downloads/components/ManualDownload.tsx:178
 #: src/features/downloads/components/RecordingJobList.tsx:59
 #: src/features/downloads/components/RecordingRow.tsx:348
 msgid "Download"
@@ -891,13 +891,13 @@ msgstr "Download again"
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
-#: src/features/downloads/components/ManualDownload.tsx:320
+#: src/features/downloads/components/ManualDownload.tsx:265
 #: src/features/downloads/components/RecordingRow.tsx:296
 #: src/features/downloads/components/RecordingRow.tsx:346
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
-#: src/features/downloads/components/ManualDownload.tsx:315
+#: src/features/downloads/components/ManualDownload.tsx:260
 #: src/features/downloads/components/RecordingRow.tsx:301
 msgid "Downloading"
 msgstr "Downloading"
@@ -926,7 +926,7 @@ msgstr "Downloading update…"
 msgid "Downloading…"
 msgstr "Downloading…"
 
-#: src/features/downloads/DownloadsView.tsx:69
+#: src/features/downloads/DownloadsView.tsx:70
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "Downloads"
@@ -1014,7 +1014,7 @@ msgstr "Export PDF"
 msgid "Exporting PDF"
 msgstr "Exporting PDF"
 
-#: src/features/downloads/components/DownloadsTabs.tsx:16
+#: src/features/downloads/components/DownloadsTabs.tsx:17
 msgid "Extension"
 msgstr "Extension"
 
@@ -1249,7 +1249,7 @@ msgstr "Last error:"
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/ManualDownload.tsx:205
+#: src/features/downloads/components/ManualDownload.tsx:150
 #: src/features/downloads/components/RecordingRow.tsx:253
 msgid "Lecture"
 msgstr "Lecture"
@@ -1316,13 +1316,9 @@ msgstr "Loading your courses…"
 msgid "Loading…"
 msgstr "Loading…"
 
-#: src/features/downloads/components/DownloadsTabs.tsx:17
+#: src/features/downloads/components/DownloadsTabs.tsx:18
 msgid "Manual"
 msgstr "Manual"
-
-#: src/features/downloads/components/ManualDownload.tsx:91
-msgid "Manual download"
-msgstr "Manual download"
 
 #: src/features/search/SearchView.tsx:220
 msgid "Match whole word"
@@ -1332,7 +1328,7 @@ msgstr "Match whole word"
 msgid "Material"
 msgstr "Material"
 
-#: src/features/downloads/DownloadsView.tsx:55
+#: src/features/downloads/DownloadsView.tsx:56
 #: src/features/lectures/MainView.tsx:379
 msgid "Materials"
 msgstr "Materials"
@@ -1345,7 +1341,7 @@ msgstr "Moodle refused the request."
 msgid "More actions"
 msgstr "More actions"
 
-#: src/features/downloads/components/ManualDownload.tsx:217
+#: src/features/downloads/components/ManualDownload.tsx:162
 msgid "Name in the course"
 msgstr "Name in the course"
 
@@ -1381,7 +1377,7 @@ msgstr "No current courses."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "No data folder is set. Choose one in Settings."
 
-#: src/features/downloads/DownloadsView.tsx:62
+#: src/features/downloads/DownloadsView.tsx:63
 msgid "No files of unknown type found."
 msgstr "No files of unknown type found."
 
@@ -1405,7 +1401,7 @@ msgstr "No login is in progress. Connect again."
 msgid "no material found"
 msgstr "no material found"
 
-#: src/features/downloads/DownloadsView.tsx:61
+#: src/features/downloads/DownloadsView.tsx:62
 msgid "No materials found."
 msgstr "No materials found."
 
@@ -1429,7 +1425,7 @@ msgstr "No PDF yet — use \"Save & update PDF\" to create one."
 msgid "No Recitations"
 msgstr "No Recitations"
 
-#: src/features/downloads/DownloadsView.tsx:60
+#: src/features/downloads/DownloadsView.tsx:61
 msgid "No recordings found."
 msgstr "No recordings found."
 
@@ -1645,7 +1641,7 @@ msgstr "Privacy policy"
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
-#: src/features/downloads/components/ManualDownload.tsx:310
+#: src/features/downloads/components/ManualDownload.tsx:255
 #: src/features/runner/RunnerView.tsx:318
 msgid "Queued"
 msgstr "Queued"
@@ -1667,7 +1663,7 @@ msgstr "Re-generate from {stepLabel}"
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/ManualDownload.tsx:211
+#: src/features/downloads/components/ManualDownload.tsx:156
 #: src/features/downloads/components/RecordingRow.tsx:259
 msgid "Recitation"
 msgstr "Recitation"
@@ -1701,7 +1697,7 @@ msgstr "Recitations {0}-{1}"
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: src/features/downloads/DownloadsView.tsx:133
+#: src/features/downloads/DownloadsView.tsx:139
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
 
@@ -1751,7 +1747,7 @@ msgstr "Results"
 msgid "Retry"
 msgstr "Retry"
 
-#: src/features/downloads/components/ManualDownload.tsx:335
+#: src/features/downloads/components/ManualDownload.tsx:280
 #: src/features/downloads/components/RecordingJobList.tsx:57
 #: src/features/downloads/components/RecordingRow.tsx:344
 msgid "Retry ✗"
@@ -2263,7 +2259,7 @@ msgstr "Try again"
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
 
-#: src/features/downloads/components/ManualDownload.tsx:198
+#: src/features/downloads/components/ManualDownload.tsx:143
 msgid "Type"
 msgstr "Type"
 
@@ -2275,7 +2271,7 @@ msgstr "Type any name (for example FastStudy) and click \"Submit\"."
 msgid "Unarchive course"
 msgstr "Unarchive course"
 
-#: src/features/downloads/components/DownloadsTabs.tsx:15
+#: src/features/downloads/components/DownloadsTabs.tsx:16
 #: src/features/settings/components/MoodleSiteField.tsx:112
 msgid "University"
 msgstr "University"
@@ -2292,7 +2288,7 @@ msgstr "University account connected"
 msgid "University saved"
 msgstr "University saved"
 
-#: src/features/downloads/DownloadsView.tsx:56
+#: src/features/downloads/DownloadsView.tsx:57
 msgid "Unknown"
 msgstr "Unknown"
 
@@ -2349,11 +2345,11 @@ msgstr "Use the window that opened on the university site, or open the site in y
 msgid "Video"
 msgstr "Video"
 
-#: src/features/downloads/components/ManualDownload.tsx:163
+#: src/features/downloads/components/ManualDownload.tsx:108
 msgid "Video link"
 msgstr "Video link"
 
-#: src/features/downloads/DownloadsView.tsx:54
+#: src/features/downloads/DownloadsView.tsx:55
 msgid "Videos"
 msgstr "Videos"
 
@@ -2401,7 +2397,7 @@ msgstr "Without one, FastStudy can't fetch recordings from your course site and 
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "Work in progress will stop. Restart anyway?"
 
-#: src/features/downloads/components/ManualDownload.tsx:99
+#: src/features/downloads/components/ManualDownload.tsx:45
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "Works only for video links, and only if they open without signing in."
 
