@@ -14,7 +14,7 @@ GEMINI_API_KEY="ai_old"
 DATA_ROOT=/old/root
 PORT=8001  # not a setting
 export GEMINI_MODEL=gemini-2.5-flash  # the cheap one
-DOWNLOADER_EXTENSION_ID=abcdef
+UNRELATED_KEY=abcdef
 """
 
 
@@ -52,9 +52,9 @@ def test_merge_leaves_everything_unnamed_untouched(env_file, tmp_path):
     assert "# keys" in text
     assert 'GROQ_API_KEY="gsk_old"' in text
     assert "PORT=8001  # not a setting" in text
-    assert "DOWNLOADER_EXTENSION_ID=abcdef" in text
+    assert "UNRELATED_KEY=abcdef" in text
     assert "\n\nDATA_ROOT=/old/root" in text
-    assert text.endswith("DOWNLOADER_EXTENSION_ID=abcdef\n")
+    assert text.endswith("UNRELATED_KEY=abcdef\n")
 
 
 def test_only_named_keys_change(env_file):

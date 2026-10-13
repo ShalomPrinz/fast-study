@@ -52,7 +52,7 @@ The list is closed on purpose; each of these looks like a field and deliberately
 | Whisper model, `he` transcript language                   | The corpus is Hebrew lectures; no user has a reason to change either                        |
 | The summary length budget                                 | A prompt-shaped tuning knob, not a preference                                               |
 | Service ports, `BACKEND_URL` / `DATABASE_URL`             | Wiring: the frontend takes its URLs from the runtime bridge                                 |
-| `FRONTEND_URL`, `DOWNLOADER_EXTENSION_ID`                 | Dev-only CORS and extension wiring the packaged app never uses                              |
+| `FRONTEND_URL`                                            | Dev-only CORS wiring the packaged app never uses                                            |
 | The last opened lecture, the search view's course         | Per-view memory in `localStorage`; nothing else has to agree on it                          |
 | The Google Drive account                                  | A consent flow and a token, connected or not — see below                                    |
 | Running unfinished lectures at app start                  | A sweep is a deliberate act; `/running`'s button and the nightly pass cover both cases      |

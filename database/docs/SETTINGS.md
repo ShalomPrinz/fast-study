@@ -46,7 +46,7 @@ a file every service reads would make one machine's cosmetics everyone's configu
 ## Merge, never rewrite
 
 `PUT /settings` takes a partial object of the same fields. **Only the named keys are touched**, so
-ports, `DOWNLOADER_EXTENSION_ID`, `FRONTEND_URL`, comments, blank lines, ordering and every unknown
+ports, `FRONTEND_URL`, comments, blank lines, ordering and every unknown
 key survive. New keys append at the end. An omitted field — and a `null`, so echoing a read back
 blanks nothing — is left alone; `""` clears.
 
