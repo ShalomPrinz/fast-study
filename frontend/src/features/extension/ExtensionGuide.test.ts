@@ -44,6 +44,30 @@ describe('ExtensionGuide', () => {
     expect(container.querySelectorAll('.extension-step')).toHaveLength(5)
   })
 
+  it('enlarges a screenshot on click, closes on any click, the × or Esc, and refocuses it', () => {
+    const { container } = mount()
+    const shots = container.querySelectorAll('.extension-shot-button')
+    expect(shots.length).toBeGreaterThan(1)
+    const zoom = () => document.querySelector('.extension-zoom')
+
+    fireEvent.click(shots[0])
+    expect(zoom()).not.toBeNull()
+    expect(document.activeElement).toBe(document.querySelector('.extension-zoom-close'))
+    fireEvent.click(document.querySelector('.extension-zoom-img')!)
+    expect(zoom()).toBeNull()
+    expect(document.activeElement).toBe(shots[0])
+
+    fireEvent.click(shots[1])
+    fireEvent.click(document.querySelector('.extension-zoom-close')!)
+    expect(zoom()).toBeNull()
+    expect(document.activeElement).toBe(shots[1])
+
+    fireEvent.click(shots[0])
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(zoom()).toBeNull()
+    expect(document.activeElement).toBe(shots[0])
+  })
+
   it('copies the extensions address and the folder path', async () => {
     const writeText = stubClipboard()
     window.faststudy = {

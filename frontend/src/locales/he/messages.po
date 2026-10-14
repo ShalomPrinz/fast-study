@@ -443,7 +443,7 @@ msgstr "ארכיון ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שאתה רוצה ליצור מחדש?"
 
-#: src/features/extension/ExtensionGuide.tsx:103
+#: src/features/extension/ExtensionGuide.tsx:105
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 msgstr "בראש הדף, הפעל את המתג \"מצב פיתוח\". תופיע שורה של כפתורים חדשים."
 
@@ -596,7 +596,7 @@ msgstr "לחץ על \"Create API key\"."
 msgid "Click \"Create API Key\"."
 msgstr "לחץ על \"Create API Key\"."
 
-#: src/features/extension/ExtensionGuide.tsx:116
+#: src/features/extension/ExtensionGuide.tsx:118
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "לחץ על \"טעינת פריט Unpacked\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
 
@@ -608,11 +608,16 @@ msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם Google או עם 
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם חשבון Google שלך."
 
-#: src/features/extension/ExtensionGuide.tsx:130
+#: src/features/extension/ExtensionGuide.tsx:203
+msgid "Click any screenshot to enlarge it."
+msgstr "לחץ על צילום מסך כדי להגדיל אותו."
+
+#: src/features/extension/ExtensionGuide.tsx:132
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "לחץ על סמל חלק הפאזל שליד שורת הכתובת, ואז על הנעץ שליד FastStudy. הסמל שלה יישאר מעכשיו בסרגל הכלים."
 
 #: src/features/downloads/DownloadsView.tsx:159
+#: src/features/extension/ExtensionGuide.tsx:186
 msgid "Close"
 msgstr "סגירה"
 
@@ -681,11 +686,11 @@ msgid "Continue transcription"
 msgstr "המשך תמלול"
 
 #: src/app/ErrorBoundary.tsx:37
-#: src/features/extension/ExtensionGuide.tsx:38
+#: src/features/extension/ExtensionGuide.tsx:40
 msgid "Copied!"
 msgstr "הועתק!"
 
-#: src/features/extension/ExtensionGuide.tsx:92
+#: src/features/extension/ExtensionGuide.tsx:94
 msgid "Copy address"
 msgstr "העתקת הכתובת"
 
@@ -693,7 +698,7 @@ msgstr "העתקת הכתובת"
 msgid "Copy details"
 msgstr "העתקת פרטים"
 
-#: src/features/extension/ExtensionGuide.tsx:59
+#: src/features/extension/ExtensionGuide.tsx:61
 msgid "Copy path"
 msgstr "העתקת הנתיב"
 
@@ -701,7 +706,7 @@ msgstr "העתקת הנתיב"
 msgid "Could not convert the summary for printing."
 msgstr "לא ניתן להמיר את הסיכום להדפסה."
 
-#: src/features/extension/ExtensionGuide.tsx:30
+#: src/features/extension/ExtensionGuide.tsx:32
 msgid "Could not copy. Select the text and copy it by hand."
 msgstr "לא הצלחנו להעתיק. סמן את הטקסט והעתק אותו ידנית."
 
@@ -878,7 +883,7 @@ msgstr "הושלם"
 msgid "Download"
 msgstr "הורדה"
 
-#: src/features/extension/ExtensionGuide.tsx:139
+#: src/features/extension/ExtensionGuide.tsx:141
 msgid "Download a lecture"
 msgstr "הורדת הרצאה"
 
@@ -1212,7 +1217,7 @@ msgstr "אישרתי, לנסות שוב"
 msgid "I solved the captcha"
 msgstr "פתרתי את החידה"
 
-#: src/features/extension/ExtensionGuide.tsx:190
+#: src/features/extension/ExtensionGuide.tsx:227
 msgid "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
 msgstr "אם Chrome מציג את FastStudy עם שגיאה, פתח את <0>{EXTENSIONS_URL}</0> ולחץ על חץ הטעינה מחדש בכרטיס של FastStudy."
 
@@ -1299,7 +1304,7 @@ msgstr "טעינת הגרסה החדשה"
 msgid "Load recordings"
 msgstr "טעינת הקלטות"
 
-#: src/features/extension/ExtensionGuide.tsx:112
+#: src/features/extension/ExtensionGuide.tsx:114
 msgid "Load the FastStudy folder"
 msgstr "טעינת התיקייה של FastStudy"
 
@@ -1515,19 +1520,19 @@ msgstr "נשלחים רק פרטים טכניים על שגיאות, אף פעם
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {host}."
 
-#: src/features/extension/ExtensionGuide.tsx:142
+#: src/features/extension/ExtensionGuide.tsx:144
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר האוניברסיטה) והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."
 
-#: src/features/extension/ExtensionGuide.tsx:78
+#: src/features/extension/ExtensionGuide.tsx:80
 msgid "Open Chrome's extensions page"
 msgstr "פתיחת דף התוספים של Chrome"
 
-#: src/features/extension/ExtensionGuide.tsx:61
+#: src/features/extension/ExtensionGuide.tsx:63
 msgid "Open folder"
 msgstr "פתיחת התיקייה"
 
-#: src/features/extension/ExtensionGuide.tsx:82
+#: src/features/extension/ExtensionGuide.tsx:84
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת הכתובת שבראש החלון והקש Enter:"
 
@@ -1624,7 +1629,7 @@ msgstr "ה-PDF ישן יותר מהסיכום הזה"
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
-#: src/features/extension/ExtensionGuide.tsx:127
+#: src/features/extension/ExtensionGuide.tsx:129
 msgid "Pin FastStudy to the toolbar"
 msgstr "הצמדת FastStudy לסרגל הכלים"
 
@@ -1821,7 +1826,7 @@ msgstr "שומר…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "צילום מסך של {name}, שלב {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:159
+#: src/features/extension/ExtensionGuide.tsx:165
 msgid "Screenshot of step {step}"
 msgstr "צילום מסך של שלב {step}"
 
@@ -2062,7 +2067,7 @@ msgstr "אי אפשר להוריד את הקובץ הזה"
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא נוצרת אם אינה קיימת."
 
-#: src/features/extension/ExtensionGuide.tsx:49
+#: src/features/extension/ExtensionGuide.tsx:51
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
@@ -2263,7 +2268,7 @@ msgstr "תמלול"
 msgid "Try again"
 msgstr "לנסות שוב"
 
-#: src/features/extension/ExtensionGuide.tsx:100
+#: src/features/extension/ExtensionGuide.tsx:102
 msgid "Turn on Developer mode"
 msgstr "הפעלת מצב פיתוח"
 
@@ -2316,7 +2321,7 @@ msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את 
 msgid "Updates"
 msgstr "עדכונים"
 
-#: src/features/extension/ExtensionGuide.tsx:184
+#: src/features/extension/ExtensionGuide.tsx:221
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 

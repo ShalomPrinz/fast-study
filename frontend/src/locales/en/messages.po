@@ -443,7 +443,7 @@ msgstr "Archived ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
 
-#: src/features/extension/ExtensionGuide.tsx:103
+#: src/features/extension/ExtensionGuide.tsx:105
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 msgstr "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 
@@ -596,7 +596,7 @@ msgstr "Click \"Create API key\"."
 msgid "Click \"Create API Key\"."
 msgstr "Click \"Create API Key\"."
 
-#: src/features/extension/ExtensionGuide.tsx:116
+#: src/features/extension/ExtensionGuide.tsx:118
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 
@@ -608,11 +608,16 @@ msgstr "Click <0>Get a key</0> and sign in with Google or your email."
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "Click <0>Get a key</0> and sign in with your Google account."
 
-#: src/features/extension/ExtensionGuide.tsx:130
+#: src/features/extension/ExtensionGuide.tsx:203
+msgid "Click any screenshot to enlarge it."
+msgstr "Click any screenshot to enlarge it."
+
+#: src/features/extension/ExtensionGuide.tsx:132
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 
 #: src/features/downloads/DownloadsView.tsx:159
+#: src/features/extension/ExtensionGuide.tsx:186
 msgid "Close"
 msgstr "Close"
 
@@ -681,11 +686,11 @@ msgid "Continue transcription"
 msgstr "Continue transcription"
 
 #: src/app/ErrorBoundary.tsx:37
-#: src/features/extension/ExtensionGuide.tsx:38
+#: src/features/extension/ExtensionGuide.tsx:40
 msgid "Copied!"
 msgstr "Copied!"
 
-#: src/features/extension/ExtensionGuide.tsx:92
+#: src/features/extension/ExtensionGuide.tsx:94
 msgid "Copy address"
 msgstr "Copy address"
 
@@ -693,7 +698,7 @@ msgstr "Copy address"
 msgid "Copy details"
 msgstr "Copy details"
 
-#: src/features/extension/ExtensionGuide.tsx:59
+#: src/features/extension/ExtensionGuide.tsx:61
 msgid "Copy path"
 msgstr "Copy path"
 
@@ -701,7 +706,7 @@ msgstr "Copy path"
 msgid "Could not convert the summary for printing."
 msgstr "Could not convert the summary for printing."
 
-#: src/features/extension/ExtensionGuide.tsx:30
+#: src/features/extension/ExtensionGuide.tsx:32
 msgid "Could not copy. Select the text and copy it by hand."
 msgstr "Could not copy. Select the text and copy it by hand."
 
@@ -878,7 +883,7 @@ msgstr "Done"
 msgid "Download"
 msgstr "Download"
 
-#: src/features/extension/ExtensionGuide.tsx:139
+#: src/features/extension/ExtensionGuide.tsx:141
 msgid "Download a lecture"
 msgstr "Download a lecture"
 
@@ -1212,7 +1217,7 @@ msgstr "I confirmed, try again"
 msgid "I solved the captcha"
 msgstr "I solved the captcha"
 
-#: src/features/extension/ExtensionGuide.tsx:190
+#: src/features/extension/ExtensionGuide.tsx:227
 msgid "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
 msgstr "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
 
@@ -1299,7 +1304,7 @@ msgstr "Load new version"
 msgid "Load recordings"
 msgstr "Load recordings"
 
-#: src/features/extension/ExtensionGuide.tsx:112
+#: src/features/extension/ExtensionGuide.tsx:114
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
@@ -1515,19 +1520,19 @@ msgstr "Only technical error details are sent, never your files or keys. It's an
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "Only YouTube playlists can be opened up; {host} cannot."
 
-#: src/features/extension/ExtensionGuide.tsx:142
+#: src/features/extension/ExtensionGuide.tsx:144
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 
-#: src/features/extension/ExtensionGuide.tsx:78
+#: src/features/extension/ExtensionGuide.tsx:80
 msgid "Open Chrome's extensions page"
 msgstr "Open Chrome's extensions page"
 
-#: src/features/extension/ExtensionGuide.tsx:61
+#: src/features/extension/ExtensionGuide.tsx:63
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/features/extension/ExtensionGuide.tsx:82
+#: src/features/extension/ExtensionGuide.tsx:84
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 
@@ -1624,7 +1629,7 @@ msgstr "PDF is older than this summary"
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
-#: src/features/extension/ExtensionGuide.tsx:127
+#: src/features/extension/ExtensionGuide.tsx:129
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
 
@@ -1821,7 +1826,7 @@ msgstr "Saving…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:159
+#: src/features/extension/ExtensionGuide.tsx:165
 msgid "Screenshot of step {step}"
 msgstr "Screenshot of step {step}"
 
@@ -2062,7 +2067,7 @@ msgstr "The downloader can't fetch this file"
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 
-#: src/features/extension/ExtensionGuide.tsx:49
+#: src/features/extension/ExtensionGuide.tsx:51
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
@@ -2263,7 +2268,7 @@ msgstr "Transcript"
 msgid "Try again"
 msgstr "Try again"
 
-#: src/features/extension/ExtensionGuide.tsx:100
+#: src/features/extension/ExtensionGuide.tsx:102
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
 
@@ -2316,7 +2321,7 @@ msgstr "Updated. Restart to update"
 msgid "Updates"
 msgstr "Updates"
 
-#: src/features/extension/ExtensionGuide.tsx:184
+#: src/features/extension/ExtensionGuide.tsx:221
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 

@@ -15,3 +15,6 @@ The Downloads page's Extension tab (`features/extension/ExtensionGuide`, [DOWNLO
   column width. Each image keeps its own aspect ratio: shrunk to the step column (up to ~840px), never
   upscaled, never cropped. Capture from a Hebrew Chrome at 1x; a wider capture shows smaller text, so a
   small UI (a menu) is cropped tight and then shows at its own pixel size.
+- **Zoom** — a note above step 1 says so; clicking a screenshot opens it over a dimmed `.modal-overlay`
+  (fit to the window, never upscaled), and any click, the × or Esc closes it and
+  returns focus to that screenshot.

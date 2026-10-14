@@ -1,8 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import ReactDOM from 'react-dom'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { runtimeBridge } from '@/services/runtime'
 import { toast } from '@/services/toaster'
 import '@/styles/button.css'
+import '@/styles/modal.css'
 import './ExtensionGuide.css'
 
 // Chrome's own extensions page; the bridge's `open.external` refuses it, so the user pastes it.
@@ -150,19 +152,76 @@ function steps(): Step[] {
   ]
 }
 
-// The screenshot for a step, or a blank 16:10 box when its file is missing.
-function Shot({ name, step }: { name: string; step: number }) {
+interface Zoomed {
+  url: string
+  alt: string
+}
+
+// The screenshot for a step, which enlarges on click, or a blank 16:10 box when its file is missing.
+function Shot({
+  name,
+  step,
+  onZoom,
+}: {
+  name: string
+  step: number
+  onZoom: (z: Zoomed, opener: HTMLElement) => void
+}) {
   const { t } = useLingui()
   const url = shotUrl(name)
   if (!url) return <div className="extension-shot extension-shot--placeholder" aria-hidden="true" />
-  return <img className="extension-shot" src={url} alt={t`Screenshot of step ${step}`} />
+  const alt = t`Screenshot of step ${step}`
+  return (
+    <button
+      className="extension-shot-button"
+      onClick={(e) => onZoom({ url, alt }, e.currentTarget)}
+    >
+      <img className="extension-shot" src={url} alt={alt} />
+    </button>
+  )
+}
+
+// One screenshot enlarged over a dimmed page; any click (the × included) or Esc closes it.
+function ZoomOverlay({ shot, onClose }: { shot: Zoomed; onClose: () => void }) {
+  const { t } = useLingui()
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+  return ReactDOM.createPortal(
+    <div className="modal-overlay extension-zoom" role="dialog" aria-modal="true" onClick={onClose}>
+      {/* No handler of its own: the click bubbles to the overlay, which closes. */}
+      <button className="extension-zoom-close" aria-label={t`Close`} autoFocus>
+        ×
+      </button>
+      <img className="extension-zoom-img" src={shot.url} alt={shot.alt} />
+    </div>,
+    document.body,
+  )
 }
 
 // A one-time walkthrough for loading the shipped Chrome extension unpacked: the Downloads page's
 // Extension tab — see docs/EXTENSION.md.
 export default function ExtensionGuide() {
+  const [zoomed, setZoomed] = useState<Zoomed | null>(null)
+  // The overlay's × holds focus and unmounts on close, so focus goes back to the screenshot clicked.
+  const opener = useRef<HTMLElement | null>(null)
+  const zoom = useCallback((z: Zoomed, from: HTMLElement) => {
+    opener.current = from
+    setZoomed(z)
+  }, [])
+  const close = useCallback(() => {
+    setZoomed(null)
+    opener.current?.focus()
+  }, [])
   return (
     <>
+      <p className="extension-intro">
+        <Trans>Click any screenshot to enlarge it.</Trans>
+      </p>
       <ol className="extension-steps">
         {steps().map((s, i) => (
           <li key={s.shot} className="extension-step">
@@ -172,7 +231,7 @@ export default function ExtensionGuide() {
             <div className="extension-step-body">
               <h2 className="extension-step-title">{s.title}</h2>
               {s.body}
-              <Shot name={s.shot} step={i + 1} />
+              <Shot name={s.shot} step={i + 1} onZoom={zoom} />
             </div>
           </li>
         ))}
@@ -191,6 +250,7 @@ export default function ExtensionGuide() {
           </Trans>
         </p>
       </aside>
+      {zoomed && <ZoomOverlay shot={zoomed} onClose={close} />}
     </>
   )
 }
