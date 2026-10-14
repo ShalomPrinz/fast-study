@@ -43,7 +43,7 @@ export function useRecordingDownload({
   // type (the bulk queue is the other), reported upward so the answer outlives this row.
   const resolveMedia = useResolveMedia()
   // The server's canonical spelling replaces the row's name, so the row compares against disk.
-  const { setName } = useRowEditsDispatch()
+  const { setName, lock } = useRowEditsDispatch()
   const withMoodleLock = useWithMoodleLock()
   // Latest runner status by ref: a confirm or passcode replay runs a closure from an earlier render.
   const { status } = useRunnerStatus()
@@ -84,6 +84,9 @@ export function useRecordingDownload({
       const send = () => downloadItem(args)
       const { media, renames } = await (item.moodle ? withMoodleLock(send) : send())
       resolveMedia(args.ref, media)
+      // An accepted whole-row download pins its name, so the tree refresh it causes cannot move the
+      // row off it. A clip retry carries its job's title, never the row's.
+      if (!args.only) lock(args.ref, { course: args.course, name: args.name, kind: args.kind })
       applyRenames(renames, [args], setName)
     } catch (err) {
       // Reconnect and passcode steer the UI elsewhere, so only the fallthrough toasts.

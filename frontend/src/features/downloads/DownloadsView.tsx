@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Link } from 'react-router-dom'
 import { ResolvedMediaContext } from './contexts/ResolvedMediaContext'
@@ -19,7 +20,12 @@ import DownloadsTabs from '@/features/downloads/components/DownloadsTabs'
 import ExtensionGuide from '@/features/extension/ExtensionGuide'
 import { useDownloadsTab } from '@/features/downloads/hooks/useDownloadsTab'
 import { groupSections, sectionId } from '@/features/downloads/utils/sections'
-import { RowEditsDispatchContext, RowEditsStateContext } from './contexts/RowEditsContext'
+import {
+  RowEditsDispatchContext,
+  RowEditsStateContext,
+  RowLocksContext,
+  useRowLocks,
+} from './contexts/RowEditsContext'
 import {
   useDownloadsActions,
   useDownloadsSession,
@@ -48,6 +54,9 @@ export default function DownloadsView() {
   // The university is optional on the init wall, so a user without one lands here with nothing to sign in to.
   const unconfigured = useAuthStatus().status?.unconfigured
   const [tab, selectTab] = useDownloadsTab()
+  // Held here rather than in the session, so leaving the page drops every lock.
+  const { locks, lock } = useRowLocks()
+  const dispatch = useMemo(() => ({ ...rowEdits, lock }), [rowEdits, lock])
 
   const countOf = (media: Media) => items.filter((i) => i.media === media).length
 
@@ -159,50 +168,52 @@ export default function DownloadsView() {
                       <button className="recordings-close" onClick={close} aria-label={t`Close`}>
                         ×
                       </button>
-                      <RowEditsDispatchContext.Provider value={rowEdits}>
+                      <RowEditsDispatchContext.Provider value={dispatch}>
                         <RowEditsStateContext.Provider value={edits}>
-                          <ModeToggle
-                            modes={mediaModes}
-                            storageKey="fastStudyDownloadsMedia"
-                            className="mode-toggle--light"
-                          >
-                            {(media, selectMedia) => {
-                              const sections = groupSections(items, media)
-                              return (
-                                <>
-                                  <PausedRunsBanner
-                                    course={selected}
-                                    media={media}
-                                    onSelectMedia={selectMedia}
-                                  />
-                                  {!sections.length ? (
-                                    <div className="recordings-status">{emptyState[media]}</div>
-                                  ) : (
-                                    sections.map((section) => {
-                                      // No run identity for the synthetic bucket: an id would collide
-                                      // with a real heading spelled the same — see docs/DOWNLOADS.md.
-                                      const id = section.synthetic
-                                        ? null
-                                        : sectionId(selected, media, section.title)
-                                      // The pile is per course and media too; one colon never matches a
-                                      // run id, which always has two.
-                                      const key = id ?? `${selected}:${media}`
-                                      return (
-                                        <SectionGroup
-                                          key={key}
-                                          collapseKey={key}
-                                          section={{ ...section, id }}
-                                          items={section.items}
-                                          course={selected}
-                                          onReconnect={reconnectHint}
-                                        />
-                                      )
-                                    })
-                                  )}
-                                </>
-                              )
-                            }}
-                          </ModeToggle>
+                          <RowLocksContext.Provider value={locks}>
+                            <ModeToggle
+                              modes={mediaModes}
+                              storageKey="fastStudyDownloadsMedia"
+                              className="mode-toggle--light"
+                            >
+                              {(media, selectMedia) => {
+                                const sections = groupSections(items, media)
+                                return (
+                                  <>
+                                    <PausedRunsBanner
+                                      course={selected}
+                                      media={media}
+                                      onSelectMedia={selectMedia}
+                                    />
+                                    {!sections.length ? (
+                                      <div className="recordings-status">{emptyState[media]}</div>
+                                    ) : (
+                                      sections.map((section) => {
+                                        // No run identity for the synthetic bucket: an id would collide
+                                        // with a real heading spelled the same — see docs/DOWNLOADS.md.
+                                        const id = section.synthetic
+                                          ? null
+                                          : sectionId(selected, media, section.title)
+                                        // The pile is per course and media too; one colon never matches a
+                                        // run id, which always has two.
+                                        const key = id ?? `${selected}:${media}`
+                                        return (
+                                          <SectionGroup
+                                            key={key}
+                                            collapseKey={key}
+                                            section={{ ...section, id }}
+                                            items={section.items}
+                                            course={selected}
+                                            onReconnect={reconnectHint}
+                                          />
+                                        )
+                                      })
+                                    )}
+                                  </>
+                                )
+                              }}
+                            </ModeToggle>
+                          </RowLocksContext.Provider>
                         </RowEditsStateContext.Provider>
                       </RowEditsDispatchContext.Provider>
                     </div>

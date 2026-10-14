@@ -15,8 +15,12 @@ import {
   rowStatus,
   useRowJobs,
 } from '@/features/downloads/contexts/DownloadJobsContext'
-import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
-import { useRowEdit, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
+import type { RowEdit, RowLock } from '@/features/downloads/contexts/RowEditsContext'
+import {
+  useRowEdit,
+  useRowEdits,
+  useRowLocksMap,
+} from '@/features/downloads/contexts/RowEditsContext'
 import { useRowExpansion } from '@/features/downloads/contexts/RowExpansionsContext'
 import {
   existingNames,
@@ -43,6 +47,7 @@ import Icon from '@/shared/components/Icon'
 interface Props {
   item: Item
   edit: RowEdit | undefined
+  lock: RowLock | undefined
   course: string
   onReconnect: () => void
   // Absent for a playlist's children, which are never expandable themselves.
@@ -61,6 +66,7 @@ const RESOLVED_LABEL: Record<ResolvedMedia, MessageDescriptor> = {
 const RecordingRow = memo(function RecordingRow({
   item,
   edit,
+  lock,
   course,
   onReconnect,
   onToggle,
@@ -75,7 +81,7 @@ const RecordingRow = memo(function RecordingRow({
     name: effectiveName,
     setName,
     setKind,
-  } = useRowEdit(item, edit, course)
+  } = useRowEdit(item, edit, course, lock)
   // The actual downloads (one bar each) of this row's `ref` in this course, scoped to its current
   // name and kind; a running download re-attaches after a reload. Subscribed per row, so another
   // row's job change doesn't re-render this one.
@@ -391,6 +397,7 @@ function ChildRows({
   onReconnect: () => void
 }) {
   const edits = useRowEdits()
+  const locks = useRowLocksMap()
   return (
     <>
       {items.map((child) => (
@@ -398,6 +405,7 @@ function ChildRows({
           key={child.ref}
           item={child}
           edit={edits[child.ref]}
+          lock={locks[child.ref]}
           course={course}
           onReconnect={onReconnect}
         />

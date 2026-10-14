@@ -225,6 +225,15 @@ course (SSE refresh, segment switch, navigation) and reset on another course or 
 collide. State and dispatch are split: only `SectionGroup` and `ChildRows` subscribe to the map, and the
 memoized `RecordingRow` takes its slice as a prop, so a keystroke re-renders one row.
 
+**A download locks its row's name.** An untitled row's suggestion is the tree's next free name, so once
+its lecture lands the suggestion would move on and the row would lose its bars and green state. A
+download the server accepts — the row's own (`useRecordingDownload`, not a clip retry) or each `pending`
+target of "Download all" (`startAndLock`) — records `{ course, name, kind }` per `ref`; a refused one
+locks nothing, so it never claims a name another row then fills. `resolveRow` uses the lock in place of the
+suggestion while course and kind still match; a typed or server-renamed `edit.name` still wins. Other rows
+keep following the suggestion. The locks live in `DownloadsView` (`useRowLocks`), not the session, so
+leaving the page drops them and every name is worked out afresh on return.
+
 **The server owns the on-disk spelling.** Both submit endpoints canonicalize names (`:` is illegal on
 NTFS) and answer `renames`; `applyRenames` writes them back through `setName` with one toast per
 submission. The stored name is then the on-disk one, which is what lets every "already there" check

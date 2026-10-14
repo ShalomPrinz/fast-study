@@ -18,6 +18,7 @@ import {
   resolveRow,
   useRowEdits,
   useRowEditsDispatch,
+  useRowLocksMap,
 } from '@/features/downloads/contexts/RowEditsContext'
 import type { ExpandState } from '@/features/downloads/contexts/RowExpansionsContext'
 import {
@@ -62,6 +63,7 @@ import {
   toastDownloadError,
 } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
+import { startAndLock } from '@/features/downloads/utils/rowLocks'
 import { leafCount, sectionTitle } from '@/features/downloads/utils/sections'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 import '@/styles/source-row.css'
@@ -90,9 +92,10 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   const { status: runner } = useRunnerStatus()
   const resolveMedia = useResolveMedia()
   const edits = useRowEdits()
+  const locks = useRowLocksMap()
   // The server's canonical spelling replaces each renamed row's name, so the skip rule and the run's
   // landed check compare against disk.
-  const { setName } = useRowEditsDispatch()
+  const { setName, lock } = useRowEditsDispatch()
   // The whole map: the bulk queue needs every playlist's children, and "Download all" needs to know
   // they are all expanded. The rows themselves subscribe per ref.
   const expansions = useAllExpansions()
@@ -160,7 +163,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   // the live tree or the runner: already on disk, already known unsupported, and pipeline-locked.
   function buildTargets(): RunTarget[] {
     return buildQueue().map((item) => {
-      const { name, kind } = resolveRow(item, edits[item.ref], courses, course)
+      const { name, kind } = resolveRow(item, edits[item.ref], courses, course, locks[item.ref])
       const media = item.resolvedMedia ?? item.media
       const target = { ref: item.ref, name, kind, media }
       if (item.resolvedMedia === 'unsupported') return { ...target, disposition: 'unsupported' }
@@ -194,8 +197,11 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
       return
     }
     try {
-      const renames = await withMoodleLock(() =>
-        startSectionRun({ sectionId: id, course, targets }),
+      const renames = await startAndLock(
+        () => withMoodleLock(() => startSectionRun({ sectionId: id, course, targets })),
+        targets,
+        course,
+        lock,
       )
       applyRenames(renames, targets, setName)
     } catch (err) {
@@ -345,6 +351,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
             key={item.ref}
             item={item}
             edit={edits[item.ref]}
+            lock={locks[item.ref]}
             course={course}
             onReconnect={onReconnect}
             onToggle={toggleExpand}

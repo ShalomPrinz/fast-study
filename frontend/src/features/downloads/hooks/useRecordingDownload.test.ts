@@ -45,6 +45,7 @@ vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError: vi.
 const resolveMedia = vi.fn()
 const setName = vi.fn()
 const setKind = vi.fn()
+const lock = vi.fn()
 const onReconnect = vi.fn()
 
 const ITEM = { ref: 'row-ref', title: 'Row title', kind: 'lecture' } as Item
@@ -64,7 +65,11 @@ function wrapper({ children }: { children: ReactNode }) {
     createElement(
       ResolvedMediaContext.Provider,
       { value: resolveMedia },
-      createElement(RowEditsDispatchContext.Provider, { value: { setName, setKind } }, children),
+      createElement(
+        RowEditsDispatchContext.Provider,
+        { value: { setName, setKind, lock } },
+        children,
+      ),
     ),
   )
 }
@@ -98,7 +103,11 @@ function renderUnderBusyLock(moodle: boolean) {
       createElement(
         ResolvedMediaContext.Provider,
         { value: resolveMedia },
-        createElement(RowEditsDispatchContext.Provider, { value: { setName, setKind } }, children),
+        createElement(
+          RowEditsDispatchContext.Provider,
+          { value: { setName, setKind, lock } },
+          children,
+        ),
       ),
     )
   return renderHook(
@@ -163,6 +172,8 @@ describe('useRecordingDownload', () => {
     expect(toastDownloadError).not.toHaveBeenCalled()
     expect(result.current.failed).toBe(false)
     expect(result.current.pending).toBe(false)
+    // Nothing was accepted, so the row keeps following the suggestion.
+    expect(lock).not.toHaveBeenCalled()
   })
 
   it('refuses to start while the pipeline runs or queues the target lecture', async () => {
@@ -208,6 +219,8 @@ describe('useRecordingDownload', () => {
 
     expect(toastLectureBusy).not.toHaveBeenCalled()
     expect(downloadItem).toHaveBeenCalledOnce()
+    // A clip retry carries its job's own title, so it pins nothing on the row.
+    expect(lock).not.toHaveBeenCalled()
   })
 
   it('resolves the row and adopts the server rename on success', async () => {
@@ -229,6 +242,11 @@ describe('useRecordingDownload', () => {
     expect(downloadItem).toHaveBeenCalledWith(ROW_ARGS)
     expect(resolveMedia).toHaveBeenCalledWith('row-ref', 'video')
     expect(setName).toHaveBeenCalledWith('row-ref', 'Lecture 3_')
+    expect(lock).toHaveBeenCalledWith('row-ref', {
+      course: 'Algebra',
+      name: 'Lecture 3',
+      kind: 'lecture',
+    })
     expect(result.current.pending).toBe(false)
     expect(result.current.failed).toBe(false)
   })
@@ -253,6 +271,8 @@ describe('useRecordingDownload', () => {
     expect(resolveMedia).toHaveBeenCalledWith('row-ref', 'unsupported')
     expect(result.current.failed).toBe(true)
     expect(toastDownloadError).toHaveBeenCalledTimes(1)
+    // Nothing was accepted, so the row keeps following the suggestion.
+    expect(lock).not.toHaveBeenCalled()
   })
 
   it('toasts a generic failure without resolving the row', async () => {
@@ -264,6 +284,8 @@ describe('useRecordingDownload', () => {
     expect(toastDownloadError).toHaveBeenCalledTimes(1)
     expect(result.current.failed).toBe(true)
     expect(resolveMedia).not.toHaveBeenCalled()
+    // Nothing was accepted, so the row keeps following the suggestion.
+    expect(lock).not.toHaveBeenCalled()
   })
 
   it('opens the passcode gate on a row download and replays the row after saving', async () => {
@@ -275,6 +297,7 @@ describe('useRecordingDownload', () => {
 
     await act(() => result.current.download())
     expect(result.current.passcode?.reason).toBe('incorrect')
+    expect(lock).not.toHaveBeenCalled()
 
     await act(async () => {
       await result.current.passcode!.onSubmit('1234', 'course')
@@ -289,6 +312,8 @@ describe('useRecordingDownload', () => {
     expect(result.current.passcode).toBeNull()
     expect(downloadItem).toHaveBeenCalledTimes(2)
     expect(downloadItem).toHaveBeenLastCalledWith(ROW_ARGS)
+    // The resumed download is the accepted one, so it is the one that locks.
+    expect(lock).toHaveBeenCalledOnce()
   })
 
   it('replays the clip, not the row, when a clip retry hit the passcode gate', async () => {

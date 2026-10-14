@@ -1,7 +1,9 @@
+// @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
+import { act, renderHook } from '@testing-library/react'
 import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
 import type { Item, Media } from '../services/autoDownloader'
-import { resolveRow } from './RowEditsContext'
+import { resolveRow, useRowLocks } from './RowEditsContext'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 
@@ -79,5 +81,57 @@ describe('resolveRow', () => {
   it('falls back to the suggestion when the field is cleared', () => {
     const row = resolveRow(item('material', 'שקפי הרצאה 5'), { name: '  ' }, COURSES, 'Algebra')
     expect({ value: row.value, name: row.name }).toEqual({ value: '  ', name: 'Lecture 5' })
+  })
+})
+
+describe('a download lock', () => {
+  const EMPTY_COURSE: Course[] = [
+    { name: 'Algebra', archived: false, source_url: null, lectures: [], recitations: [] },
+  ]
+  // The SSE refresh after the first download lands.
+  const LANDED: Course[] = [{ ...EMPTY_COURSE[0], lectures: [node('Lecture 1')] }]
+  const untitled = (ref: string): Item => ({ ...item('video'), ref })
+
+  it('keeps a downloaded untitled row on its name once that lecture lands, while a sibling moves on', () => {
+    const { result } = renderHook(() => useRowLocks())
+    const first = untitled('r1')
+    const { name, kind } = resolveRow(first, undefined, EMPTY_COURSE, 'Algebra')
+    expect(name).toBe('Lecture 1')
+    act(() => result.current.lock('r1', { course: 'Algebra', name, kind }))
+
+    const locks = result.current.locks
+    expect(resolveRow(first, undefined, LANDED, 'Algebra', locks.r1).name).toBe('Lecture 1')
+    expect(resolveRow(untitled('r2'), undefined, LANDED, 'Algebra', locks.r2).name).toBe(
+      'Lecture 2',
+    )
+  })
+
+  it('is dropped on unmount, so the row follows the suggestion again', () => {
+    const first = renderHook(() => useRowLocks())
+    act(() =>
+      first.result.current.lock('r1', { course: 'Algebra', name: 'Lecture 1', kind: 'lecture' }),
+    )
+    first.unmount()
+
+    const { result } = renderHook(() => useRowLocks())
+    expect(
+      resolveRow(untitled('r1'), undefined, LANDED, 'Algebra', result.current.locks.r1).name,
+    ).toBe('Lecture 2')
+  })
+
+  it('yields to a typed or server-renamed name', () => {
+    const lock = { course: 'Algebra', name: 'Lecture 1', kind: 'lecture' as const }
+    const row = resolveRow(untitled('r1'), { name: 'Lecture 1_' }, LANDED, 'Algebra', lock)
+    expect(row.name).toBe('Lecture 1_')
+  })
+
+  it('stops applying when the kind toggle or the course moves off it', () => {
+    const lock = { course: 'Algebra', name: 'Lecture 1', kind: 'lecture' as const }
+    const flipped = resolveRow(untitled('r1'), { kind: 'recitation' }, LANDED, 'Algebra', lock)
+    expect(flipped.name).toBe('Recitation 1')
+    const elsewhere = { ...lock, course: 'Calculus' }
+    expect(resolveRow(untitled('r1'), undefined, LANDED, 'Algebra', elsewhere).name).toBe(
+      'Lecture 2',
+    )
   })
 })
