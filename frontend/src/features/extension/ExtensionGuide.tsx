@@ -9,7 +9,7 @@ import './ExtensionGuide.css'
 export const EXTENSIONS_URL = 'chrome://extensions'
 
 // Every PNG dropped into `assets/extension-guide/` is picked up by name; a step whose file is
-// missing renders a placeholder of the same box, so adding the screenshots changes no code.
+// missing renders a placeholder box, so adding or replacing a screenshot changes no code.
 const SHOTS = import.meta.glob<string>('../../assets/extension-guide/*.png', {
   eager: true,
   import: 'default',
@@ -150,14 +150,12 @@ function steps(): Step[] {
   ]
 }
 
-// The screenshot for a step, or a same-sized blank box until the file lands.
+// The screenshot for a step, or a blank 16:10 box when its file is missing.
 function Shot({ name, step }: { name: string; step: number }) {
   const { t } = useLingui()
   const url = shotUrl(name)
   if (!url) return <div className="extension-shot extension-shot--placeholder" aria-hidden="true" />
-  return (
-    <img className="extension-shot" src={url} alt={t`Screenshot of step ${step}`} loading="lazy" />
-  )
+  return <img className="extension-shot" src={url} alt={t`Screenshot of step ${step}`} />
 }
 
 // A one-time walkthrough for loading the shipped Chrome extension unpacked: the Downloads page's

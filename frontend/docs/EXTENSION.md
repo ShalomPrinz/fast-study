@@ -10,6 +10,8 @@ The Downloads page's Extension tab (`features/extension/ExtensionGuide`, [DOWNLO
   `.extension-note--no-bridge`; the steps still render. How the folder is kept is
   [electron/docs/EXTENSION.md](../../electron/docs/EXTENSION.md).
 - **Screenshots** — `import.meta.glob` picks up `src/assets/extension-guide/<step>.png` by name
-  (`1-open-extensions`, `2-developer-mode`, `3-load-unpacked`, `4-pin`, `5-use`). A missing file renders
-  `.extension-shot--placeholder`, the same 16:10 box, so adding a file changes no code. Capture at
-  1280x800 from a Hebrew Chrome; the page shows it at up to 640px wide.
+  (`1-open-extensions`, `2-developer-mode`, `3-load-unpacked`, `4-pin`, `5-use`), so adding or
+  replacing one changes no code; a missing file renders `.extension-shot--placeholder`, a 16:10 box at
+  column width. Each image keeps its own aspect ratio: shrunk to the step column (up to ~840px), never
+  upscaled, never cropped. Capture from a Hebrew Chrome at 1x; a wider capture shows smaller text, so a
+  small UI (a menu) is cropped tight and then shows at its own pixel size.

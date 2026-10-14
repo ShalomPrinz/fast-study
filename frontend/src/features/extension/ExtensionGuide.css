@@ -77,20 +77,20 @@
   color: var(--text-3);
 }
 
-/* Captured at 1280x800 and shown at half size, so a 16:10 box holds the final layout before the
-   file exists. */
+/* Each screenshot keeps its own aspect ratio: shrunk to the column, never stretched past its pixels. */
 .extension-shot {
   display: block;
-  width: 100%;
-  max-width: 640px;
-  aspect-ratio: 16 / 10;
-  object-fit: contain;
+  align-self: flex-start;
+  max-inline-size: 100%;
+  block-size: auto;
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
   background: var(--surface);
 }
 
 .extension-shot--placeholder {
+  align-self: stretch;
+  aspect-ratio: 16 / 10;
   border-style: dashed;
   border-color: var(--control-line);
   background: var(--line-soft);
