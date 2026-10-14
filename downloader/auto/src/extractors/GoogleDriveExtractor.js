@@ -1,6 +1,6 @@
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
-import { UnsupportedError } from '../lib/errors.js';
+import { UnsupportedError, fetchUpstream } from '../lib/errors.js';
 import { cacheProbe, getProbe } from '../core/probeCache.js';
 import { NAMED_FILE, classifyFilename, filenameFromDisposition } from '../lib/fileMedia.js';
 
@@ -67,7 +67,7 @@ export function filenameFromHtml(html) {
 // The file's real name without an API key: direct-download's Content-Disposition, else the large-
 // file confirm interstitial, else `/view`'s <title>.
 async function fetchDriveFilename(fileId) {
-  const res = await fetch(driveDownloadUrl(fileId));
+  const res = await fetchUpstream(driveDownloadUrl(fileId));
   const fromHeader = filenameFromDisposition(res.headers.get('content-disposition'));
   if (fromHeader) {
     await res.body?.cancel().catch(() => {});
@@ -75,7 +75,9 @@ async function fetchDriveFilename(fileId) {
   }
   const fromHtml = filenameFromHtml(await res.text().catch(() => ''));
   if (fromHtml) return fromHtml;
-  const view = await fetch(`https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`);
+  const view = await fetchUpstream(
+    `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`,
+  );
   return filenameFromHtml(await view.text().catch(() => ''));
 }
 

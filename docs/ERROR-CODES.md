@@ -298,6 +298,7 @@ services; `state` stays as the developer-facing reason.
 | ------------------------------- | ----------------------------- | ------------------------ | ----- |
 | `http/server.js` `sendReconnect`| `moodle_reconnect_required`   | —                        | user  |
 | `moodle/wsClient.js`            | `site_blocked`                | `detail`, `challengeWindow`? | user  |
+| `lib/errors.js` `unreachable`   | `site_unreachable`            | `host`, `detail`         | user  |
 | `http/server.js` `sendPasscode` | `zoom_passcode_required`      | `reason`, `course`, `name` | user |
 | `browser/browserChannel.js`     | `browser_missing`             | `detail`                 | user  |
 | `core/registry.js`              | `course_url_unsupported_site` | `url`, `site`            | user  |
@@ -353,6 +354,11 @@ call itself, so no 503 is sent; `'ready'` (the user only repeats the action) rea
 `/site/probe` or from a call already going through the window whose reload landed on the site. A block
 from any other path (a pasted link, a link probe) leaves it absent. The videostream handler call is a
 WS call, so its block carries it.
+
+`site_unreachable` is a 503 with no `status`, so the SPA never mistakes it for a block. It comes from a fetch
+to an upstream host that failed in the network: a connect timeout, a DNS miss or a reset. It answers `/list`,
+`/courses`, `/courses/check` and `/resolve` (Moodle WS and Google Drive). `host` is that request's hostname,
+and `detail` is undici's cause verbatim. It is not reported to Sentry, since an unreachable site is not a bug.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`

@@ -1,6 +1,6 @@
 // Thin fetch wrapper over Moodle's Web-Services REST API; a wstoken authenticates every call —
 // no cookies. Protocol reference: docs/MOODLE.md.
-import { CodedError } from '../lib/errors.js';
+import { CodedError, fetchUpstream } from '../lib/errors.js';
 import { enterMoodle } from './gate.js';
 import { challengeRoute, openChallenge } from './challenge.js';
 import { currentSite, underSite } from './site.js';
@@ -19,7 +19,7 @@ async function moodleFetch(url, init, { route = true, reopen = route, label = ''
   await enterMoodle(String(url).split('?')[0]);
   const window = route ? challengeRoute(url) : null;
   if (window) return windowFetch(window, url, init);
-  const res = await fetch(url, init);
+  const res = await fetchUpstream(url, init);
   ROUTE.set(res, 'node');
   const site = currentSite();
   if (!reopen || !wallShaped(res) || !site || !underSite(String(url), site)) return res;

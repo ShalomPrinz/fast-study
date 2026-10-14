@@ -35,7 +35,13 @@ import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
 import { getProbedMedia } from '../core/probeCache.js';
 import { probeKeyForUrl } from '../lib/probeUrl.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
-import { CodedError, UnsupportedError, PasscodeError, failureOf } from '../lib/errors.js';
+import {
+  CodedError,
+  UnsupportedError,
+  PasscodeError,
+  failureOf,
+  unreachable,
+} from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
 import {
   courseIdFrom,
@@ -140,6 +146,13 @@ export function sendUnsupported(res, err) {
 async function sendBlocked(res, err) {
   await reportBlock(err, currentSite());
   send(res, 503, { status: 'blocked', message: err.message, code: err.code, params: err.params });
+}
+
+// Distinct "the upstream host could not be reached" signal (a refused, timed-out or unresolved
+// connection): 503 with no `status`, so the frontend never reads it as a bot wall.
+function sendUnreachable(res, route, err) {
+  logResult(route, `unreachable (503): ${err.message}`);
+  send(res, 503, failureOf(err));
 }
 
 // Distinct "the zoom passcode gate couldn't be cleared" signal so the page can prompt
@@ -309,8 +322,9 @@ export const handleAuthConnect = gated('/auth/connect', async (req, res) => {
 });
 
 // The verified stored token, or null after answering: 401 reconnect (none, or a dead one), 422 for
-// a refused site, 503 for a bot-protection block. One path for every WS caller.
-async function tokenOr(res, auth, route) {
+// a refused site, 503 for a bot-protection block. One path for every WS caller. `answerUnreachable`:
+// a first-use verify that cannot reach the site is 503 site_unreachable here instead of a rethrow.
+async function tokenOr(res, auth, route, { answerUnreachable = false } = {}) {
   try {
     const tok = await auth.verifiedToken();
     if (tok) return tok;
@@ -326,6 +340,8 @@ async function tokenOr(res, auth, route) {
     } else if (blocked(e)) {
       logResult(route, `blocked (503): ${e.message}`);
       await sendBlocked(res, e);
+    } else if (answerUnreachable && unreachable(e)) {
+      sendUnreachable(res, route, unreachable(e));
     } else throw e;
   }
   return null;
@@ -408,7 +424,7 @@ export function handleWarmup(req, res) {
 // ── Browsing endpoints ──────────────────────────────────────────────────────
 
 // Answer a failed WS call on a course: a dead token → mark expired + 401 reconnect, a wall → 503,
-// any other Moodle exception (with `courseUrl`) → 422 course_not_accessible. → whether it answered.
+// a network failure → 503 site_unreachable, any other Moodle exception (with `courseUrl`) → 422 course_not_accessible. → whether it answered.
 async function sentWsFailure(res, e, auth, route, courseUrl) {
   if (invalidToken(e)) {
     auth.markExpired();
@@ -419,6 +435,11 @@ async function sentWsFailure(res, e, auth, route, courseUrl) {
   if (blocked(e)) {
     logResult(route, `blocked (503): ${e.message}`);
     await sendBlocked(res, e);
+    return true;
+  }
+  const down = unreachable(e);
+  if (down) {
+    sendUnreachable(res, route, down);
     return true;
   }
   if (courseUrl !== undefined && e instanceof WsError) {
@@ -441,7 +462,7 @@ export const handleCourses = gated('/courses', async (req, res) => {
   const found = siteOr(res);
   if (!found) return;
   const { site, auth } = found;
-  const stored = await tokenOr(res, auth, '/courses');
+  const stored = await tokenOr(res, auth, '/courses', { answerUnreachable: true });
   if (!stored) return;
   if (stored.coursesAvailable !== true) {
     logResult('/courses', 'unavailable');
@@ -493,7 +514,7 @@ export const handleCourseCheck = gated('/courses/check', async (req, res) => {
   if (!found) return;
   const { site, auth } = found;
   if (!isCoursePage(courseUrl, site)) return notCoursePage();
-  const stored = await tokenOr(res, auth, '/courses/check');
+  const stored = await tokenOr(res, auth, '/courses/check', { answerUnreachable: true });
   if (!stored) return;
   try {
     await getCourseContents(site, stored.wstoken, new URL(courseUrl).searchParams.get('id'));
@@ -514,7 +535,7 @@ export const handleList = gated('/list', async (req, res) => {
   const found = siteOr(res, courseUrl);
   if (!found) return;
   const { site, auth } = found;
-  const stored = await tokenOr(res, auth, '/list');
+  const stored = await tokenOr(res, auth, '/list', { answerUnreachable: true });
   if (!stored) return;
 
   let courseId;
@@ -575,7 +596,7 @@ export const handleListExpand = gated('/list/expand', async (req, res) => {
 });
 
 // Symmetric with /list/expand: an unsupported ref on the resolve path surfaces as
-// 422, not a 500. Other errors rethrow to the centralized handler.
+// 422, not a 500, and a host it could not reach as 503. Other errors rethrow to the centralized handler.
 export const handleResolve = gated('/resolve', async (req, res) => {
   try {
     await resolveItem(req, res);
@@ -589,6 +610,8 @@ export const handleResolve = gated('/resolve', async (req, res) => {
       logResult('/resolve', `passcode ${e.reason} (409)`);
       return sendPasscode(res, e, { course, name });
     }
+    const down = unreachable(e);
+    if (down) return sendUnreachable(res, '/resolve', down);
     throw e;
   }
 });

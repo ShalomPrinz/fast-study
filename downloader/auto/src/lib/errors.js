@@ -46,3 +46,39 @@ export function failureOf(err) {
   if (err instanceof CodedError) return { error, code: err.code, params: err.params };
   return { error, code: 'internal_error', params: { detail: error } };
 }
+
+// undici's bare `TypeError: fetch failed` (the socket error rides as its `cause`) or an
+// AbortSignal.timeout firing — never a caller's own abort, which is an AbortError.
+function networkFailure(err) {
+  return (
+    (err instanceof TypeError && err.message === 'fetch failed') || err?.name === 'TimeoutError'
+  );
+}
+
+// Node's fetch to an upstream host, stamping that host on a network failure so the route that
+// catches it can name the site it could not reach.
+export async function fetchUpstream(url, init) {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    if (networkFailure(err)) err.host = new URL(String(url)).hostname;
+    throw err;
+  }
+}
+
+// A thrown error as `site_unreachable {host, detail}` (→ 503), or null when it is not a network
+// failure of a fetchUpstream call. `detail` is the socket error verbatim, as server/ reports it.
+export function unreachable(err) {
+  if (!networkFailure(err) || typeof err.host !== 'string') return null;
+  // A dual-stack refusal is an AggregateError whose own message is empty; its inner errors name it.
+  const inner = (err.cause?.errors ?? [])
+    .map((e) => e?.message)
+    .filter(Boolean)
+    .join('; ');
+  const detail = err.cause?.message || inner || err.message;
+  return new CodedError(
+    'site_unreachable',
+    { host: err.host, detail },
+    `${err.host} could not be reached: ${detail}`,
+  );
+}

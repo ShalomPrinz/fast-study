@@ -191,6 +191,9 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       '{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}',
   }),
+  site_unreachable: msg({
+    message: '{host} could not be reached. Check your internet connection and try again.',
+  }),
   moodle_busy: msg({
     message: 'The university site is busy with another request. Try again in a moment.',
   }),

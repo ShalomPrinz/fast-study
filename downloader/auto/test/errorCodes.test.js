@@ -361,6 +361,130 @@ test('503 carries what the site served instead of an answer', async (t) => {
   );
 });
 
+// undici's shape for a connect that never completed: a bare TypeError, the socket error as `cause`.
+function connectTimeout() {
+  const cause = Object.assign(
+    new Error('Connect Timeout Error (attempted address: lemida.biu.ac.il:443, timeout: 10000ms)'),
+    { name: 'ConnectTimeoutError', code: 'UND_ERR_CONNECT_TIMEOUT' },
+  );
+  return new TypeError('fetch failed', { cause });
+}
+
+test('503 site_unreachable names the host a WS call could not reach, never as a wall', async (t) => {
+  fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
+  fs.writeFileSync(
+    TOKEN_FILE,
+    JSON.stringify({ site: 'https://lemida.biu.ac.il', wstoken: 'tok' }),
+  );
+  t.after(() => fs.rmSync(TOKEN_FILE, { force: true }));
+  stubFetch(t, async () => {
+    throw connectTimeout();
+  });
+  t.mock.method(console, 'log', () => {});
+
+  const res = fakeRes();
+  await handleList({ body: { courseUrl: COURSE_URL } }, res);
+  assert.equal(res.code, 503);
+  assert.equal(res.body.status, undefined);
+  assert.deepEqual(
+    { code: res.body.code, params: res.body.params },
+    {
+      code: 'site_unreachable',
+      params: {
+        host: 'lemida.biu.ac.il',
+        detail: 'Connect Timeout Error (attempted address: lemida.biu.ac.il:443, timeout: 10000ms)',
+      },
+    },
+  );
+});
+
+test('/list whose first-use token verify cannot reach the site is 503 site_unreachable', async (t) => {
+  fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
+  fs.writeFileSync(
+    TOKEN_FILE,
+    JSON.stringify({ site: 'https://lemida.biu.ac.il', wstoken: 'tok', unverified: true }),
+  );
+  t.after(() => fs.rmSync(TOKEN_FILE, { force: true }));
+  stubFetch(t, async () => {
+    throw connectTimeout();
+  });
+  t.mock.method(console, 'log', () => {});
+  t.mock.method(console, 'warn', () => {});
+
+  const res = fakeRes();
+  await handleList({ body: { courseUrl: COURSE_URL } }, res);
+  assert.equal(res.code, 503);
+  assert.equal(res.body.code, 'site_unreachable');
+  assert.equal(res.body.params.host, 'lemida.biu.ac.il');
+});
+
+test('a Drive /resolve whose host cannot be reached is 503 site_unreachable', async (t) => {
+  stubFetch(t, async () => {
+    throw new TypeError('fetch failed', {
+      cause: Object.assign(new Error('getaddrinfo ENOTFOUND drive.google.com'), {
+        code: 'ENOTFOUND',
+      }),
+    });
+  });
+  t.mock.method(console, 'log', () => {});
+  const ref = encodeRef({
+    strategy: 'google-drive',
+    pageUrl: 'https://drive.google.com/file/d/unreachableId/view',
+  });
+  const res = fakeRes();
+  await handleResolve({ body: { ref, course: 'C', name: 'L' } }, res);
+  assert.equal(res.code, 503);
+  assert.deepEqual(
+    { code: res.body.code, params: res.body.params },
+    {
+      code: 'site_unreachable',
+      params: { host: 'drive.google.com', detail: 'getaddrinfo ENOTFOUND drive.google.com' },
+    },
+  );
+});
+
+test('a dual-stack refusal names its inner errors, never an empty detail', async (t) => {
+  stubFetch(t, async () => {
+    const cause = new AggregateError([
+      new Error('connect ECONNREFUSED 142.250.0.1:443'),
+      new Error('connect ECONNREFUSED ::1:443'),
+    ]);
+    throw new TypeError('fetch failed', { cause });
+  });
+  t.mock.method(console, 'log', () => {});
+  const ref = encodeRef({
+    strategy: 'google-drive',
+    pageUrl: 'https://drive.google.com/file/d/refusedId/view',
+  });
+  const res = fakeRes();
+  await handleResolve({ body: { ref, course: 'C', name: 'L' } }, res);
+  assert.equal(res.code, 503);
+  assert.equal(res.body.code, 'site_unreachable');
+  assert.match(res.body.params.detail, /ECONNREFUSED/);
+  assert.equal(
+    res.body.params.detail,
+    'connect ECONNREFUSED 142.250.0.1:443; connect ECONNREFUSED ::1:443',
+  );
+});
+
+test('a failure that is not the network still falls through to the 500 backstop', async (t) => {
+  fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
+  fs.writeFileSync(
+    TOKEN_FILE,
+    JSON.stringify({ site: 'https://lemida.biu.ac.il', wstoken: 'tok' }),
+  );
+  t.after(() => fs.rmSync(TOKEN_FILE, { force: true }));
+  const boom = new Error('boom');
+  stubFetch(t, async () => {
+    throw boom;
+  });
+  t.mock.method(console, 'log', () => {});
+  const res = fakeRes();
+  await assert.rejects(handleList({ body: { courseUrl: COURSE_URL } }, res), (e) => e === boom);
+  assert.equal(res.code, null);
+  assert.equal(failureOf(boom).code, 'internal_error');
+});
+
 test('422 relays the thrower\'s code rather than one flat "unsupported"', async () => {
   const res = fakeRes();
   await handleListExpand(
