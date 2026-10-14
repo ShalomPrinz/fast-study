@@ -496,6 +496,36 @@ def test_run_step_logs_error(caplog):
     assert any("step transcribe failed" in r.getMessage() for r in caplog.records)
 
 
+@pytest.mark.parametrize(
+    "code, level",
+    [
+        ("gemini_overloaded", "WARNING"),
+        ("groq_rate_limited", "WARNING"),
+        ("drive_upload_failed", "ERROR"),
+        ("summarization_failed", "ERROR"),
+    ],
+)
+def test_run_step_keeps_provider_conditions_below_error(caplog, code, level):
+    """ERROR logs become Sentry events; a provider's availability logs WARNING instead."""
+
+    async def fake_call(course, lecture, kind, step):
+        return {"status": "error", "message": "boom", "code": code}
+
+    async def go():
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            await runner._run_step_unlocked("C1", "L1", "lecture", "summarize")
+
+    with caplog.at_level("WARNING", logger="runner"):
+        asyncio.run(go())
+    runner._errors.pop(runner._skey("C1", "L1", "lecture"), None)
+
+    [record] = [r for r in caplog.records if "step summarize failed" in r.getMessage()]
+    assert record.levelname == level
+
+
 # ---- lecture deleted mid-run ----
 
 

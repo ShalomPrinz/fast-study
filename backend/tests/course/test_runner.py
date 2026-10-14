@@ -33,6 +33,7 @@ from course import runner as course_runner
 from course import to_pdf as course_to_pdf
 from services import db_client
 from services.db_client import DbClientError
+from services.errors import CodedError
 
 COURSE = "מבני נתונים"
 
@@ -433,6 +434,26 @@ class TestErrors:
 
         asyncio.run(go())
         assert captured == [err]
+
+    def test_provider_condition_phase_failure_is_not_reported(self, db, monkeypatch):
+        """A Gemini overload names the provider's availability, not a bug: no Sentry event."""
+
+        def boom(ext, report, course):
+            raise CodedError("overloaded", "gemini_overloaded", model="m")
+
+        captured = []
+        monkeypatch.setattr(course_analyze, "analyze", boom)
+        monkeypatch.setattr(
+            course_runner.sentry_sdk, "capture_exception", captured.append
+        )
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["exam-hints"]["code"] == "gemini_overloaded"
+        assert captured == []
 
     def test_one_extractor_error_does_not_abort_others(self, db, monkeypatch):
         # exam-hints matches; force its analyze to fail — pitfalls (skipped) must still be reached.

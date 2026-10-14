@@ -1,6 +1,18 @@
 """The machine `code` + flat `params` every failure carries beside its English prose.
 Vocabulary and the reasoning behind the split: docs/ERROR-CODES.md at the repo root."""
 
+# Codes naming a third-party provider's availability (Groq/Gemini), not a bug of ours: they stay
+# out of Sentry. Unclassified provider failures keep their generic code and keep reporting.
+PROVIDER_CONDITION_CODES = frozenset(
+    {
+        "gemini_overloaded",
+        "gemini_quota_exhausted",
+        "gemini_quota_blocked",
+        "groq_rate_limited",
+        "groq_rate_limit_blocked",
+    }
+)
+
 
 class CodedError(RuntimeError):
     """A failure naming itself: a stable `code` and flat `params` beside the developer-facing

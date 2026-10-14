@@ -6,7 +6,12 @@ from datetime import datetime, timezone
 
 import sentry_sdk
 from services import db_client
-from services.errors import CodedError, error_fields, failure
+from services.errors import (
+    PROVIDER_CONDITION_CODES,
+    CodedError,
+    error_fields,
+    failure,
+)
 
 from course import analyze, collect, extract, merge, overview, to_pdf
 from course.overview import Phase
@@ -229,9 +234,11 @@ class OverviewRun:
             entries[slug] = {**self._phase_worker(slug, phase), **carried}
             stop = entries[slug]["status"] == "skipped"
         except Exception as e:
-            # Nothing logs a phase failure, so this is the only way it reaches Sentry; a no-op without a DSN.
-            sentry_sdk.capture_exception(e)
             code, params = error_fields(e, "internal_error")
+            # Nothing logs a phase failure, so this is the only way it reaches Sentry; a no-op
+            # without a DSN. A provider's own availability (Gemini 503/429) is not reported.
+            if code not in PROVIDER_CONDITION_CODES:
+                sentry_sdk.capture_exception(e)
             entries[slug] = {
                 "status": "error",
                 "message": str(e),

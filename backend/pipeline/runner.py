@@ -13,7 +13,7 @@ from typing import NamedTuple, Optional
 
 from course import runner as course_runner
 from services import db_client, google_auth, settings
-from services.errors import CodedError
+from services.errors import PROVIDER_CONDITION_CODES, CodedError
 from services.llm_client import GeminiRateLimitError
 
 from pipeline.strip_audio import strip_audio
@@ -678,7 +678,15 @@ async def _run_step_unlocked(
         if result.get("groq_limit"):
             _transcribe_block = {"message": msg, "params": params}
         _errors[skey] = _error_record(step, msg, code=result.get("code"), params=params)
-        log.error("%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg)
+        # ERROR becomes a Sentry event; a provider's own availability is not ours to report.
+        level = (
+            logging.WARNING
+            if result.get("code") in PROVIDER_CONDITION_CODES
+            else logging.ERROR
+        )
+        log.log(
+            level, "%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg
+        )
         if not keep_in_flight:
             _in_flight.pop(skey, None)
             db_client.notify()
