@@ -445,7 +445,7 @@ msgstr "בטוח שאתה רוצה ליצור מחדש?"
 
 #: src/features/extension/ExtensionGuide.tsx:103
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
-msgstr "בראש הדף, הפעל את המתג \"מצב מפתח\". תופיע שורה של כפתורים חדשים."
+msgstr "בראש הדף, הפעל את המתג \"מצב פיתוח\". תופיע שורה של כפתורים חדשים."
 
 #: src/features/downloads/components/RecordingRow.tsx:271
 msgid "Attach material to"
@@ -598,7 +598,7 @@ msgstr "לחץ על \"Create API Key\"."
 
 #: src/features/extension/ExtensionGuide.tsx:116
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
-msgstr "לחץ על \"טעינת פריט לא ארוז\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
+msgstr "לחץ על \"טעינת פריט Unpacked\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
 
 #: src/features/settings/components/ApiKeyField.tsx:67
 msgid "Click <0>Get a key</0> and sign in with Google or your email."
@@ -1517,7 +1517,7 @@ msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {h
 
 #: src/features/extension/ExtensionGuide.tsx:142
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
-msgstr "פתח הרצאה באתר הקורס והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."
+msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר האוניברסיטה) והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."
 
 #: src/features/extension/ExtensionGuide.tsx:78
 msgid "Open Chrome's extensions page"
@@ -2265,7 +2265,7 @@ msgstr "לנסות שוב"
 
 #: src/features/extension/ExtensionGuide.tsx:100
 msgid "Turn on Developer mode"
-msgstr "הפעלת מצב מפתח"
+msgstr "הפעלת מצב פיתוח"
 
 #: src/features/downloads/components/ManualDownload.tsx:142
 msgid "Type"
