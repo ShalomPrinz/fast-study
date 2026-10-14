@@ -1,6 +1,7 @@
 import type { Course, InFlightEntry, Kind, QueueEntry, RunError } from '@/types'
 import type { StatusNodeState } from '@/shared/components/StatusNode'
 import { isQuotaError } from '@/shared/utils/runError'
+import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
 
@@ -49,4 +50,13 @@ export function notQueuedState(
   const error = errors[inFlightKey(item.course, item.lecture, item.kind)]
   if (!error) return 'pending'
   return isQuotaError(error.code) ? 'quota' : 'failed'
+}
+
+/** A not-queued row's glyph tooltip: the lecture's last error text, as the lecture page shows it. */
+export function notQueuedTitle(
+  errors: Record<string, RunError>,
+  item: PendingLecture,
+): string | undefined {
+  const error = errors[inFlightKey(item.course, item.lecture, item.kind)]
+  return error ? serviceErrorText(error) : undefined
 }

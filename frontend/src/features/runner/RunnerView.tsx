@@ -15,7 +15,7 @@ import { moveToFront, runPipeline } from '@/services/backend'
 import { toast, toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { lectureRoute } from '@/shared/utils/url'
-import { notQueued, notQueuedState } from './utils/notQueued'
+import { notQueued, notQueuedState, notQueuedTitle } from './utils/notQueued'
 import { canMoveToFront, headerState, nightlyPicksUp } from './utils/runnerState'
 import '@/styles/panel.css'
 import '@/styles/button.css'
@@ -40,14 +40,16 @@ interface RowProps {
   lecture: string
   kind: Kind
   state: StatusNodeState
+  // The status node's hover text, e.g. a not-queued row's last error.
+  title?: string
   chip?: ReactNode
 }
 
 // The status node, title, course and chip every row here shows, whatever acts on it.
-function RowContent({ course, lecture, kind, state, chip }: RowProps) {
+function RowContent({ course, lecture, kind, state, title, chip }: RowProps) {
   return (
     <>
-      <StatusNode state={state} />
+      <StatusNode state={state} title={title} />
       <div className="pipeline-row-body">
         <div className="row-title" dir="auto">
           {lecture}
@@ -390,6 +392,7 @@ export default function RunnerView() {
                             lecture={item.lecture}
                             kind={item.kind}
                             state={notQueuedState(status?.errors ?? {}, item)}
+                            title={notQueuedTitle(status?.errors ?? {}, item)}
                             onActivate={() => void runNow(item.course, item.lecture, item.kind)}
                           />
                         ))}

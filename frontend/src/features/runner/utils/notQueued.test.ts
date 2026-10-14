@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import type { RunError, Course, FileStatus, InFlightEntry, Lecture, QueueEntry } from '@/types'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
-import { notQueued, notQueuedState } from './notQueued'
+import { serviceErrorText } from '@/shared/i18n/serviceErrors'
+import { notQueued, notQueuedState, notQueuedTitle } from './notQueued'
 
 function files(...present: string[]): FileStatus {
   const names = [
@@ -107,5 +108,24 @@ describe('notQueuedState', () => {
     expect(notQueuedState(err('gemini_quota_blocked'), item)).toBe('quota')
     expect(notQueuedState(err('groq_rate_limited'), item)).toBe('quota')
     expect(notQueuedState(err('groq_rate_limit_blocked'), item)).toBe('quota')
+  })
+})
+
+describe('notQueuedTitle', () => {
+  const item = { course: 'C1', lecture: 'L1', kind: 'lecture' as const }
+
+  it("carries the lecture's last error text, and nothing without one", () => {
+    const error: RunError = {
+      step: 'audio.mp3',
+      message: 'ffmpeg exploded',
+      code: 'audio_extraction_failed',
+      params: { detail: 'boom' },
+      provider: null,
+      blocked: false,
+    }
+    const errors = { [inFlightKey('C1', 'L1', 'lecture')]: error }
+    expect(notQueuedTitle(errors, item)).toBe(serviceErrorText(error))
+    expect(notQueuedTitle(errors, item)).toContain('boom')
+    expect(notQueuedTitle({}, item)).toBeUndefined()
   })
 })
