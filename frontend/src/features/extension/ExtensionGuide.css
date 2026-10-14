@@ -112,34 +112,40 @@
   background: var(--line-soft);
 }
 
-/* The enlarged screenshot: as big as the window allows, at most its own pixel size. */
-.extension-zoom {
+/* The enlarged screenshot with its Close below: as big as the window allows, at most its own pixel
+   size. Darker than the shared overlay (same ink as modal.css) so the screenshot stands out. */
+.modal-overlay.extension-zoom {
+  --zoom-close-h: 36px;
+  flex-direction: column;
+  gap: var(--space-5);
   padding: var(--space-7);
+  background: rgba(23, 23, 31, 0.6);
   cursor: zoom-out;
 }
 
+/* No position of its own, so the toasts in the top corner never cover it. */
 .extension-zoom-close {
-  position: absolute;
-  inset-block-start: var(--space-4);
-  inset-inline-end: var(--space-4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
+  flex-shrink: 0;
+  block-size: var(--zoom-close-h);
+  padding: 0 var(--space-6);
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--text);
-  font-size: var(--fs-section);
-  line-height: 1;
+  font-size: var(--fs-row);
+  font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-md);
 }
 
+.extension-zoom-close:hover {
+  background: var(--surface-sunken);
+}
+
+/* Leaves room for the button and the gap, so both always fit in the window together. */
 .extension-zoom-img {
   max-inline-size: 100%;
-  max-block-size: 100%;
+  max-block-size: calc(100% - var(--zoom-close-h) - var(--space-5));
   border-radius: var(--r-sm);
   box-shadow: var(--shadow-lg);
 }

@@ -608,7 +608,7 @@ msgstr "Click <0>Get a key</0> and sign in with Google or your email."
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "Click <0>Get a key</0> and sign in with your Google account."
 
-#: src/features/extension/ExtensionGuide.tsx:203
+#: src/features/extension/ExtensionGuide.tsx:223
 msgid "Click any screenshot to enlarge it."
 msgstr "Click any screenshot to enlarge it."
 
@@ -617,7 +617,11 @@ msgid "Click the puzzle-piece icon next to the address bar, then click the pin b
 msgstr "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 
 #: src/features/downloads/DownloadsView.tsx:159
-#: src/features/extension/ExtensionGuide.tsx:186
+msgid "Close"
+msgstr "Close"
+
+#: src/features/extension/ExtensionGuide.tsx:199
+msgctxt "zoom overlay button"
 msgid "Close"
 msgstr "Close"
 
@@ -1217,7 +1221,7 @@ msgstr "I confirmed, try again"
 msgid "I solved the captcha"
 msgstr "I solved the captcha"
 
-#: src/features/extension/ExtensionGuide.tsx:227
+#: src/features/extension/ExtensionGuide.tsx:247
 msgid "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
 msgstr "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
 
@@ -1826,7 +1830,7 @@ msgstr "Saving…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:165
+#: src/features/extension/ExtensionGuide.tsx:173
 msgid "Screenshot of step {step}"
 msgstr "Screenshot of step {step}"
 
@@ -2321,7 +2325,7 @@ msgstr "Updated. Restart to update"
 msgid "Updates"
 msgstr "Updates"
 
-#: src/features/extension/ExtensionGuide.tsx:221
+#: src/features/extension/ExtensionGuide.tsx:241
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 

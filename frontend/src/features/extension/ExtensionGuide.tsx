@@ -181,9 +181,8 @@ function Shot({
   )
 }
 
-// One screenshot enlarged over a dimmed page; any click (the × included) or Esc closes it.
+// One screenshot enlarged over a dimmed page, Close below it; any click (Close included) or Esc closes.
 function ZoomOverlay({ shot, onClose }: { shot: Zoomed; onClose: () => void }) {
-  const { t } = useLingui()
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
@@ -193,11 +192,12 @@ function ZoomOverlay({ shot, onClose }: { shot: Zoomed; onClose: () => void }) {
   }, [onClose])
   return ReactDOM.createPortal(
     <div className="modal-overlay extension-zoom" role="dialog" aria-modal="true" onClick={onClose}>
-      {/* No handler of its own: the click bubbles to the overlay, which closes. */}
-      <button className="extension-zoom-close" aria-label={t`Close`} autoFocus>
-        ×
-      </button>
       <img className="extension-zoom-img" src={shot.url} alt={shot.alt} />
+      {/* No handler of its own: the click bubbles to the overlay, which closes. Its own context
+          because the shared "Close" reads "סגירה" in Hebrew, and a button under a photo says "סגור". */}
+      <button className="extension-zoom-close" autoFocus>
+        <Trans context="zoom overlay button">Close</Trans>
+      </button>
     </div>,
     document.body,
   )
@@ -207,7 +207,7 @@ function ZoomOverlay({ shot, onClose }: { shot: Zoomed; onClose: () => void }) {
 // Extension tab — see docs/EXTENSION.md.
 export default function ExtensionGuide() {
   const [zoomed, setZoomed] = useState<Zoomed | null>(null)
-  // The overlay's × holds focus and unmounts on close, so focus goes back to the screenshot clicked.
+  // The overlay's Close holds focus and unmounts on close, so focus goes back to the screenshot clicked.
   const opener = useRef<HTMLElement | null>(null)
   const zoom = useCallback((z: Zoomed, from: HTMLElement) => {
     opener.current = from

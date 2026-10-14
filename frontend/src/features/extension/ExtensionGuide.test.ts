@@ -44,7 +44,7 @@ describe('ExtensionGuide', () => {
     expect(container.querySelectorAll('.extension-step')).toHaveLength(5)
   })
 
-  it('enlarges a screenshot on click, closes on any click, the × or Esc, and refocuses it', () => {
+  it('enlarges a screenshot on click, closes on any click, Close or Esc, and refocuses it', () => {
     const { container } = mount()
     const shots = container.querySelectorAll('.extension-shot-button')
     expect(shots.length).toBeGreaterThan(1)
@@ -52,7 +52,9 @@ describe('ExtensionGuide', () => {
 
     fireEvent.click(shots[0])
     expect(zoom()).not.toBeNull()
-    expect(document.activeElement).toBe(document.querySelector('.extension-zoom-close'))
+    const close = document.querySelector('.extension-zoom-close')
+    expect(close?.textContent).toBe('Close')
+    expect(document.activeElement).toBe(close)
     fireEvent.click(document.querySelector('.extension-zoom-img')!)
     expect(zoom()).toBeNull()
     expect(document.activeElement).toBe(shots[0])

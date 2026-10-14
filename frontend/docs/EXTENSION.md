@@ -15,6 +15,7 @@ The Downloads page's Extension tab (`features/extension/ExtensionGuide`, [DOWNLO
   column width. Each image keeps its own aspect ratio: shrunk to the step column (up to ~840px), never
   upscaled, never cropped. Capture from a Hebrew Chrome at 1x; a wider capture shows smaller text, so a
   small UI (a menu) is cropped tight and then shows at its own pixel size.
-- **Zoom** — a note above step 1 says so; clicking a screenshot opens it over a dimmed `.modal-overlay`
-  (fit to the window, never upscaled), and any click, the × or Esc closes it and
-  returns focus to that screenshot.
+- **Zoom** — a note above step 1 says so; clicking a screenshot opens it over a `.modal-overlay` dimmed
+  darker than other modals, fit with a labelled Close pill below it (never upscaled, clear of the
+  corner toasts); any click, Close or Esc closes it and returns focus to that screenshot. Close has its
+  own msgid context, since the shared "Close" is "סגירה" and this one is "סגור".

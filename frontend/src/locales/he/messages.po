@@ -608,7 +608,7 @@ msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם Google או עם 
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם חשבון Google שלך."
 
-#: src/features/extension/ExtensionGuide.tsx:203
+#: src/features/extension/ExtensionGuide.tsx:223
 msgid "Click any screenshot to enlarge it."
 msgstr "לחץ על צילום מסך כדי להגדיל אותו."
 
@@ -617,9 +617,13 @@ msgid "Click the puzzle-piece icon next to the address bar, then click the pin b
 msgstr "לחץ על סמל חלק הפאזל שליד שורת הכתובת, ואז על הנעץ שליד FastStudy. הסמל שלה יישאר מעכשיו בסרגל הכלים."
 
 #: src/features/downloads/DownloadsView.tsx:159
-#: src/features/extension/ExtensionGuide.tsx:186
 msgid "Close"
 msgstr "סגירה"
+
+#: src/features/extension/ExtensionGuide.tsx:199
+msgctxt "zoom overlay button"
+msgid "Close"
+msgstr "סגור"
 
 #: src/features/downloads/components/RecordingRow.tsx:194
 msgid "Collapse"
@@ -1217,7 +1221,7 @@ msgstr "אישרתי, לנסות שוב"
 msgid "I solved the captcha"
 msgstr "פתרתי את החידה"
 
-#: src/features/extension/ExtensionGuide.tsx:227
+#: src/features/extension/ExtensionGuide.tsx:247
 msgid "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
 msgstr "אם Chrome מציג את FastStudy עם שגיאה, פתח את <0>{EXTENSIONS_URL}</0> ולחץ על חץ הטעינה מחדש בכרטיס של FastStudy."
 
@@ -1826,7 +1830,7 @@ msgstr "שומר…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "צילום מסך של {name}, שלב {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:165
+#: src/features/extension/ExtensionGuide.tsx:173
 msgid "Screenshot of step {step}"
 msgstr "צילום מסך של שלב {step}"
 
@@ -2321,7 +2325,7 @@ msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את 
 msgid "Updates"
 msgstr "עדכונים"
 
-#: src/features/extension/ExtensionGuide.tsx:221
+#: src/features/extension/ExtensionGuide.tsx:241
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 
