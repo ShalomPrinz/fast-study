@@ -1,5 +1,5 @@
 """Shared Gemini client for summarize and the course overview: SDK failures surface as
-RuntimeError (429s as GeminiRateLimitError) so endpoints can return {"status": "error"}."""
+RuntimeError (429 GeminiRateLimitError, 503 gemini_overloaded) for a {"status": "error"}."""
 
 import os
 import re
@@ -58,6 +58,27 @@ def _is_rate_limit(err: Exception, body: dict) -> bool:
     ):
         return True
     return "RESOURCE_EXHAUSTED" in str(err)
+
+
+def _overloaded_error(err: Exception, body: dict, model: str) -> CodedError | None:
+    """A gemini_overloaded CodedError when the SDK error is a 503 / UNAVAILABLE, however it is
+    shaped, else None."""
+
+    inner = body.get("error", body) if isinstance(body, dict) else None
+    if (
+        getattr(err, "code", None) == 503
+        or (
+            isinstance(inner, dict)
+            and (inner.get("code") == 503 or inner.get("status") == "UNAVAILABLE")
+        )
+        or "UNAVAILABLE" in str(err)
+    ):
+        return CodedError(
+            f"Gemini model {model} is overloaded right now (503)",
+            "gemini_overloaded",
+            model=model,
+        )
+    return None
 
 
 def _key_rejected_error(err: Exception, body: dict) -> CodedError | None:
@@ -176,7 +197,11 @@ class LLMClient:
                 info["model"] = info.get("model") or self.model
                 info["message"] = _quota_message(info, self.model)
                 raise GeminiRateLimitError(info) from e
-            raise _key_rejected_error(e, body) or RuntimeError(str(e)) from e
+            raise (
+                _overloaded_error(e, body, self.model)
+                or _key_rejected_error(e, body)
+                or RuntimeError(str(e))
+            ) from e
         return (response.text or "").strip()
 
     def upload_file(self, path, mime_type: str):
@@ -188,7 +213,11 @@ class LLMClient:
             )
         except Exception as e:
             body = _extract_gemini_body(e)
-            raise _key_rejected_error(e, body) or RuntimeError(str(e)) from e
+            raise (
+                _overloaded_error(e, body, self.model)
+                or _key_rejected_error(e, body)
+                or RuntimeError(str(e))
+            ) from e
 
     def delete_file(self, name: str) -> None:
         """Best-effort cleanup of server-side upload quota; swallows errors."""

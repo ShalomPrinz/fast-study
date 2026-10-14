@@ -50,6 +50,18 @@ describe('resolveServiceError', () => {
     expect(of({ file: null })).toBe(of({}))
   })
 
+  it('names the overloaded Gemini model, and still says something when the model is not given', () => {
+    const prose = 'Gemini model gemini-2.5-pro is overloaded right now (503)'
+    const of = (params: Record<string, string | null>) =>
+      resolveServiceError({ message: prose, code: 'gemini_overloaded', params }).headline
+
+    expect(of({ model: 'gemini-2.5-pro' })).toContain('gemini-2.5-pro')
+    expect(of({ model: 'gemini-2.5-pro' })).not.toBe(prose)
+    expect(of({ model: 'gemini-2.5-pro' })).not.toBe(of({ model: 'gemini-2.5-flash' }))
+    expect(of({})).not.toContain('{model}')
+    expect(of({ model: null })).toBe(of({}))
+  })
+
   it('tells a user-typed name apart from a caller bug in the same invalid_request code', () => {
     const prose = 'course and name with a legal character are required'
     const of = (field: string) =>

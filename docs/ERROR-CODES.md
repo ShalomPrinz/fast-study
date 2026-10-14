@@ -128,6 +128,7 @@ given, so a refusal the user can act on is caught by the route instead and re-em
 | `pipeline/transcribe.py`, `llm_client.py`| `api_key_rejected`         | `provider`                      | user  |
 | `services/llm_client.py`                | `gemini_quota_exhausted`    | `scope`, `model`, `limit`, `tier`| user |
 | `pipeline/runner.py` blocked record     | `gemini_quota_blocked`      | `scope`, `model`, `limit`, `tier`| user |
+| `services/llm_client.py`                | `gemini_overloaded`         | `model`                         | user  |
 | `pipeline/transcribe.py`                | `groq_rate_limited`         | `limit`, `used`, `requested`, `retry_after_seconds` | user |
 | `pipeline/runner.py` blocked record     | `groq_rate_limit_blocked`   | same as `groq_rate_limited`     | user  |
 | `pipeline/summarize.py`                 | `summarization_failed`      | `detail`                        | user  |
@@ -159,6 +160,9 @@ run-scoped clearing sweep in `pipeline/runner.py` tests membership of those two 
 with one string, and `provider` and `blocked` stay on the record — the frontend pins both.
 `groq_rate_limited` and `groq_rate_limit_blocked` mirror that pair for Groq (`provider: "groq"`);
 `retry_after_seconds` is `null` when Groq's message states no delay.
+`gemini_overloaded` is Gemini's 503 `UNAVAILABLE` ("high demand"); it carries no `detail`, since
+the raw text says only that and the step fails at once with no run-scoped block. It can also end a
+course-overview `analyze` phase, which passes `llm_client`'s codes through.
 
 ### `backend/` — course overview
 

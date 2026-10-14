@@ -276,3 +276,46 @@ def test_another_400_stays_a_plain_runtime_error(monkeypatch):
     with pytest.raises(RuntimeError) as exc:
         LLMClient(api_key="k").generate(["x"])
     assert not isinstance(exc.value, CodedError)
+
+
+_OVERLOADED_MESSAGE = (
+    "This model is currently experiencing high demand. Spikes in demand are usually "
+    "temporary. Please try again later."
+)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        # The SDK's APIError shape: status code on the exception, body as `details`.
+        _SdkError(
+            {
+                "error": {
+                    "code": 503,
+                    "message": _OVERLOADED_MESSAGE,
+                    "status": "UNAVAILABLE",
+                }
+            },
+            text="503 UNAVAILABLE.",
+            code=503,
+        ),
+        # No code attribute: only the dict body names the condition.
+        _SdkError({"code": 503, "status": "UNAVAILABLE"}, text="?", code=None),
+    ],
+)
+@pytest.mark.parametrize("call", ["generate", "upload_file"])
+def test_a_503_raises_gemini_overloaded(monkeypatch, error, call):
+    sdk = MagicMock()
+    sdk.models.generate_content.side_effect = error
+    sdk.files.upload.side_effect = error
+    _patched_client(sdk, monkeypatch)
+    client = LLMClient(api_key="k", model="gemini-x")
+
+    with pytest.raises(CodedError) as exc:
+        if call == "generate":
+            client.generate(["x"])
+        else:
+            client.upload_file("/tmp/a.txt", "text/plain")
+    assert exc.value.code == "gemini_overloaded"
+    assert exc.value.params == {"model": "gemini-x"}
+    assert "{" not in str(exc.value)  # readable prose, not the JSON blob

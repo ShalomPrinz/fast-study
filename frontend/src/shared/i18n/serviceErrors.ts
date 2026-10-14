@@ -74,6 +74,10 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   groq_rate_limit_blocked: msg({
     message: "Groq's rate limit was reached, so this step was not attempted.",
   }),
+  gemini_overloaded: msg({
+    message:
+      '{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The Gemini model {model} is under high demand right now. This is usually temporary, so try again later.}}',
+  }),
   summarization_failed: msg({ message: 'Summarizing the transcript failed.' }),
   pdf_tool_timeout: msg({
     message: 'Building the PDF took too long and was stopped after {seconds} seconds.',
