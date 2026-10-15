@@ -33,6 +33,7 @@ import {
   writeMoodleToken,
   writeScratchEnv,
 } from './lib/baseline.mjs';
+import { checkNpmDeps } from './lib/deps.mjs';
 import { selfCheck } from './lib/selfcheck.mjs';
 import {
   down,
@@ -333,6 +334,7 @@ async function main() {
 
   refuseSecondSetup();
   previous = readPorts(paths);
+  say(`  ✓ ${checkNpmDeps()}`);
 
   await buildHarness();
   say('  ✓ fixtures, fake binaries, scratch .env and Moodle token written');

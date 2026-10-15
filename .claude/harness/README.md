@@ -323,8 +323,11 @@ that cmid too, for a resolve that arrives without the course id. Site info lists
 ## The guarantees, each proved before handover
 
 `setup.mjs` aborts unless all of these hold, because a silently broken shim costs more than no
-harness: the fakes answer; a Python process and a Node process are both refused off loopback, the
-Python refusal logged in `network.log`, while
+harness: before anything launches, every `frontend/` and `downloader/` `node_modules` entry matches
+its `package-lock.json` version, the failure naming each missing or stale package (a stale tree
+otherwise shows only as a dev-server 500 behind "never listed course"); the fakes answer; a Python
+process and a Node process are both refused off loopback, the Python refusal logged in
+`network.log`, while
 the fake site still serves a redirected `https://lemida.biu.ac.il`, and auto/'s `POST /site/probe`
 reads it as `supported` with the seeded token connected; both services log the harness
 keys (the repo `.env` lost the `load_dotenv` race); a settings save lands in the scratch `.env` and
