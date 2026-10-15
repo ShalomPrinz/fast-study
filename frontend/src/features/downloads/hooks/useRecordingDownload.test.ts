@@ -40,7 +40,11 @@ vi.mock('@/features/downloads/utils/downloadErrors', () => ({
 vi.mock('@/shared/contexts/RunnerStatusContext', () => ({
   useRunnerStatus: () => ({ status: runner.status }),
 }))
-vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({
+  toast: vi.fn(),
+  toastConnectionError: vi.fn(),
+  dismissToast: vi.fn(),
+}))
 
 const resolveMedia = vi.fn()
 const setName = vi.fn()

@@ -16,6 +16,15 @@ export interface Rename {
   name: string
 }
 
+// `captchaSolved` is present (only ever true) when this item's zoom capture waited on screen for a
+// captcha and then caught the player; it is per-answer, so it never names another queued download.
+export interface DownloadItemResult {
+  media: ProbedMedia
+  jobIds: string[]
+  renames?: Rename[]
+  captchaSolved?: true
+}
+
 // Resolving means queued; every failure is an error status. `media` resolves an 'unknown' row, and
 // `only` re-triggers a single named clip for per-job retry.
 export async function downloadItem(args: {
@@ -24,12 +33,8 @@ export async function downloadItem(args: {
   name: string
   kind: Kind
   only?: boolean
-}): Promise<{ media: ProbedMedia; jobIds: string[]; renames?: Rename[] }> {
-  return postReconnectAware<{ media: ProbedMedia; jobIds: string[]; renames?: Rename[] }>(
-    downloadServer,
-    '/download-item',
-    args,
-  )
+}): Promise<DownloadItemResult> {
+  return postReconnectAware<DownloadItemResult>(downloadServer, '/download-item', args)
 }
 
 // The manual-entry form's request: any http(s) link through yt-dlp, with no credentials. A 400 is

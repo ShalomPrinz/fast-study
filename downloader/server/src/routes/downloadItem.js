@@ -74,7 +74,7 @@ function makeReresolve({ ref, url, course, name, kind }) {
  * `only`/`forceCapture` pass through to auto untouched (a per-clip zoom retry needs `only`).
  * `wait` is a section run's: it queues at the Moodle lock, where a button press is refused 429.
  * `signal` abandons it — the request leaves auto's queue and no job starts.
- * @returns {Promise<{status: number, body: object}>} 200 → `{media, jobIds, renames}`
+ * @returns {Promise<{status: number, body: object}>} 200 → `{media, jobIds, renames, captchaSolved?}`
  */
 export async function downloadItem({
   ref,
@@ -124,7 +124,17 @@ export async function downloadItem({
       reresolve: makeReresolve({ ref, course, name: targets[i].name, kind }),
     }),
   );
-  return { status: 200, body: { media: body.media, jobIds, renames } };
+  return { status: 200, body: itemAnswer(body, jobIds, renames) };
+}
+
+/** The 200 `/download-item` body; auto's `captchaSolved` crosses for the frontend's toast. */
+export function itemAnswer(body, jobIds, renames) {
+  return {
+    media: body.media,
+    jobIds,
+    renames,
+    ...(body.captchaSolved === true && { captchaSolved: true }),
+  };
 }
 
 // The non-2xx `/download-item` and `/download-url` answer when auto refused: auto's own body, code

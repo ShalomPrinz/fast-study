@@ -25,7 +25,7 @@ process.env.AUTODL_URL = `http://127.0.0.1:${auto.address().port}`;
 process.env.FASTSTUDY_SECRET = 'launch-secret';
 const { AUTODL_URL } = await import('../src/config.js');
 const { onAutodl, resolve, targetUrl } = await import('../src/services/autodl.js');
-const { downloadItem } = await import('../src/routes/downloadItem.js');
+const { downloadItem, itemAnswer } = await import('../src/routes/downloadItem.js');
 const { fetchFile } = await import('../src/downloaders/fetch.js');
 const { listJobs } = await import('../src/jobs.js');
 const { curl } = await import('../src/downloaders/curl.js');
@@ -279,4 +279,11 @@ test('a job gets at most one cut-short re-run and one re-resolve, in either orde
   const rerunAfter = recovery(resolved, onAuto, 18, null, false);
   assert.equal(rerunAfter.step, 'rerun');
   assert.equal(recovery(rerunAfter.next, onAuto, 0, null, true), null);
+});
+
+test("auto's captchaSolved crosses to the /download-item answer, and is absent otherwise", () => {
+  const solved = itemAnswer({ media: 'video', targets: [], captchaSolved: true }, ['j'], []);
+  assert.deepEqual(solved, { media: 'video', jobIds: ['j'], renames: [], captchaSolved: true });
+  const plain = itemAnswer({ media: 'video', targets: [] }, ['j'], []);
+  assert.equal('captchaSolved' in plain, false);
 });

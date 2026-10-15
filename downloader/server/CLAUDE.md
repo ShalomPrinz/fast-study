@@ -68,7 +68,7 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `POST /download-file`                     | plain-URL capture added to the lecture's materials; 200 at once with a `jobId`                                    |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); creates a missing course first; 200 with a `jobId`     |
 | `POST /download-url`                      | any http(s) URL (the Downloads page's manual entry) → auto/ `/resolve`, then one job: plain yt-dlp off the Moodle site, curl on auto's proxy on it; auto's refusals forwarded verbatim; 200 with a `jobId` ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
-| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim, `429 moodle_busy` included) |
+| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames, captchaSolved?}` — `captchaSolved:true` relayed from auto when the zoom capture waited for the user to solve a captcha on screen (auto's 4xx forwarded verbatim, `429 moodle_busy` included) |
 | `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives or joins that section's bulk run                      |
 | `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                 |
 | `POST /runs/:id/cancel`                   | abandon the rest of a run and cancel every job it started (each ends `cancelled`)                                 |

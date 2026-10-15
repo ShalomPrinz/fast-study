@@ -12,6 +12,7 @@ import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsCont
 import type { PasscodePromptProps } from '@/features/downloads/components/PasscodePrompt'
 import { toastDownloadError, toastLectureBusy } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
+import { toastCaptchaSolved } from '@/features/downloads/utils/zoomCaptcha'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 import { useRowEditsDispatch } from '@/features/downloads/contexts/RowEditsContext'
 import { useWithMoodleLock } from '@/features/downloads/contexts/MoodleLockContext'
@@ -82,8 +83,9 @@ export function useRecordingDownload({
     try {
       // The row's `moodle` flag decides, as it does the row's disabled state (`rowLocked`).
       const send = () => downloadItem(args)
-      const { media, renames } = await (item.moodle ? withMoodleLock(send) : send())
+      const { media, renames, captchaSolved } = await (item.moodle ? withMoodleLock(send) : send())
       resolveMedia(args.ref, media)
+      toastCaptchaSolved(captchaSolved)
       // An accepted whole-row download pins its name, so the tree refresh it causes cannot move the
       // row off it. A clip retry carries its job's title, never the row's.
       if (!args.only) lock(args.ref, { course: args.course, name: args.name, kind: args.kind })
