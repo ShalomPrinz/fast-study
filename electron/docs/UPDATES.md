@@ -72,8 +72,8 @@ offered, and the `started` guard keeps the reboot from starting a second updater
 
 ## The installer replaces `resources/` wholesale
 
-Nothing that must survive an update lives there. Tectonic's `formats/` is a per-machine artifact the
-next render rebuilds (~2s), and yt-dlp runs from its writable per-user copy under the state root so
+Nothing that must survive an update lives there. Tectonic's prebuilt `formats/` ships in
+`resources/latex/` beside `bundles/` and is replaced with the rest of `resources/` on every update, and yt-dlp runs from its writable per-user copy under the state root so
 it can update itself ([`DOWNLOAD.md`](../../downloader/server/docs/DOWNLOAD.md#the-writable-copy-and-its-self-update)).
 Settings (`userData`) and the state root are both outside the install directory.
 

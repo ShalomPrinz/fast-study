@@ -9,8 +9,8 @@ job. The installer's own configuration (one-click, per-user, the install directo
 
 Unsigned means **SmartScreen blocks the first run** on every machine: "Windows protected your PC"
 with only Don't run, and the installer starts from **More info → Run anyway**. Nothing short of an
-OV/EV certificate avoids it. The per-user install directory is writable, which is where tectonic
-builds its `formats/` on the first render.
+OV/EV certificate avoids it. The LaTeX cache ships with tectonic's prebuilt format
+([LATEX.md](LATEX.md#the-prime)), so no render writes under the install directory.
 
 ## Build, test, publish
 

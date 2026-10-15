@@ -1,5 +1,5 @@
-"""Prime tectonic's LaTeX package cache for the packaged build: render kitchen-sink.md, add
-cache-supplement.txt by name, keep only `bundles/` under <out-dir> — see docs/LATEX.md."""
+"""Prime tectonic's LaTeX cache for the packaged build: render kitchen-sink.md, which fills
+`bundles/` and builds the `formats/` .fmt, then add cache-supplement.txt by name — see docs/LATEX.md."""
 
 import argparse
 import os
@@ -78,7 +78,7 @@ def main() -> None:
     parser.add_argument(
         "out_dir",
         type=Path,
-        help="cache root to prime; `bundles/` under it is what ships",
+        help="cache root to prime; `bundles/` and `formats/` under it ship",
     )
     parser.add_argument(
         "--filelist",
@@ -104,21 +104,11 @@ def main() -> None:
     for name in _supplement_names():
         _fetch(name)
 
-    # `formats/` is per-machine — the app builds its own .fmt on the first render — so only
-    # `bundles/` ships.
-    shutil.rmtree(out / "formats", ignore_errors=True)
-
-    files = sorted(
-        p.relative_to(out).as_posix()
-        for p in (out / "bundles").rglob("*")
-        if p.is_file()
-    )
+    files = sorted(p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file())
     if args.filelist:
         args.filelist.write_text("\n".join(files) + "\n", encoding="utf-8")
     size = sum((out / f).stat().st_size for f in files)
-    print(
-        f"primed {len(files)} files, {size / 1024 / 1024:.1f}MB, in {out / 'bundles'}"
-    )
+    print(f"primed {len(files)} files, {size / 1024 / 1024:.1f}MB, in {out}")
 
 
 if __name__ == "__main__":

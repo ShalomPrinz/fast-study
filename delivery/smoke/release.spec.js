@@ -56,6 +56,22 @@ const PATH_TOOLS = ['curl'];
 const INSTALL_TIMEOUT_MS = 5 * 60_000;
 const MARKER = 'faststudy-smoke-marker.txt';
 
+/** latex/formats/ as sorted names, sizes and mtimes: a render that builds or rewrites a .fmt changes it. */
+function formatsSnapshot() {
+  const dir = paths.formatsDir();
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .sort()
+    .map((name) => {
+      const { size, mtimeMs } = fs.statSync(path.join(dir, name));
+      return { name, size, mtimeMs };
+    });
+}
+
+// The candidate's formats/ as installed, before any render; the update must land the same files.
+let shippedFormats = [];
+
 // What only a Windows run can prove, named in the failure wherever one of them breaks.
 const ASSUMPTION = {
   nsis: 'NSIS /S performs the per-user install with no prompt',
@@ -330,9 +346,11 @@ test('1. fresh install', async () => {
 
     const bundles = fs.readdirSync(path.join(paths.resourcesDir(), 'latex', 'bundles'));
     expect(bundles.length, 'resources/latex/bundles is empty').toBeGreaterThan(0);
-    expect(fs.existsSync(paths.formatsDir()), 'latex/formats/ shipped; it is per-machine').toBe(
-      false,
-    );
+    shippedFormats = formatsSnapshot();
+    expect(
+      shippedFormats.map(({ name }) => path.extname(name)),
+      'latex/formats/ does not ship exactly one .fmt',
+    ).toEqual(['.fmt']);
   });
 
   await test.step('the native host answers a framed request with no bridge file', async () => {
@@ -470,15 +488,17 @@ test('5. the provider steps fail on the network, and only there', async () => {
 test('6. the PDF, for real', async () => {
   const { page } = session;
   const { db, api } = services;
-  expect(fs.existsSync(paths.formatsDir()), 'latex/formats/ existed before any render').toBe(false);
+  const before = formatsSnapshot();
   await db.putSummary(COURSE, LECTURE, fixture('summary.md').toString('utf8'));
 
   expect(await api.runStep(COURSE, LECTURE, 'pdf'), 'the PDF step failed').toBeNull();
   const pdf = (await db.entry(COURSE, LECTURE)).files['summary.pdf'];
   expect(pdf.exists, 'no summary.pdf').toBe(true);
   expect(pdf.warning, 'the render left a .pdf_warning').toBeUndefined();
-  const formats = fs.existsSync(paths.formatsDir()) ? fs.readdirSync(paths.formatsDir()) : [];
-  expect(formats.length, 'the first render built nothing under latex/formats/').toBeGreaterThan(0);
+  // tectonic's stderr never reaches the API, so an untouched formats/ is the proof the shipped .fmt was reused.
+  expect(formatsSnapshot(), 'the render built or rewrote a file under latex/formats/').toEqual(
+    before,
+  );
 
   const text = await pdfText(await db.bytes(COURSE, LECTURE, 'summary.pdf'));
   expect(carriesPhrase(text, PDF_PHRASE), 'summary.pdf dropped glyphs of the fixed summary').toBe(
@@ -817,6 +837,10 @@ test('14. an in-place update', async () => {
         fs.existsSync(path.join(paths.resourcesDir(), MARKER)),
         `${failed(ASSUMPTION.wholesale)}: a file the previous install left in resources/ survived`,
       ).toBe(false);
+      expect(
+        formatsSnapshot().map(({ name, size }) => ({ name, size })),
+        "latex/formats/ does not hold the new build's .fmt",
+      ).toEqual(shippedFormats.map(({ name, size }) => ({ name, size })));
     });
   } finally {
     await feed.close();

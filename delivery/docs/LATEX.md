@@ -11,8 +11,9 @@ builds that cache; a cold prime is network-bound at roughly 7.5 minutes.
 - **It drives tectonic itself**, not `convert_to_pdf`: the backend reads `TECTONIC_CACHE_DIR` as "the
   cache is frozen" and adds `--only-cached`, which forbids the very fetches priming consists of. It
   reuses `build_tex` for the pandoc half, so the `.tex` is the one the pipeline generates.
-- **Only `bundles/` ships.** `formats/` is per-machine — the app builds its own `.fmt` on the first
-  render, offline — so the script deletes it.
+- **`bundles/` and `formats/` both ship.** The sink's render builds tectonic's `latex` format as
+  `formats/<hash>-latex-33.fmt`, so the app's `--only-cached` renders load it rather than build one;
+  smoke test 6 fails if a render adds or rewrites a file there.
 
 ## `kitchen-sink.md`
 
@@ -46,5 +47,6 @@ corpus against it, and either the diff is empty or it names the files to add.
 ## `tectonic-cache-filelist-linux.txt`
 
 A WSL prime of the **sink alone**, kept so a Windows-primed cache can be diffed against it: 457 lines
-under `bundles/` plus the one `formats/` `.fmt` that does not ship. `prime_cache.py --filelist`
-therefore diffs 11 lines heavy by design — the supplement; anything beyond those is real drift.
+under `bundles/` plus the one `formats/` `.fmt`, whose name is the same on both. `prime_cache.py
+--filelist` lists both directories, so it diffs 11 lines heavy by design — the supplement; anything
+beyond those, a renamed `.fmt` included, is real drift.
