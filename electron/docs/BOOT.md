@@ -13,7 +13,10 @@
    and their duration is logged to catch one that stops being so.
 5. Packaged, the extension's stable copy is refreshed and, on Windows, the native host is registered
    — both logged, neither able to fail the boot ([`EXTENSION.md`](EXTENSION.md)).
-6. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below.
+6. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below. It opens
+   centred at the last launch's normal size, maximized if it closed maximized; the size is fitted to
+   the work area and the minimum, and saved on `close` and in the `exit` handler a signal still runs.
+   It lives in its own `window-state.json`, so it never enters the settings store's read view or env.
 7. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
    alongside them because it calls no peer. `server` starts once all three are healthy. Each child is
    spawned, its port read off stdout, and its `/health` waited on before anything that needs it

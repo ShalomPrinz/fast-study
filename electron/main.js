@@ -12,6 +12,7 @@ const { reportsOn, sentryEnv, writeSettings } = require('./reports');
 const store = require('./store');
 const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
 const { reapChildren, signalChildren } = require('./teardown');
+const windowState = require('./windowState');
 const {
   registerHost,
   removeBridge,
@@ -65,6 +66,9 @@ const children = [];
 const reaping = new Set();
 let logStream = null;
 let mainWindow = null;
+// The window's latest normal size and maximized flag, kept current so the `exit` path can save it
+// without touching a window that may already be going away.
+let lastWindowState = null;
 // The launch screen's whole model: one row per child plus the failure, if the boot hit one.
 let bootState = null;
 let booting = false;
@@ -589,9 +593,11 @@ async function pickFolder(sender, defaultPath) {
 function createWindow(checks) {
   // Drops the default File/Edit/View bar, and with it its Ctrl+R / Ctrl+Shift+I / zoom accelerators.
   Menu.setApplicationMenu(null);
+  // Fitted to the primary display, which is where the window opens: centred, never at a saved position.
+  const size = windowState.restoredSize(windowState.load(), screen.getPrimaryDisplay().workArea);
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: size.width,
+    height: size.height,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -600,9 +606,22 @@ function createWindow(checks) {
       nodeIntegration: false,
     },
   });
-  // Capped by the work area of the display it opened on: a minimum bigger than the screen cannot be honoured.
-  const { workArea } = screen.getDisplayMatching(mainWindow.getBounds());
-  mainWindow.setMinimumSize(Math.min(1024, workArea.width), Math.min(640, workArea.height));
+  const minimum = windowState.minimumSize(
+    screen.getDisplayMatching(mainWindow.getBounds()).workArea,
+  );
+  mainWindow.setMinimumSize(minimum.width, minimum.height);
+  // Normal bounds, so a launch restored maximized un-maximizes back to the last normal size.
+  // Skipped while minimized, where Windows reports a window maximized before it as not maximized.
+  const captureState = () => {
+    if (mainWindow.isMinimized()) return;
+    const { width, height } = mainWindow.getNormalBounds();
+    lastWindowState = { width, height, maximized: mainWindow.isMaximized() };
+  };
+  for (const event of ['resize', 'maximize', 'unmaximize']) mainWindow.on(event, captureState);
+  mainWindow.on('close', () => {
+    captureState();
+    if (lastWindowState) windowState.save(lastWindowState);
+  });
   // The app's bridge; the URLs are filled in by the time the window navigates to the frontend.
   ipcMain.on('faststudy:config', (event) => {
     event.returnValue = {
@@ -659,7 +678,12 @@ function createWindow(checks) {
     log('main', `denied window.open: ${url} — UI links must go through open.external`);
     return { action: 'deny' };
   });
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  // `maximize()` itself shows a hidden window, so calling it before `show()` never paints the normal size first.
+  mainWindow.once('ready-to-show', () => {
+    if (size.maximized) mainWindow.maximize();
+    mainWindow.show();
+    captureState();
+  });
   // Nulled so every `mainWindow?.` guard holds: a boot that fails after a close, as quitting
   // mid-boot does, must not send to a destroyed webContents.
   mainWindow.on('closed', () => {
@@ -689,6 +713,8 @@ if (!app.requestSingleInstanceLock()) {
   });
   // The paths that skip `will-quit`; an orphaned service would keep writing DATA_ROOT (docs/BOOT.md).
   process.on('exit', killChildren);
+  // A signal or a crash exits without `close`, so the size is saved from the last snapshot here too.
+  process.on('exit', () => lastWindowState && windowState.save(lastWindowState));
   for (const signal of ['SIGINT', 'SIGTERM']) {
     process.on(signal, () => stopChildren().finally(() => process.exit(0)));
   }
