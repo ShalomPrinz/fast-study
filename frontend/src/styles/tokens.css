@@ -55,6 +55,8 @@
   /* A step lighter than --sidebar-bg, so the tree pane reads apart from the sidebar yet --sidebar-raise still shows on it. */
   --tree-pane-bg: #222230;
   --tree-pane-width: 268px;
+  /* Wide enough for a sentence, narrow enough that a long hint wraps instead of spanning the window. */
+  --tooltip-max-width: 260px;
 
   --space-1: 4px;
   --space-2: 6px;

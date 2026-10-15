@@ -139,6 +139,12 @@ the whole state-label vocabulary, and `StatusNode` the six run states (`done`, `
 optional second action row, and `.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in
 `services/toaster.css`.
 
+`shared/components/Tooltip` is the one hover hint: `<Tooltip content={…} placement="top">` wraps a
+child that takes a ref, opens after 400 ms on hover or on keyboard focus, and renders nothing for an
+empty `content`. `placement` is `top`/`bottom`/`inline-start`/`inline-end`, the logical sides resolved
+against the document's `dir`. A disabled `<button>` needs no wrapper: Chromium fires mouse events on it.
+An icon-only control keeps its accessible name as `aria-label`, since the tooltip only describes it.
+
 **No cross-file rule may depend on source order.** Vite's import order differs between dev (per-module
 `<style>` tags) and prod (one concatenated sheet), so equal-specificity rules resolve unpredictably;
 disambiguate by specificity. Where two rules genuinely collide at equal specificity (`.pipeline-row` /

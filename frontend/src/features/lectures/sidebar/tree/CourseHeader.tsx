@@ -10,6 +10,7 @@ import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import Icon from '@/shared/components/Icon'
+import Tooltip from '@/shared/components/Tooltip'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { courseProgress } from '@/features/lectures/utils/lectureProgress'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
@@ -148,9 +149,11 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             <Icon icon={course.archived ? 'unarchive' : 'archive'} />
           </button>
         ) : (
-          <button className="course-add-btn" onClick={startAdding} title={t`Add lecture`}>
-            +
-          </button>
+          <Tooltip content={t`Add lecture`} placement="inline-end">
+            <button className="course-add-btn" onClick={startAdding} aria-label={t`Add lecture`}>
+              +
+            </button>
+          </Tooltip>
         ))}
     </div>
   )
