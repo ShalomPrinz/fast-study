@@ -282,7 +282,8 @@ const RecordingRow = memo(function RecordingRow({
           placeholder={suggestion}
           list={material ? listId : undefined}
           aria-label={material ? t`Attach material to` : t`Lecture name`}
-          dir="auto"
+          // A suggestion input follows the UI direction so its text aligns with the list (I18N.md).
+          dir={material ? undefined : 'auto'}
         />
         {material && (
           <datalist id={listId}>

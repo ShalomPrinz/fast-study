@@ -79,7 +79,6 @@ export default function CourseCombobox({ id, value, options, onChange }: Props) 
         onClick={() => !open && show()}
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
-        dir="auto"
       />
       {expanded && (
         <ul id={listId} ref={listRef} className="course-combobox-listbox" role="listbox">
