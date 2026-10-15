@@ -360,8 +360,15 @@ that logic in a side-effect-free sibling (`provider-rules.mjs`, `site-control.mj
 Python shim in a child interpreter per case, since its patches are process-wide: lock globs as tail
 matches, the Windows `winerror` 32 and 5 refusals, and `fs.crud` reading `win32`.
 
-They run in CI's `internal-tests` job beside the lib tests. The self-check above stays the
-end-to-end proof and runs only on `setup.mjs`, not in CI.
+They run in CI's `internal-tests` job beside the lib tests.
+
+The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`), failure surfacing
+(`hb-fail`), download (`hb-dl`) and a locked `summary.pdf` — and run with `npm run test:e2e` from the
+repo root against a live stack, `HARNESS_DIR` set to a running `setup.mjs --harness DIR`; the report,
+traces and screenshots land in `$HARNESS_DIR/evidence/`. CI's [`e2e.yml`](../../.github/workflows/e2e.yml)
+runs them on pushes to `main` and on pull requests, with real ffmpeg, pandoc and tectonic. The
+release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a
+production override, which [SMOKE.md](../../delivery/docs/SMOKE.md) rules out.
 
 ## Driving failures
 
