@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { memo, useId, useState } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { msg } from '@lingui/core/macro'
@@ -208,9 +209,11 @@ const RecordingRow = memo(function RecordingRow({
               <Chevron open={expand.expanded} />
             )}
           </button>
-          <span className="recording-title" dir="auto" title={item.title}>
-            {item.title}
-          </span>
+          <Tooltip content={item.title}>
+            <span className="recording-title" dir="auto">
+              {item.title}
+            </span>
+          </Tooltip>
         </div>
         {expand.error && (
           <div className="recordings-status recordings-status--error">{expand.error}</div>
@@ -236,13 +239,17 @@ const RecordingRow = memo(function RecordingRow({
         .join(' ')}
     >
       <div className="recording-card-line">
-        <span className="recording-title" dir="auto" title={item.title}>
-          {item.title}
-        </span>
-        {unknown && (
-          <span className="chip chip--neutral" title={t`File type`}>
-            {resolved ? t(RESOLVED_LABEL[resolved]) : '?'}
+        <Tooltip content={item.title}>
+          <span className="recording-title" dir="auto">
+            {item.title}
           </span>
+        </Tooltip>
+        {unknown && (
+          <Tooltip content={t`File type`}>
+            <span className="chip chip--neutral">
+              {resolved ? t(RESOLVED_LABEL[resolved]) : '?'}
+            </span>
+          </Tooltip>
         )}
       </div>
 
@@ -314,15 +321,16 @@ const RecordingRow = memo(function RecordingRow({
               <Icon icon="check" />
               <Trans>In course</Trans>
             </span>
-            <button
-              className="pipeline-icon-btn"
-              onClick={onDownloadClick}
-              disabled={pending || inPipeline || locked}
-              aria-label={t`Download again`}
-              title={inPipeline ? busyTitle : (lockedTitle ?? t`Download again`)}
-            >
-              <Icon icon="rotate" />
-            </button>
+            <Tooltip content={inPipeline ? busyTitle : (lockedTitle ?? t`Download again`)}>
+              <button
+                className="pipeline-icon-btn"
+                onClick={onDownloadClick}
+                disabled={pending || inPipeline || locked}
+                aria-label={t`Download again`}
+              >
+                <Icon icon="rotate" />
+              </button>
+            </Tooltip>
           </span>
         ) : (
           <>
@@ -332,11 +340,8 @@ const RecordingRow = memo(function RecordingRow({
                 <Trans>Cancelled</Trans>
               </span>
             )}
-            <button
-              className="btn btn--ghost recording-download-btn"
-              onClick={onDownloadClick}
-              disabled={pending || unsupported || inPipeline || locked}
-              title={
+            <Tooltip
+              content={
                 unsupported
                   ? t`The downloader can't fetch this file`
                   : inPipeline
@@ -344,16 +349,22 @@ const RecordingRow = memo(function RecordingRow({
                     : lockedTitle
               }
             >
-              {action === 'pending' ? (
-                <span className="recording-spinner" />
-              ) : action === 'retry' ? (
-                t`Retry ✗`
-              ) : action === 'done' ? (
-                t`Downloaded ✓`
-              ) : (
-                t`Download`
-              )}
-            </button>
+              <button
+                className="btn btn--ghost recording-download-btn"
+                onClick={onDownloadClick}
+                disabled={pending || unsupported || inPipeline || locked}
+              >
+                {action === 'pending' ? (
+                  <span className="recording-spinner" />
+                ) : action === 'retry' ? (
+                  t`Retry ✗`
+                ) : action === 'done' ? (
+                  t`Downloaded ✓`
+                ) : (
+                  t`Download`
+                )}
+              </button>
+            </Tooltip>
           </>
         )}
       </div>

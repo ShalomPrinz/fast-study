@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
@@ -38,16 +39,18 @@ export default function LectureActionsMenu({ actions }: { actions: LectureAction
 
   return (
     <div className="actions-menu" ref={ref}>
-      <button
-        className="btn btn--ghost actions-menu-btn"
-        data-testid="lecture-actions-menu"
-        onClick={() => setOpen((v) => !v)}
-        title={t`More actions`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <Icon icon="overflow" />
-      </button>
+      <Tooltip content={t`More actions`} placement="bottom">
+        <button
+          className="btn btn--ghost actions-menu-btn"
+          data-testid="lecture-actions-menu"
+          onClick={() => setOpen((v) => !v)}
+          aria-label={t`More actions`}
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          <Icon icon="overflow" />
+        </button>
+      </Tooltip>
       {open && (
         <div className="actions-menu-list" role="menu">
           {actions.map(({ label, onClick, testId }) => (

@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useId, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -168,14 +169,11 @@ function ManualForm() {
           dir="auto"
         />
       </div>
-      <button
-        className="btn btn--primary"
-        onClick={onDownload}
-        disabled={!ready}
-        title={locked ? moodleBusyMessage() : undefined}
-      >
-        {pending ? <span className="recording-spinner" /> : t`Download`}
-      </button>
+      <Tooltip content={locked ? moodleBusyMessage() : undefined}>
+        <button className="btn btn--primary" onClick={onDownload} disabled={!ready}>
+          {pending ? <span className="recording-spinner" /> : t`Download`}
+        </button>
+      </Tooltip>
 
       {confirm && (
         <ConfirmModal
@@ -243,9 +241,11 @@ function ManualJobRow({ entry }: { entry: ManualEntry }) {
         .join(' ')}
     >
       <div className="recording-card-line">
-        <span className="recording-title" dir="auto" title={lecture}>
-          {lecture}
-        </span>
+        <Tooltip content={lecture}>
+          <span className="recording-title" dir="auto">
+            {lecture}
+          </span>
+        </Tooltip>
         <span className="manual-download-meta" dir="auto">
           {course}
         </span>
@@ -270,19 +270,22 @@ function ManualJobRow({ entry }: { entry: ManualEntry }) {
           </span>
         )}
         {status === 'error' && (
-          <button
-            className="btn btn--ghost recording-download-btn"
-            onClick={() => void retry()}
-            disabled={retrying || locked}
-            title={locked ? moodleBusyMessage() : undefined}
-          >
-            {retrying ? <span className="recording-spinner" /> : t`Retry ✗`}
-          </button>
+          <Tooltip content={locked ? moodleBusyMessage() : undefined}>
+            <button
+              className="btn btn--ghost recording-download-btn"
+              onClick={() => void retry()}
+              disabled={retrying || locked}
+            >
+              {retrying ? <span className="recording-spinner" /> : t`Retry ✗`}
+            </button>
+          </Tooltip>
         )}
       </div>
-      <div className="manual-download-url-line" dir="ltr" title={entry.request.url}>
-        {entry.request.url}
-      </div>
+      <Tooltip content={entry.request.url}>
+        <div className="manual-download-url-line" dir="ltr">
+          {entry.request.url}
+        </div>
+      </Tooltip>
 
       {status === 'running' && job && (
         <div className="recording-progress-list">

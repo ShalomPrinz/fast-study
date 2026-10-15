@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { createCourse } from '@/services/database'
@@ -106,23 +107,24 @@ export default function AddCourseRow() {
           dir="auto"
           autoFocus
         />
-        <input
-          ref={urlInput}
-          className="source-row-input source-add-url"
-          value={url}
-          readOnly={urlFixed}
-          onChange={(e) => {
-            setUrl(e.target.value)
-            clear()
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') void create(false)
-            if (e.key === 'Escape') reset()
-          }}
-          placeholder={t`Source URL (optional)…`}
-          title={urlFixed ? url : undefined}
-          dir="auto"
-        />
+        <Tooltip content={urlFixed ? url : undefined}>
+          <input
+            ref={urlInput}
+            className="source-row-input source-add-url"
+            value={url}
+            readOnly={urlFixed}
+            onChange={(e) => {
+              setUrl(e.target.value)
+              clear()
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void create(false)
+              if (e.key === 'Escape') reset()
+            }}
+            placeholder={t`Source URL (optional)…`}
+            dir="auto"
+          />
+        </Tooltip>
         <button
           className="btn btn--primary"
           onClick={() => void create(false)}

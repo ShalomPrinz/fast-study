@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { Lecture } from '@/types'
@@ -112,33 +113,37 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
 
   return (
     <li>
-      <button
-        className={`lecture-btn${isSelected ? ' selected' : ''}${dragOver ? ' drag-over' : ''}`}
-        data-testid="lecture"
-        data-course={course.name}
-        data-lecture={lecture.name}
-        data-kind={kind}
-        title={
+      <Tooltip
+        content={
           renameLocked ? t`Can't rename while it's being processed or waiting in line` : undefined
         }
-        onClick={(e) => {
-          if (e.shiftKey) {
-            if (!renameLocked) startRenaming(e)
-            else e.preventDefault()
-          } else onSelect(course.name, lecture.name, kind)
-        }}
-        onDragOver={(e) => {
-          e.preventDefault()
-          setDragOver(true)
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
+        placement="inline-end"
       >
-        <span className={`lecture-dot${dotState ? ` lecture-dot--${dotState}` : ''}`} />
-        <span className="lecture-name" dir="auto">
-          {pendingName ?? lecture.name}
-        </span>
-      </button>
+        <button
+          className={`lecture-btn${isSelected ? ' selected' : ''}${dragOver ? ' drag-over' : ''}`}
+          data-testid="lecture"
+          data-course={course.name}
+          data-lecture={lecture.name}
+          data-kind={kind}
+          onClick={(e) => {
+            if (e.shiftKey) {
+              if (!renameLocked) startRenaming(e)
+              else e.preventDefault()
+            } else onSelect(course.name, lecture.name, kind)
+          }}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragOver(true)
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+        >
+          <span className={`lecture-dot${dotState ? ` lecture-dot--${dotState}` : ''}`} />
+          <span className="lecture-name" dir="auto">
+            {pendingName ?? lecture.name}
+          </span>
+        </button>
+      </Tooltip>
     </li>
   )
 }

@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
 import { openLectureFile } from '@/services/open'
@@ -34,26 +35,28 @@ export default function SearchResult({
 
   return (
     <div className="search-result">
-      <button className="search-result-head" onClick={openPdf} disabled={!hasPdf} title={title}>
-        <span className="search-result-icon">
-          <Icon icon="file" />
-        </span>
-        <span className="search-result-title" dir="auto">
-          {name}
-        </span>
-        <span className="chip chip--neutral">
-          {kind === 'recitation' ? t`recitation` : t`lecture`}
-        </span>
-        <span className="search-result-open">
-          {hasPdf ? (
-            <Icon icon="external-link" />
-          ) : (
-            <span className="search-result-nopdf">
-              <Trans>no PDF</Trans>
-            </span>
-          )}
-        </span>
-      </button>
+      <Tooltip content={title}>
+        <button className="search-result-head" onClick={openPdf} disabled={!hasPdf}>
+          <span className="search-result-icon">
+            <Icon icon="file" />
+          </span>
+          <span className="search-result-title" dir="auto">
+            {name}
+          </span>
+          <span className="chip chip--neutral">
+            {kind === 'recitation' ? t`recitation` : t`lecture`}
+          </span>
+          <span className="search-result-open">
+            {hasPdf ? (
+              <Icon icon="external-link" />
+            ) : (
+              <span className="search-result-nopdf">
+                <Trans>no PDF</Trans>
+              </span>
+            )}
+          </span>
+        </button>
+      </Tooltip>
       <div className="search-result-snippets">
         {hits.map((hit, i) => (
           <SearchSnippet key={i} hit={hit} />

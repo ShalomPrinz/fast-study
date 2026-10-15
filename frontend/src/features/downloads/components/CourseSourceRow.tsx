@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import type { Course } from '@/types'
@@ -59,22 +60,25 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
 
   return (
     <div className={selected ? 'source-row source-row--selected' : 'source-row'}>
-      <span className="source-row-name" title={course.name} dir="auto">
-        {course.name}
-      </span>
+      <Tooltip content={course.name}>
+        <span className="source-row-name" dir="auto">
+          {course.name}
+        </span>
+      </Tooltip>
       {sourceUrl ? (
-        <a
-          className="source-row-url-text"
-          href={sourceUrl}
-          onClick={(e) => {
-            e.preventDefault()
-            void openExternalUrl(sourceUrl)
-          }}
-          title={sourceUrl}
-          dir="auto"
-        >
-          {sourceUrl}
-        </a>
+        <Tooltip content={sourceUrl}>
+          <a
+            className="source-row-url-text"
+            href={sourceUrl}
+            onClick={(e) => {
+              e.preventDefault()
+              void openExternalUrl(sourceUrl)
+            }}
+            dir="auto"
+          >
+            {sourceUrl}
+          </a>
+        </Tooltip>
       ) : (
         <button className="source-row-url" onClick={start} disabled={editing} dir="auto">
           <Trans>+ add source URL</Trans>
@@ -82,9 +86,11 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
       )}
       {!editing && sourceUrl && (
         <div className="source-row-actions">
-          <button className="pipeline-icon-btn" onClick={start} title={t`Edit source URL`}>
-            <Icon icon="edit" />
-          </button>
+          <Tooltip content={t`Edit source URL`}>
+            <button className="pipeline-icon-btn" onClick={start} aria-label={t`Edit source URL`}>
+              <Icon icon="edit" />
+            </button>
+          </Tooltip>
           {/* The loaded course's recordings are already on the page, so it states that instead —
               but not until the discovery that loads them has actually landed. */}
           {selected && !discovering ? (
@@ -93,11 +99,8 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
             </span>
           ) : (
             onDiscover && (
-              <button
-                className="btn btn--ghost"
-                onClick={onDiscover}
-                disabled={discovering || disconnected || locked}
-                title={
+              <Tooltip
+                content={
                   status?.unconfigured
                     ? t`Choose your university in Settings first`
                     : disconnected
@@ -107,8 +110,14 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
                         : undefined
                 }
               >
-                {discovering ? t`Loading…` : t`Load recordings`}
-              </button>
+                <button
+                  className="btn btn--ghost"
+                  onClick={onDiscover}
+                  disabled={discovering || disconnected || locked}
+                >
+                  {discovering ? t`Loading…` : t`Load recordings`}
+                </button>
+              </Tooltip>
             )
           )}
         </div>

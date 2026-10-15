@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { pickFolder } from '@/services/runtime'
@@ -74,15 +75,16 @@ export default function DataRootField({ value, onChange, onUnusableChange }: Pro
           onChange={(e) => !openPicker && onChange(e.target.value)}
         />
         {openPicker && (
-          <button
-            type="button"
-            className="btn btn--ghost data-root-browse"
-            aria-label={t`Choose folder`}
-            title={t`Choose folder`}
-            onClick={browse}
-          >
-            <Icon icon="folder" />
-          </button>
+          <Tooltip content={t`Choose folder`}>
+            <button
+              type="button"
+              className="btn btn--ghost data-root-browse"
+              aria-label={t`Choose folder`}
+              onClick={browse}
+            >
+              <Icon icon="folder" />
+            </button>
+          </Tooltip>
         )}
       </div>
       {probe.kind === 'unusable' && (

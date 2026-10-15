@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { Trans, useLingui } from '@lingui/react/macro'
 import type { TimingStats } from '@/types'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
@@ -28,9 +29,11 @@ export function JobProgressBar({
   const sized = job.expectedBytes != null
   const stats = useTimingStats(sized ? job.operation : null, job.expectedBytes ?? 0)
   const title = showTitle && (
-    <span className="recording-progress-title" dir="auto" title={job.title}>
-      {job.title}
-    </span>
+    <Tooltip content={job.title}>
+      <span className="recording-progress-title" dir="auto">
+        {job.title}
+      </span>
+    </Tooltip>
   )
   // Terminal: offer a per-clip retry when the row wants one (a multi-clip recording); a lone job's
   // retry lives on the main row button instead, so it renders nothing here. A cancelled clip is
@@ -45,22 +48,23 @@ export function JobProgressBar({
             <Trans>Cancelled</Trans>
           </span>
         )}
-        <button
-          className="btn btn--ghost recording-job-btn"
-          onClick={retry.onRetry}
-          disabled={retry.busy || retry.locked !== undefined}
-          title={retry.locked}
-        >
-          {retry.busy ? (
-            <span className="recording-spinner" />
-          ) : job.status === 'error' ? (
-            t`Retry ✗`
-          ) : job.status === 'cancelled' ? (
-            t`Download`
-          ) : (
-            t`Re-download ↻`
-          )}
-        </button>
+        <Tooltip content={retry.locked}>
+          <button
+            className="btn btn--ghost recording-job-btn"
+            onClick={retry.onRetry}
+            disabled={retry.busy || retry.locked !== undefined}
+          >
+            {retry.busy ? (
+              <span className="recording-spinner" />
+            ) : job.status === 'error' ? (
+              t`Retry ✗`
+            ) : job.status === 'cancelled' ? (
+              t`Download`
+            ) : (
+              t`Re-download ↻`
+            )}
+          </button>
+        </Tooltip>
       </div>
     )
   }

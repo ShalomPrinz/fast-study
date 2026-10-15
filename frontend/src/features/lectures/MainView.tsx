@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { Fragment, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
@@ -308,7 +309,7 @@ export default function MainView() {
                 >
                   <StatusNode
                     state={state}
-                    title={
+                    hint={
                       (state === 'failed' || state === 'quota') && lectureError
                         ? serviceErrorText(lectureError)
                         : undefined
@@ -344,14 +345,16 @@ export default function MainView() {
                     )}
                   </div>
                   {exists && step && hasAnyStepFile && (
-                    <button
-                      className="pipeline-icon-btn"
-                      title={t`Rotate ${file}`}
-                      onClick={() => openRotateModal(file, step)}
-                      disabled={inflight}
-                    >
-                      <Icon icon="rotate" />
-                    </button>
+                    <Tooltip content={t`Rotate ${file}`}>
+                      <button
+                        className="pipeline-icon-btn"
+                        aria-label={t`Rotate ${file}`}
+                        onClick={() => openRotateModal(file, step)}
+                        disabled={inflight}
+                      >
+                        <Icon icon="rotate" />
+                      </button>
+                    </Tooltip>
                   )}
                   {!exists && !isRunning && step && (
                     <button
@@ -383,22 +386,25 @@ export default function MainView() {
                 {materials.map((m) => (
                   <span key={m.name} className="chip material-chip">
                     <Icon icon="file" />
-                    <button
-                      className="material-chip-name"
-                      title={t`Open material`}
-                      onClick={() => openLectureFile(course, lecture, m.name, kind)}
-                      dir="auto"
-                    >
-                      {m.name}
-                    </button>
-                    <button
-                      className="material-chip-delete"
-                      title={t`Delete ${m.name}`}
-                      onClick={() => setMaterialToDelete(m.name)}
-                      disabled={inflight}
-                    >
-                      <Icon icon="trash" />
-                    </button>
+                    <Tooltip content={t`Open material`}>
+                      <button
+                        className="material-chip-name"
+                        onClick={() => openLectureFile(course, lecture, m.name, kind)}
+                        dir="auto"
+                      >
+                        {m.name}
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={t`Delete ${m.name}`}>
+                      <button
+                        className="material-chip-delete"
+                        aria-label={t`Delete ${m.name}`}
+                        onClick={() => setMaterialToDelete(m.name)}
+                        disabled={inflight}
+                      >
+                        <Icon icon="trash" />
+                      </button>
+                    </Tooltip>
                   </span>
                 ))}
               </div>

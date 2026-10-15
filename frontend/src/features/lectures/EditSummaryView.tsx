@@ -251,12 +251,14 @@ export default function EditSummaryView() {
           {lecture}
         </h2>
         {badge && (
-          <span className="chip chip--warn edit-pdf-chip" title={badge.title} role="status">
-            <Icon icon="warning" />
-            {badge.kind === 'stale'
-              ? t`PDF is older than this summary`
-              : t`PDF rendered with warnings`}
-          </span>
+          <Tooltip content={badge.title} placement="bottom">
+            <span className="chip chip--warn edit-pdf-chip" role="status">
+              <Icon icon="warning" />
+              {badge.kind === 'stale'
+                ? t`PDF is older than this summary`
+                : t`PDF rendered with warnings`}
+            </span>
+          </Tooltip>
         )}
         <div className="edit-toolbar-actions">
           <Tooltip content={hasOriginal ? t`Discard all edits` : t`No original saved`}>
@@ -268,11 +270,9 @@ export default function EditSummaryView() {
               <Trans>Restore original</Trans>
             </button>
           </Tooltip>
-          <button
-            className="btn btn--primary"
-            onClick={handleSaveAndUpdatePdf}
-            disabled={updatePdfDisabled({ canUpdate, generating, inflight, loading, diskConflict })}
-            title={
+          <Tooltip
+            placement="bottom"
+            content={
               inflight
                 ? t`Step already running`
                 : blank
@@ -282,8 +282,20 @@ export default function EditSummaryView() {
                     : t`Already up to date`
             }
           >
-            {generating ? t`Updating PDF…` : t`Save & update PDF`}
-          </button>
+            <button
+              className="btn btn--primary"
+              onClick={handleSaveAndUpdatePdf}
+              disabled={updatePdfDisabled({
+                canUpdate,
+                generating,
+                inflight,
+                loading,
+                diskConflict,
+              })}
+            >
+              {generating ? t`Updating PDF…` : t`Save & update PDF`}
+            </button>
+          </Tooltip>
         </div>
       </div>
 

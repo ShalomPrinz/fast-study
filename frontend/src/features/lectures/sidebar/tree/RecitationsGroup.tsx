@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { Trans, useLingui } from '@lingui/react/macro'
 import type { ExpandHandle } from '@/types'
 import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
@@ -33,9 +34,11 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
           </span>
         </button>
         {!shiftHeld && (
-          <button className="course-add-btn" onClick={startAdding} title={t`Add recitation`}>
-            +
-          </button>
+          <Tooltip content={t`Add recitation`} placement="inline-end">
+            <button className="course-add-btn" onClick={startAdding} aria-label={t`Add recitation`}>
+              +
+            </button>
+          </Tooltip>
         )}
       </div>
       {expand.isOpen && (

@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useState, useRef, useMemo } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Document, Page, pdfjs } from 'react-pdf'
@@ -78,29 +79,35 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
         </span>
         {show && !generating && (
           <div className="pdf-tools">
-            <button
-              className="pdf-zoom-btn"
-              title={t`Zoom out`}
-              onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}
-            >
-              −
-            </button>
+            <Tooltip content={t`Zoom out`} placement="bottom">
+              <button
+                className="pdf-zoom-btn"
+                aria-label={t`Zoom out`}
+                onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}
+              >
+                −
+              </button>
+            </Tooltip>
             <span className="pdf-zoom-label">{Math.round(scale * 100)}%</span>
-            <button
-              className="pdf-zoom-btn"
-              title={t`Zoom in`}
-              onClick={() => setScale((s) => Math.min(s + 0.2, 4))}
-            >
-              +
-            </button>
+            <Tooltip content={t`Zoom in`} placement="bottom">
+              <button
+                className="pdf-zoom-btn"
+                aria-label={t`Zoom in`}
+                onClick={() => setScale((s) => Math.min(s + 0.2, 4))}
+              >
+                +
+              </button>
+            </Tooltip>
             {numPages > 0 && (
               <span className="pdf-page-indicator">
                 {page} / {numPages}
               </span>
             )}
-            <button className="pdf-zoom-btn" title={t`Open PDF`} onClick={onPopOut}>
-              <Icon icon="external-link" />
-            </button>
+            <Tooltip content={t`Open PDF`} placement="bottom">
+              <button className="pdf-zoom-btn" aria-label={t`Open PDF`} onClick={onPopOut}>
+                <Icon icon="external-link" />
+              </button>
+            </Tooltip>
           </div>
         )}
       </div>

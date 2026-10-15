@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { Fragment, type ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { Link } from 'react-router-dom'
@@ -41,15 +42,15 @@ interface RowProps {
   kind: Kind
   state: StatusNodeState
   // The status node's hover text, e.g. a not-queued row's last error.
-  title?: string
+  hint?: string
   chip?: ReactNode
 }
 
 // The status node, title, course and chip every row here shows, whatever acts on it.
-function RowContent({ course, lecture, kind, state, title, chip }: RowProps) {
+function RowContent({ course, lecture, kind, state, hint, chip }: RowProps) {
   return (
     <>
-      <StatusNode state={state} title={title} />
+      <StatusNode state={state} hint={hint} />
       <div className="pipeline-row-body">
         <div className="row-title" dir="auto">
           {lecture}
@@ -97,14 +98,15 @@ function ActionRow({ onActivate, ...props }: RowProps & { onActivate?: () => voi
         </div>
       )}
       <span className="runner-row-sep" aria-hidden="true" />
-      <Link
-        className="pipeline-icon-btn"
-        to={lectureRoute(props.course, props.lecture, props.kind)}
-        title={t`Open lecture`}
-        aria-label={t`Open lecture`}
-      >
-        <Icon icon="external-link" />
-      </Link>
+      <Tooltip content={t`Open lecture`}>
+        <Link
+          className="pipeline-icon-btn"
+          to={lectureRoute(props.course, props.lecture, props.kind)}
+          aria-label={t`Open lecture`}
+        >
+          <Icon icon="external-link" />
+        </Link>
+      </Tooltip>
     </div>
   )
 }
@@ -392,7 +394,7 @@ export default function RunnerView() {
                             lecture={item.lecture}
                             kind={item.kind}
                             state={notQueuedState(status?.errors ?? {}, item)}
-                            title={notQueuedTitle(status?.errors ?? {}, item)}
+                            hint={notQueuedTitle(status?.errors ?? {}, item)}
                             onActivate={() => void runNow(item.course, item.lecture, item.kind)}
                           />
                         ))}
