@@ -24,6 +24,7 @@ import { lectureRoute } from '@/shared/utils/url'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
+import Tooltip from '@/shared/components/Tooltip'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import MarkdownEditor from '@/features/lectures/components/MarkdownEditor'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
@@ -250,27 +251,28 @@ export default function EditSummaryView() {
           {lecture}
         </h2>
         {badge && (
-          <span className="chip chip--warn edit-pdf-chip" title={badge.title} role="status">
-            <Icon icon="warning" />
-            {badge.kind === 'stale'
-              ? t`PDF is older than this summary`
-              : t`PDF rendered with warnings`}
-          </span>
+          <Tooltip content={badge.title} placement="bottom">
+            <span className="chip chip--warn edit-pdf-chip" role="status">
+              <Icon icon="warning" />
+              {badge.kind === 'stale'
+                ? t`PDF is older than this summary`
+                : t`PDF rendered with warnings`}
+            </span>
+          </Tooltip>
         )}
         <div className="edit-toolbar-actions">
-          <button
-            className="btn btn--ghost edit-restore"
-            onClick={() => setConfirmRestore(true)}
-            disabled={!hasOriginal || generating || loading}
-            title={hasOriginal ? t`Discard all edits` : t`No original saved`}
-          >
-            <Trans>Restore original</Trans>
-          </button>
-          <button
-            className="btn btn--primary"
-            onClick={handleSaveAndUpdatePdf}
-            disabled={updatePdfDisabled({ canUpdate, generating, inflight, loading, diskConflict })}
-            title={
+          <Tooltip content={hasOriginal ? t`Discard all edits` : t`No original saved`}>
+            <button
+              className="btn btn--ghost edit-restore"
+              onClick={() => setConfirmRestore(true)}
+              disabled={!hasOriginal || generating || loading}
+            >
+              <Trans>Restore original</Trans>
+            </button>
+          </Tooltip>
+          <Tooltip
+            placement="bottom"
+            content={
               inflight
                 ? t`Step already running`
                 : blank
@@ -280,8 +282,20 @@ export default function EditSummaryView() {
                     : t`Already up to date`
             }
           >
-            {generating ? t`Updating PDF…` : t`Save & update PDF`}
-          </button>
+            <button
+              className="btn btn--primary"
+              onClick={handleSaveAndUpdatePdf}
+              disabled={updatePdfDisabled({
+                canUpdate,
+                generating,
+                inflight,
+                loading,
+                diskConflict,
+              })}
+            >
+              {generating ? t`Updating PDF…` : t`Save & update PDF`}
+            </button>
+          </Tooltip>
         </div>
       </div>
 

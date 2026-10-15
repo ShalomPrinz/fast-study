@@ -67,6 +67,7 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
   off-scale padding. The one exception mirrors another service's constant and names its source in a
   comment (`MarkdownEditor.css`'s callout tints). Buttons are `.btn` + a variant, state labels `.chip` + a
   variant, run state `StatusNode` ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §Styling).
+- A hover hint is `<Tooltip>`, never a DOM `title` ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §Styling).
 - Hooks and components keep a narrow surface: more than ~5 returned fields or ~5 props is a design smell —
   split it or reconsider the boundary.
 - When a change makes these docs stale, update them in the same pass.

@@ -1,0 +1,45 @@
+/* Above modal.css's 1000, so a hint inside a modal still shows. */
+.tooltip {
+  z-index: 1100;
+  max-inline-size: var(--tooltip-max-width);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-ui);
+  font-size: var(--fs-meta);
+  font-weight: 400;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  animation: tooltip-in 0.12s ease-out;
+}
+
+/* FloatingArrow writes fill and stroke as presentation attributes, which take no var(); CSS outranks them.
+   The first path draws the border, the second the fill that covers the tooltip's own edge. */
+.tooltip-arrow {
+  fill: var(--surface);
+}
+
+.tooltip-arrow path:first-of-type {
+  stroke: var(--control-line);
+}
+
+.tooltip-arrow path:last-of-type {
+  stroke: var(--surface);
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    animation: none;
+  }
+}

@@ -19,6 +19,7 @@
     "@codemirror/state": "^6.7.4",
     "@codemirror/view": "^6.43.11",
     "@faststudy/sentry": "file:../lib/sentry/js",
+    "@floating-ui/react": "^0.27.20",
     "@fontsource/heebo": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@lezer/highlight": "^1.2.3",

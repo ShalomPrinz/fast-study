@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useState } from 'react'
 import { Plural, Trans } from '@lingui/react/macro'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
@@ -30,19 +31,20 @@ export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }
 
   const item = (c: EnrolledCourse) => (
     <li key={c.id}>
-      <button
-        className={
-          c.url === currentUrl
-            ? 'course-picker-item course-picker-item--current'
-            : 'course-picker-item'
-        }
-        aria-current={c.url === currentUrl || undefined}
-        onClick={() => onChoose(c)}
-        title={c.url}
-      >
-        {/* Isolated inline, so a Hebrew name keeps the page's start edge rather than its own. */}
-        <bdi>{c.name}</bdi>
-      </button>
+      <Tooltip content={c.url}>
+        <button
+          className={
+            c.url === currentUrl
+              ? 'course-picker-item course-picker-item--current'
+              : 'course-picker-item'
+          }
+          aria-current={c.url === currentUrl || undefined}
+          onClick={() => onChoose(c)}
+        >
+          {/* Isolated inline, so a Hebrew name keeps the page's start edge rather than its own. */}
+          <bdi>{c.name}</bdi>
+        </button>
+      </Tooltip>
     </li>
   )
 

@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
@@ -169,14 +170,15 @@ export default function AccountStatus() {
           <Trans>waiting for you to solve the captcha</Trans>
         </span>
         {view.panel !== 'solved' && (
-          <button
-            className="btn btn--ghost"
-            onClick={handleVerify}
-            disabled={phase === 'verifying' || locked}
-            title={lockedTitle}
-          >
-            {verifyLabel(view.panel)}
-          </button>
+          <Tooltip content={lockedTitle}>
+            <button
+              className="btn btn--ghost"
+              onClick={handleVerify}
+              disabled={phase === 'verifying' || locked}
+            >
+              {verifyLabel(view.panel)}
+            </button>
+          </Tooltip>
         )}
         <button className="btn btn--ghost" onClick={() => setConfirmDisconnect(true)}>
           <Trans>Disconnect</Trans>
@@ -212,14 +214,15 @@ export default function AccountStatus() {
       <span className={expired ? 'chip chip--warn' : 'chip chip--danger'}>
         {expired ? t`session expired` : t`not connected`}
       </span>
-      <button
-        className="btn btn--ghost"
-        onClick={() => (foreignName ? setConfirmConnect(true) : void handleConnect())}
-        disabled={locked}
-        title={lockedTitle}
-      >
-        {expired ? t`Reconnect` : t`Connect`}
-      </button>
+      <Tooltip content={lockedTitle}>
+        <button
+          className="btn btn--ghost"
+          onClick={() => (foreignName ? setConfirmConnect(true) : void handleConnect())}
+          disabled={locked}
+        >
+          {expired ? t`Reconnect` : t`Connect`}
+        </button>
+      </Tooltip>
       {confirmNow && foreignName && (
         <ConfirmModal
           message={t`You're logged in to ${foreignName}. Connecting here logs you out of it.`}

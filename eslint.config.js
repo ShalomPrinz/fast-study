@@ -133,8 +133,8 @@ export default [
     rules: baseline,
   },
 
-  // Frontend: tsc owns undefined names and types, so eslint only carries the
-  // unused-symbol and obvious-mistake rules.
+  // Frontend: tsc owns undefined names and types, so eslint carries the
+  // unused-symbol and obvious-mistake rules, plus the DOM `title` ban.
   ...tseslint.configs.recommended.map((c) => ({
     ...c,
     files: ['frontend/**/*.ts', 'frontend/**/*.tsx'],
@@ -149,6 +149,14 @@ export default [
       '@typescript-eslint/no-unused-vars': ['error', unusedVars],
       'no-unused-private-class-members': 'error',
       'no-useless-assignment': 'error',
+      // A DOM `title` bypasses the styled hover hint every other control uses.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXOpeningElement[name.name=/^[a-z]/] > JSXAttribute[name.name='title']",
+          message: 'Use <Tooltip>, not a DOM title',
+        },
+      ],
     },
   },
 ];

@@ -10,6 +10,7 @@ import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import Icon from '@/shared/components/Icon'
+import Tooltip from '@/shared/components/Tooltip'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { courseProgress } from '@/features/lectures/utils/lectureProgress'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
@@ -111,46 +112,62 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           }}
         />
       ) : (
-        <button
-          className="course-toggle"
-          title={
+        <Tooltip
+          placement="inline-end"
+          content={
             renameLocked
               ? t`Can't rename while something in this course is being processed, downloaded or generated`
               : undefined
           }
-          onClick={(e) => {
-            if (e.shiftKey) {
-              if (!renameLocked) startRenaming(e)
-              else e.preventDefault()
-            } else expand.toggle()
-          }}
         >
-          <span className="chevron">
-            <Chevron open={expand.isOpen} />
-          </span>
-          <span className="course-name" dir="auto">
-            {pendingName ?? course.name}
-          </span>
-          {progress.total > 0 && (
-            <span className="course-count" title={t`Fully processed lectures`}>
-              {progress.complete}/{progress.total}
+          <button
+            className="course-toggle"
+            onClick={(e) => {
+              if (e.shiftKey) {
+                if (!renameLocked) startRenaming(e)
+                else e.preventDefault()
+              } else expand.toggle()
+            }}
+          >
+            <span className="chevron">
+              <Chevron open={expand.isOpen} />
             </span>
-          )}
-        </button>
+            <span className="course-name" dir="auto">
+              {pendingName ?? course.name}
+            </span>
+            {progress.total > 0 && (
+              <Tooltip
+                content={renameLocked ? undefined : t`Fully processed lectures`}
+                placement="inline-end"
+              >
+                <span className="course-count">
+                  {progress.complete}/{progress.total}
+                </span>
+              </Tooltip>
+            )}
+          </button>
+        </Tooltip>
       )}
       {!renaming &&
         (shiftHeld ? (
-          <button
-            className="course-add-btn course-archive-btn"
-            onClick={toggleArchived}
-            title={course.archived ? t`Unarchive course` : t`Archive course`}
+          <Tooltip
+            content={course.archived ? t`Unarchive course` : t`Archive course`}
+            placement="inline-end"
           >
-            <Icon icon={course.archived ? 'unarchive' : 'archive'} />
-          </button>
+            <button
+              className="course-add-btn course-archive-btn"
+              onClick={toggleArchived}
+              aria-label={course.archived ? t`Unarchive course` : t`Archive course`}
+            >
+              <Icon icon={course.archived ? 'unarchive' : 'archive'} />
+            </button>
+          </Tooltip>
         ) : (
-          <button className="course-add-btn" onClick={startAdding} title={t`Add lecture`}>
-            +
-          </button>
+          <Tooltip content={t`Add lecture`} placement="inline-end">
+            <button className="course-add-btn" onClick={startAdding} aria-label={t`Add lecture`}>
+              +
+            </button>
+          </Tooltip>
         ))}
     </div>
   )

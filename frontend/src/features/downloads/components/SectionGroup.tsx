@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
@@ -308,11 +309,8 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
           </span>
         )}
         {id !== null && (
-          <button
-            className="btn btn--ghost recordings-section-run"
-            onClick={() => void startAll()}
-            disabled={busy || !allExpanded || locked}
-            title={
+          <Tooltip
+            content={
               !allExpanded
                 ? t`Expand every playlist in this section first`
                 : locked && !busy
@@ -320,8 +318,14 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
                   : undefined
             }
           >
-            {busy ? t`Downloading…` : t`Download all ${leaves}`}
-          </button>
+            <button
+              className="btn btn--ghost recordings-section-run"
+              onClick={() => void startAll()}
+              disabled={busy || !allExpanded || locked}
+            >
+              {busy ? t`Downloading…` : t`Download all ${leaves}`}
+            </button>
+          </Tooltip>
         )}
       </div>
 

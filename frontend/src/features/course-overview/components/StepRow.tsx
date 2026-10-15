@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { OverviewStep } from '@/features/course-overview/constants/overview'
@@ -46,27 +47,28 @@ export default function StepRow({ step }: { step: OverviewStep }) {
 
   return (
     <>
-      <button
-        className={`overview-phase${modifier}`}
-        title={exists ? t`Re-generate from ${stepLabel}` : undefined}
-        onClick={() => setRegenerateOpen(true)}
-        disabled={!exists || bs.running}
-      >
-        <span className={`overview-phase-node${exists ? ' overview-phase-node--done' : ''}`}>
-          {exists && (
-            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path
-                d="M2.5 6.2l2.4 2.4L9.5 4"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
-        </span>
-        {stepLabel}
-      </button>
+      <Tooltip content={exists ? t`Re-generate from ${stepLabel}` : undefined}>
+        <button
+          className={`overview-phase${modifier}`}
+          onClick={() => setRegenerateOpen(true)}
+          disabled={!exists || bs.running}
+        >
+          <span className={`overview-phase-node${exists ? ' overview-phase-node--done' : ''}`}>
+            {exists && (
+              <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <path
+                  d="M2.5 6.2l2.4 2.4L9.5 4"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
+          {stepLabel}
+        </button>
+      </Tooltip>
 
       {regenerateOpen && (
         <ConfirmModal

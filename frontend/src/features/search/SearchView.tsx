@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useEffect, useMemo, useState } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -212,15 +213,16 @@ export default function SearchView() {
             >
               <Trans>Recitations</Trans>
             </button>
-            <button
-              className="search-pill"
-              role="switch"
-              aria-checked={wholeWord}
-              onClick={() => setWholeWord((w) => !w)}
-              title={t`Match whole word`}
-            >
-              <Trans>Whole word only</Trans>
-            </button>
+            <Tooltip content={t`Match whole word`}>
+              <button
+                className="search-pill"
+                role="switch"
+                aria-checked={wholeWord}
+                onClick={() => setWholeWord((w) => !w)}
+              >
+                <Trans>Whole word only</Trans>
+              </button>
+            </Tooltip>
           </div>
 
           {notice === 'no-courses' && (

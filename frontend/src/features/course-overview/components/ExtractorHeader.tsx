@@ -1,3 +1,4 @@
+import Tooltip from '@/shared/components/Tooltip'
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { openOverviewFile } from '@/services/open'
@@ -79,7 +80,7 @@ export default function ExtractorHeader() {
 
   return (
     <div className="pipeline-row">
-      <StatusNode state={state} title={bs.error ?? undefined} />
+      <StatusNode state={state} hint={bs.error ?? undefined} />
       <button className="overview-branch-toggle" onClick={toggleExpanded} aria-expanded={expanded}>
         <span className="overview-branch-caret">
           <Chevron open={expanded} />
@@ -89,9 +90,9 @@ export default function ExtractorHeader() {
           {entry && (
             <span className="overview-branch-subtitle">
               {formatRange(entry)} ·{' '}
-              <span title={formatFullTimestamp(entry.generatedAt)}>
-                {formatMonthDate(entry.generatedAt)}
-              </span>
+              <Tooltip content={formatFullTimestamp(entry.generatedAt)}>
+                <span>{formatMonthDate(entry.generatedAt)}</span>
+              </Tooltip>
             </span>
           )}
         </span>
@@ -105,22 +106,26 @@ export default function ExtractorHeader() {
         <span className="overview-branch-actions">
           <PdfWarningBadge badge={branchBadge(bs, files, slug, phases)} />
           {bs.done && (
-            <button
-              className="pipeline-icon-btn"
-              title={t`Open PDF`}
-              onClick={() => openOverviewFile(course, lastGeneratedFile(slug, phases))}
-            >
-              <Icon icon="external-link" />
-            </button>
+            <Tooltip content={t`Open PDF`}>
+              <button
+                className="pipeline-icon-btn"
+                aria-label={t`Open PDF`}
+                onClick={() => openOverviewFile(course, lastGeneratedFile(slug, phases))}
+              >
+                <Icon icon="external-link" />
+              </button>
+            </Tooltip>
           )}
           {bs.done ? (
-            <button
-              className="pipeline-icon-btn"
-              title={t`Re-generate ${title}`}
-              onClick={confirmRegenerate}
-            >
-              <Icon icon="rotate" />
-            </button>
+            <Tooltip content={t`Re-generate ${title}`}>
+              <button
+                className="pipeline-icon-btn"
+                aria-label={t`Re-generate ${title}`}
+                onClick={confirmRegenerate}
+              >
+                <Icon icon="rotate" />
+              </button>
+            </Tooltip>
           ) : (
             <button className="btn btn--ghost" onClick={handleGenerate}>
               <Trans>Generate</Trans>
