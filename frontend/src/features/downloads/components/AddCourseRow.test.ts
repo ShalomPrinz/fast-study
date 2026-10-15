@@ -1,19 +1,28 @@
 // @vitest-environment jsdom
 import { createElement } from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, fireEvent, act } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, fireEvent, act, cleanup, screen, waitFor } from '@testing-library/react'
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { MoodleLockProvider } from '@/features/downloads/contexts/MoodleLockContext'
+import LanguageSwitcher from '@/shared/sidebar/LanguageSwitcher'
 import AddCourseRow from './AddCourseRow'
 
-const { checkCourseUrl, createCourse } = vi.hoisted(() => ({
+const { checkCourseUrl, createCourse, fetchEnrolledCourses } = vi.hoisted(() => ({
   checkCourseUrl: vi.fn(),
   createCourse: vi.fn(),
+  fetchEnrolledCourses: vi.fn(),
 }))
 vi.mock('@/features/downloads/services/autoDownloader', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   checkCourseUrl,
+  fetchEnrolledCourses,
+}))
+vi.mock('@/features/downloads/contexts/AuthStatusContext', () => ({
+  useAuthStatus: () => ({ status: { connected: true, expired: false } }),
+}))
+vi.mock('@/features/downloads/contexts/DownloadsSessionContext', () => ({
+  useDownloadsActions: () => ({ reconnectHint: vi.fn() }),
 }))
 vi.mock('@/services/database', () => ({ createCourse }))
 vi.mock('@/shared/contexts/CourseTreeContext', () => ({
@@ -23,16 +32,24 @@ vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError: vi.
 
 const PASTED = 'https://m/mod/resource/view.php?id=5'
 
-function openForm() {
-  const view = render(
+function mount() {
+  return render(
     createElement(I18nProvider, {
       i18n,
-      children: createElement(MoodleLockProvider, {
-        frame: { moodleBusy: false },
-        children: createElement(AddCourseRow),
-      }),
+      children: [
+        createElement(LanguageSwitcher, { key: 'lang' }),
+        createElement(MoodleLockProvider, {
+          key: 'row',
+          frame: { moodleBusy: false },
+          children: createElement(AddCourseRow),
+        }),
+      ],
     }),
   )
+}
+
+function openForm() {
+  const view = mount()
   const [, manual] = view.container.querySelectorAll('.source-add-btn')
   fireEvent.click(manual)
   const name = view.container.querySelector('.source-add-name') as HTMLInputElement
@@ -42,6 +59,7 @@ function openForm() {
   return { view, url }
 }
 
+afterEach(cleanup)
 beforeEach(() => vi.clearAllMocks())
 
 describe('AddCourseRow', () => {
@@ -70,5 +88,52 @@ describe('AddCourseRow', () => {
     expect(createCourse).toHaveBeenCalledTimes(1)
     expect(createCourse).toHaveBeenCalledWith('Algebra', PASTED)
     await act(async () => created())
+  })
+
+  it('shows the course code as its own chip and prefills only the name', async () => {
+    fetchEnrolledCourses.mockResolvedValue({
+      available: true,
+      courses: [
+        {
+          id: 7,
+          name: 'Algorithms 1',
+          code: '868922001',
+          url: 'https://m/course/view.php?id=7',
+          past: false,
+        },
+      ],
+    })
+    const view = mount()
+    const [fromMoodle] = view.container.querySelectorAll('.source-add-btn')
+    await act(async () => fireEvent.click(fromMoodle))
+    expect(fetchEnrolledCourses).toHaveBeenCalledWith('en')
+    const item = view.container.querySelector('.course-picker-item') as HTMLElement
+    expect(item.querySelector('.course-picker-code')?.textContent).toBe('868922001')
+    fireEvent.click(item)
+    const name = view.container.querySelector('.source-add-name') as HTMLInputElement
+    expect(name.value).toBe('Algorithms 1')
+  })
+
+  it('disables the language switcher with its hint while the picker is open, and frees it on close', async () => {
+    fetchEnrolledCourses.mockResolvedValue({ available: false })
+    const view = mount()
+    const switcher = view.container.querySelector('.language-switcher') as HTMLElement
+    const langs = () => [...switcher.querySelectorAll('button')].map((b) => b.disabled)
+    expect(langs()).toEqual([false, false])
+    const [fromMoodle] = view.container.querySelectorAll('.source-add-btn')
+    await act(async () => fireEvent.click(fromMoodle))
+    expect(langs()).toEqual([true, true])
+    fireEvent.mouseEnter(switcher)
+    await waitFor(() =>
+      expect(screen.getByRole('tooltip').textContent).toBe(
+        'Close the course list to change the language',
+      ),
+    )
+    fireEvent.mouseLeave(switcher)
+    const cancel = [...view.container.querySelectorAll('.course-picker button')].find(
+      (b) => b.textContent === 'Cancel',
+    ) as HTMLElement
+    fireEvent.click(cancel)
+    expect(langs()).toEqual([false, false])
   })
 })

@@ -2,3 +2,13 @@
 .language-switcher.mode-toggle {
   margin: 0;
 }
+
+/* Held by the course picker: the group takes the hover (for its hint), the dimmed buttons none. */
+.language-switcher--held {
+  cursor: not-allowed;
+}
+
+.language-switcher--held .mode-toggle-btn {
+  pointer-events: none;
+  opacity: 0.5;
+}

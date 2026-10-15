@@ -12,6 +12,7 @@ import { addFormDraft, checkFailure, needsCheck, pickerView, splitCourses } from
 const course = (id: number, past = false): EnrolledCourse => ({
   id,
   name: `Course ${id}`,
+  code: null,
   url: `https://moodle.example.ac.il/course/view.php?id=${id}`,
   past,
 })

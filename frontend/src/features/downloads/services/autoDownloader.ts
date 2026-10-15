@@ -2,6 +2,7 @@ import type { Client } from '@/services/http'
 import { createClient, failureError, RequestError } from '@/services/http'
 import { AUTO_DOWNLOADER_URL, withSecretParam } from '@/services/runtime'
 import type { Kind, ToolReport } from '@/types'
+import { path } from '@/shared/utils/url'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
 // Feature-local boundary for the auto-downloader service (Moodle discovery and capture).
@@ -183,10 +184,11 @@ export async function listRecordings(courseUrl: string): Promise<Item[]> {
 }
 
 // One course the connected account is enrolled in; `url` is `{site}/course/view.php?id=N`, and `past` is
-// a hidden or ended course.
+// a hidden or ended course. `name` is in the requested language; `code` is Moodle's shortname, picker-only.
 export interface EnrolledCourse {
   id: number
   name: string
+  code: string | null
   url: string
   past: boolean
 }
@@ -194,9 +196,9 @@ export interface EnrolledCourse {
 // `available: false` is an answer: the login found the site's course list closed to the Moodle app.
 export type EnrolledCourses = { available: false } | { available: true; courses: EnrolledCourse[] }
 
-// The account's courses, sorted by name — one Moodle call, so it goes through the Moodle lock.
-export async function fetchEnrolledCourses(): Promise<EnrolledCourses> {
-  return sendReconnectAware<EnrolledCourses>(autoDownloader, '/courses', 'GET')
+// The account's courses, sorted by name, named in `lang` — one Moodle call, so it goes through the Moodle lock.
+export async function fetchEnrolledCourses(lang: string): Promise<EnrolledCourses> {
+  return sendReconnectAware<EnrolledCourses>(autoDownloader, path`/courses?lang=${lang}`, 'GET')
 }
 
 // Vets a pasted course URL before it is saved: strictly a course page the account can open. A refusal

@@ -42,10 +42,13 @@ touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
 
 A course's source is the course page URL (`…/course/view.php?id=N`) — what Load recordings and auto's
 `/list` read. `CoursePicker` sets it: the pencil, "+ add source URL" and `AddCourseRow`'s "+ Add course from
-Moodle" open it under their row. It fetches auto's `GET /courses` once per open (`useEnrolledCourses`,
-through the Moodle lock with `{ wait: true }`, one request even across StrictMode's remount — the site walls
-a second call seconds after the first) and lists current courses, then the `past` ones (hidden or ended)
-behind "Show past courses". `pickerView` opens it straight on the paste input when the account is known to be
+Moodle" open it under their row. It fetches auto's `GET /courses?lang=<UI locale>` once per open
+(`useEnrolledCourses`, through the Moodle lock with `{ wait: true }`, one request even across StrictMode's
+remount — the site walls a second call seconds after the first) and lists current courses, then the `past`
+ones (hidden or ended) behind "Show past courses". Each row is the name in that language plus the course
+`code`, when Moodle has one, as a muted `.chip` beside it — picker-only, never prefilled or saved. Names stay
+in the open-time language: a mounted picker holds the locale (`useLocaleHold`, a module store, no provider),
+which disables the sidebar's `LanguageSwitcher` under a "close the course list" hint. `pickerView` opens it straight on the paste input when the account is known to be
 not connected (with the Load-recordings hint), when the list is `available: false` (the site closes it to
 the Moodle app) or empty, or after a failed fetch, which first gets the page's usual word: the reconnect
 hint, the block toast, or the service's reason.

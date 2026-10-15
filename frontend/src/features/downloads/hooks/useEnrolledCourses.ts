@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLingui } from '@lingui/react'
 import { isConnectionError } from '@/services/http'
 import { toastFailure } from '@/shared/utils/failure'
 import { useDownloadsActions } from '../contexts/DownloadsSessionContext'
@@ -9,9 +10,10 @@ import type { PickerList } from '../utils/coursePicker'
 import { toastBlocked } from '../utils/downloadErrors'
 import { MoodleLockAbandoned } from '../utils/moodleLock'
 
-// The account's courses, fetched once per open while `enabled`, waiting out the Moodle lock. A failure leaves
-// 'unavailable' (the paste input) after the page's usual word: reconnect hint, block toast, or the reason.
+// The account's courses, named in the UI locale at open, fetched once per open while `enabled`, waiting out the
+// Moodle lock. A failure leaves 'unavailable' after the usual word: reconnect hint, block toast, or reason.
 export function useEnrolledCourses(enabled: boolean): PickerList {
+  const { locale } = useLingui().i18n
   const [list, setList] = useState<PickerList>('loading')
   const withMoodleLock = useWithMoodleLock()
   const { reconnectHint } = useDownloadsActions()
@@ -25,7 +27,7 @@ export function useEnrolledCourses(enabled: boolean): PickerList {
     if (!enabled) return
     live.current = true
     let gone = false
-    const pending = (request.current ??= withMoodleLock(fetchEnrolledCourses, {
+    const pending = (request.current ??= withMoodleLock(() => fetchEnrolledCourses(locale), {
       wait: true,
       stale: () => !live.current,
     }))
@@ -49,7 +51,7 @@ export function useEnrolledCourses(enabled: boolean): PickerList {
       gone = true
       live.current = false
     }
-  }, [enabled, withMoodleLock, reconnectHint])
+  }, [enabled, locale, withMoodleLock, reconnectHint])
 
   return list
 }

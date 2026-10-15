@@ -2,6 +2,8 @@
 import { createElement, type ReactNode } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
+import { i18n } from '@lingui/core'
+import { I18nProvider } from '@lingui/react'
 import { MoodleLockProvider } from '@/features/downloads/contexts/MoodleLockContext'
 import { useEnrolledCourses } from './useEnrolledCourses'
 
@@ -15,13 +17,18 @@ vi.mock('@/features/downloads/contexts/DownloadsSessionContext', () => ({
 }))
 vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError: vi.fn() }))
 
-const COURSES = [{ id: 101, name: 'Algebra', url: 'https://m/course/view.php?id=101', past: false }]
+const COURSES = [
+  { id: 101, name: 'Algebra', code: '101', url: 'https://m/course/view.php?id=101', past: false },
+]
 
 // The wrapper reads `frame` on every render, so a rerender pushes a new lock frame.
 function render(initial: { enabled: boolean; busy: boolean }) {
   let frame = { moodleBusy: initial.busy }
   const wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(MoodleLockProvider, { frame, children })
+    createElement(I18nProvider, {
+      i18n,
+      children: createElement(MoodleLockProvider, { frame, children }),
+    })
   const hook = renderHook(({ enabled }) => useEnrolledCourses(enabled), {
     wrapper,
     initialProps: { enabled: initial.enabled },
@@ -43,6 +50,7 @@ describe('useEnrolledCourses', () => {
     const { result } = render({ enabled: true, busy: false })
     await waitFor(() => expect(result.current).toEqual(COURSES))
     expect(fetchEnrolledCourses).toHaveBeenCalledTimes(1)
+    expect(fetchEnrolledCourses).toHaveBeenCalledWith('en')
   })
 
   it('reads a closed list as unavailable', async () => {

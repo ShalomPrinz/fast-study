@@ -47,6 +47,12 @@
   color: var(--accent);
 }
 
+/* Moodle's course code beside the name: picker-only context, never part of the saved name. */
+.chip.course-picker-code {
+  margin-inline-start: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+
 /* The course this row already points at. */
 .course-picker-item.course-picker-item--current {
   font-weight: 600;

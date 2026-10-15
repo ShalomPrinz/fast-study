@@ -3,10 +3,12 @@ import { useState } from 'react'
 import { Plural, Trans } from '@lingui/react/macro'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { useEnrolledCourses } from '@/features/downloads/hooks/useEnrolledCourses'
+import { useLocaleHold } from '@/shared/hooks/useLocaleHold'
 import type { EnrolledCourse } from '@/features/downloads/services/autoDownloader'
 import { pickerView, splitCourses } from '@/features/downloads/utils/coursePicker'
 import CourseUrlPaste from './CourseUrlPaste'
 import '@/styles/button.css'
+import '@/styles/chip.css'
 import './CoursePicker.css'
 
 interface Props {
@@ -23,6 +25,8 @@ interface Props {
 export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }: Props) {
   const { status } = useAuthStatus()
   const disconnected = status?.connected === false
+  // Its names are in the locale at open, so the language stays put while it is open.
+  useLocaleHold()
   const list = useEnrolledCourses(!disconnected)
   const [pasting, setPasting] = useState(false)
   const [showPast, setShowPast] = useState(false)
@@ -41,8 +45,10 @@ export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }
           aria-current={c.url === currentUrl || undefined}
           onClick={() => onChoose(c)}
         >
-          {/* Isolated inline, so a Hebrew name keeps the page's start edge rather than its own. */}
+          {/* Isolated inline, so a Hebrew name keeps the page's start edge rather than its own, and the
+              code, a number, stays beside the name instead of reordering into it. */}
           <bdi>{c.name}</bdi>
+          {c.code && <bdi className="chip course-picker-code">{c.code}</bdi>}
         </button>
       </Tooltip>
     </li>
