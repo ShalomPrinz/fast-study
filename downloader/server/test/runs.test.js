@@ -118,6 +118,25 @@ test('a throw while triggering fails just that target', async () => {
   assert.deepEqual({ status: run.status, at: run.at }, { status: 'done', at: 3 });
 });
 
+test('captchaSolved lands on the one row whose capture waited, never on the run', async () => {
+  const run = createRun({
+    sectionId: 'c:video:captcha',
+    course: 'c',
+    targets: [target('a'), target('b')],
+  });
+  await drive(
+    run,
+    0,
+    answers({
+      a: { status: 200, body: { media: 'video', captchaSolved: true } },
+      b: { status: 200, body: { media: 'video' } },
+    }),
+  );
+  assert.equal(run.targets[0].captchaSolved, true);
+  assert.equal('captchaSolved' in run.targets[1], false);
+  assert.equal('captchaSolved' in run, false);
+});
+
 // The pre-decided rows are advanced past in one step, so `at` still lands on the total.
 test('a fully pre-decided section completes without triggering anything', async () => {
   const run = createRun({

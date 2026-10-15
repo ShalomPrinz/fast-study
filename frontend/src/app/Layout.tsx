@@ -7,6 +7,7 @@ import { DownloadsSessionProvider } from '@/features/downloads/contexts/Download
 import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsContext'
 import { toast } from '@/services/toaster'
 import ZoomCaptchaToast from '@/features/downloads/components/ZoomCaptchaToast'
+import { toastCaptchaSolved } from '@/features/downloads/utils/zoomCaptcha'
 import Sidebar from '@/shared/sidebar'
 import DriveConsentPrompt from './DriveConsentPrompt'
 import { warnBrokenTools } from './toolWarnings'
@@ -22,7 +23,7 @@ export default function Layout() {
       <DownloadJobsProvider>
         <AuthStatusProvider>
           <DownloadsSessionProvider sendUpdate={toast}>
-            <SectionRunsProvider>
+            <SectionRunsProvider onCaptchaSolved={() => toastCaptchaSolved(true)}>
               <div className="layout">
                 <Sidebar />
                 <Outlet />

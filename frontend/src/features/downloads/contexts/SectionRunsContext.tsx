@@ -10,6 +10,7 @@ import type { ReactNode } from 'react'
 import type { SectionRun } from '../services/downloadServer'
 import { fetchRuns, subscribeRuns } from '../services/downloadServer'
 import { sequencedRefresh } from '../utils/sequencedRefresh'
+import { createCaptchaCatches } from '../utils/zoomCaptcha'
 import { useDownloadsActions } from './DownloadsSessionContext'
 
 // Module store of `GET /runs` by section id with per-section subscriptions; it outlives the provider,
@@ -107,15 +108,27 @@ export function useCourseRunActive(course: string): boolean {
 
 // Reflects the downloader server's section runs, as `RunnerStatusContext` does the pipeline runner.
 // See docs/BULK.md.
-export function SectionRunsProvider({ children }: { children: ReactNode }) {
+// `onCaptchaSolved` fires once per snapshot in which any target newly caught its zoom player past a
+// captcha, never once per target.
+export function SectionRunsProvider({
+  children,
+  onCaptchaSolved,
+}: {
+  children: ReactNode
+  onCaptchaSolved?: () => void
+}) {
   const { reconnectHint } = useDownloadsActions()
   // Fires the reconnect hint once per run id; `primed` seeds the first snapshot, since a run aborted
   // before load is history.
   const reported = useRef<Set<string>>(new Set())
   const primed = useRef(false)
+  const onCaught = useRef(onCaptchaSolved)
+  onCaught.current = onCaptchaSolved
 
   useEffect(() => {
     let cancelled = false
+    // Per mount, so a remount seeds afresh instead of replaying catches that already happened.
+    const caught = createCaptchaCatches()
     const handleSnapshot = (snapshot: SectionRun[]) => {
       if (cancelled) return
       for (const run of snapshot) {
@@ -124,6 +137,7 @@ export function SectionRunsProvider({ children }: { children: ReactNode }) {
         reported.current.add(run.id)
       }
       primed.current = true
+      if (caught(snapshot) > 0) onCaught.current?.()
       publish(snapshot)
     }
     // Sequenced because `done` is the last frame a run emits: an older `/runs` reply landing after it

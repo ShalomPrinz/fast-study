@@ -164,6 +164,9 @@ export async function drive(run, from, trigger = downloadItem) {
       target.disposition = outcome.disposition;
       // `media` is the POST's answer for a queued row — it says where on disk the file lands.
       if (outcome.disposition === 'queued') target.media = body?.media ?? target.media;
+      // On this row alone: its own zoom capture waited for the user to solve a captcha on screen.
+      if (outcome.disposition === 'queued' && body?.captchaSolved === true)
+        target.captchaSolved = true;
       if (outcome.disposition === 'unsupported') target.media = 'unsupported';
       broadcastRuns();
     }
