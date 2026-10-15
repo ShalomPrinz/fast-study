@@ -87,7 +87,10 @@ link, never carried in the `ref`. `/resolve` looks one up (lecture override wins
 the gate; the frontend saves one via `POST /zoom/passcode`.
 
 The form is a Vue SPA whose binding lands a beat after the input appears, so a fill fired too early
-is dropped: fill+click is **tried up to 2×** until `#passcode` detaches. The gate throws
+is dropped: fill+click is **tried up to 2×**, 2s apart, until `#passcode` detaches — the pause keeps
+rapid resubmits from looking automated and drawing a captcha. The budget stays that small on purpose:
+a gate that outlasts a re-fill is most likely a wrong passcode the user typed, which no retry fixes
+(each one only adds captcha risk), so it ends in `'incorrect'` for the user to correct. The gate throws
 `PasscodeError` → `409` `zoom_passcode_required {reason, course, name}`: `reason:'missing'` up front
 when none is stored (no empty submits), or `'incorrect'` when a stored one never clears. The gate knows
 neither course nor lecture, so the route fills those two in. No gate means already authorized.

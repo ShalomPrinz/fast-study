@@ -235,7 +235,8 @@ test('a captcha over the passcode gate is a captcha, not an incorrect passcode',
   const page = captchaPage({ afterGate: 'player', frame: true });
 
   const capture = new ZoomExtractor()._captureVideo(page, rec, { passcode: '1234' });
-  await new Promise((r) => setTimeout(r, 120));
+  // Both attempts run with the real 2s pause between them before the captcha check.
+  await new Promise((r) => setTimeout(r, 2120));
   assert.equal(zoomCaptchaState(), true, 'shown once the gate outlasts its attempts');
   assert.equal(page.clicks, 2);
   page.solve();

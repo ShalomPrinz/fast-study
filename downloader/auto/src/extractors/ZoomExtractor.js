@@ -34,6 +34,8 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms, null).unr
 const SECOND_MP4_WAIT_MS = 15000;
 // Fill+click attempts at the passcode gate, each waiting 3s for it to detach.
 const PASSCODE_ATTEMPTS = 2;
+// Pause between passcode attempts, so back-to-back resubmits don't look automated and draw a captcha.
+const PASSCODE_RETRY_PAUSE_MS = 2000;
 
 /**
  * Zoom cloud recording from a passcode-gated `zoom.us/rec/share/…` link (found in a section
@@ -158,6 +160,7 @@ export class ZoomExtractor extends VideoExtractor {
     // Vue binds the input a beat after it appears and drops an early fill, so re-fill + click
     // until #passcode detaches. See docs/ZOOM.md.
     for (let i = 0; i < PASSCODE_ATTEMPTS; i++) {
+      if (i > 0) await delay(PASSCODE_RETRY_PAUSE_MS);
       await page.fill('input#passcode, input[type="password"]', passcode).catch(() => {});
       await page.click('#passcode_btn, button:has-text("Watch Recording")').catch(() => {});
       const cleared = await page
