@@ -22,6 +22,8 @@ function mp4Key(url) {
 const MP4_WAIT_MS = 30000;
 // Best-effort wait for the second clip's .mp4 (not a full video length); ship one file if none.
 const SECOND_MP4_WAIT_MS = 15000;
+// Fill+click attempts at the passcode gate, each waiting 3s for it to detach.
+const PASSCODE_ATTEMPTS = 2;
 
 /**
  * Zoom cloud recording from a passcode-gated `zoom.us/rec/share/…` link (found in a section
@@ -129,12 +131,12 @@ export class ZoomExtractor extends VideoExtractor {
       .waitForSelector('input#passcode, input[type="password"]', { timeout: 5000 })
       .catch(() => null);
     if (!field) return;
-    // Gate is up but we have nothing to type — don't burn 5 empty submits; ask upstream
+    // Gate is up but we have nothing to type — don't burn empty submits; ask upstream
     // for a passcode straight away.
     if (!passcode) throw new PasscodeError('missing');
     // Vue binds the input a beat after it appears and drops an early fill, so re-fill + click
     // until #passcode detaches. See docs/ZOOM.md.
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < PASSCODE_ATTEMPTS; i++) {
       await page.fill('input#passcode, input[type="password"]', passcode).catch(() => {});
       await page.click('#passcode_btn, button:has-text("Watch Recording")').catch(() => {});
       const cleared = await page
@@ -146,8 +148,8 @@ export class ZoomExtractor extends VideoExtractor {
         return;
       }
     }
-    // Gate outlasted all retries → the stored passcode is wrong (Vue-timing failures
-    // clear within a few attempts; a persistent gate means a bad code).
+    // Gate outlasted all attempts → the stored passcode is wrong (a Vue-timing drop
+    // clears on the re-fill; a persistent gate means a bad code).
     throw new PasscodeError('incorrect');
   }
 
