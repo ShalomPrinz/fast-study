@@ -411,9 +411,10 @@ Each fake's fields set only themselves; `hb reseed` sends both resets, and the p
 restarts the fake transcript at its first paragraph. `downloadMs` is read by the
 fake tool as each download starts, so a slow download for "reload mid-download" needs no restart.
 
-The account is enrolled in three courses (`core_enrol_get_users_courses`): the fake course, one ended
-(`enddate` a year ago) and one hidden, so Downloads' course picker shows a current course and two
-under "Show past courses". `core_course_get_contents` answers the fake course's rows for any enrolled
+The account is enrolled in four courses (`core_enrol_get_users_courses`): the fake course, a bilingual
+one (shortname `868922001`, a multilang `fullname` the fake reduces to `moodlewssettinglang` when
+`moodlewssettingfilter=true`), one ended (`enddate` a year ago) and one hidden, so Downloads' course
+picker shows two current courses and two under "Show past courses". `core_course_get_contents` answers the fake course's rows for any enrolled
 id and `invalidrecord` for any other, so a pasted unknown id reads as not accessible.
 
 The fake course has a row per failure, each a URL switch (titles in `FAILURE_ROWS`, `lib/env.mjs`;

@@ -141,9 +141,9 @@ function hash(value) {
   return out;
 }
 
-// The account's enrolments, shaped like core_enrol_get_users_courses: the fake course, one ended
-// course and one hidden one, so the picker's "past" group has a row per rule. Each lists the fake course's contents.
-function enrolledCourses() {
+// The account's enrolments, shaped like core_enrol_get_users_courses: the fake course, a bilingual one with a
+// numeric code, one ended and one hidden. `lang` is the multilang filter's pick; null leaves the raw markup.
+function enrolledCourses(lang = null) {
   const yearAgo = Math.floor(Date.now() / 1000) - 365 * 24 * 3600;
   const course = (id, fullname, extra = {}) => ({
     id,
@@ -159,7 +159,18 @@ function enrolledCourses() {
     course(COURSE_ID, 'מבני נתונים &amp; אלגוריתמים'),
     course(COURSE_ID + 1, 'חדו״א 1', { enddate: yearAgo }),
     course(COURSE_ID + 2, 'Old Seminar', { hidden: true }),
+    course(COURSE_ID + 3, multilang({ he: 'אלגוריתמים 1', en: 'Algorithms 1' }, lang), {
+      shortname: '868922001',
+    }),
   ];
+}
+
+// A name as Moodle's multilang filter leaves it: one language when filtered, else every span, as sent unfiltered.
+function multilang(names, lang) {
+  if (lang && names[lang]) return names[lang];
+  return Object.entries(names)
+    .map(([l, n]) => `<span lang="${l}" class="multilang">${n}</span>`)
+    .join('');
 }
 
 // Moodle's answer to a record that does not exist, under HTTP 200 like every WS fault.
@@ -391,7 +402,11 @@ function handle(req, res) {
           message: 'Access control exception',
         });
       }
-      return json(res, enrolledCourses());
+      const filtered = url.searchParams.get('moodlewssettingfilter') === 'true';
+      return json(
+        res,
+        enrolledCourses(filtered ? url.searchParams.get('moodlewssettinglang') : null),
+      );
     }
     if (fn === 'core_course_get_contents') {
       const enrolled = enrolledCourses().some(
