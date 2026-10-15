@@ -71,3 +71,14 @@ export function onMoodleSite(url: string, site: string | null | undefined): bool
     return false
   }
 }
+
+// The course field's options: all of them until the text is edited since the list opened, so a
+// prefilled course never hides the others; after an edit, those containing the text, ignoring case.
+export function courseOptions(
+  names: readonly string[],
+  text: string,
+  edited: boolean,
+): readonly string[] {
+  const key = text.trim().toLowerCase()
+  return edited ? names.filter((n) => n.toLowerCase().includes(key)) : names
+}

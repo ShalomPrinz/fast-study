@@ -27,6 +27,7 @@ import {
 } from '@/features/downloads/utils/downloadErrors'
 import { useManualStart } from '@/features/downloads/hooks/useManualStart'
 import { JobProgressBar } from './RecordingJobList'
+import CourseCombobox from './CourseCombobox'
 import '@/styles/pipeline-card.css'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
@@ -123,19 +124,12 @@ function ManualForm() {
           <Trans>Course</Trans>
         </label>
         {/* Free text with the active courses as suggestions: a name none of them has is a new course. */}
-        <input
+        <CourseCombobox
           id={`${id}-course`}
-          className="source-row-input"
           value={courseText}
-          onChange={(e) => updateManualDraft({ course: e.target.value })}
-          list={`${id}-courses`}
-          dir="auto"
+          options={active.map((c) => c.name)}
+          onChange={(course) => updateManualDraft({ course })}
         />
-        <datalist id={`${id}-courses`}>
-          {active.map((c) => (
-            <option key={c.name} value={c.name} />
-          ))}
-        </datalist>
       </div>
       {/* Buttons, not an input, so the caption names the group rather than a control. */}
       <div className="manual-download-field" role="group" aria-labelledby={`${id}-kind`}>

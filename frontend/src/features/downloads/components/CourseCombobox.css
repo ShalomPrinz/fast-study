@@ -1,0 +1,23 @@
+/* Structure only: the list drops below the input, over what follows, and scrolls past a few rows. */
+.course-combobox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-combobox-listbox {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline: 0;
+  z-index: 10;
+  max-block-size: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course-combobox-option {
+  padding: var(--space-3) var(--space-5);
+  cursor: pointer;
+}

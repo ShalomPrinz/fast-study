@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { Course, Lecture } from '@/types'
 import type { DownloadJob } from '@/features/downloads/services/downloadServer'
 import {
+  courseOptions,
   manualStatus,
   matchCourse,
   onMoodleSite,
@@ -123,5 +124,18 @@ describe('onMoodleSite', () => {
     expect(onMoodleSite('https://moodle.example.ac.il/v.mp4', '')).toBe(false)
     expect(onMoodleSite('moodle.example.ac.il/v.mp4', SITE)).toBe(false)
     expect(onMoodleSite('', SITE)).toBe(false)
+  })
+})
+
+describe('courseOptions', () => {
+  const names = ['Algebra', 'Calculus', 'Linear Algebra']
+
+  it('keeps every name until the text is edited', () => {
+    expect(courseOptions(names, 'Calculus', false)).toEqual(names)
+  })
+
+  it('keeps the names containing the edited text, ignoring case and edge spaces', () => {
+    expect(courseOptions(names, ' algebra ', true)).toEqual(['Algebra', 'Linear Algebra'])
+    expect(courseOptions(names, '', true)).toEqual(names)
   })
 })
