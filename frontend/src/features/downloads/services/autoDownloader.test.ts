@@ -193,12 +193,15 @@ describe('subscribeAuth', () => {
     es.onmessage?.({ data: '{"phase":"pending","connected":false,"expired":false}' })
     es.onmessage?.({ data: 'not json' })
     es.onmessage?.({ data: '{"connected":false,"expired":false,"storedSite":"https://a.ac.il"}' })
+    es.onmessage?.({ data: '{"connected":true,"expired":false,"zoomCaptcha":true}' })
     stop()
 
     expect(es.url).toContain('/auth/events')
     expect(seen).toEqual([
-      { phase: 'pending', connected: false, expired: false },
-      { connected: false, expired: false, tokenSite: 'https://a.ac.il' },
+      // An absent `zoomCaptcha` (an older server) reads as false.
+      { phase: 'pending', connected: false, expired: false, zoomCaptcha: false },
+      { connected: false, expired: false, zoomCaptcha: false, tokenSite: 'https://a.ac.il' },
+      { connected: true, expired: false, zoomCaptcha: true },
     ])
     expect(es.close).toHaveBeenCalled()
   })

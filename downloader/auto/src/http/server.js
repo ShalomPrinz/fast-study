@@ -20,6 +20,7 @@ import { setReporting } from '@faststudy/sentry';
 import { getSession, closeAllSessions, browserClosed } from '../browser/browserSession.js';
 import { resolveBrowserChannel } from '../browser/browserChannel.js';
 import { loadStealthChromium } from '../browser/zoomBrowser.js';
+import { zoomCaptchaEvents, zoomCaptchaState } from '../browser/zoomCaptcha.js';
 import {
   listRecordings,
   toCourses,
@@ -296,16 +297,23 @@ export function handleAuthEvents(req, res) {
   });
   res.flushHeaders();
   const push = () => {
-    const frame = { ...authState(), moodleBusy: moodleGate.busy(), challenge: challengeState() };
+    const frame = {
+      ...authState(),
+      moodleBusy: moodleGate.busy(),
+      challenge: challengeState(),
+      zoomCaptcha: zoomCaptchaState(),
+    };
     res.write(`data: ${JSON.stringify(frame)}\n\n`);
   };
   authEvents.on('change', push);
   moodleGate.on('change', push);
   challengeEvents.on('change', push);
+  zoomCaptchaEvents.on('change', push);
   req.on('close', () => {
     authEvents.off('change', push);
     moodleGate.off('change', push);
     challengeEvents.off('change', push);
+    zoomCaptchaEvents.off('change', push);
   });
   push();
 }
@@ -612,13 +620,21 @@ export const handleResolve = gated('/resolve', async (req, res) => {
     }
     const down = unreachable(e);
     if (down) return sendUnreachable(res, '/resolve', down);
-    if (e instanceof CodedError && e.code === 'zoom_browser_closed') {
-      logResult('/resolve', 'zoom browser closed (503)');
+    if (e instanceof CodedError && ZOOM_REFUSALS.has(e.code)) {
+      logResult('/resolve', `${e.code} (503)`);
       return send(res, 503, failureOf(e));
     }
     throw e;
   }
 });
+
+// Zoom captures the user can act on — a closed window, an unsolvable or unsolved captcha: a handled
+// 503 with no `status`, never the backstop or Sentry.
+const ZOOM_REFUSALS = new Set([
+  'zoom_browser_closed',
+  'zoom_captcha_unsupported',
+  'zoom_captcha_timeout',
+]);
 
 // The user closed the zoom window mid-capture: a handled 503 (no `status`), never a 500 — the
 // session already forgot that browser, so a retry launches a fresh one. Playwright's text is `detail`.
@@ -813,6 +829,8 @@ async function resolveItem(req, res) {
   const passcode = passcodes.lookup(course, name);
   // A zoom share can hold a before/after-break pair → one target per captured .mp4. open() runs
   // under the lock, so a browser the user closed while an earlier call held it is relaunched.
+  // captchaSolved rides on this one answer, so a resolve queued behind the wait never claims it.
+  let captchaSolved = false;
   const targets = await session.withLock(async () => {
     let page = null;
     try {
@@ -827,6 +845,9 @@ async function resolveItem(req, res) {
         passcode,
         ref: rowRef,
         ...opts,
+        onCaptchaSolved: () => {
+          captchaSolved = true;
+        },
       });
     } catch (e) {
       if (browserClosed(e, page)) throw zoomBrowserClosed(e);
@@ -834,7 +855,7 @@ async function resolveItem(req, res) {
     }
   });
   logResult('/resolve', `ok (${targets.length} targets, video)`);
-  send(res, 200, { media: 'video', targets });
+  send(res, 200, { media: 'video', targets, ...(captchaSolved && { captchaSolved: true }) });
 }
 
 // HEAD of a resolved Moodle file, answered from the size its resolve learned — no Moodle call, so

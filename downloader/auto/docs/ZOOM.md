@@ -32,6 +32,7 @@ The one platform-dependent part of `launchZoomBrowser()`.
 
 **Windows** — no Xvfb, so the window is parked off-screen (`--window-position=-32000,-32000`);
 otherwise a batch of N lectures steals focus N times. `FASTSTUDY_ZOOM_VISIBLE=1` keeps it on-screen.
+It comes on screen only for a captcha ([below](#captcha-browserzoomcaptchajs)).
 
 **Linux** — a managed Xvfb virtual display, which under WSL also keeps the hardware D3D12 renderer
 (`/dev/dxg` is reached independent of the X display). Spawned lazily on the first zoom launch,
@@ -45,6 +46,38 @@ reused, and killed by `stopXvfb()` on `closeAllSessions()` plus a `process.once(
 - A per-run XAUTHORITY cookie goes to both Xvfb (`-auth`) and the browser (env `XAUTHORITY`).
 - The node process is **not** wrapped in `xvfb-run` — the headed token grab must stay on the real
   WSLg display.
+
+## Captcha (`browser/zoomCaptcha.js`)
+
+Zoom shows the passcode gate either way, so only the player says the way is clear. Once the gate
+is cleared (or from load when there is none), a visible reCAPTCHA (bar v3's invisible badge),
+hCaptcha or Cloudflare Turnstile frame — or no player (`video, .video-js`) within 30s — counts as
+a captcha. No zoom-specific selector is known, so the check is generic. Every alternative carries
+`:visible`, because Playwright checks only a selector list's first DOM match and reCAPTCHA keeps a
+hidden challenge frame in the page.
+
+A gate that outlasts its 2 attempts under a visible captcha frame is a captcha, not
+`incorrect`: the frame swallows the clicks, and a wrong code is not the cause.
+
+A share with no player and no captcha frame (expired, deleted, sign-in only — or a captcha the
+check cannot recognise) takes the same path on Windows, so the user can look and act; closing the
+window gives up early.
+
+- **Windows** — the parked window moves on screen and to the front, as the Moodle challenge window
+  does (CDP `Browser.setWindowBounds`), and `/auth/events` carries `zoomCaptcha: true` so the
+  frontend can tell the user. Solved means the player is visible with no captcha frame left; a
+  gate that shows with no frame over it (a captcha solved in front of it) takes the stored passcode
+  again. The window then goes back off-screen (unless `FASTSTUDY_ZOOM_VISIBLE=1`), `zoomCaptcha`
+  reads false, and the capture carries on; its `/resolve` 200 carries `captchaSolved: true`, on that
+  one answer only, so a resolve queued behind the wait never claims it. Unsolved after 10 minutes
+  is `503 zoom_captcha_timeout {url}`; a window the user closes is `zoom_browser_closed`.
+  `zoomCaptcha` clears however it ends.
+- **Linux** — Xvfb has no screen to show it on, so a visible captcha frame answers `503
+  zoom_captcha_unsupported {url}` at once, and no player answers `zoom_no_media_request {url}`.
+
+The 30s `.mp4` sniff is armed before `goto`, so a solve that outlasts it gets a second sniff armed
+when the captcha is detected, cut to 30s once the solve ends: an autoplay right after the solve is
+never missed. The zoom session's `withLock` stays held through the solve, so other zoom resolves queue.
 
 ## Passcode gate
 

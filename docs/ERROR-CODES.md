@@ -321,8 +321,10 @@ services; `state` stays as the developer-facing reason.
 | `extractors/YoutubePlaylistExtractor.js` | `playlist_list_failed` | `detail`              | user  |
 | `extractors/YoutubePlaylistExtractor.js` | `playlist_empty`     | `url`                    | user  |
 | `core/core.js` `resolveVideostream` | `videostream_no_mp4`   | `url`                    | user  |
-| `extractors/ZoomExtractor.js`   | `zoom_no_media_request`       | `url`                    | user  |
+| `extractors/ZoomExtractor.js`, `browser/zoomCaptcha.js` | `zoom_no_media_request` | `url` | user |
 | `http/server.js` `/resolve`     | `zoom_browser_closed`         | `detail`                 | user  |
+| `browser/zoomCaptcha.js`        | `zoom_captcha_unsupported`    | `url`                    | user  |
+| `browser/zoomCaptcha.js`        | `zoom_captcha_timeout`        | `url`                    | user  |
 | `browser/zoomBrowser.js`        | `xvfb_unavailable`            | `detail`                 | user  |
 | `http/server.js` `resolveItem`  | `recording_strategy_unsupported` | `strategy`            | user  |
 | `auth/moodleToken.js`           | `moodle_login_timeout`        | —                        | user  |

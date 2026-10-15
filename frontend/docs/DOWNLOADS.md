@@ -82,6 +82,21 @@ as down. The stream cannot say "no university configured" (it reads as idle), so
 asks `/auth/status` once per mount (`refresh`), and the provider adds `unconfigured` while the pushed
 phase is idle. `status: null` is "unknown".
 
+A frame's `zoomCaptcha` (absent reads false) is a zoom download waiting on a captcha in the on-screen
+Chrome window: `ZoomCaptchaToast`, in `Layout` so it follows every route, holds an info toast up while it
+is true and dismisses it when it turns false; only a flip acts (`zoomCaptchaToastChange`), so a repeat
+frame never re-raises a toast the user closed. If auto dies mid-wait, the held toast stays until the stream
+reconnects and its first frame reads false.
+
+The capture's other end is `captchaSolved: true` (absent otherwise, never false), never the stream: it
+means this very item waited on that captcha and its player then appeared, so a queued download is never
+mistaken for the one that waited. A row download reads it off its `/download-item` answer; a section run
+carries it on the target (`run.targets[i]`, never the run), read off the `/runs` resync. Either way
+`toastCaptchaSolved` shows a short success toast and never touches the held one, whose lifetime is
+the stream's flag alone: an earlier item's late answer must not close the next item's wait. Every resync
+repeats a target's flag, so `createCaptchaCatches` toasts once per run id + target index, and its first
+snapshot per provider mount only seeds: a reload never replays a catch that already happened.
+
 Connect only posts `/auth/connect`, which returns at once: the service runs the whole login itself and
 pushes `phase: 'pending'` from window open through verification, so the chip reads "finish login in the
 browser window" (no button) from the stream, and a reload mid-login shows it again from the subscribe frame.

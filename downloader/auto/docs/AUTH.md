@@ -48,7 +48,8 @@ auth state's `storedSite` names that site beforehand so the frontend can confirm
   `disconnect`, a site switch; idle when no site is set). Every frame also carries `moodleBusy`, the
   Moodle lock's state ([GATE.md](GATE.md)), and `challenge: { open, captcha }`, block mode's window
   — up, and on screen showing a captcha until the page lands back on the site
-  ([MOODLE.md](MOODLE.md#the-rest-api)); changes to either send a frame too. No replay and no heartbeat. `EventSource`
+  ([MOODLE.md](MOODLE.md#the-rest-api)), and `zoomCaptcha`, true while a zoom window is on screen for
+  the user to solve a captcha ([ZOOM.md](ZOOM.md#captcha-browserzoomcaptchajs)); changes to any of them send a frame too. No replay and no heartbeat. `EventSource`
   cannot set a header, so the launch secret rides as `?secret=`, which `requireSecret` honours.
 - `complete()` — re-verifies the stored `unverified` token now and answers as a WS call would; its
   outcome is also announced on the stream. Throws `moodle_login_not_pending` when no unverified token

@@ -11,6 +11,7 @@ function stuckGatePage() {
     clicks: 0,
     waitForRequest: () => new Promise(() => {}),
     goto: async () => {},
+    isVisible: async () => false,
     waitForSelector: async (_sel, opts = {}) => {
       if (opts.state === 'detached') throw new Error('timeout');
       return {};

@@ -538,6 +538,10 @@ msgstr "Cancel"
 msgid "Cancelled"
 msgstr "Cancelled"
 
+#: src/features/downloads/utils/zoomCaptcha.ts:19
+msgid "Caught the Zoom video. The download is in progress."
+msgstr "Caught the Zoom video. The download is in progress."
+
 #: src/features/settings/SettingsView.tsx:417
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
@@ -789,7 +793,7 @@ msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."
 
-#: src/shared/i18n/serviceErrors.ts:259
+#: src/shared/i18n/serviceErrors.ts:265
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "Couldn't start capturing the Zoom recording. Try again."
 
@@ -1358,7 +1362,7 @@ msgstr "Material"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/shared/i18n/serviceErrors.ts:265
+#: src/shared/i18n/serviceErrors.ts:271
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
@@ -1418,7 +1422,7 @@ msgstr "No Lectures"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
-#: src/shared/i18n/serviceErrors.ts:264
+#: src/shared/i18n/serviceErrors.ts:270
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
 
@@ -2095,11 +2099,11 @@ msgstr "The following files will be re-generated:"
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
-#: src/shared/i18n/serviceErrors.ts:261
+#: src/shared/i18n/serviceErrors.ts:267
 msgid "The login window was closed before login finished. Connect again."
 msgstr "The login window was closed before login finished. Connect again."
 
-#: src/shared/i18n/serviceErrors.ts:260
+#: src/shared/i18n/serviceErrors.ts:266
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "The Moodle login timed out. Try connecting again."
 
@@ -2177,6 +2181,10 @@ msgstr "The window on the university site passed, with no captcha to solve. Pres
 msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 msgstr "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 
+#: src/shared/i18n/serviceErrors.ts:261
+msgid "The Zoom captcha wasn't solved within 10 minutes. Try the download again."
+msgstr "The Zoom captcha wasn't solved within 10 minutes. Try the download again."
+
 #: src/shared/i18n/serviceErrors.ts:255
 msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "The Zoom window was closed during the capture. Try the download again."
@@ -2248,7 +2256,7 @@ msgstr "This only needs to be done once."
 msgid "This recording needs a passcode."
 msgstr "This recording needs a passcode."
 
-#: src/shared/i18n/serviceErrors.ts:258
+#: src/shared/i18n/serviceErrors.ts:264
 msgid "This recording type can't be downloaded."
 msgstr "This recording type can't be downloaded."
 
@@ -2470,9 +2478,17 @@ msgstr "Your university session expired. Reconnect your account."
 msgid "Your university's Moodle address"
 msgstr "Your university's Moodle address"
 
+#: src/shared/i18n/serviceErrors.ts:258
+msgid "Zoom asked for a captcha, and solving it is only supported on Windows."
+msgstr "Zoom asked for a captcha, and solving it is only supported on Windows."
+
 #: src/features/lectures/components/PdfViewer.tsx:91
 msgid "Zoom in"
 msgstr "Zoom in"
+
+#: src/features/downloads/components/ZoomCaptchaToast.tsx:24
+msgid "Zoom is asking for a captcha. Solve it in the Chrome window that just opened, and the download will continue."
+msgstr "Zoom is asking for a captcha. Solve it in the Chrome window that just opened, and the download will continue."
 
 #: src/features/lectures/components/PdfViewer.tsx:83
 msgid "Zoom out"

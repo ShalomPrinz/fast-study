@@ -6,6 +6,7 @@ import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusCont
 import { DownloadsSessionProvider } from '@/features/downloads/contexts/DownloadsSessionContext'
 import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsContext'
 import { toast } from '@/services/toaster'
+import ZoomCaptchaToast from '@/features/downloads/components/ZoomCaptchaToast'
 import Sidebar from '@/shared/sidebar'
 import DriveConsentPrompt from './DriveConsentPrompt'
 import { warnBrokenTools } from './toolWarnings'
@@ -28,6 +29,7 @@ export default function Layout() {
                 {/* Route-independent by design: the run that needs consent is not the screen the
                       user is on. */}
                 <DriveConsentPrompt />
+                <ZoomCaptchaToast />
               </div>
             </SectionRunsProvider>
           </DownloadsSessionProvider>

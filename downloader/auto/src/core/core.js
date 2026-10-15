@@ -108,8 +108,13 @@ function baseName(name) {
 
 // Capture the zoom share fresh → [{ name, cap }], caching each. `name` is the BASE name: a share
 // with a distinct second .mp4 yields `<name>.1`/`<name>.2`, anything else one.
-async function captureTargets(page, recording, extractor, { name, course, kind, passcode, ref }) {
-  const caps = await extractor.captureVideo(page, recording, { passcode });
+async function captureTargets(
+  page,
+  recording,
+  extractor,
+  { name, course, kind, passcode, ref, onCaptchaSolved },
+) {
+  const caps = await extractor.captureVideo(page, recording, { passcode, onCaptchaSolved });
   const names = caps.length === 2 ? [splitName(name, 1), splitName(name, 2)] : [name];
   const targets = caps.map((cap, i) => ({ name: names[i], cap }));
   for (const t of targets) cacheCap(course, t.name, kind, 'video', t.cap, ref);
@@ -381,8 +386,9 @@ export async function resolveDirectUrl({
  * @param {import('playwright').Page} page  live shared page
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, passcode?: string|null,
- *           ref?: string|null, only?: boolean, forceCapture?: boolean }} args
- *   passcode is looked up per course/lecture upstream.
+ *           ref?: string|null, only?: boolean, forceCapture?: boolean,
+ *           onCaptchaSolved?: () => void }} args
+ *   passcode is looked up per course/lecture upstream; onCaptchaSolved: see ZoomExtractor.
  *   ref is the discovery-row id that spawned this download — cached with every cap so a zoom
  *   before/after-break split pair groups under the one parent row.
  *   only = operate on just the single (course,name,kind) target (name may be a zoom split
@@ -392,7 +398,17 @@ export async function resolveDirectUrl({
  */
 export async function resolveRecording(
   page,
-  { recording, course, name, kind, passcode, ref, only = false, forceCapture = false },
+  {
+    recording,
+    course,
+    name,
+    kind,
+    passcode,
+    ref,
+    only = false,
+    forceCapture = false,
+    onCaptchaSolved,
+  },
 ) {
   const extractor = resolveExtractorForRecording(recording);
   if (!extractor) throw new Error(`no extractor for strategy ${recording.strategy}`);
@@ -410,6 +426,7 @@ export async function resolveRecording(
       kind,
       passcode,
       ref,
+      onCaptchaSolved,
     });
     const chosen =
       captured.find((t) => t.name === name) ?? (captured.length === 1 ? captured[0] : null);
@@ -425,6 +442,7 @@ export async function resolveRecording(
     kind,
     passcode,
     ref,
+    onCaptchaSolved,
   });
   return targets.map((t) => toTarget({ name: t.name, cap: t.cap, tool, fromCache: false }));
 }

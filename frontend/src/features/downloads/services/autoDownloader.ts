@@ -30,6 +30,9 @@ export interface AuthStatus {
   moodleBusy?: boolean
   // Block mode's challenge window: up, and on screen waiting for a captcha; pushed only.
   challenge?: { open: boolean; captcha: boolean }
+  // A zoom download waits for the user to solve a captcha in the on-screen Chrome window; pushed only,
+  // and false on a frame from a server that predates the field.
+  zoomCaptcha?: boolean
   // The stored token's site URL when it belongs to another site than the selected one, which a Connect
   // here would delete; pushed only, as the wire's `storedSite`.
   tokenSite?: string | null
@@ -251,7 +254,7 @@ export function subscribeAuth(onState: (state: AuthStatus) => void): () => void 
   es.onmessage = (e) => {
     try {
       const { storedSite, ...frame } = JSON.parse(e.data) as AuthFrame
-      onState({ ...frame, tokenSite: storedSite })
+      onState({ ...frame, zoomCaptcha: frame.zoomCaptcha === true, tokenSite: storedSite })
     } catch {
       // A frame that is not JSON carries no state.
     }

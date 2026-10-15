@@ -24,7 +24,7 @@ request. Model in `src/browser/browserSession.js`.
 
 | Profile / path                                           | Browser                                                              | Display                                    | Visible            |
 | -------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ | ------------------ |
-| `'zoom'` — `ZoomExtractor` (`browser/zoomBrowser.js`)    | resolved channel + stealth, `headless:false`, no fallback            | Xvfb (Linux) / off-screen window (Windows) | no                 |
+| `'zoom'` — `ZoomExtractor` (`browser/zoomBrowser.js`)    | resolved channel + stealth, `headless:false`, no fallback            | Xvfb (Linux) / off-screen window (Windows) | only on a captcha, Windows ([ZOOM.md](ZOOM.md#captcha-browserzoomcaptchajs)) |
 | Token grab (`MoodleToken.connect()`, `browser/browserLaunch.js`) | resolved channel → bundled Chromium on launch failure, no stealth | real desktop                               | **yes — MFA once** |
 | Challenge window (`moodle/challenge.js`)                 | resolved channel, persistent profile `moodle-profile` under the state root, UA = the probe's + ` MoodleMobile`; no installed channel (no UA) → no launch; bundled Chromium only when the probe worked and the channel's persistent launch failed, still with that UA | real desktop, launched off-screen; opened by a wall | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
 

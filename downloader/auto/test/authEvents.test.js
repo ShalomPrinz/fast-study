@@ -17,6 +17,7 @@ import { setCurrentSite } from '../src/moodle/site.js';
 import { writeTokenFile } from '../src/auth/tokenStore.js';
 import { handleAuthEvents, handleAuthComplete } from '../src/http/server.js';
 import { moodleGate } from '../src/moodle/gate.js';
+import { zoomCaptchaEvents } from '../src/browser/zoomCaptcha.js';
 
 const SITE = 'https://moodle.test';
 const TOKEN_FILE = path.join(STATE_DIR, 'auth', 'moodle-token.json');
@@ -82,7 +83,12 @@ test('the stream sends the state on subscribe and on every change, and needs the
     storedSite: null,
     moodleBusy: false,
     challenge: { open: false, captcha: false },
+    zoomCaptcha: false,
   });
+
+  // A zoom captcha change sends a frame too.
+  zoomCaptchaEvents.emit('change');
+  assert.equal((await next()).zoomCaptcha, false);
 
   // The header works too, for a non-browser caller.
   const viaHeader = await fetch(`${base}/auth/events`, {
@@ -132,6 +138,7 @@ test('the stream sends the state on subscribe and on every change, and needs the
     storedSite: null,
     moodleBusy: true,
     challenge: { open: false, captcha: false },
+    zoomCaptcha: false,
   });
   assert.equal((await next()).moodleBusy, false);
 });

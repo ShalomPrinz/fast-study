@@ -8,7 +8,7 @@ import type { ConnectionError } from '@/services/http'
 
 export { ToastContainer }
 
-type ToastKind = 'info' | 'warning' | 'error'
+type ToastKind = 'info' | 'success' | 'warning' | 'error'
 
 // ReactNode, not string: a failure whose sentence carries third-party text renders it in an
 // isolated block beneath the sentence (`shared/components/ServiceError`).
@@ -20,6 +20,15 @@ export { appToast as toast }
 // toastId is keyed per service, so a downed service reuses one toast instead of stacking.
 export function toastConnectionError(err: ConnectionError): void {
   toast.error(err.message, { toastId: `conn:${err.baseUrl}` })
+}
+
+// An info toast that stays up until `dismissToast(id)`; the id keeps a repeat call from stacking a second.
+export function toastHeld(id: string, message: ReactNode): void {
+  toast.info(message, { toastId: id, autoClose: false })
+}
+
+export function dismissToast(id: string): void {
+  toast.dismiss(id)
 }
 
 // A loading toast its caller settles: `succeed` turns it into a success toast, `dismiss` drops it so

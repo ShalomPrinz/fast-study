@@ -255,6 +255,12 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   zoom_browser_closed: msg({
     message: 'The Zoom window was closed during the capture. Try the download again.',
   }),
+  zoom_captcha_unsupported: msg({
+    message: 'Zoom asked for a captcha, and solving it is only supported on Windows.',
+  }),
+  zoom_captcha_timeout: msg({
+    message: "The Zoom captcha wasn't solved within 10 minutes. Try the download again.",
+  }),
   recording_strategy_unsupported: msg({ message: "This recording type can't be downloaded." }),
   xvfb_unavailable: msg({ message: "Couldn't start capturing the Zoom recording. Try again." }),
   moodle_login_timeout: msg({ message: 'The Moodle login timed out. Try connecting again.' }),

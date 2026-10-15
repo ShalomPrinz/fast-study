@@ -538,6 +538,10 @@ msgstr "ביטול"
 msgid "Cancelled"
 msgstr "בוטל"
 
+#: src/features/downloads/utils/zoomCaptcha.ts:19
+msgid "Caught the Zoom video. The download is in progress."
+msgstr "הסרטון מ-Zoom נתפס. ההורדה בתהליך."
+
 #: src/features/settings/SettingsView.tsx:417
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
@@ -789,7 +793,7 @@ msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastS
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:259
+#: src/shared/i18n/serviceErrors.ts:265
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נסה שוב."
 
@@ -1358,7 +1362,7 @@ msgstr "חומר"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:265
+#: src/shared/i18n/serviceErrors.ts:271
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1418,7 +1422,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:264
+#: src/shared/i18n/serviceErrors.ts:270
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
@@ -2095,11 +2099,11 @@ msgstr "הקבצים הבאים ייווצרו מחדש:"
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:261
+#: src/shared/i18n/serviceErrors.ts:267
 msgid "The login window was closed before login finished. Connect again."
 msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:260
+#: src/shared/i18n/serviceErrors.ts:266
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
 
@@ -2177,6 +2181,10 @@ msgstr "החלון באתר האוניברסיטה עבר את הבדיקה, ו�
 msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 msgstr "החלון נסגר לפני שהחידה נפתרה. לחץ על \"פתיחת החידה מחדש\" כדי להחזיר אותה."
 
+#: src/shared/i18n/serviceErrors.ts:261
+msgid "The Zoom captcha wasn't solved within 10 minutes. Try the download again."
+msgstr "החידה של Zoom לא נפתרה תוך 10 דקות. נסה להוריד שוב."
+
 #: src/shared/i18n/serviceErrors.ts:255
 msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
@@ -2248,7 +2256,7 @@ msgstr "צריך לעשות את זה רק פעם אחת."
 msgid "This recording needs a passcode."
 msgstr "ההקלטה הזו דורשת קוד גישה."
 
-#: src/shared/i18n/serviceErrors.ts:258
+#: src/shared/i18n/serviceErrors.ts:264
 msgid "This recording type can't be downloaded."
 msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 
@@ -2470,9 +2478,17 @@ msgstr "תוקף החיבור לאוניברסיטה פג. חבר מחדש את 
 msgid "Your university's Moodle address"
 msgstr "כתובת ה-Moodle של האוניברסיטה"
 
+#: src/shared/i18n/serviceErrors.ts:258
+msgid "Zoom asked for a captcha, and solving it is only supported on Windows."
+msgstr "Zoom ביקש לפתור חידה, ופתרון החידה נתמך רק ב-Windows."
+
 #: src/features/lectures/components/PdfViewer.tsx:91
 msgid "Zoom in"
 msgstr "הגדלה"
+
+#: src/features/downloads/components/ZoomCaptchaToast.tsx:24
+msgid "Zoom is asking for a captcha. Solve it in the Chrome window that just opened, and the download will continue."
+msgstr "Zoom מבקש לפתור חידה. פתור אותה בחלון ה-Chrome שנפתח עכשיו, וההורדה תמשיך מעצמה."
 
 #: src/features/lectures/components/PdfViewer.tsx:83
 msgid "Zoom out"

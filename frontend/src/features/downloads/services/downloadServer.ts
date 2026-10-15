@@ -123,6 +123,8 @@ export interface RunTarget {
   kind: Kind
   media: Media | 'unsupported'
   disposition: 'pending' | 'queued' | 'skipped' | 'unsupported' | 'queue-failed'
+  // Set once this row's own zoom capture waited on the captcha and caught the player; never false.
+  captchaSolved?: true
 }
 
 // One section's bulk run as the server holds it: at most one per `sectionId`, which is the

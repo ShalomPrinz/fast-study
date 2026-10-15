@@ -1,5 +1,13 @@
 import { VideoExtractor } from './VideoExtractor.js';
-import { CodedError, PasscodeError } from '../lib/errors.js';
+import { PasscodeError } from '../lib/errors.js';
+import {
+  awaitCaptchaSolve,
+  captchaSolveMs,
+  captchaVisible,
+  detectCaptcha,
+  noMediaRequest,
+  requireCaptchaWindow,
+} from '../browser/zoomCaptcha.js';
 
 /** Path ends in .mp4, ignoring query/hash — mirrors background.js's capture filter. */
 function endsWithMp4(url) {
@@ -20,6 +28,8 @@ function mp4Key(url) {
 }
 
 const MP4_WAIT_MS = 30000;
+// Resolves null after `ms`, never holding the process open.
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms, null).unref?.());
 // Best-effort wait for the second clip's .mp4 (not a full video length); ship one file if none.
 const SECOND_MP4_WAIT_MS = 15000;
 // Fill+click attempts at the passcode gate, each waiting 3s for it to detach.
@@ -76,19 +86,32 @@ export class ZoomExtractor extends VideoExtractor {
    * Returns 1-or-2 captures (a share can hold two recordings); core.js splits the name.
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
-   * @param {{ passcode?: string|null }} [opts]  passcode resolved per course/lecture upstream
+   * @param {{ passcode?: string|null, onCaptchaSolved?: () => void }} [opts]  passcode resolved per
+   *   course/lecture upstream; onCaptchaSolved runs when an on-screen wait ended with the player
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture[]>}
    */
-  async _captureVideo(page, rec, { passcode } = {}) {
+  async _captureVideo(page, rec, { passcode, onCaptchaSolved } = {}) {
     // Register the listener BEFORE navigating so an autoplay .mp4 firing during
     // load isn't missed (mirrors VideostreamExtractor / background.js).
     const seen = new Set();
-    const firstWait = page
-      .waitForRequest((req) => endsWithMp4(req.url()), { timeout: MP4_WAIT_MS })
-      .catch(() => null);
+    const sniff = (timeout) =>
+      page.waitForRequest((req) => endsWithMp4(req.url()), { timeout }).catch(() => null);
+    let firstWait = sniff(MP4_WAIT_MS);
 
     await page.goto(rec.pageUrl, { waitUntil: 'load' });
-    await this.#submitPasscode(page, passcode);
+    // The player renders only past the gate, so the captcha check runs after it (docs/ZOOM.md).
+    const gate = await this.#submitPasscode(page, passcode);
+    const found = gate === 'captcha' ? 'frame' : await detectCaptcha(page);
+    if (found) {
+      // On Windows a share with no player is shown too: it may be a captcha we cannot recognise.
+      requireCaptchaWindow(rec.pageUrl, found);
+      // The solve can outlast firstWait's 30s: a sniff armed now catches an .mp4 fired right after
+      // it, and still gets only MP4_WAIT_MS once the solve is done.
+      const solveWait = sniff(captchaSolveMs() + MP4_WAIT_MS);
+      await awaitCaptchaSolve(page, rec.pageUrl, () => this.#submitPasscode(page, passcode));
+      firstWait = Promise.race([solveWait, delay(MP4_WAIT_MS)]);
+      onCaptchaSolved?.();
+    }
 
     let request = await firstWait;
     if (!request) {
@@ -100,11 +123,7 @@ export class ZoomExtractor extends VideoExtractor {
         .catch(() => null);
     }
     if (!request) {
-      throw new CodedError(
-        'zoom_no_media_request',
-        { url: rec.pageUrl },
-        `No .mp4 request captured on zoom share ${rec.pageUrl} (passcode/player may need a manual trigger)`,
-      );
+      throw noMediaRequest(rec.pageUrl);
     }
     seen.add(mp4Key(request.url()));
     const captures = [await this.#toCapture(request, rec)];
@@ -122,15 +141,17 @@ export class ZoomExtractor extends VideoExtractor {
    * Fill the passcode gate (`input#passcode` + `#passcode_btn` "Watch Recording") with
    * the resolved `passcode`. No-op when the player shows directly (already authorized /
    * no gate). Throws PasscodeError so the caller can steer the user to enter/fix it:
-   * `missing` (gate present, no passcode) up front; `incorrect` (gate never clears).
+   * `missing` (gate present, no passcode) up front; `incorrect` (gate never clears). → 'captcha'
+   * instead when the gate outlasts its attempts under a visible captcha frame, which a wrong code is not.
    * @param {import('playwright').Page} page
    * @param {string|null|undefined} passcode
+   * @returns {Promise<'none'|'cleared'|'captcha'>}
    */
   async #submitPasscode(page, passcode) {
     const field = await page
       .waitForSelector('input#passcode, input[type="password"]', { timeout: 5000 })
       .catch(() => null);
-    if (!field) return;
+    if (!field) return 'none';
     // Gate is up but we have nothing to type — don't burn empty submits; ask upstream
     // for a passcode straight away.
     if (!passcode) throw new PasscodeError('missing');
@@ -145,9 +166,10 @@ export class ZoomExtractor extends VideoExtractor {
         .catch(() => false);
       if (cleared) {
         console.log(`[zoom] passcode gate cleared on attempt ${i + 1}`);
-        return;
+        return 'cleared';
       }
     }
+    if (await captchaVisible(page)) return 'captcha';
     // Gate outlasted all attempts → the stored passcode is wrong (a Vue-timing drop
     // clears on the re-fill; a persistent gate means a bad code).
     throw new PasscodeError('incorrect');
