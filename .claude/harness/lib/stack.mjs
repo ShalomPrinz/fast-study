@@ -76,7 +76,8 @@ async function spawnReporting(name, spec, paths) {
   child.once('exit', (code, signal) => (exited = signal ?? `code ${code}`));
   const deadline = Date.now() + REPORT_TIMEOUT_MS;
   for (;;) {
-    const text = fs.readFileSync(log, 'utf8').slice(from);
+    // `from` is a byte offset: slicing the decoded string would skip a char per extra byte of each earlier multibyte one.
+    const text = fs.readFileSync(log).subarray(from).toString('utf8');
     const found = Object.entries(spec.reports).map(([key, source]) => [
       key,
       new RegExp(source, 'm').exec(text)?.[1],
