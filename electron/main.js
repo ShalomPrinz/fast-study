@@ -3,7 +3,7 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
 const { spawn } = require('node:child_process');
-const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, screen, shell } = require('electron');
 // An ES module, loaded by require(esm) — synchronous, which an init that must beat `ready` needs.
 const sentryPolicy = require('@faststudy/sentry');
 const { runStartupChecks } = require('./checks');
@@ -592,8 +592,6 @@ function createWindow(checks) {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
-    minWidth: 1024,
-    minHeight: 640,
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -602,6 +600,9 @@ function createWindow(checks) {
       nodeIntegration: false,
     },
   });
+  // Capped by the work area of the display it opened on: a minimum bigger than the screen cannot be honoured.
+  const { workArea } = screen.getDisplayMatching(mainWindow.getBounds());
+  mainWindow.setMinimumSize(Math.min(1024, workArea.width), Math.min(640, workArea.height));
   // The app's bridge; the URLs are filled in by the time the window navigates to the frontend.
   ipcMain.on('faststudy:config', (event) => {
     event.returnValue = {
