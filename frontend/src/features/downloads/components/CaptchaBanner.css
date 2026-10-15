@@ -1,0 +1,25 @@
+/* In flow atop the content column, so it pushes the page down rather than covering its header. */
+.captcha-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-7);
+  background: var(--warn-soft);
+  border-block-end: 1px solid var(--warn);
+  font-size: var(--fs-body);
+  color: var(--text);
+}
+
+.captcha-banner-dot {
+  flex-shrink: 0;
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.captcha-banner-text {
+  flex: 1;
+  min-width: 0;
+}

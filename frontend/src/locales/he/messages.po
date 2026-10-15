@@ -211,7 +211,7 @@ msgstr "לא ניתן להתחבר אל {host}. בדוק את החיבור לא�
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:180
+#: src/features/downloads/components/ManualDownload.tsx:174
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -534,14 +534,14 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/downloads/components/ManualDownload.tsx:269
+#: src/features/downloads/components/ManualDownload.tsx:263
 #: src/features/downloads/components/RecordingJobList.tsx:48
 #: src/features/downloads/components/RecordingRow.tsx:308
 #: src/features/downloads/components/RecordingRow.tsx:340
 msgid "Cancelled"
 msgstr "בוטל"
 
-#: src/features/downloads/utils/zoomCaptcha.ts:19
+#: src/features/downloads/utils/zoomCaptcha.ts:9
 msgid "Caught the Zoom video. The download is in progress."
 msgstr "הסרטון מ-Zoom נתפס. ההורדה בתהליך."
 
@@ -771,7 +771,7 @@ msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר תשובה ברורה."
 
-#: src/features/downloads/components/ManualDownload.tsx:301
+#: src/features/downloads/components/ManualDownload.tsx:295
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "לא ניתן להוריד את \"{lecture}\". נסה שוב."
 
@@ -808,7 +808,7 @@ msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נס�
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "לא הצלחנו לזהות מאיפה להוריד את הקובץ. נסה שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:123
+#: src/features/downloads/components/ManualDownload.tsx:124
 #: src/features/search/SearchView.tsx:183
 msgid "Course"
 msgstr "קורס"
@@ -901,7 +901,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "הושלם"
 
-#: src/features/downloads/components/ManualDownload.tsx:174
+#: src/features/downloads/components/ManualDownload.tsx:168
 #: src/features/downloads/components/RecordingJobList.tsx:62
 #: src/features/downloads/components/RecordingRow.tsx:364
 msgid "Download"
@@ -924,13 +924,13 @@ msgstr "הורדת הכול ({leaves})"
 msgid "Download any open video on the internet"
 msgstr "הורד כל וידאו שפתוח לצפייה באינטרנט"
 
-#: src/features/downloads/components/ManualDownload.tsx:264
+#: src/features/downloads/components/ManualDownload.tsx:258
 #: src/features/downloads/components/RecordingRow.tsx:309
 #: src/features/downloads/components/RecordingRow.tsx:362
 msgid "Downloaded ✓"
 msgstr "הורד ✓"
 
-#: src/features/downloads/components/ManualDownload.tsx:259
+#: src/features/downloads/components/ManualDownload.tsx:253
 #: src/features/downloads/components/RecordingRow.tsx:314
 msgid "Downloading"
 msgstr "מוריד"
@@ -1283,7 +1283,7 @@ msgstr "השגיאה האחרונה:"
 msgid "lecture"
 msgstr "הרצאה"
 
-#: src/features/downloads/components/ManualDownload.tsx:150
+#: src/features/downloads/components/ManualDownload.tsx:144
 #: src/features/downloads/components/RecordingRow.tsx:266
 msgid "Lecture"
 msgstr "הרצאה"
@@ -1380,7 +1380,7 @@ msgstr "Moodle דחה את הבקשה."
 msgid "More actions"
 msgstr "פעולות נוספות"
 
-#: src/features/downloads/components/ManualDownload.tsx:162
+#: src/features/downloads/components/ManualDownload.tsx:156
 msgid "Name in the course"
 msgstr "השם בקורס"
 
@@ -1407,6 +1407,10 @@ msgstr "לא נמצא Chrome או Edge במחשב הזה."
 #: src/shared/i18n/serviceErrors.ts:208
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "לא נמצא Chrome או Edge במחשב הזה. התקן את Chrome ונסה שוב."
+
+#: src/shared/i18n/serviceErrors.ts:272
+msgid "No Chrome window is waiting on a captcha anymore."
+msgstr "כבר אין חלון Chrome שמחכה לפתרון חידה."
 
 #: src/features/downloads/components/CoursePicker.tsx:79
 msgid "No current courses."
@@ -1682,7 +1686,7 @@ msgstr "מדיניות פרטיות"
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-GitHub: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
-#: src/features/downloads/components/ManualDownload.tsx:254
+#: src/features/downloads/components/ManualDownload.tsx:248
 #: src/features/runner/RunnerView.tsx:322
 msgid "Queued"
 msgstr "בתור"
@@ -1705,7 +1709,7 @@ msgstr "יצירה מחדש משלב {stepLabel}"
 msgid "recitation"
 msgstr "תרגול"
 
-#: src/features/downloads/components/ManualDownload.tsx:156
+#: src/features/downloads/components/ManualDownload.tsx:150
 #: src/features/downloads/components/RecordingRow.tsx:272
 msgid "Recitation"
 msgstr "תרגול"
@@ -1789,7 +1793,7 @@ msgstr "תוצאות"
 msgid "Retry"
 msgstr "ניסיון חוזר"
 
-#: src/features/downloads/components/ManualDownload.tsx:279
+#: src/features/downloads/components/ManualDownload.tsx:273
 #: src/features/downloads/components/RecordingJobList.tsx:60
 #: src/features/downloads/components/RecordingRow.tsx:360
 msgid "Retry ✗"
@@ -1910,6 +1914,10 @@ msgstr "ההגדרות נשמרו"
 #: src/features/downloads/components/SectionGroup.tsx:196
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה את השמות והרץ שוב."
+
+#: src/features/downloads/components/CaptchaBanner.tsx:51
+msgid "Show captcha window"
+msgstr "הצגת חלון החידה"
 
 #: src/features/search/SearchView.tsx:299
 msgid "Show more"
@@ -2178,6 +2186,10 @@ msgstr "האוניברסיטה בודקת את החיבור."
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "תוקף החיבור לאוניברסיטה פג. התחבר מחדש והרץ את היחידה שוב."
 
+#: src/features/downloads/components/CaptchaBanner.tsx:39
+msgid "The university site is asking for a captcha in a Chrome window. Solve it there to continue."
+msgstr "אתר האוניברסיטה מבקש לפתור חידה בחלון Chrome. פתור אותה שם כדי להמשיך."
+
 #: src/features/downloads/utils/downloadErrors.ts:38
 #: src/shared/i18n/serviceErrors.ts:201
 msgid "The university site is busy with another request. Try again in a moment."
@@ -2310,7 +2322,7 @@ msgstr "לנסות שוב"
 msgid "Turn on Developer mode"
 msgstr "הפעלת מצב פיתוח"
 
-#: src/features/downloads/components/ManualDownload.tsx:143
+#: src/features/downloads/components/ManualDownload.tsx:137
 msgid "Type"
 msgstr "סוג"
 
@@ -2397,7 +2409,7 @@ msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או �
 msgid "Video"
 msgstr "וידאו"
 
-#: src/features/downloads/components/ManualDownload.tsx:108
+#: src/features/downloads/components/ManualDownload.tsx:109
 msgid "Video link"
 msgstr "קישור לווידאו"
 
@@ -2449,7 +2461,7 @@ msgstr "בלי אחד מהם, FastStudy לא תוכל להוריד הקלטות 
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "עבודה שבתהליך תיעצר. להפעיל מחדש בכל זאת?"
 
-#: src/features/downloads/components/ManualDownload.tsx:45
+#: src/features/downloads/components/ManualDownload.tsx:46
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "עובד רק עבור קישורי וידאו, ורק אם הם נגישים ללא פרטי התחברות."
 
@@ -2502,9 +2514,9 @@ msgstr "Zoom ביקש לפתור חידה, ופתרון החידה נתמך רק
 msgid "Zoom in"
 msgstr "הגדלה"
 
-#: src/features/downloads/components/ZoomCaptchaToast.tsx:24
-msgid "Zoom is asking for a captcha. Solve it in the Chrome window that just opened, and the download will continue."
-msgstr "Zoom מבקש לפתור חידה. פתור אותה בחלון ה-Chrome שנפתח עכשיו, וההורדה תמשיך מעצמה."
+#: src/features/downloads/components/CaptchaBanner.tsx:34
+msgid "Zoom is asking for a captcha in a Chrome window. The download continues once you solve it."
+msgstr "Zoom מבקש לפתור חידה בחלון Chrome. ההורדה תמשיך אחרי שתפתור אותה."
 
 #: src/features/lectures/components/PdfViewer.tsx:82
 #: src/features/lectures/components/PdfViewer.tsx:85

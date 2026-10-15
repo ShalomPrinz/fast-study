@@ -211,7 +211,7 @@ msgstr "{host} could not be reached. Check your internet connection and try agai
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {# item} other {# items}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:180
+#: src/features/downloads/components/ManualDownload.tsx:174
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
@@ -534,14 +534,14 @@ msgstr "Can't replace the video while it's being processed or waiting in line"
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/features/downloads/components/ManualDownload.tsx:269
+#: src/features/downloads/components/ManualDownload.tsx:263
 #: src/features/downloads/components/RecordingJobList.tsx:48
 #: src/features/downloads/components/RecordingRow.tsx:308
 #: src/features/downloads/components/RecordingRow.tsx:340
 msgid "Cancelled"
 msgstr "Cancelled"
 
-#: src/features/downloads/utils/zoomCaptcha.ts:19
+#: src/features/downloads/utils/zoomCaptcha.ts:9
 msgid "Caught the Zoom video. The download is in progress."
 msgstr "Caught the Zoom video. The download is in progress."
 
@@ -771,7 +771,7 @@ msgstr "Could not rename \"{from}\" to \"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "Could not tell what {url} is — the site didn't answer usefully."
 
-#: src/features/downloads/components/ManualDownload.tsx:301
+#: src/features/downloads/components/ManualDownload.tsx:295
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
@@ -808,7 +808,7 @@ msgstr "Couldn't start capturing the Zoom recording. Try again."
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
-#: src/features/downloads/components/ManualDownload.tsx:123
+#: src/features/downloads/components/ManualDownload.tsx:124
 #: src/features/search/SearchView.tsx:183
 msgid "Course"
 msgstr "Course"
@@ -901,7 +901,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/ManualDownload.tsx:174
+#: src/features/downloads/components/ManualDownload.tsx:168
 #: src/features/downloads/components/RecordingJobList.tsx:62
 #: src/features/downloads/components/RecordingRow.tsx:364
 msgid "Download"
@@ -924,13 +924,13 @@ msgstr "Download all {leaves}"
 msgid "Download any open video on the internet"
 msgstr "Download any open video on the internet"
 
-#: src/features/downloads/components/ManualDownload.tsx:264
+#: src/features/downloads/components/ManualDownload.tsx:258
 #: src/features/downloads/components/RecordingRow.tsx:309
 #: src/features/downloads/components/RecordingRow.tsx:362
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
-#: src/features/downloads/components/ManualDownload.tsx:259
+#: src/features/downloads/components/ManualDownload.tsx:253
 #: src/features/downloads/components/RecordingRow.tsx:314
 msgid "Downloading"
 msgstr "Downloading"
@@ -1283,7 +1283,7 @@ msgstr "Last error:"
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/ManualDownload.tsx:150
+#: src/features/downloads/components/ManualDownload.tsx:144
 #: src/features/downloads/components/RecordingRow.tsx:266
 msgid "Lecture"
 msgstr "Lecture"
@@ -1380,7 +1380,7 @@ msgstr "Moodle refused the request."
 msgid "More actions"
 msgstr "More actions"
 
-#: src/features/downloads/components/ManualDownload.tsx:162
+#: src/features/downloads/components/ManualDownload.tsx:156
 msgid "Name in the course"
 msgstr "Name in the course"
 
@@ -1407,6 +1407,10 @@ msgstr "No Chrome or Edge found on this computer."
 #: src/shared/i18n/serviceErrors.ts:208
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "No Chrome or Edge was found on this computer. Install Chrome and try again."
+
+#: src/shared/i18n/serviceErrors.ts:272
+msgid "No Chrome window is waiting on a captcha anymore."
+msgstr "No Chrome window is waiting on a captcha anymore."
 
 #: src/features/downloads/components/CoursePicker.tsx:79
 msgid "No current courses."
@@ -1682,7 +1686,7 @@ msgstr "Privacy policy"
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
-#: src/features/downloads/components/ManualDownload.tsx:254
+#: src/features/downloads/components/ManualDownload.tsx:248
 #: src/features/runner/RunnerView.tsx:322
 msgid "Queued"
 msgstr "Queued"
@@ -1705,7 +1709,7 @@ msgstr "Re-generate from {stepLabel}"
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/ManualDownload.tsx:156
+#: src/features/downloads/components/ManualDownload.tsx:150
 #: src/features/downloads/components/RecordingRow.tsx:272
 msgid "Recitation"
 msgstr "Recitation"
@@ -1789,7 +1793,7 @@ msgstr "Results"
 msgid "Retry"
 msgstr "Retry"
 
-#: src/features/downloads/components/ManualDownload.tsx:279
+#: src/features/downloads/components/ManualDownload.tsx:273
 #: src/features/downloads/components/RecordingJobList.tsx:60
 #: src/features/downloads/components/RecordingRow.tsx:360
 msgid "Retry ✗"
@@ -1910,6 +1914,10 @@ msgstr "Settings saved"
 #: src/features/downloads/components/SectionGroup.tsx:196
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "Several rows would download into the same lecture ({names}). Rename them, then run again."
+
+#: src/features/downloads/components/CaptchaBanner.tsx:51
+msgid "Show captcha window"
+msgstr "Show captcha window"
 
 #: src/features/search/SearchView.tsx:299
 msgid "Show more"
@@ -2178,6 +2186,10 @@ msgstr "The university is checking the connection."
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "the university session expired. Reconnect, then run the section again."
 
+#: src/features/downloads/components/CaptchaBanner.tsx:39
+msgid "The university site is asking for a captcha in a Chrome window. Solve it there to continue."
+msgstr "The university site is asking for a captcha in a Chrome window. Solve it there to continue."
+
 #: src/features/downloads/utils/downloadErrors.ts:38
 #: src/shared/i18n/serviceErrors.ts:201
 msgid "The university site is busy with another request. Try again in a moment."
@@ -2310,7 +2322,7 @@ msgstr "Try again"
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
 
-#: src/features/downloads/components/ManualDownload.tsx:143
+#: src/features/downloads/components/ManualDownload.tsx:137
 msgid "Type"
 msgstr "Type"
 
@@ -2397,7 +2409,7 @@ msgstr "Use the window that opened on the university site, or open the site in y
 msgid "Video"
 msgstr "Video"
 
-#: src/features/downloads/components/ManualDownload.tsx:108
+#: src/features/downloads/components/ManualDownload.tsx:109
 msgid "Video link"
 msgstr "Video link"
 
@@ -2449,7 +2461,7 @@ msgstr "Without one, FastStudy can't fetch recordings from your course site and 
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "Work in progress will stop. Restart anyway?"
 
-#: src/features/downloads/components/ManualDownload.tsx:45
+#: src/features/downloads/components/ManualDownload.tsx:46
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "Works only for video links, and only if they open without signing in."
 
@@ -2502,9 +2514,9 @@ msgstr "Zoom asked for a captcha, and solving it is only supported on Windows."
 msgid "Zoom in"
 msgstr "Zoom in"
 
-#: src/features/downloads/components/ZoomCaptchaToast.tsx:24
-msgid "Zoom is asking for a captcha. Solve it in the Chrome window that just opened, and the download will continue."
-msgstr "Zoom is asking for a captcha. Solve it in the Chrome window that just opened, and the download will continue."
+#: src/features/downloads/components/CaptchaBanner.tsx:34
+msgid "Zoom is asking for a captcha in a Chrome window. The download continues once you solve it."
+msgstr "Zoom is asking for a captcha in a Chrome window. The download continues once you solve it."
 
 #: src/features/lectures/components/PdfViewer.tsx:82
 #: src/features/lectures/components/PdfViewer.tsx:85

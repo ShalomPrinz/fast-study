@@ -269,6 +269,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
   moodle_login_not_pending: msg({ message: 'No login is in progress. Connect again.' }),
   moodle_ws_error: msg({ message: 'Moodle refused the request.' }),
+  no_window_waiting: msg({ message: 'No Chrome window is waiting on a captcha anymore.' }),
 }
 
 // The catalog row for a code, or null when it has none — the caller then falls back to prose.

@@ -6,7 +6,7 @@ import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusCont
 import { DownloadsSessionProvider } from '@/features/downloads/contexts/DownloadsSessionContext'
 import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsContext'
 import { toast } from '@/services/toaster'
-import ZoomCaptchaToast from '@/features/downloads/components/ZoomCaptchaToast'
+import CaptchaBanner from '@/features/downloads/components/CaptchaBanner'
 import { toastCaptchaSolved } from '@/features/downloads/utils/zoomCaptcha'
 import Sidebar from '@/shared/sidebar'
 import DriveConsentPrompt from './DriveConsentPrompt'
@@ -26,11 +26,17 @@ export default function Layout() {
             <SectionRunsProvider onCaptchaSolved={() => toastCaptchaSolved(true)}>
               <div className="layout">
                 <Sidebar />
-                <Outlet />
+                {/* The banner spans the content column only, never the sidebar; the route keeps the row
+                      flex its pages were built for. */}
+                <div className="layout-content">
+                  <CaptchaBanner />
+                  <div className="layout-route">
+                    <Outlet />
+                  </div>
+                </div>
                 {/* Route-independent by design: the run that needs consent is not the screen the
                       user is on. */}
                 <DriveConsentPrompt />
-                <ZoomCaptchaToast />
               </div>
             </SectionRunsProvider>
           </DownloadsSessionProvider>

@@ -276,6 +276,11 @@ export async function completeAuth(): Promise<{ connected: boolean }> {
   return postReconnectAware<{ connected: boolean }>(autoDownloader, '/auth/complete', {})
 }
 
+// Brings every Chrome window waiting on a captcha to the front; a 409 `no_window_waiting` means none is.
+export async function showWindow(): Promise<{ raised: string[] }> {
+  return autoDownloader.post<{ raised: string[] }>('/window/show')
+}
+
 // Deletes the stored session locally; reconnecting costs a full headed MFA round-trip. Idempotent.
 export async function disconnectAuth(): Promise<{ connected: boolean }> {
   return autoDownloader.post<{ connected: boolean }>('/auth/disconnect')

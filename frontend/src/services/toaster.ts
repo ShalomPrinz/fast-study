@@ -22,15 +22,6 @@ export function toastConnectionError(err: ConnectionError): void {
   toast.error(err.message, { toastId: `conn:${err.baseUrl}` })
 }
 
-// An info toast that stays up until `dismissToast(id)`; the id keeps a repeat call from stacking a second.
-export function toastHeld(id: string, message: ReactNode): void {
-  toast.info(message, { toastId: id, autoClose: false })
-}
-
-export function dismissToast(id: string): void {
-  toast.dismiss(id)
-}
-
 // A loading toast its caller settles: `succeed` turns it into a success toast, `dismiss` drops it so
 // the caller can report the failure its own way. The nulls fall back to the container's defaults.
 export function toastPending(message: string): {

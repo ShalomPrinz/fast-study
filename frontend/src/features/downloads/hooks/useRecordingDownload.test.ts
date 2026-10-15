@@ -43,7 +43,6 @@ vi.mock('@/shared/contexts/RunnerStatusContext', () => ({
 vi.mock('@/services/toaster', () => ({
   toast: vi.fn(),
   toastConnectionError: vi.fn(),
-  dismissToast: vi.fn(),
 }))
 
 const resolveMedia = vi.fn()

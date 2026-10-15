@@ -89,10 +89,12 @@ asks `/auth/status` once per mount (`refresh`), and the provider adds `unconfigu
 phase is idle. `status: null` is "unknown".
 
 A frame's `zoomCaptcha` (absent reads false) is a zoom download waiting on a captcha in the on-screen
-Chrome window: `ZoomCaptchaToast`, in `Layout` so it follows every route, holds an info toast up while it
-is true and dismisses it when it turns false; only a flip acts (`zoomCaptchaToastChange`), so a repeat
-frame never re-raises a toast the user closed. If auto dies mid-wait, the held toast stays until the stream
-reconnects and its first frame reads false.
+Chrome window, and `challenge.captcha` the university site's challenge window doing the same.
+`CaptchaBanner`, in `Layout` atop the content column so it follows every route without covering the
+sidebar, shows while either is true (`captchaWait`, which names the site when both are) and hides on the
+frame that clears them. Its "Show captcha window" button calls `POST /window/show` (`showWindow`) to raise
+a window the OS left behind the user's work; a 409 `no_window_waiting` toasts like any coded failure. If
+auto dies mid-wait, the banner stays until the stream reconnects and its first frame reads false.
 
 The capture's other end is `captchaSolved: true` (absent otherwise, never false), never the stream: it
 means this very item waited on that captcha and its player then appeared, so a queued download is never

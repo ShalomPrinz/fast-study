@@ -12,7 +12,7 @@ never add a backend endpoint answering "does file X exist" — that is the datab
 | ------------------------ | ------------------------------------------------------------------------------------------------ |
 | root (`App`, `types.ts`) | flat, no subdirs                                                                                 |
 | `styles/`                | `tokens.css` plus the shared-vocabulary stylesheets — see Styling                                |
-| `app/`                   | the shell: `Layout` (providers, sidebar, outlet, Drive consent prompt), `InitGate`, error boundary |
+| `app/`                   | the shell: `Layout` (providers, sidebar, captcha banner, outlet, Drive consent prompt), `InitGate`, error boundary |
 | `services/`              | one file per external concern, shared by all features, never split per feature                   |
 | `shared/`                | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
 | `features/<x>/`          | one slice per page: views, layout routes, components, hooks, contexts, constants, utils          |
