@@ -56,12 +56,15 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
       document: fakeDocument(),
       visited: [],
       bounds: [],
+      // Every setWindowBounds, window states included.
+      steps: [],
       fronted: 0,
       closed: false,
       pages: () => [page],
       newCDPSession: async () => ({
         send: async (method, params) => {
           if (method === 'Browser.getWindowForTarget') return { windowId: 1 };
+          context.steps.push(params.bounds);
           if (params.bounds.left !== undefined) context.bounds.push(params.bounds);
           return {};
         },

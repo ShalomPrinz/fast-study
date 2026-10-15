@@ -27,6 +27,7 @@ import {
   handleResolve,
   handleZoomPasscode,
   handleClose,
+  handleWindowShow,
   handleMoodleFileHead,
   handleMoodleFile,
 } from './src/http/server.js';
@@ -70,6 +71,7 @@ app.post('/list', handleList);
 app.post('/list/expand', handleListExpand);
 app.post('/resolve', handleResolve);
 app.post('/zoom/passcode', handleZoomPasscode);
+app.post('/window/show', handleWindowShow);
 app.post('/close', handleClose);
 // HEAD first: express would otherwise answer it with the GET handler, a full turn of the lock.
 app.head('/moodle/file/:id', handleMoodleFileHead);

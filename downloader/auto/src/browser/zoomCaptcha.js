@@ -6,6 +6,8 @@ import { CodedError } from '../lib/errors.js';
 
 const OFF_SCREEN = { left: -32000, top: -32000 };
 const ON_SCREEN = { left: 80, top: 80 };
+const MINIMIZED = { windowState: 'minimized' };
+const NORMAL = { windowState: 'normal' };
 
 // Playwright checks only a selector list's first DOM match, so each alternative carries `:visible`:
 // a hidden earlier match (reCAPTCHA's idle bframe) never masks a visible one.
@@ -25,6 +27,8 @@ const CAPTCHA = visible(
 const deps = { platform: process.platform, detectMs: 30_000, solveMs: 10 * 60_000 };
 
 let shown = false;
+// The page on screen for a captcha solve, so POST /window/show can raise it again.
+let waiting = null;
 
 /** 'change' whenever `zoomCaptchaState()` may have changed (/auth/events subscribes). */
 export const zoomCaptchaEvents = new EventEmitter();
@@ -102,6 +106,7 @@ export function noMediaRequest(url) {
  */
 export async function awaitCaptchaSolve(page, url, passGate) {
   const deadline = Date.now() + deps.solveMs;
+  waiting = page;
   setShown(true);
   try {
     await bounds(page, ON_SCREEN);
@@ -115,6 +120,7 @@ export async function awaitCaptchaSolve(page, url, passGate) {
     }
     console.log('[zoom] captcha solved');
   } finally {
+    if (waiting === page) waiting = null;
     setShown(false);
     // FASTSTUDY_ZOOM_VISIBLE=1 keeps the window on screen for watching (zoomBrowser.js).
     if (process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') await bounds(page, OFF_SCREEN);
@@ -142,13 +148,29 @@ async function solved(page, deadline, passGate) {
   }
 }
 
-// Window position through CDP, as the challenge window moves its own; cosmetic, so a failure never fails the capture.
-async function bounds(page, rect) {
+/**
+ * Raise the window waiting on a captcha in front of the user's work: a minimize and restore gets past
+ * Windows' foreground lock, which a bare bringToFront does not. → false when no captcha waits.
+ */
+export async function raiseZoomCaptcha() {
+  const page = waiting;
+  if (!page) return false;
+  await bounds(page, ON_SCREEN, MINIMIZED, NORMAL);
+  await page.bringToFront().catch(() => {});
+  // The wait ended mid-raise: its move off-screen may have landed before ours, so park it again.
+  if (waiting !== page && process.env.FASTSTUDY_ZOOM_VISIBLE !== '1')
+    await bounds(page, OFF_SCREEN);
+  return true;
+}
+
+// Window state through CDP, each of `steps` in turn from a normal window (a minimized one takes no
+// position); as the challenge window moves its own, and cosmetic, so a failure never fails the capture.
+async function bounds(page, ...steps) {
   try {
     const cdp = await page.context().newCDPSession(page);
     const { windowId } = await cdp.send('Browser.getWindowForTarget');
-    await cdp.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
-    await cdp.send('Browser.setWindowBounds', { windowId, bounds: rect });
+    await cdp.send('Browser.setWindowBounds', { windowId, bounds: NORMAL });
+    for (const step of steps) await cdp.send('Browser.setWindowBounds', { windowId, bounds: step });
     await cdp.detach().catch(() => {});
   } catch {
     // the window may already be gone

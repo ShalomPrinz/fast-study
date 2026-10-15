@@ -326,6 +326,7 @@ services; `state` stays as the developer-facing reason.
 | `browser/zoomCaptcha.js`        | `zoom_captcha_unsupported`    | `url`                    | user  |
 | `browser/zoomCaptcha.js`        | `zoom_captcha_timeout`        | `url`                    | user  |
 | `browser/zoomBrowser.js`        | `xvfb_unavailable`            | `detail`                 | user  |
+| `http/server.js` `/window/show` | `no_window_waiting`           | —                        | user  |
 | `http/server.js` `resolveItem`  | `recording_strategy_unsupported` | `strategy`            | user  |
 | `auth/moodleToken.js`           | `moodle_login_timeout`        | —                        | user  |
 | `auth/moodleToken.js`           | `moodle_login_abandoned`      | —                        | user  |

@@ -145,7 +145,8 @@ are made from inside that browser:
   the caller never sees the block. Landing anywhere else is the captcha: the window moves on screen
   (CDP `Browser.setWindowBounds`), comes to the front, holds the Moodle lock for the user's retry
   ([GATE.md](GATE.md#holds-that-outlive-the-request)) and the call throws `site_blocked` with
-  `params.challengeWindow:'captcha'`; `false`: no browser could launch. `getPublicConfig` opts out
+  `params.challengeWindow:'captcha'` (`POST /window/show` raises it again, as for zoom's
+  [captcha](ZOOM.md#captcha-browserzoomcaptchajs)); `false`: no browser could launch. `getPublicConfig` opts out
   (`reopen:false`) — its 3xx or HTML may be a real redirect or a non-Moodle server — so the probe
   opens the window itself and reports `challengeWindow`, `'ready'` included. A block while it is up reuses it (Chrome locks the profile, so a second launch would
   fail), reloading its root when the page itself was challenged.

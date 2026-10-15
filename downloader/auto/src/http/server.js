@@ -13,6 +13,7 @@ import {
   openChallenge,
   challengeState,
   challengeEvents,
+  raiseChallenge,
 } from '../moodle/challenge.js';
 import { probeSite } from '../moodle/probe.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
@@ -20,7 +21,7 @@ import { setReporting } from '@faststudy/sentry';
 import { getSession, closeAllSessions, browserClosed } from '../browser/browserSession.js';
 import { resolveBrowserChannel } from '../browser/browserChannel.js';
 import { loadStealthChromium } from '../browser/zoomBrowser.js';
-import { zoomCaptchaEvents, zoomCaptchaState } from '../browser/zoomCaptcha.js';
+import { zoomCaptchaEvents, zoomCaptchaState, raiseZoomCaptcha } from '../browser/zoomCaptcha.js';
 import {
   listRecordings,
   toCourses,
@@ -954,6 +955,24 @@ export function handleZoomPasscode(req, res) {
   passcodes.save({ course, name, passcode, scope });
   logResult('/zoom/passcode', 'ok');
   send(res, 200, {});
+}
+
+// Raise every window waiting on the user's captcha, for when Windows' foreground lock kept it behind
+// their work. The challenge window goes last, so it ends in front when both wait.
+export async function handleWindowShow(req, res) {
+  logReq('POST', '/window/show');
+  const raised = [];
+  if (await raiseZoomCaptcha()) raised.push('zoom');
+  if (await raiseChallenge()) raised.push('challenge');
+  logResult('/window/show', raised.join(', ') || 'none waiting (409)');
+  if (raised.length === 0) {
+    return send(res, 409, {
+      error: 'no window is waiting on a captcha',
+      code: 'no_window_waiting',
+      params: {},
+    });
+  }
+  send(res, 200, { raised });
 }
 
 export async function handleClose(req, res) {

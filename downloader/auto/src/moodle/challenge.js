@@ -318,13 +318,22 @@ class ChallengeWindow {
     publish();
   }
 
-  // Window position through CDP; cosmetic, so a failure never fails the call.
-  async _bounds(bounds) {
+  /** Back on screen and in front; a minimize and restore gets past Windows' foreground lock. */
+  async raise() {
+    await this._bounds(ON_SCREEN, { windowState: 'minimized' }, { windowState: 'normal' });
+    await this.page.bringToFront().catch(() => {});
+    // Solved mid-raise: passed()'s move off-screen may have landed before ours, so park it again.
+    if (!this.captcha) await this._bounds(OFF_SCREEN);
+  }
+
+  // Window state through CDP, each of `steps` in turn from a normal window (a minimized one takes no
+  // position); cosmetic, so a failure never fails the call.
+  async _bounds(...steps) {
     try {
       const cdp = await this.context.newCDPSession(this.page);
       const { windowId } = await cdp.send('Browser.getWindowForTarget');
       await cdp.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
-      await cdp.send('Browser.setWindowBounds', { windowId, bounds });
+      for (const bounds of steps) await cdp.send('Browser.setWindowBounds', { windowId, bounds });
       await cdp.detach().catch(() => {});
     } catch {
       // the window may already be gone
@@ -402,6 +411,14 @@ async function closeWindow() {
     await w.context.close().catch(() => {});
   }
   await closing;
+}
+
+/** Raise the window if a captcha on it waits for the user (POST /window/show); → whether one did. */
+export async function raiseChallenge() {
+  const w = win;
+  if (!w?.captcha) return false;
+  await w.raise();
+  return true;
 }
 
 /** End block mode: close the window and wait for it to be gone; `forget` also deletes its profile. */
