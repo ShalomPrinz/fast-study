@@ -77,15 +77,17 @@ export function listRecordings(sections, courseId) {
 }
 
 /**
- * core_enrol_get_users_courses → the picker's rows, sorted by name. `past`: hidden from the user,
- * or its end date has gone by — the picker sets those apart rather than dropping them.
- * @returns {Array<{ id: number, name: string, url: string, past: boolean }>}
+ * core_enrol_get_users_courses → the picker's rows, sorted by name. `name` is `fullname`, never
+ * `displayname`, which some sites prefix with the code; `code` is `shortname`. `past`: hidden from
+ * the user, or its end date has gone by — the picker sets those apart rather than dropping them.
+ * @returns {Array<{ id: number, name: string, code: string|null, url: string, past: boolean }>}
  */
 export function toCourses(courses, site, now = Date.now()) {
   return (courses ?? [])
     .map((c) => ({
       id: c.id,
-      name: stripTags(c.displayname || c.fullname || ''),
+      name: stripTags(c.fullname || ''),
+      code: String(c.shortname ?? '').trim() || null,
       url: `${site}/course/view.php?id=${c.id}`,
       past: !!c.hidden || c.visible === 0 || (c.enddate > 0 && c.enddate * 1000 < now),
     }))

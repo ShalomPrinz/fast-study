@@ -193,12 +193,16 @@ The whole course as an array of sections — `{ section, name, summary, modules[
 
 ### `core_enrol_get_users_courses(userid)`
 
-The account's enrolled courses — `{ id, fullname, displayname, visible, hidden?, enddate, … }`.
+The account's enrolled courses — `{ id, shortname, fullname, displayname, visible, hidden?, enddate, … }`.
+`moodlewssettingfilter=true&moodlewssettinglang=<he|en>` runs the multilang filter, so `fullname`
+comes back in that one language (BIU stores both glued, `אלגוריתמים 1Algorithms 1`); sites without
+the filter ignore both flags. `displayname` is `shortname + " " + fullname` at BIU; `idnumber` is not the code.
 
 ## The course picker
 
-`GET /courses` lists the enrolled courses as `{ available:true, courses:[{ id, name, url, past }] }`:
-`name` is `displayname` (else `fullname`) through `stripTags`, `url` is `{site}/course/view.php?id=N`,
+`GET /courses?lang=he|en` lists the enrolled courses as `{ available:true, courses:[{ id, name, code, url, past }] }`.
+`lang` (the UI locale) adds the multilang flags above; any other value or none sends no flags. `name`
+is `fullname` through `stripTags` (trimmed), `code` is `shortname` trimmed or `null`, `url` is `{site}/course/view.php?id=N`,
 and `past` is `hidden`, `visible:0` or an `enddate` already gone by; sorted by name. It is **one WS
 call per picker open**: BIU's Radware walled a second call made 2 s after the first. So availability
 is never discovered by calling the function — a function missing from the token's service answers

@@ -55,27 +55,61 @@ function fakeRes() {
   return res;
 }
 
-async function call(t, handler, body = {}) {
+async function call(t, handler, body = {}, query = {}) {
   t.mock.method(console, 'log', () => {});
   t.mock.method(console, 'warn', () => {});
   const res = fakeRes();
-  await handler({ body, headers: {} }, res);
+  await handler({ body, query, headers: {} }, res);
   return res;
 }
 
-test('courses map to picker rows: decoded names, course URLs, sorted by name', () => {
+test('courses map to picker rows: fullname decoded, shortname as code, sorted by name', () => {
   const rows = toCourses(
     [
-      { id: 2, fullname: 'Zeta <span>&amp; co</span>', visible: 1, enddate: 0 },
-      { id: 1, displayname: 'Alpha', fullname: 'ignored', visible: 1, enddate: 0 },
+      {
+        id: 2,
+        shortname: '868922001',
+        fullname: 'Zeta <span>&amp; co</span>',
+        visible: 1,
+        enddate: 0,
+      },
+      {
+        id: 1,
+        shortname: ' 868922002 ',
+        displayname: '868922002 Alpha',
+        fullname: 'Alpha',
+        visible: 1,
+        enddate: 0,
+      },
     ],
     SITE,
     NOW,
   );
   assert.deepEqual(rows, [
-    { id: 1, name: 'Alpha', url: `${SITE}/course/view.php?id=1`, past: false },
-    { id: 2, name: 'Zeta & co', url: `${SITE}/course/view.php?id=2`, past: false },
+    { id: 1, name: 'Alpha', code: '868922002', url: `${SITE}/course/view.php?id=1`, past: false },
+    {
+      id: 2,
+      name: 'Zeta & co',
+      code: '868922001',
+      url: `${SITE}/course/view.php?id=2`,
+      past: false,
+    },
   ]);
+});
+
+test('code is null for a missing or blank shortname; stray name whitespace is trimmed', () => {
+  const [a, b] = toCourses(
+    [
+      { id: 1, fullname: '\tMachine Learning', visible: 1, enddate: 0 },
+      { id: 2, shortname: '  ', fullname: 'Programming Languages ', visible: 1, enddate: 0 },
+    ],
+    SITE,
+    NOW,
+  );
+  assert.equal(a.name, 'Machine Learning');
+  assert.equal(a.code, null);
+  assert.equal(b.name, 'Programming Languages');
+  assert.equal(b.code, null);
 });
 
 test('past: hidden, invisible, or an end date already gone by', () => {
@@ -112,12 +146,28 @@ test('GET /courses on a verified token is exactly one core_enrol_get_users_cours
   assert.equal(res.code, 200);
   assert.deepEqual(res.body, {
     available: true,
-    courses: [{ id: 108106, name: 'Algorithms', url: COURSE_URL, past: false }],
+    courses: [{ id: 108106, name: 'Algorithms', code: null, url: COURSE_URL, past: false }],
   });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].searchParams.get('wsfunction'), 'core_enrol_get_users_courses');
   assert.equal(calls[0].searchParams.get('userid'), '185036');
 });
+
+for (const [label, query, lang] of [
+  ['lang=he', { lang: 'he' }, 'he'],
+  ['lang=en', { lang: 'en' }, 'en'],
+  ['no lang', {}, null],
+  ['an unknown lang', { lang: 'fr' }, null],
+]) {
+  test(`GET /courses with ${label} ${lang ? 'asks Moodle to filter names' : 'sends no filter flags'}`, async (t) => {
+    plantToken(t, { coursesAvailable: true });
+    const calls = stubFetch(t, () => json([]));
+    const res = await call(t, handleCourses, {}, query);
+    assert.equal(res.code, 200);
+    assert.equal(calls[0].searchParams.get('moodlewssettinglang'), lang);
+    assert.equal(calls[0].searchParams.get('moodlewssettingfilter'), lang && 'true');
+  });
+}
 
 test('GET /courses verifies an unverified token first, then lists, in one request', async (t) => {
   plantToken(t, { unverified: true, userid: null });

@@ -251,9 +251,13 @@ export function getCourseContents(site, token, courseId) {
   return callWs(site, token, 'core_course_get_contents', { courseid: courseId });
 }
 
-/** core_enrol_get_users_courses(userid) → the user's enrolled courses (id, fullname, visible, enddate, …). */
-export function getUserCourses(site, token, userid) {
-  return callWs(site, token, 'core_enrol_get_users_courses', { userid });
+/**
+ * core_enrol_get_users_courses(userid) → the user's enrolled courses (id, shortname, fullname, visible, enddate, …).
+ * With `lang`, Moodle's multilang filter reduces each name to that language; sites without it ignore the flags.
+ */
+export function getUserCourses(site, token, userid, lang) {
+  const filter = lang ? { moodlewssettingfilter: 'true', moodlewssettinglang: lang } : {};
+  return callWs(site, token, 'core_enrol_get_users_courses', { userid, ...filter });
 }
 
 /** core_course_get_course_module(cmid) → { cm, warnings }; `cm.course` is the module's course id. */

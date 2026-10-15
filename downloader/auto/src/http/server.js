@@ -465,6 +465,7 @@ async function sentWsFailure(res, e, auth, route, courseUrl) {
 
 // The connected account's enrolled courses — one WS call, or none when the login found the
 // function missing from the token's service (docs/MOODLE.md § The course picker).
+const COURSE_LANGS = new Set(['he', 'en']);
 export const handleCourses = gated('/courses', async (req, res) => {
   logReq('GET', '/courses');
   const found = siteOr(res);
@@ -478,7 +479,8 @@ export const handleCourses = gated('/courses', async (req, res) => {
   }
   let courses;
   try {
-    courses = await getUserCourses(site, stored.wstoken, stored.userid);
+    const lang = COURSE_LANGS.has(req.query?.lang) ? req.query.lang : undefined;
+    courses = await getUserCourses(site, stored.wstoken, stored.userid, lang);
   } catch (e) {
     if (await sentWsFailure(res, e, auth, '/courses')) return;
     throw e;
