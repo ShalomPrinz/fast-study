@@ -20,6 +20,18 @@ vi.mock('@/shared/utils/failure', () => ({ toastFailure }))
 
 i18n.activate('en')
 
+// jsdom has no ResizeObserver; this one reports once, on observe, as the real one does.
+vi.stubGlobal(
+  'ResizeObserver',
+  class {
+    constructor(private cb: () => void) {}
+    observe() {
+      this.cb()
+    }
+    disconnect() {}
+  },
+)
+
 function mount(status: AuthStatus | null) {
   auth.status = status
   render(createElement(I18nProvider, { i18n, children: createElement(CaptchaBanner) }))
@@ -45,6 +57,14 @@ describe('CaptchaBanner', () => {
     cleanup()
     mount({ connected: true, expired: false, challenge: { open: true, captcha: true } })
     expect(document.querySelector('.captcha-banner--site')).not.toBeNull()
+  })
+
+  it('publishes its height on :root while shown and clears it on hide', () => {
+    const height = () => document.documentElement.style.getPropertyValue('--captcha-banner-h')
+    mount({ connected: true, expired: false, zoomCaptcha: true })
+    expect(height()).toBe('0px')
+    cleanup()
+    expect(height()).toBe('')
   })
 
   it('raises the window once, disabling the button while the call is in flight', async () => {

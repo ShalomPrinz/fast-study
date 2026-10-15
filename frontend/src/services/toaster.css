@@ -47,3 +47,11 @@
   color: var(--text-4);
   opacity: 1;
 }
+
+/* While the captcha banner shows, top toasts drop below it; it publishes its live height on :root.
+   A margin, not `top`, so it also applies under the library's narrow-screen media query. */
+.Toastify .Toastify__toast-container--top-left,
+.Toastify .Toastify__toast-container--top-center,
+.Toastify .Toastify__toast-container--top-right {
+  margin-top: var(--captcha-banner-h, 0px);
+}

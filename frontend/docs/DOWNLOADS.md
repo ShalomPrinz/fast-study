@@ -92,7 +92,8 @@ A frame's `zoomCaptcha` (absent reads false) is a zoom download waiting on a cap
 Chrome window, and `challenge.captcha` the university site's challenge window doing the same.
 `CaptchaBanner`, in `Layout` atop the content column so it follows every route without covering the
 sidebar, shows while either is true (`captchaWait`, which names the site when both are) and hides on the
-frame that clears them. Its "Show captcha window" button calls `POST /window/show` (`showWindow`) to raise
+frame that clears them. While shown it publishes its measured height as `--captcha-banner-h` on `:root`,
+which `toaster.css` adds as a top margin to top toast containers so a toast never covers it. Its "Show captcha window" button calls `POST /window/show` (`showWindow`) to raise
 a window the OS left behind the user's work; a 409 `no_window_waiting` toasts like any coded failure. If
 auto dies mid-wait, the banner stays until the stream reconnects and its first frame reads false.
 

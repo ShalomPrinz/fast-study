@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Trans } from '@lingui/react/macro'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { showWindow } from '@/features/downloads/services/autoDownloader'
@@ -13,6 +13,22 @@ export default function CaptchaBanner() {
   const { status } = useAuthStatus()
   const [busy, setBusy] = useState(false)
   const wait = captchaWait(status)
+  const shown = wait !== null
+  const ref = useRef<HTMLDivElement>(null)
+  // Publishes the banner's live height on :root so the toast container (outside Layout) sits below it.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const root = document.documentElement
+    const observer = new ResizeObserver(() =>
+      root.style.setProperty('--captcha-banner-h', `${el.offsetHeight}px`),
+    )
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--captcha-banner-h')
+    }
+  }, [shown])
   if (!wait) return null
 
   async function handleShow() {
@@ -27,7 +43,7 @@ export default function CaptchaBanner() {
   }
 
   return (
-    <div className={`captcha-banner captcha-banner--${wait}`} role="status">
+    <div ref={ref} className={`captcha-banner captcha-banner--${wait}`} role="status">
       <span className="captcha-banner-dot" aria-hidden="true" />
       <span className="captcha-banner-text">
         {wait === 'zoom' ? (
