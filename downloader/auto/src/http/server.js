@@ -17,7 +17,7 @@ import {
 import { probeSite } from '../moodle/probe.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
 import { setReporting } from '@faststudy/sentry';
-import { getSession, closeAllSessions } from '../browser/browserSession.js';
+import { getSession, closeAllSessions, browserClosed } from '../browser/browserSession.js';
 import { resolveBrowserChannel } from '../browser/browserChannel.js';
 import { loadStealthChromium } from '../browser/zoomBrowser.js';
 import {
@@ -612,9 +612,23 @@ export const handleResolve = gated('/resolve', async (req, res) => {
     }
     const down = unreachable(e);
     if (down) return sendUnreachable(res, '/resolve', down);
+    if (e instanceof CodedError && e.code === 'zoom_browser_closed') {
+      logResult('/resolve', 'zoom browser closed (503)');
+      return send(res, 503, failureOf(e));
+    }
     throw e;
   }
 });
+
+// The user closed the zoom window mid-capture: a handled 503 (no `status`), never a 500 — the
+// session already forgot that browser, so a retry launches a fresh one. Playwright's text is `detail`.
+function zoomBrowserClosed(err) {
+  return new CodedError(
+    'zoom_browser_closed',
+    { detail: err?.message ?? null },
+    'the zoom browser window was closed during the capture',
+  );
+}
 
 // The 400 body for a course/name/kind no target can land under, or null when all three are usable.
 function targetError(course, name, kind) {
@@ -797,19 +811,28 @@ async function resolveItem(req, res) {
   // Per-course default with an optional per-lecture override; null → the gate throws
   // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
   const passcode = passcodes.lookup(course, name);
-  await session.open();
-  // A zoom share can hold a before/after-break pair → one target per captured .mp4.
-  const targets = await session.withLock(() =>
-    resolveRecording(session.page, {
-      recording,
-      course,
-      name,
-      kind,
-      passcode,
-      ref: rowRef,
-      ...opts,
-    }),
-  );
+  // A zoom share can hold a before/after-break pair → one target per captured .mp4. open() runs
+  // under the lock, so a browser the user closed while an earlier call held it is relaunched.
+  const targets = await session.withLock(async () => {
+    let page = null;
+    try {
+      // Inside the try: a window closed during the launch itself maps the same way.
+      await session.open();
+      page = session.page;
+      return await resolveRecording(page, {
+        recording,
+        course,
+        name,
+        kind,
+        passcode,
+        ref: rowRef,
+        ...opts,
+      });
+    } catch (e) {
+      if (browserClosed(e, page)) throw zoomBrowserClosed(e);
+      throw e;
+    }
+  });
   logResult('/resolve', `ok (${targets.length} targets, video)`);
   send(res, 200, { media: 'video', targets });
 }

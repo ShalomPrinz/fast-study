@@ -252,6 +252,9 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       'No video was captured on that Zoom page. The passcode or the player may need a manual start.',
   }),
+  zoom_browser_closed: msg({
+    message: 'The Zoom window was closed during the capture. Try the download again.',
+  }),
   recording_strategy_unsupported: msg({ message: "This recording type can't be downloaded." }),
   xvfb_unavailable: msg({ message: "Couldn't start capturing the Zoom recording. Try again." }),
   moodle_login_timeout: msg({ message: 'The Moodle login timed out. Try connecting again.' }),

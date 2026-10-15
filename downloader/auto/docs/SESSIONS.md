@@ -9,9 +9,14 @@ request. Model in `src/browser/browserSession.js`.
   (`'zoom'`). No session holds a Moodle login: the `'zoom'` profile is passcode-gated, and Moodle is
   reached over the WS API ([MOODLE.md](MOODLE.md#videostream)).
 - **`withLock(fn)`** serializes only the quick navigate+sniff, so one call's navigation can't abort
-  another's; the heavy download runs afterward in `server/`, so downloads still overlap. `open()` is
-  deliberately outside the lock — a no-op once open, and a shared lock risks deadlock.
-- **Idle timeout** (~45 min) is a leak-safety valve only; a session re-opens lazily. Switching course
+  another's; the heavy download runs afterward in `server/`, so downloads still overlap. `/resolve`
+  calls `open()` inside its locked op, so a browser closed while an earlier call held the lock is
+  relaunched; `open()` takes no lock itself, and concurrent callers share one launch.
+- **A user-closed window.** The browser's `disconnected` (or its page's `close`) drops the session, so
+  the next `open()` launches a fresh browser. A capture cut off mid-way — Playwright's
+  `TargetClosedError`, or any failure once the page is closed — answers `503 zoom_browser_closed
+  {detail}` with no `status`, a handled refusal that never reaches the backstop or Sentry.
+- **Idle timeout** (~45 min) is a leak-safety valve only; a session re-opens lazily. It is paused while a `withLock` op runs and re-armed when it ends, so it never closes a browser mid-capture. Switching course
   is just `goto()`. `closeAllSessions()` (on `/close` and `SIGINT`/`SIGTERM`) closes every session and
   stops the managed Xvfb.
 
