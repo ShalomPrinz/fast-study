@@ -58,6 +58,9 @@ with `hb reseed`.
 
 Nothing a run shows is real provider behaviour: transcripts, summaries and downloads are fixtures.
 
+The Playwright e2e specs run against your stack with `HARNESS_DIR=$HARNESS_DIR npm run test:e2e`.
+The suite reseeds the stack (wipes scratch data, resets settings, locks and fakes), so run it on a stack whose state you don't need.
+
 ## Tear down
 
 ```bash

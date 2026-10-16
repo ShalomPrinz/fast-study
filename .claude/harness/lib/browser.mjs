@@ -43,12 +43,16 @@ export function installedChromium() {
   );
 }
 
+// The browser is outside both shims, so it is offlined here: any name but loopback fails.
+export const OFFLINE_ARGS = [
+  '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
+];
+
 /** Launch headless chromium and open one page, 1400×900, with a 10 s action timeout. */
 export async function openBrowser() {
   const browser = await chromium.launch({
     executablePath: installedChromium(),
-    // The browser is outside both shims, so it is offlined here: any name but loopback fails.
-    args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1'],
+    args: OFFLINE_ARGS,
   });
   const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   context.setDefaultTimeout(10_000);

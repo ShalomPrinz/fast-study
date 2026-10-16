@@ -243,13 +243,13 @@ async function startServices() {
     });
     record({ [key]: port });
   }
-  // No shim on the dev server (README, Ports); vite takes its port only as a flag and reports it
-  // only in its banner, so a shell hands it FASTSTUDY_PORT.
+  // No shim on the dev server (README, Ports); a shell hands vite FASTSTUDY_PORT as a flag. --host
+  // pins IPv4: bare localhost binds only ::1 where it resolves IPv6-first, and the probe dials 127.0.0.1.
   const app = appServices();
   const { FASTSTUDY_PORT: port } = await start(
     'frontend',
     'sh',
-    ['-c', 'exec npm run dev -- --port "$FASTSTUDY_PORT" --strictPort'],
+    ['-c', 'exec npm run dev -- --host 127.0.0.1 --port "$FASTSTUDY_PORT" --strictPort'],
     {
       cwd: path.join(REPO_ROOT, 'frontend'),
       env: {
@@ -263,7 +263,7 @@ async function startServices() {
       },
       paths,
       want: { FASTSTUDY_PORT: previous.frontend },
-      reports: { FASTSTUDY_PORT: 'Local:\\s+http://localhost:(\\d+)/' },
+      reports: { FASTSTUDY_PORT: 'Local:\\s+http://127\\.0\\.0\\.1:(\\d+)/' },
       healthPath: '/',
     },
   );

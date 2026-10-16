@@ -20,7 +20,7 @@ node .claude/harness/setup.mjs --skip-pipeline-check   # skip the slowest self-c
 
 Every service, fake and browser session binds its own port and reports it, the packaged launcher's
 handshake: started with `FASTSTUDY_PORT=0`, it prints `FASTSTUDY_PORT=<n>` alone on a line (the fake
-site's TLS listener adds `HARNESS_SITE_TLS_PORT=<n>`, and vite's banner `Local: http://localhost:<n>/`
+site's TLS listener adds `HARNESS_SITE_TLS_PORT=<n>`, and vite's banner `Local: http://127.0.0.1:<n>/`
 stands in for the dev server's), and `setup.mjs` reads it off the service's log. So no port is ever
 chosen in one process and bound in another, and no other stack can take it in between. They start in
 dependency order — fakes, `database`, `backend`, `downloader-auto`, `downloader-server`, `frontend` —
@@ -44,7 +44,8 @@ They learn their peers from `DATABASE_URL`, `BACKEND_URL` and `AUTODL_URL`, and 
 from `VITE_*_URL` — all passed by `setup.mjs`. The dev server runs without the Node shim: it serves
 the SPA and talks to nobody, and `NODE_OPTIONS` would ride into every tool vite spawns. No `FRONTEND_URL` is passed, since the SPA starts last:
 open the app at `http://localhost:<frontend>`, which in dev (`FASTSTUDY_SECRET` unset) every
-service's CORS takes on any port, and `127.0.0.1` is not that origin.
+service's CORS takes on any port, and `127.0.0.1` is not that origin. Vite listens on `127.0.0.1`
+only (`--host`), so `localhost` reaches it on IPv4 even where it resolves to `::1` first.
 
 A second `setup.mjs` on a root whose setup is still alive refuses to start; use that stack, or
 `--down` it first.
@@ -360,8 +361,15 @@ that logic in a side-effect-free sibling (`provider-rules.mjs`, `site-control.mj
 Python shim in a child interpreter per case, since its patches are process-wide: lock globs as tail
 matches, the Windows `winerror` 32 and 5 refusals, and `fs.crud` reading `win32`.
 
-They run in CI's `internal-tests` job beside the lib tests. The self-check above stays the
-end-to-end proof and runs only on `setup.mjs`, not in CI.
+They run in CI's `internal-tests` job beside the lib tests.
+
+The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`), failure surfacing
+(`hb-fail`), download (`hb-dl`) and a locked `summary.pdf` — and run with `npm run test:e2e` from the
+repo root against a live stack, `HARNESS_DIR` set to a running `setup.mjs --harness DIR`; the report,
+traces and screenshots land in `$HARNESS_DIR/evidence/`. CI's [`e2e.yml`](../../.github/workflows/e2e.yml)
+runs them on pushes to `main` and on pull requests, with real ffmpeg, pandoc and tectonic. The
+release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a
+production override, which [SMOKE.md](../../delivery/docs/SMOKE.md) rules out.
 
 ## Driving failures
 

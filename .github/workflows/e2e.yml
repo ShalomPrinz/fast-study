@@ -1,0 +1,148 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # The app-harness Playwright specs against one live offline stack: real ffmpeg, pandoc and
+  # tectonic, every third party faked.
+  harness-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      UV_PYTHON: '3.12'
+      TECTONIC_VERSION: '0.17.0'
+    steps:
+      # Here rather than in the job's env, where the runner context is not yet available.
+      - name: Set the harness root
+        run: echo "HARNESS_DIR=$RUNNER_TEMP/harness" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+            downloader/package-lock.json
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      # The version the backend tests and the shipped build pin: pandoc's LaTeX output differs across versions.
+      - name: Install pandoc 2.9.2.1
+        run: |
+          curl -fsSL -o pandoc.deb https://github.com/jgm/pandoc/releases/download/2.9.2.1/pandoc-2.9.2.1-1-amd64.deb
+          sudo dpkg -i pandoc.deb
+          pandoc --version | head -1
+
+      # The version delivery ships; the musl build is static, so it needs no system libraries.
+      - name: Install tectonic
+        run: |
+          mkdir -p "$RUNNER_TEMP/tectonic"
+          curl -fsSL "https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-unknown-linux-musl.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/tectonic"
+          echo "$RUNNER_TEMP/tectonic" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/tectonic/tectonic" --version
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/Tectonic
+          key: tectonic-${{ env.TECTONIC_VERSION }}-${{ hashFiles('backend/pipeline/to_pdf.py') }}
+          restore-keys: tectonic-${{ env.TECTONIC_VERSION }}-
+
+      # A cold cache fetches the LaTeX bundle here, not inside a spec, by mirroring to_pdf.py's build_tex
+      # (header, fonts, pandoc template, filter and flags) over the fixture summary the PDF spec renders.
+      - name: Warm the tectonic cache
+        run: |
+          build="$RUNNER_TEMP/tectonic-warmup"
+          mkdir -p "$build"
+          cp backend/assets/fonts/*.ttf "$build/"
+          python3 - backend/pipeline/to_pdf.py "$build/header.tex" <<'EOF'
+          import re, sys
+          src = open(sys.argv[1], encoding="utf-8").read()
+          header = re.search(r'LATEX_HEADER = r"""(.*?)"""', src, re.S).group(1)
+          open(sys.argv[2], "w", encoding="utf-8").write(header.replace("FONTS_DIR_PLACEHOLDER", "./"))
+          EOF
+          cp .claude/harness/fixtures/summary.md "$build/input.md"
+          cd "$build"
+          pandoc input.md -o build.tex --from=markdown-smart --to=latex-smart \
+            --template="$GITHUB_WORKSPACE/backend/assets/templates/pandoc_template.tex" \
+            -V geometry:margin=2.5cm -V linestretch=1.3 --include-in-header=header.tex \
+            --lua-filter="$GITHUB_WORKSPACE/backend/assets/filters/text_direction.lua" --standalone
+          time tectonic --keep-logs -Z continue-on-errors build.tex
+          test -s build.pdf
+          if grep -n '^! Font' build.log; then exit 1; fi
+
+      # The self-check stats the repo-root .env (never reads it), and the file is gitignored.
+      - name: Install dependencies
+        run: |
+          touch .env
+          npm ci
+          npm ci --prefix frontend
+          (cd downloader && npm ci --install-links)
+
+      - id: playwright
+        name: Read the Playwright version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # --with-deps for the system libraries the shell links against, which the runner image may lack.
+      - name: Install the headless Chromium
+        run: npx playwright install --with-deps chromium --only-shell
+
+      # Backgrounded because setup.mjs holds the stack in the foreground; never under `timeout`, whose
+      # kill would orphan the stack it started.
+      - name: Start the harness
+        run: |
+          node .claude/harness/setup.mjs --harness "$HARNESS_DIR" > "$HARNESS_DIR.setup.log" 2>&1 &
+          pid=$!
+          for _ in $(seq 300); do
+            if grep -q 'harness ready' "$HARNESS_DIR.setup.log"; then
+              cat "$HARNESS_DIR.setup.log"
+              exit 0
+            fi
+            if ! kill -0 "$pid" 2> /dev/null; then
+              echo "::error::setup.mjs exited before the harness was ready"
+              cat "$HARNESS_DIR.setup.log"
+              exit 1
+            fi
+            sleep 1
+          done
+          echo "::error::the harness was not ready after 5 minutes"
+          cat "$HARNESS_DIR.setup.log"
+          exit 1
+
+      - name: Run the e2e specs
+        run: npm run test:e2e
+
+      # Fails the job when a spec reached past loopback; the tectonic warm-up ran outside the stack.
+      - name: Check for network escapes
+        if: always()
+        run: node .claude/harness/hb.mjs --harness "$HARNESS_DIR" refused
+
+      - name: Stop the harness
+        if: always()
+        run: node .claude/harness/setup.mjs --harness "$HARNESS_DIR" --down
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: harness-e2e
+          path: |
+            ${{ runner.temp }}/harness/logs
+            ${{ runner.temp }}/harness/evidence
+            ${{ runner.temp }}/harness.setup.log
+          if-no-files-found: ignore

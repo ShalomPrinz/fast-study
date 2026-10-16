@@ -9,10 +9,12 @@
     "dev": "concurrently -k -t 'HH:mm:ss' -p '[{time}] {name}' -n Backend,Frontend,Downloader,AutoDL,Database -c blue,green,magenta,cyan,yellow \"cd backend && PYTHONUNBUFFERED=1 uv run uvicorn backend_main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader/server start\" \"npm --prefix downloader/auto start\" \"cd database && uv run uvicorn database_main:app --reload --port 8001\"",
     "app": "npm --prefix frontend run build && npm --prefix electron start",
     "lint": "eslint . && uvx ruff check backend database delivery lib .claude/harness/shim .claude/harness/tests .claude/scripts",
+    "test:e2e": "playwright test -c .claude/harness/e2e/playwright.config.mjs",
     "test:harness": "node --test '.claude/harness/tests/*.test.mjs' && uvx pytest .claude/harness/tests -q"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.63.0",
     "concurrently": "^9.1.0",
     "eslint": "^10.8.0",
     "globals": "^17.7.0",
