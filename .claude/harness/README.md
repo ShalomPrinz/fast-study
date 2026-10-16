@@ -20,7 +20,7 @@ node .claude/harness/setup.mjs --skip-pipeline-check   # skip the slowest self-c
 
 Every service, fake and browser session binds its own port and reports it, the packaged launcher's
 handshake: started with `FASTSTUDY_PORT=0`, it prints `FASTSTUDY_PORT=<n>` alone on a line (the fake
-site's TLS listener adds `HARNESS_SITE_TLS_PORT=<n>`, and vite's banner `Local: http://localhost:<n>/`
+site's TLS listener adds `HARNESS_SITE_TLS_PORT=<n>`, and vite's banner `Local: http://127.0.0.1:<n>/`
 stands in for the dev server's), and `setup.mjs` reads it off the service's log. So no port is ever
 chosen in one process and bound in another, and no other stack can take it in between. They start in
 dependency order — fakes, `database`, `backend`, `downloader-auto`, `downloader-server`, `frontend` —
@@ -44,7 +44,8 @@ They learn their peers from `DATABASE_URL`, `BACKEND_URL` and `AUTODL_URL`, and 
 from `VITE_*_URL` — all passed by `setup.mjs`. The dev server runs without the Node shim: it serves
 the SPA and talks to nobody, and `NODE_OPTIONS` would ride into every tool vite spawns. No `FRONTEND_URL` is passed, since the SPA starts last:
 open the app at `http://localhost:<frontend>`, which in dev (`FASTSTUDY_SECRET` unset) every
-service's CORS takes on any port, and `127.0.0.1` is not that origin.
+service's CORS takes on any port, and `127.0.0.1` is not that origin. Vite listens on `127.0.0.1`
+only (`--host`), so `localhost` reaches it on IPv4 even where it resolves to `::1` first.
 
 A second `setup.mjs` on a root whose setup is still alive refuses to start; use that stack, or
 `--down` it first.
