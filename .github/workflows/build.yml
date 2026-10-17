@@ -95,6 +95,20 @@ jobs:
           cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
           ls -l "$STAGE/bin"
 
+      # Network-bound, ~7.5 minutes. tectonic fetches each LaTeX package on first use and the
+      # shipped app renders --only-cached, so anything missing here is an unfixable failed render
+      # on a user's machine. It runs in the background beside the CPU-bound freeze and frontend
+      # build, writing its exit code to a file last, since a later step's shell cannot `wait` on it.
+      # The foreground sync keeps the freeze's own `uv run` off a .venv still being built.
+      - name: Start the LaTeX cache prime
+        working-directory: backend
+        env:
+          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
+        run: |
+          uv sync
+          nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
+          echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
+
       # The one build input that is not committed: it is gitignored so the client secret never
       # faces GitHub's secret scanning. Required — an installer without it cannot connect Drive.
       - name: Write credentials.json
@@ -152,14 +166,16 @@ jobs:
         # package.json's `lib/*/js` workspaces instead of downloader's.
         run: (cd downloader && npm ci --omit=dev --no-audit --no-fund)
 
-      # Network-bound, ~7.5 minutes. tectonic fetches each LaTeX package on first use and the
-      # shipped app renders --only-cached, so anything missing here is an unfixable failed render
-      # on a user's machine.
-      - name: Prime the LaTeX cache
-        working-directory: backend
-        env:
-          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
-        run: uv run python ../delivery/prime_cache.py "../$STAGE/latex"
+      # The prime started in the background above; its log prints here whatever the outcome.
+      - name: Wait for the LaTeX cache prime
+        run: |
+          done="$RUNNER_TEMP/prime.exit"
+          deadline=$((SECONDS + 2400))
+          until [ -f "$done" ] || [ "$SECONDS" -ge "$deadline" ]; do sleep 5; done
+          cat "$RUNNER_TEMP/prime.log"
+          [ -f "$done" ] || { echo "::error::the LaTeX cache prime did not finish within 40 minutes"; exit 1; }
+          code=$(cat "$done")
+          [ "$code" = 0 ] || { echo "::error::the LaTeX cache prime exited $code"; exit 1; }
 
       - name: Assemble the resources tree
         run: node delivery/stage.mjs "$STAGE"
