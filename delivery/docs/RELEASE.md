@@ -3,8 +3,10 @@
 ## The installer
 
 One unsigned per-user NSIS `.exe`, built by `.github/workflows/build.yml` on `windows-latest` in
-roughly 20 minutes — most of it the LaTeX prime and ~450MB of binary downloads — before the smoke
-job. The installer's own configuration (one-click, per-user, the install directory) is electron's:
+under 10 minutes — most of it the LaTeX prime, the freeze and the two installer builds — before the
+smoke job. The prime is network-bound, so it runs in the background beside the freeze and the frontend
+build, and a wait step collects its log and exit code before staging. The installer's own
+configuration (one-click, per-user, the install directory) is electron's:
 [`electron/CLAUDE.md`](../../electron/CLAUDE.md#packaging).
 
 Unsigned means **SmartScreen blocks the first run** on every machine: "Windows protected your PC"
