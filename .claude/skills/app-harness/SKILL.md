@@ -56,6 +56,9 @@ rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture
 `node .claude/harness/setup.mjs --harness $HARNESS_DIR --restart <service>`. Put the baseline back
 with `hb reseed`.
 
+A helper for a fake's setting earns a new `hb` subcommand only when the job takes more than one
+`/control` call or a wait between steps, as `hb moodle-busy` does; a single setting stays a `curl`.
+
 Nothing a run shows is real provider behaviour: transcripts, summaries and downloads are fixtures.
 
 The Playwright e2e specs run against your stack with `HARNESS_DIR=$HARNESS_DIR npm run test:e2e`.
