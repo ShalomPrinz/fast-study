@@ -56,7 +56,8 @@ backend to persist each run's inputs.
 
 ## Study with AI
 
-`components/StudyWithAiCard` closes the lecture page. Its main half reads `summary.md`
+`components/StudyWithAiCard` sits right below the pipeline list (after the last-error block, before
+Materials), capped at 560px and centred in the page column. Its split button's main half reads `summary.md`
 (`fetchSummaryContent`), copies it under a fixed study prompt in the UI language, then opens the chosen
 chat's fresh-chat page through `openExternalUrl`; nothing is prefilled or sent, the user pastes. A failed
 read toasts its failure and a refused clipboard its own error, and neither opens the chat. The clipboard
@@ -69,6 +70,9 @@ text (`utils/aiChat.ts`'s `clipboardText`, with `"` in either name turned to `'`
 {summary}
 </lecture>
 ```
+
+The paste hint sits below the card, outside its border, in its own thin `--text`-outlined box that hugs
+its text, centred under the card.
 
 `data-state` is `ready` with a summary, else `no-summary`: muted, the main half disabled and the paste hint
 hidden, while the provider half still opens its menu. A pick there saves `aiProvider` through

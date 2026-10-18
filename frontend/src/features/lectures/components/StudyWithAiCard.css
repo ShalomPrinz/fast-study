@@ -1,5 +1,13 @@
-.study-ai {
+.study-ai-block {
+  max-inline-size: 560px;
   margin-block-start: var(--space-6);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.study-ai {
   padding: var(--space-5) var(--space-6);
   border: 1px solid var(--accent-line);
   border-radius: var(--r-lg);
@@ -51,15 +59,8 @@
   color: var(--text-3);
 }
 
-/* The split button alone sets this column's width; the info line wraps inside it. */
-.study-ai-actions {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
 .study-ai-split {
+  flex-shrink: 0;
   position: relative;
   display: flex;
   border: 1px solid var(--accent-line);
@@ -135,13 +136,16 @@
   color: var(--accent-ink);
 }
 
-/* Zero width with a 100% floor: it contributes nothing to the column's width, then fills it. */
+/* Hugs its text, centred under the card. */
 .study-ai-info {
-  inline-size: 0;
-  min-inline-size: 100%;
+  align-self: center;
+  max-inline-size: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--text);
+  border-radius: var(--r-sm);
   display: flex;
   align-items: flex-start;
-  gap: var(--space-1);
+  gap: var(--space-2);
   font-size: var(--fs-fine);
   color: var(--text-2);
 }
@@ -149,5 +153,5 @@
 .study-ai-info svg {
   flex-shrink: 0;
   margin-block-start: calc(var(--space-1) / 2);
-  color: var(--text-3);
+  color: var(--accent-ink);
 }

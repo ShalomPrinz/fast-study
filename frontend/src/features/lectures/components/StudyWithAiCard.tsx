@@ -89,23 +89,23 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
   }
 
   return (
-    <section className="study-ai" data-state={summaryExists ? 'ready' : 'no-summary'}>
-      <div className="study-ai-tile">
-        <Icon icon="sparkle" />
-      </div>
-      <div className="study-ai-text">
-        <h2 className="study-ai-title">
-          <Trans>Study with AI</Trans>
-        </h2>
-        <p className="study-ai-subtitle">
-          {summaryExists ? (
-            <Trans>Click "Open chat" to study this lecture with {provider}.</Trans>
-          ) : (
-            <Trans>Available once the summary is generated.</Trans>
-          )}
-        </p>
-      </div>
-      <div className="study-ai-actions">
+    <div className="study-ai-block">
+      <section className="study-ai" data-state={summaryExists ? 'ready' : 'no-summary'}>
+        <div className="study-ai-tile">
+          <Icon icon="sparkle" />
+        </div>
+        <div className="study-ai-text">
+          <h2 className="study-ai-title">
+            <Trans>Study with AI</Trans>
+          </h2>
+          <p className="study-ai-subtitle">
+            {summaryExists ? (
+              <Trans>Click "Open chat" to study this lecture with {provider}.</Trans>
+            ) : (
+              <Trans>Available once the summary is generated.</Trans>
+            )}
+          </p>
+        </div>
         <div className="study-ai-split" ref={menuRef}>
           <button
             className="btn study-ai-open"
@@ -143,15 +143,15 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
             </div>
           )}
         </div>
-        {summaryExists && (
-          <p className="study-ai-info">
-            <Icon icon="info" />
-            <span>
-              <Trans>Paste the lecture content with Ctrl+V, we already copied it for you.</Trans>
-            </span>
-          </p>
-        )}
-      </div>
-    </section>
+      </section>
+      {summaryExists && (
+        <p className="study-ai-info">
+          <Icon icon="info" />
+          <span>
+            <Trans>Paste the lecture content with Ctrl+V, we already copied it for you.</Trans>
+          </span>
+        </p>
+      )}
+    </div>
   )
 }

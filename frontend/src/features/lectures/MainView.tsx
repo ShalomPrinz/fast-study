@@ -376,6 +376,24 @@ export default function MainView() {
             })}
           </div>
 
+          {lectureError && (
+            <div className="lecture-error" role="alert" data-testid="lecture-error">
+              <strong>
+                <Trans>Last error:</Trans>
+              </strong>{' '}
+              <span data-testid="lecture-error-message">
+                <ServiceError failure={lectureError} />
+              </span>
+            </div>
+          )}
+
+          <StudyWithAiCard
+            course={course}
+            lecture={lecture}
+            kind={kind}
+            summaryExists={summaryExists}
+          />
+
           {materials.length > 0 && (
             <>
               <div className="section-head section-head--materials">
@@ -411,24 +429,6 @@ export default function MainView() {
               </div>
             </>
           )}
-
-          {lectureError && (
-            <div className="lecture-error" role="alert" data-testid="lecture-error">
-              <strong>
-                <Trans>Last error:</Trans>
-              </strong>{' '}
-              <span data-testid="lecture-error-message">
-                <ServiceError failure={lectureError} />
-              </span>
-            </div>
-          )}
-
-          <StudyWithAiCard
-            course={course}
-            lecture={lecture}
-            kind={kind}
-            summaryExists={summaryExists}
-          />
         </div>
       </div>
 

@@ -486,7 +486,7 @@ msgstr "Auto-run: off"
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:104
+#: src/features/lectures/components/StudyWithAiCard.tsx:105
 msgid "Available once the summary is generated."
 msgstr "Available once the summary is generated."
 
@@ -628,7 +628,7 @@ msgstr "Click \"Create API Key\"."
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:102
+#: src/features/lectures/components/StudyWithAiCard.tsx:103
 msgid "Click \"Open chat\" to study this lecture with {provider}."
 msgstr "Click \"Open chat\" to study this lecture with {provider}."
 
@@ -889,8 +889,8 @@ msgid "Decline"
 msgstr "Decline"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:399
-#: src/features/lectures/MainView.tsx:402
+#: src/features/lectures/MainView.tsx:417
+#: src/features/lectures/MainView.tsx:420
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
@@ -1304,7 +1304,7 @@ msgstr "Key verified"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:418
+#: src/features/lectures/MainView.tsx:382
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -1396,7 +1396,7 @@ msgid "Material"
 msgstr "Material"
 
 #: src/features/downloads/DownloadsView.tsx:66
-#: src/features/lectures/MainView.tsx:383
+#: src/features/lectures/MainView.tsx:401
 msgid "Materials"
 msgstr "Materials"
 
@@ -1608,7 +1608,7 @@ msgstr "Open in Drive"
 msgid "Open lecture"
 msgstr "Open lecture"
 
-#: src/features/lectures/MainView.tsx:390
+#: src/features/lectures/MainView.tsx:408
 msgid "Open material"
 msgstr "Open material"
 
@@ -1682,7 +1682,7 @@ msgstr "Paste a URL instead"
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "Paste the course page's address (…/course/view.php?id=…)"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:150
+#: src/features/lectures/components/StudyWithAiCard.tsx:151
 msgid "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgstr "Paste the lecture content with Ctrl+V, we already copied it for you."
 
@@ -2008,7 +2008,7 @@ msgstr "Storage"
 msgid "Student QA"
 msgstr "Student QA"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:98
+#: src/features/lectures/components/StudyWithAiCard.tsx:99
 msgid "Study with AI"
 msgstr "Study with AI"
 
