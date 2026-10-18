@@ -83,6 +83,31 @@ class TestRecord:
         }
 
 
+class TestTimedPipeline:
+    def test_a_list_of_paths_records_their_summed_size(self, tmp_path):
+        a, b = tmp_path / "a.pdf", tmp_path / "b.pdf"
+        a.write_bytes(b"x" * 100)
+        b.write_bytes(b"y" * 250)
+
+        @timing.timed_pipeline("summarize_materials")
+        def step(paths):
+            return len(paths)
+
+        assert step([a, b]) == 2
+        assert [(op, size) for op, size, _ in _rows()] == [("summarize_materials", 350)]
+
+    def test_a_single_path_records_its_size(self, tmp_path):
+        f = tmp_path / "t.txt"
+        f.write_bytes(b"z" * 42)
+
+        @timing.timed_pipeline("summarize")
+        def step(path):
+            return path
+
+        step(f)
+        assert [(op, size) for op, size, _ in _rows()] == [("summarize", 42)]
+
+
 class TestCorruptDb:
     def test_init_quarantines_garbage_db(self, tmp_path, monkeypatch):
         db = tmp_path / "state" / "timing.db"

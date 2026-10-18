@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import summarize as summarize_mod
 from services.llm_client import GeminiRateLimitError
-from summarize import summarize
+from summarize import summarize, summarize_materials
 
 
 def _make_client(response_text: str = "# Title\nbody"):
@@ -224,3 +224,48 @@ def test_summarize_strips_but_preserves_leading_prose(tmp_path):
         result = summarize(transcript)
 
     assert result == "intro paragraph\n# Title\nbody"
+
+
+def test_summarize_materials_uses_its_own_prompt_and_no_transcript(tmp_path):
+    materials = []
+    for name in ("material.pdf", "material.2.pdf"):
+        p = tmp_path / name
+        p.write_bytes(b"%PDF-1.4\n")
+        materials.append(p)
+
+    fake = _make_client()
+    with patch.object(summarize_mod, "LLMClient", return_value=fake):
+        result = summarize_materials(materials)
+
+    uploads = _upload_calls(fake)
+    assert [c.args for c in uploads] == [(m, "application/pdf") for m in materials]
+
+    contents = _generate_contents(fake)
+    # One marker, both PDFs, then the instructions — no transcript part anywhere.
+    assert len(contents) == 5
+    assert contents[0] == summarize_mod.LECTURE_MATERIALS_MARKER
+    assert [getattr(c, "_path", None) for c in contents[1:3]] == materials
+    assert contents[3] == "--- INSTRUCTIONS ---"
+    assert "--- MAIN TRANSCRIPT DOCUMENT ---" not in contents
+    assert all(getattr(c, "_mime", None) != "text/plain" for c in contents)
+    materials_prompt = summarize_mod.MATERIALS_PROMPT_FILE.read_text(encoding="utf-8")
+    assert materials_prompt != summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
+    assert contents[4] == materials_prompt + summarize_mod.LENGTH_BUDGET_SUFFIX
+    assert summarize_mod.PDF_INSTRUCTION_SUFFIX not in contents[4]
+    assert result == "# Title\nbody"
+    assert [c.args[0] for c in fake.delete_file.call_args_list] == [
+        "files/handle1",
+        "files/handle2",
+    ]
+
+
+def test_summarize_materials_wraps_an_api_failure(tmp_path):
+    material = tmp_path / "material.pdf"
+    material.write_bytes(b"%PDF-1.4\n")
+
+    fake = MagicMock()
+    fake.upload_file.side_effect = RuntimeError("boom")
+    with patch.object(summarize_mod, "LLMClient", return_value=fake):
+        with pytest.raises(RuntimeError, match="boom") as e:
+            summarize_materials([material])
+    assert e.value.code == "summarization_failed"

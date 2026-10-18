@@ -183,10 +183,15 @@ async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lec
         )
 
     # Each step depends on the previous step's output file.
+    # Summarize also runs off material PDFs alone when the lecture has no video.
     required_file, prev_step, prev_label = _STEP_CONFIG[step]
-    if not await asyncio.to_thread(
-        runner.db_client.file_exists, course, lecture, kind, required_file
-    ):
+    if step == "summarize":
+        ready = await asyncio.to_thread(runner.summarize_ready, course, lecture, kind)
+    else:
+        ready = await asyncio.to_thread(
+            runner.db_client.file_exists, course, lecture, kind, required_file
+        )
+    if not ready:
         return _error(
             failure(
                 f"{required_file} is required — run {prev_label} first",

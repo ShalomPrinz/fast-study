@@ -17,7 +17,7 @@ from services.errors import PROVIDER_CONDITION_CODES, CodedError
 from services.llm_client import GeminiRateLimitError
 
 from pipeline.strip_audio import strip_audio
-from pipeline.summarize import summarize
+from pipeline.summarize import summarize, summarize_materials
 from pipeline.to_pdf import PdfRenderError, convert_to_pdf
 from pipeline.transcribe import (
     PARTIAL_META,
@@ -318,12 +318,16 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
         return _failed(e)
 
 
-def _download_materials(course: str, lecture: str, kind: str, dest: Path) -> list[Path]:
-    """Fetch every material PDF of a lecture into `dest`. Unlike the fixed pipeline files,
-    an empty material is skipped with a warning — the transcript alone still summarizes."""
+def _download_materials(
+    course: str, lecture: str, kind: str, dest: Path, entries: list[dict] | None = None
+) -> list[Path]:
+    """Fetch every material PDF of a lecture (or the given listing) into `dest`. Unlike the
+    fixed pipeline files, an empty material is skipped with a warning, not fatal."""
 
+    if entries is None:
+        entries = db_client.list_materials(course, lecture, kind)
     paths: list[Path] = []
-    for entry in db_client.list_materials(course, lecture, kind):
+    for entry in entries:
         name = entry["name"]
         data = db_client.get_file_bytes(course, lecture, kind, name)
         if not data:
@@ -337,27 +341,59 @@ def _download_materials(course: str, lecture: str, kind: str, dest: Path) -> lis
     return paths
 
 
+def _summarize_from_materials(
+    course: str, lecture: str, kind: str, entries: list[dict]
+) -> str:
+    """Summarize a materials-only lecture from its PDFs alone; every one empty is a step error."""
+
+    with tempfile.TemporaryDirectory() as tmp:
+        materials = _download_materials(course, lecture, kind, Path(tmp), entries)
+        if not materials:
+            raise CodedError("every material PDF is empty", "materials_empty")
+        log.info("Summarize: no transcript — %d materials only", len(materials))
+        return summarize_materials(materials)
+
+
 def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
-    """Summarize transcript.txt → summary.md via Gemini, passing every material PDF present.
-    A Gemini 429, daily or per-minute, is a plain error; only the daily one is flagged."""
+    """Summarize transcript.txt → summary.md via Gemini, passing every material PDF present;
+    a materials-only lecture summarizes from its PDFs alone. A daily Gemini 429 is flagged."""
 
     try:
         if not db_client.file_exists(course, lecture, kind, "transcript.txt"):
-            return _missing_prerequisite(
-                "transcript.txt is required — run Transcribe first",
-                "transcript.txt",
-                "transcribe",
+            has_video = db_client.file_exists(course, lecture, kind, "video.mp4")
+            entries = (
+                [] if has_video else db_client.list_materials(course, lecture, kind)
             )
-        with _db_workspace(course, lecture, kind, download=["transcript.txt"]) as ws:
-            transcript = ws["transcript.txt"]
-            materials = _download_materials(course, lecture, kind, transcript.parent)
-            log.info(
-                "Summarize: %s",
-                f"{len(materials)} materials found — passing to Gemini"
-                if materials
-                else "no materials found — transcript only",
-            )
-            summary = summarize(transcript, materials)
+            if not entries:
+                return _missing_prerequisite(
+                    "transcript.txt is required — run Transcribe first",
+                    "transcript.txt",
+                    "transcribe",
+                )
+            summary = _summarize_from_materials(course, lecture, kind, entries)
+            # A video that landed mid-summarize supersedes the PDFs: write nothing, so the
+            # pipeline's next pass finds summary.md missing and takes the video path.
+            if db_client.file_exists(course, lecture, kind, "video.mp4"):
+                log.info(
+                    "Summarize: video arrived mid-run — discarding materials summary"
+                )
+                return {"status": "done", "usedMaterial": False}
+            materials = entries
+        else:
+            with _db_workspace(
+                course, lecture, kind, download=["transcript.txt"]
+            ) as ws:
+                transcript = ws["transcript.txt"]
+                materials = _download_materials(
+                    course, lecture, kind, transcript.parent
+                )
+                log.info(
+                    "Summarize: %s",
+                    f"{len(materials)} materials found — passing to Gemini"
+                    if materials
+                    else "no materials found — transcript only",
+                )
+                summary = summarize(transcript, materials)
         # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
         db_client.put_summary(course, lecture, kind, summary, fresh=True)
@@ -496,20 +532,39 @@ def final_output() -> str:
     return STEP_OUTPUT[enabled_steps()[-1]]
 
 
-def next_step(files: dict) -> Optional[str]:
+def _has(files: dict, name: str) -> bool:
+    entry = files.get(name)
+    return bool(entry and entry.get("exists"))
+
+
+def is_materials_only(files: dict, materials: list) -> bool:
+    """A lecture with material PDFs but no video.mp4 — summarized from the PDFs alone."""
+
+    return not _has(files, "video.mp4") and bool(materials)
+
+
+def next_step(files: dict, materials_only: bool = False) -> Optional[str]:
     """The first enabled step whose output file is missing, or None once the final output
-    exists. Pure file-existence, so every trigger is resumable."""
+    exists; a materials-only lecture skips audio and transcribe. Pure file-existence."""
 
-    def has(name: str) -> bool:
-        entry = files.get(name)
-        return bool(entry and entry.get("exists"))
-
-    if has(final_output()):
+    if _has(files, final_output()):
         return None
     for step in enabled_steps():
-        if not has(STEP_OUTPUT[step]):
+        if materials_only and step in ("audio", "transcribe"):
+            continue
+        if not _has(files, STEP_OUTPUT[step]):
             return step
     return None
+
+
+def summarize_ready(course: str, lecture: str, kind: str) -> bool:
+    """True when summarize has an input: transcript.txt, or no video.mp4 but material PDFs."""
+
+    if db_client.file_exists(course, lecture, kind, "transcript.txt"):
+        return True
+    if db_client.file_exists(course, lecture, kind, "video.mp4"):
+        return False
+    return bool(db_client.list_materials(course, lecture, kind))
 
 
 def _lecture_pending(files: dict) -> bool:
@@ -712,7 +767,13 @@ async def _run_pipeline_unlocked(
     try:
         while True:
             files = await _fetch_files(course, lecture, kind)
-            step = next_step(files)
+            materials_only = False
+            if not _has(files, "video.mp4"):
+                materials = await asyncio.to_thread(
+                    db_client.list_materials, course, lecture, kind
+                )
+                materials_only = is_materials_only(files, materials)
+            step = next_step(files, materials_only)
             if step is None:
                 held = hand_over and skey in _in_flight
                 if held:

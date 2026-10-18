@@ -6,6 +6,9 @@ from services.resources import resource_path
 from timing import timed_pipeline
 
 PROMPT_FILE = resource_path("assets", "instructions", "summarize.md")
+MATERIALS_PROMPT_FILE = resource_path(
+    "assets", "instructions", "summarize_materials.md"
+)
 
 # Appended to every request — keeps the page budget tunable without editing the prompt file.
 LENGTH_BUDGET_SUFFIX = (
@@ -20,37 +23,27 @@ PDF_INSTRUCTION_SUFFIX = (
     "Cross-reference their contents with the transcript and incorporate relevant insights into the final summary."
 )
 
+TRANSCRIPT_MARKER = "--- MAIN TRANSCRIPT DOCUMENT ---"
+SUPPLEMENTARY_MARKER = "--- SUPPLEMENTARY PDF DOCUMENTS ---"
+LECTURE_MATERIALS_MARKER = "--- LECTURE MATERIAL PDF DOCUMENTS ---"
+INSTRUCTIONS_MARKER = "--- INSTRUCTIONS ---"
 
-@timed_pipeline("summarize")
-def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -> str:
-    """Summarize a transcript (plus any number of material PDFs) with Gemini."""
 
-    prompt = PROMPT_FILE.read_text(encoding="utf-8")
+def _generate(prompt: str, groups: list[tuple[str, list[tuple[Path, str]]]]) -> str:
+    """Upload each (marker, [(path, mime)]) group under its one marker, then send the prompt
+    last (context first, instructions last); every upload is deleted whatever the outcome."""
 
     client = LLMClient()
     uploaded = []
     try:
-        # Context first, instructions last.
-        transcript_file = client.upload_file(transcript_path, "text/plain")
-        uploaded.append(transcript_file)
-
-        contents: list = [
-            "--- MAIN TRANSCRIPT DOCUMENT ---",
-            transcript_file,
-        ]
-
-        if material_paths:
-            # One marker for the whole group, then every PDF under it.
-            contents.append("--- SUPPLEMENTARY PDF DOCUMENTS ---")
-            for material_path in material_paths:
-                material_file = client.upload_file(material_path, "application/pdf")
-                uploaded.append(material_file)
-                contents.append(material_file)
-            prompt += PDF_INSTRUCTION_SUFFIX
-
-        prompt += LENGTH_BUDGET_SUFFIX
-        contents += ["--- INSTRUCTIONS ---", prompt]
-
+        contents: list = []
+        for marker, files in groups:
+            contents.append(marker)
+            for path, mime_type in files:
+                handle = client.upload_file(path, mime_type)
+                uploaded.append(handle)
+                contents.append(handle)
+        contents += [INSTRUCTIONS_MARKER, prompt]
         return client.generate(contents)
     except CodedError:
         raise  # a quota hit or a missing key already names itself
@@ -59,3 +52,26 @@ def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -
     finally:
         for handle in uploaded:
             client.delete_file(handle.name)
+
+
+@timed_pipeline("summarize")
+def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -> str:
+    """Summarize a transcript (plus any number of material PDFs) with Gemini."""
+
+    prompt = PROMPT_FILE.read_text(encoding="utf-8")
+    groups = [(TRANSCRIPT_MARKER, [(transcript_path, "text/plain")])]
+    if material_paths:
+        groups.append(
+            (SUPPLEMENTARY_MARKER, [(p, "application/pdf") for p in material_paths])
+        )
+        prompt += PDF_INSTRUCTION_SUFFIX
+    return _generate(prompt + LENGTH_BUDGET_SUFFIX, groups)
+
+
+@timed_pipeline("summarize_materials")
+def summarize_materials(material_paths: list[Path]) -> str:
+    """Summarize a lecture from its material PDFs alone, for one that has no recording."""
+
+    prompt = MATERIALS_PROMPT_FILE.read_text(encoding="utf-8") + LENGTH_BUDGET_SUFFIX
+    pdfs = [(p, "application/pdf") for p in material_paths]
+    return _generate(prompt, [(LECTURE_MATERIALS_MARKER, pdfs)])
