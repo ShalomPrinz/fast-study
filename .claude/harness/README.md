@@ -355,8 +355,12 @@ the fake site still serves a redirected `https://lemida.biu.ac.il`, and auto/'s 
 reads it as `supported` with the seeded token connected; both services log the harness
 keys (the repo `.env` lost the `load_dotenv` race); a settings save lands in the scratch `.env` and
 leaves the real one untouched; Connect through auto/'s real login and browser saves the fake
-token by itself, `missing_function` refuses it with `moodle_site_unsupported`, and no browser escapes; every `/control` mode of both fakes, a targeted rule and a draining
-one each change the answer they should and switch back; Drive disconnects and reconnects through
+token by itself, `missing_function` refuses it with `moodle_site_unsupported`, and no browser escapes;
+Groq's `429`, `500`, `empty` and `slow`, Gemini's those and `invalidkey`, a targeted rule and a
+draining one, and the site's `blocked`, `invalidtoken`, `missing_function`, `downloads_disabled`,
+`not_moodle`, `mobile_service_off` and `downloadMs` each change the answer they should and switch
+back — Gemini's `429min` and the site's `blocked_ws`, `radware`, `no_enrol_function`, `hold` and
+`solve` are not; Drive disconnects and reconnects through
 the backend's routes, left connected; the app, loaded in headless chromium from this stack's
 frontend, lists every non-archived course and reaches each service's `/health` from that origin, so
 a CORS allowlist that refuses its port, or a SPA pointed at another stack, fails here
@@ -426,8 +430,8 @@ course alone for an overview — and `match` hits when its whole segments appear
 is that course, `שיעור 4` that name in any course, never `שיעור 40`. A key probe carries no path,
 so only an untargeted rule reaches it. `times` counts the calls the rule failed (one per Groq
 chunk, one per Gemini request) and puts the provider back to `ok` at zero. A mode applies where it
-means something: `429` and `empty` to transcription and generation, `500` there and to the key
-probe, `invalidkey` to every Gemini route — the real 400 `API_KEY_INVALID` body, so the first
+means something: `429` and `empty` to transcription and generation, `429min` to generation alone,
+`500` to both and to the key probe, `invalidkey` to every Gemini route — the real 400 `API_KEY_INVALID` body, so the first
 upload of a run is what fails. `slow`, on transcription and generation, holds each matched call
 `ms` and then answers as `ok` — a step that stays in flight long enough to cancel, rename, reload or
 queue behind; Groq is held once per chunk, so a lecture's step takes `ms` × its chunks. The Drive
