@@ -59,7 +59,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {# lecture} other {# lectures}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:233
+#: src/features/lectures/MainView.tsx:224
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
 
@@ -134,7 +134,7 @@ msgid "{0} remaining"
 msgstr "{0} remaining"
 
 #. placeholder {0}: formatDuration(videoDuration)
-#: src/features/lectures/MainView.tsx:230
+#: src/features/lectures/MainView.tsx:221
 msgid "{0} video"
 msgstr "{0} video"
 
@@ -154,7 +154,7 @@ msgstr "{count, plural, other {# materials will be used}}"
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, other {summary used only {used} of # materials}}"
 
-#: src/features/lectures/MainView.tsx:320
+#: src/features/lectures/MainView.tsx:300
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
@@ -223,7 +223,7 @@ msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
-#: src/features/lectures/MainView.tsx:502
+#: src/features/lectures/MainView.tsx:480
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} will be deleted."
 
@@ -291,7 +291,7 @@ msgstr "{remaining, plural, one {Show # more} other {Show # more}}"
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 
-#: src/features/lectures/MainView.tsx:210
+#: src/features/lectures/MainView.tsx:201
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · step {stepNumber} of {stepCount}"
 
@@ -673,7 +673,7 @@ msgstr "Collect"
 msgid "Compile"
 msgstr "Compile"
 
-#: src/features/lectures/MainView.tsx:224
+#: src/features/lectures/MainView.tsx:215
 msgid "Complete"
 msgstr "Complete"
 
@@ -721,7 +721,7 @@ msgstr "Contact"
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
-#: src/features/lectures/MainView.tsx:334
+#: src/features/lectures/MainView.tsx:314
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
@@ -889,8 +889,8 @@ msgid "Decline"
 msgstr "Decline"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:466
-#: src/features/lectures/MainView.tsx:469
+#: src/features/lectures/MainView.tsx:444
+#: src/features/lectures/MainView.tsx:447
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
@@ -1014,7 +1014,7 @@ msgstr "Edit"
 msgid "Edit source URL"
 msgstr "Edit source URL"
 
-#: src/features/lectures/MainView.tsx:243
+#: src/features/lectures/MainView.tsx:234
 msgid "Edit summary"
 msgstr "Edit summary"
 
@@ -1146,10 +1146,6 @@ msgstr "FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from 
 #: src/features/settings/InitWall.tsx:216
 msgid "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
-
-#: src/features/lectures/MainView.tsx:317
-msgid "Fewer details"
-msgstr "Fewer details"
 
 #: src/features/downloads/components/RecordingRow.tsx:248
 msgid "File type"
@@ -1312,7 +1308,7 @@ msgstr "Key verified"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:431
+#: src/features/lectures/MainView.tsx:409
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -1404,7 +1400,7 @@ msgid "Material"
 msgstr "Material"
 
 #: src/features/downloads/DownloadsView.tsx:66
-#: src/features/lectures/MainView.tsx:450
+#: src/features/lectures/MainView.tsx:428
 msgid "Materials"
 msgstr "Materials"
 
@@ -1539,7 +1535,7 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/lectures/MainView.tsx:420
+#: src/features/lectures/MainView.tsx:398
 msgid "not provided"
 msgstr "not provided"
 
@@ -1607,7 +1603,7 @@ msgstr "Open folder"
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 
-#: src/features/lectures/MainView.tsx:254
+#: src/features/lectures/MainView.tsx:245
 msgid "Open in Drive"
 msgstr "Open in Drive"
 
@@ -1616,7 +1612,7 @@ msgstr "Open in Drive"
 msgid "Open lecture"
 msgstr "Open lecture"
 
-#: src/features/lectures/MainView.tsx:457
+#: src/features/lectures/MainView.tsx:435
 msgid "Open material"
 msgstr "Open material"
 
@@ -1624,7 +1620,7 @@ msgstr "Open material"
 #: src/features/course-overview/components/ExtractorHeader.tsx:112
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
-#: src/features/lectures/MainView.tsx:248
+#: src/features/lectures/MainView.tsx:239
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
 msgstr "Open PDF"
@@ -1710,11 +1706,11 @@ msgstr "PDF rendered with warnings"
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
 
-#: src/features/lectures/MainView.tsx:308
+#: src/features/lectures/MainView.tsx:298
 msgid "Pipeline"
 msgstr "Pipeline"
 
-#: src/features/lectures/MainView.tsx:171
+#: src/features/lectures/MainView.tsx:162
 #: src/features/runner/RunnerView.tsx:215
 msgid "Pipeline already running"
 msgstr "Pipeline already running"
@@ -1844,12 +1840,12 @@ msgstr "Retry"
 msgid "Retry ✗"
 msgstr "Retry ✗"
 
-#: src/features/lectures/MainView.tsx:393
-#: src/features/lectures/MainView.tsx:396
+#: src/features/lectures/MainView.tsx:371
+#: src/features/lectures/MainView.tsx:374
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
-#: src/features/lectures/MainView.tsx:281
+#: src/features/lectures/MainView.tsx:272
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
@@ -1968,10 +1964,6 @@ msgstr "Show captcha window"
 msgid "Show more"
 msgstr "Show more"
 
-#: src/features/lectures/MainView.tsx:317
-msgid "Show more details"
-msgstr "Show more details"
-
 #: src/features/settings/components/ApiKeyField.tsx:151
 msgid "Show screenshot"
 msgstr "Show screenshot"
@@ -1980,7 +1972,7 @@ msgstr "Show screenshot"
 msgid "skipped"
 msgstr "skipped"
 
-#: src/features/lectures/MainView.tsx:406
+#: src/features/lectures/MainView.tsx:384
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
@@ -2012,7 +2004,7 @@ msgstr "Step {0} of {1}"
 
 #: src/features/lectures/EditSummaryView.tsx:209
 #: src/features/lectures/EditSummaryView.tsx:277
-#: src/features/lectures/MainView.tsx:147
+#: src/features/lectures/MainView.tsx:138
 msgid "Step already running"
 msgstr "Step already running"
 
@@ -2040,7 +2032,7 @@ msgstr "Summaries upload to this account's Drive. Connecting opens a Google sign
 msgid "Summarize"
 msgstr "Summarize"
 
-#: src/features/lectures/MainView.tsx:374
+#: src/features/lectures/MainView.tsx:354
 msgid "summarized from materials only"
 msgstr "summarized from materials only"
 
@@ -2174,7 +2166,7 @@ msgstr "The folder in your Drive that summaries are uploaded into. It is created
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
-#: src/features/lectures/MainView.tsx:486
+#: src/features/lectures/MainView.tsx:464
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
@@ -2199,7 +2191,7 @@ msgstr "The Moodle login timed out. Try connecting again."
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "The Moodle session expired. Reconnect the account and try again."
 
-#: src/features/lectures/MainView.tsx:503
+#: src/features/lectures/MainView.tsx:481
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -2281,7 +2273,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "The Zoom window was closed during the capture. Try the download again."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:487
+#: src/features/lectures/MainView.tsx:465
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 

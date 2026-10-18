@@ -10,29 +10,6 @@
   margin-top: var(--space-7);
 }
 
-/* The section title and its details toggle stay together at the start, clear of `.section-count`. */
-.section-head-start {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-size: var(--fs-meta);
-  color: var(--text-3);
-}
-
-/* A text control, not a `.btn`: it reads as part of the section title line. */
-.pipeline-details-toggle {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--accent-ink);
-  font: inherit;
-  cursor: pointer;
-}
-
-.pipeline-details-toggle:hover {
-  text-decoration: underline;
-}
-
 /* A running row lays its body out as a grid so `ProgressBar`'s own ETA label can sit at the end of
    the stage line while its track spans the full width beneath. */
 .pipeline-row--running .pipeline-row-body {

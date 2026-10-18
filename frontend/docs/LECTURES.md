@@ -31,8 +31,6 @@ content pane is always the window less 536) folds them into `LectureActionsMenu`
 `Run Remaining` so the primary button never moves.
 Completion is carried by the `StatusNode` alone, never a row tint; the running row sits on
 `--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
-Each row's file line (name · size) is hidden until `.pipeline-details-toggle`, beside the section title,
-opens it; a change of course/lecture/kind resets it, so every lecture visit starts hidden.
 A missing file whose step is the lecture's `error.step` shows `failed`, or `quota` for a Gemini quota
 code (`utils/stepState.ts`); the row's `data-status` carries the same state.
 

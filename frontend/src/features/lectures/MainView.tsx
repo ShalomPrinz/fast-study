@@ -87,15 +87,6 @@ export default function MainView() {
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null)
-  // File lines start hidden on every lecture visit: a route change resets them during render, since
-  // MainView stays mounted across lectures.
-  const routeKey = `${kind}/${course}/${lecture}`
-  const [showDetails, setShowDetails] = useState(false)
-  const [detailsRoute, setDetailsRoute] = useState(routeKey)
-  if (detailsRoute !== routeKey) {
-    setDetailsRoute(routeKey)
-    setShowDetails(false)
-  }
 
   const { isInFlight, getError } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
@@ -303,20 +294,9 @@ export default function MainView() {
       <div className="page-body">
         <div className="page-column">
           <div className="section-head">
-            <div className="section-head-start">
-              <h2 className="section-title">
-                <Trans>Pipeline</Trans>
-              </h2>
-              <PageHeaderDot />
-              <button
-                type="button"
-                className="pipeline-details-toggle"
-                aria-expanded={showDetails}
-                onClick={() => setShowDetails(!showDetails)}
-              >
-                {showDetails ? <Trans>Fewer details</Trans> : <Trans>Show more details</Trans>}
-              </button>
-            </div>
+            <h2 className="section-title">
+              <Trans>Pipeline</Trans>
+            </h2>
             <span className="section-count">{t`${doneCount} of ${stageCount} complete`}</span>
           </div>
 
@@ -374,12 +354,10 @@ export default function MainView() {
                         <Trans>summarized from materials only</Trans>
                       </p>
                     )}
-                    {showDetails && (
-                      <p className="pipeline-file">
-                        {file}
-                        {subtitle && ` · ${subtitle}`}
-                      </p>
-                    )}
+                    <p className="pipeline-file">
+                      {file}
+                      {subtitle && ` · ${subtitle}`}
+                    </p>
                     {isRunning && remote && (
                       <ProgressBar
                         stats={remote.timingStats}
