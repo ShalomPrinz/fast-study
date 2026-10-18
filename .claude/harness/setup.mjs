@@ -404,6 +404,7 @@ harness ready — drive the app at ${appUrl()}  (localhost, not 127.0.0.1: the s
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"missing_function"}'  # Connect refused (also mobile_service_off, downloads_disabled)
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"ok"}'
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"downloadMs":60000}'     # slow downloads, live
+    node .claude/harness/hb.mjs --harness ${paths.root} moodle-busy on|off  # auto/'s Moodle lock held, or freed
 
   not covered by this harness: the Electron shell, the installer, real provider behaviour,
   a real site's SSO and MFA pages, the zoom login, and zoom capture (it needs a real browser).

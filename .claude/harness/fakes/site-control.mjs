@@ -21,11 +21,18 @@ export const MODES = [
   'no_enrol_function',
 ];
 
-/** The site's mode and the fake tool's download speed, with the one-time drop per /die/ URL. */
+/** The site's mode, the fake tool's download speed and the Moodle hold, with the one-time drop per /die/ URL. */
 export function createSiteControl() {
-  const state = { mode: 'ok', downloadMs: DEFAULT_DOWNLOAD_MS };
+  const state = { mode: 'ok', downloadMs: DEFAULT_DOWNLOAD_MS, hold: false };
   let solveArmed = false;
   const died = new Set();
+  // Moodle requests parked by `hold`, each answered once it lifts.
+  let parked = [];
+  const release = () => {
+    const waiting = parked;
+    parked = [];
+    for (const answer of waiting) answer();
+  };
   return {
     state,
     // `reset` is what a reseed sends; any other field sets only itself. Fields apply in order, so a
@@ -36,6 +43,7 @@ export function createSiteControl() {
         state.downloadMs = DEFAULT_DOWNLOAD_MS;
         solveArmed = false;
         died.clear();
+        state.hold = false;
       }
       if (body.mode) {
         if (!MODES.includes(body.mode)) throw new Error(`mode: one of ${MODES.join(' | ')}`);
@@ -46,10 +54,22 @@ export function createSiteControl() {
         if (!Number.isFinite(ms) || ms < 0) throw new Error('downloadMs: ms ≥ 0');
         state.downloadMs = ms;
       }
+      if (body.hold !== undefined) {
+        if (typeof body.hold !== 'boolean') throw new Error('hold: true | false');
+        state.hold = body.hold;
+      }
+      if (!state.hold) release();
       // Arms one solve: the next captcha page that asks clears its browser.
       if (body.solve) solveArmed = true;
-      return { mode: state.mode, downloadMs: state.downloadMs };
+      return { mode: state.mode, downloadMs: state.downloadMs, hold: state.hold };
     },
+    // A Moodle request: answered now, or parked until the hold lifts — the in-flight call auto/'s
+    // lock then stays held for.
+    admit(answer) {
+      if (state.hold) parked.push(answer);
+      else answer();
+    },
+    parked: () => parked.length,
     // Asked by an open captcha page; true once per armed solve.
     takeSolve() {
       const solved = solveArmed;

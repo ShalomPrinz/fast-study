@@ -111,6 +111,7 @@ node .claude/harness/hb.mjs rm-lecture hb-pipeline 'שיעור 4'          # del
 node .claude/harness/hb.mjs lock 'hb-nav/שיעור 1/summary.pdf'        # held open, Windows-style
 node .claude/harness/hb.mjs unlock            # every lock off (or name the globs to drop)
 node .claude/harness/hb.mjs forget-probes     # every probed link back to unprobed ('?')
+node .claude/harness/hb.mjs moodle-busy on    # auto/'s Moodle lock held until `moodle-busy off` (≤ 5 min)
 node .claude/harness/hb.mjs refused --since 2026-09-25T09:00Z        # real escapes only
 node .claude/harness/hb.mjs browser dl        # one more browser session, stopped by --down
 node .claude/harness/hb.mjs kill database     # take one service down; setup.mjs --restart brings it back
@@ -142,6 +143,18 @@ Windows cannot hold open a missing file. The globs live in
 memory, so a row it classified — the `/gone/` link as "Unsupported" — lists unprobed again and can
 be driven through its first probe once more; `hb reseed` leaves both caches alone. The Downloads
 page keeps the verdict it was handed until it re-lists, so reload it.
+
+`moodle-busy on` holds auto/'s one Moodle lock for real: it sets the fake site's `hold`, which parks
+every request for the Moodle host unanswered, sends auto/ one `GET /courses` that takes the lock, and
+returns once `/auth/events` pushes `moodleBusy: true` and the site holds that call parked (it waits
+out a cooldown first, and lifts the hold again if the call is refused). The call stays in flight after `hb` exits, so
+every frontend Moodle button reads busy and a racing one gets the real 429 `moodle_busy`, while
+server/'s own calls queue behind it. `moodle-busy off` lifts the hold, answering every parked request,
+and returns once the 3 s cooldown ends and `moodleBusy: false` is pushed. A reseed lifts it too. The
+held call times out after undici's 5-minute headers limit and frees the lock while `hold` stays on,
+so run `off` then `on` again for a longer hold. Only
+a row auto/ flags `moodle` locks, so a zoom row's passcode Submit never does; a re-download's
+overwrite confirm on the videostream row does.
 
 `kill` ends one service's whole recorded process group, the server with the `uv`/`npm` parent
 wrapping it, so the port stops answering; a bare `kill` of the recorded pid can leave the server up.
@@ -351,7 +364,7 @@ npm run test:harness     # from the repo root: node:test, then pytest — second
 ```
 
 `tests/` unit-tests the harness's own logic: the providers' rule parsing, whole-segment `match`
-and `times` draining, the site's `/control` and one-time `/die/` drop, the fake tool's argv and
+and `times` draining, the site's `/control`, its Moodle `hold` and one-time `/die/` drop, the fake tool's argv and
 failure table, `hb state`'s diff, the env and baseline helpers, `start`'s port handshake (reuse, the fallback on a held port, a
 child that never reports, a restart that keeps its port), and the DOM timeline's retention,
 change and flicker logic (its recorder and replay run in a browser, so the live stack proves them), and `hb`'s
@@ -385,7 +398,8 @@ curl -s $P/control -d '{"reset":true}'     # every provider back to ok
 curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | blocked_ws | radware | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled | no_enrol_function
 curl -s $S/control -d '{"solve":true}'     # radware: the open captcha page solves itself
 curl -s $S/control -d '{"downloadMs":60000}' # how long each download takes (3000)
-curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, every /die/ re-armed
+curl -s $S/control -d '{"hold":true}'      # park every Moodle-host request until {"hold":false}
+curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, hold off, every /die/ re-armed
 ```
 
 The four modes after `invalidtoken` are a site auto/ must refuse. `not_moodle` answers the probe's

@@ -35,7 +35,7 @@ export async function snapshot(paths) {
   return {
     fakes: {
       providers: (await get(`${PROVIDERS}/health`)).mode,
-      site: { mode: site.mode, downloadMs: site.downloadMs },
+      site: { mode: site.mode, downloadMs: site.downloadMs, hold: site.hold },
     },
     settings: await get(`${DATABASE}/settings`),
     drive: await get(`${BACKEND}/config/drive/status`),

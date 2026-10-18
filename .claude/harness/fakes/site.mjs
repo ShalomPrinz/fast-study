@@ -19,6 +19,7 @@ const PDF = path.join(HARNESS, 'fixtures', 'handout.pdf');
 const site = createSiteControl();
 
 const SITE = FAKE_MOODLE_SITE;
+const SITE_HOST = new URL(SITE).hostname;
 const COURSE_ID = Number(new URL(FAKE_COURSE_URL).searchParams.get('id'));
 
 // One course, shaped exactly like core_course_get_contents: sections of modules, names as HTML.
@@ -283,11 +284,18 @@ function handle(req, res) {
   }
   const { state } = site;
   if (route === '/health') {
-    return json(res, { status: 'ok', mode: state.mode, downloadMs: state.downloadMs });
+    return json(res, { status: 'ok', ...state, parked: site.parked() });
   }
   if (route === '/tool') return json(res, site.tool(url.searchParams.get('url') ?? ''));
 
   const host = (req.headers.host ?? '').split(':')[0];
+  // Only the Moodle host is held: the captcha page is another site.
+  if (host === SITE_HOST) return site.admit(() => serveSite(req, res, url, route, host));
+  return serveSite(req, res, url, route, host);
+}
+
+function serveSite(req, res, url, route, host) {
+  const { state } = site;
   if (host === CAPTCHA_HOST) {
     if (route === '/harness/solved') return json(res, { solved: site.takeSolve() });
     return captchaPage(res);

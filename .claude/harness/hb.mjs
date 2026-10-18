@@ -9,6 +9,7 @@ import { ACTIONS, actionRequest } from './lib/act.mjs';
 import { DATABASE, bindPorts, bytes, call, saveSettings } from './lib/api.mjs';
 import { markSeeded, removeLecture, reseed, settingsPatch, unwall, wall } from './lib/baseline.mjs';
 import { SELFCHECK_TAG, harnessPaths, readPorts } from './lib/env.mjs';
+import { holdMoodle, releaseMoodle } from './lib/moodle-busy.mjs';
 import { kill, restart, startBrowser } from './lib/stack.mjs';
 import { diff, readLocks, snapshot } from './lib/state.mjs';
 
@@ -123,6 +124,21 @@ const COMMANDS = {
     summary: 'drop these locks, or every lock when none is named',
     async run(paths, globs) {
       writeLocks(paths, globs.length ? readLocks(paths).filter((g) => !globs.includes(g)) : []);
+    },
+  },
+  'moodle-busy': {
+    usage: 'moodle-busy on|off',
+    summary: "hold auto/'s Moodle lock with a call the fake site leaves unanswered, or answer it",
+    async run(paths, [state]) {
+      if (state === 'on') {
+        await holdMoodle();
+        console.log(
+          'moodle busy: the lock is held for up to 5 min — `hb moodle-busy off` frees it',
+        );
+      } else if (state === 'off') {
+        await releaseMoodle();
+        console.log('moodle free: the held call answered and the cooldown ran out');
+      } else throw new Error('usage: moodle-busy on|off');
     },
   },
   'forget-probes': {

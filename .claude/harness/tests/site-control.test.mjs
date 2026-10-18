@@ -7,7 +7,11 @@ const DIE = 'https://lemida.biu.ac.il/die/lecture-08.mp4';
 
 describe('control', () => {
   test('starts ok at the default speed', () => {
-    assert.deepEqual(createSiteControl().state, { mode: 'ok', downloadMs: DEFAULT_DOWNLOAD_MS });
+    assert.deepEqual(createSiteControl().state, {
+      mode: 'ok',
+      downloadMs: DEFAULT_DOWNLOAD_MS,
+      hold: false,
+    });
   });
 
   test('each field sets only itself', () => {
@@ -15,9 +19,15 @@ describe('control', () => {
     assert.deepEqual(site.control({ mode: 'blocked' }), {
       mode: 'blocked',
       downloadMs: DEFAULT_DOWNLOAD_MS,
+      hold: false,
     });
-    assert.deepEqual(site.control({ downloadMs: 10 }), { mode: 'blocked', downloadMs: 10 });
-    assert.deepEqual(site.control({}), { mode: 'blocked', downloadMs: 10 });
+    assert.deepEqual(site.control({ downloadMs: 10 }), {
+      mode: 'blocked',
+      downloadMs: 10,
+      hold: false,
+    });
+    assert.deepEqual(site.control({ hold: true }), { mode: 'blocked', downloadMs: 10, hold: true });
+    assert.deepEqual(site.control({}), { mode: 'blocked', downloadMs: 10, hold: true });
   });
 
   test('every listed mode is accepted', () => {
@@ -27,11 +37,12 @@ describe('control', () => {
 
   test('reset restores the mode, the speed and the drops', () => {
     const site = createSiteControl();
-    site.control({ mode: 'invalidtoken', downloadMs: 0 });
+    site.control({ mode: 'invalidtoken', downloadMs: 0, hold: true });
     site.tool(DIE);
     assert.deepEqual(site.control({ reset: true }), {
       mode: 'ok',
       downloadMs: DEFAULT_DOWNLOAD_MS,
+      hold: false,
     });
     assert.equal(site.tool(DIE).die, true);
   });
@@ -54,6 +65,37 @@ describe('control', () => {
     const site = createSiteControl();
     assert.equal(site.control({ downloadMs: 0 }).downloadMs, 0);
     assert.equal(site.control({ downloadMs: '250' }).downloadMs, 250);
+  });
+});
+
+describe('hold', () => {
+  test('parks requests until it lifts, then answers each in order', () => {
+    const site = createSiteControl();
+    const answered = [];
+    site.admit(() => answered.push('before'));
+    site.control({ hold: true });
+    site.admit(() => answered.push('a'));
+    site.admit(() => answered.push('b'));
+    assert.deepEqual(answered, ['before']);
+    assert.equal(site.parked(), 2);
+    site.control({ hold: false });
+    assert.deepEqual(answered, ['before', 'a', 'b']);
+    assert.equal(site.parked(), 0);
+  });
+
+  test('reset answers the parked requests too', () => {
+    const site = createSiteControl();
+    let answered = false;
+    site.control({ hold: true });
+    site.admit(() => (answered = true));
+    site.control({ reset: true });
+    assert.equal(answered, true);
+  });
+
+  test('a non-boolean hold is rejected and leaves it', () => {
+    const site = createSiteControl();
+    assert.throws(() => site.control({ hold: 'yes' }), /hold: true \| false/);
+    assert.equal(site.state.hold, false);
   });
 });
 
