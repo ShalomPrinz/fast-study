@@ -132,9 +132,11 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
 
   // The rail is the steps only — `video.mp4` is the input, not a stage the runner walks — minus
   // those a materials-only lecture skips.
-  const steps = (files ? visiblePipeline(driveEnabled, files) : []).filter(
-    (p) => p.step && !skippedStage(p.file, files!, materials),
-  )
+  const steps = files
+    ? visiblePipeline(driveEnabled, files).filter(
+        (p) => p.step && !skippedStage(p.file, files, materials),
+      )
+    : []
   const position = stepPosition(steps, entry.step)
 
   return (

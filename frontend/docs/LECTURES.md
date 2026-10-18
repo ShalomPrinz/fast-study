@@ -54,14 +54,16 @@ used`; after, each material's mtime against the summary's picks all used (green)
 the model", not a record** — re-downloading an unchanged PDF reads as unused. Exactness would need the
 backend to persist each run's inputs.
 
-**Materials-only lectures.** No `video.mp4` and at least one material (`isMaterialsOnly`, mirroring the
+**Materials-only lectures.** No `video.mp4`, no `audio.mp3` and at least one material (`isMaterialsOnly`, mirroring the
 backend) summarizes from the PDFs alone. `lectureProgress.ts` holds the shared predicates: `skippedStage`
 marks the missing Video, Audio and Transcript rows "skipped (no video)" with no button, and leaves them out
 of "N of M complete", "step N of M" and the runner rail; `stagePrereqMet` lets Summarize start without a
 transcript; `canRunRemaining` skips them as `next_step` does. Runs are manual only — `notQueued` and the
 sidebar stay video-only. "summarized from materials only" under the Summary row
 (`.pipeline-materials-note`) is derived from files alone (`summarizedFromMaterials`: summary, no
-transcript, materials-only); there is no marker, and a later video upload takes the usual wipe.
+transcript, materials-only); there is no marker, and a later video upload takes the usual wipe. So once `video.mp4` and `transcript.txt`
+are deleted by hand, a transcript-based summary reads as "materials only" — accepted, since the note has no
+marker to tell them apart.
 
 ## Study with AI
 

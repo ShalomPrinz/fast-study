@@ -11,10 +11,10 @@ export function isLectureComplete(lecture: Lecture, driveEnabled: boolean): bool
   return filesComplete(lecture.files, driveEnabled)
 }
 
-// No video.mp4 but at least one material PDF: summarized from the PDFs alone, mirroring the backend's
-// `is_materials_only()`.
+// No video.mp4, no audio.mp3 and at least one material PDF: summarized from the PDFs alone, mirroring
+// the backend's `is_materials_only()` / `_summarize_source()`.
 export function isMaterialsOnly(files: FileStatus, materials: MaterialInfo[]): boolean {
-  return !files['video.mp4'].exists && materials.length > 0
+  return !files['video.mp4'].exists && !files['audio.mp3'].exists && materials.length > 0
 }
 
 // A summary made from the materials alone — derived from files only, there is no marker.

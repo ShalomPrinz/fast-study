@@ -109,6 +109,14 @@ describe('materials-only predicates', () => {
     expect(isMaterialsOnly(files([]), MATS)).toBe(true)
     expect(isMaterialsOnly(files([]), [])).toBe(false)
     expect(isMaterialsOnly(files(['video.mp4']), MATS)).toBe(false)
+    expect(isMaterialsOnly(files(['audio.mp3']), MATS)).toBe(false)
+  })
+
+  it('keeps a lecture with audio but no video on the normal chain from transcribe', () => {
+    const audioOnly = files(['audio.mp3'])
+    expect(skippedStage('transcript.txt', audioOnly, MATS)).toBe(false)
+    expect(stagePrereqMet(SUMMARIZE, audioOnly, MATS)).toBe(false)
+    expect(canRunRemaining(audioOnly, MATS, true)).toBe(true)
   })
 
   it('skips the video, audio and transcript stages while materials-only', () => {

@@ -44,6 +44,10 @@ describe('timingKey', () => {
     })
   })
 
+  it('keys a summarize on audio, not materials, when audio.mp3 is there', () => {
+    expect(timingKey('summarize', files(['audio.mp3']), MATS).operation).toBe('summarize')
+  })
+
   it('keys every other step on its input file', () => {
     expect(timingKey('pdf', files(['summary.md']), MATS)).toEqual({ operation: 'pdf', bytes: 7 })
     expect(timingKey('audio', files([]), [])).toEqual({ operation: 'audio', bytes: 0 })
