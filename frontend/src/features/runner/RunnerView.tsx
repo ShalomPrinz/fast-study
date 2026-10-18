@@ -8,6 +8,7 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useAutoRun, useDriveEnabled, useNightlyRun } from '@/shared/contexts/SettingsContext'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { PIPELINE, stepPosition, visiblePipeline } from '@/features/lectures/constants/pipeline'
+import { skippedStage } from '@/features/lectures/utils/lectureProgress'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
@@ -119,16 +120,21 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
   const driveEnabled = useDriveEnabled()
   const node = findLecture(courses, entry.course, entry.lecture, entry.kind)
   const files = node?.files ?? null
+  const materials = node?.materials ?? []
   const remote = useRemoteInflightState({
     course: entry.course,
     lecture: entry.lecture,
     kind: entry.kind,
     files,
+    materials,
     transcribePartial: node?.transcribePartial ?? null,
   })
 
-  // The rail is the steps only — `video.mp4` is the input, not a stage the runner walks.
-  const steps = (files ? visiblePipeline(driveEnabled, files) : []).filter((p) => p.step)
+  // The rail is the steps only — `video.mp4` is the input, not a stage the runner walks — minus
+  // those a materials-only lecture skips.
+  const steps = (files ? visiblePipeline(driveEnabled, files) : []).filter(
+    (p) => p.step && !skippedStage(p.file, files!, materials),
+  )
   const position = stepPosition(steps, entry.step)
 
   return (

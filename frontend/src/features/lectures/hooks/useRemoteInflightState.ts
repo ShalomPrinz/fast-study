@@ -1,5 +1,6 @@
-import type { Step, TimingStats, Kind, FileStatus } from '@/types'
-import { STEP_INPUT_FILE, STEP_SET } from '@/features/lectures/constants/pipeline'
+import type { Step, TimingStats, Kind, FileStatus, MaterialInfo } from '@/types'
+import { STEP_SET } from '@/features/lectures/constants/pipeline'
+import { timingKey } from '@/features/lectures/utils/timingKey'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 
@@ -15,6 +16,7 @@ interface Args {
   lecture: string
   kind: Kind
   files: FileStatus | null
+  materials: MaterialInfo[]
   transcribePartial: { completed: number; total: number } | null
 }
 
@@ -24,16 +26,15 @@ export function useRemoteInflightState({
   lecture,
   kind,
   files,
+  materials,
   transcribePartial,
 }: Args): RemoteInflight | null {
   const { getInFlight } = useRunnerStatus()
   const entry = getInFlight(course, lecture, kind)
   const step = entry && STEP_SET.has(entry.step) ? (entry.step as Step) : null
 
-  // The estimate keys on the step's *input* file size.
-  const inputFile = step ? STEP_INPUT_FILE[step] : null
-  const fileSizeBytes = step && inputFile && files ? (files[inputFile]?.size ?? 0) : 0
-  const timingStats = useTimingStats(files ? step : null, fileSizeBytes)
+  const key = step && files ? timingKey(step, files, materials) : null
+  const timingStats = useTimingStats(key?.operation ?? null, key?.bytes ?? 0)
 
   if (!step || !entry) return null
 

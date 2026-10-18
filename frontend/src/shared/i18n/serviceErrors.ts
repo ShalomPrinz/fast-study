@@ -50,6 +50,10 @@ const MESSAGES: Record<string, MessageDescriptor> = {
 
   // backend — pipeline
   empty_file: msg({ message: '{file} came out empty. Run the step that creates it again.' }),
+  materials_empty: msg({
+    message:
+      'Every material PDF is empty, so there is nothing to summarize. Replace them and try again.',
+  }),
   audio_extraction_failed: msg({ message: 'Could not extract the audio from the video.' }),
   transcription_failed: msg({ message: 'Transcribing the audio failed.' }),
   unreadable_audio: msg({ message: 'Could not read the audio in {file}.' }),

@@ -24,7 +24,13 @@ import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { stepState } from '@/features/lectures/utils/stepState'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
-import { canRunRemaining, filesComplete } from '@/features/lectures/utils/lectureProgress'
+import {
+  canRunRemaining,
+  filesComplete,
+  skippedStage,
+  stagePrereqMet,
+  summarizedFromMaterials,
+} from '@/features/lectures/utils/lectureProgress'
 import { lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
@@ -85,7 +91,14 @@ export default function MainView() {
   const { isInFlight, getError } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
   const lectureError = getError(course, lecture, kind)
-  const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
+  const remote = useRemoteInflightState({
+    course,
+    lecture,
+    kind,
+    files,
+    materials,
+    transcribePartial,
+  })
 
   if (!course || !lecture) return null
 
@@ -104,17 +117,19 @@ export default function MainView() {
   if (!files) return null
 
   const stages = visiblePipeline(driveEnabled, files)
+  // A materials-only lecture's skipped stages are left out of every count and step number.
+  const counted = stages.filter(({ file }) => !skippedStage(file, files, materials))
   const runningFile = remote ? STEP_FILE[remote.step] : null
   const hasAnyStepFile = stages.some(({ file, step }) => step && files[file].exists)
   const pdfExists = files['summary.pdf'].exists
   const pdfUploaded = files['drive_url.txt'].exists
   const summaryExists = files['summary.md'].exists
-  const hasActions = canRunRemaining(files, driveEnabled)
+  const hasActions = canRunRemaining(files, materials, driveEnabled)
   const complete = filesComplete(files, driveEnabled)
 
   const summaryMtime = files['summary.md'].mtime
-  const stageCount = stages.length
-  const doneCount = stages.filter(({ file }) => files[file].exists).length
+  const stageCount = counted.length
+  const doneCount = counted.filter(({ file }) => files[file].exists).length
   const videoDuration = files['video.mp4'].duration
 
   async function handleStep(step: Step) {
@@ -180,7 +195,7 @@ export default function MainView() {
 
   function runningStateText(entry: (typeof stages)[number]): string {
     const stage = t(entry.runningLabel ?? entry.stageLabel)
-    const position = entry.step && stepPosition(stages, entry.step)
+    const position = entry.step && stepPosition(counted, entry.step)
     if (!position) return stage
     const { number: stepNumber, count: stepCount } = position
     return t`${stage} · step ${stepNumber} of ${stepCount}`
@@ -286,11 +301,13 @@ export default function MainView() {
           </div>
 
           <div className="pipeline-card lecture-pipeline">
-            {stages.map(({ file, step, stageLabel, runningLabel, actionLabel, prereq }) => {
+            {stages.map((stage) => {
+              const { file, step, stageLabel, runningLabel, actionLabel } = stage
               const exists = files[file].exists
               const isRunning = runningFile === file
+              const skipped = skippedStage(file, files, materials)
               const state = stepState(exists, isRunning, step, lectureError)
-              const prereqMet = !prereq || files[prereq].exists
+              const prereqMet = stagePrereqMet(stage, files, materials)
               const isResumeTranscribe =
                 file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
               const buttonLabel = isResumeTranscribe
@@ -332,6 +349,11 @@ export default function MainView() {
                       )}
                       {file === 'summary.pdf' && <PdfWarningBadge badge={pdfBadge(files)} />}
                     </div>
+                    {file === 'summary.md' && summarizedFromMaterials(files, materials) && (
+                      <p className="pipeline-materials-note">
+                        <Trans>summarized from materials only</Trans>
+                      </p>
+                    )}
                     <p className="pipeline-file">
                       {file}
                       {subtitle && ` · ${subtitle}`}
@@ -357,7 +379,12 @@ export default function MainView() {
                       </button>
                     </Tooltip>
                   )}
-                  {!exists && !isRunning && step && (
+                  {skipped && !isRunning && (
+                    <span className="pipeline-missing pipeline-skipped">
+                      <Trans>skipped (no video)</Trans>
+                    </span>
+                  )}
+                  {!exists && !isRunning && !skipped && step && (
                     <button
                       className="btn btn--ghost"
                       onClick={() => handleStep(step)}
@@ -366,7 +393,7 @@ export default function MainView() {
                       {buttonLabel}
                     </button>
                   )}
-                  {!exists && !step && (
+                  {!exists && !skipped && !step && (
                     <span className="pipeline-missing">
                       <Trans>not provided</Trans>
                     </span>

@@ -54,6 +54,15 @@ used`; after, each material's mtime against the summary's picks all used (green)
 the model", not a record** — re-downloading an unchanged PDF reads as unused. Exactness would need the
 backend to persist each run's inputs.
 
+**Materials-only lectures.** No `video.mp4` and at least one material (`isMaterialsOnly`, mirroring the
+backend) summarizes from the PDFs alone. `lectureProgress.ts` holds the shared predicates: `skippedStage`
+marks the missing Video, Audio and Transcript rows "skipped (no video)" with no button, and leaves them out
+of "N of M complete", "step N of M" and the runner rail; `stagePrereqMet` lets Summarize start without a
+transcript; `canRunRemaining` skips them as `next_step` does. Runs are manual only — `notQueued` and the
+sidebar stay video-only. "summarized from materials only" under the Summary row
+(`.pipeline-materials-note`) is derived from files alone (`summarizedFromMaterials`: summary, no
+transcript, materials-only); there is no marker, and a later video upload takes the usual wipe.
+
 ## Study with AI
 
 `components/StudyWithAiCard` sits right below the pipeline list (after the last-error block, before
@@ -103,6 +112,8 @@ not each one run-all then stopped at summarize.
 `useRemoteInflightState` turns the open lecture's entry into a render descriptor; progress comes from the
 entry, else from `transcript.partial.txt` for a transcribe step. `useTimingStats(step, bytes)` fetches the
 backend's regression estimate for the step's _input_ size and drops answers for a key the caller left.
+`timingKey` picks the key: a materials-only summarize with no transcript reads the backend's own
+`summarize_materials` bucket over the summed material bytes, so PDF-only runs never borrow the transcript ETA.
 
 ## summary.pdf badges
 
