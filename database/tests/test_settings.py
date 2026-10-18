@@ -167,6 +167,55 @@ def test_an_unknown_auto_run_mode_is_rejected(env_file):
     assert "AUTO_RUN" not in env_file.read_text(encoding="utf-8")
 
 
+@pytest.mark.parametrize("provider", ["claude", "chatgpt", "gemini"])
+def test_each_ai_provider_is_accepted(env_file, provider):
+    assert settings.write_settings({"ai_provider": provider})["ai_provider"] == provider
+
+
+def test_ai_provider_is_stored_trimmed_and_lowercased(env_file):
+    assert (
+        settings.write_settings({"ai_provider": " Gemini "})["ai_provider"] == "gemini"
+    )
+
+    assert "AI_PROVIDER='gemini'" in env_file.read_text(encoding="utf-8")
+
+
+def test_an_unknown_ai_provider_is_rejected(env_file):
+    assert _rejected({"ai_provider": " Copilot "}) == (
+        "setting_invalid_choice",
+        {"field": "ai_provider", "value": "copilot"},
+    )
+
+    assert "AI_PROVIDER" not in env_file.read_text(encoding="utf-8")
+
+
+def test_put_rejects_an_unknown_ai_provider(client, env_file):
+    r = client.put("/settings", json={"ai_provider": "copilot"})
+
+    assert r.status_code == 400
+    assert r.json()["code"] == "setting_invalid_choice"
+    assert r.json()["params"] == {"field": "ai_provider", "value": "copilot"}
+
+
+# A hand-edited or stale value must read as unset, so the renderer falls back to its own default.
+@pytest.mark.parametrize(
+    "stored, expected", [(None, None), ("copilot", None), ("ChatGPT", "chatgpt")]
+)
+def test_ai_provider_reads_null_unless_a_known_provider(env_file, stored, expected):
+    if stored is not None:
+        env_file.write_text(f"AI_PROVIDER={stored}\n", encoding="utf-8")
+
+    assert settings.read_settings()["ai_provider"] == expected
+
+
+def test_put_then_get_round_trips_ai_provider(client):
+    assert (
+        client.put("/settings", json={"ai_provider": "gemini"}).json()["ai_provider"]
+        == "gemini"
+    )
+    assert client.get("/settings").json()["ai_provider"] == "gemini"
+
+
 # The store validates an integer, not an hour — clamping to 0..23 is the owning service's job.
 def test_an_out_of_range_hour_is_stored_unchanged(env_file):
     assert settings.write_settings({"nightly_hour": 99})["nightly_hour"] == 99

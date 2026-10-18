@@ -23,13 +23,16 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `auto_run`                                         | `AUTO_RUN`                                        |
 | `moodle_site` (the auto-downloader's)              | `MOODLE_SITE`                                     |
 | `nightly_run` (bool), `nightly_hour` (int)         | `NIGHTLY_RUN`, `NIGHTLY_HOUR`                     |
+| `ai_provider` (the "Study with AI" pick)           | `AI_PROVIDER`                                     |
 
 Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` — which is all the store
 knows about a value. It validates the _type_ and nothing else: `nightly_hour` is stored as any
 integer, and clamping it to a real hour is the backend's job. Meaning belongs to the owning service;
 the store stays generic. The one exception is `auto_run`, stored lowercased and refused
 (`setting_invalid_choice`) unless `off`/`audio`/`full`, because the backend silently runs an unknown
-mode as `full`; the list is a deliberate copy of the backend's `AUTO_RUN_MODES`. An int that is unparsable in
+mode as `full`; the list is a deliberate copy of the backend's `AUTO_RUN_MODES`. `ai_provider` follows
+the same rule against `claude`/`chatgpt`/`gemini`, mirroring `electron/store.js`, and reads back `null`
+when the stored value is not one of them; no service reads it, only the renderer. An int that is unparsable in
 `.env` reads back as `null`, the same as an absent one, so a hand-edited typo falls back to the
 client's default instead of erroring. `PUT` rejects a boolean for an int field, which Python would
 otherwise store as `1`.
@@ -39,7 +42,7 @@ path reports only whether each is set, so a stored key never travels back to the
 rule `safeStorage` follows under Electron.
 
 The list is closed to **credentials, `DATA_ROOT`, the backend's own pipeline config, and the
-auto-downloader's Moodle site** — nothing else. A purely visual preference (the UI language, the sidebar's lectures/courses mode) is the browser
+auto-downloader's Moodle site, and the AI provider the Electron store also holds** — nothing else. A purely visual preference (the UI language, the sidebar's lectures/courses mode) is the browser
 profile's, kept in its `localStorage`, and `PUT` rejects it as an unknown setting: routing it through
 a file every service reads would make one machine's cosmetics everyone's configuration.
 
