@@ -181,5 +181,7 @@ written from both processes would put two writers on one file.
   env. Main turns `error_reports` into each process's Sentry flag itself; `privacy_confirmed`
   (`privacyConfirmed`, unset reads `false`) is the renderer's record that the privacy notice was
   answered, and main only stores it.
+- **`ai_provider` (`aiProvider`) is launcher-only too**: `claude` | `chatgpt` | `gemini`, any other
+  write refused; unset or unknown reads `null` and the renderer applies the `claude` default.
 - **In a packaged app `database/settings.py`'s `.env` store goes unused.** The services read the env
   vars main sets; nothing migrates between the two stores, and Electron never reads `.env`.
