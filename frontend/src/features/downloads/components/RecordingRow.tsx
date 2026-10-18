@@ -387,10 +387,12 @@ const RecordingRow = memo(function RecordingRow({
             run()
           }}
           onCancel={() => setConfirm(null)}
+          // A Yes replays a Moodle download, so it waits out the lock like the button that opened it.
+          confirmLocked={lockedTitle}
         />
       )}
 
-      {passcode && <PasscodePrompt {...passcode} />}
+      {passcode && <PasscodePrompt {...passcode} submitLocked={lockedTitle} />}
     </div>
   )
 })

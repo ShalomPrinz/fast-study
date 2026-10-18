@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import ReactDOM from 'react-dom'
+import Tooltip from '@/shared/components/Tooltip'
 import type { PasscodeError } from '@/features/downloads/services/autoDownloader'
 import '@/styles/modal.css'
 import '@/styles/source-row.css'
@@ -14,6 +15,8 @@ export interface PasscodePromptProps {
   onCancel: () => void
   // Escape and an overlay click; omitted, they cancel like the Cancel button.
   onDismiss?: () => void
+  // Set, Submit is disabled with this as its hint: the resume it would send is refused right now.
+  submitLocked?: string
 }
 
 // Masked passcode modal — ConfirmModal's portal/Escape shape, which can't host an input.
@@ -24,6 +27,7 @@ export default function PasscodePrompt({
   onSubmit,
   onCancel,
   onDismiss = onCancel,
+  submitLocked,
 }: PasscodePromptProps) {
   const { t } = useLingui()
   const [value, setValue] = useState('')
@@ -49,6 +53,7 @@ export default function PasscodePrompt({
         <form
           onSubmit={(e) => {
             e.preventDefault()
+            if (submitLocked) return
             onSubmit(value.trim(), justThisLecture ? 'lecture' : 'course')
           }}
         >
@@ -73,9 +78,15 @@ export default function PasscodePrompt({
             <button type="button" className="btn btn--ghost" onClick={onCancel}>
               <Trans>Cancel</Trans>
             </button>
-            <button type="submit" className="btn btn--primary" disabled={busy || !value.trim()}>
-              <Trans>Submit</Trans>
-            </button>
+            <Tooltip content={submitLocked}>
+              <button
+                type="submit"
+                className="btn btn--primary"
+                disabled={busy || !value.trim() || !!submitLocked}
+              >
+                <Trans>Submit</Trans>
+              </button>
+            </Tooltip>
           </div>
         </form>
       </div>

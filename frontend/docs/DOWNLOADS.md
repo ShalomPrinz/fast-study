@@ -172,6 +172,8 @@ call of this tab in flight — counted on call, so a double click can't send two
 There is no local timer; the push says when the cooldown ends.
 
 While `moodleLocked(state)` holds, every one of those buttons is disabled with the `moodleBusyMessage()` tooltip.
+A row's overwrite confirm (Yes) and passcode modal (Submit) replay that row's download, so they follow the
+same `rowLocked` rule and re-enable in place once the push clears; Cancel never locks.
 The exemption is an open challenge window (`accountView`'s `panel === 'window'`): it holds the lock itself
 and is waiting for Complete, so Complete and Connect stay enabled unless this tab's own call is in flight.
 A button that still races the push gets 429 `moodle_busy` → `MoodleBusyError`, which every caller swallows:

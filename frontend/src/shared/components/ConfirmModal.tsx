@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { Trans } from '@lingui/react/macro'
 import ReactDOM from 'react-dom'
+import Tooltip from './Tooltip'
 import '@/styles/modal.css'
 import '@/styles/button.css'
 import './ConfirmModal.css'
@@ -12,6 +13,8 @@ interface Props {
   detail?: React.ReactNode
   onConfirm: () => void
   onCancel: () => void
+  // Set, Yes is disabled with this as its hint — the action it would replay is refused right now.
+  confirmLocked?: string
 }
 
 export default function ConfirmModal({
@@ -21,6 +24,7 @@ export default function ConfirmModal({
   detail,
   onConfirm,
   onCancel,
+  confirmLocked,
 }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -38,9 +42,11 @@ export default function ConfirmModal({
         {detail}
         {postMessage && <p className="modal-message modal-note">{postMessage}</p>}
         <div className="modal-actions">
-          <button className="btn btn--primary" onClick={onConfirm}>
-            <Trans>Yes</Trans>
-          </button>
+          <Tooltip content={confirmLocked}>
+            <button className="btn btn--primary" onClick={onConfirm} disabled={!!confirmLocked}>
+              <Trans>Yes</Trans>
+            </button>
+          </Tooltip>
           <button className="btn btn--ghost" autoFocus onClick={onCancel}>
             <Trans>No</Trans>
           </button>
