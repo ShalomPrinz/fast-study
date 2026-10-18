@@ -124,8 +124,14 @@ def test_is_materials_only():
     assert runner.is_materials_only(_files(), pdf) is True
     assert runner.is_materials_only(_files(video=True), pdf) is False
     assert runner.is_materials_only(_files(), []) is False
-    # audio.mp3 left over from a deleted video still counts: the accepted edge case.
-    assert runner.is_materials_only(_files(audio=True), pdf) is True
+    # Audio with no video is still transcribed, never summarized from the PDFs alone.
+    assert runner.is_materials_only(_files(audio=True), pdf) is False
+
+
+def test_next_step_on_audio_only_lecture_with_materials_is_transcribe():
+    files = _files(audio=True)
+    pdf = [{"name": "material.pdf", "size": 3}]
+    assert runner.next_step(files, runner.is_materials_only(files, pdf)) == "transcribe"
 
 
 # ---- scan_pending ----
@@ -504,6 +510,23 @@ def test_exec_summarize_materials_all_empty_is_materials_empty():
     put_summary.assert_not_called()
 
 
+def test_exec_summarize_with_audio_but_no_transcript_never_lists_materials():
+    with (
+        patch.object(
+            runner.db_client,
+            "file_exists",
+            side_effect=lambda c, l, k, name: name == "audio.mp3",
+        ),
+        patch.object(runner.db_client, "list_materials") as list_materials,
+        patch.object(runner.db_client, "put_summary") as put_summary,
+    ):
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    assert result["code"] == "missing_prerequisite"
+    assert result["params"] == {"file": "transcript.txt", "step": "transcribe"}
+    list_materials.assert_not_called()
+    put_summary.assert_not_called()
+
+
 def test_a_video_arriving_mid_materials_summarize_discards_the_summary():
     """The upload wiped derived files mid-call; writing now would leave a PDF-only summary.md
     that next_step treats as the video's, so the transcript would never be summarized."""
@@ -524,10 +547,10 @@ def test_a_video_arriving_mid_materials_summarize_discards_the_summary():
         patch.object(runner.db_client, "put_summary") as put_summary,
     ):
         result = runner._exec_summarize("C1", "L1", "lecture")
-    assert result == {"status": "done", "usedMaterial": False}
+    assert result["status"] == "error"
+    assert result["code"] == "missing_prerequisite"
+    assert result["params"] == {"file": "transcript.txt", "step": "transcribe"}
     put_summary.assert_not_called()
-    # The pipeline's next pass sees the video with no summary and takes the normal path.
-    assert runner.next_step(_files(video=True)) == "audio"
 
 
 def test_exec_summarize_materials_only_rejects_an_empty_summary():

@@ -354,30 +354,44 @@ def _summarize_from_materials(
         return summarize_materials(materials)
 
 
+def _summarize_source(course: str, lecture: str, kind: str) -> list[dict] | None:
+    """The single summarize readiness rule: [] for the transcript path, the material listing for
+    a lecture with no video.mp4/audio.mp3, or None when there is no input yet."""
+
+    if db_client.file_exists(course, lecture, kind, "transcript.txt"):
+        return []
+    if db_client.file_exists(
+        course, lecture, kind, "video.mp4"
+    ) or db_client.file_exists(course, lecture, kind, "audio.mp3"):
+        return None
+    return db_client.list_materials(course, lecture, kind) or None
+
+
 def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
     """Summarize transcript.txt → summary.md via Gemini, passing every material PDF present;
     a materials-only lecture summarizes from its PDFs alone. A daily Gemini 429 is flagged."""
 
     try:
-        if not db_client.file_exists(course, lecture, kind, "transcript.txt"):
-            has_video = db_client.file_exists(course, lecture, kind, "video.mp4")
-            entries = (
-                [] if has_video else db_client.list_materials(course, lecture, kind)
+        entries = _summarize_source(course, lecture, kind)
+        if entries is None:
+            return _missing_prerequisite(
+                "transcript.txt is required — run Transcribe first",
+                "transcript.txt",
+                "transcribe",
             )
-            if not entries:
-                return _missing_prerequisite(
-                    "transcript.txt is required — run Transcribe first",
-                    "transcript.txt",
-                    "transcribe",
-                )
+        if entries:
             summary = _summarize_from_materials(course, lecture, kind, entries)
-            # A video that landed mid-summarize supersedes the PDFs: write nothing, so the
-            # pipeline's next pass finds summary.md missing and takes the video path.
+            # A video that landed mid-summarize supersedes the PDFs: write nothing and fail,
+            # so the run stops and the video path (transcribe) is what runs next.
             if db_client.file_exists(course, lecture, kind, "video.mp4"):
                 log.info(
                     "Summarize: video arrived mid-run — discarding materials summary"
                 )
-                return {"status": "done", "usedMaterial": False}
+                return _missing_prerequisite(
+                    "video.mp4 arrived during summarize — run Transcribe first",
+                    "transcript.txt",
+                    "transcribe",
+                )
             materials = entries
         else:
             with _db_workspace(
@@ -538,9 +552,13 @@ def _has(files: dict, name: str) -> bool:
 
 
 def is_materials_only(files: dict, materials: list) -> bool:
-    """A lecture with material PDFs but no video.mp4 — summarized from the PDFs alone."""
+    """A lecture with material PDFs but no video.mp4 or audio.mp3 — summarized from the PDFs alone."""
 
-    return not _has(files, "video.mp4") and bool(materials)
+    return (
+        not _has(files, "video.mp4")
+        and not _has(files, "audio.mp3")
+        and bool(materials)
+    )
 
 
 def next_step(files: dict, materials_only: bool = False) -> Optional[str]:
@@ -558,13 +576,9 @@ def next_step(files: dict, materials_only: bool = False) -> Optional[str]:
 
 
 def summarize_ready(course: str, lecture: str, kind: str) -> bool:
-    """True when summarize has an input: transcript.txt, or no video.mp4 but material PDFs."""
+    """True when summarize has an input — see _summarize_source."""
 
-    if db_client.file_exists(course, lecture, kind, "transcript.txt"):
-        return True
-    if db_client.file_exists(course, lecture, kind, "video.mp4"):
-        return False
-    return bool(db_client.list_materials(course, lecture, kind))
+    return _summarize_source(course, lecture, kind) is not None
 
 
 def _lecture_pending(files: dict) -> bool:
@@ -768,7 +782,7 @@ async def _run_pipeline_unlocked(
         while True:
             files = await _fetch_files(course, lecture, kind)
             materials_only = False
-            if not _has(files, "video.mp4"):
+            if not _has(files, "video.mp4") and not _has(files, "audio.mp3"):
                 materials = await asyncio.to_thread(
                     db_client.list_materials, course, lecture, kind
                 )

@@ -56,6 +56,29 @@ class TestRunStep:
         assert response.json() == {"status": "started"}
         run.assert_called_once_with("C", "L", "lecture", "summarize")
 
+    def test_summarize_with_audio_but_no_transcript_is_a_409(self):
+        with (
+            patch.object(
+                backend_main.runner.db_client,
+                "file_exists",
+                side_effect=lambda c, l, k, name: name == "audio.mp3",
+            ),
+            patch.object(
+                backend_main.runner.db_client,
+                "list_materials",
+                return_value=[{"name": "material.pdf"}],
+            ),
+            patch.object(backend_main.runner, "try_run_step") as run,
+        ):
+            response = client.post("/courses/C/lectures/L/run/summarize")
+        assert response.status_code == 409
+        assert response.json()["code"] == "missing_prerequisite"
+        assert response.json()["params"] == {
+            "file": "transcript.txt",
+            "step": "transcribe",
+        }
+        run.assert_not_called()
+
     def test_summarize_with_a_video_but_no_transcript_is_a_409(self):
         with (
             patch.object(
