@@ -630,7 +630,7 @@ msgstr "לחץ על \"טעינת פריט Unpacked\". בחלון שנפתח, ה�
 
 #: src/features/lectures/components/StudyWithAiCard.tsx:103
 msgid "Click \"Open chat\" to study this lecture with {provider}."
-msgstr "לחץ על \"פתיחת צ'אט\" בשביל ללמוד עם {provider}."
+msgstr "לחץ על \"פתיחת צ'אט\" בשביל ללמוד את ההרצאה הזו עם {provider}."
 
 #: src/features/settings/components/ApiKeyField.tsx:67
 msgid "Click <0>Get a key</0> and sign in with Google or your email."
