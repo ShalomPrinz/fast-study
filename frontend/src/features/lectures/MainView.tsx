@@ -291,135 +291,143 @@ export default function MainView() {
         }
       />
 
-      <div className="page-body">
-        <div className="page-column">
-          <div className="section-head">
-            <h2 className="section-title">
-              <Trans>Pipeline</Trans>
-            </h2>
-            <span className="section-count">{t`${doneCount} of ${stageCount} complete`}</span>
-          </div>
+      <div className="page-body lecture-page-body">
+        <div className="page-column lecture-page">
+          <div className="lecture-split">
+            <div className="section-head lecture-split-head">
+              <h2 className="section-title">
+                <Trans>Pipeline</Trans>
+              </h2>
+              <span className="section-count">{t`${doneCount} of ${stageCount} complete`}</span>
+            </div>
 
-          <div className="pipeline-card lecture-pipeline">
-            {stages.map((stage) => {
-              const { file, step, stageLabel, runningLabel, actionLabel } = stage
-              const exists = files[file].exists
-              const isRunning = runningFile === file
-              const skipped = skippedStage(file, files, materials)
-              const state = stepState(exists, isRunning, step, lectureError)
-              const prereqMet = stagePrereqMet(stage, files, materials)
-              const isResumeTranscribe =
-                file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
-              const buttonLabel = isResumeTranscribe
-                ? t`Continue transcription`
-                : actionLabel && t(actionLabel)
+            <div className="pipeline-card lecture-pipeline lecture-split-steps">
+              {stages.map((stage) => {
+                const { file, step, stageLabel, runningLabel, actionLabel } = stage
+                const exists = files[file].exists
+                const isRunning = runningFile === file
+                const skipped = skippedStage(file, files, materials)
+                const state = stepState(exists, isRunning, step, lectureError)
+                const prereqMet = stagePrereqMet(stage, files, materials)
+                const isResumeTranscribe =
+                  file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
+                const buttonLabel = isResumeTranscribe
+                  ? t`Continue transcription`
+                  : actionLabel && t(actionLabel)
 
-              const size = files[file].size
-              const subtitle = !isRunning && exists && size !== null ? formatBytes(size) : null
+                const size = files[file].size
+                const subtitle = !isRunning && exists && size !== null ? formatBytes(size) : null
 
-              return (
-                <div
-                  key={file}
-                  className={`pipeline-row${isRunning ? ' pipeline-row--running' : ''}`}
-                  data-testid={step ? 'step-status' : undefined}
-                  data-step={step}
-                  data-status={step ? state : undefined}
-                >
-                  <StatusNode
-                    state={state}
-                    hint={
-                      (state === 'failed' || state === 'quota') && lectureError
-                        ? serviceErrorText(lectureError)
-                        : undefined
-                    }
-                  />
-                  <div className="pipeline-row-body">
-                    <div className="pipeline-stage-line">
-                      <span
-                        className={`pipeline-stage${exists || isRunning ? '' : ' pipeline-stage--pending'}`}
-                      >
-                        {isRunning && runningLabel ? t(runningLabel) : t(stageLabel)}
-                      </span>
-                      {file === 'summary.md' && (
-                        <MaterialIndicator
-                          materials={materials}
-                          summaryExists={summaryExists}
-                          summaryMtime={summaryMtime}
+                return (
+                  <div
+                    key={file}
+                    className={`pipeline-row${isRunning ? ' pipeline-row--running' : ''}`}
+                    data-testid={step ? 'step-status' : undefined}
+                    data-step={step}
+                    data-status={step ? state : undefined}
+                  >
+                    <StatusNode
+                      state={state}
+                      hint={
+                        (state === 'failed' || state === 'quota') && lectureError
+                          ? serviceErrorText(lectureError)
+                          : undefined
+                      }
+                    />
+                    <div className="pipeline-row-body">
+                      <div className="pipeline-stage-line">
+                        <span
+                          className={`pipeline-stage${exists || isRunning ? '' : ' pipeline-stage--pending'}`}
+                        >
+                          {isRunning && runningLabel ? t(runningLabel) : t(stageLabel)}
+                        </span>
+                        {file === 'summary.md' && (
+                          <MaterialIndicator
+                            materials={materials}
+                            summaryExists={summaryExists}
+                            summaryMtime={summaryMtime}
+                          />
+                        )}
+                        {file === 'summary.pdf' && <PdfWarningBadge badge={pdfBadge(files)} />}
+                      </div>
+                      {file === 'summary.md' && summarizedFromMaterials(files, materials) && (
+                        <p className="pipeline-materials-note">
+                          <Trans>summarized from materials only</Trans>
+                        </p>
+                      )}
+                      <p className="pipeline-file">
+                        {file}
+                        {subtitle && ` · ${subtitle}`}
+                      </p>
+                      {isRunning && remote && (
+                        <ProgressBar
+                          stats={remote.timingStats}
+                          startedAt={remote.startedAt}
+                          completedFraction={remote.completedFraction}
+                          className="pipeline-progress"
                         />
                       )}
-                      {file === 'summary.pdf' && <PdfWarningBadge badge={pdfBadge(files)} />}
                     </div>
-                    {file === 'summary.md' && summarizedFromMaterials(files, materials) && (
-                      <p className="pipeline-materials-note">
-                        <Trans>summarized from materials only</Trans>
-                      </p>
+                    {exists && step && hasAnyStepFile && (
+                      <Tooltip content={t`Rotate ${file}`}>
+                        <button
+                          className="pipeline-icon-btn"
+                          aria-label={t`Rotate ${file}`}
+                          onClick={() => openRotateModal(file, step)}
+                          disabled={inflight}
+                        >
+                          <Icon icon="rotate" />
+                        </button>
+                      </Tooltip>
                     )}
-                    <p className="pipeline-file">
-                      {file}
-                      {subtitle && ` · ${subtitle}`}
-                    </p>
-                    {isRunning && remote && (
-                      <ProgressBar
-                        stats={remote.timingStats}
-                        startedAt={remote.startedAt}
-                        completedFraction={remote.completedFraction}
-                        className="pipeline-progress"
-                      />
+                    {skipped && !isRunning && (
+                      <span className="pipeline-missing pipeline-skipped">
+                        <Trans>skipped (no video)</Trans>
+                      </span>
+                    )}
+                    {!exists && !isRunning && !skipped && step && (
+                      <button
+                        className="btn btn--ghost"
+                        onClick={() => handleStep(step)}
+                        disabled={inflight || !prereqMet}
+                      >
+                        {buttonLabel}
+                      </button>
+                    )}
+                    {!exists && !skipped && !step && (
+                      <span className="pipeline-missing">
+                        <Trans>not provided</Trans>
+                      </span>
                     )}
                   </div>
-                  {exists && step && hasAnyStepFile && (
-                    <Tooltip content={t`Rotate ${file}`}>
-                      <button
-                        className="pipeline-icon-btn"
-                        aria-label={t`Rotate ${file}`}
-                        onClick={() => openRotateModal(file, step)}
-                        disabled={inflight}
-                      >
-                        <Icon icon="rotate" />
-                      </button>
-                    </Tooltip>
-                  )}
-                  {skipped && !isRunning && (
-                    <span className="pipeline-missing pipeline-skipped">
-                      <Trans>skipped (no video)</Trans>
-                    </span>
-                  )}
-                  {!exists && !isRunning && !skipped && step && (
-                    <button
-                      className="btn btn--ghost"
-                      onClick={() => handleStep(step)}
-                      disabled={inflight || !prereqMet}
-                    >
-                      {buttonLabel}
-                    </button>
-                  )}
-                  {!exists && !skipped && !step && (
-                    <span className="pipeline-missing">
-                      <Trans>not provided</Trans>
-                    </span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {lectureError && (
-            <div className="lecture-error" role="alert" data-testid="lecture-error">
-              <strong>
-                <Trans>Last error:</Trans>
-              </strong>{' '}
-              <span data-testid="lecture-error-message">
-                <ServiceError failure={lectureError} />
-              </span>
+                )
+              })}
             </div>
-          )}
 
-          <StudyWithAiCard
-            course={course}
-            lecture={lecture}
-            kind={kind}
-            summaryExists={summaryExists}
-          />
+            {lectureError && (
+              <div
+                className="lecture-error lecture-split-error"
+                role="alert"
+                data-testid="lecture-error"
+              >
+                <strong>
+                  <Trans>Last error:</Trans>
+                </strong>{' '}
+                <span data-testid="lecture-error-message">
+                  <ServiceError failure={lectureError} />
+                </span>
+              </div>
+            )}
+
+            <div className="lecture-split-ai">
+              <StudyWithAiCard
+                course={course}
+                lecture={lecture}
+                kind={kind}
+                summaryExists={summaryExists}
+              />
+            </div>
+          </div>
 
           {materials.length > 0 && (
             <>

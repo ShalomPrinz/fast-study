@@ -67,8 +67,10 @@ marker to tell them apart.
 
 ## Study with AI
 
-`components/StudyWithAiCard` sits right below the pipeline list (after the last-error block, before
-Materials), capped at 560px and centred in the page column. Its split button's main half reads `summary.md`
+`components/StudyWithAiCard` sits in a 300px column on the inline-end side of the pipeline list, top-aligned
+with it, once the page body (a container) is 800px wide; the page column then widens to 880px. Narrower, it
+stacks below the list and last-error block, before Materials, capped at 560px and centred. Below 420px of
+its own width the split button takes its own row. Its split button's main half reads `summary.md`
 (`fetchSummaryContent`), copies it under a fixed study prompt in the UI language, then opens the chosen
 chat's fresh-chat page through `openExternalUrl`; nothing is prefilled or sent, the user pastes. A failed
 read toasts its failure and a refused clipboard its own error, and neither opens the chat. The clipboard

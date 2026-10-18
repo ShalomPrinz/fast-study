@@ -154,7 +154,7 @@ msgstr "{count, plural, one {חומר אחד ישמש} two {# חומרים יש�
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר אחד בלבד} two {הסיכום השתמש ב-{used} מתוך # חומרים בלבד} other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
 
-#: src/features/lectures/MainView.tsx:300
+#: src/features/lectures/MainView.tsx:301
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
@@ -223,7 +223,7 @@ msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} oth
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
-#: src/features/lectures/MainView.tsx:480
+#: src/features/lectures/MainView.tsx:488
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} יימחק."
 
@@ -721,7 +721,7 @@ msgstr "יצירת קשר"
 msgid "Continue Generating"
 msgstr "המשך יצירה"
 
-#: src/features/lectures/MainView.tsx:314
+#: src/features/lectures/MainView.tsx:315
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
@@ -889,8 +889,8 @@ msgid "Decline"
 msgstr "סירוב"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:444
-#: src/features/lectures/MainView.tsx:447
+#: src/features/lectures/MainView.tsx:452
+#: src/features/lectures/MainView.tsx:455
 msgid "Delete {0}"
 msgstr "מחיקת {0}"
 
@@ -1308,7 +1308,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:409
+#: src/features/lectures/MainView.tsx:414
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -1400,7 +1400,7 @@ msgid "Material"
 msgstr "חומר"
 
 #: src/features/downloads/DownloadsView.tsx:66
-#: src/features/lectures/MainView.tsx:428
+#: src/features/lectures/MainView.tsx:436
 msgid "Materials"
 msgstr "חומרים"
 
@@ -1535,7 +1535,7 @@ msgstr "לא מחובר"
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
-#: src/features/lectures/MainView.tsx:398
+#: src/features/lectures/MainView.tsx:399
 msgid "not provided"
 msgstr "חסר"
 
@@ -1612,7 +1612,7 @@ msgstr "פתיחה ב-Drive"
 msgid "Open lecture"
 msgstr "פתיחת ההרצאה"
 
-#: src/features/lectures/MainView.tsx:435
+#: src/features/lectures/MainView.tsx:443
 msgid "Open material"
 msgstr "פתיחת החומר"
 
@@ -1706,7 +1706,7 @@ msgstr "ה-PDF נוצר עם אזהרות"
 msgid "Pin FastStudy to the toolbar"
 msgstr "הצמדת FastStudy לסרגל הכלים"
 
-#: src/features/lectures/MainView.tsx:298
+#: src/features/lectures/MainView.tsx:299
 msgid "Pipeline"
 msgstr "שלבים"
 
@@ -1840,8 +1840,8 @@ msgstr "ניסיון חוזר"
 msgid "Retry ✗"
 msgstr "ניסיון חוזר ✗"
 
-#: src/features/lectures/MainView.tsx:371
-#: src/features/lectures/MainView.tsx:374
+#: src/features/lectures/MainView.tsx:372
+#: src/features/lectures/MainView.tsx:375
 msgid "Rotate {file}"
 msgstr "יצירה מחדש של {file}"
 
@@ -1972,7 +1972,7 @@ msgstr "הצג צילום מסך"
 msgid "skipped"
 msgstr "דולג"
 
-#: src/features/lectures/MainView.tsx:384
+#: src/features/lectures/MainView.tsx:385
 msgid "skipped (no video)"
 msgstr "דולג (אין וידאו)"
 
@@ -2032,7 +2032,7 @@ msgstr "הסיכומים מועלים ל-Drive של החשבון הזה. חיב�
 msgid "Summarize"
 msgstr "סיכום"
 
-#: src/features/lectures/MainView.tsx:354
+#: src/features/lectures/MainView.tsx:355
 msgid "summarized from materials only"
 msgstr "סוכם מהחומרים בלבד"
 
@@ -2166,7 +2166,7 @@ msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
-#: src/features/lectures/MainView.tsx:464
+#: src/features/lectures/MainView.tsx:472
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -2191,7 +2191,7 @@ msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחב
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:481
+#: src/features/lectures/MainView.tsx:489
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -2273,7 +2273,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:465
+#: src/features/lectures/MainView.tsx:473
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 

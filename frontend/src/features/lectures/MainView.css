@@ -5,6 +5,55 @@
   font-size: var(--fs-fine);
 }
 
+/* Pipeline and the Study with AI card. Stacked by default, as the narrow pane needs; the container query
+   below sets them side by side, the card on the inline-end side, once both columns fit. */
+.lecture-page-body {
+  container-type: inline-size;
+}
+
+.lecture-split-ai {
+  max-inline-size: 560px;
+  margin-block-start: var(--space-6);
+  margin-inline: auto;
+}
+
+@container (width >= 800px) {
+  /* Widens the lectures tree's 660px measure back to the routed pages' 880px; the steps get what the card leaves. */
+  .lectures-layout .page-column.lecture-page {
+    max-width: 880px;
+  }
+
+  .lecture-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas:
+      'head .'
+      'steps ai'
+      'error ai';
+    grid-template-rows: auto auto 1fr;
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+
+  .lecture-split-head {
+    grid-area: head;
+  }
+
+  .lecture-split-steps {
+    grid-area: steps;
+  }
+
+  .lecture-split-error {
+    grid-area: error;
+  }
+
+  .lecture-split-ai {
+    grid-area: ai;
+    max-inline-size: none;
+    margin: 0;
+  }
+}
+
 /* Outspecifies `.section-head`'s margin from the shared sheet rather than relying on order. */
 .section-head.section-head--materials {
   margin-top: var(--space-7);
