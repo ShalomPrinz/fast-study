@@ -61,8 +61,8 @@ of "N of M complete", "step N of M" and the runner rail; `stagePrereqMet` lets S
 transcript; `canRunRemaining` skips them as `next_step` does. Runs are manual only — `notQueued` and the
 sidebar stay video-only. "summarized from materials only" under the Summary row
 (`.pipeline-materials-note`) is derived from files alone (`summarizedFromMaterials`: summary, no
-transcript, materials-only); there is no marker, and a later video upload takes the usual wipe. So once `video.mp4` and `transcript.txt`
-are deleted by hand, a transcript-based summary reads as "materials only" — accepted, since the note has no
+transcript, materials-only); there is no marker, and a later video upload takes the usual wipe. So once `video.mp4`, `audio.mp3` and
+`transcript.txt` are deleted by hand, a transcript-based summary reads as "materials only" — accepted, since the note has no
 marker to tell them apart.
 
 ## Study with AI

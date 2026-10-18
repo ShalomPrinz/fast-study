@@ -28,7 +28,7 @@ When `FASTSTUDY_SECRET` is set, every request but `GET /health` must carry it; t
 
 `POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}`
 `step ∈ {audio, transcribe, summarize, pdf, drive}`, `kind` defaults to `lecture`.
-Unknown step → 404. Validates that the step's prerequisite file exists (`_STEP_CONFIG`; for `summarize`, `runner.summarize_ready`: `transcript.txt`, or no `video.mp4` and at least one material PDF), answering 409 `"<file> is required — run <previous step> first"` otherwise; a step a setting has switched off is 409 `"<step> is disabled in settings"`. On success → `{"status": "started"|"busy"}`.
+Unknown step → 404. Validates that the step's prerequisite file exists (`_STEP_CONFIG`; for `summarize`, `runner.summarize_ready`: `transcript.txt`, or no `video.mp4`, no `audio.mp3` and at least one material PDF), answering 409 `"<file> is required — run <previous step> first"` otherwise; a step a setting has switched off is 409 `"<step> is disabled in settings"`. On success → `{"status": "started"|"busy"}`.
 
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`. Both this and `run/{step}` pull a lecture waiting in the runner queue out of it when they start it.
