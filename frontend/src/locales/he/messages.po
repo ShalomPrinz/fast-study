@@ -42,14 +42,14 @@ msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
 msgstr "\"<0>{lecture}</0>\" ב\"<1>{course}</1>\""
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:380
+#: src/features/runner/RunnerView.tsx:382
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {הרצאה אחת לא הושלמה} two {# הרצאות לא הושלמו} other {# הרצאות לא הושלמו}}"
 
 #. placeholder {0}: header.count
 #. placeholder {0}: inFlight.length
-#: src/features/runner/RunnerView.tsx:243
-#: src/features/runner/RunnerView.tsx:283
+#: src/features/runner/RunnerView.tsx:245
+#: src/features/runner/RunnerView.tsx:285
 msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {הרצאה אחת בעיבוד} two {# הרצאות בעיבוד} other {# הרצאות בעיבוד}}"
 
@@ -59,7 +59,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:224
+#: src/features/lectures/MainView.tsx:233
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -134,7 +134,7 @@ msgid "{0} remaining"
 msgstr "נותרו {0}"
 
 #. placeholder {0}: formatDuration(videoDuration)
-#: src/features/lectures/MainView.tsx:221
+#: src/features/lectures/MainView.tsx:230
 msgid "{0} video"
 msgstr "וידאו באורך {0}"
 
@@ -154,7 +154,7 @@ msgstr "{count, plural, one {חומר אחד ישמש} two {# חומרים יש�
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר אחד בלבד} two {הסיכום השתמש ב-{used} מתוך # חומרים בלבד} other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
 
-#: src/features/lectures/MainView.tsx:300
+#: src/features/lectures/MainView.tsx:320
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
@@ -223,7 +223,7 @@ msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} oth
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
-#: src/features/lectures/MainView.tsx:480
+#: src/features/lectures/MainView.tsx:502
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} יימחק."
 
@@ -291,7 +291,7 @@ msgstr "{remaining, plural, one {הצג עוד אחד} two {הצג עוד #} oth
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. היא מתאפסת בחצות לפי שעון החוף המערבי בארה״ב.} other {יותר מדי בקשות ל-Gemini. נסה שוב בעוד דקה.}}"
 
-#: src/features/lectures/MainView.tsx:201
+#: src/features/lectures/MainView.tsx:210
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stepCount}"
 
@@ -405,7 +405,7 @@ msgstr "הוספת תרגול"
 msgid "AI chat provider"
 msgstr "ספק צ'אט AI"
 
-#: src/features/runner/RunnerView.tsx:271
+#: src/features/runner/RunnerView.tsx:273
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
@@ -470,19 +470,19 @@ msgstr "צירוף חומר אל"
 msgid "Audio"
 msgstr "שמע"
 
-#: src/features/runner/RunnerView.tsx:358
+#: src/features/runner/RunnerView.tsx:360
 msgid "Audio only"
 msgstr "שמע בלבד"
 
-#: src/features/runner/RunnerView.tsx:232
+#: src/features/runner/RunnerView.tsx:234
 msgid "Auto-run: audio only"
 msgstr "הרצה אוטומטית: שמע בלבד"
 
-#: src/features/runner/RunnerView.tsx:233
+#: src/features/runner/RunnerView.tsx:235
 msgid "Auto-run: off"
 msgstr "הרצה אוטומטית: כבויה"
 
-#: src/features/runner/RunnerView.tsx:231
+#: src/features/runner/RunnerView.tsx:233
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל השלבים"
 
@@ -673,7 +673,7 @@ msgstr "איסוף"
 msgid "Compile"
 msgstr "הרכבה"
 
-#: src/features/lectures/MainView.tsx:215
+#: src/features/lectures/MainView.tsx:224
 msgid "Complete"
 msgstr "הושלם"
 
@@ -721,7 +721,7 @@ msgstr "יצירת קשר"
 msgid "Continue Generating"
 msgstr "המשך יצירה"
 
-#: src/features/lectures/MainView.tsx:314
+#: src/features/lectures/MainView.tsx:334
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
@@ -889,8 +889,8 @@ msgid "Decline"
 msgstr "סירוב"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:444
-#: src/features/lectures/MainView.tsx:447
+#: src/features/lectures/MainView.tsx:466
+#: src/features/lectures/MainView.tsx:469
 msgid "Delete {0}"
 msgstr "מחיקת {0}"
 
@@ -1014,7 +1014,7 @@ msgstr "עריכה"
 msgid "Edit source URL"
 msgstr "עריכת כתובת מקור"
 
-#: src/features/lectures/MainView.tsx:234
+#: src/features/lectures/MainView.tsx:243
 msgid "Edit summary"
 msgstr "עריכת סיכום"
 
@@ -1146,6 +1146,10 @@ msgstr "FastStudy משתמשת ב-Google Chrome או ב-Microsoft Edge כדי ל
 #: src/features/settings/InitWall.tsx:216
 msgid "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "FastStudy משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
+
+#: src/features/lectures/MainView.tsx:317
+msgid "Fewer details"
+msgstr "פחות פרטים"
 
 #: src/features/downloads/components/RecordingRow.tsx:248
 msgid "File type"
@@ -1308,7 +1312,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:409
+#: src/features/lectures/MainView.tsx:431
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -1400,7 +1404,7 @@ msgid "Material"
 msgstr "חומר"
 
 #: src/features/downloads/DownloadsView.tsx:66
-#: src/features/lectures/MainView.tsx:428
+#: src/features/lectures/MainView.tsx:450
 msgid "Materials"
 msgstr "חומרים"
 
@@ -1421,7 +1425,7 @@ msgstr "השם בקורס"
 msgid "New course"
 msgstr "קורס חדש"
 
-#: src/features/runner/RunnerView.tsx:354
+#: src/features/runner/RunnerView.tsx:356
 msgid "Next"
 msgstr "הבאה"
 
@@ -1517,7 +1521,7 @@ msgstr "עדיין לא נבחרה אוניברסיטה. בחר אותה בהג�
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
-#: src/features/runner/RunnerView.tsx:207
+#: src/features/runner/RunnerView.tsx:209
 msgid "None"
 msgstr "אין"
 
@@ -1535,11 +1539,11 @@ msgstr "לא מחובר"
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
-#: src/features/lectures/MainView.tsx:398
+#: src/features/lectures/MainView.tsx:420
 msgid "not provided"
 msgstr "חסר"
 
-#: src/features/runner/RunnerView.tsx:375
+#: src/features/runner/RunnerView.tsx:377
 msgid "Not queued"
 msgstr "לא בתור"
 
@@ -1551,7 +1555,7 @@ msgstr "שים לב: הפעולה הזו תמחק את השמע, התמלול, �
 msgid "Nothing matched this search"
 msgstr "לא נמצאו תוצאות לחיפוש הזה"
 
-#: src/features/runner/RunnerView.tsx:248
+#: src/features/runner/RunnerView.tsx:250
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
@@ -1567,7 +1571,7 @@ msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בע�
 msgid "Nothing was found to analyze in this course."
 msgstr "לא נמצא חומר לניתוח בקורס הזה."
 
-#: src/features/runner/RunnerView.tsx:279
+#: src/features/runner/RunnerView.tsx:281
 msgid "Now running"
 msgstr "בעיבוד עכשיו"
 
@@ -1603,7 +1607,7 @@ msgstr "פתיחת התיקייה"
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת הכתובת שבראש החלון והקש Enter:"
 
-#: src/features/lectures/MainView.tsx:245
+#: src/features/lectures/MainView.tsx:254
 msgid "Open in Drive"
 msgstr "פתיחה ב-Drive"
 
@@ -1612,7 +1616,7 @@ msgstr "פתיחה ב-Drive"
 msgid "Open lecture"
 msgstr "פתיחת ההרצאה"
 
-#: src/features/lectures/MainView.tsx:435
+#: src/features/lectures/MainView.tsx:457
 msgid "Open material"
 msgstr "פתיחת החומר"
 
@@ -1620,7 +1624,7 @@ msgstr "פתיחת החומר"
 #: src/features/course-overview/components/ExtractorHeader.tsx:112
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
-#: src/features/lectures/MainView.tsx:239
+#: src/features/lectures/MainView.tsx:248
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
 msgstr "פתיחת ה-PDF"
@@ -1706,12 +1710,12 @@ msgstr "ה-PDF נוצר עם אזהרות"
 msgid "Pin FastStudy to the toolbar"
 msgstr "הצמדת FastStudy לסרגל הכלים"
 
-#: src/features/lectures/MainView.tsx:298
+#: src/features/lectures/MainView.tsx:308
 msgid "Pipeline"
 msgstr "שלבים"
 
-#: src/features/lectures/MainView.tsx:162
-#: src/features/runner/RunnerView.tsx:213
+#: src/features/lectures/MainView.tsx:171
+#: src/features/runner/RunnerView.tsx:215
 msgid "Pipeline already running"
 msgstr "ההרצאה כבר בעיבוד"
 
@@ -1728,7 +1732,7 @@ msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPri
 msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-GitHub: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
 #: src/features/downloads/components/ManualDownload.tsx:248
-#: src/features/runner/RunnerView.tsx:328
+#: src/features/runner/RunnerView.tsx:330
 msgid "Queued"
 msgstr "בתור"
 
@@ -1840,12 +1844,12 @@ msgstr "ניסיון חוזר"
 msgid "Retry ✗"
 msgstr "ניסיון חוזר ✗"
 
-#: src/features/lectures/MainView.tsx:371
-#: src/features/lectures/MainView.tsx:374
+#: src/features/lectures/MainView.tsx:393
+#: src/features/lectures/MainView.tsx:396
 msgid "Rotate {file}"
 msgstr "יצירה מחדש של {file}"
 
-#: src/features/lectures/MainView.tsx:272
+#: src/features/lectures/MainView.tsx:281
 msgid "Run Remaining"
 msgstr "הרצת השלבים הנותרים"
 
@@ -1853,7 +1857,7 @@ msgstr "הרצת השלבים הנותרים"
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
-#: src/features/runner/RunnerView.tsx:387
+#: src/features/runner/RunnerView.tsx:389
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
@@ -1863,11 +1867,11 @@ msgstr "להריץ מדי יום הרצאות שלא הסתיימו"
 
 #. placeholder {0}: header.current
 #. placeholder {1}: header.total
-#: src/features/runner/RunnerView.tsx:241
+#: src/features/runner/RunnerView.tsx:243
 msgid "Running · lecture {0} of {1}"
 msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 
-#: src/features/runner/RunnerView.tsx:257
+#: src/features/runner/RunnerView.tsx:259
 #: src/shared/sidebar/Sidebar.tsx:78
 msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
@@ -1964,6 +1968,10 @@ msgstr "הצגת חלון החידה"
 msgid "Show more"
 msgstr "הצג עוד"
 
+#: src/features/lectures/MainView.tsx:317
+msgid "Show more details"
+msgstr "פרטים נוספים"
+
 #: src/features/settings/components/ApiKeyField.tsx:151
 msgid "Show screenshot"
 msgstr "הצג צילום מסך"
@@ -1972,7 +1980,7 @@ msgstr "הצג צילום מסך"
 msgid "skipped"
 msgstr "דולג"
 
-#: src/features/lectures/MainView.tsx:384
+#: src/features/lectures/MainView.tsx:406
 msgid "skipped (no video)"
 msgstr "דולג (אין וידאו)"
 
@@ -1998,13 +2006,13 @@ msgstr "להתחיל להשתמש ב-FastStudy"
 
 #. placeholder {0}: position.number
 #. placeholder {1}: position.count
-#: src/features/runner/RunnerView.tsx:153
+#: src/features/runner/RunnerView.tsx:155
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
 #: src/features/lectures/EditSummaryView.tsx:209
 #: src/features/lectures/EditSummaryView.tsx:277
-#: src/features/lectures/MainView.tsx:138
+#: src/features/lectures/MainView.tsx:147
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
@@ -2032,7 +2040,7 @@ msgstr "הסיכומים מועלים ל-Drive של החשבון הזה. חיב�
 msgid "Summarize"
 msgstr "סיכום"
 
-#: src/features/lectures/MainView.tsx:354
+#: src/features/lectures/MainView.tsx:374
 msgid "summarized from materials only"
 msgstr "סוכם מהחומרים בלבד"
 
@@ -2094,7 +2102,7 @@ msgstr "תהליך ההורדה הזה כבר לא קיים."
 msgid "That is not a Google Drive file link: {url}."
 msgstr "זה אינו קישור לקובץ ב-Google Drive: {url}."
 
-#: src/features/runner/RunnerView.tsx:224
+#: src/features/runner/RunnerView.tsx:226
 msgid "That lecture is no longer queued"
 msgstr "ההרצאה הזו כבר לא בתור"
 
@@ -2166,7 +2174,7 @@ msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
-#: src/features/lectures/MainView.tsx:464
+#: src/features/lectures/MainView.tsx:486
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -2191,7 +2199,7 @@ msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחב
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:481
+#: src/features/lectures/MainView.tsx:503
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -2223,7 +2231,7 @@ msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{l
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
-#: src/features/runner/RunnerView.tsx:332
+#: src/features/runner/RunnerView.tsx:334
 msgid "the runner takes these in order"
 msgstr "ההרצות מתבצעות לפי הסדר"
 
@@ -2273,15 +2281,15 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:465
+#: src/features/lectures/MainView.tsx:487
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
-#: src/features/runner/RunnerView.tsx:410
+#: src/features/runner/RunnerView.tsx:412
 msgid "These won't start until you run them, or until the daily run does."
 msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה היומית."
 
-#: src/features/runner/RunnerView.tsx:414
+#: src/features/runner/RunnerView.tsx:416
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
 

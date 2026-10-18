@@ -35,7 +35,9 @@ test('a summarised lecture runs to a finished PDF uploaded to Drive', async ({ p
     });
     await expect(step(name)).toHaveAttribute('data-status', 'done', { timeout: 1_000 });
   }
-  // The file itself appears in the row with its size, and the header calls the lecture complete.
+  // The file itself appears in the row with its size once details are open, and the header calls
+  // the lecture complete.
+  await view.locator('.pipeline-details-toggle').click();
   await expect(step('pdf').locator('.pipeline-file')).toHaveText(/^summary\.pdf · \S/);
   await expect(view.getByTestId('open-pdf')).toBeVisible();
   await expect(view.locator('.page-header-state--done')).toBeVisible();
