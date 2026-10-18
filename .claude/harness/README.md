@@ -327,6 +327,15 @@ the page takes it, visits `/__harness/clear` for the cookie and lands on the sit
 lives in `$FASTSTUDY_STATE_DIR/moodle-profile`, so a reopened window passes hidden until Disconnect
 deletes the profile.
 
+A zoom share runs auto/'s real `ZoomExtractor` in that same patched browser. The `הרצאות` section's
+summary lists `https://zoom.us/rec/share/harness-05` under the label `הרצאה מספר 5`, and the fake site
+serves it on the `zoom.us` host as a passcode gate (`input#passcode`, `#passcode_btn`) taking only
+`harness` (`ZOOM_PASSCODE`, `lib/env.mjs`). The first Download asks for a passcode (`missing`), a wrong
+one keeps the gate up (`incorrect`), and the right one swaps it for a `<video>` whose `/rec/play/….mp4`
+request auto/ captures and the fake tool downloads. The passcodes land in
+`$FASTSTUDY_STATE_DIR/auth/zoom-passcodes.json`, which a reseed deletes; a capture auto/ already
+replays skips the gate until `hb forget-probes`.
+
 A videostream recording needs no browser. The fake course lists one `videostream` activity
 (`הקלטה 4 — גרפים`), and the site answers its `tool_mobile_get_content` call — a POST naming
 `mod_videostream`/`view_videostream` with the course's and module's ids among the args, anything else
@@ -465,4 +474,4 @@ Open the PNG to check the Hebrew RTL layout by eye; `get_text()` returns the log
 
 The Electron shell and the installer (this is the dev stack), real provider behaviour and real
 quota accounting, a real site's SSO and MFA pages (the fake `launch.php` redirects at once), the
-zoom login, zoom capture (it needs a real browser), an off-site videostream `.mp4` (the fake serves it from the Moodle host), and Google Drive's own semantics beyond create/update.
+zoom login, the real zoom player (its captcha, two-clip shares, a share that never shows a player), an off-site videostream `.mp4` (the fake serves it from the Moodle host), and Google Drive's own semantics beyond create/update.

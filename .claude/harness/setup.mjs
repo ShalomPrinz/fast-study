@@ -407,7 +407,7 @@ harness ready — drive the app at ${appUrl()}  (localhost, not 127.0.0.1: the s
     node .claude/harness/hb.mjs --harness ${paths.root} moodle-busy on|off  # auto/'s Moodle lock held, or freed
 
   not covered by this harness: the Electron shell, the installer, real provider behaviour,
-  a real site's SSO and MFA pages, the zoom login, and zoom capture (it needs a real browser).
+  a real site's SSO and MFA pages, the zoom login, and the real zoom player (captcha, two-clip shares).
 
 Ctrl-C stops every service and fake.`);
   return keepRunning();

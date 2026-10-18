@@ -7,7 +7,13 @@ import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
-import { FAILURE_ROWS, FAKE_COURSE_URL, FAKE_MOODLE_SITE } from '../lib/env.mjs';
+import {
+  FAILURE_ROWS,
+  FAKE_COURSE_URL,
+  FAKE_MOODLE_SITE,
+  ZOOM_PASSCODE,
+  ZOOM_ROW,
+} from '../lib/env.mjs';
 import { createSiteControl } from './site-control.mjs';
 
 const HARNESS = process.env.HARNESS_DIR;
@@ -25,13 +31,13 @@ const COURSE_ID = Number(new URL(FAKE_COURSE_URL).searchParams.get('id'));
 // One course, shaped exactly like core_course_get_contents: sections of modules, names as HTML.
 // It carries a row per path the downloader can take — direct mp4, an in-site videostream, YouTube, a
 // PDF resource, a plain web page (unsupported), a dead link, a 403 and a mid-download drop — plus
-// Hebrew names and one multi-file resource.
+// Hebrew names, one multi-file resource and a passcode-gated zoom share in a section summary.
 function courseContents() {
   return [
     {
       id: 1,
       name: 'הרצאות',
-      summary: '',
+      summary: `<p>${ZOOM_ROW}</p><p><a href="${ZOOM_SHARE}">${ZOOM_SHARE}</a></p>`,
       modules: [
         mod('url', 'הקלטה 1 — מבוא', `${SITE}/media/lecture-01.mp4`),
         mod('url', 'הקלטה 2 — סיבוכיות', `${SITE}/media/lecture-02.mp4`),
@@ -119,6 +125,48 @@ function contentArgs(form) {
     args[form.get(`args[${i}][name]`)] = form.get(`args[${i}][value]`);
   }
   return args;
+}
+
+// The zoom share the summary lists, served by this fake on the zoom.us host the shim maps here.
+const ZOOM_SHARE = 'https://zoom.us/rec/share/harness-05';
+
+// zoom's share page as ZoomExtractor reads it: a passcode gate (`input#passcode` + `#passcode_btn`)
+// that detaches on the right code and leaves a player whose .mp4 request it sniffs; a wrong one stays.
+function zoomShare(res, token) {
+  const body = `<!doctype html><meta charset="utf-8"><title>harness zoom</title>
+<div id="gate"><input id="passcode" type="password"><button id="passcode_btn">Watch Recording</button>
+<p id="error"></p></div>
+<script>
+document.getElementById('passcode_btn').onclick = async () => {
+  const passcode = document.getElementById('passcode').value;
+  const { ok } = await (await fetch('/rec/validate', { method: 'POST', body: passcode })).json();
+  if (!ok) { document.getElementById('error').textContent = 'Wrong passcode'; return; }
+  document.getElementById('gate').remove();
+  const video = Object.assign(document.createElement('video'), {
+    autoplay: true, muted: true, controls: true, src: '/rec/play/${token}.mp4?fid=harness',
+  });
+  document.body.append(video);
+};
+</script>`;
+  res.writeHead(200, {
+    'content-type': 'text/html; charset=utf-8',
+    'content-length': Buffer.byteLength(body),
+  });
+  res.end(body);
+}
+
+function serveZoom(req, res, route) {
+  const share = /^\/rec\/share\/([\w-]+)$/.exec(route);
+  if (share) return zoomShare(res, share[1]);
+  if (route === '/rec/validate' && req.method === 'POST') {
+    const parts = [];
+    req.on('data', (part) => parts.push(part));
+    return req.on('end', () =>
+      json(res, { ok: Buffer.concat(parts).toString('utf8') === ZOOM_PASSCODE }),
+    );
+  }
+  if (route.startsWith('/rec/play/')) return serveFile(req, res, VIDEO, 'video/mp4');
+  return json(res, { error: `harness fake zoom has no route for ${route}` }, 404);
 }
 
 function resource(name, files) {
@@ -289,7 +337,8 @@ function handle(req, res) {
   if (route === '/tool') return json(res, site.tool(url.searchParams.get('url') ?? ''));
 
   const host = (req.headers.host ?? '').split(':')[0];
-  // Only the Moodle host is held: the captcha page is another site.
+  if (host === 'zoom.us' || host.endsWith('.zoom.us')) return serveZoom(req, res, route);
+  // Only the Moodle host is held: the zoom share and the captcha page are other sites.
   if (host === SITE_HOST) return site.admit(() => serveSite(req, res, url, route, host));
   return serveSite(req, res, url, route, host);
 }

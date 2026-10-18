@@ -38,6 +38,10 @@ export const FAILURE_ROWS = {
   die: 'הקלטה 8 — נקטעת באמצע',
 };
 
+// The fake course's zoom share: its row title (the summary's label) and the one passcode its gate takes.
+export const ZOOM_ROW = 'הרצאה מספר 5';
+export const ZOOM_PASSCODE = 'harness';
+
 // How long the fake tool takes over one download until `/control` says otherwise.
 export const DEFAULT_DOWNLOAD_MS = 3000;
 

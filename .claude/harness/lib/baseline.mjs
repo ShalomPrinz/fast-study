@@ -127,6 +127,8 @@ export async function restore(paths) {
   // Disconnect first: it is the only thing that clears the auto-downloader's in-memory "expired".
   await call(`${AUTO}/auth/disconnect`, { method: 'POST' });
   writeMoodleToken(paths);
+  // auto/ reads the store on every lookup, so the zoom share asks for its passcode again.
+  fs.rmSync(path.join(paths.state, 'auth', 'zoom-passcodes.json'), { force: true });
   await json(`${PROVIDERS}/control`, 'POST', { reset: true });
   await json(`${SITE}/control`, 'POST', { reset: true });
   for (const file of ['store.json', 'ops.jsonl']) {
