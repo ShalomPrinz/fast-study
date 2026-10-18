@@ -94,9 +94,9 @@ const WIRE: Record<SettingsField, string> = {
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
-// never another. Every field the store holds is named in one of them, bar the launcher-only
-// `errorReports`, `privacyConfirmed` and `aiProvider`: the launcher itself pushes the switch to every
-// service, and only the renderer reads the other two.
+// never another. Every field the store holds is named in one of them, bar three no service owns:
+// `errorReports`, which the launcher itself pushes to every service, and the renderer-only
+// `privacyConfirmed` and `aiProvider`.
 const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
@@ -121,6 +121,7 @@ interface RawSettings {
   nightly_run: boolean | null
   nightly_hour: number | null
   moodle_site: string | null
+  ai_provider: string | null
 }
 
 function normalize(raw: RawSettings): Settings {
@@ -135,10 +136,10 @@ function normalize(raw: RawSettings): Settings {
     nightlyRun: raw.nightly_run,
     nightlyHour: raw.nightly_hour,
     moodleSite: raw.moodle_site ?? null,
-    // The browser-dev store has no such setting; the switch is Electron-only.
+    aiProvider: raw.ai_provider ?? null,
+    // The browser-dev store has neither; the switch and its privacy answer are Electron-only.
     errorReports: null,
     privacyConfirmed: false,
-    aiProvider: null,
   }
 }
 
@@ -181,8 +182,7 @@ export interface SettingsBacking {
 
 const browserBacking: SettingsBacking = {
   read: async () => normalize(await database.get<RawSettings>('/settings')),
-  // The `.env` store has no AI chat field and refuses an unknown one, so the pick stays unsaved here.
-  write: async ({ aiProvider: _aiProvider, ...patch }) =>
+  write: async (patch) =>
     normalize(await database.put<RawSettings>('/settings', { json: storeBody(patch) })),
 }
 

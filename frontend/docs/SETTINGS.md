@@ -45,9 +45,8 @@ on every save, and while the policy is unanswered its Start opens the modal inst
 and starts in one go (`wallMustAskPrivacy`); closing it saves nothing.
 
 **The AI chat provider** is the chat "Study with AI" opens ([LECTURES.md](LECTURES.md)), read through
-`useAiProvider`, where unset or unknown is Claude. Like `privacyConfirmed` it is launcher-only and no service
-reads it; browser dev's `.env` store has no such field, so there it always reads Claude and a pick is dropped
-before the write.
+`useAiProvider`, where unset or unknown is Claude. It is renderer-only: no service reads it, so a save writes
+it to the store alone, the launcher's in the packaged app and the database's `.env` in browser dev.
 
 ## What is not a setting
 

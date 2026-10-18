@@ -37,6 +37,10 @@ describe('storeBody', () => {
   it('keeps an empty string, which clears a key rather than leaving it alone', () => {
     expect(storeBody({ groqApiKey: '' })).toEqual({ groq_api_key: '' })
   })
+
+  it('stores the AI chat provider under its wire key', () => {
+    expect(storeBody({ aiProvider: 'gemini' })).toEqual({ ai_provider: 'gemini' })
+  })
 })
 
 describe('ownerBodies', () => {
@@ -59,8 +63,10 @@ describe('ownerBodies', () => {
   })
 
   // Launcher-only: the launcher itself pushes the switch to every service.
-  it('gives error reports and the privacy answer no owner', () => {
-    expect(ownerBodies({ errorReports: false, privacyConfirmed: true })).toEqual({
+  it('gives error reports, the privacy answer and the AI chat provider no owner', () => {
+    expect(
+      ownerBodies({ errorReports: false, privacyConfirmed: true, aiProvider: 'chatgpt' }),
+    ).toEqual({
       backend: null,
       database: null,
       auto: null,
@@ -92,6 +98,22 @@ describe('saveSettings', () => {
     ])
     expect(settings.dataRoot).toBe('/data')
     expect(settings.groqApiKeySet).toBe(false)
+  })
+
+  it('stores the AI chat provider in the database store and pushes it to no service', async () => {
+    const calls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        calls.push(`${init.method} ${url} ${init.body}`)
+        return ok({ ...STORED, ai_provider: 'chatgpt' })
+      }),
+    )
+
+    const settings = await saveSettings({ aiProvider: 'chatgpt' })
+
+    expect(calls).toEqual(['PUT http://localhost:8001/settings {"ai_provider":"chatgpt"}'])
+    expect(settings.aiProvider).toBe('chatgpt')
   })
 
   it('skips an owner with nothing to apply', async () => {
