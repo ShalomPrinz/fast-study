@@ -76,7 +76,7 @@ export interface CourseSummary {
 }
 
 export type DownloadOperation = 'download:curl' | 'download:ytdlp'
-export type TimingOperation = Step | DownloadOperation
+export type TimingOperation = Step | 'summarize_materials' | DownloadOperation
 
 export interface RateLimitInfo {
   limit: number | null

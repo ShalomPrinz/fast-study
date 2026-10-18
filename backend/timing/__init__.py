@@ -158,20 +158,25 @@ def get_stats(operation: str, file_size_bytes: int) -> dict:
     }
 
 
+def _input_size(value) -> int:
+    """Byte size of a timed call's first argument: a path's file size (or its text's length
+    when no such file exists), the summed sizes for a list or tuple of paths, else 0."""
+
+    if isinstance(value, (list, tuple)):
+        return sum(Path(p).stat().st_size for p in value if Path(p).exists())
+    if value and isinstance(value, (str, Path)):
+        p = Path(value)
+        return p.stat().st_size if p.exists() else len(str(value).encode())
+    return 0
+
+
 def timed_pipeline(operation: str):
     """Decorator recording a pipeline call's duration against its first argument's file size."""
 
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            input_val = args[0] if args else None
-            if input_val and isinstance(input_val, (str, Path)):
-                p = Path(input_val)
-                file_size = (
-                    p.stat().st_size if p.exists() else len(str(input_val).encode())
-                )
-            else:
-                file_size = 0
+            file_size = _input_size(args[0] if args else None)
 
             start = time.perf_counter()
             result = func(*args, **kwargs)

@@ -66,6 +66,12 @@
   font-style: italic;
 }
 
+.pipeline-materials-note {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
 /* `ProgressBar` carries the class on its wrapper when it has an estimate and on the bare label when
    it has none; `display: contents` lifts the track and label into the row grid in the first case. */
 .progress-wrap.pipeline-progress {

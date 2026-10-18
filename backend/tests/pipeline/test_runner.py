@@ -107,6 +107,33 @@ def test_next_step_pdf_present_drive_missing_returns_drive():
     )
 
 
+def test_next_step_materials_only_skips_audio_and_transcribe():
+    assert runner.next_step(_files(), materials_only=True) == "summarize"
+    assert runner.next_step(_files(summary=True), materials_only=True) == "pdf"
+    assert runner.next_step(_files(summary=True, pdf=True), True) == "drive"
+    assert runner.next_step(_files(summary=True, pdf=True, drive=True), True) is None
+
+
+def test_next_step_without_the_flag_still_starts_at_audio():
+    assert runner.next_step(_files()) == "audio"
+    assert runner.next_step(_files(summary=True)) == "audio"
+
+
+def test_is_materials_only():
+    pdf = [{"name": "material.pdf", "size": 3}]
+    assert runner.is_materials_only(_files(), pdf) is True
+    assert runner.is_materials_only(_files(video=True), pdf) is False
+    assert runner.is_materials_only(_files(), []) is False
+    # Audio with no video is still transcribed, never summarized from the PDFs alone.
+    assert runner.is_materials_only(_files(audio=True), pdf) is False
+
+
+def test_next_step_on_audio_only_lecture_with_materials_is_transcribe():
+    files = _files(audio=True)
+    pdf = [{"name": "material.pdf", "size": 3}]
+    assert runner.next_step(files, runner.is_materials_only(files, pdf)) == "transcribe"
+
+
 # ---- scan_pending ----
 
 
@@ -133,6 +160,29 @@ def test_scan_pending_filters_no_video_and_finished():
     assert ("C1", "L_no_video", "lecture") not in result
     assert ("C1", "R_done", "recitation") not in result
     assert len(result) == 2
+
+
+def test_scan_pending_ignores_materials_only_lectures():
+    """Materials-only summarize is manual: no automatic trigger ever picks one up."""
+    tree = [
+        {
+            "name": "C1",
+            "lectures": [
+                {
+                    "name": "L_slides",
+                    "files": _files(),
+                    "materials": [{"name": "material.pdf", "size": 3}],
+                }
+            ],
+            "recitations": [],
+        }
+    ]
+    with (
+        patch.object(runner.db_client, "get_tree", return_value=tree),
+        patch.object(runner.db_client, "list_materials") as list_materials,
+    ):
+        assert asyncio.run(runner.scan_pending()) == []
+    list_materials.assert_not_called()
 
 
 # ---- _scheduled_run guard ----
@@ -205,7 +255,10 @@ def test_every_step_guard_names_the_file_and_its_producing_step():
         "pdf": ("summary.md", "summarize"),
         "drive": ("summary.pdf", "pdf"),
     }
-    with patch.object(runner.db_client, "file_exists", return_value=False):
+    with (
+        patch.object(runner.db_client, "file_exists", return_value=False),
+        patch.object(runner.db_client, "list_materials", return_value=[]),
+    ):
         for step, (file, producer) in guards.items():
             result = runner.execute_step("C1", "L1", "lecture", step)
             assert result["status"] == "error"
@@ -370,6 +423,188 @@ def test_exec_summarize_all_materials_empty_runs_transcript_only():
     )
     assert result == {"status": "done", "usedMaterial": False}
     assert seen["names"] == []
+
+
+# ---- summarize: materials-only (no video) ----
+
+
+def _run_exec_summarize_no_transcript(
+    *, video: bool, contents: dict[str, bytes]
+) -> tuple[dict, Mock, Mock, Mock]:
+    """Run _exec_summarize with no transcript.txt, `video` deciding video.mp4, and a material
+    listing ({name: bytes}); returns the result and the summarize/summarize_materials/put mocks."""
+
+    seen: dict = {}
+
+    def _fake_materials(paths):
+        seen["names"] = [p.name for p in paths]
+        seen["bytes"] = [p.read_bytes() for p in paths]
+        return "# from slides"
+
+    with (
+        patch.object(
+            runner.db_client,
+            "file_exists",
+            side_effect=lambda c, l, k, name: video and name == "video.mp4",
+        ),
+        patch.object(
+            runner.db_client,
+            "list_materials",
+            return_value=[{"name": n, "size": len(b)} for n, b in contents.items()],
+        ),
+        patch.object(
+            runner.db_client,
+            "get_file_bytes",
+            side_effect=lambda c, l, k, name: contents[name],
+        ),
+        patch.object(runner, "summarize") as transcript_summarize,
+        patch.object(
+            runner, "summarize_materials", side_effect=_fake_materials
+        ) as materials_summarize,
+        patch.object(runner.db_client, "put_summary") as put_summary,
+    ):
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    materials_summarize.seen = seen
+    return result, transcript_summarize, materials_summarize, put_summary
+
+
+def test_exec_summarize_materials_only_summarizes_the_pdfs():
+    result, transcript_summarize, materials_summarize, put_summary = (
+        _run_exec_summarize_no_transcript(
+            video=False, contents={"material.pdf": b"%PDF-a", "material.2.pdf": b""}
+        )
+    )
+    assert result == {"status": "done", "usedMaterial": True}
+    assert materials_summarize.seen == {"names": ["material.pdf"], "bytes": [b"%PDF-a"]}
+    transcript_summarize.assert_not_called()
+    put_summary.assert_called_once_with(
+        "C1", "L1", "lecture", "# from slides", fresh=True
+    )
+
+
+def test_exec_summarize_with_a_video_still_needs_the_transcript():
+    result, _, materials_summarize, put_summary = _run_exec_summarize_no_transcript(
+        video=True, contents={"material.pdf": b"%PDF-a"}
+    )
+    assert result["code"] == "missing_prerequisite"
+    assert result["params"] == {"file": "transcript.txt", "step": "transcribe"}
+    materials_summarize.assert_not_called()
+    put_summary.assert_not_called()
+
+
+def test_exec_summarize_with_no_video_and_no_materials_needs_the_transcript():
+    result, _, materials_summarize, _ = _run_exec_summarize_no_transcript(
+        video=False, contents={}
+    )
+    assert result["code"] == "missing_prerequisite"
+    materials_summarize.assert_not_called()
+
+
+def test_exec_summarize_materials_all_empty_is_materials_empty():
+    result, _, materials_summarize, put_summary = _run_exec_summarize_no_transcript(
+        video=False, contents={"material.pdf": b"", "material.2.pdf": b""}
+    )
+    assert result["status"] == "error"
+    assert (result["code"], result["params"]) == ("materials_empty", {})
+    materials_summarize.assert_not_called()
+    put_summary.assert_not_called()
+
+
+def test_exec_summarize_with_audio_but_no_transcript_never_lists_materials():
+    with (
+        patch.object(
+            runner.db_client,
+            "file_exists",
+            side_effect=lambda c, l, k, name: name == "audio.mp3",
+        ),
+        patch.object(runner.db_client, "list_materials") as list_materials,
+        patch.object(runner.db_client, "put_summary") as put_summary,
+    ):
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    assert result["code"] == "missing_prerequisite"
+    assert result["params"] == {"file": "transcript.txt", "step": "transcribe"}
+    list_materials.assert_not_called()
+    put_summary.assert_not_called()
+
+
+def test_a_video_arriving_mid_materials_summarize_discards_the_summary():
+    """The upload wiped derived files mid-call; writing now would leave a PDF-only summary.md
+    that next_step treats as the video's, so the transcript would never be summarized."""
+    video_checks = iter(
+        [False, True]
+    )  # absent at the start, present after Gemini returns
+
+    def _exists(course, lecture, kind, name):
+        return name == "video.mp4" and next(video_checks)
+
+    with (
+        patch.object(runner.db_client, "file_exists", side_effect=_exists),
+        patch.object(
+            runner.db_client, "list_materials", return_value=[{"name": "m.pdf"}]
+        ),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"%PDF"),
+        patch.object(runner, "summarize_materials", return_value="# stale"),
+        patch.object(runner.db_client, "put_summary") as put_summary,
+    ):
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    assert result["status"] == "error"
+    assert result["code"] == "missing_prerequisite"
+    assert result["params"] == {"file": "transcript.txt", "step": "transcribe"}
+    put_summary.assert_not_called()
+
+
+def test_exec_summarize_materials_only_rejects_an_empty_summary():
+    with (
+        patch.object(runner.db_client, "file_exists", return_value=False),
+        patch.object(
+            runner.db_client, "list_materials", return_value=[{"name": "m.pdf"}]
+        ),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"%PDF"),
+        patch.object(runner, "summarize_materials", return_value=""),
+        patch.object(runner.db_client, "put_summary") as put_summary,
+    ):
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    assert (result["code"], result["params"]) == ("empty_file", {"file": "summary.md"})
+    put_summary.assert_not_called()
+
+
+def test_a_materials_only_pipeline_runs_summarize_pdf_drive():
+    """No video plus materials: /pipeline skips audio and transcribe and ends at drive."""
+    states = [
+        _files(),
+        _files(summary=True),
+        _files(summary=True, pdf=True),
+        _files(summary=True, pdf=True, drive=True),
+    ]
+    steps: list[str] = []
+
+    async def fake_fetch(course, lecture, kind):
+        return states[len(steps)]
+
+    async def fake_call(course, lecture, kind, step):
+        steps.append(step)
+        return {"status": "done"}
+
+    with (
+        patch.object(runner, "_fetch_files", fake_fetch),
+        patch.object(runner, "_call_step", fake_call),
+        patch.object(
+            runner.db_client, "list_materials", return_value=[{"name": "m.pdf"}]
+        ),
+        patch.object(runner.db_client, "notify"),
+    ):
+        asyncio.run(runner.run_pipeline_for("C1", "L1", "lecture"))
+    assert steps == ["summarize", "pdf", "drive"]
+
+
+def test_a_pipeline_with_a_video_never_lists_materials():
+    with (
+        patch.object(runner, "_fetch_files", AsyncMock(return_value=_STATES[-1])),
+        patch.object(runner.db_client, "list_materials") as list_materials,
+        patch.object(runner.db_client, "notify"),
+    ):
+        asyncio.run(runner.run_pipeline_for("C1", "L1", "lecture"))
+    list_materials.assert_not_called()
 
 
 # ---- transcribe partial persistence ----

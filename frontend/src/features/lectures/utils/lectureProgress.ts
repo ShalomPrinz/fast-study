@@ -1,4 +1,4 @@
-import type { Course, FileStatus, Lecture } from '@/types'
+import type { Course, FileName, FileStatus, Lecture, MaterialInfo } from '@/types'
 import { PIPELINE } from '@/features/lectures/constants/pipeline'
 
 // Done once the last output exists (`drive_url.txt`, or `summary.pdf` with Drive off), mirroring
@@ -11,14 +11,59 @@ export function isLectureComplete(lecture: Lecture, driveEnabled: boolean): bool
   return filesComplete(lecture.files, driveEnabled)
 }
 
-// Whether Run Remaining would do anything: the backend's `next_step` (the first enabled step whose
-// output is missing, none once complete) must exist and have its input file, or the run fails on it.
-export function canRunRemaining(files: FileStatus, driveEnabled: boolean): boolean {
+// No video.mp4, no audio.mp3 and at least one material PDF: summarized from the PDFs alone, mirroring
+// the backend's `is_materials_only()` / `_summarize_source()`.
+export function isMaterialsOnly(files: FileStatus, materials: MaterialInfo[]): boolean {
+  return !files['video.mp4'].exists && !files['audio.mp3'].exists && materials.length > 0
+}
+
+// A summary made from the materials alone — derived from files only, there is no marker.
+export function summarizedFromMaterials(files: FileStatus, materials: MaterialInfo[]): boolean {
+  return (
+    files['summary.md'].exists &&
+    !files['transcript.txt'].exists &&
+    isMaterialsOnly(files, materials)
+  )
+}
+
+const SKIPPABLE: FileName[] = ['video.mp4', 'audio.mp3', 'transcript.txt']
+
+// A materials-only lecture skips the video, audio and transcript stages; one whose file is
+// nonetheless there still shows it.
+export function skippedStage(
+  file: FileName,
+  files: FileStatus,
+  materials: MaterialInfo[],
+): boolean {
+  return SKIPPABLE.includes(file) && !files[file].exists && isMaterialsOnly(files, materials)
+}
+
+// Whether a stage's step has its input; summarize also runs off a materials-only lecture's PDFs.
+export function stagePrereqMet(
+  stage: { file: FileName; prereq?: FileName },
+  files: FileStatus,
+  materials: MaterialInfo[],
+): boolean {
+  if (!stage.prereq || files[stage.prereq].exists) return true
+  return stage.file === 'summary.md' && isMaterialsOnly(files, materials)
+}
+
+// Whether Run Remaining would do anything: the backend's `next_step` (the first enabled, non-skipped
+// step whose output is missing, none once complete) must exist and have its input, or the run fails.
+export function canRunRemaining(
+  files: FileStatus,
+  materials: MaterialInfo[],
+  driveEnabled: boolean,
+): boolean {
   if (filesComplete(files, driveEnabled)) return false
   const next = PIPELINE.find(
-    (p) => p.step && (driveEnabled || p.step !== 'drive') && !files[p.file].exists,
+    (p) =>
+      p.step &&
+      (driveEnabled || p.step !== 'drive') &&
+      !files[p.file].exists &&
+      !skippedStage(p.file, files, materials),
   )
-  return !!next && (!next.prereq || files[next.prereq].exists)
+  return !!next && stagePrereqMet(next, files, materials)
 }
 
 // A course's sidebar `N/M`: lectures and recitations together, archived courses contributing nothing.

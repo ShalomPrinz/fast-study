@@ -8,7 +8,7 @@
 | ------------ | ---------------- | ----------------------------------------------------------------------------------------- |
 | `audio`      | `audio.mp3`      | ffmpeg → mono 16 kHz 32 kbps. Minimal size, enough for ASR.                               |
 | `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks overlapping by 10 s (Groq caps a request at 25 MB). Chunks are frame copies of `audio.mp3`, never re-encoded; `verbose_json` segment timestamps split each overlap at its midpoint so no boundary text repeats. Chunk count comes from `services/mp3.py`, an in-process header parse rather than a spawned probe. |
-| `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ every material PDF) uploaded as file parts.  |
+| `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ every material PDF) uploaded as file parts — or, for a materials-only lecture, the material PDFs alone under `summarize_materials.md`. |
 | `pdf`        | `summary.pdf`    | pandoc → `.tex` → tectonic (one run). See [PDF.md](PDF.md).                                      |
 | `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link. Runs only while `DRIVE_ENABLED` is on, and only with Drive connected. |
 
@@ -19,6 +19,8 @@ A LaTeX error that still yielded a usable PDF is **not** a step failure: `_exec_
 Drive consent never happens inside a run. `services/google_auth.py` only loads and refreshes the stored token, so a drive step with none raises `DriveNotConnected` before it fetches the PDF: the lecture stops at `summary.pdf` and nothing waits on a human. That first failure sets one process flag, reported as `consent_needed` on `GET /config/drive/status` and pushed over SSE, so a queue of N lectures leaves the UI one thing to render; the consent flow itself is `POST /config/drive/connect` ([API.md](API.md)).
 
 A lecture may hold any number of material PDFs. `database/` owns their naming, so the backend never constructs one: `_exec_summarize` lists them via `db_client.list_materials`, downloads each into the workspace and passes them all to `summarize`. The step result's `usedMaterial` stays a bool — true iff at least one reached Gemini.
+
+**Materials-only lectures.** A lecture with no `video.mp4`, no `audio.mp3` and at least one material (`is_materials_only`) summarizes from its PDFs alone: `summarize_materials()` uploads them under one marker with the separate `assets/instructions/summarize_materials.md` prompt plus `LENGTH_BUDGET_SUFFIX`, and no transcript part. `_run_pipeline_unlocked` lists materials only when both `video.mp4` and `audio.mp3` are missing and passes `materials_only` to `next_step`, which then skips `audio` and `transcribe`, so the run goes summarize → pdf → drive. It is manual only: `_lecture_pending`/`scan_pending` stay video-only, so `run_all` (nightly, Run-all, `AUTO_RUN`) never picks one up. `_summarize_source` is the single readiness rule, shared by `_exec_summarize` and the route's `summarize_ready`: `transcript.txt` takes the transcript path; without one, a video or audio, or no materials, is `missing_prerequisite`. A later video upload keeps the database's usual wipe; there is no marker file. A video that lands mid-summarize supersedes the PDFs: `_exec_summarize` re-checks `video.mp4` before `put_summary` and, if present, writes nothing and fails `missing_prerequisite` (`{file: transcript.txt, step: transcribe}`), so the run stops and the video path is what runs next; a tiny check-then-write window remains, the same as on the transcript path.
 
 Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode. The model is `settings.gemini_model()` — `LLMClient`'s default, so summarize and the course overview cannot drift apart.
 
@@ -34,7 +36,7 @@ Writes never create a lecture dir: on one deleted mid-run `database/` answers `l
 
 A pipeline file is never legitimately 0 bytes; when one is, the producing tool returned success with no content and raised nothing to explain it. `_require_nonempty` rejects 0-byte data at every workspace read and write, and `EMPTY_FILE_ISSUES` supplies the likely cause per filename. Without it a 0-byte file counts as "exists" for `next_step` and the run advances, surfacing a misleading downstream error instead. All six are one code, `empty_file`, carrying `{file}` only — the hints are sentence fragments and stay in the English prose.
 
-Material PDFs are the exception: they are user-supplied optional inputs with no producing step, so an empty one is skipped with a warning and the run continues on the remaining materials (or transcript-only).
+Material PDFs are the exception: they are user-supplied optional inputs with no producing step, so an empty one is skipped with a warning and the run continues on the remaining materials (or transcript-only). A materials-only summarize whose every material is empty has no input left, so it fails `materials_empty` (no params).
 
 ## Execution model
 
@@ -48,7 +50,7 @@ Outcomes of the fire-and-forget endpoints live in runner state, read via `GET /s
 - `_runner_status` — `{running, total, done, last_error}` for `run_all`; `last_error` is a crashed lecture as `{message, code, params}` (`run_crashed`), or `null`.
 - `_queue` — the ordered `QueueEntry(course, lecture, kind, depth)` list `run_all` drains. In memory only: a restart empties it, and those lectures simply fall back to "has work left, nothing scheduled", which the frontend derives from the tree.
 
-`next_step` is pure file-existence over `enabled_steps()`: the first step whose output is missing. That makes every trigger resumable with no stored progress.
+`next_step` is pure file-existence over `enabled_steps()`: the first step whose output is missing (skipping `audio`/`transcribe` when `materials_only`). That makes every trigger resumable with no stored progress.
 
 `db_client.notify()` fires an SSE ping on each meaningful state change (step start, error, pipeline end, a lone `run_step`'s step done, run start/complete) so the frontend reacts without polling; inside a pipeline a finished step pings only through the next step's start or the pipeline's end, and under `run_all` a finished lecture pings only through the next lecture's first step start. It is deliberately NOT fired at `run_all` start or at the end of a lecture where no step ran (beyond the one that clears a held previous lecture): with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
 
@@ -105,7 +107,7 @@ Manual `/run/summarize` and `/pipeline` triggers ignore both blocks — the user
 
 ## Timing
 
-`timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. See [timing/README.md](../timing/README.md) for queries and the outlier-cleaning scripts.
+`timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. A list of paths as the first argument records their summed size; the materials-only summarize records under its own `summarize_materials` bucket so PDF-only runs never skew the transcript `summarize` ETA. See [timing/README.md](../timing/README.md) for queries and the outlier-cleaning scripts.
 
 The db sits at `runtime.state_path("timing.db")`, outside the `backend/` tree `--reload` watches, so the runner's constant writes never restart the dev server. `timing/__init__.py` owns that path and `init_db()` creates the directory — `state_path` itself only joins.
 

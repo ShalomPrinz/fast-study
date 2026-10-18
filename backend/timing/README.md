@@ -6,6 +6,8 @@ It lives under the writable state root — `$FASTSTUDY_STATE_DIR` if set, else `
 
 `operation` is validated against an allowlist on record: the pipeline steps sourced from `pipeline/runner.STEP_ORDER`, plus the downloader's `OPERATIONS` (downloader/server/src/services/timing.js). An unknown value (typo/rename) is logged and rejected rather than silently starting a dead bucket that nothing queries. Rows are per-bucket, so each valid operation has its own regression.
 
+`summarize_materials` (a lecture summarized from its material PDFs alone, sized by their sum) is recorded in-process by `@timed_pipeline`, so it bypasses that allowlist; `GET /timing/summarize_materials` reads it like any step.
+
 ## Schema
 
 ```sql

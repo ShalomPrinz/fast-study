@@ -37,6 +37,71 @@ class TestRunStep:
         }
         run.assert_not_called()
 
+    def test_summarize_is_accepted_for_a_materials_only_lecture(self):
+        with (
+            patch.object(
+                backend_main.runner.db_client, "file_exists", return_value=False
+            ),
+            patch.object(
+                backend_main.runner.db_client,
+                "list_materials",
+                return_value=[{"name": "material.pdf"}],
+            ),
+            patch.object(
+                backend_main.runner, "try_run_step", return_value="started"
+            ) as run,
+        ):
+            response = client.post("/courses/C/lectures/L/run/summarize")
+        assert response.status_code == 200
+        assert response.json() == {"status": "started"}
+        run.assert_called_once_with("C", "L", "lecture", "summarize")
+
+    def test_summarize_with_audio_but_no_transcript_is_a_409(self):
+        with (
+            patch.object(
+                backend_main.runner.db_client,
+                "file_exists",
+                side_effect=lambda c, l, k, name: name == "audio.mp3",
+            ),
+            patch.object(
+                backend_main.runner.db_client,
+                "list_materials",
+                return_value=[{"name": "material.pdf"}],
+            ),
+            patch.object(backend_main.runner, "try_run_step") as run,
+        ):
+            response = client.post("/courses/C/lectures/L/run/summarize")
+        assert response.status_code == 409
+        assert response.json()["code"] == "missing_prerequisite"
+        assert response.json()["params"] == {
+            "file": "transcript.txt",
+            "step": "transcribe",
+        }
+        run.assert_not_called()
+
+    def test_summarize_with_a_video_but_no_transcript_is_a_409(self):
+        with (
+            patch.object(
+                backend_main.runner.db_client,
+                "file_exists",
+                side_effect=lambda c, l, k, name: name == "video.mp4",
+            ),
+            patch.object(
+                backend_main.runner.db_client,
+                "list_materials",
+                return_value=[{"name": "material.pdf"}],
+            ),
+            patch.object(backend_main.runner, "try_run_step") as run,
+        ):
+            response = client.post("/courses/C/lectures/L/run/summarize")
+        assert response.status_code == 409
+        assert response.json() == {
+            "error": "transcript.txt is required — run Transcribe first",
+            "code": "missing_prerequisite",
+            "params": {"file": "transcript.txt", "step": "transcribe"},
+        }
+        run.assert_not_called()
+
     def test_an_unreachable_database_is_a_readable_500(self):
         """With database/ down the prerequisite check raises out of the route; the body still
         parses, which is the whole point of the app-level backstop."""
