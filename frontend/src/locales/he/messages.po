@@ -486,7 +486,7 @@ msgstr "הרצה אוטומטית: כבויה"
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל השלבים"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:104
+#: src/features/lectures/components/StudyWithAiCard.tsx:105
 msgid "Available once the summary is generated."
 msgstr "זמין אחרי יצירת הסיכום."
 
@@ -628,9 +628,9 @@ msgstr "לחץ על \"Create API Key\"."
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "לחץ על \"טעינת פריט Unpacked\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:102
+#: src/features/lectures/components/StudyWithAiCard.tsx:103
 msgid "Click \"Open chat\" to study this lecture with {provider}."
-msgstr "לחץ על \"פתיחת צ'אט\" בשביל ללמוד את ההרצאה הזו עם {provider}."
+msgstr "לחץ על \"פתיחת צ'אט\" בשביל ללמוד עם {provider}."
 
 #: src/features/settings/components/ApiKeyField.tsx:67
 msgid "Click <0>Get a key</0> and sign in with Google or your email."
@@ -889,8 +889,8 @@ msgid "Decline"
 msgstr "סירוב"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:399
-#: src/features/lectures/MainView.tsx:402
+#: src/features/lectures/MainView.tsx:417
+#: src/features/lectures/MainView.tsx:420
 msgid "Delete {0}"
 msgstr "מחיקת {0}"
 
@@ -1304,7 +1304,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:418
+#: src/features/lectures/MainView.tsx:382
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -1396,7 +1396,7 @@ msgid "Material"
 msgstr "חומר"
 
 #: src/features/downloads/DownloadsView.tsx:66
-#: src/features/lectures/MainView.tsx:383
+#: src/features/lectures/MainView.tsx:401
 msgid "Materials"
 msgstr "חומרים"
 
@@ -1608,7 +1608,7 @@ msgstr "פתיחה ב-Drive"
 msgid "Open lecture"
 msgstr "פתיחת ההרצאה"
 
-#: src/features/lectures/MainView.tsx:390
+#: src/features/lectures/MainView.tsx:408
 msgid "Open material"
 msgstr "פתיחת החומר"
 
@@ -1682,9 +1682,9 @@ msgstr "הדבקת כתובת במקום"
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "הדבק את כתובת עמוד הקורס (…/course/view.php?id=…)"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:150
+#: src/features/lectures/components/StudyWithAiCard.tsx:151
 msgid "Paste the lecture content with Ctrl+V, we already copied it for you."
-msgstr "הדבק את תוכן ההרצאה עם Ctrl+V, העתקנו כבר מה שצריך בשבילך."
+msgstr "הדבק את תוכן ההרצאה עם Ctrl+V בחלון שייפתח, העתקנו כבר מה שצריך בשבילך."
 
 #: src/features/lectures/constants/pipeline.ts:45
 msgid "PDF"
@@ -2008,7 +2008,7 @@ msgstr "אחסון"
 msgid "Student QA"
 msgstr "שאלות סטודנטים"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:98
+#: src/features/lectures/components/StudyWithAiCard.tsx:99
 msgid "Study with AI"
 msgstr "ללמוד עם AI"
 
