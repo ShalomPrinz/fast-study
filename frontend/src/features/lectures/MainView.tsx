@@ -28,6 +28,7 @@ import { canRunRemaining, filesComplete } from '@/features/lectures/utils/lectur
 import { lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
+import StudyWithAiCard from '@/features/lectures/components/StudyWithAiCard'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode from '@/shared/components/StatusNode'
@@ -421,6 +422,13 @@ export default function MainView() {
               </span>
             </div>
           )}
+
+          <StudyWithAiCard
+            course={course}
+            lecture={lecture}
+            kind={kind}
+            summaryExists={summaryExists}
+          />
         </div>
       </div>
 

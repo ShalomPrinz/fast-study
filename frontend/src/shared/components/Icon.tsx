@@ -25,6 +25,8 @@ export type IconName =
   | 'check'
   | 'folder'
   | 'home'
+  | 'sparkle'
+  | 'info'
 
 const ExternalLinkIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -370,6 +372,28 @@ const HomeIcon = () => (
   </svg>
 )
 
+// A four-pointed star with a small companion — the "Study with AI" card's mark.
+const SparkleIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M7 2.5l1.2 3.3 3.3 1.2-3.3 1.2L7 11.5 5.8 8.2 2.5 7l3.3-1.2z"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinejoin="round"
+    />
+    <path d="M12 10.5v3M10.5 12h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+)
+
+// A circled "i" — prefixes a short hint line.
+const InfoIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="6" cy="6" r="4.9" stroke="currentColor" strokeWidth="1.2" />
+    <path d="M6 5.4v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <circle cx="6" cy="3.6" r="0.7" fill="currentColor" />
+  </svg>
+)
+
 const icons: Record<IconName, () => JSX.Element> = {
   'external-link': ExternalLinkIcon,
   edit: EditIcon,
@@ -397,6 +421,8 @@ const icons: Record<IconName, () => JSX.Element> = {
   check: CheckIcon,
   folder: FolderIcon,
   home: HomeIcon,
+  sparkle: SparkleIcon,
+  info: InfoIcon,
 }
 
 export default function Icon({ icon }: { icon: IconName }) {

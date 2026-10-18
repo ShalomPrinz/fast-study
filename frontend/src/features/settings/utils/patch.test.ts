@@ -15,6 +15,7 @@ const STORED: Settings = {
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: null,
   privacyConfirmed: false,
+  aiProvider: null,
 }
 
 const UNCHANGED: SettingsForm = {
@@ -30,6 +31,7 @@ const UNCHANGED: SettingsForm = {
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: false,
   privacyConfirmed: false,
+  aiProvider: 'claude',
 }
 
 describe('buildPatch', () => {
@@ -111,6 +113,13 @@ describe('buildPatch', () => {
     expect(buildPatch(UNCHANGED, { ...STORED, errorReports: true })).toEqual({
       errorReports: false,
     })
+  })
+
+  it('stores a changed AI chat, and reads nothing stored as Claude', () => {
+    expect(buildPatch({ ...UNCHANGED, aiProvider: 'gemini' }, STORED)).toEqual({
+      aiProvider: 'gemini',
+    })
+    expect(buildPatch(UNCHANGED, { ...STORED, aiProvider: 'copilot' })).toEqual({})
   })
 
   it('stores a newly answered privacy policy, and never unsets an answered one', () => {

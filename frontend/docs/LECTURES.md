@@ -54,6 +54,27 @@ used`; after, each material's mtime against the summary's picks all used (green)
 the model", not a record** — re-downloading an unchanged PDF reads as unused. Exactness would need the
 backend to persist each run's inputs.
 
+## Study with AI
+
+`components/StudyWithAiCard` closes the lecture page. Its main half reads `summary.md`
+(`fetchSummaryContent`), copies it under a fixed study prompt in the UI language, then opens the chosen
+chat's fresh-chat page through `openExternalUrl`; nothing is prefilled or sent, the user pastes. A failed
+read toasts its failure and a refused clipboard its own error, and neither opens the chat. The clipboard
+text (`utils/aiChat.ts`'s `clipboardText`, with `"` in either name turned to `'`):
+
+```
+{prompt}
+
+<lecture course="{course}" title="{lecture}">
+{summary}
+</lecture>
+```
+
+`data-state` is `ready` with a summary, else `no-summary`: muted, the main half disabled and the paste hint
+hidden, while the provider half still opens its menu. A pick there saves `aiProvider` through
+`saveSettings` and pushes the answer into `SettingsContext`, so `/settings` shows the same chat
+([SETTINGS.md](SETTINGS.md)).
+
 ## Runner status and in-flight state
 
 `RunnerStatusContext` holds `GET /status`, refreshed by `SnapshotProvider` (in `Layout`) on mount and

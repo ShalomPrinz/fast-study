@@ -15,6 +15,7 @@ import { toastFailure } from '@/shared/utils/failure'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
+import { AI_PROVIDER_IDS, AI_PROVIDERS, type AiProvider } from '@/features/lectures/utils/aiChat'
 import { useNotify } from '@/shared/hooks/useNotify'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
@@ -372,6 +373,28 @@ export default function SettingsView() {
                   The daily run also follows the setting above: if it's set to do nothing, the daily
                   run does nothing either.
                 </Trans>
+              </span>
+            </div>
+            <div className="settings-field">
+              <div className="settings-label">
+                <label htmlFor="ai-provider">
+                  <Trans>AI chat provider</Trans>
+                </label>
+              </div>
+              <select
+                id="ai-provider"
+                className="settings-select"
+                value={form.aiProvider}
+                onChange={(e) => setForm({ ...form, aiProvider: e.target.value as AiProvider })}
+              >
+                {AI_PROVIDER_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {AI_PROVIDERS[id].name}
+                  </option>
+                ))}
+              </select>
+              <span className="settings-hint">
+                <Trans>Where "Study with AI" opens a lecture's summary.</Trans>
               </span>
             </div>
           </section>

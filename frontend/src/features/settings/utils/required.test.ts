@@ -27,6 +27,7 @@ const SETTINGS: Settings = {
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: null,
   privacyConfirmed: false,
+  aiProvider: null,
 }
 
 describe('missingEntries', () => {

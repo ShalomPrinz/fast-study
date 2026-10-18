@@ -6,6 +6,7 @@ import {
   type Settings,
   type SettingsPatch,
 } from '@/services/settings'
+import { toAiProvider, type AiProvider } from '@/features/lectures/utils/aiChat'
 
 export interface SettingsForm {
   geminiApiKey: string
@@ -23,6 +24,7 @@ export interface SettingsForm {
   errorReports: boolean
   // Set by answering the privacy policy, either way; never unset again.
   privacyConfirmed: boolean
+  aiProvider: AiProvider
 }
 
 // The model the form shows: a stored one the options no longer list reads as the first, so Save sends
@@ -52,6 +54,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     // Unset means off, as the launcher reads it; only the init wall starts its box checked.
     errorReports: stored.errorReports === true,
     privacyConfirmed: stored.privacyConfirmed,
+    aiProvider: toAiProvider(stored.aiProvider),
   }
 }
 
@@ -89,6 +92,7 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   // Unset means off, as the launcher reads it, so leaving it off stores nothing.
   if (form.errorReports !== (stored.errorReports === true)) patch.errorReports = form.errorReports
   if (form.privacyConfirmed && !stored.privacyConfirmed) patch.privacyConfirmed = true
+  if (form.aiProvider !== toAiProvider(stored.aiProvider)) patch.aiProvider = form.aiProvider
   return patch
 }
 

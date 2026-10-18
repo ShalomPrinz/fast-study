@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { toAutoRun, type AutoRun, type Settings } from '@/services/settings'
+import { toAiProvider, type AiProvider } from '@/features/lectures/utils/aiChat'
 
 interface SettingsValue {
   settings: Settings | null
@@ -31,6 +32,11 @@ export function useSettingsContext(): SettingsValue {
  *  `settings.drive_enabled()` gives a missing DRIVE_ENABLED, so both ends agree on a fresh install. */
 export function useDriveEnabled(): boolean {
   return useSettingsContext().settings?.driveEnabled ?? false
+}
+
+/** The chat "Study with AI" opens. Unset or unrecognised means Claude. */
+export function useAiProvider(): AiProvider {
+  return toAiProvider(useSettingsContext().settings?.aiProvider)
 }
 
 /** How much of the pipeline an automatic trigger may run. Unset or unrecognised means `full`, the

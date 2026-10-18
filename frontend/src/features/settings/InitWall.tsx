@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { toAiProvider } from '@/features/lectures/utils/aiChat'
 import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusContext'
 import { failureNode } from '@/shared/utils/failure'
 import { canSetErrorReports, canStoreApiKeys, runtimeBridge } from '@/services/runtime'
@@ -94,6 +95,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     // Starts checked for a first answer, though unset means off until the wall's save stores it.
     errorReports: stored.errorReports ?? true,
     privacyConfirmed: stored.privacyConfirmed,
+    aiProvider: toAiProvider(stored.aiProvider),
   })
   const [dataRootUnusable, setDataRootUnusable] = useState(false)
   const [saving, setSaving] = useState(false)
