@@ -2,6 +2,7 @@ import { createClient, isMoodleBusyError } from './http'
 import { AUTO_DOWNLOADER_URL, BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
 import { applyErrorReports } from './sentry'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
+import type { AiProvider } from '@/features/lectures/utils/aiChat'
 
 // The settings concern, spanning three services by design: a setting's owner is a property of the
 // setting, not of the screen editing it — see docs/SETTINGS.md.
@@ -45,6 +46,8 @@ export interface Settings {
   errorReports: boolean | null
   // Whether the user answered the privacy policy, either way.
   privacyConfirmed: boolean
+  // Launcher-only too: the "Study with AI" chat. The launcher reads an unknown value as null.
+  aiProvider: string | null
 }
 
 // A write's answer: the read view, plus whether some service missed the error-reports switch and
@@ -69,6 +72,7 @@ export interface SettingsPatch {
   moodleSite?: string
   errorReports?: boolean
   privacyConfirmed?: boolean
+  aiProvider?: AiProvider
 }
 
 export type SettingsField = keyof SettingsPatch
@@ -86,11 +90,13 @@ const WIRE: Record<SettingsField, string> = {
   moodleSite: 'moodle_site',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
+  aiProvider: 'ai_provider',
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
 // never another. Every field the store holds is named in one of them, bar the launcher-only
-// `errorReports` and `privacyConfirmed`: the launcher itself pushes the switch to every service.
+// `errorReports`, `privacyConfirmed` and `aiProvider`: the launcher itself pushes the switch to every
+// service, and only the renderer reads the other two.
 const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
@@ -132,6 +138,7 @@ function normalize(raw: RawSettings): Settings {
     // The browser-dev store has no such setting; the switch is Electron-only.
     errorReports: null,
     privacyConfirmed: false,
+    aiProvider: null,
   }
 }
 
@@ -174,7 +181,8 @@ export interface SettingsBacking {
 
 const browserBacking: SettingsBacking = {
   read: async () => normalize(await database.get<RawSettings>('/settings')),
-  write: async (patch) =>
+  // The `.env` store has no AI chat field and refuses an unknown one, so the pick stays unsaved here.
+  write: async ({ aiProvider: _aiProvider, ...patch }) =>
     normalize(await database.put<RawSettings>('/settings', { json: storeBody(patch) })),
 }
 

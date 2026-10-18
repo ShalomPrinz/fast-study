@@ -18,6 +18,8 @@ const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED' };
 // Booleans no service gets as a settings env var: `error_reports` main turns into each process's
 // Sentry flag itself; `privacy_confirmed` is the renderer's record that the privacy notice was answered.
 const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed'];
+// The renderer's chosen AI chat, launcher-only like `privacy_confirmed`; unset or unknown reads null.
+const AI_PROVIDERS = ['claude', 'chatgpt', 'gemini'];
 // Write-only: these are held as safeStorage ciphertext and reported to the renderer as set/unset.
 const SECRET_FIELDS = { gemini_api_key: 'GEMINI_API_KEY', groq_api_key: 'GROQ_API_KEY' };
 
@@ -32,6 +34,7 @@ const FIELDS = {
   driveEnabled: 'drive_enabled',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
+  aiProvider: 'ai_provider',
   geminiApiKey: 'gemini_api_key',
   groqApiKey: 'groq_api_key',
 };
@@ -98,6 +101,7 @@ function read() {
     errorReports: bool(stored.error_reports),
     // Unset reads false: nothing was confirmed until the renderer says so.
     privacyConfirmed: stored.privacy_confirmed === true,
+    aiProvider: AI_PROVIDERS.includes(stored.ai_provider) ? stored.ai_provider : null,
   };
 }
 
@@ -123,6 +127,12 @@ function write(patch) {
           throw new Error(`${key} must be one of ${AUTO_RUN_MODES.join(', ')}`);
         }
         updates[field] = mode;
+      } else if (field === 'ai_provider') {
+        const provider = value.trim().toLowerCase();
+        if (!AI_PROVIDERS.includes(provider)) {
+          throw new Error(`${key} must be one of ${AI_PROVIDERS.join(', ')}`);
+        }
+        updates[field] = provider;
       } else {
         updates[field] = field in SECRET_FIELDS ? encrypt(value) : value.trim();
       }

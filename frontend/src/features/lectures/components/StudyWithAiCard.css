@@ -1,0 +1,157 @@
+.study-ai-block {
+  max-inline-size: 560px;
+  margin-block-start: var(--space-6);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.study-ai {
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-lg);
+  background: var(--accent-soft);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.study-ai[data-state='no-summary'] {
+  border-color: var(--line);
+  background: var(--surface-sunken);
+}
+
+.study-ai-tile {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.study-ai[data-state='no-summary'] .study-ai-tile {
+  color: var(--text-4);
+}
+
+.study-ai-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.study-ai-title {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.study-ai-subtitle {
+  margin-block-start: var(--space-1);
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+}
+
+.study-ai[data-state='no-summary'] .study-ai-subtitle {
+  color: var(--text-3);
+}
+
+.study-ai-split {
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+/* Both halves drop `.btn`'s own border and radius: the split's outline frames them as one control. */
+.btn.study-ai-open {
+  border: none;
+  border-radius: 0;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.btn.study-ai-open:disabled {
+  color: var(--text-4);
+}
+
+.btn.study-ai-provider {
+  padding-inline: var(--space-3);
+  border: none;
+  border-inline-start: 1px solid var(--accent-line);
+  border-radius: 0;
+  color: var(--text-2);
+  gap: var(--space-1);
+}
+
+.btn.study-ai-open:hover:not(:disabled),
+.btn.study-ai-provider:hover {
+  background: var(--accent-soft);
+}
+
+.study-ai-menu {
+  position: absolute;
+  z-index: 10;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline-end: 0;
+  min-width: 160px;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.study-ai-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-meta);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.study-ai-menu-item:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.study-ai-menu-check {
+  display: inline-flex;
+  width: 12px;
+  color: var(--accent-ink);
+}
+
+/* Hugs its text, centred under the card. */
+.study-ai-info {
+  align-self: center;
+  max-inline-size: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--text);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--fs-fine);
+  color: var(--text-2);
+}
+
+.study-ai-info svg {
+  flex-shrink: 0;
+  margin-block-start: calc(var(--space-1) / 2);
+  color: var(--accent-ink);
+}

@@ -69,6 +69,7 @@ const STORE: Settings = {
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: null,
   privacyConfirmed: false,
+  aiProvider: null,
 }
 
 describe('toNightlyHour', () => {

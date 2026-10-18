@@ -17,6 +17,7 @@ const full = {
   driveEnabled: true,
   errorReports: false,
   privacyConfirmed: true,
+  aiProvider: 'gemini',
   geminiApiKey: 'gemini-secret',
   groqApiKey: 'groq-secret',
 };
@@ -89,6 +90,7 @@ test('echoing a read back blanks nothing', () => {
     moodleSite: written.moodleSite,
     errorReports: written.errorReports,
     privacyConfirmed: written.privacyConfirmed,
+    aiProvider: written.aiProvider,
   };
 
   assert.deepEqual(store.write(echo), written);
@@ -122,6 +124,7 @@ test('an unset store reads as all-null, bar privacyConfirmed, which reads false'
     moodleSite: null,
     errorReports: null,
     privacyConfirmed: false,
+    aiProvider: null,
   });
 });
 
@@ -142,6 +145,23 @@ test('privacyConfirmed round-trips as a boolean and never reaches a child env', 
     /privacyConfirmed must be a boolean/,
   );
   assert.equal(store.read().privacyConfirmed, false);
+});
+
+test('aiProvider round-trips one of three providers and never reaches a child env', () => {
+  assert.equal(store.write({ aiProvider: ' ChatGPT ' }).aiProvider, 'chatgpt');
+  assert.equal(store.read().aiProvider, 'chatgpt');
+  assert.deepEqual(store.serviceEnv(), {});
+  assert.throws(
+    () => store.write({ aiProvider: 'copilot' }),
+    /aiProvider must be one of claude, chatgpt, gemini/,
+  );
+  assert.throws(() => store.write({ aiProvider: true }), /aiProvider must be a string/);
+  assert.equal(store.read().aiProvider, 'chatgpt');
+});
+
+test('an unknown aiProvider in the file reads as unset', () => {
+  fs.writeFileSync(store.file(), JSON.stringify({ ai_provider: 'copilot' }));
+  assert.equal(store.read().aiProvider, null);
 });
 
 test('the string "false" cannot store errorReports', () => {

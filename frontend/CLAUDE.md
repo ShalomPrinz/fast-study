@@ -25,7 +25,7 @@ back to those overrides, then the dev ports — see
 | ------------------------------------------ | --------------------------------------------------------------------------------- |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md)    | layering, SSE refresh, routes, error boundary, mode toggles, styling, test ids    |
 | [SERVICES.md](docs/SERVICES.md)            | the boundary rule, http client and errors, each service, the bridge, URL encoding |
-| [LECTURES.md](docs/LECTURES.md)            | pipeline constants, lecture view, materials, runner state, sidebar, tree pane     |
+| [LECTURES.md](docs/LECTURES.md)            | pipeline constants, lecture view, materials, Study with AI, runner state, sidebar, tree pane |
 | [EDITOR.md](docs/EDITOR.md)                | the summary editor: save cycle, `PdfViewer`, `MarkdownEditor`                     |
 | [OVERVIEW.md](docs/OVERVIEW.md)            | course overview: extractors, generate/continue/re-generate, per-slug gating       |
 | [DOWNLOADS.md](docs/DOWNLOADS.md)          | downloads page: tabs, auth, the Moodle lock, session, discovery, row edits, already-downloaded rule |

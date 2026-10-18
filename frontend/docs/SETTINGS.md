@@ -19,6 +19,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Daily run         | on                                        | off                   | `backend/`        |
 | Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`        |
 | Error reports     | off until answered; the wall starts it on | on                    | `electron/`, live    |
+| AI chat provider  | Claude                                    | ChatGPT, Gemini       | `electron/`, renderer-only |
 
 The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
@@ -42,6 +43,11 @@ set the launcher-only `privacyConfirmed`, shown as the box's mark. Esc or a clic
 On `/settings` an answer is a form edit that Save stores. The wall stores `errorReports` explicitly
 on every save, and while the policy is unanswered its Start opens the modal instead, whose answer saves
 and starts in one go (`wallMustAskPrivacy`); closing it saves nothing.
+
+**The AI chat provider** is the chat "Study with AI" opens ([LECTURES.md](LECTURES.md)), read through
+`useAiProvider`, where unset or unknown is Claude. Like `privacyConfirmed` it is launcher-only and no service
+reads it; browser dev's `.env` store has no such field, so there it always reads Claude and a pick is dropped
+before the write.
 
 ## What is not a setting
 
