@@ -14,6 +14,7 @@ import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
 import CourseSourceRow from '@/features/downloads/components/CourseSourceRow'
 import AddCourseRow from '@/features/downloads/components/AddCourseRow'
 import ManualDownload from '@/features/downloads/components/ManualDownload'
+import FolderJobList from '@/features/downloads/components/FolderJobList'
 import SectionGroup from '@/features/downloads/components/SectionGroup'
 import PausedRunsBanner from '@/features/downloads/components/PausedRunsBanner'
 import DownloadsTabs from '@/features/downloads/components/DownloadsTabs'
@@ -118,7 +119,12 @@ export default function DownloadsView() {
                 <div className="spinner" />
               </div>
             )}
-            {tab === 'extension' && <ExtensionGuide />}
+            {tab === 'extension' && (
+              <>
+                <FolderJobList />
+                <ExtensionGuide />
+              </>
+            )}
             {tab === 'manual' && <ManualDownload />}
             {tab === 'university' && (
               <>

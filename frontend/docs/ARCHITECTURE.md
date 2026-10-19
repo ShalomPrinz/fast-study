@@ -78,7 +78,8 @@ course named `course`.
 
 The sidebar's five rows are all routes and exactly one is active per page: the four static routes claim
 their own, Lectures claims the rest. Leaving `/downloads` unmounts its view, so `Layout` also mounts the
-downloads providers, and discovery, edits, jobs and runs outlive the route ([DOWNLOADS.md](DOWNLOADS.md)).
+downloads providers, and discovery, edits, jobs and runs outlive the route ([DOWNLOADS.md](DOWNLOADS.md)),
+plus the extension's folder-picker listener ([EXTENSION.md](EXTENSION.md)).
 
 Every name param is read through `routeParam`: React Router turns a literal `%2F` inside a decoded segment
 into `/`, and a name never holds `/` (the database strips it), so mapping `/` back is exact.

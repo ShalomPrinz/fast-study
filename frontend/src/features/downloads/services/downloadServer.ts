@@ -77,9 +77,35 @@ export interface DownloadJob {
   params?: ErrorParams | null
 }
 
+// A general-mode download (`dest:'folder'`) into the user's chosen computer folder: no course, no
+// lecture. `fileName` is the requested name until `done`, then the name actually saved.
+export interface FolderJob {
+  id: string
+  status: DownloadJob['status']
+  folder: string
+  fileName: string
+  tool: DownloadTool
+  operation: DownloadOperation | null
+  expectedBytes: number | null
+  startedAt: number | null
+  message: string | null
+  code?: string | null
+  params?: ErrorParams | null
+}
+
+// Split at this boundary so a folder job, whose course/lecture/kind are null, never reaches a
+// lecture row, a manual card or the course-rename lock.
 export interface JobsSnapshot {
   boot: string | null
   jobs: DownloadJob[]
+  folderJobs: FolderJob[]
+}
+
+// `/jobs` as sent; `dest` is absent from a server that predates general mode, which is all app jobs.
+export type WireJob = DownloadJob & {
+  dest?: 'app' | 'folder'
+  folder?: string | null
+  fileName?: string | null
 }
 
 // yt-dlp and curl as the server's boot probe found them; answers once that probe settles.
@@ -93,8 +119,68 @@ export async function fetchDownloadServerTools(): Promise<ToolReport> {
 export async function fetchJobs(): Promise<JobsSnapshot> {
   const res = await fetch(downloadServer.url('/jobs'), { headers: secretHeaders() })
   if (!res.ok) throw httpError(res)
-  const data = (await res.json()) as { boot?: string; jobs?: DownloadJob[] }
-  return { boot: data.boot ?? null, jobs: data.jobs ?? [] }
+  const data = (await res.json()) as { boot?: string; jobs?: WireJob[] }
+  return { boot: data.boot ?? null, ...splitJobs(data.jobs ?? []) }
+}
+
+// App jobs and folder jobs apart, each in the server's order.
+export function splitJobs(wire: WireJob[]): Omit<JobsSnapshot, 'boot'> {
+  const jobs: DownloadJob[] = []
+  const folderJobs: FolderJob[] = []
+  for (const { dest, folder, fileName, ...job } of wire) {
+    if (dest !== 'folder') jobs.push(job)
+    else folderJobs.push(folderJob(job, folder ?? '', fileName ?? ''))
+  }
+  return { jobs, folderJobs }
+}
+
+function folderJob(j: DownloadJob, folder: string, fileName: string): FolderJob {
+  const { id, status, tool, operation, expectedBytes, startedAt, message, code, params } = j
+  return {
+    id,
+    status,
+    folder,
+    fileName,
+    tool,
+    operation,
+    expectedBytes,
+    startedAt,
+    message,
+    code,
+    params,
+  }
+}
+
+// Stops a queued or running job; it ends `cancelled` via the usual ping. A no-op on a terminal job;
+// 404 `job_unknown` when it already left `/jobs`.
+export async function cancelJob(id: string): Promise<void> {
+  await downloadServer.post<void>(`/jobs/${encodeURIComponent(id)}/cancel`)
+}
+
+// Saves the folder general-mode downloads land in; a 400 is `general_folder_missing`,
+// `general_folder_not_writable` or `invalid_request` (field `folder`).
+export async function setGeneralFolder(folder: string): Promise<void> {
+  await downloadServer.post<{ folder: string }>('/general-folder', { json: { folder } })
+}
+
+// The popup asking this window to open the native picker at the current `folder`. A `?picker=1`
+// stream of its own: with none open the server answers the popup 409, so open it only with a picker.
+export function subscribeFolderPick(onPick: (folder: string | undefined) => void): () => void {
+  const es = new EventSource(withSecretParam(downloadServer.url('/events?picker=1')))
+  const listener = (e: MessageEvent<string>) => {
+    let folder: unknown
+    try {
+      folder = (JSON.parse(e.data) as { folder?: unknown }).folder
+    } catch {
+      folder = undefined
+    }
+    onPick(typeof folder === 'string' && folder ? folder : undefined)
+  }
+  es.addEventListener('folder:pick', listener)
+  return () => {
+    es.removeEventListener('folder:pick', listener)
+    es.close()
+  }
 }
 
 // A contentless ping per job transition; `open` also calls back, for the initial sync and a resync

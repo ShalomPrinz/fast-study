@@ -13,7 +13,7 @@ Three tabs, University, Extension and Manual (`DownloadsTabs`, the light segment
 by tab, so each opens at its top. The header meta is per tab: University the account chip and the count
 of courses with a source, Extension the setup time, Manual a one-line description, and "Loading your data…"
 while no tab is chosen; all share one grid cell with the rest hidden (plus a hidden button-height
-placeholder for the chip still loading), so the header's height and the tab row never move. Extension is the guide
+placeholder for the chip still loading), so the header's height and the tab row never move. Extension is the folder downloads and the guide
 ([EXTENSION.md](EXTENSION.md)), Manual is `ManualDownload` (below).
 
 `useDownloadsTab` picks the tab through the pure `defaultTab`: a valid stored choice

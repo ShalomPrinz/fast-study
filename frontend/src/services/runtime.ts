@@ -105,5 +105,5 @@ export function secretHeaders(): Record<string, string> {
 /** Native `EventSource` cannot set a header, so the SSE routes — and only they — take the
  *  secret as a query parameter, which also survives EventSource's own reconnects. */
 export function withSecretParam(url: string): string {
-  return SECRET ? `${url}?secret=${encodeURIComponent(SECRET)}` : url
+  return SECRET ? `${url}${url.includes('?') ? '&' : '?'}secret=${encodeURIComponent(SECRET)}` : url
 }

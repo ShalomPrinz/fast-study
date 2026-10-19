@@ -1,0 +1,7 @@
+/* The folder jobs sit above the extension guide, parted from its first step. */
+.folder-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-block-end: var(--space-6);
+}

@@ -172,6 +172,19 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   recapture_failed: msg({
     message: "Couldn't work out where to download this from. Try again.",
   }),
+  job_unknown: msg({ message: 'That download has already finished.' }),
+  folder_picker_unavailable: msg({
+    message: 'Open the FastStudy app to choose a folder.',
+  }),
+  general_folder_missing: msg({
+    message: 'The download folder {folder} no longer exists. Choose another folder.',
+  }),
+  general_folder_not_writable: msg({
+    message: "FastStudy can't save into {folder}. Choose another folder.",
+  }),
+  general_folder_save_failed: msg({
+    message: "The video downloaded, but it couldn't be saved into {folder}.",
+  }),
 
   // lib/tools — the boot probe each service reports on `GET /tools`; no exit code: it means nothing to the user.
   tool_missing: msg({

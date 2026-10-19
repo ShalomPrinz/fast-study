@@ -24,5 +24,8 @@ describe('runtime secret', () => {
     const runtime = await importWithSecret('a b/c')
     expect(runtime.secretHeaders()).toEqual({ 'X-FastStudy-Secret': 'a b/c' })
     expect(runtime.withSecretParam('http://x/events')).toBe('http://x/events?secret=a%20b%2Fc')
+    expect(runtime.withSecretParam('http://x/events?picker=1')).toBe(
+      'http://x/events?picker=1&secret=a%20b%2Fc',
+    )
   })
 })

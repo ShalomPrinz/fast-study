@@ -82,8 +82,20 @@ first refetch, or done once its video is in the tree — a `done` job is evicted
 `download_auth_failed` reads "this link needs a login" instead of "reconnect the account"
 (`manualFailureHeadline`, through `ServiceError`'s `headline`), in the card and the toast alike.
 
+## Folder jobs
+
+A general-mode job (`dest: 'folder'`, the popup's "General video") lands in a computer folder, not a
+course, so its `course`/`lecture`/`kind` are null. `fetchJobs` splits it out (`splitJobs`) into
+`folderJobs`, so no folder job reaches a row bucket, a manual card or the course lock; `dest` absent is an
+app job. `reconcileVanishedFolder` runs the same restart rule keyed by folder + `fileName` (still the
+requested name on any live job, the only kind that can vanish), and
+`useFolderJobs()` hands the Extension tab's `FolderJobList` the list in server order: name, folder, a bar
+while running, the outcome after. A done one leaves with the server's bridge. A queued or running row offers Cancel
+(`POST /jobs/:id/cancel`); the row ends `cancelled` through the usual ping, and a `job_unknown` 404 (the job
+already left `/jobs`, its own ping on the way) does not toast (`cancelFailure`).
+
 ## Failure toasts
 
 The provider, not the row, toasts a job failure (`toastJobError`), so single and bulk rows share one
-place. Each error id toasts once; a `primed` flag seeds the first snapshot's errors as history. Because
+place, labelled by the lecture or a folder job's `fileName` (`failedJobLabel`). Each error id toasts once; a `primed` flag seeds the first snapshot's errors as history. Because
 the provider is app-wide, a job that fails while the user is elsewhere toasts there and then.

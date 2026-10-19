@@ -11,6 +11,7 @@ import { toastCaptchaSolved } from '@/features/downloads/utils/zoomCaptcha'
 import Sidebar from '@/shared/sidebar'
 import DriveConsentPrompt from './DriveConsentPrompt'
 import { warnBrokenTools } from './toolWarnings'
+import { useGeneralFolderPicker } from '@/features/downloads/hooks/useGeneralFolderPicker'
 import './Layout.css'
 
 export default function Layout() {
@@ -18,6 +19,7 @@ export default function Layout() {
   useEffect(() => {
     void warnBrokenTools()
   }, [])
+  useGeneralFolderPicker()
   return (
     <SnapshotProvider sendUpdate={toast}>
       <DownloadJobsProvider>

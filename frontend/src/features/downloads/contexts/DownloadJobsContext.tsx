@@ -8,7 +8,7 @@ import {
 } from 'react'
 import type { ReactNode } from 'react'
 import type { DownloadOperation, Kind } from '@/types'
-import type { DownloadJob, JobsSnapshot } from '../services/downloadServer'
+import type { DownloadJob, FolderJob, JobsSnapshot } from '../services/downloadServer'
 import { fetchJobs, subscribeJobs } from '../services/downloadServer'
 import { toastJobError } from '../utils/downloadErrors'
 import { isManualJob } from './ManualDownloadsContext'
@@ -33,7 +33,7 @@ export interface JobProgress extends JobState {
   ref: string
 }
 
-function isTerminal(job: DownloadJob): boolean {
+function isTerminal(job: { status: DownloadJob['status'] }): boolean {
   return job.status === 'done' || job.status === 'error' || job.status === 'cancelled'
 }
 
@@ -68,9 +68,18 @@ function targetKey(j: DownloadJob): string {
   return [j.course, j.lecture, j.kind, j.ref ?? ''].join('\0')
 }
 
-export interface VanishState {
-  active: ReadonlyMap<string, DownloadJob>
-  vanished: ReadonlyMap<string, DownloadJob>
+// A folder job's target: folder + `fileName`, which is still the requested name on any live job — the
+// only kind that can vanish — and becomes the saved name once `done`, when it no longer matters.
+function folderTargetKey(j: FolderJob): string {
+  return [j.folder, j.fileName].join('\0')
+}
+
+// What reconciling needs of a job, app or folder alike.
+type Tracked = Pick<DownloadJob, 'id' | 'status' | 'message' | 'code'>
+
+export interface VanishState<J extends Tracked = DownloadJob> {
+  active: ReadonlyMap<string, J>
+  vanished: ReadonlyMap<string, J>
   boot?: string | null
 }
 
@@ -83,13 +92,31 @@ export function reconcileVanished(
   snapshot: DownloadJob[],
   boot: string | null = null,
 ): VanishState & { jobs: DownloadJob[] } {
+  return reconcileTracked(prev, snapshot, boot, targetKey)
+}
+
+// The same reconciliation for folder jobs, keyed by their own target so the two never supersede each other.
+export function reconcileVanishedFolder(
+  prev: VanishState<FolderJob>,
+  snapshot: FolderJob[],
+  boot: string | null = null,
+): VanishState<FolderJob> & { jobs: FolderJob[] } {
+  return reconcileTracked(prev, snapshot, boot, folderTargetKey)
+}
+
+function reconcileTracked<J extends Tracked>(
+  prev: VanishState<J>,
+  snapshot: J[],
+  boot: string | null,
+  targetKey: (j: J) => string,
+): VanishState<J> & { jobs: J[] } {
   const evicted = boot !== null && prev.boot === boot
   const ids = new Set(snapshot.map((j) => j.id))
   const targets = new Set(snapshot.map(targetKey))
-  const vanished = new Map<string, DownloadJob>()
+  const vanished = new Map<string, J>()
   for (const j of prev.active.values())
     if (!ids.has(j.id) && !evicted)
-      vanished.set(j.id, { ...j, status: 'error', message: null, code: null })
+      vanished.set(j.id, { ...j, status: 'error', message: null, code: null } as J)
   for (const [id, j] of prev.vanished)
     if (!ids.has(id) && !targets.has(targetKey(j))) vanished.set(id, j)
   for (const [id, j] of vanished) if (targets.has(targetKey(j))) vanished.delete(id)
@@ -165,6 +192,7 @@ export function indexJobsById(snapshot: DownloadJob[]): JobsById {
 let jobsByRef: JobsByRef = new Map()
 let activeCourses: ReadonlySet<string> = new Set()
 let jobsById: JobsById = new Map()
+let folderJobs: readonly FolderJob[] = Object.freeze([])
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void): () => void {
@@ -172,10 +200,11 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener)
 }
 
-function publish(snapshot: DownloadJob[]) {
+function publish(snapshot: DownloadJob[], folders: readonly FolderJob[]) {
   jobsByRef = groupJobsByRef(snapshot)
   activeCourses = coursesWithActiveJobs(snapshot)
   jobsById = indexJobsById(snapshot)
+  folderJobs = folders
   for (const listener of listeners) listener()
 }
 
@@ -223,6 +252,17 @@ export function useJobById(id: string): DownloadJob | null {
   )
 }
 
+// The general-mode (folder) jobs, in the server's creation order, for the Extension tab.
+export function useFolderJobs(): readonly FolderJob[] {
+  useProviderGuard()
+  return useSyncExternalStore(subscribe, () => folderJobs)
+}
+
+// The label a failed job's toast names: the lecture, or a folder job's file name.
+export function failedJobLabel(job: DownloadJob | FolderJob): string {
+  return ('fileName' in job ? job.fileName : job.lecture) || 'recording'
+}
+
 // Reflects the downloader server's jobs: each contentless `job:change` ping refetches `GET /jobs`,
 // trusted as-is. See docs/JOBS.md.
 export function DownloadJobsProvider({ children }: { children: ReactNode }) {
@@ -231,14 +271,25 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
   const toastedIds = useRef<Set<string>>(new Set())
   const primed = useRef(false)
   const vanishState = useRef<VanishState>({ active: new Map(), vanished: new Map(), boot: null })
+  const folderVanish = useRef<VanishState<FolderJob>>({
+    active: new Map(),
+    vanished: new Map(),
+    boot: null,
+  })
 
   useEffect(() => {
     let cancelled = false
-    const handleSnapshot = ({ boot, jobs: raw }: JobsSnapshot) => {
+    const handleSnapshot = ({ boot, jobs: raw, folderJobs: rawFolders }: JobsSnapshot) => {
       if (cancelled) return
       const { jobs: snap, ...next } = reconcileVanished(vanishState.current, raw, boot)
       vanishState.current = next
-      for (const job of snap) {
+      const { jobs: folders, ...nextFolders } = reconcileVanishedFolder(
+        folderVanish.current,
+        rawFolders,
+        boot,
+      )
+      folderVanish.current = nextFolders
+      for (const job of [...snap, ...folders]) {
         if (job.status !== 'error') continue
         if (!primed.current) {
           toastedIds.current.add(job.id) // seed and suppress: history from before this session
@@ -246,12 +297,12 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
           const failure = job.message
             ? { message: job.message, code: job.code, params: job.params }
             : null
-          toastJobError(job.lecture || 'recording', failure, isManualJob(job.id))
+          toastJobError(failedJobLabel(job), failure, isManualJob(job.id))
           toastedIds.current.add(job.id)
         }
       }
       primed.current = true
-      publish(snap)
+      publish(snap, folders)
     }
     // Sequenced: an older reply landing after the final `done` ping would republish the job as
     // `running` with nothing left to correct it.
@@ -262,9 +313,10 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
       close()
-      publish([])
+      publish([], [])
       primed.current = false
       vanishState.current = { active: new Map(), vanished: new Map(), boot: null }
+      folderVanish.current = { active: new Map(), vanished: new Map(), boot: null }
       toastedIds.current.clear()
     }
   }, [])

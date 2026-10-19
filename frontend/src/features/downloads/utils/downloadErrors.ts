@@ -99,3 +99,11 @@ export function manualFailureHeadline(failure: ServiceFailure): string | undefin
 export function loginFailure(err: unknown): ServiceFailure | null {
   return isUnsupportedError(err) ? err : null
 }
+
+// A failed job cancel worth telling the user, or null: `job_unknown` means the job already left
+// `/jobs` and its own ping is on the way, and a ConnectionError was already toasted by the client.
+export function cancelFailure(err: unknown): ServiceFailure | null {
+  if (isConnectionError(err)) return null
+  const failure = failureOf(err)
+  return failure.code === 'job_unknown' ? null : failure
+}

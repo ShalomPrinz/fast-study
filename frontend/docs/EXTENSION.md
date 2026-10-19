@@ -19,3 +19,9 @@ The Downloads page's Extension tab (`features/extension/ExtensionGuide`, [DOWNLO
   darker than other modals, fit with a labelled Close pill below it (never upscaled, clear of the
   corner toasts); any click, Close or Esc closes it and returns focus to that screenshot. Close has its
   own msgid context, since the shared "Close" is "סגירה" and this one is "סגור".
+- **General video** — the tab lists folder downloads above the guide ([JOBS.md](JOBS.md) §Folder jobs).
+  The popup's "Choose folder…" arrives as `folder:pick {folder}` on a dedicated `/events?picker=1` stream;
+  `useGeneralFolderPicker`, mounted in `Layout` so any page answers, opens `pickFolder` at that folder and
+  `POST /general-folder`s the choice (cancel saves nothing, a request while the dialog is up is dropped,
+  a refusal toasts). With no `pickFolder` it opens no picker stream, so the server answers the popup
+  409 `folder_picker_unavailable`.

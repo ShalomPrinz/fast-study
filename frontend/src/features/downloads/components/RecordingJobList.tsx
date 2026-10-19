@@ -20,7 +20,8 @@ export function JobProgressBar({
   showTitle,
   retry,
 }: {
-  job: JobState
+  // Only what a bar shows, so a folder job — no course, no kind — renders one too.
+  job: Pick<JobState, 'title' | 'status' | 'startedAt' | 'expectedBytes' | 'operation'>
   showTitle: boolean
   // `locked` is why the button is disabled while the Moodle lock is busy, undefined when it is free.
   retry?: { onRetry: () => void; busy: boolean; locked?: string }

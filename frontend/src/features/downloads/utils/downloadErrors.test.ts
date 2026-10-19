@@ -8,6 +8,7 @@ import { ConnectionError, MoodleBusyError, RequestError } from '@/services/http'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import { failureOf } from '@/shared/utils/failure'
 import {
+  cancelFailure,
   blockedMessage,
   expandErrorText,
   manualFailureHeadline,
@@ -171,5 +172,18 @@ describe('a manual download refused by auto', () => {
     const text = serviceErrorText(failure)
     expect(text).toContain(expected)
     expect(text).not.toContain('english prose')
+  })
+})
+
+describe('cancelFailure', () => {
+  it('stays quiet when the job already left /jobs or the server was unreachable', () => {
+    expect(cancelFailure(new RequestError('unknown job', 'job_unknown', {}))).toBeNull()
+    expect(cancelFailure(new ConnectionError('downloader server', 'http://x'))).toBeNull()
+  })
+
+  it('reports any other refusal', () => {
+    expect(cancelFailure(new RequestError('boom', 'invalid_request', {}))).toMatchObject({
+      code: 'invalid_request',
+    })
   })
 })

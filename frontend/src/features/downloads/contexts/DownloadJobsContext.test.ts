@@ -1,13 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import type { DownloadJob } from '../services/downloadServer'
+import type { DownloadJob, FolderJob, WireJob } from '../services/downloadServer'
+import { splitJobs } from '../services/downloadServer'
 import {
   coursesWithActiveJobs,
+  failedJobLabel,
   groupJobsByRef,
   indexJobsById,
   jobState,
   jobsForRef,
   jobsForTarget,
   reconcileVanished,
+  reconcileVanishedFolder,
   rowStatus,
 } from './DownloadJobsContext'
 
@@ -241,5 +244,67 @@ describe('reconcileVanished', () => {
     const gone = reconcileVanished(first, [], 'b2')
     const retried = reconcileVanished(gone, [job({ id: 'b', status: 'queued' })], 'b2')
     expect(retried.jobs.map((j) => j.id)).toEqual(['b'])
+  })
+})
+
+function folderJob(over: Partial<FolderJob> & Pick<FolderJob, 'id'>): FolderJob {
+  return {
+    status: 'running',
+    folder: '/home/u/Downloads',
+    fileName: 'My talk',
+    tool: 'curl',
+    operation: 'download:curl',
+    expectedBytes: null,
+    startedAt: null,
+    message: null,
+    ...over,
+  }
+}
+
+describe('folder jobs', () => {
+  const empty = { active: new Map(), vanished: new Map() }
+
+  it('fails a folder job lost to a server restart, and keeps one merely evicted', () => {
+    const first = reconcileVanishedFolder(empty, [folderJob({ id: 'a' })], 'b1')
+    expect(reconcileVanishedFolder(first, [], 'b1').jobs).toEqual([])
+    expect(reconcileVanishedFolder(first, [], 'b2').jobs).toMatchObject([
+      { id: 'a', status: 'error', code: null },
+    ])
+  })
+
+  it('drops a lost folder job once the same name is downloaded into the same folder again', () => {
+    const first = reconcileVanishedFolder(empty, [folderJob({ id: 'a' })], 'b1')
+    const lost = reconcileVanishedFolder(first, [], 'b2')
+    const again = reconcileVanishedFolder(lost, [folderJob({ id: 'b', status: 'queued' })], 'b2')
+    expect(again.jobs.map((j) => j.id)).toEqual(['b'])
+  })
+
+  it('labels a failure by the file name for a folder job, the lecture for an app job', () => {
+    expect(failedJobLabel(folderJob({ id: 'a', fileName: 'Talk (2).mp4' }))).toBe('Talk (2).mp4')
+    expect(failedJobLabel(job({ id: 'b', lecture: 'lecture 3' }))).toBe('lecture 3')
+  })
+})
+
+describe('splitJobs', () => {
+  const wire = (over: Partial<WireJob> & Pick<WireJob, 'id'>): WireJob => ({
+    ...job(over),
+    ...over,
+  })
+
+  it('separates folder jobs, so none reaches a lecture row or the course lock', () => {
+    const { jobs, folderJobs } = splitJobs([
+      wire({ id: 'app', dest: 'app' }),
+      wire({ id: 'old' }),
+      {
+        ...wire({ id: 'f', dest: 'folder', folder: '/d', fileName: 'Talk', ref: null }),
+        course: null,
+        lecture: null,
+        kind: null,
+      } as unknown as WireJob,
+    ])
+    expect(jobs.map((j) => j.id)).toEqual(['app', 'old'])
+    expect(folderJobs).toMatchObject([{ id: 'f', folder: '/d', fileName: 'Talk' }])
+    expect(folderJobs[0]).not.toHaveProperty('course')
+    expect(coursesWithActiveJobs(jobs)).toEqual(new Set(['Algo']))
   })
 })
