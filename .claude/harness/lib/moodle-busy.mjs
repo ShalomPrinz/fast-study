@@ -26,7 +26,7 @@ export async function busyIs(want, timeoutMs = 15_000) {
 
 /** Park the site's Moodle answers and send auto/ one gated call, which then holds the lock. */
 export async function holdMoodle() {
-  // A cooldown also reads busy, and a call sent into it is refused without ever being parked.
+  // A lock still held reads busy, and a call sent into it is refused without ever being parked.
   await busyIs(false);
   await json(`${SITE}/control`, 'POST', { hold: true });
   // No wait header, so it takes the lock or is refused as a frontend call is. Never answered while
@@ -56,7 +56,7 @@ export async function holdMoodle() {
   }
 }
 
-/** Answer every parked call; the lock frees after auto/'s cooldown. */
+/** Answer every parked call, which frees auto/'s lock. */
 export async function releaseMoodle() {
   await json(`${SITE}/control`, 'POST', { hold: false });
   await busyIs(false);
