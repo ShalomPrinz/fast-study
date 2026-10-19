@@ -95,6 +95,21 @@ worker each invalidate that and would put two uploads on one name.
 A fresh `video.mp4` never touches materials: they are attached, not derived from the video, and a
 handout routinely arrives before its recording.
 
+A material may carry its download **source**: an opaque string the downloader passes as `?source=`
+on `POST /…/materials` (its discovery row's `ref`), never parsed here. Sources live in
+`.materials.json` (`{material name: source}`, sourced files only), read and written inside the same
+no-`await` section as allocation. Deleting a material through the files route drops its entry; the
+video wipe leaves the sidecar alone. Every sidecar writer is an `async def` route with no `await`
+across its read-modify-write, so the event loop serialises them; a writer moved to a plain `def`
+route would run in the threadpool and could drop another's entry. Writes go through a temp file and
+`os.replace`, so the threadpool tree and listing reads never see a torn file. A source already carried by a material still appends a new file
+— re-downloading is the user's call.
+
+Legacy adoption, temporary (removal tracked in the repo-root `docs/MIGRATIONS.md`): a sourced POST
+whose source no material carries yet first looks for a source-less material with identical bytes;
+on a match it tags that file, writes nothing, and answers its name — so a PDF saved before sources
+existed is not duplicated.
+
 ## Dotfiles
 
 Metadata is stored as dotfiles so it stays invisible to listings: tree iteration walks
@@ -105,6 +120,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | ------------------------ | ----------- | -------------------------------------------------------- |
 | `.archived`              | course dir  | empty marker; course is archived                          |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
+| `.materials.json`        | lecture dir | `{material name: source}` for materials with a download source |
 | `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
 | `.{slug}.pdf_warning`    | overview/   | same, per overview pdf (see OVERVIEW.md)                  |
@@ -117,7 +133,7 @@ Deleting `summary.pdf` drops both of its render markers — each describes that 
 `recitations`. `Recitations` and `overview` are skipped as lectures.
 
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
-`materials` (index-ordered `{name, size, mtime}`, always present and `[]` when none — presence
+`materials` (index-ordered `{name, size, mtime}` plus `source` when it has one, always present and `[]` when none — presence
 in the list *is* existence, so entries carry no `exists`), and `transcribePartial`. Three fields are inlined onto file entries rather than exposed as separate
 endpoints, because the frontend needs them on every render of the tree:
 
@@ -135,5 +151,6 @@ field stay backwards-compatible.
 ## Degrade, don't fail
 
 Every metadata read (`transcript.partial.meta.json`, both `.pdf_warning` readers,
-`overview/meta.json`) swallows parse and read errors and falls back to "absent". A corrupt
+`overview/meta.json`, `.materials.json`) swallows parse and read errors and falls back to "absent". A corrupt
 side-file must never take down a whole tree or listing; the next write self-heals it.
+Writing `.materials.json` degrades the same way: a failed write is logged and the upload or delete still succeeds, untagged.

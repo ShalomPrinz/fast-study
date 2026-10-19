@@ -53,7 +53,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file in it is open elsewhere |
 | `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
-| `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf; returns `{name}` with the allocated filename          |
+| `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf, optional `?source=` tag; returns `{name}` with the allocated (or adopted) filename |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `404` if the lecture is missing; `423` if it is open in another program |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}` | stream one file                                                           |
@@ -89,7 +89,8 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand (the downloader uploads to brand-new lectures) but never the course: a missing one is `404` `course_not_found`.
 - **`POST /…/materials`** appends an attached PDF, allocating its name server-side (see
-  [LAYOUT.md](LAYOUT.md#materials)) and returning it. Like the video upload, it creates the lecture dir on demand, never the course. Callers that already know
+  [LAYOUT.md](LAYOUT.md#materials)) and returning it. An optional `?source=` records the opaque download source,
+  echoed as `source` on the entry; a byte-identical source-less material is adopted instead of duplicated. Like the video upload, it creates the lecture dir on demand, never the course. Callers that already know
   the exact filename keep using `PUT /…/files/{name}`; delete/get/head go through the files
   routes unchanged. `GET /…/materials` returns the same entries the tree inlines, so a caller
   needing one lecture's materials doesn't pull the whole tree; a missing lecture yields `[]`

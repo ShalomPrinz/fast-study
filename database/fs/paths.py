@@ -43,6 +43,8 @@ PREDEFINED_FILES = (
 # Material PDFs are a numbered family, not a predefined name: material.pdf, material.2.pdf, …
 MATERIAL_PREFIX = "material"
 MATERIAL_EXT = ".pdf"
+# Lecture-dir sidecar mapping a material filename to the download source it came from.
+MATERIAL_SOURCES_MARKER = ".materials.json"
 
 # The data root as explicit module state: unset until database_main.py seeds it or POST /config sets it.
 _data_root: Path | None = None

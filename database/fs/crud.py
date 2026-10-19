@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+from .material_sources import forget_source
 from .paths import (
     ARCHIVED_MARKER,
     OVERVIEW_DIR,
@@ -19,6 +20,7 @@ from .paths import (
     check_safe_segment,
     course_dir,
     lecture_dir,
+    material_index,
     reject_if_locked,
     safe_name,
 )
@@ -173,6 +175,8 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
         except PermissionError as e:
             reject_if_locked(e, file)
             raise
+    if material_index(file) is not None:
+        forget_source(d, file)
     if file == "summary.pdf":
         (d / PDF_WARNING_MARKER).unlink(missing_ok=True)
         (d / PDF_BUILD_TEX_MARKER).unlink(missing_ok=True)
