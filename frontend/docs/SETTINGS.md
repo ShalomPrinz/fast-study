@@ -35,7 +35,8 @@ owns the switch and pushes each saved value to every service itself, so the fron
 `/config`; `saveSettings` only re-gates the renderer's own reports (`applyErrorReports`). A service the push
 misses takes it at the next launch: the write answers `errorReportsRestartNeeded`, and `/settings` then
 says so under the switch (`restartNotice`). The switch is Electron-only (`canSetErrorReports`): browser
-dev's `.env` store has no such field and reports nothing anyway, so both screens hide it.
+dev's `.env` store has no such field and reports nothing anyway, so both screens hide it and
+`buildPatch` never sends it there.
 
 **The privacy policy** opens from a link under the switch (`PrivacyPolicyModal`); Confirm unlocks only
 once its text is scrolled to the end (`readToEnd`), Confirm turns the switch on and Decline off, and both

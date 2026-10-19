@@ -148,7 +148,7 @@ export default function SettingsView() {
   // Aliased so the async save below keeps the non-null narrowing the early return established.
   const current = form
   const currentOptions = options
-  const patch = () => buildPatch(current, stored)
+  const patch = () => buildPatch(current, stored, canSetErrorReports)
 
   const missing = missingEntries({
     geminiKey: form.geminiApiKey,

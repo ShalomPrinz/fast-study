@@ -141,7 +141,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     try {
       // A site save still in flight lands first; resending the same site is a no-op for its owner.
       await siteSaves.current
-      const patch = buildPatch(answered, stored)
+      const patch = buildPatch(answered, stored, canSetErrorReports)
       // Always explicit here, so the checked default is stored as the user's own yes or no.
       if (canSetErrorReports) patch.errorReports = answered.errorReports
       onDone(await saveSettings(patch))

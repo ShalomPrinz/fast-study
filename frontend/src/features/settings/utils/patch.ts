@@ -71,7 +71,11 @@ export function withOptions(
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore
  *  renders blank, so leaving it alone must never reach the store — an empty value there clears it. */
-export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch {
+export function buildPatch(
+  form: SettingsForm,
+  stored: Settings,
+  canSetErrorReports: boolean,
+): SettingsPatch {
   const patch: SettingsPatch = {}
   if (form.geminiApiKey.trim()) patch.geminiApiKey = form.geminiApiKey.trim()
   if (form.groqApiKey.trim()) patch.groqApiKey = form.groqApiKey.trim()
@@ -89,8 +93,11 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   if (form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')) {
     patch.moodleSite = form.moodleSite
   }
-  // Unset means off, as the launcher reads it, so leaving it off stores nothing.
-  if (form.errorReports !== (stored.errorReports === true)) patch.errorReports = form.errorReports
+  // Unset means off, as the launcher reads it, so leaving it off stores nothing. Without the launcher
+  // the store has no such setting and rejects the whole save, so it is never sent.
+  if (canSetErrorReports && form.errorReports !== (stored.errorReports === true)) {
+    patch.errorReports = form.errorReports
+  }
   if (form.privacyConfirmed && !stored.privacyConfirmed) patch.privacyConfirmed = true
   if (form.aiProvider !== toAiProvider(stored.aiProvider)) patch.aiProvider = form.aiProvider
   return patch
