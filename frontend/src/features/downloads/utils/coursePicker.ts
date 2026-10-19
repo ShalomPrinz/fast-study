@@ -29,6 +29,14 @@ export function splitCourses(courses: EnrolledCourse[]): {
   }
 }
 
+// The widest code, in characters, that sets the picker's code column; a longer one would push every
+// name over, so its row lets the name follow its own chip instead.
+export const CODE_COLUMN_CAP = 12
+
+export function codeOverCap(code: string | null): boolean {
+  return code !== null && [...code].length > CODE_COLUMN_CAP
+}
+
 // A URL is checked before saving unless it is empty (clearing) or came from Moodle's own list.
 export function needsCheck(url: string, fromMoodle: boolean): boolean {
   return !fromMoodle && url.trim() !== ''

@@ -5,7 +5,7 @@ import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { useEnrolledCourses } from '@/features/downloads/hooks/useEnrolledCourses'
 import { useLocaleHold } from '@/shared/hooks/useLocaleHold'
 import type { EnrolledCourse } from '@/features/downloads/services/autoDownloader'
-import { pickerView, splitCourses } from '@/features/downloads/utils/coursePicker'
+import { codeOverCap, pickerView, splitCourses } from '@/features/downloads/utils/coursePicker'
 import CourseUrlPaste from './CourseUrlPaste'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -37,18 +37,20 @@ export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }
     <li key={c.id}>
       <Tooltip content={c.url}>
         <button
-          className={
-            c.url === currentUrl
-              ? 'course-picker-item course-picker-item--current'
-              : 'course-picker-item'
-          }
+          className={[
+            'course-picker-item',
+            c.url === currentUrl && 'course-picker-item--current',
+            codeOverCap(c.code) && 'course-picker-item--long-code',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           aria-current={c.url === currentUrl || undefined}
           onClick={() => onChoose(c)}
         >
           {/* Each isolated, so the code chip leads on the page's start edge and a name in either script
               can't reorder across it. */}
           {c.code && <bdi className="chip course-picker-code">{c.code}</bdi>}
-          <bdi>{c.name}</bdi>
+          <bdi className="course-picker-name">{c.name}</bdi>
         </button>
       </Tooltip>
     </li>

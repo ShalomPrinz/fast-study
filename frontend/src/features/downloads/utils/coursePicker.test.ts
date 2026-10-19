@@ -7,7 +7,15 @@ import {
   type AuthStatus,
   type EnrolledCourse,
 } from '../services/autoDownloader'
-import { addFormDraft, checkFailure, needsCheck, pickerView, splitCourses } from './coursePicker'
+import {
+  CODE_COLUMN_CAP,
+  addFormDraft,
+  checkFailure,
+  codeOverCap,
+  needsCheck,
+  pickerView,
+  splitCourses,
+} from './coursePicker'
 
 const course = (id: number, past = false): EnrolledCourse => ({
   id,
@@ -90,5 +98,22 @@ describe('checkFailure', () => {
     const refused = new RequestError('no', 'course_not_accessible', { url: 'u', detail: null })
     expect(checkFailure(refused)).toMatchObject({ code: 'course_not_accessible' })
     expect(checkFailure(new MoodleBusyError('busy')).code).toBe('moodle_busy')
+  })
+})
+
+describe('codeOverCap', () => {
+  it('keeps no code and codes up to the cap in the column', () => {
+    expect(codeOverCap(null)).toBe(false)
+    expect(codeOverCap('C101')).toBe(false)
+    expect(codeOverCap('868922001')).toBe(false)
+    expect(codeOverCap('x'.repeat(CODE_COLUMN_CAP))).toBe(false)
+  })
+
+  it('lets a longer code out of the column', () => {
+    expect(codeOverCap('x'.repeat(CODE_COLUMN_CAP + 1))).toBe(true)
+  })
+
+  it('counts characters, not UTF-16 units', () => {
+    expect(codeOverCap('𝟘'.repeat(CODE_COLUMN_CAP))).toBe(false)
   })
 })

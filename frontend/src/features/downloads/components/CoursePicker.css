@@ -20,18 +20,26 @@
   color: var(--warn);
 }
 
+/* Names line up in column 2, after the widest code chip in column 1: each row and its button are
+   subgrids of the list, so every code in the list sizes the one shared column. */
 .course-picker-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto 1fr;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.course-picker-list > li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
 /* A dim rule between rows, inset from both edges so it reads as a divider rather than a border. */
 .course-picker-list > li + li::before {
   content: '';
-  display: block;
+  grid-column: 1 / -1;
   height: 1px;
   margin-inline: var(--space-3);
   background: var(--line);
@@ -39,6 +47,10 @@
 
 /* A course is a full-width choice; the name hugs the start whatever its script. */
 .course-picker-item {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
   width: 100%;
   padding: var(--space-3) var(--space-4);
   border: none;
@@ -58,8 +70,23 @@
 
 /* Moodle's course code ahead of the name: picker-only context, never part of the saved name. */
 .chip.course-picker-code {
+  justify-self: start;
   margin-inline-end: var(--space-3);
   font-variant-numeric: tabular-nums;
+}
+
+/* Shrunk to its text so a name in the other script still starts at the column, not its own far edge. */
+.course-picker-name {
+  grid-column: 2;
+  justify-self: start;
+  min-width: 0;
+}
+
+/* A code past CODE_COLUMN_CAP: a flex row spanning both columns, which grid sizing never lets widen the
+   auto column (it spans the 1fr one), so only this name moves, to just after its own chip. */
+.course-picker-item.course-picker-item--long-code {
+  display: flex;
+  align-items: center;
 }
 
 /* The course this row already points at. */
