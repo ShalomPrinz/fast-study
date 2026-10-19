@@ -416,9 +416,17 @@ requests, with real ffmpeg, pandoc and tectonic. The
 release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a
 production override, which [SMOKE.md](../../delivery/docs/SMOKE.md) rules out.
 
-An e2e spec drives a flow a real user can reach in the shipped app, through its UI or the files and
-sites it reads; a state only the harness can produce has no spec. One service restarting alone is such
-a state: the launcher has no respawn, so a dead service stays dead until the app restarts.
+Two rules decide what earns a spec. First, it drives a flow a real user reaches in the shipped app,
+through its UI or the files and sites it reads; a state only the harness can produce has no spec. One
+service restarting alone is such a state: the launcher has no respawn, so a dead service stays dead until
+the app restarts. Second, it covers the app's main flows, not edge cases: a lecture deleted mid-run, a
+provider quota, a mid-run consent prompt or a refused rename belong in the owning service's unit tests.
+A distinct but ordinary flow, such as a materials-only lecture, is in scope.
+
+`e2e/fixtures.mjs` holds what more than one spec needs: the stack's levers (`providers`, `site`, `lock`,
+`reseed`, `reset`), a lecture view's `step` rows and `expectStepsDone`, `treeLecture` over the database's
+`/tree`, `driveFile` walking the fake Drive's folder chain, and `dropFile`, which drops a local file on an
+element the way a drag from the file manager does.
 
 ## Driving failures
 
@@ -457,7 +465,9 @@ means something: `429` and `empty` to transcription and generation, `429min` to 
 `500` to both and to the key probe, `invalidkey` to every Gemini route — the real 400 `API_KEY_INVALID` body, so the first
 upload of a run is what fails. `slow`, on transcription and generation, holds each matched call
 `ms` and then answers as `ok` — sooner if a `/control` sets that provider's rule or resets — a step that stays in flight long enough to cancel, rename, reload or
-queue behind; Groq is held once per chunk, so a lecture's step takes `ms` × its chunks. The Drive
+queue behind; Groq is held once per chunk, so a lecture's step takes `ms` × its chunks. The shim cuts
+transcribe's chunks to 8 s overlapping by 2 s, so the 20 s fixture video transcribes in several chunks, as a
+real lecture does in many. The Drive
 upload is an in-process fake in the backend, outside `/control`, so it has no `slow`. An unknown
 mode or field is answered 400. `/health` shows each rule
 and `hb state` diffs it field by field.

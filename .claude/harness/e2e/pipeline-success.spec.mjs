@@ -1,6 +1,6 @@
 // A summarised lecture runs its remaining steps — PDF (real pandoc + tectonic) and Drive (fake) — to
 // a finished lecture, judged only by what the lecture view shows.
-import { test, expect, reseed, reset } from './fixtures.mjs';
+import { test, expect, expectStepsDone, reseed, reset, step as stepOf } from './fixtures.mjs';
 
 const COURSE = 'hb-pipeline';
 const LECTURE = 'שיעור 3';
@@ -17,7 +17,7 @@ test('a summarised lecture runs to a finished PDF uploaded to Drive', async ({ p
   const view = page.getByTestId('lecture-view');
   await expect(view).toHaveAttribute('data-lecture', LECTURE);
 
-  const step = (name) => view.locator(`[data-testid="step-status"][data-step="${name}"]`);
+  const step = (name) => stepOf(view, name);
   await expect(step('summarize')).toHaveAttribute('data-status', 'done');
   // Not done rather than pending: the backend keeps a lecture's last error across a reseed.
   await expect(step('pdf')).not.toHaveAttribute('data-status', 'done');
@@ -28,13 +28,7 @@ test('a summarised lecture runs to a finished PDF uploaded to Drive', async ({ p
   // Past the start first, so a stale `failed` left by an earlier run never reads as this run's end.
   await expect(step('pdf')).toHaveAttribute('data-status', /^(running|done)$/);
 
-  // Wait for each step to settle, then require success, so a failed step fails at once.
-  for (const name of ['pdf', 'drive']) {
-    await expect(step(name)).toHaveAttribute('data-status', /^(done|failed|quota)$/, {
-      timeout: 45_000,
-    });
-    await expect(step(name)).toHaveAttribute('data-status', 'done', { timeout: 1_000 });
-  }
+  await expectStepsDone(view, ['pdf', 'drive']);
   // The file itself appears in the row with its size, and the header calls the lecture complete.
   await expect(step('pdf').locator('.pipeline-file')).toHaveText(/^summary\.pdf · \S/);
   await expect(view.getByTestId('open-pdf')).toBeVisible();
