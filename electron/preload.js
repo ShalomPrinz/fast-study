@@ -30,7 +30,7 @@ contextBridge.exposeInMainWorld('faststudy', {
     file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
     external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
   },
-  // The OS folder dialog for the data-folder field; resolves to an absolute path, or `null` on cancel.
+  // The OS folder dialog, raising the window first; resolves to an absolute path, or `null` on cancel.
   pickFolder: (defaultPath) => ipcRenderer.invoke('faststudy:pick-folder', defaultPath),
   // The app's update row: `'downloading' | 'downloaded' | null`, pushed on every check. `restart()`
   // installs a downloaded update and relaunches, answering `{ ok, error }` — see docs/UPDATES.md.

@@ -74,9 +74,12 @@ it is two calls:
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
 bridge. Both answer `{ ok, error }` — main does not toast; the frontend does.
 
-**`pickFolder(defaultPath?)`** opens the OS folder dialog for the data-folder field and resolves to the
-chosen absolute path, or `null` on cancel. It is the one path the renderer gets back from main, and main
-neither creates nor validates it — the folder is only a proposal until `database/` accepts it on save.
+**`pickFolder(defaultPath?)`** opens the OS folder dialog — for the data-folder field and for the general
+downloads folder the extension asks for — and resolves to the chosen absolute path, or `null` on cancel.
+It restores, shows and focuses the window first (topmost for an instant, past Windows' focus-stealing
+rule), since an extension-triggered pick finds it behind Chrome or minimized. It is the one path the
+renderer gets back from main, and main neither creates nor validates it — the folder is only a proposal
+until the service that owns it accepts it.
 
 **Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
 child window itself with this window's security `webPreferences` — the preload, and so the launch

@@ -576,15 +576,22 @@ function logTail() {
   }
 }
 
-/** The OS folder dialog for the data-folder field: the chosen absolute path, or `null` if canceled.
- *  Creates and validates nothing — the frontend and `database/` guard the path on save. */
+/** The OS folder dialog for any folder the frontend asks for: the chosen absolute path, or `null` if
+ *  canceled. Creates and validates nothing — the caller and its owning service guard the path. */
 async function pickFolder(sender, defaultPath) {
   const options = { properties: ['openDirectory', 'createDirectory'] };
   if (typeof defaultPath === 'string' && defaultPath !== '') options.defaultPath = defaultPath;
-  const { canceled, filePaths } = await dialog.showOpenDialog(
-    BrowserWindow.fromWebContents(sender),
-    options,
-  );
+  const win = BrowserWindow.fromWebContents(sender);
+  // A pick the extension triggers finds the window behind Chrome or minimized, and its modal dialog with it.
+  if (win) {
+    if (win.isMinimized()) win.restore();
+    win.show();
+    // Windows' focus-stealing rule turns a background focus() into a taskbar flash; topmost bypasses it.
+    win.setAlwaysOnTop(true);
+    win.focus();
+    win.setAlwaysOnTop(false);
+  }
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, options);
   return canceled || filePaths.length === 0 ? null : filePaths[0];
 }
 
