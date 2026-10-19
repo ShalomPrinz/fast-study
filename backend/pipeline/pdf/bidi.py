@@ -22,11 +22,13 @@ _WORD = (
     r"(?:[0-9]+(?:[.,][0-9]+)*-?)?(?:(?<![" + _HEBREW + r"])/)?[" + _LATIN + r"]"
     r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r"0-9])|" + _POSSESSIVE + r")*"
 )
-# A bare URL is one token, so its `:`/`?`/`=`/`&` can't fall out into the RTL run. It stops at
-# whitespace, Hebrew or a markdown/quote delimiter, and never ends on sentence punctuation.
+# A bare URL is one token, so its `:`/`?`/`=`/`&` stay in the LTR run; it never takes `*` or ends on
+# `_`/punctuation, so emphasis markers stay outside. A balanced `(…)` joins it (Foo_(bar)).
+_URL_CHAR = r"[^\s<>\[\]()`\"*" + _HEBREW + r"]"
+_URL_PAREN = r"\(" + _URL_CHAR + r"*\)"
 _URL = (
-    r"(?:https?://|www\.)[^\s<>\[\]()`\"" + _HEBREW + r"]*"
-    r"[^\s<>\[\]()`\"'’.,;:!?" + _HEBREW + r"]"
+    r"(?:https?://|www\.)(?:" + _URL_CHAR + r"|" + _URL_PAREN + r")*"
+    r"(?:[^\s<>\[\]()`\"*'’.,;:!?_" + _HEBREW + r"]|" + _URL_PAREN + r")"
 )
 # A link destination `](…)` and an autolink `<…>` must reach pandoc untouched, or the href breaks.
 _LINK_TARGET_RE = re.compile(r"(\]\([^)\n]*\)|<(?:https?://|www\.)[^>\s]*>)")

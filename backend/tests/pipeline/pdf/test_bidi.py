@@ -405,6 +405,37 @@ class TestWrapEnglishPhrases:
         md = "ראו <https://example.com/a> כאן"
         assert wrap_english_phrases(md) == md
 
+    def test_bold_url_markers_stay_outside(self):
+        result = wrap_english_phrases("ראה **https://x/a** כאן")
+        assert result == r"ראה **\LR{https://x/a}** כאן"
+
+    def test_italic_url_markers_stay_outside(self):
+        result = wrap_english_phrases("ראה *https://x/a* כאן")
+        assert result == r"ראה *\LR{https://x/a}* כאן"
+
+    def test_underscore_bold_url_markers_stay_outside(self):
+        result = wrap_english_phrases("ראה __https://x/a__ כאן")
+        assert result == r"ראה __\LR{https://x/a}__ כאן"
+
+    def test_mid_url_underscore_kept(self):
+        result = wrap_english_phrases("ראה https://x/a_b כאן")
+        assert result == r"ראה \LR{https://x/a\_b} כאן"
+
+    def test_balanced_parens_join_url(self):
+        result = wrap_english_phrases("ראה https://en.wikipedia.org/wiki/Foo_(bar) כאן")
+        assert result == r"ראה \LR{https://en.wikipedia.org/wiki/Foo\_(bar)} כאן"
+
+    def test_outer_parens_around_url_stay_outside(self):
+        assert wrap_english_phrases("(https://x/a)") == r"(\LR{https://x/a})"
+
+    def test_paren_url_inside_outer_parens(self):
+        result = wrap_english_phrases("(ראה https://x/Foo_(bar))")
+        assert result == r"(ראה \LR{https://x/Foo\_(bar)})"
+
+    def test_sentence_final_period_after_paren_url_stays_outside(self):
+        result = wrap_english_phrases("ראה https://x/Foo_(bar).")
+        assert result == r"ראה \LR{https://x/Foo\_(bar)}\RL{.}"
+
 
 # ---------------------------------------------------------------------------
 # force_ltr_inline_code
