@@ -10,6 +10,8 @@ Three packages that capture lecture videos and PDFs and hand them to the databas
 - **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links whose filename says they're video (`auto/`'s `google-drive` strategy, which probes the name first and sends a Drive PDF down the material path instead).
 - **PDF** — not token-gated, so no header replay: the extension popup fetches the tab's `.pdf` with the user's cookies and uploads it as one of the lecture's materials.
 
+The popup's "General video" mode sends any of the three to a computer folder instead of the database ([DOWNLOAD.md](server/docs/DOWNLOAD.md)).
+
 ## Running
 
 ```bash

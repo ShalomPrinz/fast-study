@@ -160,5 +160,77 @@
         "example": "1.25"
       }
     }
+  },
+  "labelMode": {
+    "message": "Save to",
+    "description": "Accessible name of the App lecture / General video switch."
+  },
+  "modeApp": {
+    "message": "App lecture",
+    "description": "Mode switch: save into a course in FastStudy."
+  },
+  "modeGeneral": {
+    "message": "General video",
+    "description": "Mode switch: save as a plain file in a folder on the computer."
+  },
+  "labelFileName": {
+    "message": "File name",
+    "description": "Label of the file name field in General video mode."
+  },
+  "placeholderFileName": {
+    "message": "File name…",
+    "description": "Placeholder of the file name field."
+  },
+  "labelFolder": {
+    "message": "Folder",
+    "description": "Label of the read-only folder the file is saved into."
+  },
+  "btnChooseFolder": {
+    "message": "Choose folder…",
+    "description": "Opens the folder picker in the FastStudy app window."
+  },
+  "pickInApp": {
+    "message": "Choose the folder in the FastStudy window, then open this again.",
+    "description": "Shown once the app window was asked to open its folder picker."
+  },
+  "errOpenAppWindow": {
+    "message": "Open the FastStudy app window, then try again.",
+    "description": "No FastStudy window is open to show the folder picker."
+  },
+  "errChooseFolder": {
+    "message": "Couldn't open the folder picker.",
+    "description": "Headline when the server refused the folder pick; its own text shows beneath."
+  },
+  "errMissingFileName": {
+    "message": "Enter a file name first.",
+    "description": "Submit in General video mode with an empty file name."
+  },
+  "doneGeneralVideo": {
+    "message": "Downloading $FILE$ to $FOLDER$. Follow it in FastStudy's Downloads.",
+    "description": "Shown once the server accepted a General video download.",
+    "placeholders": {
+      "file": {
+        "content": "$1",
+        "example": "Intro to Calculus.mp4"
+      },
+      "folder": {
+        "content": "$2",
+        "example": "C:\\Users\\me\\Downloads"
+      }
+    }
+  },
+  "doneGeneralPdf": {
+    "message": "Saved $FILE$ to $FOLDER$",
+    "description": "Shown once the PDF was saved into the folder.",
+    "placeholders": {
+      "file": {
+        "content": "$1",
+        "example": "Intro to Calculus.mp4"
+      },
+      "folder": {
+        "content": "$2",
+        "example": "C:\\Users\\me\\Downloads"
+      }
+    }
   }
 }

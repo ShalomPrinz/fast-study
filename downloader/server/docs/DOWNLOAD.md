@@ -7,6 +7,27 @@ probe, the silent child spawned in that dir, and on a clean exit the source's `u
 `uploadVideo` for curl/yt-dlp, `uploadMaterial` for `fetch`. A new source is a new module + one
 registry line.
 
+## General mode — into a computer folder (`src/generalFolder.js`)
+
+`dest:'folder'` on `/download`, `/download-youtube` or `/upload-pdf` (the popup's "General video")
+saves the file into a folder on the computer instead of the database: same job, child, progress,
+cancel and timing sample, but the runner's last step is the route's `save` (a move out of the temp
+dir) instead of the source's `upload` — no course, no `/video-arrived`, no notify.
+
+- **The folder** is this server's state, `statePath('general-folder.json')`, defaulting to
+  `~/Downloads`. The popup only shows it: a native picker can't run there (Chrome closes the popup
+  when the OS dialog takes focus, and `showDirectoryPicker` yields no path), so "Choose folder…"
+  calls `POST /general-folder/pick`, which pushes `folder:pick {folder}` to every `/events?picker=1`
+  stream — only a window that can open Electron's picker opens one — which then `POST /general-folder`s
+  the answer. No picker stream → `409 folder_picker_unavailable`; plain streams never count.
+- **Checked at request time**: an absolute, existing, writable directory, else `409
+  general_folder_missing {folder}` / `general_folder_not_writable {folder, detail}`. `fileName` goes
+  through `storedName` (traversal and separators refused, the rest made Windows-legal).
+- **Never overwrites**: the name is `<stem><ext>` with the extension of the file actually produced
+  (`.mp4`, yt-dlp's choice, `.pdf`), then ` (2)`, ` (3)`… — claimed with an exclusive create, so two
+  jobs finishing together can't pick the same one. A cross-drive rename (`EXDEV`) copies + unlinks;
+  any failure is `general_folder_save_failed {folder, detail}`.
+
 Every tool spawn — the runner's child, the yt-dlp size probe, the yt-dlp self-update — spreads
 `NO_WINDOW` from `@faststudy/tools`, or a packaged build flashes a console window per spawn
 ([why](../../../lib/tools/CLAUDE.md)).

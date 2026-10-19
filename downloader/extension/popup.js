@@ -21,6 +21,10 @@ let courses = [];
 let capture = null;
 let youtubeUrl = null;
 let pdfUrl = null;
+let tabTitle = '';
+// 'app' saves into a course in FastStudy; 'general' into the computer folder the server keeps.
+let mode = 'app';
+let generalFolder = '';
 
 function $(id) {
   return document.getElementById(id);
@@ -31,6 +35,31 @@ function translateStatic() {
   for (const el of document.querySelectorAll('[data-i18n-placeholder]')) {
     el.placeholder = msg(el.dataset.i18nPlaceholder);
   }
+  for (const el of document.querySelectorAll('[data-i18n-aria-label]')) {
+    el.setAttribute('aria-label', msg(el.dataset.i18nAriaLabel));
+  }
+}
+
+// Shows the fields of one mode; each mode-specific field carries `data-mode`.
+function applyMode(next) {
+  mode = next;
+  for (const el of document.querySelectorAll('[data-mode]')) el.hidden = el.dataset.mode !== mode;
+  document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
+}
+
+// The tab title as a Windows-legal file stem, the server adding the extension. The server enforces
+// the same rule (validate.js::storedName); this only keeps the prefill from changing under the user.
+function suggestFileName(title) {
+  const stem = title
+    .replace(/ - YouTube$/, '')
+    .replace(/\.pdf$/i, '')
+    // eslint-disable-next-line no-control-regex -- control characters are illegal in a Windows name
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
+    .trim();
+  return [...stem]
+    .slice(0, 80)
+    .join('')
+    .replace(/[. ]+$/, '');
 }
 
 function getKind() {
@@ -200,6 +229,7 @@ async function probeSize(url, headers) {
 async function loadSource() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const pageUrl = tab?.url ?? null;
+  tabTitle = tab?.title ?? '';
   if (tab?.id != null) chrome.action.setBadgeText({ tabId: tab.id, text: '' }).catch(() => {});
   if (!pageUrl) return msg('statusNothing');
 
@@ -250,6 +280,31 @@ async function serverError(res) {
   }
 }
 
+// The general folder's path, read on open; the popup never edits it, the app window's picker does.
+async function loadFolder() {
+  try {
+    const res = await api('/general-folder');
+    if (res.ok) generalFolder = (await res.json()).folder;
+  } catch {}
+  $('folder').value = generalFolder;
+  $('folder').title = generalFolder;
+}
+
+// The OS picker can't run in this popup (Chrome closes it on the dialog's focus), so the server asks
+// the app window to open one; the new folder shows the next time the popup opens.
+async function chooseFolder() {
+  clearResult();
+  try {
+    const res = await api('/general-folder/pick', { method: 'POST' });
+    if (res.ok) return showResult(msg('pickInApp'), { ok: true });
+    const body = await res.json().catch(() => ({}));
+    if (body.code === 'folder_picker_unavailable') return showResult(msg('errOpenAppWindow'));
+    showResult(msg('errChooseFolder'), { detail: body.error ?? `HTTP ${res.status}` });
+  } catch {
+    showResult(msg('statusOffline'));
+  }
+}
+
 async function startVideo(course, lecture, kind) {
   const endpoint = youtubeUrl ? '/download-youtube' : '/download';
   const payload = youtubeUrl
@@ -265,16 +320,49 @@ async function startVideo(course, lecture, kind) {
   showResult(msg('doneVideo', isolate(target)), { ok: true });
 }
 
-async function uploadPdf(course, lecture, kind) {
-  // Fetched here so Chrome attaches the user's own session cookies for the site.
-  let blob;
+async function startGeneralVideo(fileName) {
+  const endpoint = youtubeUrl ? '/download-youtube' : '/download';
+  const source = youtubeUrl ? { url: youtubeUrl } : { url: capture.url, headers: capture.headers };
+  const res = await api(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...source, dest: 'folder', fileName }),
+  });
+  if (!res.ok) return showResult(msg('errStart'), { detail: await serverError(res) });
+  const body = await res.json();
+  showResult(msg('doneGeneralVideo', isolate(body.fileName), isolate(body.folder)), { ok: true });
+}
+
+// Fetched here so Chrome attaches the user's own session cookies for the site; null after showing
+// the failure.
+async function fetchPdf() {
   try {
     const pdfRes = await fetch(pdfUrl, { credentials: 'include' });
     if (!pdfRes.ok) throw new Error(`HTTP ${pdfRes.status}`);
-    blob = await pdfRes.blob();
+    return await pdfRes.blob();
   } catch (e) {
-    return showResult(msg('errPdfFetch'), { detail: e.message });
+    showResult(msg('errPdfFetch'), { detail: e.message });
+    return null;
   }
+}
+
+async function saveGeneralPdf(fileName) {
+  const blob = await fetchPdf();
+  if (!blob) return;
+  const qs = new URLSearchParams({ dest: 'folder', fileName }).toString();
+  const res = await api(`/upload-pdf?${qs}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/pdf' },
+    body: blob,
+  });
+  if (!res.ok) return showResult(msg('errPdfStore'), { detail: await serverError(res) });
+  const body = await res.json();
+  showResult(msg('doneGeneralPdf', isolate(body.fileName), isolate(body.folder)), { ok: true });
+}
+
+async function uploadPdf(course, lecture, kind) {
+  const blob = await fetchPdf();
+  if (!blob) return;
   const qs = new URLSearchParams({ course, lecture, kind }).toString();
   const res = await api(`/upload-pdf?${qs}`, {
     method: 'POST',
@@ -291,13 +379,17 @@ async function submit(event) {
   clearResult();
   const course = $('course').value.trim();
   const lecture = $('lecture').value.trim();
-  if (!course || !lecture) return showResult(msg('errMissingTarget'));
+  const fileName = $('fileName').value.trim();
+  if (mode === 'app' && (!course || !lecture)) return showResult(msg('errMissingTarget'));
+  if (mode === 'general' && !fileName) return showResult(msg('errMissingFileName'));
 
   const btn = $('submit');
   btn.disabled = true;
   btn.textContent = msg('btnDownloading');
   try {
-    if (youtubeUrl || capture) await startVideo(course, lecture, getKind());
+    const video = !!(youtubeUrl || capture);
+    if (mode === 'general') await (video ? startGeneralVideo(fileName) : saveGeneralPdf(fileName));
+    else if (video) await startVideo(course, lecture, getKind());
     else await uploadPdf(course, lecture, getKind());
   } catch {
     // fetch() itself threw: the local server is not answering.
@@ -310,13 +402,24 @@ async function submit(event) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   translateStatic();
+  const { popupMode } = await chrome.storage.local.get('popupMode');
+  applyMode(popupMode === 'general' ? 'general' : 'app');
   server = await discoverServer();
   if (server.running === false) return setStatus(msg('statusAppClosed'), true);
-  const [online, status] = await Promise.all([loadCourses(), loadSource()]);
+  const [online, status] = await Promise.all([loadCourses(), loadSource(), loadFolder()]);
   const hasSource = !!(youtubeUrl || capture || pdfUrl);
   if (!online) setStatus(msg('statusOffline'), true);
   else setStatus(status);
   $('form').hidden = !hasSource;
+  $('fileName').value = suggestFileName(tabTitle);
+  for (const el of document.querySelectorAll('input[name="mode"]')) {
+    el.addEventListener('change', () => {
+      applyMode(el.value);
+      clearResult();
+      chrome.storage.local.set({ popupMode: el.value });
+    });
+  }
+  $('chooseFolder').addEventListener('click', chooseFolder);
   refreshLectureSuggestions();
   $('course').addEventListener('input', refreshLectureSuggestions);
   for (const el of document.querySelectorAll('input[name="kind"]')) {

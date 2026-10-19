@@ -13,12 +13,22 @@ export const BOOT_ID = randomUUID();
 // the frontend row green — the tree, not the job, owns the durable "downloaded" state.
 export const DONE_BRIDGE_MS = 60 * 1000;
 
-// Created SYNCHRONOUSLY by the route, before the async size probe, so a client that
-// resyncs with the id it just received can never miss the job.
-export function createJob({ course, lecture, kind, tool, ref = null, fromCache = false }) {
+// Created SYNCHRONOUSLY by the route, before the size probe, so a resync with the new id finds it.
+// A folder job has no course/lecture/kind; `fileName` is the requested stem until saved (docs/JOBS.md).
+export function createJob({
+  course = null,
+  lecture = null,
+  kind = null,
+  tool,
+  ref = null,
+  fromCache = false,
+  dest = 'app',
+  folder = null,
+  fileName = null,
+}) {
   // A retry supersedes any terminal predecessor for this target so `/jobs` holds at most
   // one job per target.
-  supersedeTerminal({ course, lecture, kind, ref });
+  supersedeTerminal({ course, lecture, kind, ref, dest, folder, fileName });
   const id = randomUUID();
   jobs.set(id, {
     id,
@@ -28,6 +38,11 @@ export function createJob({ course, lecture, kind, tool, ref = null, fromCache =
     tool,
     ref,
     fromCache,
+    dest,
+    folder,
+    fileName,
+    // Off the wire: the supersede key, which must not move when `fileName` becomes the saved name.
+    requested: fileName,
     status: 'queued',
     expectedBytes: null,
     startedAt: null,
@@ -58,6 +73,17 @@ export function startJob(id, entry) {
   job.entry = entry;
   job.startedAt = Date.now();
   broadcastJobs();
+}
+
+// The name a folder job's file was saved under, set just before it turns `done`.
+export function setJobFileName(id, fileName) {
+  const job = jobs.get(id);
+  if (job) job.fileName = fileName;
+}
+
+// Whether `id` names a job still on `/jobs`.
+export function hasJob(id) {
+  return jobs.has(id);
 }
 
 // The signal the runner hands to `spawn` and to a re-resolve; null for an unknown job.
@@ -102,18 +128,16 @@ export function finishJob(id, status, message = null, code = null, params = null
   if (status === 'done') setTimeout(() => evict(id), DONE_BRIDGE_MS).unref();
 }
 
-// Evict any terminal predecessor (`done`, `error` or `cancelled`) to guarantee one job per target
-function supersedeTerminal({ course, lecture, kind, ref }) {
+// Evict any terminal predecessor (`done`, `error` or `cancelled`) to guarantee one job per target.
+// A folder job's target is folder + requested name, so it never matches an app job's course/lecture.
+function supersedeTerminal({ course, lecture, kind, ref, dest, folder, fileName }) {
   for (const [id, job] of jobs) {
-    if (
-      terminal(job) &&
-      job.ref === ref &&
-      job.course === course &&
-      job.lecture === lecture &&
-      job.kind === kind
-    ) {
-      evict(id);
-    }
+    if (!terminal(job) || job.dest !== dest) continue;
+    const same =
+      dest === 'folder'
+        ? job.folder === folder && job.requested === fileName
+        : job.ref === ref && job.course === course && job.lecture === lecture && job.kind === kind;
+    if (same) evict(id);
   }
 }
 
@@ -127,7 +151,7 @@ function liveBytes(job) {
 
 function snapshot(job) {
   const { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt } = job;
-  const { message, code, params } = job;
+  const { message, code, params, dest, folder, fileName } = job;
   return {
     id,
     status,
@@ -136,6 +160,9 @@ function snapshot(job) {
     kind,
     tool,
     ref,
+    dest,
+    folder,
+    fileName,
     operation: operationForTool(tool),
     expectedBytes,
     startedAt,

@@ -60,6 +60,9 @@ npm start
 | Captured `.mp4` (recitation) | `{DATA_ROOT}\{Course}\Recitations\{Name}\video.mp4` |
 | YouTube                      | Same paths, via `yt-dlp`                            |
 | PDF                          | `...\{Lecture}\material.pdf` (`material.2.pdf`, … for each further PDF) |
+| Any, in **General video** mode | `{Folder}\{File name}.mp4` / `.pdf` — `{File name} (2).mp4`, … rather than overwrite |
+
+**General video** (the switch at the top of the popup) saves to a folder on your computer instead of into a course: `Downloads` until you press **Choose folder…**, which opens the picker in the FastStudy window.
 
 ### Troubleshooting
 

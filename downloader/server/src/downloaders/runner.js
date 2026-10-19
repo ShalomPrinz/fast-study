@@ -76,14 +76,23 @@ function cancelled(jobId, tool, tempDir) {
   finishJob(jobId, 'cancelled');
 }
 
-// Source-agnostic runner (docs/DOWNLOAD.md). Every exit path must terminate `jobId`; `reresolve`
-// (null without a ref) drives the one silent auth recovery, and the job's signal cancels it (docs/JOBS.md).
+// Source-agnostic runner (docs/DOWNLOAD.md); every exit path terminates `jobId`. `reresolve` drives the
+// one silent auth recovery (docs/JOBS.md); `save(tempDir, jobId)`, if set, replaces the upload.
 export async function runDownloadJob(
   downloader,
   input,
-  { course, lecture, kind, jobId, fromCache = false, reresolve = null, rerun = false },
+  {
+    course,
+    lecture,
+    kind,
+    jobId,
+    fromCache = false,
+    reresolve = null,
+    rerun = false,
+    save = null,
+    label = `${course}/${lecture}`,
+  },
 ) {
-  const label = `${course}/${lecture}`;
   const signal = jobSignal(jobId);
   const tempDir = makeTempDir();
   try {
@@ -161,7 +170,15 @@ export async function runDownloadJob(
         );
         if (next?.step === 'rerun') {
           emitError(`♻️  ${downloader.tool} cut short (exit ${code}) — fetching from auto again`);
-          runDownloadJob(downloader, input, { course, lecture, kind, jobId, ...next.next });
+          runDownloadJob(downloader, input, {
+            course,
+            lecture,
+            kind,
+            jobId,
+            save,
+            label,
+            ...next.next,
+          });
           return;
         }
         if (next?.step === 'reresolve') {
@@ -181,6 +198,8 @@ export async function runDownloadJob(
             lecture,
             kind,
             jobId,
+            save,
+            label,
             ...next.next,
           });
           return;
@@ -195,7 +214,9 @@ export async function runDownloadJob(
       recordDownloadTiming(downloader.tool, finalBytes || bytes, (Date.now() - spawnedAt) / 1000);
       // Not done at exit 0 — the bytes are still in a temp dir nobody else can see.
       // The job turns `done` only once the database has them.
-      const uploadError = await downloader.upload(tempDir, course, lecture, kind, downloader.tool);
+      const uploadError = save
+        ? await save(tempDir, jobId)
+        : await downloader.upload(tempDir, course, lecture, kind, downloader.tool);
       if (uploadError)
         finishJob(jobId, 'error', uploadError.error, uploadError.code, uploadError.params);
       else finishJob(jobId, 'done');

@@ -20,7 +20,8 @@ would find nothing. `createJob` runs synchronously in the route, before any awai
 
 `queued` → `running` (child spawned) → `done` | `error` | `cancelled`.
 
-`done` means the file reached the **database**, not that the child exited 0 — in between the bytes
+`done` means the file reached the **database** (or, for a `dest:'folder'` job, the general folder
+— [DOWNLOAD.md](DOWNLOAD.md)), not that the child exited 0 — in between the bytes
 sit in a private temp dir nobody else can see, and a failed upload is an `error` like any other.
 First terminal call wins, so a spawn failure (which fires both `error` and `close`) keeps the
 informative reason. `message` carries the child's stderr tail, the upload's error, or the thrown
@@ -29,8 +30,9 @@ message, and `code`/`params` carry the same failure in machine form (below).
 ## Cancel
 
 Each job holds an `AbortController` (off the wire); `cancelJob` aborts it and the runner ends the job
-`cancelled` — a status, not a failure, so `message`/`code`/`params` stay `null`. The only caller is a
-run's cancel ([RUNS.md](RUNS.md)); there is no per-job route. The signal goes to `spawn`, so a running
+`cancelled` — a status, not a failure, so `message`/`code`/`params` stay `null`. Callers are a run's
+cancel ([RUNS.md](RUNS.md)) and `POST /jobs/:id/cancel` for any one job, app or folder (`404
+job_unknown` for an id not on `/jobs`; an already-terminal job is left alone and still answers 200). The signal goes to `spawn`, so a running
 child is killed — and a curl waiting at auto's Moodle lock hangs up, which drops it from auto's queue.
 Aborted before the spawn (during the size probe), the child never starts; aborted during a silent
 re-resolve, that waiting `/resolve` is abandoned. A cancelled job's temp dir — the partial file — is
@@ -91,7 +93,8 @@ Terminal jobs are kept asymmetrically:
   can't tell it from never-attempted. It stays with no timeout until a retry supersedes it, and so
   does **`cancelled`**, for the same reason.
 
-`createJob` evicts **any terminal predecessor** for the same target (course + lecture + kind + ref),
+`createJob` evicts **any terminal predecessor** for the same target (course + lecture + kind + ref;
+for a folder job, folder + requested file name — the two kinds never match each other),
 so `/jobs` holds at most one job per target and the frontend does no client-side dedupe. A pending
 `DONE_BRIDGE_MS` eviction for an already-superseded job then no-ops, without a ping.
 
@@ -101,8 +104,10 @@ The body is `{ boot, jobs }`. `boot` is an opaque per-process UUID, never persis
 on a restart, so a client whose tracked job is missing from `jobs` fails it only when `boot` differs
 from the one it last saw — a job merely evicted after its `DONE_BRIDGE_MS` bridge keeps the same `boot`.
 Each job is
-`{ id, status, course, lecture, kind, tool, ref, operation, expectedBytes, startedAt, message, code,
-params }`. `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `tool` via
+`{ id, status, course, lecture, kind, tool, ref, dest, folder, fileName, operation, expectedBytes,
+startedAt, message, code, params }`. `dest` is `'app'` or `'folder'`; an app job's `folder`/`fileName`
+are `null`, a folder job's `course`/`lecture`/`kind` are. A folder job's `fileName` is the requested
+stem until `done`, then the name actually saved (`Talk (2).mp4`). `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `tool` via
 `services/timing.js`. `ref` (or `null`) is the discovery row that spawned the job; jobs sharing a
 `ref` group under one row, which is what keeps a zoom `<name>.1`/`<name>.2` pair together.
 
@@ -121,6 +126,7 @@ params }`. `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `t
 | the database's own code      | as the database sent them    | the database refused the store (`docs/DATABASE.md`) |
 | auto's own code               | as auto sent them            | auto refused a file fetch (`site_blocked` with `challengeWindow`, …); a non-envelope body is `download_tool_failed`, a 401/403 `download_auth_failed` |
 | `recapture_*`                 | see above                    | the one silent re-resolve failed                 |
+| `general_folder_save_failed`  | `folder`, `detail`           | a folder job's move into the folder failed       |
 
 ## Timing samples
 

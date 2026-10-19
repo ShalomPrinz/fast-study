@@ -13,7 +13,7 @@ Extension ID: **`hknnjgdhokbapjodjklfodhobjekjlnn`**, pinned by the public `key`
 | `manifest.json`               | MV3; `webRequest` + `storage` + `nativeMessaging`, host `<all_urls>`, pinned `key`; name/description from `_locales` |
 | `bridge.js`                   | server discovery through the native host; loaded by the popup and `importScripts`ed by the worker |
 | `background.js`               | service worker: observational `webRequest.onSendHeaders` capture of `.mp4` requests; the `onStartup` version check |
-| `popup.html` / `.css` / `.js` | the toolbar popup: source, course, kind, name, Download                                          |
+| `popup.html` / `.css` / `.js` | the toolbar popup: mode switch, source, then course/kind/name or file name/folder, Download      |
 | `_locales/{en,he}/`           | every user-facing string; Hebrew wording copied from `frontend/src/locales/he/messages.po`       |
 | `icons/`                      | 16/32/48/128 PNGs extracted from `electron/assets/icon.ico`                                      |
 | `fonts/`                      | Heebo 400/500/600 woff2, hebrew + latin subsets, from `@fontsource/heebo` (OFL, `fonts/OFL.txt`) |
@@ -27,6 +27,7 @@ Extension ID: **`hknnjgdhokbapjodjklfodhobjekjlnn`**, pinned by the public `key`
 - **Per-page isolation** is by exact `pageUrl === activeTab.url` (query and hash included), so captures from other tabs never leak in and navigating away hides earlier ones.
 - **Sizes** come from the server's `POST /probe-size`, since `Cookie` is a forbidden `fetch` header; `[…]` while pending, `[?]` when unknown.
 - **PDF** is fetched by the popup itself with `credentials: 'include'`, so the user's session cookies authenticate, then uploaded as bytes.
+- **Mode** (`popupMode` in storage): "App lecture" sends course/kind/name; "General video" sends `dest:'folder'` + a file name prefilled from the tab title, and shows the server's folder read-only. "Choose folder…" asks the server to have the app window open its picker (the popup can't host one); the new folder shows on the next open ([DOWNLOAD.md](../server/docs/DOWNLOAD.md)).
 
 ## MV3 rules this relies on
 

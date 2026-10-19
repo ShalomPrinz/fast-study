@@ -264,11 +264,20 @@ other failure; they previously fell through to the bare status line.
 | `routes/downloadItem.js`  | job        | `recapture_passcode_required`  | —                       | user  |
 | `routes/downloadItem.js`  | job        | `recapture_unsupported`     | `detail`                   | user  |
 | `routes/downloadItem.js`  | job        | `recapture_failed`          | `detail`                   | user  |
+| `routes/jobs.js`          | http       | `job_unknown`               | —                          | user  |
+| `routes/generalFolder.js` | http       | `folder_picker_unavailable` | —                          | user  |
+| `generalFolder.js`        | http       | `general_folder_missing`    | `folder`                   | user  |
+| `generalFolder.js`        | http       | `general_folder_not_writable` | `folder`, `detail`       | user  |
+| `generalFolder.js`        | http, job  | `general_folder_save_failed` | `folder`, `detail`        | user  |
 
 `/download-item` and `/download-url` forward auto's `/resolve` refusal body verbatim, so a manual URL on
 the Moodle site can answer auto's `moodle_busy`, `link_not_a_video`, `link_dead` or
 `link_probe_inconclusive`; `autodl_unreachable` reaches `/download-url` for any URL, since only auto
 can say which URLs are Moodle's.
+
+The `general_folder_*` codes are a general-video download into the user's chosen folder: `missing` and
+`not_writable` answer `POST /general-folder` (400) and the three download routes (409); `save_failed`
+ends a folder job, or answers a folder `/upload-pdf` with 500.
 
 `services/database.js` forwards the database's own `code`/`params` (`name_reserved`, `file_locked`, …)
 on both channels unchanged, so `database_store_failed` is only the fallback for a failure with no code

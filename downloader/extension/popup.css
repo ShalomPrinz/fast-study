@@ -52,10 +52,12 @@
 :root {
   --bg: #fbfbfd;
   --surface: #ffffff;
+  --surface-sunken: #f7f8ff;
   --text: #17171f;
   --text-2: #55596b;
   --text-4: #a4a8b8;
   --line: #e8e9ef;
+  --line-soft: #f0f1f5;
   --control-line: #dcdee7;
   --ink: #17171f;
   --accent: #4f5bd5;
@@ -69,6 +71,7 @@
   --space-6: 18px;
   --r-sm: 8px;
   --r: 9px;
+  --shadow-sm: 0 1px 2px rgba(23, 23, 31, 0.08);
   --font-ui: 'Heebo', 'Noto Sans Hebrew', system-ui, sans-serif;
   --fs-section: 17px;
   --fs-body: 13px;
@@ -198,7 +201,58 @@ input[dir='auto']:placeholder-shown {
   accent-color: var(--accent);
 }
 
-/* After the app's button.css: .btn plus the one filled --primary variant. */
+/* After the app's segmented.css `.mode-toggle--light`: the App lecture / General video switch,
+   two radios worn as segments. */
+.modes {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--r);
+  background: var(--line-soft);
+}
+
+.mode {
+  flex: 1;
+  cursor: pointer;
+}
+
+.mode input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode span {
+  display: block;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mode:hover span {
+  color: var(--text);
+}
+
+.mode input:checked + span {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.mode input:focus-visible + span {
+  outline: 2px solid var(--accent);
+}
+
+.folder-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* After the app's button.css: .btn plus the filled --primary and outlined --ghost variants. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -256,4 +310,24 @@ input[dir='auto']:placeholder-shown {
 .result-detail {
   color: var(--text-2);
   overflow-wrap: anywhere;
+}
+
+.btn--ghost {
+  padding: var(--space-2) var(--space-5);
+  border-color: var(--control-line);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.btn--ghost:disabled {
+  color: var(--text-4);
+  cursor: not-allowed;
 }

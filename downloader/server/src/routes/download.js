@@ -4,6 +4,7 @@ import { YTDLP_HOST_RE } from '../downloaders/ytdlp.js';
 import { invalidRequest, storedName, validateKind } from '../validate.js';
 import { createJob } from '../jobs.js';
 import { ensureCourse } from '../services/database.js';
+import { folderSaver, folderTarget } from '../generalFolder.js';
 
 const router = Router();
 
@@ -44,6 +45,24 @@ function namesError(course, _lecture) {
   );
 }
 
+// `dest` picks where the file lands: 'app' (default) the database, 'folder' the general folder.
+// Null when valid, else the 400 body.
+function destError(dest) {
+  if (dest === undefined || dest === 'app' || dest === 'folder') return null;
+  return invalidRequest('dest', `invalid dest: ${dest}`);
+}
+
+// A general-mode download: no course, no database, the file moved into the persisted folder
+// (docs/DOWNLOAD.md). `fileName` in the answer is the stem; the job's turns into the saved name.
+function startFolderJob(res, downloader, input, fileName) {
+  const target = folderTarget(fileName);
+  if (target.body) return res.status(target.status).json(target.body);
+  const { folder, stem } = target;
+  const jobId = createJob({ tool: downloader.tool, dest: 'folder', folder, fileName: stem });
+  runDownloadJob(downloader, input, { jobId, save: folderSaver(folder, stem), label: stem });
+  res.json({ status: 'Downloading in background...', jobId, folder, fileName: stem });
+}
+
 // The extension reads `status`/`target` verbatim, so the public routes keep answering
 // with them alongside the job id.
 function startAndAnswer(res, downloader, input, { course, lecture, kind }) {
@@ -60,10 +79,13 @@ async function ensureThenStart(res, downloader, input, meta) {
 }
 
 router.post('/download', async (req, res) => {
-  const { url, headers, course, lecture, kind = 'lecture' } = req.body ?? {};
+  const { url, headers, course, lecture, kind = 'lecture', dest, fileName } = req.body ?? {};
   if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
     return res.status(400).json(invalidRequest('url', 'valid url required'));
   }
+  const destErr = destError(dest);
+  if (destErr) return res.status(400).json(destErr);
+  if (dest === 'folder') return startFolderJob(res, downloaders.curl, { url, headers }, fileName);
   const names = storedNames(course, lecture);
   if (!names) {
     return res.status(400).json(namesError(course, lecture));
@@ -91,7 +113,7 @@ router.post('/download-file', (req, res) => {
 });
 
 router.post('/download-youtube', async (req, res) => {
-  const { url, course, lecture, kind = 'lecture' } = req.body ?? {};
+  const { url, course, lecture, kind = 'lecture', dest, fileName } = req.body ?? {};
   let host = '';
   try {
     host = new URL(url).hostname;
@@ -101,6 +123,9 @@ router.post('/download-youtube', async (req, res) => {
       .status(400)
       .json(invalidRequest('url', 'valid youtube or google drive url required'));
   }
+  const destErr = destError(dest);
+  if (destErr) return res.status(400).json(destErr);
+  if (dest === 'folder') return startFolderJob(res, downloaders.ytdlp, { url }, fileName);
   const names = storedNames(course, lecture);
   if (!names) {
     return res.status(400).json(namesError(course, lecture));
