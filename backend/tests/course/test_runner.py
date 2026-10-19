@@ -1324,7 +1324,7 @@ class TestStatusAndListing:
         assert asyncio.run(go()) == ["א", "ב", "ד"]
 
     def test_active_courses_survives_concurrent_inserts(self):
-        # Simulates the event loop inserting keys mid-iteration (the route runs on a threadpool).
+        # Simulates another thread inserting keys mid-iteration.
         class InsertingLock:
             def locked(self):
                 course_runner._locks[("new", str(len(course_runner._locks)))] = None

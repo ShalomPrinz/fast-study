@@ -269,7 +269,7 @@ async def overview_generate(
 
 
 @app.get("/courses/{course}/overview/status")
-def overview_status(course: str):
+async def overview_status(course: str):
     """Overview status for a course, aggregated over the shared per-(course, slug) store."""
 
     return course_runner.get_status(course)
@@ -312,10 +312,11 @@ async def run_all_endpoint():
 
 
 @app.get("/status")
-def runner_status_endpoint():
+async def runner_status_endpoint():
     """Live status snapshot for the runner. Cheap; refetched by the UI on each SSE notify."""
 
-    runner.prune_stale_errors()
+    # Async so runner state is read and pruned on the loop that mutates it, never a threadpool.
+    await runner.prune_stale_errors()
     return runner.get_status()
 
 

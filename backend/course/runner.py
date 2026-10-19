@@ -42,7 +42,7 @@ def active_courses() -> list[str]:
     """Courses with an overview slug pending or holding its lock — a run that a course rename
     would break. The lock covers the gap between phases, when the entry briefly reads "done"."""
 
-    # Snapshot each dict: this runs on a threadpool thread while the loop may insert keys.
+    # Snapshot each dict: _run_slug_phase writes entries from a worker thread (asyncio.to_thread).
     held = {c for (c, _slug), lock in list(_locks.items()) if lock.locked()}
     seeded = {
         c

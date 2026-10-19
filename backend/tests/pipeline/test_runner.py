@@ -1957,11 +1957,11 @@ def test_prune_stale_errors_drops_renamed_and_deleted_lectures():
             runner._errors[keep] = runner._error_record("transcribe", "boom", code="x")
             runner._errors[old] = runner._error_record("transcribe", "boom", code="x")
             with patch.object(runner.db_client, "get_tree", return_value=tree):
-                runner.prune_stale_errors()
+                asyncio.run(runner.prune_stale_errors())
             assert list(runner._errors) == [keep]
         # The delete's poll already dropped it, so the recreated name has nothing to inherit.
         with patch.object(runner.db_client, "get_tree", return_value=recreated):
-            runner.prune_stale_errors()
+            asyncio.run(runner.prune_stale_errors())
         assert list(runner._errors) == [keep]
     finally:
         runner._errors.clear()
@@ -1982,7 +1982,25 @@ def test_prune_stale_errors_keeps_an_existing_lecture_without_a_video():
         runner._errors[skey] = runner._error_record("summarize", "boom", code="x")
         runner._errors[rkey] = runner._error_record("summarize", "boom", code="x")
         with patch.object(runner.db_client, "get_tree", return_value=tree):
-            runner.prune_stale_errors()
+            asyncio.run(runner.prune_stale_errors())
         assert set(runner._errors) == {skey, rkey}
+    finally:
+        runner._errors.clear()
+
+
+def test_prune_stale_errors_keeps_an_error_written_during_the_tree_fetch():
+    """The tree predates a record the loop writes mid-fetch, so that record must survive."""
+    stale = runner._skey("C1", "Old", "lecture")
+    fresh = runner._skey("C1", "New", "lecture")
+
+    def get_tree():
+        runner._errors[fresh] = runner._error_record("transcribe", "boom", code="x")
+        return [{"name": "C1", "lectures": []}]
+
+    try:
+        runner._errors[stale] = runner._error_record("transcribe", "boom", code="x")
+        with patch.object(runner.db_client, "get_tree", side_effect=get_tree):
+            asyncio.run(runner.prune_stale_errors())
+        assert list(runner._errors) == [fresh]
     finally:
         runner._errors.clear()

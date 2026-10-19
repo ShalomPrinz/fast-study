@@ -159,14 +159,16 @@ def get_status() -> dict:
     }
 
 
-def prune_stale_errors() -> None:
+async def prune_stale_errors() -> None:
     """Drop errors whose lecture no longer exists: a rename or delete never reaches the runner.
     Any existing lecture keeps its error whatever files it has, since a step may run off any of them."""
 
     if not _errors:
         return
+    # A record written while the tree is fetched postdates it, so only earlier ones may go.
+    before = dict(_errors)
     try:
-        tree = db_client.get_tree()
+        tree = await asyncio.to_thread(db_client.get_tree)
     except Exception:
         return  # database unreachable: keep what we have rather than lose real failures
     live = {
@@ -175,8 +177,9 @@ def prune_stale_errors() -> None:
         for kind, key in (("lecture", "lectures"), ("recitation", "recitations"))
         for lec in c.get(key) or []
     }
-    for skey in [k for k in _errors if k not in live and k not in _in_flight]:
-        del _errors[skey]
+    for skey, record in before.items():
+        if skey not in live and skey not in _in_flight and _errors.get(skey) is record:
+            del _errors[skey]
 
 
 # ---- empty-file guard ----

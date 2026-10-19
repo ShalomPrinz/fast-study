@@ -357,3 +357,37 @@ def test_status_keeps_a_step_error_on_a_lecture_without_a_video():
         assert body["errors"][skey]["step"] == "summarize"
     finally:
         backend_main.runner._errors.clear()
+
+
+class TestStatus:
+    def test_prunes_errors_on_the_loop_and_fetches_the_tree_off_it(self):
+        """_errors is mutated unlocked by the loop, so /status may only touch it from there."""
+
+        def on_loop():
+            try:
+                asyncio.get_running_loop()
+                return True
+            except RuntimeError:
+                return False
+
+        seen = {}
+
+        class LoopOnlyDict(dict):
+            def __delitem__(self, key):
+                seen["delete_on_loop"] = on_loop()
+                super().__delitem__(key)
+
+        def get_tree():
+            seen["fetch_on_loop"] = on_loop()
+            return []
+
+        skey = backend_main.runner._skey("C", "Gone", "lecture")
+        errors = LoopOnlyDict({skey: backend_main.runner._error_record("pdf", "x")})
+        with (
+            patch.object(backend_main.runner, "_errors", errors),
+            patch.object(backend_main.runner.db_client, "get_tree", get_tree),
+        ):
+            response = client.get("/status")
+        assert response.status_code == 200
+        assert response.json()["errors"] == {}
+        assert seen == {"delete_on_loop": True, "fetch_on_loop": False}
