@@ -36,8 +36,8 @@ code (`utils/stepState.ts`); the row's `data-status` carries the same state.
 
 **Rotate** deletes a file _and every later file in `PIPELINE`_ that exists, then re-runs its step — why
 it derives from `PIPELINE` order rather than a per-step list. A refused delete (`file_locked`, the file open in the
-user's PDF app) toasts and stops before the step, which would only hit the same lock; the editor's
-re-export and a material delete share the guard.
+user's PDF app) toasts and stops before the step, which would only hit the same lock; a material delete
+shares the guard. The editor's re-export instead runs `pdf` with `fresh=true`, so the delete happens under the lecture lock.
 
 A provider quota or rate limit is an error like any other: `gemini_quota_*` and `groq_rate_limit*` codes
 (`isQuotaError`) mark the step with the quota glyph, and a `blocked` record is not toasted again per lecture.
@@ -114,7 +114,10 @@ the toast both render it through `ServiceError` ([I18N.md](I18N.md)), the toast 
 tests the four quota codes (two Gemini, two Groq) `backend/pipeline/runner.py` spells, which is also what marks the row's glyph.
 
 Error toasts go through `useReportOnce`, which dedupes `(key, failureId)` across refreshes; `prune` lets a
-key fire again if the error recurs. A quota toasts only when not `blocked` — the lecture that hit the limit,
+key fire again if the error recurs. A run that fails within milliseconds (a locked file) can clear and re-set
+an identical error between two refreshes, so a caller whose run answered `started` calls `markStarted`: it
+rearms the key and hides the old error from every `/status` issued before the answer, since the backend
+clears it before serving any later request. A quota toasts only when not `blocked` — the lecture that hit the limit,
 not each one run-all then stopped at summarize.
 
 `useRemoteInflightState` turns the open lecture's entry into a render descriptor; progress comes from the

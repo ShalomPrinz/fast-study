@@ -51,10 +51,18 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
   // The first applied status and tree carry errors and warnings from before load: seed-and-suppress them.
   const statusPrimed = useRef(false)
   const treePrimed = useRef(false)
+  // Lectures whose run this window started, each with the last refresh id issued before the `started`
+  // answer: the backend clears the old error before it serves any later request, so only those may hold it.
+  const startedAt = useRef(new Map<string, number>())
   // `refreshUntil` callers, each told of every applied tree; one returns true once it is satisfied.
   const treeWaiters = useRef(new Set<(courses: Course[]) => boolean>())
 
-  function applyStatus(s: RunnerStatus) {
+  function applyStatus(fetched: RunnerStatus, id: number) {
+    let s = fetched
+    for (const [key, at] of startedAt.current) {
+      if (id > at) startedAt.current.delete(key)
+      else s = withoutError(s, key)
+    }
     setStatus(s)
     const validKeys = new Set(Object.keys(s.errors))
     validKeys.add('runner-crash')
@@ -88,7 +96,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     // Overtaken by a pair already shown.
     if (!pair) return
     const [s, c] = pair
-    if (s.status === 'fulfilled') applyStatus(s.value)
+    if (s.status === 'fulfilled') applyStatus(s.value, id)
     if (c.status === 'fulfilled') {
       setCourses(c.value)
       for (const w of treeWaiters.current) if (w(c.value)) treeWaiters.current.delete(w)
@@ -147,6 +155,16 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     }
   }
 
+  // A previous attempt's error would otherwise read as this run's outcome until a refresh shows it gone,
+  // and a start-to-failure too quick for any refresh to see would leave an identical new error unannounced.
+  function markStarted(course: string, lecture: string, kind: Kind) {
+    const key = inFlightKey(course, lecture, kind)
+    startedAt.current.set(key, issued.current)
+    pruneErrors(new Set(), (k) => k === key)
+    setStatus((prev) => prev && withoutError(prev, key))
+    void refresh()
+  }
+
   function isInFlight(course: string, lecture: string, kind: Kind): boolean {
     const key = inFlightKey(course, lecture, kind)
     return status?.inFlight.some((e) => inFlightKey(e.course, e.lecture, e.kind) === key) ?? false
@@ -178,9 +196,18 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     <CourseTreeContext.Provider
       value={{ courses: sortedCourses, loaded, loadFailed, refreshCourses: refresh, refreshUntil }}
     >
-      <RunnerStatusContext.Provider value={{ status, trigger, isInFlight, getInFlight, getError }}>
+      <RunnerStatusContext.Provider
+        value={{ status, trigger, isInFlight, getInFlight, getError, markStarted }}
+      >
         {children}
       </RunnerStatusContext.Provider>
     </CourseTreeContext.Provider>
   )
+}
+
+function withoutError(s: RunnerStatus, key: string): RunnerStatus {
+  if (!(key in s.errors)) return s
+  const errors = { ...s.errors }
+  delete errors[key]
+  return { ...s, errors }
 }

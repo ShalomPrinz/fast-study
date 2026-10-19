@@ -18,6 +18,7 @@ import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import {
   kindQuery,
   lectureBase,
+  runStepQuery,
   courseOverviewBase,
   overviewGenerateQuery,
 } from '@/shared/utils/url'
@@ -31,9 +32,10 @@ export async function runStep(
   lecture: string,
   step: Step,
   kind?: Kind,
+  fresh?: boolean,
 ): Promise<RunInitResult> {
   return backend.post<RunInitResult>(
-    `${lectureBase(course, lecture)}/run/${step}${kindQuery(kind)}`,
+    `${lectureBase(course, lecture)}/run/${step}${runStepQuery(kind, fresh)}`,
   )
 }
 

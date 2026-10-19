@@ -5,7 +5,6 @@ import {
   fetchSummaryContent,
   saveSummaryContent,
   revertSummary,
-  deleteFile,
   fileUrl,
 } from '@/services/database'
 import { runStep } from '@/services/backend'
@@ -31,8 +30,10 @@ import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import {
   canUpdatePdf,
   diskChange,
+  freshPdfLanded,
   pdfGenerating,
   updatePdfDisabled,
+  updatePdfReason,
 } from '@/features/lectures/utils/summaryBuffer'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
@@ -45,7 +46,7 @@ export default function EditSummaryView() {
   const { t } = useLingui()
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
-  const { getError, getInFlight, isInFlight } = useRunnerStatus()
+  const { getError, getInFlight, isInFlight, markStarted } = useRunnerStatus()
   const { courses, loaded: treeLoaded, loadFailed } = useCourseTreeContext()
   const lectureError: ServiceFailure | null = getError(course, lecture, kind)
 
@@ -64,6 +65,8 @@ export default function EditSummaryView() {
 
   // True only while waiting for the pdf step this view started.
   const pdfFiredRef = useRef(false)
+  // The PDF's mtime when that step was asked for, so the old file is not taken for the new one.
+  const firedMtimeRef = useRef<number | null>(null)
   const latest = useLatestRequest()
   // The buffer as of the last render, for a disk read that resolves after later keystrokes.
   const bufferRef = useRef({ content, savedContent })
@@ -75,10 +78,11 @@ export default function EditSummaryView() {
   const summaryMtime = files?.['summary.md'].mtime ?? null
 
   // Runs on every refresh; the ref limits it to the generate this view started, whose missing PDF
-  // is our own delete — see docs/EDITOR.md.
+  // is the run's own delete — see docs/EDITOR.md.
   useEffect(() => {
     if (!files) return
-    const pdfExists = files['summary.pdf'].exists
+    const pdf = files['summary.pdf']
+    const pdfExists = pdf.exists
     if (!pdfFiredRef.current) {
       setShowPdf(pdfExists)
       return
@@ -87,9 +91,9 @@ export default function EditSummaryView() {
       pdfFiredRef.current = false
       setUpdating(false)
       setShowPdf(pdfExists)
+      // The runner status toasts every step error itself; the toolbar keeps it beside the button.
       setError(lectureError)
-      toast('error', serviceErrorNode(lectureError))
-    } else if (pdfExists) {
+    } else if (freshPdfLanded(pdf, firedMtimeRef.current)) {
       pdfFiredRef.current = false
       setUpdating(false)
       setShowPdf(true)
@@ -190,21 +194,15 @@ export default function EditSummaryView() {
   async function handleSaveAndUpdatePdf() {
     setUpdating(true)
     setError(null)
+    firedMtimeRef.current = files?.['summary.pdf'].mtime ?? null
     if (!(await persist())) {
       setUpdating(false)
       return
     }
-    // A pdf we cannot delete — a viewer still holding it open — is one the step could not write
-    // either, so the failure is reported here rather than pushed into a doomed run.
+    // `fresh` has the backend delete the old PDF inside the lecture lock, so a `busy` answer leaves it
+    // in place; a delete it cannot make (a viewer holding the file) arrives as the step's error.
     try {
-      await deleteFile(course, lecture, 'summary.pdf', kind)
-    } catch (e) {
-      reportFailure(e, t`Failed to generate PDF`)
-      setUpdating(false)
-      return
-    }
-    try {
-      const initResult = await runStep(course, lecture, 'pdf', kind)
+      const initResult = await runStep(course, lecture, 'pdf', kind, true)
       if (initResult.status !== 'started') {
         toastInitResult(initResult, { busy: t`Step already running` })
         setUpdating(false)
@@ -215,6 +213,7 @@ export default function EditSummaryView() {
       setUpdating(false)
       return
     }
+    markStarted(course, lecture, kind)
     pdfFiredRef.current = true
   }
 
@@ -235,8 +234,9 @@ export default function EditSummaryView() {
   const canUpdate = canUpdatePdf(content, dirty, files)
   const blank = !loading && !content.trim()
   const generating = pdfGenerating(updating, getInFlight(course, lecture, kind))
-  // A run answers `busy` while any step holds the lecture, after the PDF was already deleted.
+  // A run answers `busy` while any step holds the lecture.
   const inflight = isInFlight(course, lecture, kind)
+  const updateReason = updatePdfReason({ inflight, generating, blank, canUpdate })
 
   return (
     <div className="edit-view">
@@ -273,13 +273,13 @@ export default function EditSummaryView() {
           <Tooltip
             placement="bottom"
             content={
-              inflight
+              updateReason === 'busy'
                 ? t`Step already running`
-                : blank
+                : updateReason === 'blank'
                   ? t`The summary is empty`
-                  : canUpdate
-                    ? undefined
-                    : t`Already up to date`
+                  : updateReason === 'current'
+                    ? t`Already up to date`
+                    : undefined
             }
           >
             <button

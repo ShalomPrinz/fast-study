@@ -14,18 +14,24 @@ Leaving the editor discards unsaved changes, with no confirm or `beforeunload`: 
 ## Saving
 
 `Save & update PDF` is the only write path — a saved summary whose PDF still shows the old text is never
-what the user wanted. It runs save → delete `summary.pdf` → run `pdf`, then waits for SSE; the database
-notifies on every summary write, so the stale chip's mtimes arrive the same way. It is enabled for a
-dirty buffer, a stale PDF or no PDF — stale by the mtime rule (`pdfNeedsUpdate`), not the chip, which a
-render warning outranks — and never for a blank buffer (`canUpdatePdf`), whose save would leave an empty
-`summary.md` and delete a PDF the render cannot replace. It is also disabled (title `Step already running`)
-while any step holds the lecture (`isInFlight`): the run would answer `busy` after the PDF was deleted.
+what the user wanted. It saves, then runs `pdf` with `fresh=true`, and waits for SSE; the database
+notifies on every summary write, so the stale chip's mtimes arrive the same way. `fresh` has the backend
+delete the old PDF inside the lecture lock, so a `busy` answer leaves it in place, and a PDF it cannot
+delete (open in a viewer) arrives as the step's error (`file_locked`) on `lectureError`, shown in the
+toolbar; the runner status toasts it. `markStarted` keeps the previous attempt's error from ending the new run. It is enabled
+for a dirty buffer, a stale PDF or no PDF — stale by the mtime rule (`pdfNeedsUpdate`), not the chip,
+which a render warning outranks — and never for a blank buffer (`canUpdatePdf`), whose save would leave
+an empty `summary.md` the render cannot turn into a PDF. It is also disabled while any step holds the
+lecture (`isInFlight`), whose run would only answer `busy`; the tooltip says `Step already running` only
+when that is another run, never during this view's own update (`updatePdfReason`).
 `Restore original` discards every edit and deletes the snapshot, so it is confirm-gated; a failure
 (`summary.md` held open elsewhere) reports like a failed save, in the toolbar and as a toast.
 
 The effect watching `files`/`lectureError` runs on every refresh, so `pdfFiredRef` limits it to the run
 this view started: otherwise a sibling file change or another lecture's error would clear the generating
-state, and the self-inflicted missing PDF would flash the "no PDF yet" placeholder. `PdfViewer`'s
+state, and the run's own missing PDF would flash the "no PDF yet" placeholder. The run ends on its error
+or on a PDF whose mtime differs from the one at the press (`freshPdfLanded`): the backend deletes the old
+file only once the run holds the lecture, so a refresh before that still shows it. `PdfViewer`'s
 `generating` wins over both, so one spinner covers the cycle.
 `generating` is that local cycle or the runner reporting this lecture's `pdf` step (`pdfGenerating`), so a
 reload mid-render keeps the spinner and the disabled Save; other steps in flight do not count.

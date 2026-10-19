@@ -1,4 +1,4 @@
-import type { FileStatus, InFlightEntry } from '@/types'
+import type { FileInfo, FileStatus, InFlightEntry } from '@/types'
 import { pdfNeedsUpdate } from './pdfBadge'
 
 export type DiskChange = 'none' | 'reload' | 'conflict'
@@ -24,8 +24,8 @@ export function pdfGenerating(localCycle: boolean, inFlight: InFlightEntry | nul
   return localCycle || inFlight?.step === 'pdf'
 }
 
-// Whether the `Save & update PDF` button is disabled. Any step in flight blocks it: the run would answer
-// `busy` after the PDF was already deleted, leaving none.
+// Whether the `Save & update PDF` button is disabled. Any step in flight blocks it: the run would only
+// answer `busy`.
 export function updatePdfDisabled(s: {
   canUpdate: boolean
   generating: boolean
@@ -34,4 +34,26 @@ export function updatePdfDisabled(s: {
   diskConflict: boolean
 }): boolean {
   return !s.canUpdate || s.generating || s.inflight || s.loading || s.diskConflict
+}
+
+export type UpdatePdfReason = 'busy' | 'blank' | 'current' | null
+
+// Why `Save & update PDF` cannot be pressed, for its tooltip. None while generating, whose label says it,
+// so `busy` is only ever another run holding the lecture.
+export function updatePdfReason(s: {
+  inflight: boolean
+  generating: boolean
+  blank: boolean
+  canUpdate: boolean
+}): UpdatePdfReason {
+  if (s.generating) return null
+  if (s.inflight) return 'busy'
+  if (s.blank) return 'blank'
+  return s.canUpdate ? null : 'current'
+}
+
+// Whether the render this view started has written its PDF. The backend deletes the old one only once
+// the run holds the lecture, so a refresh can still show it; a changed mtime is the new file.
+export function freshPdfLanded(pdf: FileInfo, firedMtime: number | null): boolean {
+  return pdf.exists && pdf.mtime !== firedMtime
 }

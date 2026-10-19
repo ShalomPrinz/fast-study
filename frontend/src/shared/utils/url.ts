@@ -15,6 +15,12 @@ export function kindQuery(kind: Kind | undefined): string {
   return kind === 'recitation' ? '?kind=recitation' : ''
 }
 
+// /run/{step} query: the kind plus `fresh`, which has the backend delete the step's output under the lecture lock.
+export function runStepQuery(kind: Kind | undefined, fresh?: boolean): string {
+  const q = kindQuery(kind)
+  return fresh ? `${q}${q ? '&' : '?'}fresh=true` : q
+}
+
 // Browser route for a lecture — note it differs from the API path below.
 export function lectureRoute(course: string, lecture: string, kind: Kind | undefined): string {
   return path`/${course}/${lecture}` + kindQuery(kind)

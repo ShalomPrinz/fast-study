@@ -8,6 +8,8 @@ interface RunnerStatusValue {
   isInFlight: (course: string, lecture: string, kind: Kind) => boolean
   getInFlight: (course: string, lecture: string, kind: Kind) => InFlightEntry | null
   getError: (course: string, lecture: string, kind: Kind) => RunError | null
+  // Called when this window's run answered `started`: drops the lecture's previous error.
+  markStarted: (course: string, lecture: string, kind: Kind) => void
 }
 
 export type UpdateKind = 'info' | 'error'
@@ -18,6 +20,7 @@ export const RunnerStatusContext = createContext<RunnerStatusValue>({
   isInFlight: () => false,
   getInFlight: () => null,
   getError: () => null,
+  markStarted: () => {},
 })
 
 export function useRunnerStatus() {

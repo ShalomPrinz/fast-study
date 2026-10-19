@@ -3,6 +3,7 @@ import { matchRoutes } from 'react-router-dom'
 import {
   path,
   kindQuery,
+  runStepQuery,
   courseRoute,
   lectureRoute,
   lectureBase,
@@ -24,6 +25,15 @@ describe('kindQuery', () => {
     expect(kindQuery('recitation')).toBe('?kind=recitation')
     expect(kindQuery('lecture')).toBe('')
     expect(kindQuery(undefined)).toBe('')
+  })
+})
+
+describe('runStepQuery', () => {
+  it('appends fresh after the kind, or alone for a lecture', () => {
+    expect(runStepQuery('recitation', true)).toBe('?kind=recitation&fresh=true')
+    expect(runStepQuery('lecture', true)).toBe('?fresh=true')
+    expect(runStepQuery('recitation')).toBe('?kind=recitation')
+    expect(runStepQuery(undefined, false)).toBe('')
   })
 })
 

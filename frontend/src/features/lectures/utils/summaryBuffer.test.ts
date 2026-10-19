@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import type { FileStatus, FileInfo, InFlightEntry } from '@/types'
-import { canUpdatePdf, diskChange, pdfGenerating, updatePdfDisabled } from './summaryBuffer'
+import {
+  canUpdatePdf,
+  diskChange,
+  freshPdfLanded,
+  pdfGenerating,
+  updatePdfDisabled,
+  updatePdfReason,
+} from './summaryBuffer'
 
 const info = (over: Partial<FileInfo> = {}): FileInfo => ({
   exists: false,
@@ -111,5 +118,35 @@ describe('updatePdfDisabled', () => {
     expect(updatePdfDisabled({ ...ready, generating: true })).toBe(true)
     expect(updatePdfDisabled({ ...ready, loading: true })).toBe(true)
     expect(updatePdfDisabled({ ...ready, diskConflict: true })).toBe(true)
+  })
+})
+
+describe('updatePdfReason', () => {
+  const base = { inflight: false, generating: false, blank: false, canUpdate: true }
+
+  it('says another run holds the lecture only when this view is not generating', () => {
+    expect(updatePdfReason({ ...base, inflight: true })).toBe('busy')
+    expect(updatePdfReason({ ...base, inflight: true, generating: true })).toBeNull()
+  })
+
+  it('names an empty buffer before an up-to-date PDF', () => {
+    expect(updatePdfReason({ ...base, blank: true, canUpdate: false })).toBe('blank')
+    expect(updatePdfReason({ ...base, canUpdate: false })).toBe('current')
+    expect(updatePdfReason(base)).toBeNull()
+  })
+})
+
+describe('freshPdfLanded', () => {
+  it('ignores the old PDF the backend has not deleted yet', () => {
+    expect(freshPdfLanded(info({ exists: true, mtime: 100 }), 100)).toBe(false)
+  })
+
+  it('waits while the PDF is missing', () => {
+    expect(freshPdfLanded(info(), 100)).toBe(false)
+  })
+
+  it('takes a PDF with a new mtime, or any PDF when there was none', () => {
+    expect(freshPdfLanded(info({ exists: true, mtime: 200 }), 100)).toBe(true)
+    expect(freshPdfLanded(info({ exists: true, mtime: 200 }), null)).toBe(true)
   })
 })

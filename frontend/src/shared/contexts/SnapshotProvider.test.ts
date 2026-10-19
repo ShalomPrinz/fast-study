@@ -223,3 +223,60 @@ describe('the course tree', () => {
     ])
   })
 })
+
+describe('markStarted', () => {
+  const LOCKED = {
+    step: 'pdf',
+    message: 'summary.pdf is open in another program.',
+    code: 'file_locked',
+    params: { file: 'summary.pdf' },
+    provider: null,
+    blocked: false,
+  }
+  const failed = () =>
+    ({
+      ...status(1),
+      errors: { 'C||L||lecture': LOCKED },
+    }) as unknown as RunnerStatus
+
+  // Booted after a failed attempt, with a pair issued before the next start still out.
+  async function retried() {
+    const sendUpdate = vi.fn()
+    const stale = deferred<RunnerStatus>()
+    const afterStart = deferred<RunnerStatus>()
+    fetchRunnerStatus
+      .mockResolvedValueOnce(failed())
+      .mockReturnValueOnce(stale.promise)
+      .mockReturnValueOnce(afterStart.promise)
+    fetchTree.mockResolvedValue(tree(1))
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(SnapshotProvider, { sendUpdate, children })
+    const { result } = renderHook(() => useRunnerStatus(), { wrapper })
+    await act(async () => {})
+    act(() => {
+      notify.cb()
+    })
+    const errorToasts = () => sendUpdate.mock.calls.filter(([kind]) => kind === 'error').length
+    return { result, errorToasts, stale, afterStart }
+  }
+
+  it("hides the previous attempt's error, even from a pair issued before the start", async () => {
+    const { result, stale } = await retried()
+    act(() => result.current.markStarted('C', 'L', 'lecture'))
+    expect(result.current.getError('C', 'L', 'lecture')).toBeNull()
+
+    await act(async () => stale.resolve(failed()))
+    expect(result.current.getError('C', 'L', 'lecture')).toBeNull()
+  })
+
+  it('toasts an identical new failure once, though no refresh saw the error cleared', async () => {
+    const { result, errorToasts, stale, afterStart } = await retried()
+    act(() => result.current.markStarted('C', 'L', 'lecture'))
+    await act(async () => stale.resolve(failed()))
+    expect(errorToasts()).toBe(0)
+
+    await act(async () => afterStart.resolve(failed()))
+    expect(result.current.getError('C', 'L', 'lecture')).toEqual(LOCKED)
+    expect(errorToasts()).toBe(1)
+  })
+})
