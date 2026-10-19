@@ -416,6 +416,10 @@ requests, with real ffmpeg, pandoc and tectonic. The
 release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a
 production override, which [SMOKE.md](../../delivery/docs/SMOKE.md) rules out.
 
+An e2e spec drives a flow a real user can reach in the shipped app, through its UI or the files and
+sites it reads; a state only the harness can produce has no spec. One service restarting alone is such
+a state: the launcher has no respawn, so a dead service stays dead until the app restarts.
+
 ## Driving failures
 
 The fakes take a mode, so the quota and outage flows need no real quota:
