@@ -22,17 +22,23 @@ export function materialsOf(
   return existingNodes(kind, courses, course).find((l) => l.name === name)?.materials ?? []
 }
 
-// The single "already on disk" rule, shared by the green row and the bulk skip. An unprobed 'unknown'
-// or an 'unsupported' row has no reliable target, so it is always false.
+// The single "already on disk" rule for the green row, bulk skip and landed check; a material matches by
+// `source === ref`, so several share a node. An unprobed 'unknown' or 'unsupported' row is always false.
 export function hasResource(
-  item: { media: Media; resolvedMedia?: ResolvedMedia },
+  item: { ref?: string; media: Media; resolvedMedia?: ResolvedMedia },
   name: string,
   kind: Kind,
   courses: Course[],
   course: string,
 ): boolean {
   const media = item.resolvedMedia ?? item.media
-  if (media === 'material') return materialsOf(name, kind, courses, course).length > 0
+  if (media === 'material') {
+    const { ref } = item
+    // A ref-less caller (a manual download) or a source-less material never matches.
+    return (
+      ref !== undefined && materialsOf(name, kind, courses, course).some((m) => m.source === ref)
+    )
+  }
   if (media !== 'video') return false
   return holdsVideo(name, kind, courses, course)
 }
@@ -72,7 +78,7 @@ export function splitSiblings(
 // Whether a bulk-run target is on disk — the durable answer a run reads its outcome from. The split
 // siblings count: a zoom share queued as `name` lands as `name.1`/`.2`, and nothing else would see it.
 export function targetLanded(
-  target: { name: string; kind: Kind; media: Media | 'unsupported' },
+  target: { ref: string; name: string; kind: Kind; media: Media | 'unsupported' },
   courses: Course[],
   course: string,
 ): boolean {
@@ -80,7 +86,7 @@ export function targetLanded(
   // An unprobed 'unknown' target has no reliable on-disk target, so it never claims to have landed.
   if (target.media === 'unknown') return false
   // The target's recorded media is already the probe's answer, so it goes in as `resolvedMedia`.
-  const item = { media: 'unknown' as const, resolvedMedia: target.media }
+  const item = { ref: target.ref, media: 'unknown' as const, resolvedMedia: target.media }
   // Every candidate goes through `hasResource`'s one rule — a sibling must hold the media itself, or a
   // bare node left by an earlier run reads as landed on a row the queue's own skip would not skip.
   return [name, `${name}.1`, `${name}.2`].some((n) => hasResource(item, n, kind, courses, course))

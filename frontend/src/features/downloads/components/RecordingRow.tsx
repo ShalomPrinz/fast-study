@@ -123,7 +123,7 @@ const RecordingRow = memo(function RecordingRow({
   const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
   // Live tree, so a completed download's SSE refresh flips the card green.
   const alreadyDownloaded = hasResource(
-    { media: item.media, resolvedMedia: resolved },
+    { ref: item.ref, media: item.media, resolvedMedia: resolved },
     effectiveName,
     kind,
     courses,

@@ -33,9 +33,9 @@ export type FileInfo = {
 }
 export type FileStatus = Record<FileName, FileInfo>
 
-// One of a lecture's `material.pdf`, `material.2.pdf`, … — presence in the list is existence,
-// and names are never reused, so a URL held by name stays valid after a sibling is deleted.
-export type MaterialInfo = { name: string; size: number; mtime: number }
+// One of a lecture's `material.pdf`, `material.2.pdf`, …; names are never reused, so a URL held by name
+// outlives a sibling's delete. `source` is the discovery row's `ref`, absent for a manual or legacy PDF.
+export type MaterialInfo = { name: string; size: number; mtime: number; source?: string }
 
 export type TranscribePartial = { completed: number; total: number }
 

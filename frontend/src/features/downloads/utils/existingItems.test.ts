@@ -12,7 +12,11 @@ import {
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 const PRESENT: FileInfo = { exists: true, size: 10, mtime: 1 }
 
-const material = (name: string): MaterialInfo => ({ name, size: 10, mtime: 1 })
+// `name` or `name@source` — the tree omits `source` for a source-less material, never nulls it.
+function material(spec: string): MaterialInfo {
+  const [name, source] = spec.split('@')
+  return source ? { name, size: 10, mtime: 1, source } : { name, size: 10, mtime: 1 }
+}
 
 function node(name: string, has: { materials?: string[]; video?: boolean } = {}): Lecture {
   const files = {
@@ -69,19 +73,36 @@ describe('materialsOf', () => {
 describe('hasResource', () => {
   const courses = tree([
     node('Lecture 1', { video: true }),
-    node('Lecture 2', { materials: ['material.pdf'] }),
+    node('Lecture 2', { materials: ['material.pdf@refA'] }),
     node('Lecture 3'),
-    node('Lecture 4', { materials: ['material.pdf', 'material.2.pdf'] }),
+    node('Lecture 4', { materials: ['material.pdf@refA', 'material.2.pdf@refB'] }),
+    node('Lecture 5', { materials: ['material.pdf'] }),
   ])
-  const row = (media: Media, resolvedMedia?: ResolvedMedia) => ({ media, resolvedMedia })
-
-  it('is true for a material row when that node holds any material', () => {
-    expect(hasResource(row('material'), 'Lecture 4', 'lecture', courses, 'Algebra')).toBe(true)
+  const row = (media: Media, resolvedMedia?: ResolvedMedia, ref = 'refA') => ({
+    ref,
+    media,
+    resolvedMedia,
   })
 
-  it('is true for a material row only when that node holds a material', () => {
+  it('is true for a material row only when that node holds a material from its own ref', () => {
     expect(hasResource(row('material'), 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(
+      hasResource(row('material', undefined, 'refB'), 'Lecture 2', 'lecture', courses, 'Algebra'),
+    ).toBe(false)
+    expect(
+      hasResource(row('material', undefined, 'refB'), 'Lecture 4', 'lecture', courses, 'Algebra'),
+    ).toBe(true)
     expect(hasResource(row('material'), 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(false)
+  })
+
+  it('matches no row against a source-less material, nor a ref-less caller against any', () => {
+    expect(hasResource(row('material'), 'Lecture 5', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(hasResource({ media: 'material' }, 'Lecture 5', 'lecture', courses, 'Algebra')).toBe(
+      false,
+    )
+    expect(hasResource({ media: 'material' }, 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(
+      false,
+    )
   })
 
   it('is true for a video row only when that node holds a video.mp4', () => {
@@ -153,8 +174,16 @@ describe('overwritesVideo', () => {
 })
 
 describe('targetLanded', () => {
-  const landed = (name: string, media: Media | 'unsupported', courses: Course[]) =>
-    targetLanded({ name, kind: 'lecture', media }, courses, 'Algebra')
+  const landed = (name: string, media: Media | 'unsupported', courses: Course[], ref = 'refA') =>
+    targetLanded({ ref, name, kind: 'lecture', media }, courses, 'Algebra')
+
+  it('reads a material target as landed only once a material from its own ref is there', () => {
+    const courses = tree([
+      node('Lecture 1', { materials: ['material.pdf@refA', 'material.2.pdf'] }),
+    ])
+    expect(landed('Lecture 1', 'material', courses, 'refA')).toBe(true)
+    expect(landed('Lecture 1', 'material', courses, 'refB')).toBe(false)
+  })
 
   it('is true when the queued name itself holds the media', () => {
     expect(landed('Lecture 1', 'video', tree([node('Lecture 1', { video: true })]))).toBe(true)

@@ -268,7 +268,9 @@ submission. The stored name is then the on-disk one, which is what lets every "a
 match — no client-side sanitizing, which would only hide the desync.
 
 `hasResource(item, name, kind, courses, course)` is the single already-downloaded rule: the named node
-holds `video.mp4` for a video, any material for a material. An unprobed `unknown` or an `unsupported` row
+holds `video.mp4` for a video, or for a material a material whose `source` equals the row's `ref`
+(equality only; a source-less manual or legacy PDF matches no row), so several materials share one
+node. It also decides the bulk skip and `targetLanded`. An unprobed `unknown` or an `unsupported` row
 is always false rather than ever showing a wrong "downloaded". The overwrite guard is the separate
 `overwritesVideo`: any non-material, non-unsupported row — an unprobed `unknown` included, since it may be a
 video and a video PUT wipes the transcript and summary — confirms when its target holds `video.mp4` in the tree — never because of a job;
