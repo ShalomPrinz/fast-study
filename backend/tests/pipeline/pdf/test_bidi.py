@@ -757,3 +757,62 @@ class TestRawLatexCommands:
 
     def test_math_span_untouched(self):
         assert wrap_english_phrases(r"$\frac{a}{b}$") == r"$\frac{a}{b}$"
+
+    def test_textbf_hebrew_becomes_markdown_bold(self):
+        assert wrap_english_phrases(r"\textbf{שלום} כאן") == "**שלום** כאן"
+
+    def test_textbf_latin_becomes_wrapped_bold(self):
+        assert (
+            wrap_english_phrases(r"ראה \textbf{word} כאן") == r"ראה **\LR{word}** כאן"
+        )
+
+    def test_textit_and_emph_become_markdown_italic(self):
+        assert wrap_english_phrases(r"\textit{שלום} כאן") == "*שלום* כאן"
+        assert wrap_english_phrases(r"\emph{שלום} כאן") == "*שלום* כאן"
+
+    def test_emphasis_argument_edge_spaces_trimmed(self):
+        assert wrap_english_phrases(r"\textbf{ שלום } כאן") == "**שלום** כאן"
+
+    def test_empty_textbf_stays_literal(self):
+        assert wrap_english_phrases(r"\textbf{}") == r"\LR{\textbackslash{}textbf\{\}}"
+
+    def test_other_command_still_literal(self):
+        assert (
+            wrap_english_phrases(r"\textsc{שלום}")
+            == r"\LR{\textbackslash{}textsc\{שלום\}}"
+        )
+
+    def test_textbf_in_code_span_untouched(self):
+        md = r"`\textbf{x}` כאן"
+        assert wrap_english_phrases(md) == md
+
+    def test_already_emphasised_command_stays_literal(self):
+        assert (
+            wrap_english_phrases(r"**\textbf{x}**")
+            == r"**\LR{\textbackslash{}textbf\{x\}}**"
+        )
+        assert (
+            wrap_english_phrases(r"*\textit{x}*")
+            == r"*\LR{\textbackslash{}textit\{x\}}*"
+        )
+
+    def test_nested_braces_not_rewritten(self):
+        out = wrap_english_phrases(r"\textbf{\textit{x}}")
+        assert "*" not in out and r"\textbackslash{}textbf" in out
+
+    def test_unbalanced_brace_not_rewritten(self):
+        out = wrap_english_phrases(r"\textbf{x}}")
+        assert "*" not in out and r"\textbackslash{}textbf" in out
+
+    def test_back_to_back_same_kind_commands_merge(self):
+        assert wrap_english_phrases(r"\textbf{a}\textbf{b} סוף") == r"**\LR{ab}** סוף"
+        assert wrap_english_phrases(r"\emph{a}\textit{b} סוף") == r"*\LR{ab}* סוף"
+
+    def test_back_to_back_mixed_commands_both_rewritten(self):
+        assert (
+            wrap_english_phrases(r"\textbf{a}\emph{b} סוף") == r"**\LR{a}***\LR{b}* סוף"
+        )
+
+    def test_textbf_in_math_untouched(self):
+        md = r"$\textbf{x}$ כאן"
+        assert wrap_english_phrases(md) == md

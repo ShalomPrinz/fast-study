@@ -62,6 +62,24 @@ _ITEM = (
     + r")"
 )
 _CONT = r"(?:" + _ITEM + r"|" + _NUM + r")"
+# The LLM sometimes emphasises with LaTeX instead of markdown; rewritten to markdown so it
+# renders as emphasis. Next to a marker or brace (already emphasised, nested) it stays a _CMD.
+_EMPH_ARG = r"\{([^{}\n]*[^{}\s][^{}\n]*)\}"
+# One pass over the original text, so a rewritten neighbour's `*` never blocks the next command;
+# back-to-back same-kind commands form one run, since `*a**b*` would not parse as two emphases.
+_EMPH_RUN_RE = re.compile(
+    r"(?<![*_{])(?:((?:\\textbf" + _EMPH_ARG + r")+)"
+    r"|((?:\\(?:textit|emph)" + _EMPH_ARG + r")+))(?![*_{}])"
+)
+_EMPH_ARG_RE = re.compile(_EMPH_ARG)
+
+
+def _emphasis_to_markdown(m: re.Match) -> str:
+    marker = "**" if m.group(1) else "*"
+    body = "".join(_EMPH_ARG_RE.findall(m.group(0))).strip()
+    return marker + body + marker
+
+
 _MULTI_LATIN_RE = re.compile(r"(" + _ITEM + r"(?:" + _SEP + _CONT + r")*)([.,;:!?]*)")
 _LEADING_PUNCT_RE = re.compile(r"^([.,;:!?]+)")
 # A run ENDING in `<digit>)` mirrors that paren inside a bare \LR{} — the neutral sits
@@ -104,7 +122,8 @@ def wrap_english_phrases(text: str) -> str:
             # Odd pieces are link targets, passed through like protected spans.
             pieces = _LINK_TARGET_RE.split(part)
             for j in range(0, len(pieces), 2):
-                pieces[j] = _MULTI_LATIN_RE.sub(replace, pieces[j])
+                piece = _EMPH_RUN_RE.sub(_emphasis_to_markdown, pieces[j])
+                pieces[j] = _MULTI_LATIN_RE.sub(replace, piece)
             out.append(leading + "".join(pieces))
     return "".join(out)
 

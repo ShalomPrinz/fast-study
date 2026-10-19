@@ -380,6 +380,16 @@ class TestBidiOrderingRenders:
         assert "https://example.com/path?a=1&b=2" in vis
         assert "https://docs.python.org/3/library/os.html" in vis
 
+    def test_bold_url_paren_url_and_textbf_render(self):
+        # A bold URL keeps its `**` outside, a paren URL stays whole, \textbf{} renders bold.
+        vis = self._visual_text(
+            "ראה **https://x.com/a** וגם https://en.wikipedia.org/wiki/Foo_(bar) "
+            "ואז \\textbf{שלום} סוף.\n"
+        )
+        assert "https://x.com/a" in vis and "*" not in vis
+        assert "https://en.wikipedia.org/wiki/Foo_(bar)" in vis
+        assert "textbf" not in vis and "\\" not in vis
+
     # The inline-code paths below pin what force_ltr_inline_code's \LR{\textenglish{\texttt{}}}
     # wrapper buys at render time, so a change to the wrapper is judged here.
 
