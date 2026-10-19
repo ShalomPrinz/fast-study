@@ -403,7 +403,7 @@ They run in CI's `internal-tests` job beside the lib tests.
 
 The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`), failure surfacing
 (`hb-fail`), download (`hb-dl`), a locked `summary.pdf`, and "Run these now" joining a live run
-(`hb-dl`, then every seeded pending lecture, so it waits for the runner to drain) — and run with
+(its own two-lecture course in `data-empty`, so its queue holds nothing else) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to a running
 `setup.mjs --harness DIR`; the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to `main` and on pull
