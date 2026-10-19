@@ -28,10 +28,19 @@
   list-style: none;
 }
 
+/* A dim rule between rows, inset from both edges so it reads as a divider rather than a border. */
+.course-picker-list > li + li::before {
+  content: '';
+  display: block;
+  height: 1px;
+  margin-inline: var(--space-3);
+  background: var(--line);
+}
+
 /* A course is a full-width choice; the name hugs the start whatever its script. */
 .course-picker-item {
   width: 100%;
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border: none;
   border-radius: var(--r-sm);
   background: none;
@@ -47,9 +56,9 @@
   color: var(--accent);
 }
 
-/* Moodle's course code beside the name: picker-only context, never part of the saved name. */
+/* Moodle's course code ahead of the name: picker-only context, never part of the saved name. */
 .chip.course-picker-code {
-  margin-inline-start: var(--space-3);
+  margin-inline-end: var(--space-3);
   font-variant-numeric: tabular-nums;
 }
 

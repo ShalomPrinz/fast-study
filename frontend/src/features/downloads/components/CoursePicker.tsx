@@ -45,10 +45,10 @@ export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }
           aria-current={c.url === currentUrl || undefined}
           onClick={() => onChoose(c)}
         >
-          {/* Isolated inline, so a Hebrew name keeps the page's start edge rather than its own, and the
-              code, a number, stays beside the name instead of reordering into it. */}
-          <bdi>{c.name}</bdi>
+          {/* Each isolated, so the code chip leads on the page's start edge and a name in either script
+              can't reorder across it. */}
           {c.code && <bdi className="chip course-picker-code">{c.code}</bdi>}
+          <bdi>{c.name}</bdi>
         </button>
       </Tooltip>
     </li>
