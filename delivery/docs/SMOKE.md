@@ -65,7 +65,7 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
   as UTF-8, not lost or `\u05..`-escaped.
 - **The window is 1008x655 CSS px**, not the 1400x900 fallback it opens at (fresh userData has no saved
   size, see `electron/windowState.js`) — Windows clamps it to the runner's 1024x768 desktop (`"viewport"` in any `smoke-traces` launch trace). So a step touching
-  a layout-dependent control works in both branches — test 8 clicks `lecture-actions-menu` only if present.
+  a layout-dependent control works in both branches — test 9 clicks `lecture-actions-menu` only if present.
 - **Launched with `--lang=en-US`**, so a failure screenshot is readable.
 
 ## Boot timing
