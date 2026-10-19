@@ -648,6 +648,15 @@ def enqueue_arrival(course: str, lecture: str, kind: str) -> str:
     return "queued"
 
 
+def clear_provider_blocks() -> None:
+    """Lift the run-scoped Gemini and Groq blocks so a user's run-all retries the provider — the
+    user may have swapped keys since the block was set. Never called for an automatic arrival."""
+
+    global _summarize_block, _transcribe_block
+    _summarize_block = None
+    _transcribe_block = None
+
+
 def move_to_front(course: str, lecture: str, kind: str) -> str:
     """Make a queued lecture the runner's next one, keeping its entry and depth. Returns 'moved',
     or 'not_queued' when it is not waiting in the queue (in flight counts as not queued)."""

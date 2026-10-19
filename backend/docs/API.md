@@ -40,7 +40,7 @@ Makes a lecture waiting in the runner queue the next one it takes, keeping its `
 A new `video.mp4` landed on disk, reported by whichever service uploaded it — the downloader helper server or the frontend — once the upload succeeded. A fact, not a command: `AUTO_RUN` decides the depth and the lecture is queued rather than run inline. → `{"status": "queued"|"busy"|"off"}` — `off` when `AUTO_RUN` forbids automatic work, `busy` when the lecture is already queued, in flight, or owned by another trigger.
 
 `POST /run-all`
-Scans for pending lectures and queues them at depth `full`, whatever `AUTO_RUN` caps automatic work at — the user asked for this one explicitly. → `{"status": "started"|"already_running"|"empty_queue"|"all_in_flight"}`.
+Scans for pending lectures and queues them at depth `full`, whatever `AUTO_RUN` caps automatic work at — the user asked for this one explicitly. A live run is joined, not refused: the pending lectures not already queued or in flight are enqueued into it, and its Gemini/Groq provider blocks are cleared so they get a fresh try. → `{"status": "started"|"empty_queue"|"all_in_flight"}`.
 `all_in_flight` means every pending lecture is already owned by a concurrent trigger — the run would have skipped them all, so the UI can say so instead of appearing to do nothing.
 
 `GET /status`

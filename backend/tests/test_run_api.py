@@ -222,6 +222,66 @@ class TestRunAll:
         assert response.status_code == 500
         assert response.json()["code"] == "storage_unavailable"
 
+    def test_a_live_run_takes_the_other_pending_lectures(self, monkeypatch):
+        """Mid-run, the in-flight lecture is skipped and the rest join the drain — no second one."""
+        r = backend_main.runner
+        monkeypatch.setattr(
+            r,
+            "_runner_status",
+            {"running": True, "total": 1, "done": 0, "last_error": None},
+        )
+        monkeypatch.setattr(r, "_in_flight", {r._skey("C", "A", "lecture"): {}})
+        monkeypatch.setattr(r, "_queue", [])
+        pending = {"video.mp4": {"exists": True}}
+        tree = [
+            {
+                "name": "C",
+                "lectures": [
+                    {"name": "A", "files": pending},
+                    {"name": "B", "files": pending},
+                ],
+            }
+        ]
+        with (
+            patch.object(r.db_client, "get_tree", return_value=tree),
+            patch.object(r.db_client, "notify"),
+            patch.object(r, "run_all") as drain,
+        ):
+            response = client.post("/run-all")
+        assert response.json()["status"] == "started"
+        assert [e[:3] for e in r._queue] == [("C", "B", "lecture")]
+        assert r._runner_status["total"] == 2
+        drain.assert_not_called()
+
+    def test_joining_a_live_run_clears_its_provider_blocks(self, monkeypatch):
+        """A run-all mid-run lifts the quota blocks, so a swapped key gets tried on what it adds."""
+        r = backend_main.runner
+        monkeypatch.setattr(
+            r,
+            "_runner_status",
+            {"running": True, "total": 1, "done": 0, "last_error": None},
+        )
+        monkeypatch.setattr(r, "_in_flight", {})
+        monkeypatch.setattr(r, "_queue", [])
+        monkeypatch.setattr(r, "_summarize_block", {"message": "quota", "params": {}})
+        monkeypatch.setattr(r, "_transcribe_block", {"message": "rate", "params": {}})
+        tree = [
+            {
+                "name": "C",
+                "lectures": [{"name": "B", "files": {"video.mp4": {"exists": True}}}],
+            }
+        ]
+        with (
+            patch.object(r.db_client, "get_tree", return_value=tree),
+            patch.object(r.db_client, "notify"),
+            patch.object(r, "run_all"),
+        ):
+            response = client.post("/run-all")
+        assert response.json()["status"] == "started"
+        assert r._summarize_block is None
+        assert r._transcribe_block is None
+        assert [e[:3] for e in r._queue] == [("C", "B", "lecture")]
+
 
 class TestHealth:
     def test_health_is_liveness_only(self):

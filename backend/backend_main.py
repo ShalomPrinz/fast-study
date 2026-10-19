@@ -289,11 +289,9 @@ def overview_extractors():
 
 @app.post("/run-all")
 async def run_all_endpoint():
-    """Scan for pending lectures and queue them, unless a run is already in progress. Always the
-    full pipeline — AUTO_RUN caps automatic work, never a run the user asked for."""
+    """Scan for pending lectures and queue them, joining a live run when one is draining. Always
+    the full pipeline — AUTO_RUN caps automatic work, never a run the user asked for."""
 
-    if runner._runner_status["running"]:
-        return {"status": "already_running", **runner.get_status()}
     try:
         pending = await runner.scan_pending()
     except db_client.DbClientError as e:
@@ -302,6 +300,7 @@ async def run_all_endpoint():
         return _error(failure(str(e), e.code, **e.params), 409)
     if not pending:
         return {"status": "empty_queue"}
+    runner.clear_provider_blocks()
     queued = [
         runner.enqueue(runner.QueueEntry(course, lecture, kind, "full"))
         for course, lecture, kind in pending
