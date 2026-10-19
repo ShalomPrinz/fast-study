@@ -55,9 +55,9 @@ test('course PDFs attached to a new lecture summarise on their own to Drive', as
   await expect(card(FILES[0]).locator('.recording-material-count')).toHaveText('1 material', {
     timeout: 15_000,
   });
-  // A material row reads "In course" once its target holds any material, so the second file goes in
-  // through the row's own re-download, which appends rather than replaces.
-  await card(FILES[1]).getByLabel('Download again').click();
+  // A material row reads "In course" only once its own file is attached, so the second row still offers
+  // a plain download, which appends to the lecture rather than replacing the first material.
+  await card(FILES[1]).locator('.recording-download-btn').click();
   await expect(card(FILES[1]).locator('.recording-material-count')).toHaveText('2 materials', {
     timeout: 15_000,
   });
