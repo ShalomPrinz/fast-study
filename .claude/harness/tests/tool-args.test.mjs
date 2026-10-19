@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { describe, test } from 'node:test';
-import { FAILURES, fixtureFor, urlArg, valueAfter } from '../fakes/tool-args.mjs';
+import {
+  FAILURES,
+  fixtureFor,
+  headerDump,
+  onAuto,
+  requestHeaders,
+  urlArg,
+  valueAfter,
+} from '../fakes/tool-args.mjs';
 
 describe('valueAfter', () => {
   test('the first flag listed wins, whatever the argv order', () => {
@@ -70,5 +78,43 @@ describe('FAILURES', () => {
     assert.match(FAILURES[404].curl[1], /^curl: \(22\) .*404$/);
     assert.match(FAILURES[403].curl[1], /^curl: \(22\) .*403$/);
     assert.match(FAILURES.drop.curl[1], /^curl: \(18\) /);
+  });
+});
+
+describe('onAuto', () => {
+  test("only a /moodle/file/ path is auto's", () => {
+    assert.equal(onAuto('http://127.0.0.1:4000/moodle/file/abc'), true);
+    assert.equal(onAuto('https://lemida.biu.ac.il/deny/lecture-07.mp4'), false);
+    assert.equal(onAuto(''), false);
+  });
+});
+
+describe('requestHeaders', () => {
+  test('reads inline -H values and @file ones', () => {
+    const files = { 'h.txt': 'X-Secret: s3\nX-Wait: 1\n' };
+    const args = ['-H', '@h.txt', '--header', 'Range: bytes=5-', '-L', 'http://a/b'];
+    assert.deepEqual(
+      requestHeaders(args, (f) => files[f]),
+      {
+        'X-Secret': 's3',
+        'X-Wait': '1',
+        Range: 'bytes=5-',
+      },
+    );
+  });
+
+  test('none without -H', () => {
+    assert.deepEqual(
+      requestHeaders(['-L', 'http://a/b'], () => ''),
+      {},
+    );
+  });
+});
+
+describe('headerDump', () => {
+  test("a status line curl's parsers read, then the headers", () => {
+    const dump = headerDump(403, [['content-type', 'application/json']]);
+    assert.equal(dump, 'HTTP/1.1 403\r\ncontent-type: application/json\r\n\r\n');
+    assert.match(dump, /^HTTP\/\S+\s+(\d{3})/m);
   });
 });

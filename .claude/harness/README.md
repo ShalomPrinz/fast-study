@@ -297,7 +297,7 @@ site or real data cannot be drawn from here.
 | Google Drive        | an in-process fake service writing `drive/store.json` + `ops.jsonl`   | `googleapiclient.discovery.build`, replaced    |
 | Drive OAuth consent | a pending → connected flow with no browser and no account            | `services.google_auth`, four functions replaced |
 | The lecture site    | `fakes/site.mjs` — Moodle WS, pluginfile PDFs, media, over http + TLS | every non-loopback socket, redirected          |
-| `curl`, `yt-dlp`    | `fakes/tool.mjs` — writes the fixture the URL names (PDF or video) in slices, asking the fake site only for its live settings | first on `PATH`, where `toolPath()` looks      |
+| `curl`, `yt-dlp`    | `fakes/tool.mjs` — writes the fixture the URL names (PDF or video) in slices, asking the fake site only for its live settings; a file auto streams (`/moodle/file/<id>`) is fetched for real | first on `PATH`, where `toolPath()` looks      |
 | The Moodle login    | a pre-seeded WS token for the fake site, naming it as its `site`; Connect mints the same one from the fake `launch.php` | `state/auth/moodle-token.json`; auto/'s browsers, below |
 
 The two shims (`shim/sitecustomize.py` on `PYTHONPATH`, `shim/node.mjs` through `NODE_OPTIONS`)
@@ -492,11 +492,13 @@ The fake course has a row per failure, each a URL switch (titles in `FAILURE_ROW
 the self-check proves all three are listed):
 
 - `/gone/` — the site answers 404, so the resolve probe calls the link dead before any download.
-- `/deny/` — probes as a video, then the tool fails 403. The first download is a fresh capture and
-  fails "authentication failed"; the retry replays auto's cached cap, so its 403 drives the
-  downloader's one silent re-resolve, which fails again (logged `♻️` in `downloader-server.log`).
-- `/die/` — the tool drops the connection halfway the first time per URL, until a reset; the
-  retry succeeds.
+- `/deny/` — probes as a video, then the download fails 403. auto streams a Moodle-host file through
+  `/moodle/file/<id>`, which the fake curl fetches for real, so the site plants this on the GET auto
+  makes (a HEAD or `bytes=0-0` probe passes). A proxied capture always counts as cached, so the 403
+  drives the downloader's one silent re-resolve, which fails again "authentication failed" (logged
+  `♻️` in `downloader-server.log`).
+- `/die/` — the site drops the download halfway the first time per path, until a reset; the
+  downloader's own silent re-fetch (logged `♻️`) succeeds, so the row lands.
 
 ## Inspecting a PDF
 

@@ -41,3 +41,34 @@ export function fixtureFor(url, fixtures) {
     return path.join(fixtures, 'video.mp4');
   }
 }
+
+/** Whether `url` is a file auto streams (`/moodle/file/<id>`), which the fake fetches for real. */
+export function onAuto(url) {
+  try {
+    return new URL(url).pathname.startsWith('/moodle/file/');
+  } catch {
+    return false;
+  }
+}
+
+/** The request headers curl's `-H` arguments name, an `@file` one read through `read(file)`. */
+export function requestHeaders(args, read) {
+  const lines = [];
+  args.forEach((arg, at) => {
+    if ((arg !== '-H' && arg !== '--header') || !args[at + 1]) return;
+    const value = args[at + 1];
+    lines.push(...(value.startsWith('@') ? read(value.slice(1)).split('\n') : [value]));
+  });
+  const headers = {};
+  for (const line of lines) {
+    const colon = line.indexOf(':');
+    if (colon > 0) headers[line.slice(0, colon).trim()] = line.slice(colon + 1).trim();
+  }
+  return headers;
+}
+
+/** A `--dump-header` file for one answer, as curl writes it: the status line, then each header. */
+export function headerDump(status, headers) {
+  const lines = [`HTTP/1.1 ${status}`, ...headers.map(([name, value]) => `${name}: ${value}`)];
+  return `${lines.join('\r\n')}\r\n\r\n`;
+}

@@ -142,3 +142,35 @@ describe('tool', () => {
     assert.deepEqual(site.tool(''), { downloadMs: 42, die: false });
   });
 });
+
+describe('fault', () => {
+  const get = { method: 'GET', range: undefined };
+
+  test('/deny/ refuses every download', () => {
+    const site = createSiteControl();
+    assert.equal(site.fault('/deny/lecture-07.mp4', get), 'deny');
+    assert.equal(site.fault('/deny/lecture-07.mp4', get), 'deny');
+  });
+
+  test('/die/ drops the first download per path, until a reset', () => {
+    const site = createSiteControl();
+    assert.equal(site.fault('/die/lecture-08.mp4', get), 'die');
+    assert.equal(site.fault('/die/lecture-08.mp4', get), null);
+    assert.equal(site.fault('/die/lecture-09.mp4', get), 'die');
+    site.control({ reset: true });
+    assert.equal(site.fault('/die/lecture-08.mp4', get), 'die');
+  });
+
+  test('a probe never faults, nor spends the one /die/ drop', () => {
+    const site = createSiteControl();
+    for (const probe of [{ method: 'HEAD' }, { method: 'GET', range: 'bytes=0-0' }]) {
+      assert.equal(site.fault('/deny/lecture-07.mp4', probe), null);
+      assert.equal(site.fault('/die/lecture-08.mp4', probe), null);
+    }
+    assert.equal(site.fault('/die/lecture-08.mp4', get), 'die');
+  });
+
+  test('other files never fault', () => {
+    assert.equal(createSiteControl().fault('/media/lecture-01.mp4', get), null);
+  });
+});

@@ -31,7 +31,7 @@ export const FAKE_MOODLE_SITE = 'https://lemida.biu.ac.il';
 export const FAKE_COURSE_URL = `${FAKE_MOODLE_SITE}/course/view.php?id=101`;
 
 // The fake course's failure rows, by URL switch → title: the site lists them, the self-check
-// proves each one is in the real listing. /deny/ and /die/ list as recordings and fail in the tool.
+// proves each one is in the real listing. /deny/ and /die/ list as recordings and fail on the download.
 export const FAILURE_ROWS = {
   gone: 'הקלטה 9 — הוסרה',
   deny: 'הקלטה 7 — גישה נחסמה',

@@ -314,6 +314,13 @@ function serveFile(req, res, file, type) {
   return fs.createReadStream(file).pipe(res);
 }
 
+// Promise the whole file, send half, then cut the socket: the mid-body drop curl reports as exit 18.
+function dropHalfway(res, file, type) {
+  const bytes = fs.readFileSync(file);
+  res.writeHead(200, { 'content-type': type, 'content-length': bytes.length });
+  res.write(bytes.subarray(0, bytes.length >> 1), () => res.destroy());
+}
+
 function handle(req, res) {
   const url = new URL(req.url, 'http://lecture-site.invalid');
   const route = decodeURIComponent(url.pathname);
@@ -501,8 +508,13 @@ function serveSite(req, res, url, route, host) {
   }
 
   if (route.startsWith('/pluginfile.php/')) return serveFile(req, res, PDF, 'application/pdf');
-  // /deny/ and /die/ probe as a video like /media/; they fail only in the fake tool's download.
-  if (/^\/(media|deny|die)\//.test(route)) return serveFile(req, res, VIDEO, 'video/mp4');
+  // /deny/ and /die/ probe as a video like /media/; they fail only on the download auto streams.
+  if (/^\/(media|deny|die)\//.test(route)) {
+    const fault = site.fault(route, { method: req.method, range: req.headers.range });
+    if (fault === 'deny') return json(res, { error: 'forbidden' }, 403);
+    if (fault === 'die') return dropHalfway(res, VIDEO, 'video/mp4');
+    return serveFile(req, res, VIDEO, 'video/mp4');
+  }
   if (route.startsWith('/page/')) {
     const body =
       '<!doctype html><meta charset="utf-8"><h1>harness: an ordinary web page, not a recording.';

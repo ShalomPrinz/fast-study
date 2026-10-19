@@ -21,7 +21,7 @@ export const MODES = [
   'no_enrol_function',
 ];
 
-/** The site's mode, the fake tool's download speed and the Moodle hold, with the one-time drop per /die/ URL. */
+/** The site's mode, the fake tool's download speed and the Moodle hold, with the one-time drop per /die/ URL or path. */
 export function createSiteControl() {
   const state = { mode: 'ok', downloadMs: DEFAULT_DOWNLOAD_MS, hold: false };
   let solveArmed = false;
@@ -81,6 +81,15 @@ export function createSiteControl() {
       const die = target.includes('/die/') && !died.has(target);
       if (die) died.add(target);
       return { downloadMs: state.downloadMs, die };
+    },
+    // The fault a GET of a site file carries when auto streams it to the tool: /deny/ refuses every
+    // download, /die/ drops the first per path. A HEAD or `bytes=0-0` probe never faults.
+    fault(route, { method, range }) {
+      if (method === 'HEAD' || range === 'bytes=0-0') return null;
+      if (route.startsWith('/deny/')) return 'deny';
+      if (!route.startsWith('/die/') || died.has(route)) return null;
+      died.add(route);
+      return 'die';
     },
   };
 }
