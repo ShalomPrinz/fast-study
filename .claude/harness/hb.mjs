@@ -198,7 +198,7 @@ const COMMANDS = {
         );
       } else if (state === 'off') {
         await releaseMoodle();
-        console.log('moodle free: the held call answered and the lock freed');
+        console.log('moodle free: the held call answered and the cooldown ran out');
       } else throw new Error('usage: moodle-busy on|off');
     },
   },

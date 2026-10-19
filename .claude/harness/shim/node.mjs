@@ -135,11 +135,11 @@ if (HARNESS) {
         const port = url.port || (url.protocol === 'https:' ? 443 : 80);
         note(`REFUSED ${url.hostname}:${port} (browser)`);
       });
-    // The fake site needs no rate limit, so auto/'s Moodle lock frees at once instead of 3 s after
-    // each request. The same module instance auto/ imports, since ESM caches by file URL.
+    // auto/'s Moodle lock cools down 200 ms after each request instead of 3 s: the app's delay, kept
+    // but short. The same module instance auto/ imports, since ESM caches by file URL.
     const { pathToFileURL } = await import('node:url');
     const gate = path.join(REPO_ROOT, 'downloader', 'auto', 'src', 'moodle', 'gate.js');
-    (await import(pathToFileURL(gate).href)).moodleGate.cooldownMs = 0;
+    (await import(pathToFileURL(gate).href)).moodleGate.cooldownMs = 200;
     const browserType = Object.getPrototypeOf(chromium);
     const originalLaunch = browserType.launch;
     browserType.launch = async function launch(options) {

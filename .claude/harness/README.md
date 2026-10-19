@@ -147,10 +147,10 @@ page keeps the verdict it was handed until it re-lists, so reload it.
 `moodle-busy on` holds auto/'s one Moodle lock for real: it sets the fake site's `hold`, which parks
 every request for the Moodle host unanswered, sends auto/ one `GET /courses` that takes the lock, and
 returns once `/auth/events` pushes `moodleBusy: true` and the site holds that call parked (it waits
-for the lock to read free first, and lifts the hold again if the call is refused). The call stays in flight after `hb` exits, so
+out a cooldown first, and lifts the hold again if the call is refused). The call stays in flight after `hb` exits, so
 every frontend Moodle button reads busy and a racing one gets the real 429 `moodle_busy`, while
 server/'s own calls queue behind it. `moodle-busy off` lifts the hold, answering every parked request,
-and returns once `moodleBusy: false` is pushed. A reseed lifts it too. The
+and returns once the cooldown ends and `moodleBusy: false` is pushed. A reseed lifts it too. The
 held call times out after undici's 5-minute headers limit and frees the lock while `hold` stays on,
 so run `off` then `on` again for a longer hold. Only
 a row auto/ flags `moodle` locks, so a zoom row's passcode Submit never does; a re-download's
@@ -322,9 +322,10 @@ host lands on the TLS port and fails `ERR_EMPTY_RESPONSE` — every fixture URL 
 cannot write `network.log`, so each context it opens logs an http(s) request that failed
 `ERR_NAME_NOT_RESOLVED` as `downloader-auto REFUSED host:port (browser)`.
 
-The shim also sets auto/'s Moodle-lock cooldown to 0: the app waits 3 s after each Moodle request to
-spare the real site, which the fake does not need, so a row's Download is clickable the moment the
-list arrives. The lock itself — one request at a time, `moodle_busy` for a racing one — is unchanged.
+The shim also cuts auto/'s Moodle-lock cooldown from 3 s to 200 ms. The harness shortens the app's
+delays rather than removing them, so the lock still reads busy for a moment after each request and a
+row's Download still waits it out; the lock itself — one request at a time, `moodle_busy` for a racing
+one — is unchanged.
 
 So Connect runs auto/'s real login: the fake site answers `launch.php` with a 302 to
 `moodlemobile://token=…` carrying `FAKE_WSTOKEN`, auto/ captures it and finishes the login by itself,
