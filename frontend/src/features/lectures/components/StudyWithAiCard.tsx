@@ -94,18 +94,16 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
         <div className="study-ai-tile">
           <Icon icon="sparkle" />
         </div>
-        <div className="study-ai-text">
-          <h2 className="study-ai-title">
-            <Trans>Study with AI</Trans>
-          </h2>
-          <p className="study-ai-subtitle">
-            {summaryExists ? (
-              <Trans>Click "Open chat" to study this lecture with {provider}.</Trans>
-            ) : (
-              <Trans>Available once the summary is generated.</Trans>
-            )}
-          </p>
-        </div>
+        <h2 className="study-ai-title">
+          <Trans>Study with AI</Trans>
+        </h2>
+        <p className="study-ai-subtitle">
+          {summaryExists ? (
+            <Trans>Click "Open chat" to study this lecture with {provider}.</Trans>
+          ) : (
+            <Trans>Available once the summary is generated.</Trans>
+          )}
+        </p>
         <div className="study-ai-split" ref={menuRef}>
           <button
             className="btn study-ai-open"

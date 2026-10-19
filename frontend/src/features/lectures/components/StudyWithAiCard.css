@@ -11,9 +11,13 @@
   border: 1px solid var(--accent-line);
   border-radius: var(--r-lg);
   background: var(--accent-soft);
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'tile title split'
+    'tile sub split';
+  align-items: start;
+  column-gap: var(--space-4);
 }
 
 .study-ai[data-state='no-summary'] {
@@ -22,7 +26,7 @@
 }
 
 .study-ai-tile {
-  flex-shrink: 0;
+  grid-area: tile;
   width: 32px;
   height: 32px;
   border-radius: var(--r);
@@ -37,29 +41,27 @@
   color: var(--text-4);
 }
 
-.study-ai-text {
-  flex: 1;
-  min-width: 0;
-}
-
 .study-ai-title {
+  grid-area: title;
   font-size: var(--fs-row);
   font-weight: 600;
   color: var(--text);
 }
 
 .study-ai-subtitle {
+  grid-area: sub;
   margin-block-start: var(--space-1);
   font-size: var(--fs-meta);
   color: var(--text-2);
 }
 
 .study-ai[data-state='no-summary'] .study-ai-subtitle {
+  grid-area: sub;
   color: var(--text-3);
 }
 
 .study-ai-split {
-  flex-shrink: 0;
+  grid-area: split;
   position: relative;
   display: flex;
   border: 1px solid var(--accent-line);
@@ -155,14 +157,32 @@
   color: var(--accent-ink);
 }
 
-/* In a narrow column the split button takes its own row under the title, full width. */
+/* In a narrow column (the side column included) the subtitle drops under the title and button. */
 @container (width < 420px) {
   .study-ai {
-    flex-wrap: wrap;
+    grid-template-areas:
+      'tile title split'
+      'sub sub sub';
+    align-items: center;
+    row-gap: var(--space-3);
   }
 
-  .study-ai-split {
-    flex-basis: 100%;
+  /* A step up, since it has the card's full width; `pretty` keeps a lone word ("Claude.") off line 2. */
+  .study-ai-subtitle {
+    margin-block-start: 0;
+    font-size: var(--fs-body);
+    text-wrap: pretty;
+  }
+}
+
+/* Too narrow for title and button on one row (330px fits both languages): the button gets its own. */
+@container (width < 330px) {
+  .study-ai {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'tile title'
+      'sub sub'
+      'split split';
   }
 
   .btn.study-ai-open {
