@@ -97,12 +97,19 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
   }
 }
 
+// The appending /materials URL. `source` is the discovery row's ref, stored as the material's
+// identity so the frontend can match the row; a download from no row sends none.
+function materialsUrl(course, lecture, kind, source = null) {
+  const base = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
+  return source ? `${base}&source=${encodeURIComponent(source)}` : base;
+}
+
 // Stream the temp PDF to the appending /materials, removing the temp dir either way. Never
 // throws: null on success, else the job's failure.
-export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
+export async function uploadMaterial(tempDir, course, lecture, kind, tool, source = null) {
   const file = path.join(tempDir, MATERIAL_TEMP_FILENAME);
   try {
-    const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
+    const url = materialsUrl(course, lecture, kind, source);
     // duplex: 'half' is required when a fetch body is a stream (undici).
     const res = await fetch(url, {
       method: 'POST',
@@ -137,7 +144,7 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
 // Forward already-fetched PDF bytes to /materials. Throws on a network error (route → 500);
 // returns the failure body on a database-level failure (route → 502).
 export async function uploadPdf(buf, course, lecture, kind) {
-  const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
+  const url = materialsUrl(course, lecture, kind);
   const res = await fetch(url, {
     method: 'POST',
     headers: peerHeaders({ 'Content-Type': 'application/pdf' }),

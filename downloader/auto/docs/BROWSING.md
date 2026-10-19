@@ -63,7 +63,10 @@ The frontend never sees the mechanism. `/list` and `/list/expand` return
   resolved row keeps its original `media` rather than moving segments.
 - `ref` — the internal `Recording`, base64url JSON (`src/lib/ref.js`): stateless, round-tripped,
   never parsed by the frontend. `strategy`/`pageUrl`/`passcode` and the like must never appear in a
-  response outside it.
+  response outside it. It is a pure function of the WS listing (fixed key order, no minted id, token
+  or timestamp), so a later `/list` yields the same string: the database stores a row's ref as its
+  material's `source`, which the frontend matches by string equality. Adding a field to a material's
+  Recording, or a volatile one to any, unmatches every material already downloaded.
 - `section` — the Moodle section heading, `''` when unnamed; display metadata the frontend groups by.
 - `likelyRecording` — the keyword hint; `false` only for a `url` module that reads like a stray link.
   Every other strategy is unambiguously a recording.

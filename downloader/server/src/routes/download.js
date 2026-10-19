@@ -19,6 +19,7 @@ const router = Router();
  * @param {{ course: string, lecture: string, kind: string, ref?: string|null,
  *           fromCache?: boolean, reresolve?: (() => Promise<object>)|null }} meta
  *   reresolve refreshes a stale cached cap so the SAME job re-runs; null when there is no ref.
+ *   ref, a discovery row's, rides to a material upload as its `source`.
  */
 export function startJob(
   downloader,
@@ -26,7 +27,15 @@ export function startJob(
   { course, lecture, kind, ref = null, fromCache = false, reresolve = null },
 ) {
   const jobId = createJob({ course, lecture, kind, tool: downloader.tool, ref, fromCache });
-  runDownloadJob(downloader, input, { course, lecture, kind, jobId, fromCache, reresolve });
+  runDownloadJob(downloader, input, {
+    course,
+    lecture,
+    kind,
+    jobId,
+    fromCache,
+    reresolve,
+    source: ref,
+  });
   return jobId;
 }
 

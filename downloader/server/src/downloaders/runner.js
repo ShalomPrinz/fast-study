@@ -76,8 +76,8 @@ function cancelled(jobId, tool, tempDir) {
   finishJob(jobId, 'cancelled');
 }
 
-// Source-agnostic runner (docs/DOWNLOAD.md); every exit path terminates `jobId`. `reresolve` drives the
-// one silent auth recovery (docs/JOBS.md); `save(tempDir, jobId)`, if set, replaces the upload.
+// Source-agnostic runner (docs/DOWNLOAD.md); every exit path terminates `jobId`. `reresolve`: silent
+// auth recovery (docs/JOBS.md); `save` replaces the upload; `source`: a row's ref, a material's identity.
 export async function runDownloadJob(
   downloader,
   input,
@@ -90,6 +90,7 @@ export async function runDownloadJob(
     reresolve = null,
     rerun = false,
     save = null,
+    source = null,
     label = `${course}/${lecture}`,
   },
 ) {
@@ -176,6 +177,7 @@ export async function runDownloadJob(
             kind,
             jobId,
             save,
+            source,
             label,
             ...next.next,
           });
@@ -199,6 +201,7 @@ export async function runDownloadJob(
             kind,
             jobId,
             save,
+            source,
             label,
             ...next.next,
           });
@@ -216,7 +219,7 @@ export async function runDownloadJob(
       // The job turns `done` only once the database has them.
       const uploadError = save
         ? await save(tempDir, jobId)
-        : await downloader.upload(tempDir, course, lecture, kind, downloader.tool);
+        : await downloader.upload(tempDir, course, lecture, kind, downloader.tool, source);
       if (uploadError)
         finishJob(jobId, 'error', uploadError.error, uploadError.code, uploadError.params);
       else finishJob(jobId, 'done');

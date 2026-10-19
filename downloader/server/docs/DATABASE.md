@@ -32,6 +32,13 @@ The **database allocates the filename** (`material.pdf`, `material.2.pdf`, …) 
 upload appends instead of overwriting and the server names nothing. Derived artifacts survive:
 attaching material shouldn't invalidate an existing summary.
 
+A material downloaded from a discovery row — `/download-item` or a section run — also sends
+`&source=<ref>`: the row's `ref`, verbatim as `/list` gave it, which the database stores as the
+material's identity so the frontend can tell this row's PDF from another one in the same lecture
+(`startJob`'s `ref` → the runner's `source` → `uploadMaterial`). Every other path (`/download-file`,
+`/download-url`, `/upload-pdf`) sends none, and a video upload never carries one. The match holds
+only because `auto/`'s ref is a pure function of the WS listing ([BROWSING.md](../../auto/docs/BROWSING.md#the-item--ref-contract)).
+
 `uploadVideo` and `uploadMaterial` are the job path: they stream from the temp dir, remove it either
 way, and never throw — `null` on success, else the failure body the runner turns into the job's
 terminal state. `uploadPdf` forwards bytes the extension already fetched: it throws on a network error
