@@ -8,6 +8,7 @@ import path from 'node:path';
 import { ACTIONS, actionRequest } from './lib/act.mjs';
 import { DATABASE, bindPorts, bytes, call, saveSettings } from './lib/api.mjs';
 import { markSeeded, removeLecture, reseed, settingsPatch, unwall, wall } from './lib/baseline.mjs';
+import { serveBefore } from './lib/before.mjs';
 import { SELFCHECK_TAG, harnessPaths, readPorts } from './lib/env.mjs';
 import { holdMoodle, releaseMoodle } from './lib/moodle-busy.mjs';
 import { kill, restart, startBrowser } from './lib/stack.mjs';
@@ -20,6 +21,66 @@ function lectureArg(text) {
     lecture: recitation ? text.slice('Recitations/'.length) : text,
     kind: recitation ? 'recitation' : 'lecture',
   };
+}
+
+// `--before` takes an optional ref, so a bare one before another flag or the end means HEAD.
+function shotArgs(args) {
+  const out = { langs: ['en', 'he'], setup: '', before: null, tag: 'main' };
+  const positional = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const next = () => {
+      if (i + 1 >= args.length) throw new Error(`${arg} needs a value`);
+      return args[++i];
+    };
+    if (arg === '--langs') out.langs = next().split(',').filter(Boolean);
+    else if (arg === '--setup') {
+      const js = next();
+      out.setup = js === '-' ? fs.readFileSync(0, 'utf8') : js;
+    } else if (arg === '--browser') out.tag = next();
+    else if (arg === '--before')
+      out.before = args[i + 1] && !args[i + 1].startsWith('--') ? args[++i] : 'HEAD';
+    else positional.push(arg);
+  }
+  if (positional.length !== 1 || !out.langs.length)
+    throw new Error(`usage: ${COMMANDS.shot.usage}`);
+  return { ...out, name: positional[0] };
+}
+
+// One /eval for the whole loop: per side and language, reload in that locale, rerun the setup the
+// reload undid, and shoot the full window; then put the session's page and locale back.
+function shotScript(paths, tag, sides, langs, setup) {
+  const file = (name) =>
+    path.join(paths.evidence, `${tag}-${name.replace(/[^\p{L}\p{N}._-]+/gu, '-')}.png`);
+  const shots = sides.flatMap(([origin, name]) =>
+    langs.map((lang) => ({ origin, lang, file: file(`${name}-${lang}`) })),
+  );
+  return `
+const KEY = 'fast-study:locale';
+const back = page.url();
+const saved = await page.evaluate((key) => localStorage.getItem(key), KEY);
+const at = new URL(back);
+const files = [];
+try {
+  for (const { origin, lang, file } of ${JSON.stringify(shots)}) {
+    await page.goto(origin ? origin + at.pathname + at.search + at.hash : back);
+    await page.evaluate(([key, lang]) => localStorage.setItem(key, lang), [KEY, lang]);
+    await page.reload();
+    await page.waitForTimeout(500);
+    await (async (page, context) => {
+${setup}
+    })(page, context);
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: file });
+    files.push(file);
+  }
+} finally {
+  await page.goto(back);
+  await page.evaluate(([key, value]) => value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value), [KEY, saved]);
+  await page.reload();
+}
+return files.join('\\n');
+`;
 }
 
 function writeLocks(paths, globs) {
@@ -186,6 +247,29 @@ const COMMANDS = {
       if (!tag) throw new Error('usage: browser <tag>');
       const port = await startBrowser(paths, tag);
       console.log(`browser ${tag} on http://127.0.0.1:${port}, logged to logs/browser-${tag}.log`);
+    },
+  },
+  shot: {
+    usage: 'shot <name> [--langs en,he] [--setup js|-] [--before [ref]] [--browser TAG]',
+    summary:
+      "screenshot the session's page once per UI language, and as <ref> (HEAD) had it with --before",
+    async run(paths, args) {
+      const { name, langs, setup, before, tag } = shotArgs(args);
+      const port = readPorts(paths)[`browser-${tag}`];
+      if (!port)
+        throw new Error(`no browser session "${tag}" — start one with \`hb browser ${tag}\``);
+      const served = before ? await serveBefore(paths, before) : null;
+      try {
+        const sides = [[null, name], ...(served ? [[served.url, `${name}-before`]] : [])];
+        const response = await fetch(`http://127.0.0.1:${port}/eval`, {
+          method: 'POST',
+          body: shotScript(paths, tag, sides, langs, setup),
+        });
+        process.stdout.write(await response.text());
+        if (!response.ok) process.exitCode = 1;
+      } finally {
+        await served?.close();
+      }
     },
   },
   refused: {

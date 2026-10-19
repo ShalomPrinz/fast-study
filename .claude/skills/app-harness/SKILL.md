@@ -35,6 +35,7 @@ hb goto /course/hb-edit/overview         # actions take plain arguments, no JSON
 hb click 'text=…'
 hb fill 'input[placeholder="Course name…"]' 'קורס'
 hb press Enter --shot saved              # click, fill and press take --shot NAME; all take --browser TAG
+hb shot dialog --before --setup "await page.click('text=…')"  # en+he, before+after → evidence/main-dialog-[before-]<lang>.png
 hb eval <<'JS'                           # JS on stdin (or as one argument), given page and context
 return page.url()
 JS
@@ -44,6 +45,9 @@ curl -s $B/screenshot -d '{"name":"after-save"}' # → $HARNESS_DIR/evidence/mai
 curl -s $B/dom -d '{"selector":".toast","since":"-10000"}'  # always-on DOM timeline: what it matched over time
 curl -s $B/dom/flicker -d '{"selector":".focus-card"}'      # content gone and back within 300 ms
 ```
+
+Screenshots are always the full app window (1400×900), never cropped to an element; for a
+before/after or per-language shot use `hb shot`.
 
 Drive the UI only through a browser session, never your own Playwright script. Every answer ends
 with the console errors and failed requests the command caused. Service logs are in
@@ -71,3 +75,4 @@ node .claude/harness/setup.mjs --harness $HARNESS_DIR --down
 ```
 
 This stops every service, fake and browser session of that stack and no other.
+

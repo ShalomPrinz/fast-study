@@ -209,7 +209,19 @@ hb fill 'input[placeholder="Course name…"]' hb-mgmt-x
 hb press Enter --shot created                       # on the focus, or `hb press <key> <selector>`
 hb eval 'await page.waitForTimeout(3000); return page.url()'   # or the JS on stdin: `hb eval <<'JS'`
 hb fill input -- --shot                             # `--` ends the flags, for a value that reads like one
+hb shot picker --before --setup "await page.click('text=Moodle')"   # → evidence/main-picker-{en,he}.png + main-picker-before-{en,he}.png
 ```
+
+Every screenshot is the full app window (1400×900), never cropped to an element and never the
+whole scrolled page; scroll what a shot is about into view (in `--setup`) instead.
+
+`hb shot <name>` shoots the session's current page once per `--langs` locale (`en,he`): it sets the
+locale, reloads, runs `--setup` (an async function body given `page` and `context`, or `-` for stdin)
+to rebuild the state the reload undid, and shoots. `--before [ref]` (default `HEAD`) does the same
+against a second vite serving `frontend/` as the ref had it — copied with `git archive` under
+`$HARNESS_DIR/before/`, never swapped into the live tree — and warns about every other changed file,
+since the services and installs run as the working tree has them. Afterwards the page and locale
+are back where they were.
 
 Every route, those included, is also plain HTTP on the session's port:
 
@@ -217,7 +229,7 @@ Every route, those included, is also plain HTTP on the session's port:
 B=$(node .claude/harness/hb.mjs --harness DIR url browser-main)
 curl -s $B/fill -d '{"selector":"input","value":"hb-mgmt-x","screenshot":"filled"}'
 curl -s $B/text                                           # body innerText; or {"selector":…}
-curl -s $B/screenshot -d '{"name":"new-course"}'          # → evidence/mgmt-new-course.png ({"full":true})
+curl -s $B/screenshot -d '{"name":"new-course"}'          # → evidence/mgmt-new-course.png
 curl -s $B/eval --data-binary 'await page.waitForTimeout(3000); return page.url()'
 curl -s "$B/log?since=0"                                  # every recorded event, numbered
 curl -s $B/mutations                                      # every non-GET request, with body and answer

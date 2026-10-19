@@ -14,7 +14,7 @@
 //                               /click, /fill and /press also take {"screenshot":name}: captured once the
 //                               action settles, so a short-lived toast is in the same call
 // /text {"selector"}            innerText; the whole body when no selector
-// /screenshot {"name","full"}   saved as <harness>/evidence/<tag>-<name>.png
+// /screenshot {"name"}          the full window, saved as <harness>/evidence/<tag>-<name>.png
 // /eval <js>                    raw body: an async function body given `page` and `context`
 // /log {"since"}                every recorded event from N on, numbered
 // /mutations                    every non-GET request so far
@@ -128,9 +128,9 @@ function evidenceName(name) {
   return path.join(paths.evidence, `${tag}-${safe}.png`);
 }
 
-async function shoot(name, full) {
+async function shoot(name) {
   const file = evidenceName(name);
-  await page.screenshot({ path: file, fullPage: full === true || full === 'true' });
+  await page.screenshot({ path: file });
   return file;
 }
 
@@ -170,7 +170,7 @@ const COMMANDS = {
         .first()
         .innerText()
     ).replace(/\n{2,}/g, '\n'),
-  '/screenshot': async ({ name, full }) => shoot(name, full),
+  '/screenshot': async ({ name }) => shoot(name),
   '/eval': async (_, raw) => {
     const result = await new AsyncFunction('page', 'context', raw)(page, context);
     return result === undefined || typeof result === 'string'
