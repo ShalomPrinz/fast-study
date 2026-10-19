@@ -47,7 +47,7 @@ Moodle" open it under their row. It fetches auto's `GET /courses?lang=<UI locale
 remount — the site walls a second call seconds after the first) and lists current courses, then the `past`
 ones (hidden or ended) behind "Show past courses". Each row is the name in that language plus the course
 `code`, when Moodle has one, as a muted `.chip` before it — picker-only, never prefilled or saved. Each list is a
-grid whose rows are subgrids, so names align in a column after its widest chip; a code over `CODE_COLUMN_CAP` (12 chars, `codeOverCap`)
+grid whose rows are subgrids, so names align in a column after its widest chip; a code over `CODE_COLUMN_CAP` (16 chars, `codeOverCap`)
 sets no column width and its name just follows its chip. Names stay
 in the open-time language: a mounted picker holds the locale (`useLocaleHold`, a module store, no provider),
 which disables the sidebar's `LanguageSwitcher` under a "close the course list" hint. `pickerView` opens it straight on the paste input when the account is known to be

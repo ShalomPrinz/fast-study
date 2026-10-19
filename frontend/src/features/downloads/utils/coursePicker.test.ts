@@ -106,11 +106,13 @@ describe('codeOverCap', () => {
     expect(codeOverCap(null)).toBe(false)
     expect(codeOverCap('C101')).toBe(false)
     expect(codeOverCap('868922001')).toBe(false)
+    expect(codeOverCap('x'.repeat(16))).toBe(false)
     expect(codeOverCap('x'.repeat(CODE_COLUMN_CAP))).toBe(false)
   })
 
   it('lets a longer code out of the column', () => {
     expect(codeOverCap('x'.repeat(CODE_COLUMN_CAP + 1))).toBe(true)
+    expect(codeOverCap('x'.repeat(17))).toBe(true)
   })
 
   it('counts characters, not UTF-16 units', () => {

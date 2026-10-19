@@ -30,6 +30,13 @@
   list-style: none;
 }
 
+/* Only a list with an in-column code gets the gap, so an empty column 1 indents nothing. */
+.course-picker-list:has(
+  .course-picker-item:not(.course-picker-item--long-code) > .course-picker-code
+) {
+  column-gap: var(--space-5);
+}
+
 .course-picker-list > li {
   display: grid;
   grid-column: 1 / -1;
@@ -45,7 +52,8 @@
   background: var(--line);
 }
 
-/* A course is a full-width choice; the name hugs the start whatever its script. */
+/* A course is a full-width choice; the name hugs the start whatever its script. The chip-to-name gap is
+   the list's column-gap (inherited by the subgrids), never a chip margin: a dir=auto chip flips its own sides. */
 .course-picker-item {
   display: grid;
   grid-column: 1 / -1;
@@ -71,7 +79,6 @@
 /* Moodle's course code ahead of the name: picker-only context, never part of the saved name. */
 .chip.course-picker-code {
   justify-self: start;
-  margin-inline-end: var(--space-3);
   font-variant-numeric: tabular-nums;
 }
 
@@ -87,6 +94,7 @@
 .course-picker-item.course-picker-item--long-code {
   display: flex;
   align-items: center;
+  gap: var(--space-5);
 }
 
 /* The course this row already points at. */
