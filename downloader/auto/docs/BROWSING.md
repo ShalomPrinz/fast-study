@@ -11,8 +11,13 @@ then each activity routes to the first extractor in `core/registry.js` whose `ca
   **several** files, so it emits one activity per `type:'file'` entry, appending the filename to the
   title only when there are several.
 - `parseZoomSummaries` (`discovery/zoomSection.js`) walks each `section.summary` **HTML string**,
-  tracking the latest `הרצאה מספר N` label and emitting one synthetic `modType:'zoom'` activity per
-  `zoom.us/rec/share` link, deduped by share token. Zoom links live in summaries, not modules.
+  tracking the latest week heading (`שבוע N` / `Week N`) and kind label (`הרצאה מספר N`, a bare
+  `תרגול:` / `Recitation:`, or any line of at most 40 chars ending in `:` directly before a link),
+  and emitting one synthetic `modType:'zoom'` activity per `zoom.us/rec/share` link, deduped by share
+  token. The title is `<week> – <label>` (either alone when only one is set), so it carries the number
+  the frontend names the row by; a numbered label already carries one and stands alone. A new week
+  heading clears the label. Zoom links live in summaries,
+  not modules.
 
 WS names are HTML (Moodle wraps subsection headings in `<span class="course-mod_subsection">`), so
 both parsers flatten them through `stripTags` (`lib/html.js`) before they become titles or headings.
