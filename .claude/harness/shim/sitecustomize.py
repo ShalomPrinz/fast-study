@@ -295,6 +295,13 @@ if _HARNESS:
         for step, fn in module._EXECUTORS.items():
             module._EXECUTORS[step] = _targeting(fn, path_of)
 
+    def _patch_transcribe(module):
+        """8 s chunks overlapping by 2 s, so the 20 s fixture transcribes in several chunks the way a real
+        lecture does in many; the fake Groq's segment sits inside every chunk's own share."""
+
+        module.CHUNK_SECONDS = 8
+        module.OVERLAP_SECONDS = 2
+
     def _patch_course_analyze(module):
         module.run_analyze = _targeting(module.run_analyze, lambda course, *_: course)
 
@@ -409,6 +416,7 @@ if _HARNESS:
         "settings": _patch_settings,
         "googleapiclient.discovery": _patch_discovery,
         "pipeline.runner": _patch_pipeline_runner,
+        "pipeline.transcribe": _patch_transcribe,
         "course.analyze": _patch_course_analyze,
         "httpx": _patch_httpx,
     }

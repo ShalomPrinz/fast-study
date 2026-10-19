@@ -174,3 +174,17 @@ def test_no_or_corrupt_locks_file_locks_nothing(child, summary, locks):
 def test_crud_reads_win32_while_the_real_platform_is_unchanged(child):
     code = "import fs.crud\nprint(json.dumps([fs.crud.sys.platform, sys.platform]))"
     assert child(code) == ["win32", sys.platform]
+
+
+def test_transcribe_chunks_shrink_to_split_the_fixture(child, tmp_path):
+    pipeline = tmp_path / "stubs" / "pipeline"
+    pipeline.mkdir()
+    (pipeline / "__init__.py").write_text("")
+    (pipeline / "transcribe.py").write_text(
+        "CHUNK_SECONDS = 600\nOVERLAP_SECONDS = 10\n"
+    )
+    code = (
+        "import pipeline.transcribe as t\n"
+        "print(json.dumps([t.CHUNK_SECONDS, t.OVERLAP_SECONDS]))"
+    )
+    assert child(code) == [8, 2]

@@ -55,9 +55,10 @@ function json(res, status, body, headers = {}) {
   res.end(payload);
 }
 
-// A verbose_json reply; the segment sits mid-chunk so the backend's overlap trim keeps it.
+// A verbose_json reply; the segment's midpoint (1.5 s) lies in every chunk's own share under the shim's
+// 8 s chunks overlapping by 2 s, so the backend's overlap trim keeps one line per chunk.
 function transcription(res, line) {
-  const segments = line ? [{ id: 0, start: 10, end: 20, text: line }] : [];
+  const segments = line ? [{ id: 0, start: 1, end: 2, text: line }] : [];
   return json(res, 200, { text: line, segments });
 }
 
