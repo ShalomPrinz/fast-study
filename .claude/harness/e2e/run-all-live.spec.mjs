@@ -45,11 +45,13 @@ test.beforeEach(async () => {
 });
 
 test.afterEach(async () => {
-  await reset();
-  // Reseeded even when the drain times out, so the stack never stays on the empty root.
+  // Lifts the hold, and every lecture left in the run stops at its transcript instead of a real PDF.
+  await providers({ groq: 'ok', gemini: 'empty' });
+  // Reset and reseeded even when the drain times out, so the stack never stays on the empty root.
   try {
     await waitForIdleRunner();
   } finally {
+    await reset();
     await reseed();
   }
 });
@@ -75,7 +77,8 @@ test('"Run these now" during a live run queues the rest, and a later download jo
 }) => {
   test.setTimeout(240_000);
   await site({ downloadMs: 500 });
-  // Transcription of the first lecture is held, so it stays the runner's lecture through every check.
+  // Transcription of the first lecture is held until afterEach lifts it, so it stays the runner's
+  // lecture through every check.
   await providers({ groq: { mode: 'slow', ms: 30_000, match: `${COURSE}/${FIRST.lecture}` } });
 
   const section = (title) =>

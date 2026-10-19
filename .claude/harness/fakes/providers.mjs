@@ -21,11 +21,24 @@ const SUMMARY = fs.readFileSync(path.join(FIXTURES, 'summary.md'), 'utf8');
 const rules = createRules();
 const { mode } = rules;
 
+// Each provider's calls a 'slow' hit is holding, as the callbacks that answer them early.
+const held = { groq: new Set(), gemini: new Set() };
+
 // The failure this request gets among the modes its route honours, or 'ok'. The shim stamps the
 // lecture a pipeline step or an overview works on; a 'slow' hit is waited out here and answers 'ok'.
 async function failure(provider, req, honoured) {
   const { hit, ms } = rules.take(provider, req.headers['x-harness-lecture'], honoured);
-  if (hit === 'slow') await new Promise((resolve) => setTimeout(resolve, ms));
+  if (hit === 'slow') {
+    await new Promise((resolve) => {
+      const release = () => {
+        clearTimeout(timer);
+        held[provider].delete(release);
+        resolve();
+      };
+      const timer = setTimeout(release, ms);
+      held[provider].add(release);
+    });
+  }
   return hit === 'slow' ? 'ok' : hit;
 }
 
@@ -138,6 +151,11 @@ async function handle(req, res) {
       return json(res, 400, { error: error.message });
     }
     if (body.reset) chunk = 0; // the transcript restarts at its first paragraph
+    // A new rule for a provider ends its held calls, so a test lifts a hold the moment it is done.
+    for (const provider of ['groq', 'gemini']) {
+      if (body.reset || body[provider] !== undefined)
+        for (const release of held[provider]) release();
+    }
     return json(res, 200, { mode });
   }
   if (route === '/health') return json(res, 200, { status: 'ok', mode });

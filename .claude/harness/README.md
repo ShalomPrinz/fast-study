@@ -451,7 +451,7 @@ chunk, one per Gemini request) and puts the provider back to `ok` at zero. A mod
 means something: `429` and `empty` to transcription and generation, `429min` to generation alone,
 `500` to both and to the key probe, `invalidkey` to every Gemini route — the real 400 `API_KEY_INVALID` body, so the first
 upload of a run is what fails. `slow`, on transcription and generation, holds each matched call
-`ms` and then answers as `ok` — a step that stays in flight long enough to cancel, rename, reload or
+`ms` and then answers as `ok` — sooner if a `/control` sets that provider's rule or resets — a step that stays in flight long enough to cancel, rename, reload or
 queue behind; Groq is held once per chunk, so a lecture's step takes `ms` × its chunks. The Drive
 upload is an in-process fake in the backend, outside `/control`, so it has no `slow`. An unknown
 mode or field is answered 400. `/health` shows each rule
