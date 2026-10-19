@@ -7,6 +7,37 @@ installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, 
 path, the browser chain, an in-place update. It needs an installed Windows build, so off the runner
 only `npx playwright test --list` works — it is never "passed" from WSL.
 
+## Scope
+
+The suite asks one question: did build, freeze, stage and install produce the app the source tests
+proved? It never asserts flow behaviour — UI wording, step order, how an error code renders — which
+the app-harness E2E specs own ([`.claude/harness/README.md`](../../.claude/harness/README.md)); a step
+status, an error code or a provider's verbatim text (test 5's `lecture-error-message`) is read only as
+evidence of a packaging fact. Two flow checks stay here only because no harness spec covers them yet,
+both in `lib/firstRun.js`: the privacy gate — the wall's first save opens the policy, and Confirm stays
+disabled until `.privacy-body` is scrolled to its end (test 4, and test 14 when the policy opens) — and a canceled folder dialog
+keeping the launcher's default (test 4). The boundary is the
+root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
+
+| Test                    | The failure only packaging can cause                                                                                                 | Harness flow side                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| 1. fresh install        | the per-user NSIS install fails, `resources/` drifts from `BOOT.md`'s tree, the shipped native host breaks | —                                                  |
+| 2. DLL imports          | an installed binary imports a DLL a clean PC lacks                                                                                   | —                                                  |
+| 3. boot                 | the launcher spawns out of order, a bundled tool is unusable, `bin/` and the probed tools differ, a service runs without the secret  | —                                                  |
+| 4. first run            | main's native folder dialog over IPC breaks, keys land in `settings.json` unencrypted, a probe reaches the network instead of `unverified` | `first-run-and-data-folder.spec.mjs`               |
+| 5. provider steps       | the bundled ffmpeg is not spawned by path; a frozen SDK fails to import or build a request, rather than failing on the network       | `failure-surfacing.spec.mjs`                       |
+| 6. the PDF              | bundled pandoc or tectonic fails, the shipped `.fmt` is rebuilt rather than reused, Hebrew glyphs drop                               | `pipeline-success.spec.mjs`                        |
+| 7. live SSE             | SSE never reaches the document under `app://bundle` with the launch secret, so the page needs a reload                              | `pipeline-success.spec.mjs`                        |
+| 8. drive off            | a fresh install's defaults run a step past the PDF or upload to Drive                                                                | —                                                  |
+| 9. opening a PDF        | `open-pdf` fails through the preload bridge and `shell.openPath`; a real Windows exclusive handle is not reported as `file_locked`   | `locked-file.spec.mjs`                             |
+| 10. yt-dlp download     | yt-dlp cannot find the bundled ffmpeg to merge DASH, the state root's yt-dlp copy is not seeded, `/video-arrived` is never reported  | `download.spec.mjs`, `download-all.spec.mjs`       |
+| 11. quit, no orphans    | a frozen process or port outlives the launcher's teardown; settings do not persist across a relaunch                                 | —                                                  |
+| 12. Hebrew temp path    | a bundled tool breaks under a non-ASCII `TEMP`; the frozen services do not write UTF-8 to `launch.log`                               | —                                                  |
+| 13. the browser chain   | the prerequisite misresolves installed Chrome or Edge; the PDF step depends on a browser                                             | —                                                  |
+| 14. an in-place update  | the updater fails to replace `resources/` from a feed, or loses the keys, the yt-dlp copy or the new `.fmt`                          | —                                                  |
+
+A new smoke test adds its row here; a test with no packaging-only failure belongs in the harness or a unit test.
+
 ## Rules
 
 - **`resources/bin/` is one set with what the services probe** — compared exactly against the tool

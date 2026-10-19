@@ -148,6 +148,16 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 - Verify empirically — start the service, curl it, kill it, quote the exact output — rather than asserting it works. For anything a user would see, run it on the `app-harness` skill's private offline stack ([`.claude/harness/`](.claude/harness/README.md)).
 - WSL interop is off, so no `.exe` runs from this shell — but the user has a Windows machine with PowerShell and Claude Code. When something needs verifying on Windows, ask them to run it there: give exact PowerShell commands or a self-contained prompt for that Claude Code, rather than leaving the Windows behavior unproven. That Claude Code is allowed to access this repo too, so when a check needs the code on the Windows side, tell the user it should work from the repo.
 
+## Test boundaries
+
+Each fact is tested once, at the cheapest layer that can prove it — broad tests are slow and brittle, so a fact proven twice is paid for twice and fails twice:
+
+1. **Unit tests**, in the owning service: anything one module can get wrong on its own, edge cases included.
+2. **The app-harness E2E specs** ([`.claude/harness/`](.claude/harness/README.md)): a main user flow across services, run from source with every third party faked. They never assert what only the installed app has — bundled binaries, the frozen bundle, DLL imports, the launcher, the installer, the updater.
+3. **The release smoke suite** ([`delivery/docs/SMOKE.md`](delivery/docs/SMOKE.md)): whether build, freeze, stage and install produced the app the source tests proved. Each test names a failure only packaging can cause, and never re-proves flow behaviour — UI wording, step order, how an error code renders.
+
+A check that needs both splits: the flow goes in the harness, and smoke keeps only the packaging fact. Smoke may read a step status, an error code or a third party's verbatim text as the evidence of that fact, never assert the flow around it. A flow check smoke holds because no harness spec covers it yet is named as such in its own doc. Each suite's own doc holds its detailed scope.
+
 ## Linting
 
 Every service is linted, and new code must land lint-clean — `npm run lint` from the repo root runs both linters over everything.

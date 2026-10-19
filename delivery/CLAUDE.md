@@ -75,4 +75,4 @@ resolves through `resource_path()`** (`backend/services/resources.py`), never a 
 | ---------------------------------- | ------------------------------------------------------------------------------- |
 | [RELEASE.md](docs/RELEASE.md)      | The installer, build → test → publish, versions, pins, the frozen bundle, stage |
 | [LATEX.md](docs/LATEX.md)          | Priming the shipped tectonic cache: the sink, the supplement, the baseline      |
-| [SMOKE.md](docs/SMOKE.md)          | The release smoke suite's rules and what only a Windows run proves              |
+| [SMOKE.md](docs/SMOKE.md)          | The release smoke suite's scope, rules and what only a Windows run proves           |

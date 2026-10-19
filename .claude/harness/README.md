@@ -420,12 +420,15 @@ requests, with real ffmpeg, pandoc and tectonic. The
 release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a
 production override, which [SMOKE.md](../../delivery/docs/SMOKE.md) rules out.
 
-Two rules decide what earns a spec. First, it drives a flow a real user reaches in the shipped app,
+Three rules decide what earns a spec. First, it drives a flow a real user reaches in the shipped app,
 through its UI or the files and sites it reads; a state only the harness can produce has no spec. One
 service restarting alone is such a state: the launcher has no respawn, so a dead service stays dead until
 the app restarts. Second, it covers the app's main flows, not edge cases: a lecture deleted mid-run, a
 provider quota, a mid-run consent prompt or a refused rename belong in the owning service's unit tests.
-A distinct but ordinary flow, such as a materials-only lecture, is in scope.
+A distinct but ordinary flow, such as a materials-only lecture, is in scope. Third, it proves a fact that
+holds from source: the bundled binaries, the shipped tectonic cache, keys encrypted in `settings.json`, a
+real Windows lock, the launcher's boot and the updater belong to the release smoke suite, per the root
+`CLAUDE.md`'s test boundaries.
 
 `e2e/fixtures.mjs` holds what more than one spec needs: the stack's levers (`providers`, `site`, `lock`,
 `reseed`, `reset`), a lecture view's `step` rows and `expectStepsDone`, `treeLecture` over the database's
