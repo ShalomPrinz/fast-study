@@ -54,7 +54,7 @@ class TestRunStep:
             response = client.post("/courses/C/lectures/L/run/summarize")
         assert response.status_code == 200
         assert response.json() == {"status": "started"}
-        run.assert_called_once_with("C", "L", "lecture", "summarize")
+        run.assert_called_once_with("C", "L", "lecture", "summarize", fresh=False)
 
     def test_summarize_with_audio_but_no_transcript_is_a_409(self):
         with (
@@ -391,3 +391,30 @@ class TestStatus:
         assert response.status_code == 200
         assert response.json()["errors"] == {}
         assert seen == {"delete_on_loop": True, "fetch_on_loop": False}
+
+
+class TestFreshFlag:
+    @staticmethod
+    def _post(path: str):
+        with (
+            patch.object(
+                backend_main.runner.db_client, "file_exists", return_value=True
+            ),
+            patch.object(
+                backend_main.runner, "try_run_step", return_value="started"
+            ) as run,
+        ):
+            assert client.post(path).json() == {"status": "started"}
+        return run
+
+    def test_fresh_reaches_the_pdf_step(self):
+        run = self._post("/courses/C/lectures/L/run/pdf?fresh=true")
+        run.assert_called_once_with("C", "L", "lecture", "pdf", fresh=True)
+
+    def test_pdf_defaults_to_not_fresh(self):
+        run = self._post("/courses/C/lectures/L/run/pdf")
+        run.assert_called_once_with("C", "L", "lecture", "pdf", fresh=False)
+
+    def test_other_steps_ignore_fresh(self):
+        run = self._post("/courses/C/lectures/L/run/transcribe?fresh=true")
+        run.assert_called_once_with("C", "L", "lecture", "transcribe", fresh=False)

@@ -431,7 +431,7 @@ def _drop_marker(course: str, lecture: str, kind: str, name: str) -> None:
         log.exception("failed to delete %s", name)
 
 
-def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
+def _exec_pdf(course: str, lecture: str, kind: str, *, fresh: bool = False) -> dict:
     """Render summary.md → summary.pdf via pandoc/tectonic. A render that errored but still
     produced a usable PDF is `done` with the warning persisted to .pdf_warning."""
 
@@ -442,6 +442,10 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
                 "summary.md",
                 "summarize",
             )
+        if fresh:
+            # A PDF the database cannot delete (a viewer holds it) is one the upload cannot
+            # overwrite either, so fail with its code before the render rather than after.
+            db_client.delete_file(course, lecture, kind, "summary.pdf")
         with _db_workspace(course, lecture, kind, upload=["summary.pdf"]) as ws:
             # summary.md comes from get_summary (envelope-wrapped), not get_file_bytes.
             md_path = ws["summary.pdf"].parent / "summary.md"
@@ -478,7 +482,7 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
                 stored_tex = True
             except Exception:
                 log.exception("failed to store %s", PDF_BUILD_TEX_FILE)
-        # The old summary.pdf survives, but overwriting the .tex just invalidated its
+        # Any old summary.pdf survives, but overwriting the .tex just invalidated its
         # warning's `l.<N>`. Only that overwrite does — otherwise the old pair still agrees.
         if stored_tex:
             _drop_marker(course, lecture, kind, PDF_WARNING_FILE)
@@ -708,14 +712,23 @@ def _drop_handover() -> bool:
     return key is not None and _in_flight.pop(key, None) is not None
 
 
-async def _call_step(course: str, lecture: str, kind: str, step: str) -> dict:
+async def _call_step(
+    course: str, lecture: str, kind: str, step: str, *, fresh: bool = False
+) -> dict:
     """Run one executor in a worker thread so the event loop stays free during blocking I/O."""
 
-    return await asyncio.to_thread(_EXECUTORS[step], course, lecture, kind)
+    opts = {"fresh": True} if fresh else {}
+    return await asyncio.to_thread(_EXECUTORS[step], course, lecture, kind, **opts)
 
 
 async def _run_step_unlocked(
-    course: str, lecture: str, kind: str, step: str, *, keep_in_flight: bool = False
+    course: str,
+    lecture: str,
+    kind: str,
+    step: str,
+    *,
+    keep_in_flight: bool = False,
+    fresh: bool = False,
 ) -> None:
     """Run one step once, to done or a recorded error. Unsafe: the caller must hold this
     lecture's lock; keep_in_flight leaves the end-of-step clear to it."""
@@ -744,7 +757,7 @@ async def _run_step_unlocked(
         _transcribe_block = None
     db_client.notify()
 
-    result = await _call_step(course, lecture, kind, step)
+    result = await _call_step(course, lecture, kind, step, fresh=fresh)
 
     if result["status"] == "done":
         if not keep_in_flight:
@@ -841,11 +854,14 @@ async def _run_pipeline_unlocked(
             db_client.notify()
 
 
-async def run_step(course: str, lecture: str, kind: str, step: str) -> None:
-    """Acquire the per-lecture lock, then run one step to completion (blocking the caller)."""
+async def run_step(
+    course: str, lecture: str, kind: str, step: str, *, fresh: bool = False
+) -> None:
+    """Acquire the per-lecture lock, then run one step to completion (blocking the caller).
+    `fresh` (pdf only) deletes the old summary.pdf under the lock before the render."""
 
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
-        await _run_step_unlocked(course, lecture, kind, step)
+        await _run_step_unlocked(course, lecture, kind, step, fresh=fresh)
 
 
 async def run_pipeline_for(
@@ -865,15 +881,17 @@ async def run_pipeline_for(
         )
 
 
-def try_run_step(course: str, lecture: str, kind: str, step: str) -> str:
+def try_run_step(
+    course: str, lecture: str, kind: str, step: str, *, fresh: bool = False
+) -> str:
     """Fire-and-forget run_step if the lecture isn't already locked, pulling it out of the
-    runner queue. Returns 'busy' or 'started'."""
+    runner queue. Returns 'busy' or 'started'; 'busy' touches no file."""
 
     lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
     if lock.locked():
         return "busy"
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
-    asyncio.create_task(run_step(course, lecture, kind, step))
+    asyncio.create_task(run_step(course, lecture, kind, step, fresh=fresh))
     return "started"
 
 

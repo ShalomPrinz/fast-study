@@ -26,8 +26,8 @@ When `FASTSTUDY_SECRET` is set, every request but `GET /health` must carry it; t
 
 ## Per-lecture
 
-`POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}`
-`step ∈ {audio, transcribe, summarize, pdf, drive}`, `kind` defaults to `lecture`.
+`POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}[&fresh=true]`
+`step ∈ {audio, transcribe, summarize, pdf, drive}`, `kind` defaults to `lecture`. `fresh=true` (pdf only; other steps ignore it) deletes the old `summary.pdf` through the database once the run holds the lecture's lock, before the render; a failed delete is the pdf step's error with the database's own code (`file_locked` for a PDF another program holds open) and nothing renders. A `busy` answer touches no file.
 Unknown step → 404. Validates that the step's prerequisite file exists (`_STEP_CONFIG`; for `summarize`, `runner.summarize_ready`: `transcript.txt`, or no `video.mp4`, no `audio.mp3` and at least one material PDF), answering 409 `"<file> is required — run <previous step> first"` otherwise; a step a setting has switched off is 409 `"<step> is disabled in settings"`. On success → `{"status": "started"|"busy"}`.
 
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`

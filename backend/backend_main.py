@@ -174,7 +174,13 @@ def _is_user_actionable(e: db_client.DbClientError) -> bool:
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/{step}")
-async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
+async def run_step(
+    course: str,
+    lecture: str,
+    step: str,
+    kind: Kind = Query("lecture"),
+    fresh: bool = Query(False),
+):
     if step not in _STEP_CONFIG:
         return _error(failure(f"Unknown step: {step}", "unknown_step", step=step), 404)
     if step not in runner.enabled_steps():
@@ -201,7 +207,12 @@ async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lec
             ),
             409,
         )
-    return {"status": runner.try_run_step(course, lecture, kind, step)}
+    # `fresh` means only "delete the old PDF first", so every other step ignores it.
+    return {
+        "status": runner.try_run_step(
+            course, lecture, kind, step, fresh=fresh and step == "pdf"
+        )
+    }
 
 
 @app.post("/courses/{course}/lectures/{lecture}/pipeline")

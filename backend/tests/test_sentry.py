@@ -165,7 +165,7 @@ def test_pipeline_step_failure_reports_a_log_event(reload_main, monkeypatch):
     sentry_policy.set_reporting(True)
     reload_main()
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         return {"status": "error", "message": "boom"}
 
     async def go():

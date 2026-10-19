@@ -14,6 +14,8 @@
 
 Other files in a lecture dir: `video.mp4` (user/downloader), any number of material PDFs (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on failure), `.pdf_warning` + `.pdf_build.tex` (pdf, on a recovered or failed render — see [PDF.md](PDF.md)).
 
+A `fresh` pdf run (`run/pdf?fresh=true`, the editor's save-and-rerender) deletes `summary.pdf` under the lecture's lock before rendering, so a racing run that answers `busy` never leaves the lecture without its PDF; the database's delete also drops `.pdf_warning` and `.pdf_build.tex`.
+
 A LaTeX error that still yielded a usable PDF is **not** a step failure: `_exec_pdf` returns `done` and persists the warning to `.pdf_warning`, so the run continues to `drive`. The runner stays error-only — there is no warning channel in `/status`.
 
 Drive consent never happens inside a run. `services/google_auth.py` only loads and refreshes the stored token, so a drive step with none raises `DriveNotConnected` before it fetches the PDF: the lecture stops at `summary.pdf` and nothing waits on a human. That first failure sets one process flag, reported as `consent_needed` on `GET /config/drive/status` and pushed over SSE, so a queue of N lectures leaves the UI one thing to render; the consent flow itself is `POST /config/drive/connect` ([API.md](API.md)).

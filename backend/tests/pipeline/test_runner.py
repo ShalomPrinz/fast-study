@@ -581,7 +581,7 @@ def test_a_materials_only_pipeline_runs_summarize_pdf_drive():
     async def fake_fetch(course, lecture, kind):
         return states[len(steps)]
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         steps.append(step)
         return {"status": "done"}
 
@@ -704,7 +704,7 @@ def test_run_step_logs_error(caplog):
     """An error outcome is logged (not only stored in _errors), so the terminal shows
     the failure instead of a silent jump to the next lecture."""
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         return {"status": "error", "message": "boom"}
 
     async def go():
@@ -743,7 +743,7 @@ def test_run_step_logs_error(caplog):
 def test_run_step_keeps_provider_conditions_below_error(caplog, code, level):
     """ERROR logs become Sentry events; a provider's availability logs WARNING instead."""
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         return {"status": "error", "message": "boom", "code": code}
 
     async def go():
@@ -829,7 +829,7 @@ def _run_pipeline_observed(results, *, honor_block=False):
         seen.append(entry and entry["step"])
         return _STATES[len(seen) - 1]
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         result = results.pop(0)
         if isinstance(result, BaseException):
             raise result
@@ -899,7 +899,7 @@ def test_a_pipeline_with_nothing_to_do_does_not_notify():
 
 
 def test_a_lone_step_clears_in_flight_when_it_ends():
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         assert runner._in_flight[_SKEY]["step"] == "audio"
         return {"status": "done"}
 
@@ -931,7 +931,7 @@ def _run_all_observed(plans: dict, *, fetch_error: str | None = None):
             ]  # every planned step ran, or a step error cleared the plan
         return _STATES[totals[lecture] - len(plans[lecture])]
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         result = plans[lecture].pop(0)
         if result["status"] == "error":
             plans[lecture].clear()
@@ -1100,7 +1100,7 @@ def test_groq_limit_blocks_transcribe_for_later_lectures():
     async def fake_fetch(course, lecture, kind):
         return _files(video=True, audio=True)
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         steps_run.append((lecture, step))
         return _groq_error_result()
 
@@ -1147,7 +1147,7 @@ def test_groq_blocked_error_carries_stated_retry_after():
     async def fake_fetch(course, lecture, kind):
         return _files(video=True, audio=True)
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         return {**_groq_error_result(), "params": params}
 
     async def go():
@@ -1192,7 +1192,7 @@ def test_transcribe_start_clears_groq_records_and_lifts_block():
     )
     runner._transcribe_block = {"message": "r", "params": GROQ_PARAMS}
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         return {"status": "done"}
 
     async def go():
@@ -1237,7 +1237,7 @@ def _quota_error_result(
 def test_daily_quota_error_record():
     """A daily-quota failure is tagged quota/gemini so the UI can say so."""
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         return _quota_error_result("quota msg")
 
     async def go():
@@ -1283,7 +1283,7 @@ def test_daily_quota_blocks_summarize_for_later_lectures(caplog):
         # until summary.md exists (it never does here).
         return _files(video=True, audio=True, transcript=True)
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         steps_run.append((lecture, step))
         return _quota_error_result()
 
@@ -1337,7 +1337,7 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
     async def fake_fetch(course, lecture, kind):
         return _files(video=True, audio=True, transcript=True)
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         calls.append(step)
         return _quota_error_result()
 
@@ -1383,7 +1383,7 @@ def test_summarize_start_clears_quota_records_and_lifts_block():
     )
     runner._summarize_block = {"message": "q", "params": QUOTA_PARAMS}
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         return {"status": "done"}
 
     async def go():
@@ -1426,7 +1426,7 @@ def test_manual_summarize_mid_run_lets_queued_lectures_summarize():
             drive=done,
         )
 
-    async def fake_call(course, lecture, kind, step):
+    async def fake_call(course, lecture, kind, step, **_opts):
         calls.append(lecture)
         if lecture == "L1":
             return _quota_error_result()
@@ -2004,3 +2004,108 @@ def test_prune_stale_errors_keeps_an_error_written_during_the_tree_fetch():
         assert list(runner._errors) == [fresh]
     finally:
         runner._errors.clear()
+
+
+# ---- fresh pdf run: the old summary.pdf goes under the lock, before the render ----
+
+
+def test_exec_pdf_fresh_deletes_the_old_pdf_before_rendering():
+    order: list[str] = []
+    render = _fake_render(None)
+
+    def convert(md_path):
+        order.append("render")
+        return render(md_path)
+
+    db = _PdfDb()
+    with ExitStack() as stack:
+        db.install(stack, convert)
+        stack.enter_context(
+            patch.object(
+                runner.db_client,
+                "delete_file",
+                lambda c, l, k, name: order.append(f"delete {name}"),
+            )
+        )
+        result = runner._exec_pdf("C1", "L1", "lecture", fresh=True)
+    assert result == {"status": "done"}
+    assert order[:2] == ["delete summary.pdf", "render"]
+
+
+def test_exec_pdf_without_fresh_never_deletes_the_pdf():
+    _, db = _run_exec_pdf(_fake_render(None))
+    assert "summary.pdf" not in db.deletes
+
+
+def test_exec_pdf_fresh_delete_failure_is_the_step_error_and_skips_the_render():
+    """A PDF a viewer holds open cannot be overwritten either, so no render is wasted on it."""
+
+    convert = Mock()
+    db = _PdfDb()
+    with ExitStack() as stack:
+        db.install(stack, convert)
+        stack.enter_context(
+            patch.object(
+                runner.db_client,
+                "delete_file",
+                Mock(
+                    side_effect=runner.db_client.DbClientError(
+                        "summary.pdf is open in another program",
+                        "file_locked",
+                        file="summary.pdf",
+                    )
+                ),
+            )
+        )
+        result = runner._exec_pdf("C1", "L1", "lecture", fresh=True)
+    convert.assert_not_called()
+    assert result == {
+        "status": "error",
+        "message": "summary.pdf is open in another program",
+        "code": "file_locked",
+        "params": {"file": "summary.pdf"},
+    }
+
+
+def test_fresh_run_step_records_the_delete_failure(clean_queue):
+    skey = runner._skey("C1", "L1", "lecture")
+    with (
+        patch.object(runner.db_client, "notify", lambda: None),
+        patch.object(runner.db_client, "file_exists", lambda *a: True),
+        patch.object(
+            runner.db_client,
+            "delete_file",
+            Mock(
+                side_effect=runner.db_client.DbClientError(
+                    "locked", "file_locked", file="summary.pdf"
+                )
+            ),
+        ),
+        patch.object(runner, "convert_to_pdf") as convert,
+    ):
+        asyncio.run(runner.run_step("C1", "L1", "lecture", "pdf", fresh=True))
+    stored = runner._errors.pop(skey)
+    convert.assert_not_called()
+    assert (stored["step"], stored["code"], stored["params"]) == (
+        "pdf",
+        "file_locked",
+        {"file": "summary.pdf"},
+    )
+
+
+def test_a_busy_fresh_pdf_run_leaves_the_old_pdf(clean_queue):
+    """The lecture's lock is held by another run: the answer is busy and nothing is deleted."""
+
+    async def go():
+        lock = runner._locks.setdefault(
+            runner._lkey("C1", "L1", "lecture"), asyncio.Lock()
+        )
+        await lock.acquire()
+        with patch.object(runner.db_client, "delete_file") as delete:
+            assert (
+                runner.try_run_step("C1", "L1", "lecture", "pdf", fresh=True) == "busy"
+            )
+            await asyncio.sleep(0)
+        delete.assert_not_called()
+
+    asyncio.run(go())
