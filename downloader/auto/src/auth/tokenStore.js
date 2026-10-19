@@ -60,6 +60,7 @@ export function readTokenFile(file) {
       const key = tokenKey();
       return key ? open(parsed, key) : null;
     }
+    // Temporary legacy patch, tracked with its removal condition in the repo-root docs/MIGRATIONS.md.
     if (tokenKey()) writeTokenFile(file, parsed);
     return parsed;
   } catch {

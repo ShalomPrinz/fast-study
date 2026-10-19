@@ -95,6 +95,12 @@ to the English prose — but is not finished. `frontend/src/shared/i18n/errorCod
 the three in step: it greps the services for emitted codes and fails when one is undocumented, or
 when the doc calls a code user-reachable and no catalog row says it.
 
+## Migrations
+
+Code that only patches data an older version wrote is temporary: list it in
+[`docs/MIGRATIONS.md`](docs/MIGRATIONS.md) in the same change, with the condition that makes it
+safe to delete, and point at that file from a one-line comment on the code.
+
 ## Service subagents
 
 Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent, with a brief written by the [`delegate`](.claude/skills/delegate/SKILL.md) skill; `.claude/ownership.json` says which agent owns which path. Subagents never commit; the main session commits what they report.

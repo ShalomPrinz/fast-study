@@ -1,0 +1,33 @@
+# Migrations
+
+Code that exists only to bring data written by an older version into line with the current one. Each
+entry is temporary by design: it names the code, what old state it handles, and the signal that
+makes it safe to delete. When an entry's removal condition holds, delete the code, its tests and its
+row here in one change.
+
+A migration patch is added here in the same change that introduces it, and its code carries a
+one-line comment pointing at this file.
+
+## Material source adoption
+
+- **Code:** `database/fs/materials.py`, the adoption step of `write_material`.
+- **Old state:** material PDFs saved before materials recorded their download source have no entry
+  in the lecture's `.materials.json`, so no discovery row can match them and the downloads page
+  offers them again.
+- **What it does:** a `POST …/materials?source=` whose source the lecture doesn't hold yet is
+  compared byte for byte with the lecture's source-less materials of equal size. On an identical
+  match the source is recorded on that file and nothing new is written, instead of a duplicate
+  `material.N.pdf`.
+- **Remove when:** users' source-less materials have been re-downloaded once (each re-download
+  adopts them). After removal, a re-download of a still-unadopted old material lands as one
+  duplicate. PDFs saved by the Chrome extension never carry a
+  source, so they never adopt either way. They are not a reason to keep this.
+
+## Plaintext Moodle token
+
+- **Code:** `downloader/auto/src/auth/tokenStore.js`, the plaintext branch of `readTokenFile`.
+- **Old state:** a Moodle token file written before the launcher passed `FASTSTUDY_TOKEN_KEY` is
+  plain JSON.
+- **What it does:** reads it and, when a key is set, rewrites it encrypted.
+- **Remove when:** every install has launched once under a release that sets the key. After
+  removal, a still-plaintext file reads as absent, so the user reconnects once.
