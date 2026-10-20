@@ -138,6 +138,62 @@ test('captchaSolved lands on the one row whose capture waited, never on the run'
 });
 
 // The pre-decided rows are advanced past in one step, so `at` still lands on the total.
+test('a captcha left unsolved fails the Moodle rows after it unsent; the others still run', async () => {
+  const row = (name, moodle) => ({ ...target(name), ...(moodle && { moodle: true }) });
+  const run = createRun({
+    sectionId: 'c:video:unsolved',
+    course: 'c',
+    targets: [row('a', true), row('b', true), row('zoom'), row('c', true)],
+  });
+  const sent = [];
+  await drive(run, 0, async ({ name }) => {
+    sent.push(name);
+    if (name === 'a')
+      return { status: 503, body: { error: 'unsolved', code: 'site_captcha_timeout', params: {} } };
+    return { status: 200, body: { media: 'video', jobIds: [] } };
+  });
+  assert.deepEqual(sent, ['a', 'zoom']);
+  assert.deepEqual(
+    run.targets.map((t) => [t.name, t.disposition, t.code]),
+    [
+      ['a', 'queue-failed', 'site_captcha_timeout'],
+      ['b', 'queue-failed', 'site_captcha_timeout'],
+      ['zoom', 'queued', undefined],
+      ['c', 'queue-failed', 'site_captcha_timeout'],
+    ],
+  );
+  assert.equal(run.status, 'done');
+});
+
+test('a resume after a passcode pause still fails the Moodle rows after an unsolved captcha', async () => {
+  const row = (name, moodle) => ({ ...target(name), ...(moodle && { moodle: true }) });
+  const run = createRun({
+    sectionId: 'c:video:unsolved-resume',
+    course: 'c',
+    targets: [row('a', true), row('zoom'), row('b', true)],
+  });
+  const sent = [];
+  const trigger = async ({ name }) => {
+    sent.push(name);
+    if (name === 'a')
+      return { status: 503, body: { error: 'unsolved', code: 'site_captcha_timeout', params: {} } };
+    if (name === 'zoom' && sent.length === 2) return { status: 409, body: { reason: 'missing' } };
+    return { status: 200, body: { media: 'video', jobIds: [] } };
+  };
+  await drive(run, 0, trigger);
+  assert.equal(run.status, 'paused');
+  await drive(run, run.paused.index, trigger);
+  assert.deepEqual(sent, ['a', 'zoom', 'zoom']);
+  assert.deepEqual(
+    run.targets.map((t) => [t.name, t.disposition, t.code]),
+    [
+      ['a', 'queue-failed', 'site_captcha_timeout'],
+      ['zoom', 'queued', undefined],
+      ['b', 'queue-failed', 'site_captcha_timeout'],
+    ],
+  );
+});
+
 test('a fully pre-decided section completes without triggering anything', async () => {
   const run = createRun({
     sectionId: 'c:video:alldone',

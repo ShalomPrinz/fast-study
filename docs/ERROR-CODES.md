@@ -27,6 +27,7 @@ already had.
 | Runner crash    | `runner.last_error` — `{message, code, params}` or `null`                   | `backend/pipeline/runner.py`                                 |
 | Overview status | `{status, phase, message, code, params, started_at}` per extractor          | `backend/course/runner.py`                                   |
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
+| Run target      | `{…, disposition, code?}` per target on `GET /runs` and the runs SSE        | `downloader/server/src/runs.js`                              |
 | Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
 | Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
 
@@ -275,6 +276,9 @@ the Moodle site can answer auto's `moodle_busy`, `link_not_a_video`, `link_dead`
 `link_probe_inconclusive`; `autodl_unreachable` reaches `/download-url` for any URL, since only auto
 can say which URLs are Moodle's.
 
+A section run's target carries a `code` only as auto's `site_captcha_timeout` (no params): on the row
+whose resolve timed out on the captcha, and on each later `moodle` row the run then fails unsent.
+
 The `general_folder_*` codes are a general-video download into the user's chosen folder: `missing` and
 `not_writable` answer `POST /general-folder` (400) and the three download routes (409); `save_failed`
 ends a folder job, or answers a folder `/upload-pdf` with 500.
@@ -286,8 +290,8 @@ on both channels unchanged, so `database_store_failed` is only the fallback for 
 `downloaders/runner.js` likewise ends a job whose file on auto was refused with auto's own
 `code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_reconnect_required`,
 `moodle_file_unknown`); a body that is not auto's envelope falls back to `download_tool_failed` /
-`download_auth_failed`. A re-resolve that auto answers `503 site_blocked` likewise ends the job with
-that code and params, never `recapture_failed`.
+`download_auth_failed`. A re-resolve that auto answers `503 site_blocked` or `site_captcha_timeout`
+likewise ends the job with that code and params, never `recapture_failed`.
 
 The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live only in `progress.js`'s
 `console` wrappers; `services/database.js` logs the emoji line and returns the bare error, so nothing

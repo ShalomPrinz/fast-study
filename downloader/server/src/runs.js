@@ -25,10 +25,14 @@ export function outcomeFor(status) {
 
 // The caller owns the skip rule (it reads the live course tree), so `skipped`/`unsupported` arrive
 // already decided; anything else is undecided until the queue reaches it.
-function toTarget({ ref, name, kind, media, disposition }) {
+function toTarget({ ref, name, kind, media, disposition, moodle }) {
   const decided = disposition === 'skipped' || disposition === 'unsupported';
-  return { ref, name, kind, media, disposition: decided ? disposition : 'pending' };
+  const target = { ref, name, kind, media, disposition: decided ? disposition : 'pending' };
+  return moodle === true ? { ...target, moodle } : target;
 }
+
+// A row whose resolve ended with Moodle's captcha unsolved for 10 minutes (auto MOODLE.md).
+const CAPTCHA_TIMEOUT = 'site_captcha_timeout';
 
 // Registering replaces any previous run for this section outright — one run per section is what
 // keeps a run re-findable and removes any need for time-based eviction.
@@ -126,6 +130,14 @@ export async function drive(run, from, trigger = downloadItem) {
       run.at = i + 1;
       broadcastRuns();
       if (target.disposition !== 'pending') continue;
+      // Once a row's captcha went unsolved, nobody is at the window: the Moodle rows left fail
+      // unsent, across a resume too, since the row records it.
+      const unsolved = run.targets.some((t) => t.code === CAPTCHA_TIMEOUT);
+      if (unsolved && target.moodle === true) {
+        Object.assign(target, { disposition: 'queue-failed', code: CAPTCHA_TIMEOUT });
+        broadcastRuns();
+        continue;
+      }
 
       // Contained per target: a malformed answer from auto/ fails this row, never the whole run.
       let outcome = { disposition: 'queue-failed' };
@@ -142,6 +154,7 @@ export async function drive(run, from, trigger = downloadItem) {
         });
         body = res.body;
         outcome = outcomeFor(res.status);
+        if (res.status === 503 && body?.code === CAPTCHA_TIMEOUT) target.code = CAPTCHA_TIMEOUT;
         if (outcome.disposition === 'queued') adoptJobs(run, body?.jobIds);
       } catch {
         /* keep the queue-failed default */
