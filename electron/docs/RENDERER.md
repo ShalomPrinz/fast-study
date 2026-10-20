@@ -186,5 +186,9 @@ written from both processes would put two writers on one file.
   answered, and main only stores it.
 - **`ai_provider` (`aiProvider`) is launcher-only too**: `claude` | `chatgpt` | `gemini`, any other
   write refused; unset or unknown reads `null` and the renderer applies the `claude` default.
+- **`auto_remove` (`autoRemove`: `off` | `video` | `audio`) and `auto_remove_after`
+  (`autoRemoveAfter`: `pdf` | `drive`) are choices like `auto_run`**: lowercased, any other write
+  refused, and — as `database/settings.py` reads them — unset or unknown reads `null` and stays out
+  of the env as `AUTO_REMOVE` / `AUTO_REMOVE_AFTER`.
 - **In a packaged app `database/settings.py`'s `.env` store goes unused.** The services read the env
   vars main sets; nothing migrates between the two stores, and Electron never reads `.env`.

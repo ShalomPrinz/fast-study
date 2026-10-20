@@ -13,6 +13,8 @@ const full = {
   geminiModel: 'gemini-2.5-pro',
   gdriveRootFolder: 'FastStudy',
   autoRun: 'audio',
+  autoRemove: 'video',
+  autoRemoveAfter: 'drive',
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
   errorReports: false,
@@ -55,6 +57,41 @@ test('autoRun is trimmed and lowercased before it is stored', () => {
   assert.equal(store.serviceEnv().AUTO_RUN, 'audio');
 });
 
+test('an unknown autoRemove or autoRemoveAfter is refused and nothing is written', () => {
+  store.write({ autoRemove: 'off' });
+  const before = fs.readFileSync(store.file());
+
+  assert.throws(
+    () => store.write({ dataRoot: '/data/root', autoRemove: 'pdf' }),
+    /autoRemove must be one of off, video, audio/,
+  );
+  assert.throws(
+    () => store.write({ dataRoot: '/data/root', autoRemoveAfter: 'never' }),
+    /autoRemoveAfter must be one of pdf, drive/,
+  );
+  assert.throws(() => store.write({ autoRemove: true }), /autoRemove must be a string/);
+  assert.deepEqual(fs.readFileSync(store.file()), before);
+});
+
+test('autoRemove and autoRemoveAfter are trimmed and lowercased before they are stored', () => {
+  const view = store.write({ autoRemove: ' Audio ', autoRemoveAfter: 'PDF ' });
+
+  assert.equal(view.autoRemove, 'audio');
+  assert.equal(view.autoRemoveAfter, 'pdf');
+  assert.deepEqual(store.serviceEnv(), { AUTO_REMOVE: 'audio', AUTO_REMOVE_AFTER: 'pdf' });
+});
+
+test('a hand-edited auto-remove value reads normalized, or unset when invalid', () => {
+  fs.writeFileSync(
+    store.file(),
+    JSON.stringify({ auto_remove: 'everything', auto_remove_after: ' Drive ' }),
+  );
+
+  assert.equal(store.read().autoRemove, null);
+  assert.equal(store.read().autoRemoveAfter, 'drive');
+  assert.deepEqual(store.serviceEnv(), { AUTO_REMOVE_AFTER: 'drive' });
+});
+
 test('moodleSite round-trips trimmed and reaches the child env as MOODLE_SITE', () => {
   const view = store.write({ moodleSite: '  https://x.ac.il/moodle  ' });
 
@@ -87,6 +124,8 @@ test('echoing a read back blanks nothing', () => {
     driveEnabled: written.driveEnabled,
     gdriveRootFolder: written.gdriveRootFolder,
     autoRun: written.autoRun,
+    autoRemove: written.autoRemove,
+    autoRemoveAfter: written.autoRemoveAfter,
     moodleSite: written.moodleSite,
     errorReports: written.errorReports,
     privacyConfirmed: written.privacyConfirmed,
@@ -121,6 +160,8 @@ test('an unset store reads as all-null, bar privacyConfirmed, which reads false'
     driveEnabled: null,
     gdriveRootFolder: null,
     autoRun: null,
+    autoRemove: null,
+    autoRemoveAfter: null,
     moodleSite: null,
     errorReports: null,
     privacyConfirmed: false,
@@ -178,6 +219,8 @@ test('serviceEnv maps every field onto its service env var', () => {
     GDRIVE_ROOT_FOLDER: 'FastStudy',
     AUTO_RUN: 'audio',
     MOODLE_SITE: 'https://lemida.biu.ac.il',
+    AUTO_REMOVE: 'video',
+    AUTO_REMOVE_AFTER: 'drive',
     DRIVE_ENABLED: 'true',
     GEMINI_API_KEY: 'gemini-secret',
     GROQ_API_KEY: 'groq-secret',

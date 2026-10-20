@@ -11,15 +11,22 @@ const STRING_FIELDS = {
   gdrive_root_folder: 'GDRIVE_ROOT_FOLDER',
   auto_run: 'AUTO_RUN',
   moodle_site: 'MOODLE_SITE',
+  auto_remove: 'AUTO_REMOVE',
+  auto_remove_after: 'AUTO_REMOVE_AFTER',
 };
-// Mirrors AUTO_RUN_MODES in backend/services/settings.py, which reads an unknown value as 'full'.
-const AUTO_RUN_MODES = ['off', 'audio', 'full'];
+// Fields whose write is refused outside a fixed list. auto_run mirrors AUTO_RUN_MODES in
+// backend/services/settings.py; the auto-remove pair mirrors database/settings.py.
+const CHOICES = {
+  auto_run: ['off', 'audio', 'full'],
+  // The renderer's chosen AI chat, launcher-only like `privacy_confirmed`; unset or unknown reads null.
+  ai_provider: ['claude', 'chatgpt', 'gemini'],
+  auto_remove: ['off', 'video', 'audio'],
+  auto_remove_after: ['pdf', 'drive'],
+};
 const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED' };
 // Booleans no service gets as a settings env var: `error_reports` main turns into each process's
 // Sentry flag itself; `privacy_confirmed` is the renderer's record that the privacy notice was answered.
 const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed'];
-// The renderer's chosen AI chat, launcher-only like `privacy_confirmed`; unset or unknown reads null.
-const AI_PROVIDERS = ['claude', 'chatgpt', 'gemini'];
 // Write-only: these are held as safeStorage ciphertext and reported to the renderer as set/unset.
 const SECRET_FIELDS = { gemini_api_key: 'GEMINI_API_KEY', groq_api_key: 'GROQ_API_KEY' };
 
@@ -30,6 +37,8 @@ const FIELDS = {
   geminiModel: 'gemini_model',
   gdriveRootFolder: 'gdrive_root_folder',
   autoRun: 'auto_run',
+  autoRemove: 'auto_remove',
+  autoRemoveAfter: 'auto_remove_after',
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
   errorReports: 'error_reports',
@@ -62,6 +71,12 @@ function save(stored) {
 // stored" — which has to stay distinguishable from a value, since the client owns every default.
 function text(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+// A choice field trimmed and lowercased, or null when unset or outside its list — as database/settings.py reads it.
+function choice(field, value) {
+  const picked = typeof value === 'string' ? value.trim().toLowerCase() : null;
+  return CHOICES[field].includes(picked) ? picked : null;
 }
 
 function bool(value) {
@@ -97,11 +112,13 @@ function read() {
     driveEnabled: bool(stored.drive_enabled),
     gdriveRootFolder: text(stored.gdrive_root_folder),
     autoRun: text(stored.auto_run),
+    autoRemove: choice('auto_remove', stored.auto_remove),
+    autoRemoveAfter: choice('auto_remove_after', stored.auto_remove_after),
     moodleSite: text(stored.moodle_site),
     errorReports: bool(stored.error_reports),
     // Unset reads false: nothing was confirmed until the renderer says so.
     privacyConfirmed: stored.privacy_confirmed === true,
-    aiProvider: AI_PROVIDERS.includes(stored.ai_provider) ? stored.ai_provider : null,
+    aiProvider: choice('ai_provider', stored.ai_provider),
   };
 }
 
@@ -121,18 +138,12 @@ function write(patch) {
       updates[field] = value;
     } else {
       if (typeof value !== 'string') throw new Error(`${key} must be a string`);
-      if (field === 'auto_run') {
-        const mode = value.trim().toLowerCase();
-        if (!AUTO_RUN_MODES.includes(mode)) {
-          throw new Error(`${key} must be one of ${AUTO_RUN_MODES.join(', ')}`);
+      if (field in CHOICES) {
+        const picked = value.trim().toLowerCase();
+        if (!CHOICES[field].includes(picked)) {
+          throw new Error(`${key} must be one of ${CHOICES[field].join(', ')}`);
         }
-        updates[field] = mode;
-      } else if (field === 'ai_provider') {
-        const provider = value.trim().toLowerCase();
-        if (!AI_PROVIDERS.includes(provider)) {
-          throw new Error(`${key} must be one of ${AI_PROVIDERS.join(', ')}`);
-        }
-        updates[field] = provider;
+        updates[field] = picked;
       } else {
         updates[field] = field in SECRET_FIELDS ? encrypt(value) : value.trim();
       }
@@ -148,7 +159,9 @@ function serviceEnv() {
   const stored = load();
   const env = {};
   for (const [field, name] of Object.entries(STRING_FIELDS)) {
-    const value = text(stored[field]);
+    // auto_run passes through as stored: the backend reads an unknown mode as 'full'.
+    const value =
+      field in CHOICES && field !== 'auto_run' ? choice(field, stored[field]) : text(stored[field]);
     if (value) env[name] = value;
   }
   for (const [field, name] of Object.entries(BOOL_FIELDS)) {
