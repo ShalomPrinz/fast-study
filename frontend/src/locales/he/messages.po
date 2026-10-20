@@ -239,10 +239,6 @@ msgstr "{more_count, plural, =0 {משהו בסיכום מנע את בניית ה
 msgid "{name} was used"
 msgstr "{name} שימש"
 
-#: src/features/lectures/utils/materialIndicator.ts:21
-msgid "{name} will be used"
-msgstr "{name} ישמש"
-
 #: src/features/downloads/components/SectionGroup.tsx:336
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {ההורדה של הקלטה אחת לא התחילה — {stoppedBecause}} two {ההורדה של # הקלטות לא התחילה — {stoppedBecause}} other {ההורדה של # הקלטות לא התחילה — {stoppedBecause}}}"
@@ -409,7 +405,7 @@ msgstr "ספק צ'אט AI"
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
-#: src/features/lectures/EditSummaryView.tsx:362
+#: src/features/lectures/EditSummaryView.tsx:363
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-AI ישוחזר."
 
@@ -425,7 +421,7 @@ msgstr "כל ההרצאות"
 msgid "Already generated."
 msgstr "כבר נוצר."
 
-#: src/features/lectures/EditSummaryView.tsx:280
+#: src/features/lectures/EditSummaryView.tsx:281
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
@@ -490,7 +486,7 @@ msgstr "הרצה אוטומטית: כל השלבים"
 msgid "Available once the summary is generated."
 msgstr "זמין אחרי יצירת הסיכום."
 
-#: src/features/lectures/EditSummaryView.tsx:246
+#: src/features/lectures/EditSummaryView.tsx:247
 msgid "Back"
 msgstr "חזרה"
 
@@ -897,7 +893,7 @@ msgstr "סירוב"
 msgid "Delete {0}"
 msgstr "מחיקת {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:263
+#: src/features/lectures/EditSummaryView.tsx:264
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
@@ -1307,7 +1303,7 @@ msgstr "התקנת Chrome"
 msgid "just this lecture"
 msgstr "רק להרצאה הזו"
 
-#: src/features/lectures/EditSummaryView.tsx:319
+#: src/features/lectures/EditSummaryView.tsx:320
 msgid "Keep my edits"
 msgstr "שמירה על השינויים שלי"
 
@@ -1366,7 +1362,7 @@ msgstr "הרצאות {0}-{1}"
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
-#: src/features/lectures/EditSummaryView.tsx:316
+#: src/features/lectures/EditSummaryView.tsx:317
 msgid "Load new version"
 msgstr "טעינת הגרסה החדשה"
 
@@ -1493,7 +1489,7 @@ msgstr "לא נמצא חומר"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/EditSummaryView.tsx:263
+#: src/features/lectures/EditSummaryView.tsx:264
 msgid "No original saved"
 msgstr "אין גרסה מקורית שמורה"
 
@@ -1567,11 +1563,11 @@ msgstr "לא נמצאו תוצאות לחיפוש הזה"
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
-#: src/shared/contexts/SnapshotProvider.tsx:136
+#: src/shared/contexts/SnapshotProvider.tsx:144
 msgid "Nothing to run - All pipelines complete"
 msgstr "אין מה להריץ - כל ההרצאות הושלמו"
 
-#: src/shared/contexts/SnapshotProvider.tsx:140
+#: src/shared/contexts/SnapshotProvider.tsx:148
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בעיבוד"
 
@@ -1710,11 +1706,11 @@ msgstr "הדבק את תוכן ההרצאה עם Ctrl+V בחלון שייפתח,
 msgid "PDF"
 msgstr "PDF"
 
-#: src/features/lectures/EditSummaryView.tsx:257
+#: src/features/lectures/EditSummaryView.tsx:258
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/EditSummaryView.tsx:258
+#: src/features/lectures/EditSummaryView.tsx:259
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -1839,7 +1835,7 @@ msgstr "חובה"
 msgid "Restart now"
 msgstr "הפעלה מחדש"
 
-#: src/features/lectures/EditSummaryView.tsx:269
+#: src/features/lectures/EditSummaryView.tsx:270
 msgid "Restore original"
 msgstr "שחזור המקור"
 
@@ -1894,7 +1890,7 @@ msgstr "עיבוד הרצאות"
 msgid "Save"
 msgstr "שמירה"
 
-#: src/features/lectures/EditSummaryView.tsx:295
+#: src/features/lectures/EditSummaryView.tsx:296
 msgid "Save & update PDF"
 msgstr "שמירה ועדכון PDF"
 
@@ -2020,7 +2016,7 @@ msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
 #: src/features/lectures/EditSummaryView.tsx:207
-#: src/features/lectures/EditSummaryView.tsx:276
+#: src/features/lectures/EditSummaryView.tsx:277
 #: src/features/lectures/MainView.tsx:138
 msgid "Step already running"
 msgstr "השלב כבר רץ"
@@ -2080,6 +2076,10 @@ msgstr "הסיכום לא השתמש באף חומר"
 #: src/features/settings/SettingsView.tsx:251
 msgid "Summary model"
 msgstr "מודל הסיכום"
+
+#: src/features/lectures/utils/materialIndicator.ts:21
+msgid "summary with {name}"
+msgstr "סיכום עם {name}"
 
 #. placeholder {0}: formatDuration(elapsed)
 #. placeholder {1}: formatDuration(longest)
@@ -2256,7 +2256,7 @@ msgstr "ההרצות מתבצעות לפי הסדר"
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."
 msgstr "האתר סירב להורדה. הקישור הזה דורש התחברות, ולכן אי אפשר להוריד אותו כאן."
 
-#: src/features/lectures/EditSummaryView.tsx:278
+#: src/features/lectures/EditSummaryView.tsx:279
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
@@ -2322,7 +2322,7 @@ msgstr "שירותי צד שלישי"
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
-#: src/features/lectures/EditSummaryView.tsx:363
+#: src/features/lectures/EditSummaryView.tsx:364
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
 
@@ -2376,7 +2376,7 @@ msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 msgid "This source can't be downloaded automatically."
 msgstr "לא ניתן להוריד את המקור הזה אוטומטית."
 
-#: src/features/lectures/EditSummaryView.tsx:304
+#: src/features/lectures/EditSummaryView.tsx:305
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש. טען את הגרסה החדשה, או השאר את השינויים שלך ושמור אותם במקומה."
 
@@ -2442,7 +2442,7 @@ msgstr "האוניברסיטה נשמרה"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/EditSummaryView.tsx:346
+#: src/features/lectures/EditSummaryView.tsx:347
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
@@ -2462,7 +2462,7 @@ msgstr "עדכונים"
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 
-#: src/features/lectures/EditSummaryView.tsx:295
+#: src/features/lectures/EditSummaryView.tsx:296
 msgid "Updating PDF…"
 msgstr "מעדכן PDF…"
 

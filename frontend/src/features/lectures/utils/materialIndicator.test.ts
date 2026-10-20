@@ -13,7 +13,7 @@ describe('materialIndicator', () => {
 
   it('names the single material a pending summarize will use', () => {
     const { text, cls } = materialIndicator([material('material.pdf', 100)], false, null)!
-    expect(text).toBe('material.pdf will be used')
+    expect(text).toBe('summary with material.pdf')
     expect(cls).toBe('material-indicator--will-use')
   })
 

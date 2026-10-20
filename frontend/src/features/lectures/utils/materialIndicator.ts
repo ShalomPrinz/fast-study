@@ -18,7 +18,7 @@ export function materialIndicator(
       ? {
           text:
             count === 1
-              ? t`${name} will be used`
+              ? t`summary with ${name}`
               : plural(count, { other: '# materials will be used' }),
           cls: 'material-indicator--will-use',
         }
