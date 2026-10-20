@@ -124,6 +124,19 @@ def delete_file(course: str, lecture: str, kind: str, filename: str) -> None:
     _raise_for_status(r)
 
 
+def remove_files(course: str, lecture: str, kind: str, names: list[str]) -> None:
+    """Delete removable intermediates and have the database record them, all or nothing; an
+    absent name is a no-op. Raises DbClientError (`file_locked` when one is open elsewhere)."""
+
+    r = _request(
+        "POST",
+        f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/removed",
+        params={"kind": kind},
+        json={"files": names},
+    )
+    _raise_for_status(r)
+
+
 def list_materials(course: str, lecture: str, kind: str) -> list[dict]:
     """List a lecture's material PDFs as [{name, size, mtime}] — empty when it has none.
     The database service owns their naming, so never construct a material filename here."""

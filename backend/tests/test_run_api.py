@@ -418,3 +418,21 @@ class TestFreshFlag:
     def test_other_steps_ignore_fresh(self):
         run = self._post("/courses/C/lectures/L/run/transcribe?fresh=true")
         run.assert_called_once_with("C", "L", "lecture", "transcribe", fresh=False)
+
+
+class TestAutoRemoveApply:
+    def test_answers_the_sweeps_counts(self):
+        counts = {"removed": 2, "locked": 1, "deferred": 0, "failed": 0}
+        with patch.object(
+            backend_main.runner, "apply_auto_remove", return_value=counts
+        ):
+            response = client.post("/auto-remove/apply")
+        assert response.status_code == 200
+        assert response.json() == counts
+
+    def test_no_data_root_is_a_409(self):
+        error = DbClientError("no data root", "data_root_not_configured")
+        with patch.object(backend_main.runner, "apply_auto_remove", side_effect=error):
+            response = client.post("/auto-remove/apply")
+        assert response.status_code == 409
+        assert response.json()["code"] == "data_root_not_configured"

@@ -112,3 +112,30 @@ class TestApplyConfig:
         monkeypatch.setenv("GEMINI_MODEL", "gemini-3.6-flash")
         assert settings.apply_config({"gemini_model": None, "nope": "x"}) == []
         assert settings.gemini_model() == "gemini-3.6-flash"
+
+
+class TestAutoRemove:
+    def test_unset_is_off(self, monkeypatch):
+        monkeypatch.delenv("AUTO_REMOVE", raising=False)
+        assert settings.auto_remove() == "off"
+
+    @pytest.mark.parametrize("value", ["off", "video", " AUDIO "])
+    def test_listed_values_are_kept(self, monkeypatch, value):
+        monkeypatch.setenv("AUTO_REMOVE", value)
+        assert settings.auto_remove() == value.strip().lower()
+
+    def test_an_unknown_value_removes_nothing(self, monkeypatch):
+        monkeypatch.setenv("AUTO_REMOVE", "everything")
+        assert settings.auto_remove() == "off"
+
+
+class TestAutoRemoveAfter:
+    @pytest.mark.parametrize("value", ["", "never", "summary"])
+    def test_unset_or_unknown_is_none(self, monkeypatch, value):
+        monkeypatch.setenv("AUTO_REMOVE_AFTER", value)
+        assert settings.auto_remove_after() is None
+
+    @pytest.mark.parametrize("value", ["pdf", "Drive"])
+    def test_listed_values_are_kept(self, monkeypatch, value):
+        monkeypatch.setenv("AUTO_REMOVE_AFTER", value)
+        assert settings.auto_remove_after() == value.lower()

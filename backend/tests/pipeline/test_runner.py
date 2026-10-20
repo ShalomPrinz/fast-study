@@ -1634,7 +1634,7 @@ class TestQueueDrain:
 
         async def go():
             with (
-                patch.object(runner.db_client, "file_exists", return_value=False),
+                patch.object(runner.db_client, "file_exists", _disk("video.mp4")),
                 patch.object(
                     runner,
                     "run_step",
@@ -2109,3 +2109,338 @@ def test_a_busy_fresh_pdf_run_leaves_the_old_pdf(clean_queue):
         delete.assert_not_called()
 
     asyncio.run(go())
+
+
+# ---- auto-remove ----
+
+
+def _rule(monkeypatch, mode: str, after: str) -> None:
+    monkeypatch.setenv("AUTO_REMOVE", mode)
+    monkeypatch.setenv("AUTO_REMOVE_AFTER", after)
+
+
+def _disk(*present: str):
+    """A file_exists fake answering from a fixed set of names."""
+
+    return lambda _c, _l, _k, name: name in present
+
+
+class TestRemovalTargets:
+    def test_off_or_no_point_removes_nothing(self, monkeypatch):
+        files = _files(video=True, audio=True, pdf=True, drive=True)
+        _rule(monkeypatch, "off", "pdf")
+        assert runner.removal_targets(files) == []
+        _rule(monkeypatch, "audio", "")
+        assert runner.removal_targets(files) == []
+
+    def test_video_after_pdf(self, monkeypatch):
+        _rule(monkeypatch, "video", "pdf")
+        assert runner.removal_targets(_files(video=True, audio=True, pdf=True)) == [
+            "video.mp4"
+        ]
+        assert runner.removal_targets(_files(video=True, summary=True)) == []
+
+    def test_audio_is_cumulative_and_lists_only_present_files(self, monkeypatch):
+        _rule(monkeypatch, "audio", "pdf")
+        assert runner.removal_targets(_files(video=True, audio=True, pdf=True)) == [
+            "video.mp4",
+            "audio.mp3",
+        ]
+        assert runner.removal_targets(_files(audio=True, pdf=True)) == ["audio.mp3"]
+
+    def test_after_drive_needs_the_share_url(self, monkeypatch):
+        _rule(monkeypatch, "video", "drive")
+        assert runner.removal_targets(_files(video=True, pdf=True)) == []
+        assert runner.removal_targets(_files(video=True, pdf=True, drive=True)) == [
+            "video.mp4"
+        ]
+
+    def test_after_drive_with_drive_off_removes_nothing(self, monkeypatch):
+        _rule(monkeypatch, "video", "drive")
+        monkeypatch.setenv("DRIVE_ENABLED", "false")
+        assert runner.removal_targets(_files(video=True, pdf=True, drive=True)) == []
+
+
+class TestRemovedCountsAsPresent:
+    """An auto-removed intermediate stands for its step being done, never for a missing input."""
+
+    def _stripped(self, **existing):
+        return runner._mark_removed(_files(**existing), ["video.mp4", "audio.mp3"])
+
+    def test_next_step_resumes_at_drive_not_audio(self):
+        files = self._stripped(transcript=True, summary=True, pdf=True)
+        assert runner.next_step(files) == "drive"
+
+    def test_not_materials_only(self):
+        files = self._stripped(transcript=True, summary=True, pdf=True)
+        assert runner.is_materials_only(files, [{"name": "m.pdf"}]) is False
+
+    def test_still_pending_for_the_nightly_pass(self):
+        assert runner._lecture_pending(self._stripped(pdf=True)) is True
+        assert runner._lecture_pending(self._stripped(pdf=True, drive=True)) is False
+
+    def test_scan_pending_reads_the_trees_removed(self):
+        tree = [
+            {
+                "name": "C1",
+                "lectures": [
+                    {"name": "L1", "files": _files(pdf=True), "removed": ["video.mp4"]},
+                    {"name": "L2", "files": _files(pdf=True), "removed": []},
+                ],
+                "recitations": [],
+            }
+        ]
+        with patch.object(runner.db_client, "get_tree", return_value=tree):
+            assert asyncio.run(runner.scan_pending()) == [("C1", "L1", "lecture")]
+
+    def test_fetch_files_marks_removed_off_the_tree(self):
+        tree = [
+            {
+                "name": "C1",
+                "lectures": [],
+                "recitations": [{"name": "R1", "files": {}, "removed": ["audio.mp3"]}],
+            }
+        ]
+        with (
+            patch.object(runner.db_client, "file_exists", _disk("transcript.txt")),
+            patch.object(runner.db_client, "get_tree", return_value=tree),
+        ):
+            files = asyncio.run(runner._fetch_files("C1", "R1", "recitation"))
+        assert runner._present(files, "audio.mp3")
+        assert not runner._present(files, "video.mp4")
+
+    def test_fetch_files_skips_the_tree_while_video_is_on_disk(self):
+        tree = Mock(side_effect=AssertionError("tree read"))
+        with (
+            patch.object(runner.db_client, "file_exists", _disk("video.mp4")),
+            patch.object(runner.db_client, "get_tree", tree),
+        ):
+            asyncio.run(runner._fetch_files("C1", "L1", "lecture"))
+
+
+class TestAutoRemoveHook:
+    """Every locked operation ends by applying the live rule, and never fails on it."""
+
+    def test_a_pdf_step_removes_the_video(self, monkeypatch, clean_queue):
+        _rule(monkeypatch, "video", "pdf")
+        remove = Mock()
+        with (
+            patch.dict(runner._EXECUTORS, {"pdf": lambda *a, **k: {"status": "done"}}),
+            patch.object(runner.db_client, "notify"),
+            patch.object(
+                runner.db_client, "file_exists", _disk("video.mp4", "summary.pdf")
+            ),
+            patch.object(runner.db_client, "remove_files", remove),
+        ):
+            asyncio.run(runner.run_step("C1", "L1", "lecture", "pdf"))
+        remove.assert_called_once_with("C1", "L1", "lecture", ["video.mp4"])
+
+    def test_nothing_is_removed_before_the_point(self, monkeypatch, clean_queue):
+        _rule(monkeypatch, "audio", "drive")
+        remove = Mock()
+        with (
+            patch.dict(runner._EXECUTORS, {"pdf": lambda *a, **k: {"status": "done"}}),
+            patch.object(runner.db_client, "notify"),
+            patch.object(
+                runner.db_client,
+                "file_exists",
+                _disk("video.mp4", "audio.mp3", "summary.pdf"),
+            ),
+            patch.object(runner.db_client, "remove_files", remove),
+        ):
+            asyncio.run(runner.run_step("C1", "L1", "lecture", "pdf"))
+        remove.assert_not_called()
+
+    def test_a_locked_file_is_a_warning_not_a_failure(self, monkeypatch, clean_queue):
+        _rule(monkeypatch, "video", "pdf")
+        locked = runner.db_client.DbClientError("open", "file_locked", file="video.mp4")
+        with (
+            patch.dict(runner._EXECUTORS, {"pdf": lambda *a, **k: {"status": "done"}}),
+            patch.object(runner.db_client, "notify"),
+            patch.object(
+                runner.db_client, "file_exists", _disk("video.mp4", "summary.pdf")
+            ),
+            patch.object(runner.db_client, "remove_files", side_effect=locked),
+        ):
+            asyncio.run(runner.run_step("C1", "L1", "lecture", "pdf"))
+            assert runner.auto_remove("C1", "L1", "lecture") == "locked"
+        assert runner._skey("C1", "L1", "lecture") not in runner._errors
+
+    def test_a_pipeline_applies_the_rule_once_at_its_end(
+        self, monkeypatch, clean_queue
+    ):
+        _rule(monkeypatch, "audio", "pdf")
+        remove = Mock()
+        with (
+            patch.object(
+                runner, "_run_pipeline_unlocked", AsyncMock(return_value=False)
+            ),
+            patch.object(
+                runner.db_client,
+                "file_exists",
+                _disk("video.mp4", "audio.mp3", "summary.pdf"),
+            ),
+            patch.object(runner.db_client, "remove_files", remove),
+        ):
+            assert asyncio.run(runner.run_pipeline_for("C1", "L1", "lecture")) is False
+        remove.assert_called_once_with(
+            "C1", "L1", "lecture", ["video.mp4", "audio.mp3"]
+        )
+
+
+def _sweep_tree(*lectures: str) -> list:
+    return [
+        {
+            "name": "C1",
+            "archived": True,
+            "lectures": [
+                {"name": name, "files": _files(video=True, pdf=True), "removed": []}
+                for name in lectures
+            ],
+            "recitations": [{"name": "R1", "files": _files(video=True), "removed": []}],
+        }
+    ]
+
+
+class TestApplyAutoRemove:
+    def test_counts_each_outcome(self, monkeypatch, clean_queue):
+        _rule(monkeypatch, "video", "pdf")
+        outcomes = {"L1": "removed", "L2": "locked", "L3": "failed"}
+
+        async def go():
+            held = runner._locks.setdefault(
+                runner._lkey("C1", "L4", "lecture"), asyncio.Lock()
+            )
+            async with held:  # L4 is mid-run: its own hook covers it
+                return await runner.apply_auto_remove()
+
+        with (
+            patch.object(
+                runner.db_client,
+                "get_tree",
+                return_value=_sweep_tree("L1", "L2", "L3", "L4"),
+            ),
+            patch.object(runner, "auto_remove", lambda _c, lec, _k: outcomes[lec]),
+        ):
+            counts = asyncio.run(go())
+        # R1 has no pdf yet, so it is not counted anywhere; the archived course is swept.
+        assert counts == {"removed": 1, "locked": 1, "deferred": 1, "failed": 1}
+
+    def test_rule_off_reads_nothing(self, monkeypatch, clean_queue):
+        _rule(monkeypatch, "off", "pdf")
+        with patch.object(runner.db_client, "get_tree", side_effect=AssertionError):
+            counts = asyncio.run(runner.apply_auto_remove())
+        assert counts == {"removed": 0, "locked": 0, "deferred": 0, "failed": 0}
+
+    def test_triggers_during_a_removal_wait_instead_of_skipping(
+        self, monkeypatch, clean_queue
+    ):
+        """A sweep's removal holds the lecture's lock, yet nothing that arrives meanwhile is
+        refused or skipped — and only the first of two manual runs is accepted."""
+
+        _rule(monkeypatch, "video", "pdf")
+        seen: dict = {}
+        ran: list = []
+
+        def removal(course, lecture, kind):
+            key = runner._lkey(course, lecture, kind)
+            seen["held"] = runner._locks[key].locked()
+            return "removed"
+
+        async def fake_run_step(course, lecture, kind, step, **_):
+            async with runner._locks.setdefault(
+                runner._lkey(course, lecture, kind), asyncio.Lock()
+            ):
+                ran.append(step)
+
+        async def go():
+            release = asyncio.Event()
+
+            async def slow_removal(fn, *args):
+                if fn is runner.auto_remove:
+                    result = fn(*args)
+                    # Every trigger arrives while the removal still holds the lock.
+                    seen["enqueue"] = runner.enqueue(_entry("L1"))
+                    seen["first"] = runner.try_run_step("C1", "L1", "lecture", "drive")
+                    seen["second"] = runner.try_run_step("C1", "L1", "lecture", "drive")
+                    await release.wait()
+                    return result
+                return fn(*args)
+
+            with patch.object(runner.asyncio, "to_thread", slow_removal):
+                sweep = asyncio.create_task(runner.apply_auto_remove())
+                await asyncio.sleep(0.01)
+                release.set()
+                await sweep
+            await asyncio.sleep(0.01)
+
+        with (
+            patch.object(runner.db_client, "get_tree", return_value=_sweep_tree("L1")),
+            patch.object(runner, "auto_remove", removal),
+            patch.object(runner, "run_step", fake_run_step),
+            patch.object(runner, "run_all", AsyncMock()),
+            patch.object(runner.db_client, "notify"),
+        ):
+            asyncio.run(go())
+        assert seen == {
+            "held": True,
+            "enqueue": True,
+            "first": "started",
+            "second": "busy",
+        }
+        assert ran == ["drive"]
+
+    def test_run_all_waits_for_a_removal_instead_of_skipping(
+        self, monkeypatch, clean_queue
+    ):
+        ran: list = []
+
+        async def fake_entry(entry):
+            async with runner._locks[
+                runner._lkey(entry.course, entry.lecture, entry.kind)
+            ]:
+                ran.append(entry.lecture)
+            return False
+
+        async def go():
+            key = runner._lkey("C1", "L1", "lecture")
+            lock = runner._locks.setdefault(key, asyncio.Lock())
+            async with lock:
+                runner._removing.add(key)
+                runner._queue.append(_entry("L1"))
+                drain = asyncio.create_task(runner.run_all())
+                await asyncio.sleep(0.01)
+                assert ran == []  # waiting on the removal, not skipped
+                runner._removing.discard(key)
+            await drain
+
+        with (
+            patch.object(runner, "_run_entry", fake_entry),
+            patch.object(runner.db_client, "notify"),
+        ):
+            asyncio.run(go())
+        assert ran == ["L1"]
+
+
+def test_an_audio_entry_whose_audio_was_auto_removed_has_nothing_left(clean_queue):
+    """Otherwise AUTO_RUN=audio re-runs audio on a stripped lecture every night and fails on video.mp4."""
+
+    tree = [
+        {
+            "name": "C1",
+            "lectures": [
+                {"name": "L1", "files": {}, "removed": ["video.mp4", "audio.mp3"]}
+            ],
+            "recitations": [],
+        }
+    ]
+    step = AsyncMock()
+    with (
+        patch.object(
+            runner.db_client, "file_exists", _disk("transcript.txt", "summary.pdf")
+        ),
+        patch.object(runner.db_client, "get_tree", return_value=tree),
+        patch.object(runner, "run_step", step),
+    ):
+        assert asyncio.run(runner._run_entry(_entry("L1", "audio"))) is False
+    step.assert_not_called()

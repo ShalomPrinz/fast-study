@@ -65,6 +65,16 @@ class TestPostConfig:
         client.post("/config", json={"nightly_run": False})
         assert schedule._scheduler.get_job(schedule.JOB_ID) is None
 
+    def test_the_auto_remove_rule_applies_with_no_restart(self):
+        body = client.post(
+            "/config", json={"auto_remove": "audio", "auto_remove_after": "pdf"}
+        ).json()
+        assert body["applied"] == ["auto_remove", "auto_remove_after"]
+        assert (settings.auto_remove(), settings.auto_remove_after()) == (
+            "audio",
+            "pdf",
+        )
+
 
 class TestProbeKey:
     def test_returns_the_probe_verdict(self):

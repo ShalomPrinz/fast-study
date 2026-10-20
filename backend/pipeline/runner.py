@@ -81,6 +81,10 @@ _queue: list[
     QueueEntry
 ] = []  # drained in order by run_all; in memory only, a restart empties it
 
+# Lectures whose lock only an auto-remove sweep holds, for one removal call: a trigger finding the
+# lock held so waits for it instead of being refused or skipped (docs/PIPELINE.md, Auto-remove).
+_removing: set[tuple[str, str, str]] = set()
+
 
 def _lkey(course: str, lecture: str, kind: str) -> tuple[str, str, str]:
     """Tuple key into _locks — the dict holds Lock objects, not serialisable data."""
@@ -558,26 +562,43 @@ def _has(files: dict, name: str) -> bool:
     return bool(entry and entry.get("exists"))
 
 
+def _present(files: dict, name: str) -> bool:
+    """On disk, or deleted by auto-remove: either way the step that produces it is done."""
+
+    entry = files.get(name)
+    return bool(entry and (entry.get("exists") or entry.get("removed")))
+
+
+def _mark_removed(files: dict, removed: list[str]) -> dict:
+    """Flag the names the database reports auto-removed (the tree's `removed`) on a files map."""
+
+    marked = dict(files)
+    for name in removed:
+        marked[name] = {**(marked.get(name) or {"exists": False}), "removed": True}
+    return marked
+
+
 def is_materials_only(files: dict, materials: list) -> bool:
-    """A lecture with material PDFs but no video.mp4 or audio.mp3 — summarized from the PDFs alone."""
+    """A lecture with material PDFs and no video.mp4 or audio.mp3, neither auto-removed — summarized
+    from the PDFs alone."""
 
     return (
-        not _has(files, "video.mp4")
-        and not _has(files, "audio.mp3")
+        not _present(files, "video.mp4")
+        and not _present(files, "audio.mp3")
         and bool(materials)
     )
 
 
 def next_step(files: dict, materials_only: bool = False) -> Optional[str]:
     """The first enabled step whose output file is missing, or None once the final output
-    exists; a materials-only lecture skips audio and transcribe. Pure file-existence."""
+    exists; a materials-only lecture skips audio and transcribe. An auto-removed output counts."""
 
     if _has(files, final_output()):
         return None
     for step in enabled_steps():
         if materials_only and step in ("audio", "transcribe"):
             continue
-        if not _has(files, STEP_OUTPUT[step]):
+        if not _present(files, STEP_OUTPUT[step]):
             return step
     return None
 
@@ -589,11 +610,9 @@ def summarize_ready(course: str, lecture: str, kind: str) -> bool:
 
 
 def _lecture_pending(files: dict) -> bool:
-    """A lecture is pending iff it has video.mp4 but not the final output."""
+    """A lecture is pending iff it has video.mp4 (or auto-removed it) but not the final output."""
 
-    video = files.get("video.mp4") or {}
-    final = files.get(final_output()) or {}
-    return bool(video.get("exists")) and not bool(final.get("exists"))
+    return _present(files, "video.mp4") and not _has(files, final_output())
 
 
 async def scan_pending() -> list[tuple[str, str, str]]:
@@ -603,13 +622,29 @@ async def scan_pending() -> list[tuple[str, str, str]]:
     pending: list[tuple[str, str, str]] = []
     for course in tree:
         course_name = course["name"]
-        for lec in course.get("lectures") or []:
-            if _lecture_pending(lec.get("files") or {}):
-                pending.append((course_name, lec["name"], "lecture"))
-        for rec in course.get("recitations") or []:
-            if _lecture_pending(rec.get("files") or {}):
-                pending.append((course_name, rec["name"], "recitation"))
+        for kind, key in (("lecture", "lectures"), ("recitation", "recitations")):
+            for lec in course.get(key) or []:
+                files = _mark_removed(lec.get("files") or {}, lec.get("removed") or [])
+                if _lecture_pending(files):
+                    pending.append((course_name, lec["name"], kind))
     return pending
+
+
+def _busy(key: tuple[str, str, str]) -> bool:
+    """True when a run owns this lecture's lock; a sweep's removal holding it does not count."""
+
+    lock = _locks.get(key)
+    return lock is not None and lock.locked() and key not in _removing
+
+
+def _claim(key: tuple[str, str, str]) -> bool:
+    """Take a lecture for a run about to wait on its lock: False when busy, else True, and from
+    here on a second trigger finds it busy even while a sweep's removal still holds the lock."""
+
+    if _busy(key):
+        return False
+    _removing.discard(key)
+    return True
 
 
 def enqueue(entry: QueueEntry) -> bool:
@@ -620,8 +655,7 @@ def enqueue(entry: QueueEntry) -> bool:
         return False
     if _skey(entry.course, entry.lecture, entry.kind) in _in_flight:
         return False
-    lock = _locks.get(_lkey(entry.course, entry.lecture, entry.kind))
-    if lock is not None and lock.locked():
+    if _busy(_lkey(entry.course, entry.lecture, entry.kind)):
         return False
     _queue.append(entry)
     if not _runner_status["running"]:
@@ -696,9 +730,26 @@ async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
             for name in names
         ]
     )
-    return {
+    files = {
         name: {"exists": exists} for name, exists in zip(names, results, strict=True)
     }
+    if not results[0] and not results[1]:
+        # Neither intermediate on disk: auto-removed or never there, which only the tree tells.
+        removed = await asyncio.to_thread(_removed_names, course, lecture, kind)
+        files = _mark_removed(files, removed)
+    return files
+
+
+def _removed_names(course: str, lecture: str, kind: str) -> list[str]:
+    """The intermediates the database reports auto-removed from one lecture, off the tree."""
+
+    key = "recitations" if kind == "recitation" else "lectures"
+    for node in db_client.get_tree():
+        if node.get("name") == course:
+            for lec in node.get(key) or []:
+                if lec.get("name") == lecture:
+                    return lec.get("removed") or []
+    return []
 
 
 # ---- Async step/pipeline runners ----
@@ -807,7 +858,7 @@ async def _run_pipeline_unlocked(
         while True:
             files = await _fetch_files(course, lecture, kind)
             materials_only = False
-            if not _has(files, "video.mp4") and not _has(files, "audio.mp3"):
+            if not _present(files, "video.mp4") and not _present(files, "audio.mp3"):
                 materials = await asyncio.to_thread(
                     db_client.list_materials, course, lecture, kind
                 )
@@ -862,6 +913,7 @@ async def run_step(
 
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
         await _run_step_unlocked(course, lecture, kind, step, fresh=fresh)
+        await asyncio.to_thread(auto_remove, course, lecture, kind)
 
 
 async def run_pipeline_for(
@@ -876,9 +928,11 @@ async def run_pipeline_for(
     Returns True iff it stopped early on a run-scoped block (run_all only)."""
 
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
-        return await _run_pipeline_unlocked(
+        blocked = await _run_pipeline_unlocked(
             course, lecture, kind, honor_block=honor_block, hand_over=hand_over
         )
+        await asyncio.to_thread(auto_remove, course, lecture, kind)
+        return blocked
 
 
 def try_run_step(
@@ -887,8 +941,7 @@ def try_run_step(
     """Fire-and-forget run_step if the lecture isn't already locked, pulling it out of the
     runner queue. Returns 'busy' or 'started'; 'busy' touches no file."""
 
-    lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
-    if lock.locked():
+    if not _claim(_lkey(course, lecture, kind)):
         return "busy"
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
     asyncio.create_task(run_step(course, lecture, kind, step, fresh=fresh))
@@ -899,12 +952,107 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
     """Fire-and-forget run_pipeline_for if the lecture isn't already locked, pulling it out of
     the runner queue. Returns 'busy' or 'started'."""
 
-    lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
-    if lock.locked():
+    if not _claim(_lkey(course, lecture, kind)):
         return "busy"
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
     asyncio.create_task(run_pipeline_for(course, lecture, kind))
     return "started"
+
+
+# ---- Auto-remove ----
+
+_REMOVE_TARGETS = {"video": ["video.mp4"], "audio": ["video.mp4", "audio.mp3"]}
+_REMOVE_CONDITION = {"pdf": "summary.pdf", "drive": "drive_url.txt"}
+
+
+def _remove_rule() -> tuple[list[str], str] | None:
+    """The live rule as (files it deletes, output that must exist), or None when it removes nothing.
+    `drive` with Drive switched off removes nothing: drive_url.txt can never arrive to justify it."""
+
+    mode, after = settings.auto_remove(), settings.auto_remove_after()
+    if mode == "off" or after is None:
+        return None
+    if after == "drive" and not settings.drive_enabled():
+        return None
+    return _REMOVE_TARGETS[mode], _REMOVE_CONDITION[after]
+
+
+def removal_targets(files: dict) -> list[str]:
+    """The files the live rule deletes from a lecture with this files map: those on disk, once
+    the rule's output exists."""
+
+    rule = _remove_rule()
+    if rule is None:
+        return []
+    targets, condition = rule
+    if not _has(files, condition):
+        return []
+    return [name for name in targets if _has(files, name)]
+
+
+def auto_remove(course: str, lecture: str, kind: str) -> str:
+    """Apply the live rule to one lecture; the caller holds its lock. Returns removed, none, locked
+    or failed and never raises: a failed removal is a warning, never the run's outcome."""
+
+    rule = _remove_rule()
+    if rule is None:
+        return "none"
+    targets, condition = rule
+    try:
+        files = {
+            name: {"exists": db_client.file_exists(course, lecture, kind, name)}
+            for name in [condition, *targets]
+        }
+        names = removal_targets(files)
+        if not names:
+            return "none"
+        db_client.remove_files(course, lecture, kind, names)
+    except Exception as e:
+        locked = isinstance(e, db_client.DbClientError) and e.code == "file_locked"
+        log.warning(
+            "%s/%s (%s): auto-remove %s: %s",
+            course,
+            lecture,
+            kind,
+            "skipped, a file is open elsewhere" if locked else "failed",
+            e,
+        )
+        return "locked" if locked else "failed"
+    log.info("%s/%s (%s): auto-removed %s", course, lecture, kind, ", ".join(names))
+    return "removed"
+
+
+async def apply_auto_remove() -> dict:
+    """Apply the live rule to every lecture and recitation in the tree, archived courses included.
+    A lecture mid-run is deferred: the hook at the end of its run applies the rule then."""
+
+    counts = {"removed": 0, "locked": 0, "deferred": 0, "failed": 0}
+    if _remove_rule() is None:
+        return counts
+    tree = await asyncio.to_thread(db_client.get_tree)
+    for node in tree:
+        for kind, key in (("lecture", "lectures"), ("recitation", "recitations")):
+            for lec in node.get(key) or []:
+                if not removal_targets(lec.get("files") or {}):
+                    continue
+                lkey = _lkey(node["name"], lec["name"], kind)
+                lock = _locks.setdefault(lkey, asyncio.Lock())
+                if lock.locked():
+                    counts["deferred"] += 1
+                    continue
+                # A free lock is taken without yielding, so nothing starts in between; _removing
+                # makes every trigger that arrives meanwhile wait behind it rather than skip it.
+                async with lock:
+                    _removing.add(lkey)
+                    try:
+                        outcome = await asyncio.to_thread(
+                            auto_remove, node["name"], lec["name"], kind
+                        )
+                    finally:
+                        _removing.discard(lkey)
+                if outcome in counts:
+                    counts[outcome] += 1
+    return counts
 
 
 # ---- Runner orchestration ----
@@ -912,17 +1060,11 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
 
 async def _run_entry(entry: QueueEntry) -> bool:
     """Run one queue entry as far as its depth allows; True iff a full run stopped early on the
-    run-scoped block. An `audio` entry that already has audio.mp3 has nothing left."""
+    run-scoped block. An `audio` entry whose audio.mp3 exists or was auto-removed has nothing left."""
 
     if entry.depth == "audio":
-        done = await asyncio.to_thread(
-            db_client.file_exists,
-            entry.course,
-            entry.lecture,
-            entry.kind,
-            STEP_OUTPUT["audio"],
-        )
-        if not done:
+        files = await _fetch_files(entry.course, entry.lecture, entry.kind)
+        if not _present(files, STEP_OUTPUT["audio"]):
             await run_step(entry.course, entry.lecture, entry.kind, "audio")
         return False
     return await run_pipeline_for(
@@ -964,8 +1106,7 @@ async def run_all() -> dict:
                 kind,
                 entry.depth,
             )
-            lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
-            if lock.locked():
+            if not _claim(_lkey(course, lecture, kind)):
                 # Skip if a concurrent trigger (e.g. a manual step run) already owns this lecture.
                 log.info(
                     "lecture %s/%s (%s) already in flight, skipping",

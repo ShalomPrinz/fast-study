@@ -11,6 +11,11 @@ GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash"]
 # both a new video's arrival and the nightly cron, and never the user's own run.
 AUTO_RUN_MODES = ["off", "audio", "full"]
 
+# What auto-remove deletes, cumulatively: `audio` takes video.mp4 too.
+AUTO_REMOVE_MODES = ["off", "video", "audio"]
+# The output whose existence makes a lecture's intermediates removable.
+AUTO_REMOVE_AFTER = ["pdf", "drive"]
+
 _TRUTHY = {"1", "true", "yes", "on"}
 
 # Settings field name → the environment variable its consumer reads.
@@ -23,6 +28,8 @@ _ENV_KEYS = {
     "auto_run": "AUTO_RUN",
     "nightly_run": "NIGHTLY_RUN",
     "nightly_hour": "NIGHTLY_HOUR",
+    "auto_remove": "AUTO_REMOVE",
+    "auto_remove_after": "AUTO_REMOVE_AFTER",
 }
 
 # The hour the nightly catch-up pass runs when NIGHTLY_HOUR says nothing usable.
@@ -43,6 +50,22 @@ def auto_run() -> str:
 
     mode = os.environ.get("AUTO_RUN", "").strip().lower()
     return mode if mode in AUTO_RUN_MODES else "full"
+
+
+def auto_remove() -> str:
+    """Which intermediates auto-remove deletes: AUTO_REMOVE, else `off`. Unlike auto_run(), an
+    unrecognised value means `off`, since a typo must never delete files."""
+
+    mode = os.environ.get("AUTO_REMOVE", "").strip().lower()
+    return mode if mode in AUTO_REMOVE_MODES else "off"
+
+
+def auto_remove_after() -> str | None:
+    """The point a lecture's intermediates become removable: AUTO_REMOVE_AFTER, else None,
+    which removes nothing."""
+
+    point = os.environ.get("AUTO_REMOVE_AFTER", "").strip().lower()
+    return point if point in AUTO_REMOVE_AFTER else None
 
 
 def drive_enabled() -> bool:

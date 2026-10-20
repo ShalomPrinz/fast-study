@@ -137,3 +137,20 @@ class TestPutSummary:
 
     def test_a_plain_write_omits_the_flag(self):
         assert self._sent_params() == {"kind": "lecture"}
+
+
+class TestRemoveFiles:
+    def test_posts_the_names_to_the_removed_route(self):
+        with _answering(FakeResponse(204)) as request:
+            db_client.remove_files("C 1", "L/1", "recitation", ["video.mp4"])
+        method, url = request.call_args.args
+        assert method == "POST"
+        assert url.endswith("/courses/C%201/lectures/L%2F1/removed")
+        assert request.call_args.kwargs["params"] == {"kind": "recitation"}
+        assert request.call_args.kwargs["json"] == {"files": ["video.mp4"]}
+
+    def test_a_locked_file_rides_through_as_its_code(self):
+        body = {"error": "open", "code": "file_locked", "params": {"file": "audio.mp3"}}
+        with _answering(FakeResponse(423, body)), pytest.raises(DbClientError) as e:
+            db_client.remove_files("C", "L", "lecture", ["audio.mp3"])
+        assert e.value.code == "file_locked"

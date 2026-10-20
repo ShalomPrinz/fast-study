@@ -10,7 +10,7 @@ Read the relevant doc before changing that area, and update it in the same pass 
 
 | Doc                                    | Covers                                                                                     |
 | -------------------------------------- | ------------------------------------------------------------------------------------------ |
-| [docs/PIPELINE.md](docs/PIPELINE.md)   | per-lecture stages and files, the run/lock/queue model, `AUTO_RUN`, nightly pass, rate limits |
+| [docs/PIPELINE.md](docs/PIPELINE.md)   | per-lecture stages and files, the run/lock/queue model, `AUTO_RUN`, auto-remove, nightly pass, rate limits |
 | [docs/OVERVIEW.md](docs/OVERVIEW.md)   | course overview: extractors, phases, run/lock model, `from_phase` + `skip_existing`        |
 | [docs/API.md](docs/API.md)             | endpoint reference                                                                         |
 | [docs/PDF.md](docs/PDF.md)             | the pandoc → tectonic render, outcome rules, warning markers, failure messages            |
@@ -37,7 +37,7 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_R
 
 ## Environment
 
-Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GDRIVE_ROOT_FOLDER` once Drive is on. Optional: `DATABASE_URL` (default `http://localhost:8001`), plus `GEMINI_MODEL`, `DRIVE_ENABLED`, `AUTO_RUN`, `NIGHTLY_RUN` and `NIGHTLY_HOUR` (defaults in `services/settings.py`).
+Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GDRIVE_ROOT_FOLDER` once Drive is on. Optional: `DATABASE_URL` (default `http://localhost:8001`), plus `GEMINI_MODEL`, `DRIVE_ENABLED`, `AUTO_RUN`, `NIGHTLY_RUN`, `NIGHTLY_HOUR`, `AUTO_REMOVE` and `AUTO_REMOVE_AFTER` (defaults in `services/settings.py`).
 
 **Never read a setting at import.** `POST /config` rewrites `os.environ` on the running process, so every consumer reads its variable at call time — `services/settings.py` for the model and the Drive toggle, `llm_client`/`transcribe`/`upload_to_drive` for the keys and the Drive folder.
 

@@ -322,6 +322,19 @@ async def run_all_endpoint():
     return {"status": "started", **runner.get_status()}
 
 
+@app.post("/auto-remove/apply")
+async def auto_remove_apply():
+    """Apply the live AUTO_REMOVE rule to every existing lecture now; awaited, so the answer is the
+    counts {removed, locked, deferred, failed} of lectures (docs/PIPELINE.md, Auto-remove)."""
+
+    try:
+        return await runner.apply_auto_remove()
+    except db_client.DbClientError as e:
+        if not _is_user_actionable(e):
+            raise
+        return _error(failure(str(e), e.code, **e.params), 409)
+
+
 @app.get("/status")
 async def runner_status_endpoint():
     """Live status snapshot for the runner. Cheap; refetched by the UI on each SSE notify."""
@@ -366,6 +379,8 @@ class ConfigUpdate(BaseModel):
     auto_run: str | None = None
     nightly_run: bool | None = None
     nightly_hour: int | None = None
+    auto_remove: str | None = None
+    auto_remove_after: str | None = None
     error_reports: bool | None = None
 
 
