@@ -108,6 +108,16 @@ the stream's flag alone: an earlier item's late answer must not close the next i
 repeats a target's flag, so `createCaptchaCatches` toasts once per run id + target index, and its first
 snapshot per provider mount only seeds: a reload never replays a catch that already happened.
 
+The site's captcha needs no such answer: a routed Moodle call that meets it waits in auto for the solve
+and carries on, so the row stays pending (its `/download-item` simply takes longer) and every other Moodle
+button reads busy, since the wait holds the lock. The solve's toast is pushed instead: `challenge.solved`
+counts auto's solves, and `createSiteCaptchaSolves` (fed by `AuthStatusProvider`, toasting through
+`Layout`) toasts "Captcha solved. Continuing." once per rise. The first frame after each (re)connect only
+seeds, and a lower count (auto restarted) seeds afresh. A solve the unverified account's panel already
+announces ("The captcha is solved. Finishing the connection…") does not toast while an `AccountStatus` is
+mounted (`useAccountPanelShown`, `siteSolveToasts`); on any other page it toasts. A captcha left unsolved for 10 minutes fails the
+call with `site_captcha_timeout`, toasted like any coded failure.
+
 Connect only posts `/auth/connect`, which returns at once: the service runs the whole login itself and
 pushes `phase: 'pending'` from window open through verification, so the chip reads "finish login in the
 browser window" (no button) from the stream, and a reload mid-login shows it again from the subscribe frame.
@@ -125,7 +135,8 @@ remounting re-runs the probe, since the cached status predates the 401. That is 
 the component, not the never-remounting provider. A `BlockedError` (the site's bot protection answering
 a burst with a captcha) is deliberately not that path: it says nothing about the token, so it toasts
 `toastBlocked(challengeWindow)` and leaves the chip alone. `challengeWindow` (`challengeWindowOf`) is
-`'captcha'` (solve it in the window, then repeat), `'ready'` (just repeat), `false` (no browser could open:
+`'captcha'` (solve it in the window, then repeat — only the site probe, or a call that already waited
+out two solves, still answers it), `'ready'` (just repeat), `false` (no browser could open:
 wait) or `null` (a path the window can't carry: the generic wait). The wording is `site_blocked`'s catalog
 row, a `select` on that param, so a job failure carrying it reads the same; `blockedToastKind` makes the two
 instructions (`'captcha'`, `'ready'`) info toasts and the waits errors, wherever a block is toasted. Nothing retries or resumes by

@@ -52,13 +52,16 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import { toast } from '@/services/toaster'
 import {
+  captchaTimeoutCount,
   collidingNames,
   notStartedCount,
   runningCount,
   summarize,
+  targetOf,
   unverifiedCount,
 } from '@/features/downloads/utils/runStatus'
 import {
+  captchaTimeoutReason,
   expandErrorText,
   moodleBusyMessage,
   toastDownloadError,
@@ -165,8 +168,8 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   function buildTargets(): RunTarget[] {
     return buildQueue().map((item) => {
       const { name, kind } = resolveRow(item, edits[item.ref], courses, course, locks[item.ref])
-      const media = item.resolvedMedia ?? item.media
-      const target = { ref: item.ref, name, kind, media }
+      const target = targetOf(item, name, kind)
+      const { media } = target
       if (item.resolvedMedia === 'unsupported') return { ...target, disposition: 'unsupported' }
       // The lectures this target may write — a video's split siblings too, as the row's own lock.
       const lands =
@@ -264,6 +267,9 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   // Rows the run stopped short of. The summary omits them too, so a run halted at row 3 of 20 would
   // read exactly like a finished one — and unlike the unverified rows, this one has an action.
   const notStarted = queueing ? 0 : notStartedCount(targets)
+  // Shown while the run still walks its other rows: the captcha is why these failed, not the summary's "failed".
+  const captchaTimedOut = captchaTimeoutCount(targets)
+  const unsolvedBecause = captchaTimeoutReason()
   const stoppedBecause =
     run?.status === 'reconnect'
       ? t`the university session expired. Reconnect, then run the section again.`
@@ -331,6 +337,15 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
 
       {/* Hidden, not unmounted: the rows and the prompt hold in-flight download and passcode state. */}
       <div id={bodyId} className="recordings-section-body" hidden={!open}>
+        {captchaTimedOut > 0 && (
+          <div className="recordings-section-stalled">
+            {plural(captchaTimedOut, {
+              one: `# recording wasn't downloaded: ${unsolvedBecause}`,
+              other: `# recordings weren't downloaded: ${unsolvedBecause}`,
+            })}
+          </div>
+        )}
+
         {notStarted > 0 && (
           <div className="recordings-section-stalled">
             {plural(notStarted, {

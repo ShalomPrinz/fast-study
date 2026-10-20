@@ -8,6 +8,7 @@ import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsCo
 import { toast } from '@/services/toaster'
 import CaptchaBanner from '@/features/downloads/components/CaptchaBanner'
 import { toastCaptchaSolved } from '@/features/downloads/utils/zoomCaptcha'
+import { toastSiteCaptchaSolved } from '@/features/downloads/utils/captchaBanner'
 import Sidebar from '@/shared/sidebar'
 import DriveConsentPrompt from './DriveConsentPrompt'
 import { warnBrokenTools } from './toolWarnings'
@@ -23,7 +24,7 @@ export default function Layout() {
   return (
     <SnapshotProvider sendUpdate={toast}>
       <DownloadJobsProvider>
-        <AuthStatusProvider>
+        <AuthStatusProvider onSiteCaptchaSolved={toastSiteCaptchaSolved}>
           <DownloadsSessionProvider sendUpdate={toast}>
             <SectionRunsProvider onCaptchaSolved={() => toastCaptchaSolved(true)}>
               <div className="layout">

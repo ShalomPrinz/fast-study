@@ -8,7 +8,10 @@ import {
   isBlockedError,
   isReconnectError,
 } from '@/features/downloads/services/autoDownloader'
-import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
+import {
+  useAccountPanelShown,
+  useAuthStatus,
+} from '@/features/downloads/contexts/AuthStatusContext'
 import {
   useMoodleLockState,
   useWithMoodleLock,
@@ -45,6 +48,8 @@ import '@/styles/button.css'
 export default function AccountStatus() {
   const { t } = useLingui()
   const { status, refresh } = useAuthStatus()
+  // Its unverified panel says when the captcha is solved, so the generic solve toast stays quiet meanwhile.
+  useAccountPanelShown()
   const [phase, setPhase] = useState<LoginPhase>('loading')
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
   const [confirmConnect, setConfirmConnect] = useState(false)
