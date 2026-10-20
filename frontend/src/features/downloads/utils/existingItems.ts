@@ -44,7 +44,7 @@ export function hasResource(
   return holdsVideo(name, kind, courses, course)
 }
 
-// An auto-removed video is still held: the lecture was finished from it, so re-downloading is a
+// A removed video is still held: the lecture was finished from it, so re-downloading is a
 // deliberate replace, not a gap to fill.
 export function holdsVideo(name: string, kind: Kind, courses: Course[], course: string): boolean {
   const node = existingNodes(kind, courses, course).find((l) => l.name === name)

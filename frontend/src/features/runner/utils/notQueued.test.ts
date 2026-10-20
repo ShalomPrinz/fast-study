@@ -130,8 +130,8 @@ describe('notQueuedTitle', () => {
   })
 })
 
-describe('notQueued with auto-removed files', () => {
-  it('still lists an unfinished lecture whose video was auto-removed', () => {
+describe('notQueued with removed files', () => {
+  it('still lists an unfinished lecture whose video was removed', () => {
     const stripped: Lecture = { ...lecture('L1', 'summary.pdf'), removed: ['video.mp4'] }
     expect(notQueued([course('C', [stripped])], [], [], true)).toEqual([
       { course: 'C', lecture: 'L1', kind: 'lecture' },

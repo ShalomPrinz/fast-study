@@ -119,7 +119,7 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
   const { courses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
   const node = findLecture(courses, entry.course, entry.lecture, entry.kind)
-  // Auto-removed files count as present, so the rail and ETA match the backend's next step.
+  // Removed files count as present, so the rail and ETA match the backend's next step.
   const files = node ? markRemoved(node.files, node.removed) : null
   const materials = node?.materials ?? []
   const remote = useRemoteInflightState({

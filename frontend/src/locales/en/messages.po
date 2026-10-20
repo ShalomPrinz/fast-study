@@ -215,9 +215,9 @@ msgstr "{generated} of {0} generated"
 msgid "{host} could not be reached. Check your internet connection and try again."
 msgstr "{host} could not be reached. Check your internet connection and try again."
 
-#: src/features/lectures/MainView.tsx:328
-msgid "{input} was removed automatically"
-msgstr "{input} was removed automatically"
+#: src/features/lectures/MainView.tsx:336
+msgid "{input} was removed"
+msgstr "{input} was removed"
 
 #: src/features/downloads/components/SectionGroup.tsx:292
 msgid "{leaves, plural, one {# item} other {# items}}"
@@ -239,7 +239,7 @@ msgstr "{locked, plural, one {# lecture was skipped: a file is open in another p
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
-#: src/features/lectures/MainView.tsx:514
+#: src/features/lectures/MainView.tsx:522
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} will be deleted."
 
@@ -763,7 +763,7 @@ msgstr "Contact"
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
-#: src/features/lectures/MainView.tsx:333
+#: src/features/lectures/MainView.tsx:341
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
@@ -932,8 +932,8 @@ msgid "Decline"
 msgstr "Decline"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:478
-#: src/features/lectures/MainView.tsx:481
+#: src/features/lectures/MainView.tsx:486
+#: src/features/lectures/MainView.tsx:489
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
@@ -1384,7 +1384,7 @@ msgstr "Key verified"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:440
+#: src/features/lectures/MainView.tsx:448
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -1476,7 +1476,7 @@ msgid "Material"
 msgstr "Material"
 
 #: src/features/downloads/DownloadsView.tsx:67
-#: src/features/lectures/MainView.tsx:462
+#: src/features/lectures/MainView.tsx:470
 msgid "Materials"
 msgstr "Materials"
 
@@ -1611,7 +1611,7 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/lectures/MainView.tsx:425
+#: src/features/lectures/MainView.tsx:433
 msgid "not provided"
 msgstr "not provided"
 
@@ -1688,7 +1688,7 @@ msgstr "Open in Drive"
 msgid "Open lecture"
 msgstr "Open lecture"
 
-#: src/features/lectures/MainView.tsx:469
+#: src/features/lectures/MainView.tsx:477
 msgid "Open material"
 msgstr "Open material"
 
@@ -1877,9 +1877,9 @@ msgstr "Reload"
 msgid "Remove files from every existing lecture?"
 msgstr "Remove files from every existing lecture?"
 
-#: src/features/lectures/MainView.tsx:392
-msgid "Removed automatically"
-msgstr "Removed automatically"
+#: src/features/lectures/MainView.tsx:400
+msgid "Removed"
+msgstr "Removed"
 
 #: src/features/downloads/utils/renames.ts:30
 msgid "Renamed \"{before}\" to \"{name}\" — some characters can't be used in a folder name."
@@ -1929,8 +1929,8 @@ msgstr "Retry"
 msgid "Retry ✗"
 msgstr "Retry ✗"
 
-#: src/features/lectures/MainView.tsx:396
-#: src/features/lectures/MainView.tsx:399
+#: src/features/lectures/MainView.tsx:404
+#: src/features/lectures/MainView.tsx:407
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
@@ -2061,7 +2061,7 @@ msgstr "Show screenshot"
 msgid "skipped"
 msgstr "skipped"
 
-#: src/features/lectures/MainView.tsx:409
+#: src/features/lectures/MainView.tsx:417
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
@@ -2121,7 +2121,7 @@ msgstr "Summaries upload to this account's Drive. Connecting opens a Google sign
 msgid "Summarize"
 msgstr "Summarize"
 
-#: src/features/lectures/MainView.tsx:374
+#: src/features/lectures/MainView.tsx:382
 msgid "summarized from materials only"
 msgstr "summarized from materials only"
 
@@ -2271,7 +2271,7 @@ msgstr "The folder in your Drive that summaries are uploaded into. It is created
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
-#: src/features/lectures/MainView.tsx:498
+#: src/features/lectures/MainView.tsx:506
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
@@ -2300,7 +2300,7 @@ msgstr "The Moodle login timed out. Try connecting again."
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "The Moodle session expired. Reconnect the account and try again."
 
-#: src/features/lectures/MainView.tsx:515
+#: src/features/lectures/MainView.tsx:523
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -2402,7 +2402,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "The Zoom window was closed during the capture. Try the download again."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:499
+#: src/features/lectures/MainView.tsx:507
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 

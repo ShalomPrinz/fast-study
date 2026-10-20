@@ -22,7 +22,7 @@ export type FileName =
   | 'summary.pdf'
   | 'drive_url.txt'
 
-// The intermediates auto-remove deletes once a lecture is done; the database records them.
+// The intermediates a lecture can lose once a later stage is made from them.
 export type RemovableFile = 'video.mp4' | 'audio.mp3'
 
 export type FileInfo = {
@@ -59,7 +59,7 @@ export interface Lecture {
   // Always present, [] when none, ordered by material index ascending.
   materials: MaterialInfo[]
   transcribePartial: TranscribePartial | null
-  // Auto-removed names still absent from disk, [] otherwise; a new video upload clears it.
+  // The video/audio missing from disk while a later stage's file is there, whoever deleted it; [] otherwise.
   removed: RemovableFile[]
 }
 

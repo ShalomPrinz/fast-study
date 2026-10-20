@@ -89,7 +89,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
       return
     }
     const found = findLecture(courses, course.name, lecture.name, kind)
-    // An auto-removed video still confirms: the upload wipes the transcript and summary made from it.
+    // A removed video still confirms: the upload wipes the transcript and summary made from it.
     if (found && holdsFile(found, 'video.mp4')) {
       upload.confirm(course.name, lecture.name, file, kind)
     } else {

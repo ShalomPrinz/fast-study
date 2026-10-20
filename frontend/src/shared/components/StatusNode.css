@@ -14,7 +14,7 @@
   border-radius: 50%;
 }
 
-/* The six state variants below recolour .status-node at equal specificity, so they must stay in
+/* The seven state variants below recolour .status-node at equal specificity, so they must stay in
    this file, after it. */
 .status-node--done {
   background: var(--ok-soft);
@@ -48,4 +48,9 @@
   border: 1.5px solid var(--danger);
   color: var(--danger);
   cursor: help;
+}
+
+.status-node--removed {
+  background: var(--line);
+  color: var(--text-3);
 }

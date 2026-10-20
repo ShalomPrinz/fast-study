@@ -217,19 +217,15 @@ describe('targetLanded', () => {
 describe('holdsVideo', () => {
   const courses = tree([
     node('On disk', { video: true }),
-    node('Auto-removed', { removedVideo: true }),
+    node('Removed', { removedVideo: true }),
     node('Never had one'),
   ])
 
-  it('counts a video on disk or one auto-remove deleted, so bulk skips and a re-download confirms', () => {
+  it('counts a video on disk or a removed one, so bulk skips and a re-download confirms', () => {
     expect(holdsVideo('On disk', 'lecture', courses, 'Algebra')).toBe(true)
-    expect(holdsVideo('Auto-removed', 'lecture', courses, 'Algebra')).toBe(true)
-    expect(hasResource({ media: 'video' }, 'Auto-removed', 'lecture', courses, 'Algebra')).toBe(
-      true,
-    )
-    expect(overwritesVideo({ media: 'video' }, 'Auto-removed', 'lecture', courses, 'Algebra')).toBe(
-      true,
-    )
+    expect(holdsVideo('Removed', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(hasResource({ media: 'video' }, 'Removed', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(overwritesVideo({ media: 'video' }, 'Removed', 'lecture', courses, 'Algebra')).toBe(true)
   })
 
   it('is false for a lecture with no video and for a missing one', () => {

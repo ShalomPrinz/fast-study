@@ -11,7 +11,7 @@ export interface PendingLecture {
   kind: Kind
 }
 
-/** Lectures with a video (on disk or auto-removed) and no final output that nothing is scheduled to pick up. The backend
+/** Lectures with a video (on disk or removed) and no final output that nothing is scheduled to pick up. The backend
  *  never reports these — the tree is already in memory, and the queue is what it lacks. */
 export function notQueued(
   courses: Course[],
@@ -32,7 +32,7 @@ export function notQueued(
     ]
     for (const [kind, lectures] of groups) {
       for (const lecture of lectures) {
-        // An auto-removed video still counts, as the backend's `scan_pending` reads it.
+        // A removed video still counts, as the backend's `scan_pending` reads it.
         if (!holdsFile(lecture, 'video.mp4')) continue
         if (isLectureComplete(lecture, driveEnabled)) continue
         if (spokenFor.has(inFlightKey(course.name, lecture.name, kind))) continue

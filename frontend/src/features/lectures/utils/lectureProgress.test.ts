@@ -181,7 +181,7 @@ describe('courseProgress', () => {
   })
 })
 
-describe('auto-removed files count as present', () => {
+describe('removed files count as present', () => {
   // A lecture finished from its video, then stripped of video and audio after the PDF.
   const stripped = markRemoved(files(['transcript.txt', 'summary.md', 'summary.pdf']), [
     'video.mp4',

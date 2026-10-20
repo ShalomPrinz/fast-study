@@ -22,7 +22,7 @@ import { toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
-import { stepState } from '@/features/lectures/utils/stepState'
+import { stageControl, stepState } from '@/features/lectures/utils/stepState'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import {
   canRunRemaining,
@@ -90,7 +90,7 @@ export default function MainView() {
     transcribePartial,
     removed,
   } = useLectureRoute()
-  // Every rule reads auto-removed files as present; `onDisk` is only for what can be deleted.
+  // Every rule reads removed files as present; `onDisk` is only for what can be deleted.
   const files = onDisk && markRemoved(onDisk, removed)
   const { courses, loaded, loadFailed, refreshCourses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
@@ -318,14 +318,22 @@ export default function MainView() {
                 const exists = files[file].exists
                 const isRunning = runningFile === file
                 const skipped = skippedStage(file, files, materials)
-                const state = stepState(exists, isRunning, step, lectureError)
-                const prereqMet = stagePrereqMet(stage, files, materials)
                 const isRemoved = (removed as FileName[]).includes(file)
-                // A step whose input was auto-removed cannot run again until a new video arrives.
+                const state = stepState(isRemoved, exists, isRunning, step, lectureError)
+                const prereqMet = stagePrereqMet(stage, files, materials)
+                const control = stageControl({
+                  removed: isRemoved,
+                  exists,
+                  running: isRunning,
+                  skipped,
+                  hasStep: !!step,
+                  canRotate: hasAnyStepFile,
+                })
+                // A step whose input was removed cannot run again until a new video arrives.
                 const input = stage.prereq
                 const inputRemoved =
                   input && (removed as FileName[]).includes(input)
-                    ? t`${input} was removed automatically`
+                    ? t`${input} was removed`
                     : undefined
                 const isResumeTranscribe =
                   file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
@@ -387,12 +395,12 @@ export default function MainView() {
                         />
                       )}
                     </div>
-                    {isRemoved && (
+                    {control === 'removed' && (
                       <span className="pipeline-missing pipeline-removed">
-                        <Trans>Removed automatically</Trans>
+                        <Trans>Removed</Trans>
                       </span>
                     )}
-                    {exists && !isRemoved && step && hasAnyStepFile && (
+                    {control === 'rotate' && step && (
                       <Tooltip content={inputRemoved ?? t`Rotate ${file}`}>
                         <button
                           className="pipeline-icon-btn"
@@ -404,12 +412,12 @@ export default function MainView() {
                         </button>
                       </Tooltip>
                     )}
-                    {skipped && !isRunning && (
+                    {control === 'skipped' && (
                       <span className="pipeline-missing pipeline-skipped">
                         <Trans>skipped (no video)</Trans>
                       </span>
                     )}
-                    {!exists && !isRunning && !skipped && step && (
+                    {control === 'run' && step && (
                       <Tooltip content={inputRemoved}>
                         <button
                           className="btn btn--ghost"
@@ -420,7 +428,7 @@ export default function MainView() {
                         </button>
                       </Tooltip>
                     )}
-                    {!exists && !skipped && !step && (
+                    {control === 'not-provided' && (
                       <span className="pipeline-missing">
                         <Trans>not provided</Trans>
                       </span>

@@ -1,7 +1,15 @@
 import Tooltip from '@/shared/components/Tooltip'
 import './StatusNode.css'
 
-export type StatusNodeState = 'done' | 'running' | 'pending' | 'paused' | 'failed' | 'quota'
+export type StatusNodeState =
+  | 'done'
+  | 'running'
+  | 'pending'
+  | 'paused'
+  | 'failed'
+  | 'quota'
+  // A file gone from disk after a later stage was made from it: finished, but not there.
+  | 'removed'
 
 // The one run-state glyph for pipeline rows, course branches and their steps. `paused` is a run
 // waiting out a provider's rate limit: still ours, not a failure. `quota` is a failure on a provider's
@@ -45,6 +53,11 @@ export default function StatusNode({ state, hint }: { state: StatusNodeState; hi
               strokeWidth="1.3"
             />
             <path d="M10.9 5.1v1.8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+        )}
+        {state === 'removed' && (
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 6h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
         )}
         {state === 'failed' && '!'}
