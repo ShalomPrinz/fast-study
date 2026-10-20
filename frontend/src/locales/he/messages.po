@@ -233,7 +233,7 @@ msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} oth
 
 #: src/features/settings/components/AutoRemoveSummary.tsx:20
 msgid "{locked, plural, one {# lecture was skipped: a file is open in another program. Close it and press Apply under “Disk space” again.} other {# lectures were skipped: a file is open in another program. Close it and press Apply under “Disk space” again.}}"
-msgstr "{locked, plural, one {דילגנו על הרצאה אחת: קובץ שלה פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החלה\" תחת \"מקום במחשב\".} two {דילגנו על # הרצאות: קובץ שלהן פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החלה\" תחת \"מקום במחשב\".} other {דילגנו על # הרצאות: קובץ שלהן פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החלה\" תחת \"מקום במחשב\".}}"
+msgstr "{locked, plural, one {דילגנו על הרצאה אחת: קובץ שלה פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החל\" תחת \"מקום במחשב\".} two {דילגנו על # הרצאות: קובץ שלהן פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החל\" תחת \"מקום במחשב\".} other {דילגנו על # הרצאות: קובץ שלהן פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החל\" תחת \"מקום במחשב\".}}"
 
 #: src/features/downloads/components/RecordingRow.tsx:297
 msgid "{materialCount, plural, one {# material} other {# materials}}"
@@ -471,7 +471,7 @@ msgstr "מראה והעדפות"
 
 #: src/features/settings/components/AutoRemoveField.tsx:126
 msgid "Apply"
-msgstr "החלה"
+msgstr "החל"
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:154
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:160
@@ -2261,7 +2261,7 @@ msgstr "אי אפשר להוריד את הקובץ הזה"
 
 #: src/features/settings/SettingsView.tsx:215
 msgid "The files weren't removed. Press Apply under “Disk space” to try again."
-msgstr "הקבצים לא הוסרו. כדי לנסות שוב, לחץ על \"החלה\" תחת \"מקום במחשב\"."
+msgstr "הקבצים לא הוסרו. כדי לנסות שוב, לחץ על \"החל\" תחת \"מקום במחשב\"."
 
 #: src/features/settings/components/DriveFields.tsx:60
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
