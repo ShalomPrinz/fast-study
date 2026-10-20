@@ -18,7 +18,6 @@ from fs import summary as summary_fs
 from fs.files import file_path
 from fs.paths import (
     ARCHIVED_MARKER,
-    REMOVED_MARKER,
     SOURCE_URL_MARKER,
     CodedError,
     CodedValueError,
@@ -294,10 +293,9 @@ async def delete_file_endpoint(
 async def post_removed(
     course: str, lecture: str, request: Request, kind: str = Query("lecture")
 ):
-    """Delete the named intermediates (body: {files}) and record them, so the tree shows them as removed."""
+    """Delete the named intermediates (body: {files}); the tree then derives them as removed."""
 
-    # On the loop, not the threadpool: the .removed.json read-modify-write must not interleave with
-    # PUT /…/files/{name} dropping a name from it (docs/LAYOUT.md).
+    files = None
     try:
         body = await request.json()
         # A non-object body passes None on, which remove_files refuses as bad_request_body.
@@ -306,8 +304,9 @@ async def post_removed(
         broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
-        # Body, name and unlink failures are coded already, so only the record write lands here.
-        return _failure(e, 400, "file_write_failed", {"file": REMOVED_MARKER})
+        # Body, name, lock and unlink failures are coded already, so the files param is only a fallback.
+        named = ", ".join(map(str, files)) if isinstance(files, list) else ""
+        return _failure(e, 400, "file_delete_failed", {"file": named})
 
 
 @app.put("/courses/{course}/lectures/{lecture}/files/{name}")

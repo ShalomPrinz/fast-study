@@ -11,7 +11,6 @@ from .paths import (
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     REMOVABLE_FILES,
-    REMOVED_MARKER,
     SOURCE_URL_MARKER,
     CodedError,
     CodedValueError,
@@ -28,7 +27,6 @@ from .paths import (
     reject_if_locked,
     safe_name,
 )
-from .removed import forget_removed, read_removed, write_removed
 
 # Course-level folders the tree skips as lectures; casefolded because NTFS matches names case-insensitively.
 _RESERVED_LECTURE_NAMES = {OVERVIEW_DIR.casefold(), RECITATIONS_DIR.casefold()}
@@ -153,8 +151,6 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
             "transcript.partial.meta.json",
             PDF_WARNING_MARKER,
             PDF_BUILD_TEX_MARKER,
-            # A new video starts the lecture fresh, so nothing in it counts as removed any more.
-            REMOVED_MARKER,
         )
     ]
     # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
@@ -205,13 +201,10 @@ def write_file(course: str, lecture: str, file: str, kind: str, data: bytes) -> 
     except PermissionError as e:
         reject_if_locked(e, file)
         raise
-    # A file written back (a re-run producing audio.mp3 again) is no longer removed.
-    if file in REMOVABLE_FILES:
-        forget_removed(d, file)
 
 
 def remove_files(course: str, lecture: str, kind: str, files) -> None:
-    """Delete the named intermediates and record them as removed; all-or-nothing on locks, idempotent."""
+    """Delete the named intermediates; all-or-nothing on locks, and an absent file is a no-op."""
 
     if not isinstance(files, list) or not all(isinstance(f, str) for f in files):
         raise CodedValueError(
@@ -231,11 +224,8 @@ def remove_files(course: str, lecture: str, kind: str, files) -> None:
         raise LectureNotFound(
             f"{course}/{lecture} does not exist", course=course, lecture=lecture
         )
-    # Only a file that is actually here gets recorded: an absent one was never auto-removed.
     present = [d / f for f in files if (d / f).exists()]
     check_none_locked(present)
-    # Record first: a lecture stripped of its video with no record would read as materials-only.
-    write_removed(d, read_removed(d) + [p.name for p in present])
     for p in present:
         try:
             p.unlink(missing_ok=True)

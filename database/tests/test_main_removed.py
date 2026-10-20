@@ -1,6 +1,4 @@
-"""The remove route: deletes intermediates, records them, and the record's lifecycle in the tree."""
-
-import json
+"""The remove route, and the tree's `removed` field derived from the files on disk."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -54,12 +52,11 @@ def _tree_lecture(client, kind="lectures"):
     return course[kind][0]
 
 
-def test_removes_files_records_them_and_notifies_once(client, lecture, notifies):
+def test_removes_files_and_notifies_once(client, lecture, notifies):
     r = client.post(URL, json={"files": ["audio.mp3", "video.mp4"]})
 
     assert r.status_code == 204
     assert sorted(p.name for p in lecture.iterdir()) == [
-        ".removed.json",
         "drive_url.txt",
         "material.pdf",
         "summary.md",
@@ -70,31 +67,12 @@ def test_removes_files_records_them_and_notifies_once(client, lecture, notifies)
     assert notifies == [1]
 
 
-def test_tree_reports_an_empty_list_when_nothing_was_removed(client, lecture):
-    assert _tree_lecture(client)["removed"] == []
-
-
-def test_a_later_call_merges_with_the_earlier_record(client, lecture):
-    client.post(URL, json={"files": ["video.mp4"]})
-    client.post(URL, json={"files": ["audio.mp3"]})
-
-    assert _tree_lecture(client)["removed"] == ["video.mp4", "audio.mp3"]
-
-
 def test_repeating_a_removal_is_idempotent(client, lecture):
     client.post(URL, json={"files": ["video.mp4"]})
     r = client.post(URL, json={"files": ["video.mp4"]})
 
     assert r.status_code == 204
     assert _tree_lecture(client)["removed"] == ["video.mp4"]
-
-
-def test_an_absent_file_is_not_recorded(client, lecture):
-    # A video the user deleted by hand was never auto-removed, so it must not read as such.
-    (lecture / "video.mp4").unlink()
-
-    assert client.post(URL, json={"files": ["video.mp4"]}).status_code == 204
-    assert _tree_lecture(client)["removed"] == []
 
 
 @pytest.mark.parametrize(
@@ -110,7 +88,6 @@ def test_a_non_removable_name_is_refused_and_nothing_is_touched(
     assert r.json()["code"] == "file_not_removable"
     assert r.json()["params"] == {"file": name}
     assert (lecture / "video.mp4").exists()
-    assert not (lecture / ".removed.json").exists()
     assert notifies == []
 
 
@@ -138,6 +115,7 @@ def test_recitations_are_addressed_by_kind(client, data_root):
     d = data_root / "Algo" / "Recitations" / "R1"
     d.mkdir(parents=True)
     (d / "video.mp4").write_bytes(b"x")
+    (d / "audio.mp3").write_bytes(b"x")
 
     r = client.post(
         "/courses/Algo/lectures/R1/removed?kind=recitation",
@@ -170,41 +148,6 @@ def test_one_locked_file_refuses_the_whole_set(client, lecture, monkeypatch):
     assert r.json()["code"] == "file_locked"
     assert r.json()["params"] == {"file": "audio.mp3"}
     assert (lecture / "video.mp4").exists()
-    assert not (lecture / ".removed.json").exists()
-
-
-def test_writing_a_removed_file_back_drops_it_from_the_record(client, lecture):
-    client.post(URL, json={"files": ["video.mp4", "audio.mp3"]})
-
-    r = client.put("/courses/Algo/lectures/L1/files/audio.mp3", content=b"new")
-
-    assert r.status_code == 204
-    assert _tree_lecture(client)["removed"] == ["video.mp4"]
-    assert json.loads((lecture / ".removed.json").read_text()) == ["video.mp4"]
-
-
-def test_a_new_video_clears_the_record(client, lecture):
-    client.post(URL, json={"files": ["video.mp4", "audio.mp3"]})
-
-    r = client.put("/courses/Algo/lectures/L1/video", content=b"\x00mp4")
-
-    assert r.status_code == 204
-    assert not (lecture / ".removed.json").exists()
-    assert _tree_lecture(client)["removed"] == []
-
-
-def test_a_recorded_file_back_on_disk_is_not_reported_removed(client, lecture):
-    # The record is written before the unlinks, so a failed unlink can leave a recorded file in place.
-    (lecture / ".removed.json").write_text('["video.mp4"]')
-
-    assert _tree_lecture(client)["removed"] == []
-
-
-def test_a_corrupt_record_reads_as_empty(client, lecture):
-    (lecture / "video.mp4").unlink()
-    (lecture / ".removed.json").write_text("{not json")
-
-    assert _tree_lecture(client)["removed"] == []
 
 
 def test_a_failed_unlink_names_its_file(client, lecture, monkeypatch):
@@ -226,5 +169,57 @@ def test_a_failed_unlink_names_its_file(client, lecture, monkeypatch):
     assert r.status_code == 400
     assert r.json()["code"] == "file_delete_failed"
     assert r.json()["params"]["file"] == "audio.mp3"
-    # Recorded but still on disk, so the tree does not call it removed.
+    # Still on disk, so the tree does not call it removed.
     assert _tree_lecture(client)["removed"] == []
+
+
+def _lecture_with(data_root, *names):
+    """Create Algo/L1 holding exactly the given files."""
+
+    d = data_root / "Algo" / "L1"
+    d.mkdir(parents=True)
+    for name in names:
+        (d / name).write_bytes(b"x")
+    return d
+
+
+@pytest.mark.parametrize(
+    "names, removed",
+    [
+        (("video.mp4", "audio.mp3", "transcript.txt"), []),
+        (("audio.mp3",), ["video.mp4"]),
+        (("transcript.txt",), ["video.mp4", "audio.mp3"]),
+        (("audio.mp3", "transcript.txt"), ["video.mp4"]),
+        (("video.mp4", "transcript.txt"), ["audio.mp3"]),
+        (("video.mp4",), []),
+        (("summary.md", "summary.pdf", "drive_url.txt"), []),
+        ((), []),
+    ],
+)
+def test_removed_is_derived_from_the_files_on_disk(client, data_root, names, removed):
+    _lecture_with(data_root, *names)
+
+    assert _tree_lecture(client)["removed"] == removed
+
+
+def test_a_materials_only_lecture_reports_nothing_removed(client, data_root):
+    _lecture_with(data_root, "material.pdf", "material.2.pdf")
+
+    assert _tree_lecture(client)["removed"] == []
+
+
+def test_a_manual_delete_reads_as_removed(client, lecture):
+    # No route call: who deleted the file does not matter, only what the disk proves.
+    (lecture / "video.mp4").unlink()
+    (lecture / "audio.mp3").unlink()
+
+    assert _tree_lecture(client)["removed"] == ["video.mp4", "audio.mp3"]
+
+
+def test_a_file_written_back_is_no_longer_removed(client, lecture):
+    client.post(URL, json={"files": ["video.mp4", "audio.mp3"]})
+
+    r = client.put("/courses/Algo/lectures/L1/files/audio.mp3", content=b"new")
+
+    assert r.status_code == 204
+    assert _tree_lecture(client)["removed"] == ["video.mp4"]

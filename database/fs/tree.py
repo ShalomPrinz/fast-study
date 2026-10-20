@@ -13,7 +13,6 @@ from .paths import (
     SOURCE_URL_MARKER,
     data_root,
 )
-from .removed import read_removed
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
@@ -45,9 +44,22 @@ def _read_pdf_warning(lecture_path: Path) -> Optional[str]:
         return None
 
 
+def _removed(files: dict) -> list[str]:
+    """Name the absent intermediates a later artifact proves existed, in REMOVABLE_FILES order."""
+
+    # transcript.txt is never removed, so it is the evidence that outlives both; who deleted is irrelevant.
+    has = {f: files[f]["exists"] for f in ("video.mp4", "audio.mp3", "transcript.txt")}
+    removed = []
+    if not has["video.mp4"] and (has["audio.mp3"] or has["transcript.txt"]):
+        removed.append("video.mp4")
+    if not has["audio.mp3"] and has["transcript.txt"]:
+        removed.append("audio.mp3")
+    return removed
+
+
 def _read_lecture(lecture_path: Path, name: str) -> dict:
     """Build the tree entry for one lecture: existence/size per predefined file (plus video duration),
-    the material list, partial-transcript progress, and the intermediates removed on purpose."""
+    the material list, partial-transcript progress, and which intermediates are removed."""
 
     files = {}
     for f in PREDEFINED_FILES:
@@ -76,8 +88,7 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         "files": files,
         "materials": list_materials(lecture_path),
         "transcribePartial": _read_transcribe_partial(lecture_path),
-        # A recorded file that is on disk again (an unlink that failed after recording) is not removed.
-        "removed": [f for f in read_removed(lecture_path) if not files[f]["exists"]],
+        "removed": _removed(files),
     }
 
 
