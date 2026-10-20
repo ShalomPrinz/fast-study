@@ -547,3 +547,33 @@ def test_probe_answers_400_on_a_body_without_data_root(client):
 
     assert r.status_code == 400
     assert r.json()["code"] == "bad_request_body"
+
+
+@pytest.mark.parametrize(
+    "field,env,choices",
+    [
+        ("auto_remove", "AUTO_REMOVE", ("off", "video", "audio")),
+        ("auto_remove_after", "AUTO_REMOVE_AFTER", ("pdf", "drive")),
+    ],
+)
+def test_auto_remove_fields_store_each_choice_lowercased(env_file, field, env, choices):
+    for choice in choices:
+        assert settings.write_settings({field: f" {choice.upper()} "})[field] == choice
+    assert f"{env}='{choices[-1]}'" in env_file.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "field,bad",
+    [("auto_remove", "transcript"), ("auto_remove_after", "never")],
+)
+def test_auto_remove_fields_refuse_an_unknown_choice(env_file, field, bad):
+    assert _rejected({field: bad}) == (
+        "setting_invalid_choice",
+        {"field": field, "value": bad},
+    )
+
+
+def test_auto_remove_fields_read_null_when_unset(env_file):
+    stored = settings.read_settings()
+    assert stored["auto_remove"] is None
+    assert stored["auto_remove_after"] is None

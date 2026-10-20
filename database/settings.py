@@ -53,6 +53,14 @@ AUTO_RUN_MODES = ("off", "audio", "full")
 # Mirrors electron/store.js's `ai_provider` rule; renderer-only, so no service reads it.
 AI_PROVIDERS = ("claude", "chatgpt", "gemini")
 
+# Closed-list fields: field → (env var, choices). Stored lowercased; a stored value off the list reads `null`.
+# The auto-remove lists mirror electron/store.js and the backend, which owns their defaults and meaning.
+CHOICE_FIELDS = {
+    "ai_provider": ("AI_PROVIDER", AI_PROVIDERS),
+    "auto_remove": ("AUTO_REMOVE", ("off", "video", "audio")),
+    "auto_remove_after": ("AUTO_REMOVE_AFTER", ("pdf", "drive")),
+}
+
 
 def _text(value) -> str | None:
     """Normalize a stored value to a non-empty string, or None when the key is absent or blank."""
@@ -274,7 +282,10 @@ def read_settings() -> dict:
     stored = {field: _text(values.get(env)) for field, env in STRING_FIELDS.items()}
     stored |= {field: _flag(values.get(env)) for field, env in BOOL_FIELDS.items()}
     stored |= {field: _int(values.get(env)) for field, env in INT_FIELDS.items()}
-    stored["ai_provider"] = _choice(values.get("AI_PROVIDER"), AI_PROVIDERS)
+    stored |= {
+        field: _choice(values.get(env), choices)
+        for field, (env, choices) in CHOICE_FIELDS.items()
+    }
     stored |= {
         f"{field}_set": _text(values.get(env)) is not None
         for field, env in SECRET_FIELDS.items()
@@ -295,10 +306,9 @@ def write_settings(patch: dict) -> dict:
         elif field == "auto_run":
             # The backend silently runs an unknown mode as `full`, so a typo must be refused here.
             updates["AUTO_RUN"] = _incoming_choice("auto_run", value, AUTO_RUN_MODES)
-        elif field == "ai_provider":
-            updates["AI_PROVIDER"] = _incoming_choice(
-                "ai_provider", value, AI_PROVIDERS
-            )
+        elif field in CHOICE_FIELDS:
+            env, choices = CHOICE_FIELDS[field]
+            updates[env] = _incoming_choice(field, value, choices)
         elif field in STRING_FIELDS:
             updates[STRING_FIELDS[field]] = _incoming(field, value)
         elif field in SECRET_FIELDS:

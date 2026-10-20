@@ -54,6 +54,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf, optional `?source=` tag; returns `{name}` with the allocated (or adopted) filename |
+| `POST   /courses/{course}/lectures/{lecture}/removed`      | delete intermediates (`{files}`, each `video.mp4` or `audio.mp3`) and record them; see Write semantics |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `404` if the lecture is missing; `423` if it is open in another program |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}` | stream one file                                                           |
@@ -76,7 +77,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /events`                                           | SSE stream of `notify` events                                             |
 | `POST   /notify`                                           | broadcast a `notify` event                                                |
 
-Course create/rename/archive, lecture create/rename and a `POST /config` carrying `data_root` broadcast
+Course create/rename/archive, lecture create/rename, `POST /…/removed` and a `POST /config` carrying `data_root` broadcast
 a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
 
 ## Write semantics
@@ -84,7 +85,7 @@ a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
 The two file-write paths differ on purpose, and confusing them destroys data:
 
 - **`PUT /…/video`** is the downloader's fresh-source path. It erases every predefined file plus
-  `original_summary.md`, the partial-transcript meta, and both pdf dotfiles — they all belong to
+  `original_summary.md`, the partial-transcript meta, both pdf dotfiles and `.removed.json` — they all belong to
   the _old_ video. Materials stay: they are attached, not derived. The wipe is all-or-nothing: the whole set is probed for locks first, so one
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand (the downloader uploads to brand-new lectures) but never the course: a missing one is `404` `course_not_found`.
@@ -99,6 +100,15 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   `summary.pdf`, `drive_url.txt`, …). It is strictly neutral; wiping here would erase earlier
   outputs of the run in progress. It never creates the lecture dir: a step finishing after its
   lecture was deleted or renamed answers `404` `lecture_not_found` instead of resurrecting a ghost.
+  Writing `video.mp4` or `audio.mp3` here drops that name from the removed record.
+- **`POST /…/removed`** is the auto-remove path: body `{files: [...]}`, `204` on success. A name other
+  than `video.mp4`/`audio.mp3` is `400` `file_not_removable` `{file}` with nothing touched; a non-list
+  body is `400` `bad_request_body`; a missing lecture is `404` `lecture_not_found`. Like the video wipe it
+  probes every present file first, so one open elsewhere answers `423` `file_locked` with nothing
+  deleted. Any other failed unlink is `400` `file_delete_failed` naming that file; a failed record write is
+  `400` `file_write_failed` `{file: .removed.json}` with nothing deleted. An absent file is not an error
+  and is not recorded, so a repeat is a no-op. The record and
+  the tree's `removed` field are in [LAYOUT.md](LAYOUT.md#removed-intermediates).
 
 Every route that writes or deletes a file answers `423 Locked` when Windows refuses the operation
 because another process holds the file open — a native PDF viewer left open on `summary.pdf` is the

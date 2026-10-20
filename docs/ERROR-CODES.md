@@ -202,6 +202,7 @@ for the code whichever view chooses to show it.
 | `fs/paths.py`         | `name_has_no_legal_characters`  | `name`            | user      |
 | `fs/crud.py`          | `name_taken`                    | `name`            | user      |
 | `fs/crud.py`          | `name_reserved`                 | `name`            | user      |
+| `fs/crud.py`          | `file_not_removable`            | `file`            | dev       |
 | `fs/crud.py`, `fs/summary.py` | `lecture_not_found`     | `course`, `lecture` | user    |
 | `fs/overview.py`, `fs/summaries.py`, `fs/crud.py` | `course_not_found` | `course`          | user      |
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
@@ -214,12 +215,12 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `data_root_not_absolute`        | `path`            | user      |
 | `settings.py`         | `data_root_not_a_directory`     | `path`            | user      |
 | `settings.py`         | `data_root_not_writable`        | `path`, `detail`  | user      |
-| `database_main.py`    | `bad_request_body`              | `detail`          | dev       |
+| `database_main.py`, `fs/crud.py` | `bad_request_body`  | `detail`          | dev       |
 | `database_main.py`    | `create_dir_failed`             | `path`, `detail`  | user      |
 | `database_main.py`    | `rename_failed`                 | `from`, `to`, `detail` | user |
 | `database_main.py`    | `file_write_failed`             | `file`, `detail`  | user      |
 | `database_main.py`    | `file_read_failed`              | `file`, `detail`  | user      |
-| `database_main.py`    | `file_delete_failed`            | `file`, `detail`  | user      |
+| `database_main.py`, `fs/crud.py` | `file_delete_failed` | `file`, `detail`  | user      |
 | `database_main.py`    | `file_not_found`                | `file`            | user      |
 | `database_main.py`    | `summary_io_failed`             | `detail`          | uncertain |
 | `database_main.py`    | `overview_read_failed`          | `detail`          | uncertain |

@@ -24,6 +24,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `moodle_site` (the auto-downloader's)              | `MOODLE_SITE`                                     |
 | `nightly_run` (bool), `nightly_hour` (int)         | `NIGHTLY_RUN`, `NIGHTLY_HOUR`                     |
 | `ai_provider` (the "Study with AI" pick)           | `AI_PROVIDER`                                     |
+| `auto_remove`, `auto_remove_after`                 | `AUTO_REMOVE`, `AUTO_REMOVE_AFTER`                |
 
 Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` — which is all the store
 knows about a value. It validates the _type_ and nothing else: `nightly_hour` is stored as any
@@ -32,7 +33,9 @@ the store stays generic. The one exception is `auto_run`, stored lowercased and 
 (`setting_invalid_choice`) unless `off`/`audio`/`full`, because the backend silently runs an unknown
 mode as `full`; the list is a deliberate copy of the backend's `AUTO_RUN_MODES`. `ai_provider` follows
 the same rule against `claude`/`chatgpt`/`gemini`, mirroring `electron/store.js`, and reads back `null`
-when the stored value is not one of them; no service reads it, only the renderer. An int that is unparsable in
+when the stored value is not one of them; no service reads it, only the renderer. `auto_remove`
+(`off`/`video`/`audio`, cumulative: `audio` removes the video too) and `auto_remove_after`
+(`pdf`/`drive`) follow the same rule, mirroring `electron/store.js`; the backend owns their defaults. An int that is unparsable in
 `.env` reads back as `null`, the same as an absent one, so a hand-edited typo falls back to the
 client's default instead of erroring. `PUT` rejects a boolean for an int field, which Python would
 otherwise store as `1`.

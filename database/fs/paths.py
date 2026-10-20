@@ -40,6 +40,11 @@ PREDEFINED_FILES = (
     "drive_url.txt",
 )
 
+# The only files the remove route will delete; when to remove them is the backend's policy.
+REMOVABLE_FILES = ("video.mp4", "audio.mp3")
+# Lecture-dir sidecar listing which REMOVABLE_FILES were removed on purpose, as a JSON array.
+REMOVED_MARKER = ".removed.json"
+
 # Material PDFs are a numbered family, not a predefined name: material.pdf, material.2.pdf, …
 MATERIAL_PREFIX = "material"
 MATERIAL_EXT = ".pdf"

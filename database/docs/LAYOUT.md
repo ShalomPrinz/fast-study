@@ -121,11 +121,24 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.archived`              | course dir  | empty marker; course is archived                          |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
 | `.materials.json`        | lecture dir | `{material name: source}` for materials with a download source |
+| `.removed.json`          | lecture dir | JSON array of the intermediates removed on purpose (see below) |
 | `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
 | `.{slug}.pdf_warning`    | overview/   | same, per overview pdf (see OVERVIEW.md)                  |
 
 Deleting `summary.pdf` drops both of its render markers — each describes that one build and can never outlive it.
+
+## Removed intermediates
+
+`REMOVABLE_FILES` (`video.mp4`, `audio.mp3`) are the only files `POST /…/removed` will delete; when to
+call it is the backend's policy, not checked here. Summaries, the pdf, `drive_url.txt`, `transcript.txt` (search reads it) and materials never are. The deleted names go
+in `.removed.json`, because a lecture with no video or audio is otherwise indistinguishable from a
+materials-only one. Only a file actually present is recorded — one the user deleted by hand was never
+removed by the app. The record is written before the unlinks, so a failure between them leaves a
+recorded file on disk rather than a lecture stripped with no record; the tree reports only recorded
+names that are absent. Writing a name back through `PUT /…/files/{name}` drops it from the record, and
+the video wipe deletes the sidecar, since a new video starts the lecture fresh. Writers are `async def`
+routes with no `await` across the read-modify-write, the same rule as `.materials.json`.
 
 ## Tree shape
 
@@ -134,7 +147,8 @@ Deleting `summary.pdf` drops both of its render markers — each describes that 
 
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
 `materials` (index-ordered `{name, size, mtime}` plus `source` when it has one, always present and `[]` when none — presence
-in the list *is* existence, so entries carry no `exists`), and `transcribePartial`. Three fields are inlined onto file entries rather than exposed as separate
+in the list *is* existence, so entries carry no `exists`), `transcribePartial`, and `removed` (the
+recorded names still absent, in `REMOVABLE_FILES` order; always present, `[]` when none). Three fields are inlined onto file entries rather than exposed as separate
 endpoints, because the frontend needs them on every render of the tree:
 
 - `drive_url.txt` → `url` on its own entry.
@@ -151,6 +165,6 @@ field stay backwards-compatible.
 ## Degrade, don't fail
 
 Every metadata read (`transcript.partial.meta.json`, both `.pdf_warning` readers,
-`overview/meta.json`, `.materials.json`) swallows parse and read errors and falls back to "absent". A corrupt
+`overview/meta.json`, `.materials.json`, `.removed.json`) swallows parse and read errors and falls back to "absent". A corrupt
 side-file must never take down a whole tree or listing; the next write self-heals it.
 Writing `.materials.json` degrades the same way: a failed write is logged and the upload or delete still succeeds, untagged.

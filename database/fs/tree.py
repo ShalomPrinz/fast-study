@@ -13,6 +13,7 @@ from .paths import (
     SOURCE_URL_MARKER,
     data_root,
 )
+from .removed import read_removed
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
@@ -46,7 +47,7 @@ def _read_pdf_warning(lecture_path: Path) -> Optional[str]:
 
 def _read_lecture(lecture_path: Path, name: str) -> dict:
     """Build the tree entry for one lecture: existence/size per predefined file (plus video duration),
-    the material list, and partial-transcript progress."""
+    the material list, partial-transcript progress, and the intermediates removed on purpose."""
 
     files = {}
     for f in PREDEFINED_FILES:
@@ -75,6 +76,8 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         "files": files,
         "materials": list_materials(lecture_path),
         "transcribePartial": _read_transcribe_partial(lecture_path),
+        # A recorded file that is on disk again (an unlink that failed after recording) is not removed.
+        "removed": [f for f in read_removed(lecture_path) if not files[f]["exists"]],
     }
 
 
