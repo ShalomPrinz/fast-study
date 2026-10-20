@@ -8,6 +8,7 @@
     "electron-dev": ["electron/"],
     "delivery-dev": ["delivery/", ".github/workflows/build.yml", ".github/workflows/publish.yml"],
     "site-dev": ["site/", ".github/workflows/pages.yml"],
+    "harness-dev": [".claude/harness/", ".claude/skills/app-harness/", ".github/workflows/e2e.yml"],
     "reviewer": []
   },
   "packages": [

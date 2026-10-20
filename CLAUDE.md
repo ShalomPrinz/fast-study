@@ -113,6 +113,8 @@ A service agent reports in 300 words or fewer: files changed, docs updated and w
 
 `site-dev` owns `site/` and `.github/workflows/pages.yml` under the same rule: the page describes what `electron/`, `delivery/` and the services own, so a claim or a name that needs changing there is reported, not edited.
 
+`harness-dev` owns `.claude/harness/`, the `app-harness` skill and `.github/workflows/e2e.yml` under the same rule: it develops the harness and its e2e suite, and a spec that fails on service behaviour is reported to that service's subagent, not patched around. Using the harness is not its job — every agent runs it through the `app-harness` skill to build and verify its own features and fixes.
+
 ## Running Python
 
 Anything that imports a service's code runs through `uv` from that service's directory — `cd database && uv run pytest tests/ -q`. Bare `python3` is the system 3.10 with none of the service's dependencies, so it dies at the first import.
