@@ -12,6 +12,7 @@ import {
   parseSectionId,
   sectionId,
   sectionTitle,
+  showsMediaSegment,
 } from './sections'
 
 function item(
@@ -207,5 +208,17 @@ describe('leafCount', () => {
 
   it('counts an expanded empty playlist as nothing', () => {
     expect(leafCount(rows, () => [])).toBe(1)
+  })
+})
+
+describe('showsMediaSegment', () => {
+  it('hides Unknown only while it is empty', () => {
+    expect(showsMediaSegment('unknown', 0)).toBe(false)
+    expect(showsMediaSegment('unknown', 2)).toBe(true)
+  })
+
+  it('always shows Videos and Materials', () => {
+    expect(showsMediaSegment('video', 0)).toBe(true)
+    expect(showsMediaSegment('material', 0)).toBe(true)
   })
 })

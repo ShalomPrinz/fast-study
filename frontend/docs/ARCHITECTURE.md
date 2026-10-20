@@ -110,7 +110,8 @@ reports are sent (`isReporting()`); browser dev, a DSN-less build and a switched
 
 `shared/components/ModeToggle<M>({ modes, storageKey, className?, children? })` is the segmented switch,
 its mode persisted in `localStorage`. The insertion order of `modes` is both segment order and default,
-and an unknown stored key falls back to it. A mode names a zero-prop `Component`, or the caller passes
+and a stored or chosen key absent from `modes` falls back to it (`effectiveMode`), so a caller may hide
+a segment without losing the choice. A mode names a zero-prop `Component`, or the caller passes
 `children(mode, selectMode)` — `selectMode` lets the body switch segments itself (the paused-runs banner).
 A mode may carry a `count`.
 

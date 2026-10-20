@@ -20,7 +20,7 @@ import PausedRunsBanner from '@/features/downloads/components/PausedRunsBanner'
 import DownloadsTabs from '@/features/downloads/components/DownloadsTabs'
 import ExtensionGuide from '@/features/extension/ExtensionGuide'
 import { useDownloadsTab } from '@/features/downloads/hooks/useDownloadsTab'
-import { groupSections, sectionId } from '@/features/downloads/utils/sections'
+import { groupSections, sectionId, showsMediaSegment } from '@/features/downloads/utils/sections'
 import {
   RowEditsDispatchContext,
   RowEditsStateContext,
@@ -62,11 +62,16 @@ export default function DownloadsView() {
   const countOf = (media: Media) => items.filter((i) => i.media === media).length
 
   // Order matters: it drives the segment order and the default side (videos).
-  const mediaModes: Record<Media, ModeConfig> = {
+  const allMediaModes: Record<Media, ModeConfig> = {
     video: { label: t`Videos`, count: countOf('video') },
     material: { label: t`Materials`, count: countOf('material') },
     unknown: { label: t`Unknown`, count: countOf('unknown') },
   }
+  const mediaModes = Object.fromEntries(
+    Object.entries(allMediaModes).filter(([media, { count }]) =>
+      showsMediaSegment(media as Media, count ?? 0),
+    ),
+  ) as Partial<Record<Media, ModeConfig>>
 
   const emptyState: Record<Media, string> = {
     video: t`No recordings found.`,

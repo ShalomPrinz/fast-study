@@ -75,3 +75,8 @@ export function leafCount(items: Item[], childrenOf: (ref: string) => Item[] | n
     0,
   )
 }
+
+// Unknown is the only segment hidden when empty: most courses have no Drive rows at all.
+export function showsMediaSegment(media: Media, count: number): boolean {
+  return media !== 'unknown' || count > 0
+}

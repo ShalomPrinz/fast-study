@@ -212,7 +212,8 @@ Google Drive row — no filename, so only a download-time probe can tell). The d
 server-side from the opaque `ref`; the frontend branches its own affordances on `media` and never sends
 it.
 
-A `ModeToggle` splits the three segments, each with its count, and `groupSections(items, media)` filters
+A `ModeToggle` splits the three segments, each with its count — Unknown only while it holds a row
+(`showsMediaSegment`) — and `groupSections(items, media)` filters
 by media _before_ grouping by Moodle heading (first-seen order, blank → "Other"), so a section with
 nothing on the active side does not render and "Download all" covers one media only.
 

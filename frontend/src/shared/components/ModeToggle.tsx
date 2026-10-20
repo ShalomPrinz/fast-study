@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
+import { effectiveMode, storedMode } from '@/shared/utils/modeToggle'
 import '@/styles/segmented.css'
 
 export interface ModeConfig {
@@ -10,7 +11,8 @@ export interface ModeConfig {
 }
 
 interface Props<M extends string> {
-  modes: Record<M, ModeConfig>
+  // Partial so a caller can hide a segment; the hidden mode still types the body's `mode`.
+  modes: Partial<Record<M, ModeConfig>>
   storageKey: string
   className?: string
   // `selectMode` lets a body switch segments itself — e.g. jumping to the section a run is stuck on.
@@ -26,18 +28,16 @@ export default function ModeToggle<M extends string>({
   children,
 }: Props<M>) {
   const entries = Object.entries(modes) as [M, ModeConfig][]
-  const [mode, setMode] = useState<M>(() => {
-    const stored = localStorage.getItem(storageKey)
-    // A stale stored key falls back to the default.
-    return stored && stored in modes ? (stored as M) : entries[0][0]
-  })
+  const [mode, setMode] = useState<M>(() => storedMode(localStorage.getItem(storageKey), modes))
 
   function selectMode(m: M) {
     setMode(m)
     localStorage.setItem(storageKey, m)
   }
 
-  const Body = modes[mode].Component
+  // A caller may drop a segment while it is chosen; the choice is kept for when it returns.
+  const shown = effectiveMode(modes, mode)
+  const Body = modes[shown]?.Component
 
   return (
     <>
@@ -45,7 +45,7 @@ export default function ModeToggle<M extends string>({
         {entries.map(([m, { label, count }]) => (
           <button
             key={m}
-            className={`mode-toggle-btn${mode === m ? ' active' : ''}`}
+            className={`mode-toggle-btn${shown === m ? ' active' : ''}`}
             onClick={() => selectMode(m)}
           >
             {label}
@@ -53,7 +53,7 @@ export default function ModeToggle<M extends string>({
           </button>
         ))}
       </div>
-      {Body ? <Body /> : children?.(mode, selectMode)}
+      {Body ? <Body /> : children?.(shown, selectMode)}
     </>
   )
 }
