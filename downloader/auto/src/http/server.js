@@ -55,6 +55,7 @@ import {
   openPluginfile,
   openMoodleFile,
   pluginfileUrl,
+  SiteCaptchaTimeoutError,
 } from '../moodle/wsClient.js';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -142,10 +143,10 @@ export function sendUnsupported(res, err) {
   });
 }
 
-// Distinct "the site served a bot-protection challenge" signal. 503: the site is refusing us for
-// now; nothing about the request is wrong. Block mode goes on first, so `params.challengeWindow`
-// says whether a captcha waits on screen (docs/MOODLE.md § Bot protection).
+// 503 for a bot-protection challenge, after block mode goes on (docs/MOODLE.md § Bot protection);
+// an unsolved captcha the call waited on has no `status`, as Zoom's has none.
 async function sendBlocked(res, err) {
+  if (err instanceof SiteCaptchaTimeoutError) return send(res, 503, failureOf(err));
   await reportBlock(err, currentSite());
   send(res, 503, { status: 'blocked', message: err.message, code: err.code, params: err.params });
 }

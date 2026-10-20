@@ -82,7 +82,7 @@ test('the stream sends the state on subscribe and on every change, and needs the
     unverified: false,
     storedSite: null,
     moodleBusy: false,
-    challenge: { open: false, captcha: false },
+    challenge: { open: false, captcha: false, solved: 0 },
     zoomCaptcha: false,
   });
 
@@ -137,7 +137,7 @@ test('the stream sends the state on subscribe and on every change, and needs the
     unverified: false,
     storedSite: null,
     moodleBusy: true,
-    challenge: { open: false, captcha: false },
+    challenge: { open: false, captcha: false, solved: 0 },
     zoomCaptcha: false,
   });
   assert.equal((await next()).moodleBusy, false);

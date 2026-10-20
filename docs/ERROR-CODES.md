@@ -312,6 +312,7 @@ services; `state` stays as the developer-facing reason.
 | ------------------------------- | ----------------------------- | ------------------------ | ----- |
 | `http/server.js` `sendReconnect`| `moodle_reconnect_required`   | —                        | user  |
 | `moodle/wsClient.js`            | `site_blocked`                | `detail`, `challengeWindow`? | user  |
+| `moodle/wsClient.js`            | `site_captcha_timeout`        | —                        | user  |
 | `lib/errors.js` `unreachable`   | `site_unreachable`            | `host`, `detail`         | user  |
 | `http/server.js` `sendPasscode` | `zoom_passcode_required`      | `reason`, `course`, `name` | user |
 | `browser/browserChannel.js`     | `browser_missing`             | `detail`                 | user  |
@@ -366,9 +367,12 @@ so the login connects (and reports it to Sentry) and a videostream row's `/resol
 `timeout`, `network`), plus `challengeWindow` beside a `site_blocked`.
 
 `site_blocked`'s `challengeWindow` is present only on a block from a call the challenge window can
-carry (a WS call, a Moodle PDF): `'captcha'` when the window is on screen showing a captcha, `false`
-when no browser could launch. A window that opens hidden with its clearance still valid carries the
-call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
+carry (a WS call, a Moodle PDF): `false` when no browser could launch. A routed call that meets a
+captcha waits for the user's solve and resends itself through the window, so no 503 is sent; it ends
+on `site_captcha_timeout` when the captcha stays unsolved for the window's 10-minute cap, and on
+`site_blocked` with no `challengeWindow` when the user closes the window. `'captcha'` reaches a client
+only from `/site/probe` or a call that wait cannot cover (the window's reopen cap spent). A window that
+opens hidden with its clearance still valid carries the call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
 `/site/probe` or from a call already going through the window whose reload landed on the site. A block
 from any other path (a pasted link, a link probe) leaves it absent. The videostream handler call is a
 WS call, so its block carries it.

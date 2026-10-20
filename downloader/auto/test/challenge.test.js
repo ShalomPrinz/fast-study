@@ -25,6 +25,7 @@ import {
 import {
   getCourseContents,
   getVideostreamContent,
+  getPublicConfig,
   openPluginfile,
   openMoodleFile,
   WsBlockedError,
@@ -32,6 +33,16 @@ import {
 
 const SITE = 'https://moodle.test';
 const tick = () => new Promise((r) => setImmediate(r));
+// The window's timers are unref'd (a live server keeps the process up); this stands in for it.
+function keepAlive(t) {
+  const keep = setInterval(() => {}, 1000);
+  t.after(() => clearInterval(keep));
+}
+// The window's state without the process-wide solve count, which earlier tests have moved.
+const shown = () => {
+  const { open, captcha } = challengeState();
+  return { open, captcha };
+};
 
 // Records every fetch; `answer(url, init)` decides what each one gets.
 function stubFetch(t, answer) {
@@ -84,21 +95,21 @@ test('the window launches headed on the persistent profile, always off-screen', 
   assert.deepEqual(ctx.visited, [SITE]);
   assert.deepEqual(ctx.bounds, []);
   assert.equal(ctx.fronted, 0);
-  assert.deepEqual(challengeState(), { open: true, captcha: false });
+  assert.deepEqual(shown(), { open: true, captcha: false });
   assert.equal(moodleGate.busy(), false);
 });
 
 test('landing on a captcha brings the window on screen and in front', async (t) => {
   const profile = fakeProfile(t, { lands: 'captcha' });
   const seen = [];
-  const onChange = () => seen.push(challengeState());
+  const onChange = () => seen.push(shown());
   challengeEvents.on('change', onChange);
   t.after(() => challengeEvents.off('change', onChange));
   assert.equal(await moodleGate.run({}, () => openChallenge(SITE)), 'captcha');
   const [ctx] = profile.launches;
   assert.deepEqual(ctx.bounds, [{ left: 80, top: 80 }]);
   assert.equal(ctx.fronted, 1);
-  assert.deepEqual(challengeState(), { open: true, captcha: true });
+  assert.deepEqual(shown(), { open: true, captcha: true });
   assert.deepEqual(seen.at(-1), { open: true, captcha: true });
   // A second block while it is up reuses it.
   assert.equal(await moodleGate.run({}, () => openChallenge(SITE)), 'captcha');
@@ -111,7 +122,7 @@ test('no browser launching reports false and leaves block mode off', async (t) =
   // The sandbox launcher throws, as a machine with no Chrome, Edge or Chromium does.
   t.after(configureChallenge({ userAgent: async () => CHROME_UA }));
   assert.equal(await gated(() => openChallenge(SITE)), false);
-  assert.deepEqual(challengeState(), { open: false, captcha: false });
+  assert.deepEqual(shown(), { open: false, captcha: false });
 });
 
 test('an unknown browser UA launches no window: a clearance under a non-app UA is no use', async (t) => {
@@ -119,7 +130,7 @@ test('an unknown browser UA launches no window: a clearance under a non-app UA i
   t.after(configureChallenge({ userAgent: async () => null }));
   assert.equal(await gated(() => openChallenge(SITE)), false);
   assert.equal(profile.launches.length, 0);
-  assert.deepEqual(challengeState(), { open: false, captcha: false });
+  assert.deepEqual(shown(), { open: false, captcha: false });
 });
 
 // ── The transport switch ────────────────────────────────────────────────────
@@ -207,11 +218,24 @@ test('a ranged PDF streams back from the page whole, across several slices', asy
   assert.deepEqual(new Uint8Array(await res.arrayBuffer()), bytes);
 });
 
-test('a page still on the captcha sends nothing and answers blocked', async (t) => {
+test('a call while the page is on the captcha sends nothing until the solve, then goes out', async (t) => {
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  await moodleGate.run({}, () => openChallenge(SITE));
+  const calls = stubFetch(t, () => json([{ id: 5 }]));
+  const call = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '5'));
+  await tick();
+  assert.equal(calls.length, 0);
+  profile.launches[0].solve(SITE);
+  assert.deepEqual(await call, [{ id: 5 }]);
+  assert.equal(calls.length, 1);
+  assert.ok(fromPage(calls[0].init));
+});
+
+test('the pre-login check on a captcha is refused unsent: it never waits', async (t) => {
   fakeProfile(t, { lands: 'captcha' });
   await moodleGate.run({}, () => openChallenge(SITE));
   const calls = stubFetch(t, () => json({}));
-  const err = await moodleGate.run({}, () => getCourseContents(SITE, 'tok', '5')).catch((e) => e);
+  const err = await moodleGate.run({}, () => getPublicConfig(SITE)).catch((e) => e);
   assert.ok(err instanceof WsBlockedError);
   assert.equal(calls.length, 0);
 });
@@ -231,7 +255,7 @@ test('a replayed-cookie file and an off-site URL stay on Node in block mode', as
 
 // ── The captcha's hold on the lock ──────────────────────────────────────────
 
-test('a captcha holds the lock for the user: a retry is admitted, a queued call waits for it', async (t) => {
+test('a captcha holds the lock for the user: a press is admitted and waits, a queued call waits for it', async (t) => {
   const profile = fakeProfile(t, { lands: 'captcha' });
   await moodleGate.run({}, () => openChallenge(SITE));
   const [ctx] = profile.launches;
@@ -239,28 +263,39 @@ test('a captcha holds the lock for the user: a retry is admitted, a queued call 
   assert.equal(moodleGate.busy(), false);
   const calls = stubFetch(t, () => json([]));
 
-  let queuedRan = false;
+  const order = [];
   const queued = moodleGate.run({ wait: true }, async () => {
     await getCourseContents(SITE, 'tok', '1');
-    queuedRan = true;
+    order.push('queued');
   });
   await tick();
-  assert.equal(queuedRan, false);
+  assert.deepEqual(order, []);
 
-  // Unsolved, the retry is admitted but sends nothing.
-  const early = await moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
-  assert.ok(early instanceof WsBlockedError);
+  // Unsolved, the press is admitted but sends nothing until the solve.
+  const press = moodleGate.run({}, async () => {
+    await getCourseContents(SITE, 'tok', '1');
+    order.push('press');
+  });
+  await tick();
   assert.equal(calls.length, 0);
 
-  // Solved: the page landing back on the site lets the lock go and moves the window off-screen,
-  // with no call needed (the user's retry may be a replay-cache hit), so the queued call runs.
+  // Solved: the page landing back on the site lets the lock go and moves the window off-screen;
+  // the press goes out through the window, then the queued call runs.
   ctx.solve(SITE);
-  await queued;
-  assert.equal(queuedRan, true);
+  await Promise.all([press, queued]);
+  assert.deepEqual(order, ['press', 'queued']);
   assert.deepEqual(ctx.bounds.at(-1), { left: -32000, top: -32000 });
-  assert.deepEqual(challengeState(), { open: true, captcha: false });
-  assert.equal(calls.length, 1);
-  assert.ok(fromPage(calls[0].init));
+  assert.deepEqual(shown(), { open: true, captcha: false });
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(({ init }) => fromPage(init)));
+});
+
+test('a captcha opened by no waiting call (the probe) keeps admitting a press', async (t) => {
+  fakeProfile(t, { lands: 'captcha' });
+  await moodleGate.run({}, () => openChallenge(SITE));
+  assert.equal(moodleGate.busy(), false);
+  await moodleGate.run({}, () => moodleGate.enter('x'));
+  assert.equal(moodleGate.busy(), false);
 });
 
 test('a captcha raised again during an admitted retry still admits the next retry', async (t) => {
@@ -274,7 +309,7 @@ test('a captcha raised again during an admitted retry still admits the next retr
     // A later call in the same retry is walled: the window lands on the captcha again.
     assert.equal(await openChallenge(SITE), 'captcha');
   });
-  assert.deepEqual(challengeState(), { open: true, captcha: true });
+  assert.deepEqual(shown(), { open: true, captcha: true });
   assert.equal(moodleGate.busy(), false);
   await moodleGate.run({}, () => moodleGate.enter('x'));
 });
@@ -295,7 +330,7 @@ test('the user closing the window mid-call ends block mode with an unrouted site
   await gated(() => reportBlock(err, SITE));
   assert.equal('challengeWindow' in err.params, false);
   assert.equal(profile.launches.length, 1);
-  assert.deepEqual(challengeState(), { open: false, captcha: false });
+  assert.deepEqual(shown(), { open: false, captcha: false });
 });
 
 test('only one retry runs on a captcha at a time', async (t) => {
@@ -320,7 +355,7 @@ test('the user closing the window ends block mode; the next block relaunches on 
   const profile = fakeProfile(t);
   await gated(() => openChallenge(SITE));
   await profile.launches[0].close();
-  assert.deepEqual(challengeState(), { open: false, captcha: false });
+  assert.deepEqual(shown(), { open: false, captcha: false });
   const calls = stubFetch(t, () => json([]));
   await gated(() => getCourseContents(SITE, 'tok', '1'));
   assert.equal(fromPage(calls[0].init), false);
@@ -337,7 +372,7 @@ test('a minute with no call through it (shortened here) closes the window, keepi
   await sleep(60);
   assert.equal(profile.launches[0].closed, true);
   assert.equal(fs.existsSync(profile.launches[0].dir), true);
-  assert.deepEqual(challengeState(), { open: false, captcha: false });
+  assert.deepEqual(shown(), { open: false, captcha: false });
 });
 
 test('a captcha on screen gets the longer timeout; solving it starts the short one', async (t) => {
@@ -394,25 +429,39 @@ test('a call still running through the window holds off the idle close', async (
 
 // ── Every site_blocked 503 carries the window's state ───────────────────────
 
-test('a blocked /list opens the window and its 503 says whether a captcha waits', async (t) => {
+test('a blocked /list opens the window on the captcha and answers 200 once the user solves it', async (t) => {
   setCurrentSite(SITE);
   t.after(() => setCurrentSite(null));
   writeTokenFile(statePath('auth', 'moodle-token.json'), { site: SITE, wstoken: 'w', userid: 7 });
   const profile = fakeProfile(t, { lands: 'captcha' });
   stubFetch(t, (url, init) => (fromPage(init) ? json([]) : html()));
   const res = fakeRes();
+  const listed = handleList({ body: { courseUrl: `${SITE}/course/view.php?id=5` } }, res);
+  await until(() => challengeState().captcha);
+  assert.equal(res.code, null);
+  assert.equal(profile.launches[0].page.url(), CAPTCHA_URL);
+  profile.launches[0].solve(SITE);
+  await listed;
+  assert.equal(res.code, 200);
+  assert.deepEqual(shown(), { open: true, captcha: false });
+});
+
+test('a captcha left unsolved for captchaMs answers 503 site_captcha_timeout with no status', async (t) => {
+  keepAlive(t);
+  setCurrentSite(SITE);
+  t.after(() => setCurrentSite(null));
+  writeTokenFile(statePath('auth', 'moodle-token.json'), { site: SITE, wstoken: 'w', userid: 7 });
+  const profile = fakeProfile(t, { lands: 'captcha', captchaMs: 30 });
+  stubFetch(t, () => html());
+  const res = fakeRes();
   await handleList({ body: { courseUrl: `${SITE}/course/view.php?id=5` } }, res);
   assert.equal(res.code, 503);
-  assert.equal(res.body.code, 'site_blocked');
-  assert.equal(res.body.params.challengeWindow, 'captcha');
-  assert.equal(profile.launches[0].page.url(), CAPTCHA_URL);
-
-  // The user solves it and repeats the action: it passes through the window.
-  profile.launches[0].solve(SITE);
-  const again = fakeRes();
-  await handleList({ body: { courseUrl: `${SITE}/course/view.php?id=5` } }, again);
-  assert.equal(again.code, 200);
-  assert.deepEqual(challengeState(), { open: true, captcha: false });
+  assert.deepEqual(
+    [res.body.code, res.body.params, res.body.status],
+    ['site_captcha_timeout', {}, undefined],
+  );
+  assert.equal(profile.launches[0].closed, true);
+  assert.deepEqual(shown(), { open: false, captcha: false });
 });
 
 test('a block on an unrouted path opens no window and carries no challengeWindow', async (t) => {
@@ -423,7 +472,7 @@ test('a block on an unrouted path opens no window and carries no challengeWindow
   await gated(() => reportBlock(err, SITE));
   assert.equal('challengeWindow' in err.params, false);
   assert.equal(profile.launches.length, 0);
-  assert.deepEqual(challengeState(), { open: false, captcha: false });
+  assert.deepEqual(shown(), { open: false, captcha: false });
 });
 
 test('the window closing between the head and the body is the same unrouted site_blocked', async (t) => {
@@ -470,7 +519,7 @@ test('a walled Node call reopens the window hidden and is resent through it, uns
   const calls = stubFetch(t, (url, init) => (fromPage(init) ? json([{ id: 1 }]) : html()));
   assert.deepEqual(await gated(() => getCourseContents(SITE, 'tok', '5')), [{ id: 1 }]);
   assert.equal(profile.launches.length, 1);
-  assert.deepEqual(challengeState(), { open: true, captcha: false });
+  assert.deepEqual(shown(), { open: true, captcha: false });
   // The same call went out twice: once on Node, once from the page.
   assert.equal(calls.length, 2);
   assert.equal(fromPage(calls[0].init), false);
@@ -584,21 +633,231 @@ test('a blocked /list after the window closed passes with no 503', async (t) => 
   assert.equal(profile.launches.length, 2);
 });
 
-test('a walled Node call that lands on a captcha throws once, the window opened once', async (t) => {
+// ── A captcha met by a routed call waits for the user's solve ──────────────
+
+// Resolves once `cond()` holds, checking each macrotask.
+async function until(cond) {
+  while (!cond()) await tick();
+}
+
+test('a walled Node call that lands on a captcha waits for the solve, then is resent through the window', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  const calls = stubFetch(t, (url, init) => (fromPage(init) ? json([{ id: 1 }]) : html()));
+  const call = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1'));
+  await until(() => challengeState().captcha);
+  assert.equal(calls.length, 1);
+  profile.launches[0].solve(SITE);
+  assert.deepEqual(await call, [{ id: 1 }]);
+  assert.equal(calls.length, 2);
+  assert.ok(fromPage(calls[1].init));
+  assert.deepEqual(profile.launches[0].visited, [SITE]);
+});
+
+test('a second call during the captcha waits on the same solve, then sends', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  const calls = stubFetch(t, (url, init) => (fromPage(init) ? json([]) : html()));
+  const first = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1'));
+  await until(() => challengeState().captcha);
+  // A server/ call queued behind the first, and nothing else sent meanwhile.
+  const second = moodleGate.run({ wait: true }, () => getCourseContents(SITE, 'tok', '2'));
+  await tick();
+  assert.equal(calls.length, 1);
+  profile.launches[0].solve(SITE);
+  await Promise.all([first, second]);
+  assert.deepEqual(
+    calls.map(({ init }) => fromPage(init)),
+    [false, true, true],
+  );
+});
+
+test('the solved browser walled again waits once more, then throws site_blocked', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  const calls = stubFetch(t, () => html());
+  const err = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  await until(() => challengeState().captcha);
+  profile.launches[0].solve(SITE);
+  // The resend is walled: the root reloads onto the captcha, and the call waits again.
+  await until(() => challengeState().captcha);
+  profile.launches[0].solve(SITE);
+  const thrown = await err;
+  assert.ok(thrown instanceof WsBlockedError);
+  assert.equal(thrown.code, 'site_blocked');
+  // Node, the resend after each of the two solves: no third wait, no third resend.
+  assert.equal(calls.length, 3);
+  assert.equal(challengeState().solved >= 2, true);
+});
+
+test('a call starting on a captcha already up waits twice at most, counted with the reopens', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  await moodleGate.run({}, () => openChallenge(SITE));
+  const calls = stubFetch(t, () => html());
+  const [ctx] = profile.launches;
+  const err = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  await tick();
+  ctx.solve(SITE); // the first wait, before the call is sent at all
+  await until(() => calls.length === 1 && challengeState().captcha);
+  ctx.solve(SITE); // the one wait beyond it
+  const thrown = await err;
+  assert.equal(thrown.code, 'site_blocked');
+  // The window reloaded onto the captcha a third time; the call reports it rather than waiting.
+  assert.equal(thrown.params.challengeWindow, 'captcha');
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(({ init }) => fromPage(init)));
+});
+
+test('the user closing the window mid-wait answers site_blocked with no challengeWindow', async (t) => {
   onSite(t);
   const profile = fakeProfile(t, { lands: 'captcha' });
   stubFetch(t, () => html());
-  const err = await moodleGate
-    .run({}, async () => {
-      const e = await getCourseContents(SITE, 'tok', '1').catch((x) => x);
-      await reportBlock(e, SITE);
-      return e;
-    })
+  const err = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  await until(() => challengeState().captcha);
+  await profile.launches[0].close();
+  const thrown = await err;
+  assert.ok(thrown instanceof WsBlockedError);
+  assert.equal(thrown.routed, false);
+  await gated(() => reportBlock(thrown, SITE));
+  assert.equal('challengeWindow' in thrown.params, false);
+});
+
+test('a caller hanging up stops its wait alone; the other waiter still gets the solve', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  const calls = stubFetch(t, (url, init) => (fromPage(init) ? json([]) : html()));
+  const ac = new AbortController();
+  const gone = moodleGate
+    .run({ signal: ac.signal }, () => getCourseContents(SITE, 'tok', '1'))
     .catch((e) => e);
+  await until(() => challengeState().captcha);
+  // A press admitted on the probe-like hold would be refused: the hung-up caller still waits here.
+  const other = moodleGate.run({ wait: true }, () => getCourseContents(SITE, 'tok', '2'));
+  ac.abort(new Error('hung up'));
+  assert.equal((await gone).message, 'hung up');
+  assert.equal(shown().captcha, true);
+  profile.launches[0].solve(SITE);
+  await other;
+  assert.equal(calls.filter(({ init }) => fromPage(init)).length, 1);
+});
+
+test("a file stream's own signal ends its wait when the reader hangs up", async (t) => {
+  onSite(t);
+  fakeProfile(t, { lands: 'captcha' });
+  const calls = stubFetch(t, () => html());
+  const ac = new AbortController();
+  const err = moodleGate
+    .run({}, () => openPluginfile(`${SITE}/pluginfile.php/1/a.pdf?token=t`, { signal: ac.signal }))
+    .catch((e) => e);
+  await until(() => challengeState().captcha);
+  ac.abort(new Error('reader gone'));
+  assert.equal((await err).message, 'reader gone');
+  assert.equal(calls.length, 1);
+});
+
+test('the captcha unsolved for captchaMs ends every waiter with site_captcha_timeout', async (t) => {
+  keepAlive(t);
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha', captchaMs: 30 });
+  stubFetch(t, () => html());
+  const err = await moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.equal(err.code, 'site_captcha_timeout');
+  assert.deepEqual(err.params, {});
+  assert.equal(err.message, "the captcha in the site's challenge window was not solved in time");
+  assert.equal(profile.launches[0].closed, true);
+});
+
+test('no browser for the window still throws site_blocked with challengeWindow false', async (t) => {
+  onSite(t);
+  t.after(configureChallenge({ userAgent: async () => null }));
+  stubFetch(t, () => html());
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
   assert.equal(err.code, 'site_blocked');
-  assert.equal(err.params.challengeWindow, 'captcha');
-  assert.equal(err.params.detail, 'HTTP 200, text/html');
-  assert.deepEqual(profile.launches[0].visited, [SITE]);
+  assert.equal(err.params.challengeWindow, false);
+});
+
+// ── What /auth/events reads while a call waits ──────────────────────────────
+
+// Every frame /auth/events would send, as it composes them.
+function frames(t) {
+  const seen = [];
+  const push = () => seen.push({ moodleBusy: moodleGate.busy(), ...challengeState() });
+  moodleGate.on('change', push);
+  challengeEvents.on('change', push);
+  t.after(() => {
+    moodleGate.off('change', push);
+    challengeEvents.off('change', push);
+  });
+  return seen;
+}
+
+test('a call waiting on the captcha reads busy, and only in frames that show the captcha', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  stubFetch(t, (url, init) => (fromPage(init) ? json([]) : html()));
+  const seen = frames(t);
+  const solvedBefore = challengeState().solved;
+  const call = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1'));
+  await until(() => challengeState().captcha);
+  await tick();
+  // Waiting: busy, so the admitting hold lets no press on top.
+  assert.equal(moodleGate.busy(), true);
+  const press = await moodleGate.run({}, () => moodleGate.enter('x')).catch((e) => e);
+  assert.equal(press.code, 'moodle_busy');
+  // Nothing read "not busy" while the captcha was up and the call waited on it.
+  assert.equal(
+    seen.some((f) => f.captcha && !f.moodleBusy),
+    false,
+  );
+  profile.launches[0].solve(SITE);
+  await call;
+  // The solve: one more solved, in the frame that clears the captcha.
+  const cleared = seen.find((f) => f.open && !f.captcha && f.solved === solvedBefore + 1);
+  assert.ok(cleared);
+  assert.equal(
+    seen.some((f) => f.solved > solvedBefore + 1),
+    false,
+  );
+});
+
+test('a press admitted on a probe-opened captcha that waits turns busy in a frame with the captcha', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  await moodleGate.run({}, () => openChallenge(SITE));
+  stubFetch(t, () => json([]));
+  const seen = frames(t);
+  const solvedBefore = challengeState().solved;
+  const press = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1'));
+  await tick();
+  assert.equal(moodleGate.busy(), true);
+  assert.deepEqual(seen.at(-1), {
+    moodleBusy: true,
+    open: true,
+    captcha: true,
+    solved: solvedBefore,
+  });
+  profile.launches[0].solve(SITE);
+  await press;
+  assert.equal(challengeState().solved, solvedBefore + 1);
+});
+
+test('the waiter hanging up gives the captcha back its admitting hold', async (t) => {
+  onSite(t);
+  fakeProfile(t, { lands: 'captcha' });
+  stubFetch(t, () => html());
+  const ac = new AbortController();
+  const gone = moodleGate
+    .run({ signal: ac.signal }, () => getCourseContents(SITE, 'tok', '1'))
+    .catch((e) => e);
+  await until(() => challengeState().captcha);
+  await tick();
+  assert.equal(moodleGate.busy(), true);
+  ac.abort(new Error('hung up'));
+  await gone;
+  // Its request ended; the captcha's hold remains, admitting a press again.
+  assert.equal(moodleGate.busy(), false);
+  assert.equal(shown().captcha, true);
 });
 
 test('solving the captcha verifies the unverified token by itself, announced on authEvents', async (t) => {
@@ -617,8 +876,12 @@ test('solving the captcha verifies the unverified token by itself, announced on 
   };
   stubFetch(t, (url, init) => (fromPage(init) ? json(GOOD) : html()));
   const { auth } = siteAuth();
-  const err = await moodleGate.run({}, () => auth.complete()).catch((e) => e);
-  assert.equal(err.params.challengeWindow, 'captcha');
+  // The caller hangs up mid-wait, leaving the token unverified behind a captcha still up.
+  const ac = new AbortController();
+  const err = moodleGate.run({ signal: ac.signal }, () => auth.complete()).catch((e) => e);
+  await until(() => challengeState().captcha);
+  ac.abort(new Error('hung up'));
+  assert.equal((await err).message, 'hung up');
   assert.equal(authState().phase, 'unverified');
 
   const connected = new Promise((resolve) => {

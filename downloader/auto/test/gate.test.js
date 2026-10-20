@@ -135,6 +135,33 @@ test('a lease keeps the lock past its request until released, and its run() reus
   assert.equal(gate.busy(), false);
 });
 
+test('an admitting lease admits a press only while its condition holds, re-read on refresh()', async () => {
+  const gate = new MoodleGate({ cooldownMs: 0 });
+  let admits = true;
+  const flips = [];
+  gate.on('change', (busy) => flips.push(busy));
+  let lease;
+  await gate.run({}, async () => {
+    lease = await gate.hold('captcha', { admit: () => admits });
+  });
+  assert.equal(gate.busy(), false);
+  await gate.run({}, () => gate.enter('x')); // admitted
+  flips.length = 0;
+  admits = false; // a request now waits on the captcha
+  gate.refresh();
+  assert.equal(gate.busy(), true);
+  assert.equal((await gate.run({}, () => gate.enter('x')).catch((e) => e)).code, 'moodle_busy');
+  gate.refresh(); // unchanged: no frame
+  admits = true;
+  gate.refresh();
+  assert.equal(gate.busy(), false);
+  // 'change' fired on each flip of the condition, and only then.
+  assert.deepEqual(flips, [true, false]);
+  await gate.run({}, () => gate.enter('x'));
+  lease.release();
+  assert.equal(gate.busy(), false);
+});
+
 test('a waiter whose caller went away leaves the queue', async () => {
   const gate = new MoodleGate({ cooldownMs: 0 });
   const first = holding(gate);

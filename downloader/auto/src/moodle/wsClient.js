@@ -1,8 +1,8 @@
 // Thin fetch wrapper over Moodle's Web-Services REST API; a wstoken authenticates every call —
 // no cookies. Protocol reference: docs/MOODLE.md.
 import { CodedError, fetchUpstream } from '../lib/errors.js';
-import { enterMoodle } from './gate.js';
-import { challengeRoute, openChallenge } from './challenge.js';
+import { enterMoodle, moodleGate } from './gate.js';
+import { challengeRoute, openChallenge, waitChallenge } from './challenge.js';
 import { currentSite, underSite } from './site.js';
 
 // An answer shaped like the bot wall: a redirect, or a page where a WS body or a file was due.
@@ -13,36 +13,76 @@ function wallShaped(res) {
   );
 }
 
-// Every Moodle request: the gate, then Node's fetch or the challenge window's page, resending a Node
-// wall through a window that opens 'ready' (docs/MOODLE.md § Bot protection; `route`/`reopen` there).
+// Captcha solves one call waits for: the first and one more, so a site that walls the solved
+// browser cannot spin.
+const MAX_WAITS = 2;
+
+// Every Moodle request: the gate, then Node's fetch or the challenge window's page; a wall reopens
+// the window and resends through it (docs/MOODLE.md § Bot protection; `route`/`reopen` there).
 async function moodleFetch(url, init, { route = true, reopen = route, label = '' } = {}) {
   await enterMoodle(String(url).split('?')[0]);
+  // The request's own signal: a caller that hung up stops waiting on a captcha.
+  const call = { signal: init.signal ?? moodleGate.signal(), waits: reopen ? 0 : MAX_WAITS };
   const window = route ? challengeRoute(url) : null;
-  if (window) return windowFetch(window, url, init);
-  const res = await fetchUpstream(url, init);
-  ROUTE.set(res, 'node');
+  let res = window ? await windowFetch(window, url, init, call) : await nodeFetch(url, init);
   const site = currentSite();
-  if (!reopen || !wallShaped(res) || !site || !underSite(String(url), site)) return res;
-  await res.body?.cancel().catch(() => {});
-  const err = new WsBlockedError(`${label}${wallDetail(res)}`, ROUTED);
-  const state = await openChallenge(site);
-  const reopened = state === 'ready' ? challengeRoute(url) : null;
-  if (reopened) return windowFetch(reopened, url, init);
-  err.params = { ...err.params, challengeWindow: state };
-  throw err;
+  if (!reopen || !site || !underSite(String(url), site)) return res;
+  while (wallShaped(res)) {
+    await res.body?.cancel().catch(() => {});
+    const err = new WsBlockedError(`${label}${wallDetail(res)}`, ROUTED);
+    const state = await reopenOn(site, call);
+    // A wall through the window itself is resent only after a solve; else the 503 says the state.
+    const resend = state === 'solved' || (state === 'ready' && ROUTE.get(res) === 'node');
+    if (!resend) {
+      err.params = { ...err.params, challengeWindow: state };
+      throw err;
+    }
+    const reopened = challengeRoute(url);
+    if (!reopened) throw windowClosed();
+    res = await windowFetch(reopened, url, init, call);
+  }
+  return res;
 }
 
-async function windowFetch(window, url, init) {
-  // Still on the captcha: nothing is sent, and the 503 tells the user to solve it first.
-  if (!window.onSite())
-    throw new WsBlockedError('the challenge window is still on the captcha', ROUTED);
-  // Closed mid-call (head or body): block mode is over, so the user's repeat goes out on Node.
-  const closed = () => new WsBlockedError('the challenge window was closed');
+// The window on `site`, waiting out a captcha while `call` has waits left; else it reports it.
+async function reopenOn(site, call) {
+  if (call.waits >= MAX_WAITS) return openChallenge(site);
+  const state = unlessEnded(await waitChallenge(site, call.signal));
+  if (state === 'solved') call.waits++;
+  return state;
+}
+
+async function nodeFetch(url, init) {
+  const res = await fetchUpstream(url, init);
+  ROUTE.set(res, 'node');
+  return res;
+}
+
+// Closed mid-call or mid-wait: block mode is over, so the user's repeat goes out on Node.
+const windowClosed = () => new WsBlockedError('the challenge window was closed');
+
+// A wait that ended without the page on the site, as the call's error.
+function unlessEnded(state) {
+  if (state === 'timeout') throw new SiteCaptchaTimeoutError();
+  if (state === 'closed') throw windowClosed();
+  return state;
+}
+
+// On the captcha, a call with no waits left (getPublicConfig has none) is refused unsent.
+async function windowFetch(window, url, init, call) {
+  if (!window.onSite()) {
+    if (call.waits >= MAX_WAITS)
+      throw new WsBlockedError('the challenge window is still on the captcha', ROUTED);
+    const state = await reopenOn(window.site, call);
+    const now = state ? challengeRoute(url) : null;
+    if (!now) throw windowClosed();
+    window = now;
+  }
   let res;
   try {
-    res = await window.fetch(url, init, { lost: closed });
+    res = await window.fetch(url, init, { lost: windowClosed });
   } catch (err) {
-    if (window.gone(err)) throw closed();
+    if (window.gone(err)) throw windowClosed();
     throw err;
   }
   ROUTE.set(res, 'window');
@@ -108,6 +148,17 @@ export class WsBlockedError extends CodedError {
 }
 
 const ROUTED = { routed: true };
+
+/** A captcha a routed call waited on, unsolved within captchaMs; `blocked()`, but 503 with no `status`. */
+export class SiteCaptchaTimeoutError extends WsBlockedError {
+  constructor() {
+    super('captcha not solved in time');
+    this.name = 'SiteCaptchaTimeoutError';
+    this.code = 'site_captcha_timeout';
+    this.params = {};
+    this.message = "the captcha in the site's challenge window was not solved in time";
+  }
+}
 
 /** @returns {boolean} true when a thrown error is the site's bot-protection challenge. */
 export function blocked(err) {

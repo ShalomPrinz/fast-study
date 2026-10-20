@@ -48,11 +48,18 @@ hangs up leaves the queue.
   token, failure, timeout or abandon — or at once on `disconnect()`. The user's clicks inside the
   window are not gated; they happen under this lease.
 - **Captcha.** While block mode's window shows a captcha, the request that opened it holds an
-  **admitting** lease (`hold(target, { admit: true })`): queued callers (`server/`'s, a section run's
-  rows) wait, but one button press at a time runs on top of it — the user's retry, whatever route it
-  is (`/auth/complete`, `/list`, `/resolve`, a new `connect()`). `moodleBusy` reads false while only
-  that lease holds the lock, so the frontend's buttons stay live. The retry keeps the lock until it
-  ends. The page landing back on the site (the user solved it) or the first call through the window
+  **admitting** lease (`hold(target, { admit: () => … })`, a condition `busy()` reads on every
+  check): queued callers (`server/`'s, a section run's rows) wait, and while no request waits on the
+  solve one button press at a time runs on top of it — whatever route it is (`/auth/complete`,
+  `/list`, `/resolve`, a new `connect()`). `moodleBusy` reads false while only that lease holds the
+  lock, so the frontend's buttons stay live; that is a captcha nobody waits on (opened by
+  `/site/probe`). A routed call that meets the captcha waits on the solve
+  ([MOODLE.md](MOODLE.md#the-rest-api)) holding its ticket, and while any does the lease admits
+  nothing: `moodleBusy` reads true and a press gets `429 moodle_busy`. The waiting count and the
+  captcha change in the same tick (a waiter joins before the lease is taken; the solve clears both
+  before the lease is released), so no `/auth/events` frame reads busy-because-waiting without
+  `challenge.captcha:true`. An admitted press that meets the captcha waits too, and keeps the lock
+  until it ends. The page landing back on the site (the user solved it) or the first call through the window
   that passes releases the lease, so a retry that never reaches Moodle (a replay-cache hit) cannot
   strand the queue; the lock then cools down as usual, and the solve's own token verification
   ([AUTH.md](AUTH.md)) queues for it as a waiting request. A captcha raised again during a retry puts its
