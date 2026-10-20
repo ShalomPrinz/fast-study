@@ -9,7 +9,7 @@ The main session routes; service agents do the work (CLAUDE.md, Service subagent
 
 The agent whose list in `.claude/ownership.json` covers the files the task changes owns it (a trailing `/` is a folder, else one file). Paths no agent covers — the root `CLAUDE.md`, `docs/`, `.claude/`, root config — are the main session's own: edit those yourself, do not delegate them.
 
-A task that touches two owners becomes one brief per agent, run in sequence, with the side that defines the contract first: `lib/` before its consumers (the launcher included), `database/` before its callers, `backend/` before `frontend/` and `downloader/`, and `delivery/`, `site/` and `.claude/harness/` last, since they describe what the others own. Pass the first agent's report into the second brief.
+A task that touches two owners becomes one brief per agent, run in sequence, with the side that defines the contract first: `lib/` before its consumers (the launcher included), `database/` before its callers, `backend/` before `frontend/` and `downloader/`, and `delivery/` and `site/` last, since they describe what the others own. `.claude/harness/` has no fixed place: order it by what the task needs. Pass the first agent's report into the second brief.
 
 ### 2. Scope it to what the user asked
 
