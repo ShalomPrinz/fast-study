@@ -570,17 +570,8 @@ details p {
   margin-block-end: 16px;
 }
 
-.signpath {
-  font-weight: 500;
-  margin-block-end: 12px;
-}
-
 .policy-title ~ h2 {
   margin-block: 40px 16px;
-}
-
-.policy-title ~ .muted {
-  margin-block-end: 16px;
 }
 
 /* The privacy policy closes the page: set apart by a rule, in quieter, smaller prose. */
