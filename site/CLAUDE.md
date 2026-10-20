@@ -7,12 +7,12 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | File          | What it is                                                                       |
 | ------------- | -------------------------------------------------------------------------------- |
 | `index.html`  | Every section, both languages' copy side by side as `.he` / `.en` spans          |
-| `code-signing.html` | The code signing policy SignPath Foundation requires: its credit line and team roles on top, the full privacy policy as the last section (`#privacy`) |
+| `code-signing.html` | The code signing policy SignPath Foundation requires: its credit line and team roles on top, the full privacy policy as the last section (`#privacy`) — also the privacy URL Google OAuth brand verification holds, so it keeps the Drive scope, token and Limited Use lines |
 | `style.css`   | The app's own tokens, light only, logical properties for both directions        |
 | `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>` |
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
 | `capture.mjs` | Recaptures the seven app screenshots on a live app-harness stack                 |
-| `img/`        | The screenshots (1280×800 JPEG), the logo, the SmartScreen steps                 |
+| `img/`        | The screenshots (1280×800 JPEG), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
 | `sitemap.xml` | Both page URLs, for Search Console; a new page gets a `<url>` here               |
 
 `index.html`'s `<head>` carries the `google-site-verification` meta for the Search Console property
