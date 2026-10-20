@@ -24,7 +24,7 @@ function node(name: string, video = false): Lecture {
     'summary.pdf': EMPTY,
     'drive_url.txt': EMPTY,
   } satisfies FileStatus
-  return { name, files, materials: [], transcribePartial: null }
+  return { name, files, materials: [], transcribePartial: null, removed: [] }
 }
 
 function tree(lectures: Lecture[]): Course[] {

@@ -22,6 +22,9 @@ export type FileName =
   | 'summary.pdf'
   | 'drive_url.txt'
 
+// The intermediates auto-remove deletes once a lecture is done; the database records them.
+export type RemovableFile = 'video.mp4' | 'audio.mp3'
+
 export type FileInfo = {
   exists: boolean
   size: number | null
@@ -43,6 +46,7 @@ export type LectureDerived = {
   files: FileStatus | null
   materials: MaterialInfo[]
   transcribePartial: TranscribePartial | null
+  removed: RemovableFile[]
 }
 
 export type TimingStats =
@@ -55,6 +59,8 @@ export interface Lecture {
   // Always present, [] when none, ordered by material index ascending.
   materials: MaterialInfo[]
   transcribePartial: TranscribePartial | null
+  // Auto-removed names still absent from disk, [] otherwise; a new video upload clears it.
+  removed: RemovableFile[]
 }
 
 export interface Course {

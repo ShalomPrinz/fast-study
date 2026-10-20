@@ -1,0 +1,28 @@
+/* The two choices sit under the checkbox, aligned with its text. */
+.auto-remove-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-inline-start: var(--space-7);
+}
+
+.auto-remove-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.auto-remove-option--disabled {
+  color: var(--text-3);
+  cursor: default;
+}
+
+.auto-remove-apply {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}

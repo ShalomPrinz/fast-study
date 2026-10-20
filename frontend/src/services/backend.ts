@@ -135,6 +135,20 @@ export async function runAll(): Promise<RunnerStatus | 'empty_queue' | 'all_in_f
   return normalizeRunner(raw)
 }
 
+// Lecture counts from one auto-remove sweep: files deleted, skipped over a file open elsewhere,
+// left to their own run's end (mid-run), and failed otherwise.
+export interface AutoRemoveSweep {
+  removed: number
+  locked: number
+  deferred: number
+  failed: number
+}
+
+/** Applies the live auto-remove rule to every existing lecture; awaited, so it answers the counts. */
+export async function applyAutoRemove(): Promise<AutoRemoveSweep> {
+  return backend.post<AutoRemoveSweep>('/auto-remove/apply')
+}
+
 export async function fetchRunnerStatus(): Promise<RunnerStatus> {
   return normalizeRunner(await backend.get<RawRunnerStatus>('/status'))
 }

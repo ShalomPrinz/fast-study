@@ -4,6 +4,7 @@ import type { Media, ResolvedMedia } from '../services/autoDownloader'
 import {
   existingNames,
   hasResource,
+  holdsVideo,
   materialsOf,
   overwritesVideo,
   targetLanded,
@@ -18,7 +19,10 @@ function material(spec: string): MaterialInfo {
   return source ? { name, size: 10, mtime: 1, source } : { name, size: 10, mtime: 1 }
 }
 
-function node(name: string, has: { materials?: string[]; video?: boolean } = {}): Lecture {
+function node(
+  name: string,
+  has: { materials?: string[]; video?: boolean; removedVideo?: boolean } = {},
+): Lecture {
   const files = {
     'video.mp4': has.video ? PRESENT : EMPTY,
     'audio.mp3': EMPTY,
@@ -28,7 +32,13 @@ function node(name: string, has: { materials?: string[]; video?: boolean } = {})
     'summary.pdf': EMPTY,
     'drive_url.txt': EMPTY,
   } satisfies FileStatus
-  return { name, files, materials: (has.materials ?? []).map(material), transcribePartial: null }
+  return {
+    name,
+    files,
+    materials: (has.materials ?? []).map(material),
+    transcribePartial: null,
+    removed: has.removedVideo ? ['video.mp4'] : [],
+  }
 }
 
 function tree(lectures: Lecture[], recitations: Lecture[] = []): Course[] {
@@ -201,5 +211,29 @@ describe('targetLanded', () => {
 
   it('is false for an unprobed unknown target, even with the node on disk', () => {
     expect(landed('Lecture 1', 'unknown', tree([node('Lecture 1', { video: true })]))).toBe(false)
+  })
+})
+
+describe('holdsVideo', () => {
+  const courses = tree([
+    node('On disk', { video: true }),
+    node('Auto-removed', { removedVideo: true }),
+    node('Never had one'),
+  ])
+
+  it('counts a video on disk or one auto-remove deleted, so bulk skips and a re-download confirms', () => {
+    expect(holdsVideo('On disk', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(holdsVideo('Auto-removed', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(hasResource({ media: 'video' }, 'Auto-removed', 'lecture', courses, 'Algebra')).toBe(
+      true,
+    )
+    expect(overwritesVideo({ media: 'video' }, 'Auto-removed', 'lecture', courses, 'Algebra')).toBe(
+      true,
+    )
+  })
+
+  it('is false for a lecture with no video and for a missing one', () => {
+    expect(holdsVideo('Never had one', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(holdsVideo('Nowhere', 'lecture', courses, 'Algebra')).toBe(false)
   })
 })

@@ -1,5 +1,19 @@
-import type { Course, FileName, FileStatus, Lecture, MaterialInfo } from '@/types'
+import type { Course, FileName, FileStatus, Lecture, MaterialInfo, RemovableFile } from '@/types'
 import { PIPELINE } from '@/features/lectures/constants/pipeline'
+
+// The files map every rule below reads: an auto-removed file counts as present, mirroring the
+// backend's `_mark_removed`, so a lecture stripped after its PDF never looks undone or materials-only.
+export function markRemoved(files: FileStatus, removed: RemovableFile[]): FileStatus {
+  if (removed.length === 0) return files
+  const marked = { ...files }
+  for (const name of removed) marked[name] = { ...files[name], exists: true }
+  return marked
+}
+
+// Whether a lecture holds this file, on disk or auto-removed.
+export function holdsFile(lecture: Pick<Lecture, 'files' | 'removed'>, file: FileName): boolean {
+  return lecture.files[file].exists || (lecture.removed as FileName[]).includes(file)
+}
 
 // Done once the last output exists (`drive_url.txt`, or `summary.pdf` with Drive off), mirroring
 // the backend's `final_output()`.
@@ -10,6 +24,8 @@ export function filesComplete(files: FileStatus, driveEnabled: boolean): boolean
 export function isLectureComplete(lecture: Lecture, driveEnabled: boolean): boolean {
   return filesComplete(lecture.files, driveEnabled)
 }
+
+// Every rule from here on takes the `markRemoved` map.
 
 // No video.mp4, no audio.mp3 and at least one material PDF: summarized from the PDFs alone, mirroring
 // the backend's `is_materials_only()` / `_summarize_source()`.

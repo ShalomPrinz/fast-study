@@ -5,6 +5,7 @@ import {
   courseProgress,
   isLectureComplete,
   isMaterialsOnly,
+  markRemoved,
   skippedStage,
   stagePrereqMet,
   summarizedFromMaterials,
@@ -34,6 +35,7 @@ const lecture = (name: string, present: FileName[]): Lecture => ({
   files: files(present),
   materials: [],
   transcribePartial: null,
+  removed: [],
 })
 
 const done = (name: string) => lecture(name, ['video.mp4', 'summary.pdf', 'drive_url.txt'])
@@ -176,5 +178,34 @@ describe('courseProgress', () => {
   it('excludes an archived course from both numbers', () => {
     const c = course({ archived: true, lectures: [done('Lecture 1'), partial('Lecture 2')] })
     expect(courseProgress(c, true)).toEqual({ complete: 0, total: 0 })
+  })
+})
+
+describe('auto-removed files count as present', () => {
+  // A lecture finished from its video, then stripped of video and audio after the PDF.
+  const stripped = markRemoved(files(['transcript.txt', 'summary.md', 'summary.pdf']), [
+    'video.mp4',
+    'audio.mp3',
+  ])
+
+  it('is never mistaken for a materials-only lecture', () => {
+    expect(isMaterialsOnly(stripped, MATS)).toBe(false)
+    expect(skippedStage('video.mp4', stripped, MATS)).toBe(false)
+    expect(skippedStage('audio.mp3', stripped, MATS)).toBe(false)
+    expect(summarizedFromMaterials(stripped, MATS)).toBe(false)
+  })
+
+  it('meets the prereq of a step whose input was removed, as the backend reads it', () => {
+    expect(stagePrereqMet({ file: 'transcript.txt', prereq: 'audio.mp3' }, stripped, [])).toBe(true)
+  })
+
+  it('resumes at Drive rather than at audio', () => {
+    expect(canRunRemaining(stripped, [], true)).toBe(true)
+    expect(canRunRemaining(stripped, [], false)).toBe(false)
+  })
+
+  it('leaves an empty record as the same map', () => {
+    const f = files(['video.mp4'])
+    expect(markRemoved(f, [])).toBe(f)
   })
 })

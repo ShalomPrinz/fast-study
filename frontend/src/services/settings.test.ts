@@ -62,6 +62,14 @@ describe('ownerBodies', () => {
     })
   })
 
+  it('routes both auto-remove fields to the backend under their wire keys', () => {
+    expect(ownerBodies({ autoRemove: 'audio', autoRemoveAfter: 'pdf' })).toEqual({
+      backend: { auto_remove: 'audio', auto_remove_after: 'pdf' },
+      database: null,
+      auto: null,
+    })
+  })
+
   // Launcher-only: the launcher itself pushes the switch to every service.
   it('gives error reports, the privacy answer and the AI chat provider no owner', () => {
     expect(

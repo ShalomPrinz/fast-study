@@ -66,6 +66,8 @@ const STORE: Settings = {
   autoRun: null,
   nightlyRun: null,
   nightlyHour: null,
+  autoRemove: null,
+  autoRemoveAfter: null,
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: null,
   privacyConfirmed: false,

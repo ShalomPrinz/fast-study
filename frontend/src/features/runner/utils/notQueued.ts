@@ -2,7 +2,7 @@ import type { Course, InFlightEntry, Kind, QueueEntry, RunError } from '@/types'
 import type { StatusNodeState } from '@/shared/components/StatusNode'
 import { isQuotaError } from '@/shared/utils/runError'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
-import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
+import { holdsFile, isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
 
 export interface PendingLecture {
@@ -11,7 +11,7 @@ export interface PendingLecture {
   kind: Kind
 }
 
-/** Lectures with a video and no final output that nothing is scheduled to pick up. The backend
+/** Lectures with a video (on disk or auto-removed) and no final output that nothing is scheduled to pick up. The backend
  *  never reports these — the tree is already in memory, and the queue is what it lacks. */
 export function notQueued(
   courses: Course[],
@@ -32,7 +32,8 @@ export function notQueued(
     ]
     for (const [kind, lectures] of groups) {
       for (const lecture of lectures) {
-        if (!lecture.files['video.mp4'].exists) continue
+        // An auto-removed video still counts, as the backend's `scan_pending` reads it.
+        if (!holdsFile(lecture, 'video.mp4')) continue
         if (isLectureComplete(lecture, driveEnabled)) continue
         if (spokenFor.has(inFlightKey(course.name, lecture.name, kind))) continue
         out.push({ course: course.name, lecture: lecture.name, kind })

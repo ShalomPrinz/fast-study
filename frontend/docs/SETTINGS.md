@@ -18,6 +18,8 @@ edits them all, and the prerequisites and accounts both screens show.
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Daily run         | on                                        | off                   | `backend/`        |
 | Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`        |
+| Auto-remove       | off                                       | video, video + audio  | `backend/`        |
+| Auto-remove after | none — the user must choose               | the PDF, the Drive upload | `backend/`    |
 | Error reports     | off until answered; the wall starts it on | on                    | `electron/`, live    |
 | AI chat provider  | Claude                                    | ChatGPT, Gemini       | `electron/`, renderer-only |
 
@@ -29,6 +31,20 @@ the nightly pass; it never caps a run the user starts. **The nightly pass has tw
 decides whether the cron runs and when, auto-run still caps what it does. Every unset value reads as the
 backend's own fallback (`useAutoRun`, `useNightlyRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
 a number on the wire, never the `<select>`'s string, which the store rejects.
+
+**Auto-remove deletes a finished lecture's video (and audio) from disk**, and saves differently from
+the rest of the page. Its section (`AutoRemoveField`, rules in `utils/autoRemove.ts`) has its own Apply,
+enabled once it differs from the store and both values are chosen; checking the box always starts from
+video and no timing, and "after Drive" is disabled while the form's Drive toggle is off. The page's Save
+treats the section exactly like Apply, and a half-chosen section holds both. A save that **widens** the
+rule (`autoRemoveWidens`: off to on, video to video + audio, Drive to PDF) first confirms that the files
+of every existing lecture go for good; Yes saves, pushes `/config`, then awaits the backend's `POST
+/auto-remove/apply` and toasts its counts (`AutoRemoveSummary`); No saves nothing, the whole Save
+included. Narrowing or unchecking (stored `off`) saves with no confirm and no sweep. Apply's action is
+`autoRemoveApply`: with the section matching a stored rule that is on, it re-runs the sweep with no
+confirm, the retry the locked and failed toasts point to; "after Drive" while the form's Drive toggle
+differs from the store disables it with a hint, since only the page's Save stores both before sweeping. How removed files
+read on a lecture is in [LECTURES.md](LECTURES.md).
 
 **Error reports apply live, and unset means off** — nothing is sent before an explicit yes. The launcher
 owns the switch and pushes each saved value to every service itself, so the frontend posts it to no

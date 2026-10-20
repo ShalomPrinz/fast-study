@@ -1,4 +1,5 @@
 import type { Course, Kind, Lecture, MaterialInfo } from '@/types'
+import { holdsFile } from '@/features/lectures/utils/lectureProgress'
 import type { Media, ResolvedMedia } from '../services/autoDownloader'
 
 // The live tree's nodes for one course+kind
@@ -43,9 +44,11 @@ export function hasResource(
   return holdsVideo(name, kind, courses, course)
 }
 
-function holdsVideo(name: string, kind: Kind, courses: Course[], course: string): boolean {
+// An auto-removed video is still held: the lecture was finished from it, so re-downloading is a
+// deliberate replace, not a gap to fill.
+export function holdsVideo(name: string, kind: Kind, courses: Course[], course: string): boolean {
   const node = existingNodes(kind, courses, course).find((l) => l.name === name)
-  return node?.files['video.mp4']?.exists ?? false
+  return node ? holdsFile(node, 'video.mp4') : false
 }
 
 // Whether downloading this row could replace a stored video — the overwrite confirm's and the bulk

@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { msg } from '@lingui/core/macro'
+import type { MessageDescriptor } from '@lingui/core'
 import {
   fetchConfigOptions,
   fetchSettings,
+  type AutoRemoveAfter,
   type AutoRun,
   type ConfigOptions,
   type Settings,
   type SettingsPatch,
 } from '@/services/settings'
 import { isConnectionError } from '@/services/http'
+import { applyAutoRemove } from '@/services/backend'
 import { canSetErrorReports, canStoreApiKeys } from '@/services/runtime'
 import { toast } from '@/services/toaster'
-import { toastFailure } from '@/shared/utils/failure'
+import { failureNode, toastFailure } from '@/shared/utils/failure'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
@@ -29,14 +33,25 @@ import ErrorReportsField from './components/ErrorReportsField'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
+import AutoRemoveField from './components/AutoRemoveField'
+import AutoRemoveSummary from './components/AutoRemoveSummary'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import {
   buildPatch,
   formFromStore,
   withOptions,
+  withSavedAutoRemove,
   withSavedSite,
   type SettingsForm,
 } from './utils/patch'
+import {
+  autoRemoveApply,
+  autoRemoveComplete,
+  autoRemoveDirty,
+  autoRemovePatch,
+  autoRemoveWidens,
+  type RemoveWhat,
+} from './utils/autoRemove'
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
 import { privacyAnswer, restartNotice } from './utils/privacy'
@@ -54,6 +69,27 @@ const NIGHTLY_HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 interface Pending {
   patch: SettingsPatch
   runs: string[]
+  sweep: boolean
+}
+
+// A save that widens auto-remove, held for its confirm: the section's Apply, or the page's whole Save.
+interface PendingRemoval {
+  patch: SettingsPatch
+  what: RemoveWhat
+  after: AutoRemoveAfter
+  whole: boolean
+}
+
+// The confirm's warning, one whole sentence per rule: what goes, from which lectures.
+const REMOVAL_WARNING: Record<RemoveWhat, Record<AutoRemoveAfter, MessageDescriptor>> = {
+  video: {
+    pdf: msg`The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered.`,
+    drive: msg`The video of every lecture already uploaded to Drive will be deleted from this computer. It cannot be recovered.`,
+  },
+  audio: {
+    pdf: msg`The video and audio of every lecture that already has a PDF will be deleted from this computer. They cannot be recovered.`,
+    drive: msg`The video and audio of every lecture already uploaded to Drive will be deleted from this computer. They cannot be recovered.`,
+  },
 }
 
 // Every setting the app has, in one place. See docs/SETTINGS.md.
@@ -69,6 +105,7 @@ export default function SettingsView() {
   const [saving, setSaving] = useState(false)
   const [siteChecking, setSiteChecking] = useState(false)
   const [pending, setPending] = useState<Pending | null>(null)
+  const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null)
   // The switch state some part of the app takes only after a restart, from the last save.
   const [reportsRestart, setReportsRestart] = useState<'on' | 'off' | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
@@ -147,6 +184,7 @@ export default function SettingsView() {
 
   // Aliased so the async save below keeps the non-null narrowing the early return established.
   const current = form
+  const storedNow = stored
   const currentOptions = options
   const patch = () => buildPatch(current, stored, canSetErrorReports)
 
@@ -163,7 +201,34 @@ export default function SettingsView() {
     canStoreApiKeys,
   })
 
-  async function commit(next: SettingsPatch) {
+  // Deletes the newly covered files from every existing lecture, then says what happened.
+  async function sweep() {
+    try {
+      const counts = await applyAutoRemove()
+      toast(
+        counts.locked > 0 || counts.failed > 0 ? 'warning' : 'success',
+        <AutoRemoveSummary counts={counts} />,
+      )
+    } catch (err) {
+      // A connection error was toasted by the client already; the retry hint is still owed.
+      const retry = (
+        <p>{t`The files weren't removed. Press Apply under “Disk space” to try again.`}</p>
+      )
+      toast(
+        'error',
+        isConnectionError(err) ? (
+          retry
+        ) : (
+          <>
+            {failureNode(err)}
+            {retry}
+          </>
+        ),
+      )
+    }
+  }
+
+  async function commit(next: SettingsPatch, sweepAfter: boolean) {
     setSaving(true)
     setPending(null)
     try {
@@ -178,6 +243,7 @@ export default function SettingsView() {
       // The chip follows auto's stream; the one-shot read re-answers what it cannot say (no site).
       if (next.moodleSite !== undefined) void refreshAccount()
       toast('info', t`Settings saved`)
+      if (sweepAfter) await sweep()
     } catch (err) {
       saveFailed(err)
     } finally {
@@ -185,12 +251,70 @@ export default function SettingsView() {
     }
   }
 
+  // The section's own Apply: only its two fields, every other edit on the page kept unsaved.
+  async function commitAutoRemove(next: SettingsPatch, sweepAfter: boolean) {
+    setSaving(true)
+    try {
+      const saved = await site.save(next)
+      setStored(saved)
+      setSettings(saved)
+      setForm((f) => f && withSavedAutoRemove(f, saved))
+      toast('info', t`Auto-remove saved`)
+      if (sweepAfter) await sweep()
+    } catch (err) {
+      saveFailed(err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function proceed(next: SettingsPatch, sweepAfter: boolean) {
+    const runs = runsAtRisk(next, status)
+    if (runs) setPending({ patch: next, runs, sweep: sweepAfter })
+    else void commit(next, sweepAfter)
+  }
+
+  // Widening auto-remove deletes files now, so it confirms first; Cancel aborts the whole save.
   function save() {
     const next = patch()
-    const runs = runsAtRisk(next, status)
-    if (runs) setPending({ patch: next, runs })
-    else void commit(next)
+    if (next.autoRemove !== undefined && autoRemoveWidens(current.autoRemove, storedNow)) {
+      setPendingRemoval({ patch: next, ...widened(current), whole: true })
+    } else proceed(next, false)
   }
+
+  async function resweep() {
+    setSaving(true)
+    try {
+      await sweep()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function applyAutoRemoveSection() {
+    if (autoRemoveApply(current.autoRemove, storedNow, current.driveEnabled) === 'sweep') {
+      void resweep()
+      return
+    }
+    const next = autoRemovePatch(current.autoRemove, storedNow, current.driveEnabled)
+    if (autoRemoveWidens(current.autoRemove, storedNow)) {
+      setPendingRemoval({ patch: next, ...widened(current), whole: false })
+    } else void commitAutoRemove(next, false)
+  }
+
+  // The rule a widening save stores; widening implies a chosen timing.
+  function widened(f: SettingsForm): { what: RemoveWhat; after: AutoRemoveAfter } {
+    return { what: f.autoRemove.what, after: f.autoRemove.after! }
+  }
+
+  function confirmRemoval(held: PendingRemoval) {
+    setPendingRemoval(null)
+    if (held.whole) proceed(held.patch, true)
+    else void commitAutoRemove(held.patch, true)
+  }
+
+  const autoRemoveReady = autoRemoveComplete(form.autoRemove, form.driveEnabled)
+  const autoRemoveChanged = autoRemoveDirty(form.autoRemove, stored)
 
   const provider = (id: string) => options?.providers.find((p) => p.id === id)
   const gemini = provider('gemini')
@@ -203,7 +327,13 @@ export default function SettingsView() {
         actions={
           <button
             className="btn btn--primary"
-            disabled={saving || siteChecking || missing.length > 0}
+            // A half-chosen auto-remove holds Save the same way it holds Apply.
+            disabled={
+              saving ||
+              siteChecking ||
+              missing.length > 0 ||
+              (autoRemoveChanged && !autoRemoveReady)
+            }
             onClick={save}
           >
             <Trans>Save</Trans>
@@ -399,6 +529,23 @@ export default function SettingsView() {
             </div>
           </section>
 
+          <section className="settings-section">
+            <h2 className="settings-section-title">
+              <Trans>Disk space</Trans>
+            </h2>
+            <AutoRemoveField
+              value={form.autoRemove}
+              onChange={(v) => setForm({ ...form, autoRemove: v })}
+              driveEnabled={form.driveEnabled}
+              apply={
+                saving || siteChecking
+                  ? null
+                  : autoRemoveApply(form.autoRemove, stored, form.driveEnabled)
+              }
+              onApply={applyAutoRemoveSection}
+            />
+          </section>
+
           {canSetErrorReports && (
             <section className="settings-section">
               <h2 className="settings-section-title">
@@ -450,8 +597,18 @@ export default function SettingsView() {
               </ul>
             ) : undefined
           }
-          onConfirm={() => void commit(pending.patch)}
+          onConfirm={() => void commit(pending.patch, pending.sweep)}
           onCancel={() => setPending(null)}
+        />
+      )}
+
+      {pendingRemoval && (
+        <ConfirmModal
+          message={t`Remove files from every existing lecture?`}
+          warning={t(REMOVAL_WARNING[pendingRemoval.what][pendingRemoval.after])}
+          postMessage={t`From now on, each lecture's files are removed the same way once it reaches that point.`}
+          onConfirm={() => confirmRemoval(pendingRemoval)}
+          onCancel={() => setPendingRemoval(null)}
         />
       )}
     </main>

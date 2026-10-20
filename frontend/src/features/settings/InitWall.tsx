@@ -24,6 +24,7 @@ import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import { buildPatch, type SettingsForm } from './utils/patch'
+import { autoRemoveFromStore } from './utils/autoRemove'
 import { privacyAnswer, wallMustAskPrivacy } from './utils/privacy'
 import { missingEntries, sectionMark } from './utils/required'
 import '@/styles/button.css'
@@ -91,6 +92,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     autoRun: toAutoRun(stored.autoRun),
     nightlyRun: stored.nightlyRun ?? true,
     nightlyHour: toNightlyHour(stored.nightlyHour),
+    autoRemove: autoRemoveFromStore(stored),
     moodleSite: stored.moodleSite ?? '',
     // Starts checked for a first answer, though unset means off until the wall's save stores it.
     errorReports: stored.errorReports ?? true,

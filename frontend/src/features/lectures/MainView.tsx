@@ -27,6 +27,7 @@ import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import {
   canRunRemaining,
   filesComplete,
+  markRemoved,
   skippedStage,
   stagePrereqMet,
   summarizedFromMaterials,
@@ -80,7 +81,17 @@ function MaterialIndicator({
 
 export default function MainView() {
   const { t } = useLingui()
-  const { course, lecture, kind, files, materials, transcribePartial } = useLectureRoute()
+  const {
+    course,
+    lecture,
+    kind,
+    files: onDisk,
+    materials,
+    transcribePartial,
+    removed,
+  } = useLectureRoute()
+  // Every rule reads auto-removed files as present; `onDisk` is only for what can be deleted.
+  const files = onDisk && markRemoved(onDisk, removed)
   const { courses, loaded, loadFailed, refreshCourses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
   const compactActions = useCompactHeaderActions()
@@ -114,7 +125,7 @@ export default function MainView() {
   if (miss) return <NotFoundPanel {...miss} />
 
   // The tree has this lecture, so files is set; the guard is for the type only.
-  if (!files) return null
+  if (!files || !onDisk) return null
 
   const stages = visiblePipeline(driveEnabled, files)
   // A materials-only lecture's skipped stages are left out of every count and step number.
@@ -172,7 +183,7 @@ export default function MainView() {
     const toDelete = stages
       .slice(idx)
       .map((p) => p.file)
-      .filter((f) => files![f].exists)
+      .filter((f) => onDisk![f].exists)
     setRotateTarget({ file, step, toDelete })
   }
 
@@ -309,6 +320,13 @@ export default function MainView() {
                 const skipped = skippedStage(file, files, materials)
                 const state = stepState(exists, isRunning, step, lectureError)
                 const prereqMet = stagePrereqMet(stage, files, materials)
+                const isRemoved = (removed as FileName[]).includes(file)
+                // A step whose input was auto-removed cannot run again until a new video arrives.
+                const input = stage.prereq
+                const inputRemoved =
+                  input && (removed as FileName[]).includes(input)
+                    ? t`${input} was removed automatically`
+                    : undefined
                 const isResumeTranscribe =
                   file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
                 const buttonLabel = isResumeTranscribe
@@ -316,12 +334,13 @@ export default function MainView() {
                   : actionLabel && t(actionLabel)
 
                 const size = files[file].size
-                const subtitle = !isRunning && exists && size !== null ? formatBytes(size) : null
+                const subtitle =
+                  !isRunning && exists && !isRemoved && size !== null ? formatBytes(size) : null
 
                 return (
                   <div
                     key={file}
-                    className={`pipeline-row${isRunning ? ' pipeline-row--running' : ''}`}
+                    className={`pipeline-row${isRunning ? ' pipeline-row--running' : ''}${isRemoved ? ' pipeline-row--removed' : ''}`}
                     data-testid={step ? 'step-status' : undefined}
                     data-step={step}
                     data-status={step ? state : undefined}
@@ -337,7 +356,7 @@ export default function MainView() {
                     <div className="pipeline-row-body">
                       <div className="pipeline-stage-line">
                         <span
-                          className={`pipeline-stage${exists || isRunning ? '' : ' pipeline-stage--pending'}`}
+                          className={`pipeline-stage${(exists && !isRemoved) || isRunning ? '' : ' pipeline-stage--pending'}`}
                         >
                           {isRunning && runningLabel ? t(runningLabel) : t(stageLabel)}
                         </span>
@@ -368,13 +387,18 @@ export default function MainView() {
                         />
                       )}
                     </div>
-                    {exists && step && hasAnyStepFile && (
-                      <Tooltip content={t`Rotate ${file}`}>
+                    {isRemoved && (
+                      <span className="pipeline-missing pipeline-removed">
+                        <Trans>Removed automatically</Trans>
+                      </span>
+                    )}
+                    {exists && !isRemoved && step && hasAnyStepFile && (
+                      <Tooltip content={inputRemoved ?? t`Rotate ${file}`}>
                         <button
                           className="pipeline-icon-btn"
                           aria-label={t`Rotate ${file}`}
                           onClick={() => openRotateModal(file, step)}
-                          disabled={inflight}
+                          disabled={inflight || !!inputRemoved}
                         >
                           <Icon icon="rotate" />
                         </button>
@@ -386,13 +410,15 @@ export default function MainView() {
                       </span>
                     )}
                     {!exists && !isRunning && !skipped && step && (
-                      <button
-                        className="btn btn--ghost"
-                        onClick={() => handleStep(step)}
-                        disabled={inflight || !prereqMet}
-                      >
-                        {buttonLabel}
-                      </button>
+                      <Tooltip content={inputRemoved}>
+                        <button
+                          className="btn btn--ghost"
+                          onClick={() => handleStep(step)}
+                          disabled={inflight || !prereqMet || !!inputRemoved}
+                        >
+                          {buttonLabel}
+                        </button>
+                      </Tooltip>
                     )}
                     {!exists && !skipped && !step && (
                       <span className="pipeline-missing">

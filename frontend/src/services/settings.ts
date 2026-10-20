@@ -19,6 +19,13 @@ export function toAutoRun(stored: string | null): AutoRun {
   return (AUTO_RUN_MODES as readonly string[]).includes(stored ?? '') ? (stored as AutoRun) : 'full'
 }
 
+// Auto-remove: which intermediates go (`audio` is cumulative, video too) and once which output exists.
+// The backend reads anything unset or unrecognised as removing nothing.
+export const AUTO_REMOVE_MODES = ['off', 'video', 'audio'] as const
+export type AutoRemove = (typeof AUTO_REMOVE_MODES)[number]
+export const AUTO_REMOVE_AFTER = ['pdf', 'drive'] as const
+export type AutoRemoveAfter = (typeof AUTO_REMOVE_AFTER)[number]
+
 // The hour the nightly catch-up pass fires. The backend clamps an unset or out-of-range value to
 // the same 3, so a store holding anything else still shows the hour that will actually run.
 export const DEFAULT_NIGHTLY_HOUR = 3
@@ -40,6 +47,8 @@ export interface Settings {
   autoRun: string | null
   nightlyRun: boolean | null
   nightlyHour: number | null
+  autoRemove: string | null
+  autoRemoveAfter: string | null
   // The university's Moodle root, always the canonical `wwwroot` the site probe answered.
   moodleSite: string | null
   // Launcher-only, like `privacyConfirmed`. Unset means off: nothing is sent before an explicit yes.
@@ -69,6 +78,8 @@ export interface SettingsPatch {
   nightlyRun?: boolean
   // A number, never the raw string a `<select>` hands back: the store rejects a JSON string.
   nightlyHour?: number
+  autoRemove?: AutoRemove
+  autoRemoveAfter?: AutoRemoveAfter
   moodleSite?: string
   errorReports?: boolean
   privacyConfirmed?: boolean
@@ -87,6 +98,8 @@ const WIRE: Record<SettingsField, string> = {
   autoRun: 'auto_run',
   nightlyRun: 'nightly_run',
   nightlyHour: 'nightly_hour',
+  autoRemove: 'auto_remove',
+  autoRemoveAfter: 'auto_remove_after',
   moodleSite: 'moodle_site',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
@@ -106,6 +119,8 @@ const BACKEND_FIELDS: SettingsField[] = [
   'autoRun',
   'nightlyRun',
   'nightlyHour',
+  'autoRemove',
+  'autoRemoveAfter',
 ]
 const DATABASE_FIELDS: SettingsField[] = ['dataRoot']
 const AUTO_FIELDS: SettingsField[] = ['moodleSite']
@@ -120,6 +135,8 @@ interface RawSettings {
   auto_run: string | null
   nightly_run: boolean | null
   nightly_hour: number | null
+  auto_remove: string | null
+  auto_remove_after: string | null
   moodle_site: string | null
   ai_provider: string | null
 }
@@ -135,6 +152,8 @@ function normalize(raw: RawSettings): Settings {
     autoRun: raw.auto_run,
     nightlyRun: raw.nightly_run,
     nightlyHour: raw.nightly_hour,
+    autoRemove: raw.auto_remove ?? null,
+    autoRemoveAfter: raw.auto_remove_after ?? null,
     moodleSite: raw.moodle_site ?? null,
     aiProvider: raw.ai_provider ?? null,
     // The browser-dev store has neither; the switch and its privacy answer are Electron-only.

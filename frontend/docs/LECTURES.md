@@ -65,6 +65,13 @@ transcript, materials-only); there is no marker, and a later video upload takes 
 `transcript.txt` are deleted by hand, a transcript-based summary reads as "materials only" — accepted, since the note has no
 marker to tell them apart.
 
+**Auto-removed files.** The tree's `removed` lists the intermediates auto-remove deleted ([SETTINGS.md](SETTINGS.md)).
+`markRemoved` flags them present, mirroring the backend's `_mark_removed`, and every `lectureProgress.ts`
+rule reads that map, so a stripped lecture is never materials-only and resumes where the backend's
+`next_step` does; `notQueued` and the sidebar's drop confirm count a removed video too (`holdsFile`).
+Its row reads done, greyed, "Removed automatically", with no action; a step whose input was removed
+(rotate, or run) is disabled with a tooltip saying so. `.pipeline-row--removed` marks the row.
+
 ## Study with AI
 
 `components/StudyWithAiCard` sits in a 340px column on the inline-end side of the pipeline list, top-aligned

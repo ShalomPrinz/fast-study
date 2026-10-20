@@ -11,7 +11,7 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { findLecture } from '@/features/lectures/utils/courseTree'
-import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
+import { holdsFile, isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
 import { lectureNotFound } from '@/shared/utils/notFound'
@@ -89,7 +89,8 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
       return
     }
     const found = findLecture(courses, course.name, lecture.name, kind)
-    if (found?.files['video.mp4'].exists) {
+    // An auto-removed video still confirms: the upload wipes the transcript and summary made from it.
+    if (found && holdsFile(found, 'video.mp4')) {
       upload.confirm(course.name, lecture.name, file, kind)
     } else {
       upload.trigger(course.name, lecture.name, file, kind)

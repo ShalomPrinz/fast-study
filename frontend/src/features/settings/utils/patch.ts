@@ -7,6 +7,7 @@ import {
   type SettingsPatch,
 } from '@/services/settings'
 import { toAiProvider, type AiProvider } from '@/features/lectures/utils/aiChat'
+import { autoRemoveFromStore, autoRemovePatch, type AutoRemoveForm } from './autoRemove'
 
 export interface SettingsForm {
   geminiApiKey: string
@@ -18,6 +19,7 @@ export interface SettingsForm {
   autoRun: AutoRun
   nightlyRun: boolean
   nightlyHour: number
+  autoRemove: AutoRemoveForm
   // `''` is "no university", which clears a stored site; `null` while a site is chosen but not yet
   // savable (in flight, unsupported), which leaves the stored one alone.
   moodleSite: string | null
@@ -50,6 +52,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
     nightlyRun: stored.nightlyRun ?? true,
     nightlyHour: toNightlyHour(stored.nightlyHour),
+    autoRemove: autoRemoveFromStore(stored),
     moodleSite: stored.moodleSite ?? '',
     // Unset means off, as the launcher reads it; only the init wall starts its box checked.
     errorReports: stored.errorReports === true,
@@ -90,6 +93,8 @@ export function buildPatch(
   // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
   if (form.nightlyRun !== (stored.nightlyRun ?? true)) patch.nightlyRun = form.nightlyRun
   if (form.nightlyHour !== toNightlyHour(stored.nightlyHour)) patch.nightlyHour = form.nightlyHour
+  // Nothing while the section is unchanged or half chosen; Save waits on the latter (`autoRemoveComplete`).
+  Object.assign(patch, autoRemovePatch(form.autoRemove, stored, form.driveEnabled))
   if (form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')) {
     patch.moodleSite = form.moodleSite
   }
@@ -107,4 +112,9 @@ export function buildPatch(
  *  so the next Save does not send it again. */
 export function withSavedSite(form: SettingsForm, saved: Settings): SettingsForm {
   return { ...form, moodleSite: saved.moodleSite ?? '' }
+}
+
+/** The form once the auto-remove section was applied on its own: every other edit kept. */
+export function withSavedAutoRemove(form: SettingsForm, saved: Settings): SettingsForm {
+  return { ...form, autoRemove: autoRemoveFromStore(saved) }
 }

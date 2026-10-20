@@ -8,7 +8,7 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useAutoRun, useDriveEnabled, useNightlyRun } from '@/shared/contexts/SettingsContext'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { PIPELINE, stepPosition, visiblePipeline } from '@/features/lectures/constants/pipeline'
-import { skippedStage } from '@/features/lectures/utils/lectureProgress'
+import { markRemoved, skippedStage } from '@/features/lectures/utils/lectureProgress'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
@@ -119,7 +119,8 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
   const { courses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
   const node = findLecture(courses, entry.course, entry.lecture, entry.kind)
-  const files = node?.files ?? null
+  // Auto-removed files count as present, so the rail and ETA match the backend's next step.
+  const files = node ? markRemoved(node.files, node.removed) : null
   const materials = node?.materials ?? []
   const remote = useRemoteInflightState({
     course: entry.course,

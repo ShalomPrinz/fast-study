@@ -20,7 +20,7 @@ function files(...present: string[]): FileStatus {
 }
 
 function lecture(name: string, ...present: string[]): Lecture {
-  return { name, files: files(...present), materials: [], transcribePartial: null }
+  return { name, files: files(...present), materials: [], transcribePartial: null, removed: [] }
 }
 
 function course(name: string, lectures: Lecture[], recitations: Lecture[] = []): Course {
@@ -127,5 +127,14 @@ describe('notQueuedTitle', () => {
     expect(notQueuedTitle(errors, item)).toBe(serviceErrorText(error))
     expect(notQueuedTitle(errors, item)).toContain('boom')
     expect(notQueuedTitle({}, item)).toBeUndefined()
+  })
+})
+
+describe('notQueued with auto-removed files', () => {
+  it('still lists an unfinished lecture whose video was auto-removed', () => {
+    const stripped: Lecture = { ...lecture('L1', 'summary.pdf'), removed: ['video.mp4'] }
+    expect(notQueued([course('C', [stripped])], [], [], true)).toEqual([
+      { course: 'C', lecture: 'L1', kind: 'lecture' },
+    ])
   })
 })
