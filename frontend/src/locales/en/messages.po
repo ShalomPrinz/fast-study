@@ -114,7 +114,7 @@ msgid "{0} API key"
 msgstr "{0} API key"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:170
+#: src/features/downloads/DownloadsView.tsx:175
 msgid "{0} found"
 msgstr "{0} found"
 
@@ -142,15 +142,15 @@ msgstr "{0} video"
 msgid "{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
 msgstr "{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:33
+#: src/features/lectures/utils/materialIndicator.ts:31
 msgid "{count, plural, other {# materials were used}}"
 msgstr "{count, plural, other {# materials were used}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:45
+#: src/features/lectures/utils/materialIndicator.ts:43
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, other {summary used only {used} of # materials}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:22
+#: src/features/lectures/utils/materialIndicator.ts:20
 msgid "{count, plural, other {summary with # PDFs}}"
 msgstr "{count, plural, other {summary with # PDFs}}"
 
@@ -235,7 +235,7 @@ msgstr "{model, select, undefined {The Gemini model is under high demand right n
 msgid "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
 msgstr "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:33
+#: src/features/lectures/utils/materialIndicator.ts:31
 msgid "{name} was used"
 msgstr "{name} was used"
 
@@ -319,7 +319,7 @@ msgstr "{tool} is missing, so the parts of FastStudy that need it will fail. Rei
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} no longer exists. Check the course page for a new link."
 
-#: src/features/downloads/DownloadsView.tsx:98
+#: src/features/downloads/DownloadsView.tsx:103
 msgid "{withSource} courses with a source"
 msgstr "{withSource} courses with a source"
 
@@ -335,7 +335,7 @@ msgstr "+ Add course from Moodle"
 msgid "+ add source URL"
 msgstr "+ add source URL"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:108
+#: src/features/settings/components/PrivacyPolicyModal.tsx:143
 msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 msgstr "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 
@@ -367,7 +367,7 @@ msgstr "A key is saved — type to replace it"
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "A lecture running now would save some files in the old folder and the rest in the new one."
 
-#: src/features/downloads/DownloadsView.tsx:101
+#: src/features/downloads/DownloadsView.tsx:106
 msgid "A one-time setup of about three minutes."
 msgstr "A one-time setup of about three minutes."
 
@@ -593,7 +593,7 @@ msgstr "Choose folder"
 msgid "Choose your university above to connect its account."
 msgstr "Choose your university above to connect its account."
 
-#: src/features/downloads/DownloadsView.tsx:133
+#: src/features/downloads/DownloadsView.tsx:138
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
@@ -646,7 +646,7 @@ msgstr "Click any screenshot to enlarge it."
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 
-#: src/features/downloads/DownloadsView.tsx:174
+#: src/features/downloads/DownloadsView.tsx:179
 msgid "Close"
 msgstr "Close"
 
@@ -675,7 +675,7 @@ msgstr "Compile"
 msgid "Complete"
 msgstr "Complete"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:180
+#: src/features/settings/components/PrivacyPolicyModal.tsx:217
 msgctxt "privacy policy"
 msgid "Confirm"
 msgstr "Confirm"
@@ -711,7 +711,7 @@ msgstr "Connecting again needs a full login in a browser window, including two-s
 msgid "connecting…"
 msgstr "connecting…"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:148
+#: src/features/settings/components/PrivacyPolicyModal.tsx:193
 msgid "Contact"
 msgstr "Contact"
 
@@ -846,7 +846,7 @@ msgstr "Course name…"
 msgid "Course overview"
 msgstr "Course overview"
 
-#: src/features/downloads/DownloadsView.tsx:142
+#: src/features/downloads/DownloadsView.tsx:147
 msgid "Course sources"
 msgstr "Course sources"
 
@@ -855,7 +855,7 @@ msgid "Course URL"
 msgstr "Course URL"
 
 #: src/App.tsx:37
-#: src/features/downloads/DownloadsView.tsx:149
+#: src/features/downloads/DownloadsView.tsx:154
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:238
 #: src/shared/utils/notFound.ts:35
@@ -882,7 +882,7 @@ msgstr "Daily run time"
 msgid "Data folder"
 msgstr "Data folder"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:183
+#: src/features/settings/components/PrivacyPolicyModal.tsx:220
 msgctxt "privacy policy"
 msgid "Decline"
 msgstr "Decline"
@@ -940,7 +940,7 @@ msgstr "Download again"
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
-#: src/features/downloads/DownloadsView.tsx:104
+#: src/features/downloads/DownloadsView.tsx:109
 msgid "Download any open video on the internet"
 msgstr "Download any open video on the internet"
 
@@ -981,7 +981,7 @@ msgstr "Downloading update…"
 msgid "Downloading…"
 msgstr "Downloading…"
 
-#: src/features/downloads/DownloadsView.tsx:81
+#: src/features/downloads/DownloadsView.tsx:86
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "Downloads"
@@ -1002,11 +1002,11 @@ msgstr "Drive connected"
 msgid "Drive folder name"
 msgstr "Drive folder name"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:115
+#: src/features/settings/components/PrivacyPolicyModal.tsx:150
 msgid "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
 msgstr "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:144
+#: src/features/settings/components/PrivacyPolicyModal.tsx:189
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "Each time it starts, FastStudy checks GitHub for a new version."
 
@@ -1027,7 +1027,7 @@ msgstr "Edit summary"
 msgid "Enter the zoom passcode for this recording"
 msgstr "Enter the zoom passcode for this recording"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:122
+#: src/features/settings/components/PrivacyPolicyModal.tsx:167
 #: src/features/settings/InitWall.tsx:287
 #: src/features/settings/SettingsView.tsx:405
 msgid "Error reports"
@@ -1119,6 +1119,10 @@ msgstr "Failed to restore the original summary"
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
+#: src/features/settings/components/PrivacyPolicyModal.tsx:127
+msgid "FastStudy asks only for the <0><1>{DRIVE_SCOPE}</1></0> permission, which gives it access only to the specific Google Drive files you use with this app — in practice, the summary PDFs it uploads."
+msgstr "FastStudy asks only for the <0><1>{DRIVE_SCOPE}</1></0> permission, which gives it access only to the specific Google Drive files you use with this app — in practice, the summary PDFs it uploads."
+
 #: src/shared/i18n/serviceErrors.ts:182
 msgid "FastStudy can't save into {folder}. Choose another folder."
 msgstr "FastStudy can't save into {folder}. Choose another folder."
@@ -1131,15 +1135,15 @@ msgstr "FastStudy couldn't reach your files. Try again."
 msgid "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:80
+#: src/features/settings/components/PrivacyPolicyModal.tsx:101
 msgid "FastStudy privacy policy"
 msgstr "FastStudy privacy policy"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:83
+#: src/features/settings/components/PrivacyPolicyModal.tsx:104
 msgid "FastStudy runs on your computer. Your lectures, transcripts and summaries stay in the folder you chose. There are no accounts, ads or usage tracking, and nothing is sold."
 msgstr "FastStudy runs on your computer. Your lectures, transcripts and summaries stay in the folder you chose. There are no accounts, ads or usage tracking, and nothing is sold."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:93
+#: src/features/settings/components/PrivacyPolicyModal.tsx:114
 msgid "FastStudy sends data only to services you set up yourself:"
 msgstr "FastStudy sends data only to services you set up yourself:"
 
@@ -1154,6 +1158,10 @@ msgstr "FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from 
 #: src/features/settings/InitWall.tsx:216
 msgid "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
+
+#: src/features/settings/components/PrivacyPolicyModal.tsx:156
+msgid "FastStudy's use and transfer of information received from Google APIs will adhere to the <0>Google API Services User Data Policy</0>, including the Limited Use requirements."
+msgstr "FastStudy's use and transfer of information received from Google APIs will adhere to the <0>Google API Services User Data Policy</0>, including the Limited Use requirements."
 
 #: src/features/downloads/components/RecordingRow.tsx:248
 msgid "File type"
@@ -1184,7 +1192,7 @@ msgstr "Found your university's Moodle: <0>{0}</0>"
 msgid "Fully processed lectures"
 msgstr "Fully processed lectures"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:100
+#: src/features/settings/components/PrivacyPolicyModal.tsx:121
 msgid "Gemini gets the transcript and any PDFs you add, to write the summary."
 msgstr "Gemini gets the transcript and any PDFs you add, to write the summary."
 
@@ -1230,7 +1238,7 @@ msgstr "Google Drive"
 msgid "Google Drive can't be connected: a file FastStudy needs is missing from {path}."
 msgstr "Google Drive can't be connected: a file FastStudy needs is missing from {path}."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:103
+#: src/features/settings/components/PrivacyPolicyModal.tsx:124
 msgid "Google Drive gets the summary PDF, and only if you turned Drive upload on."
 msgstr "Google Drive gets the summary PDF, and only if you turned Drive upload on."
 
@@ -1238,7 +1246,7 @@ msgstr "Google Drive gets the summary PDF, and only if you turned Drive upload o
 msgid "Google Drive is not connected. Connect it in Settings."
 msgstr "Google Drive is not connected. Connect it in Settings."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:97
+#: src/features/settings/components/PrivacyPolicyModal.tsx:118
 msgid "Groq gets a lecture's audio to transcribe it."
 msgstr "Groq gets a lecture's audio to transcribe it."
 
@@ -1386,7 +1394,7 @@ msgstr "Loading summaries…"
 msgid "Loading your courses…"
 msgstr "Loading your courses…"
 
-#: src/features/downloads/DownloadsView.tsx:107
+#: src/features/downloads/DownloadsView.tsx:112
 msgid "Loading your data…"
 msgstr "Loading your data…"
 
@@ -1461,7 +1469,7 @@ msgstr "No current courses."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "No data folder is set. Choose one in Settings."
 
-#: src/features/downloads/DownloadsView.tsx:74
+#: src/features/downloads/DownloadsView.tsx:79
 msgid "No files of unknown type found."
 msgstr "No files of unknown type found."
 
@@ -1481,11 +1489,11 @@ msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
 
-#: src/features/lectures/utils/materialIndicator.ts:25
+#: src/features/lectures/utils/materialIndicator.ts:23
 msgid "no material found"
 msgstr "no material found"
 
-#: src/features/downloads/DownloadsView.tsx:73
+#: src/features/downloads/DownloadsView.tsx:78
 msgid "No materials found."
 msgstr "No materials found."
 
@@ -1509,7 +1517,7 @@ msgstr "No PDF yet — use \"Save & update PDF\" to create one."
 msgid "No Recitations"
 msgstr "No Recitations"
 
-#: src/features/downloads/DownloadsView.tsx:72
+#: src/features/downloads/DownloadsView.tsx:77
 msgid "No recordings found."
 msgstr "No recordings found."
 
@@ -1735,7 +1743,7 @@ msgstr "Pitfalls"
 msgid "Privacy policy"
 msgstr "Privacy policy"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:151
+#: src/features/settings/components/PrivacyPolicyModal.tsx:196
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
@@ -1797,7 +1805,7 @@ msgstr "Recitations {0}-{1}"
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: src/features/downloads/DownloadsView.tsx:168
+#: src/features/downloads/DownloadsView.tsx:173
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
 
@@ -1918,7 +1926,7 @@ msgstr "Screenshot of {name}, step {step}"
 msgid "Screenshot of step {step}"
 msgstr "Screenshot of step {step}"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:171
+#: src/features/settings/components/PrivacyPolicyModal.tsx:208
 msgid "Scroll to the end to confirm."
 msgstr "Scroll to the end to confirm."
 
@@ -2065,11 +2073,11 @@ msgstr "Summary"
 msgid "Summary copied — paste it in the chat with Ctrl+V."
 msgstr "Summary copied — paste it in the chat with Ctrl+V."
 
-#: src/features/lectures/utils/materialIndicator.ts:39
+#: src/features/lectures/utils/materialIndicator.ts:37
 msgid "summary did not use {name}"
 msgstr "summary did not use {name}"
 
-#: src/features/lectures/utils/materialIndicator.ts:39
+#: src/features/lectures/utils/materialIndicator.ts:37
 msgid "summary did not use any material"
 msgstr "summary did not use any material"
 
@@ -2077,7 +2085,7 @@ msgstr "summary did not use any material"
 msgid "Summary model"
 msgstr "Summary model"
 
-#: src/features/lectures/utils/materialIndicator.ts:21
+#: src/features/lectures/utils/materialIndicator.ts:20
 msgid "summary with {name}"
 msgstr "summary with {name}"
 
@@ -2199,6 +2207,10 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
+#: src/features/settings/components/PrivacyPolicyModal.tsx:135
+msgid "The Google access token is stored only on your computer and is never sent to FastStudy's author, who receives no Google user data. You can disconnect Drive in Settings, which deletes the token, or revoke access in your <0>Google account permissions</0>."
+msgstr "The Google access token is stored only on your computer and is never sent to FastStudy's author, who receives no Google user data. You can disconnect Drive in Settings, which deletes the token, or revoke access in your <0>Google account permissions</0>."
+
 #: src/features/downloads/components/AccountStatus.tsx:63
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
@@ -2314,7 +2326,7 @@ msgstr "These won't start until you run them, or until the daily run does."
 msgid "These won't start until you run them."
 msgstr "These won't start until you run them."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:90
+#: src/features/settings/components/PrivacyPolicyModal.tsx:111
 msgid "Third-party services"
 msgstr "Third-party services"
 
@@ -2454,7 +2466,7 @@ msgstr "Unsupported"
 msgid "Updated. Restart to update"
 msgstr "Updated. Restart to update"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:141
+#: src/features/settings/components/PrivacyPolicyModal.tsx:186
 msgid "Updates"
 msgstr "Updates"
 
@@ -2523,7 +2535,7 @@ msgstr "We couldn't check this site right now. You can still save it."
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:125
+#: src/features/settings/components/PrivacyPolicyModal.tsx:170
 msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 msgstr "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 

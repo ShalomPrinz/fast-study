@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import ReactDOM from 'react-dom'
 import { Trans } from '@lingui/react/macro'
 import { openExternalUrl } from '@/services/open'
@@ -8,6 +8,27 @@ import '@/styles/button.css'
 import './PrivacyPolicyModal.css'
 
 const ISSUES_URL = 'https://github.com/ShalomPrinz/fast-study/issues'
+const GOOGLE_PERMISSIONS_URL = 'https://myaccount.google.com/permissions'
+const GOOGLE_USER_DATA_POLICY_URL =
+  'https://developers.google.com/terms/api-services-user-data-policy'
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
+
+// An outside link, opened through the OS rather than loaded in the app window.
+function PolicyLink({ href, dir, children }: { href: string; dir?: 'ltr'; children: ReactNode }) {
+  return (
+    <a
+      className="privacy-link"
+      href={href}
+      dir={dir}
+      onClick={(e) => {
+        e.preventDefault()
+        void openExternalUrl(href)
+      }}
+    >
+      {children}
+    </a>
+  )
+}
 
 interface Props {
   // true for Confirm, false for Decline; both answer the policy.
@@ -102,6 +123,20 @@ export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
             <li>
               <Trans>
                 Google Drive gets the summary PDF, and only if you turned Drive upload on.
+              </Trans>{' '}
+              <Trans>
+                FastStudy asks only for the{' '}
+                <bdi dir="ltr">
+                  <code className="privacy-scope">{DRIVE_SCOPE}</code>
+                </bdi>{' '}
+                permission, which gives it access only to the specific Google Drive files you use
+                with this app — in practice, the summary PDFs it uploads.
+              </Trans>{' '}
+              <Trans>
+                The Google access token is stored only on your computer and is never sent to
+                FastStudy's author, who receives no Google user data. You can disconnect Drive in
+                Settings, which deletes the token, or revoke access in your{' '}
+                <PolicyLink href={GOOGLE_PERMISSIONS_URL}>Google account permissions</PolicyLink>.
               </Trans>
             </li>
             <li>
@@ -115,6 +150,16 @@ export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
             <Trans>
               Each service handles the data under its own privacy policy, and your API keys are
               stored encrypted on this computer.
+            </Trans>
+          </p>
+          <p>
+            <Trans>
+              FastStudy's use and transfer of information received from Google APIs will adhere to
+              the{' '}
+              <PolicyLink href={GOOGLE_USER_DATA_POLICY_URL}>
+                Google API Services User Data Policy
+              </PolicyLink>
+              , including the Limited Use requirements.
             </Trans>
           </p>
 
@@ -150,17 +195,9 @@ export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
           <p>
             <Trans>
               Questions go to the project's GitHub issues page:{' '}
-              <a
-                className="privacy-link"
-                href={ISSUES_URL}
-                dir="ltr"
-                onClick={(e) => {
-                  e.preventDefault()
-                  void openExternalUrl(ISSUES_URL)
-                }}
-              >
+              <PolicyLink href={ISSUES_URL} dir="ltr">
                 github.com/ShalomPrinz/fast-study/issues
-              </a>
+              </PolicyLink>
             </Trans>
           </p>
         </div>

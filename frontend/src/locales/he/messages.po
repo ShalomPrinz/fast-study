@@ -114,7 +114,7 @@ msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:170
+#: src/features/downloads/DownloadsView.tsx:175
 msgid "{0} found"
 msgstr "נמצאו {0}"
 
@@ -142,15 +142,15 @@ msgstr "וידאו באורך {0}"
 msgid "{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
 msgstr "{challengeWindow, select, captcha {אתר האוניברסיטה מבקש ממך לפתור חידה. פתור אותה בחלון שנפתח, ואז נסה שוב.} ready {אתר האוניברסיטה בדק את החיבור, והבדיקה עברה. נסה שוב.} false {אתר האוניברסיטה חוסם בקשות אוטומטיות, ולא ניתן היה לפתוח חלון דפדפן כדי לעבור את החסימה. המתן כמה דקות ונסה שוב.} other {אתר האוניברסיטה חוסם כרגע בקשות אוטומטיות. המתן כמה דקות ונסה שוב.}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:33
+#: src/features/lectures/utils/materialIndicator.ts:31
 msgid "{count, plural, other {# materials were used}}"
 msgstr "{count, plural, one {חומר אחד שימש} two {# חומרים שימשו} other {# חומרים שימשו}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:45
+#: src/features/lectures/utils/materialIndicator.ts:43
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר אחד בלבד} two {הסיכום השתמש ב-{used} מתוך # חומרים בלבד} other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:22
+#: src/features/lectures/utils/materialIndicator.ts:20
 msgid "{count, plural, other {summary with # PDFs}}"
 msgstr "{count, plural, other {סיכום עם # PDFs}}"
 
@@ -235,7 +235,7 @@ msgstr "{model, select, undefined {מודל Gemini עמוס כרגע בגלל ב
 msgid "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
 msgstr "{more_count, plural, =0 {משהו בסיכום מנע את בניית ה-PDF.} one {משהו בסיכום מנע את בניית ה-PDF, ועוד בעיה אחת.} two {משהו בסיכום מנע את בניית ה-PDF, ועוד # בעיות.} other {משהו בסיכום מנע את בניית ה-PDF, ועוד # בעיות.}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:33
+#: src/features/lectures/utils/materialIndicator.ts:31
 msgid "{name} was used"
 msgstr "{name} שימש"
 
@@ -319,7 +319,7 @@ msgstr "הכלי {tool} חסר, ולכן חלקים ב-FastStudy שזקוקים 
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
-#: src/features/downloads/DownloadsView.tsx:98
+#: src/features/downloads/DownloadsView.tsx:103
 msgid "{withSource} courses with a source"
 msgstr "{withSource} קורסים עם מקור"
 
@@ -335,7 +335,7 @@ msgstr "+ הוספת קורס מ-Moodle"
 msgid "+ add source URL"
 msgstr "+ הוספת כתובת מקור"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:108
+#: src/features/settings/components/PrivacyPolicyModal.tsx:143
 msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 msgstr "<0>אתר האוניברסיטה</0> — גישה לתוכן הקורסים שנבחרו בלבד, והגישה מוגבלת לקריאת תוכן בלבד."
 
@@ -367,7 +367,7 @@ msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
-#: src/features/downloads/DownloadsView.tsx:101
+#: src/features/downloads/DownloadsView.tsx:106
 msgid "A one-time setup of about three minutes."
 msgstr "הגדרה חד־פעמית של כשלוש דקות."
 
@@ -593,7 +593,7 @@ msgstr "בחירת תיקייה"
 msgid "Choose your university above to connect its account."
 msgstr "בחר את האוניברסיטה שלך למעלה כדי לחבר את החשבון שלה."
 
-#: src/features/downloads/DownloadsView.tsx:133
+#: src/features/downloads/DownloadsView.tsx:138
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי להוריד מ-Moodle."
 
@@ -646,7 +646,7 @@ msgstr "לחץ על צילום מסך כדי להגדיל אותו."
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "לחץ על סמל חלק הפאזל שליד שורת הכתובת, ואז על הנעץ שליד FastStudy. הסמל שלה יישאר מעכשיו בסרגל הכלים."
 
-#: src/features/downloads/DownloadsView.tsx:174
+#: src/features/downloads/DownloadsView.tsx:179
 msgid "Close"
 msgstr "סגירה"
 
@@ -675,7 +675,7 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:180
+#: src/features/settings/components/PrivacyPolicyModal.tsx:217
 msgctxt "privacy policy"
 msgid "Confirm"
 msgstr "אישור"
@@ -711,7 +711,7 @@ msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפ
 msgid "connecting…"
 msgstr "מתחבר…"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:148
+#: src/features/settings/components/PrivacyPolicyModal.tsx:193
 msgid "Contact"
 msgstr "יצירת קשר"
 
@@ -846,7 +846,7 @@ msgstr "שם הקורס…"
 msgid "Course overview"
 msgstr "סקירת קורס"
 
-#: src/features/downloads/DownloadsView.tsx:142
+#: src/features/downloads/DownloadsView.tsx:147
 msgid "Course sources"
 msgstr "מקורות קורסים"
 
@@ -855,7 +855,7 @@ msgid "Course URL"
 msgstr "כתובת הקורס"
 
 #: src/App.tsx:37
-#: src/features/downloads/DownloadsView.tsx:149
+#: src/features/downloads/DownloadsView.tsx:154
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:238
 #: src/shared/utils/notFound.ts:35
@@ -882,7 +882,7 @@ msgstr "שעת ההרצה היומית"
 msgid "Data folder"
 msgstr "תיקיית נתונים"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:183
+#: src/features/settings/components/PrivacyPolicyModal.tsx:220
 msgctxt "privacy policy"
 msgid "Decline"
 msgstr "סירוב"
@@ -940,7 +940,7 @@ msgstr "הורדה מחדש"
 msgid "Download all {leaves}"
 msgstr "הורדת הכול ({leaves})"
 
-#: src/features/downloads/DownloadsView.tsx:104
+#: src/features/downloads/DownloadsView.tsx:109
 msgid "Download any open video on the internet"
 msgstr "הורד כל וידאו שפתוח לצפייה באינטרנט"
 
@@ -981,7 +981,7 @@ msgstr "מוריד עדכון…"
 msgid "Downloading…"
 msgstr "מוריד…"
 
-#: src/features/downloads/DownloadsView.tsx:81
+#: src/features/downloads/DownloadsView.tsx:86
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "הורדות"
@@ -1002,11 +1002,11 @@ msgstr "Drive מחובר"
 msgid "Drive folder name"
 msgstr "שם התיקייה ב-Drive"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:115
+#: src/features/settings/components/PrivacyPolicyModal.tsx:150
 msgid "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
 msgstr "כל שירות מטפל במידע לפי מדיניות הפרטיות שלו, ומפתחות ה-API שלך נשמרים מוצפנים במחשב הזה."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:144
+#: src/features/settings/components/PrivacyPolicyModal.tsx:189
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה חדשה."
 
@@ -1027,7 +1027,7 @@ msgstr "עריכת סיכום"
 msgid "Enter the zoom passcode for this recording"
 msgstr "הזן את קוד הגישה של Zoom להקלטה הזו"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:122
+#: src/features/settings/components/PrivacyPolicyModal.tsx:167
 #: src/features/settings/InitWall.tsx:287
 #: src/features/settings/SettingsView.tsx:405
 msgid "Error reports"
@@ -1119,6 +1119,10 @@ msgstr "שחזור הסיכום המקורי נכשל"
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
+#: src/features/settings/components/PrivacyPolicyModal.tsx:127
+msgid "FastStudy asks only for the <0><1>{DRIVE_SCOPE}</1></0> permission, which gives it access only to the specific Google Drive files you use with this app — in practice, the summary PDFs it uploads."
+msgstr "FastStudy מבקשת רק את ההרשאה <0><1>{DRIVE_SCOPE}</1></0>, שנותנת לה גישה רק לקובצי Google Drive המסוימים שבהם אתה משתמש עם האפליקציה הזו — בפועל, קובצי ה-PDF של הסיכומים שהיא מעלה."
+
 #: src/shared/i18n/serviceErrors.ts:182
 msgid "FastStudy can't save into {folder}. Choose another folder."
 msgstr "FastStudy לא יכולה לשמור בתיקייה {folder}. בחר תיקייה אחרת."
@@ -1131,15 +1135,15 @@ msgstr "FastStudy לא הצליחה לגשת לקבצים שלך. נסה שוב.
 msgid "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "FastStudy מוצאת את ההקלטות שלך באתר ה-Moodle של האוניברסיטה. אם היא לא ברשימה, בחר \"אחר…\" והדבק את כתובת ה-Moodle שלה."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:80
+#: src/features/settings/components/PrivacyPolicyModal.tsx:101
 msgid "FastStudy privacy policy"
 msgstr "מדיניות הפרטיות של FastStudy"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:83
+#: src/features/settings/components/PrivacyPolicyModal.tsx:104
 msgid "FastStudy runs on your computer. Your lectures, transcripts and summaries stay in the folder you chose. There are no accounts, ads or usage tracking, and nothing is sold."
 msgstr "FastStudy פועלת במחשב שלך. ההרצאות, התמלולים והסיכומים שלך נשארים בתיקייה שבחרת. אין חשבונות, פרסומות או מעקב אחר השימוש, ושום דבר לא נמכר."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:93
+#: src/features/settings/components/PrivacyPolicyModal.tsx:114
 msgid "FastStudy sends data only to services you set up yourself:"
 msgstr "FastStudy שולחת מידע רק לשירותים שהגדרת בעצמך:"
 
@@ -1154,6 +1158,10 @@ msgstr "FastStudy משתמשת ב-Google Chrome או ב-Microsoft Edge כדי ל
 #: src/features/settings/InitWall.tsx:216
 msgid "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "FastStudy משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
+
+#: src/features/settings/components/PrivacyPolicyModal.tsx:156
+msgid "FastStudy's use and transfer of information received from Google APIs will adhere to the <0>Google API Services User Data Policy</0>, including the Limited Use requirements."
+msgstr "השימוש של FastStudy במידע שמתקבל מ-Google APIs והעברתו יעמדו ב<0>מדיניות נתוני המשתמש של Google API Services</0>, כולל דרישות השימוש המוגבל (⁨Limited Use⁩)."
 
 #: src/features/downloads/components/RecordingRow.tsx:248
 msgid "File type"
@@ -1184,7 +1192,7 @@ msgstr "נמצא ה-Moodle של האוניברסיטה: <0>{0}</0>"
 msgid "Fully processed lectures"
 msgstr "הרצאות שהושלמו במלואן"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:100
+#: src/features/settings/components/PrivacyPolicyModal.tsx:121
 msgid "Gemini gets the transcript and any PDFs you add, to write the summary."
 msgstr "Gemini מקבל את התמלול וכל PDF שהוספת, כדי לכתוב את הסיכום."
 
@@ -1230,7 +1238,7 @@ msgstr "Google Drive"
 msgid "Google Drive can't be connected: a file FastStudy needs is missing from {path}."
 msgstr "לא ניתן לחבר את Google Drive: חסר קובץ ש-FastStudy זקוקה לו ב-{path}."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:103
+#: src/features/settings/components/PrivacyPolicyModal.tsx:124
 msgid "Google Drive gets the summary PDF, and only if you turned Drive upload on."
 msgstr "Google Drive מקבל את ה-PDF של הסיכום, ורק אם הפעלת העלאה ל-Drive."
 
@@ -1238,7 +1246,7 @@ msgstr "Google Drive מקבל את ה-PDF של הסיכום, ורק אם הפע�
 msgid "Google Drive is not connected. Connect it in Settings."
 msgstr "Google Drive לא מחובר. חבר אותו בהגדרות."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:97
+#: src/features/settings/components/PrivacyPolicyModal.tsx:118
 msgid "Groq gets a lecture's audio to transcribe it."
 msgstr "Groq מקבל את השמע של הרצאה כדי לתמלל אותו."
 
@@ -1386,7 +1394,7 @@ msgstr "טוען סיכומים…"
 msgid "Loading your courses…"
 msgstr "טוען את הקורסים שלך…"
 
-#: src/features/downloads/DownloadsView.tsx:107
+#: src/features/downloads/DownloadsView.tsx:112
 msgid "Loading your data…"
 msgstr "טוען את הנתונים שלך…"
 
@@ -1461,7 +1469,7 @@ msgstr "אין קורסים נוכחיים."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקיית נתונים. בחר אחת בהגדרות."
 
-#: src/features/downloads/DownloadsView.tsx:74
+#: src/features/downloads/DownloadsView.tsx:79
 msgid "No files of unknown type found."
 msgstr "לא נמצאו קבצים מסוג לא ידוע."
 
@@ -1481,11 +1489,11 @@ msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדו�
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
-#: src/features/lectures/utils/materialIndicator.ts:25
+#: src/features/lectures/utils/materialIndicator.ts:23
 msgid "no material found"
 msgstr "לא נמצא חומר"
 
-#: src/features/downloads/DownloadsView.tsx:73
+#: src/features/downloads/DownloadsView.tsx:78
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
@@ -1509,7 +1517,7 @@ msgstr "אין עדיין PDF — השתמש ב\"שמירה ועדכון PDF\" �
 msgid "No Recitations"
 msgstr "אין תרגולים"
 
-#: src/features/downloads/DownloadsView.tsx:72
+#: src/features/downloads/DownloadsView.tsx:77
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
@@ -1735,7 +1743,7 @@ msgstr "טעויות נפוצות"
 msgid "Privacy policy"
 msgstr "מדיניות פרטיות"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:151
+#: src/features/settings/components/PrivacyPolicyModal.tsx:196
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-GitHub: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
@@ -1797,7 +1805,7 @@ msgstr "תרגולים {0}-{1}"
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
-#: src/features/downloads/DownloadsView.tsx:168
+#: src/features/downloads/DownloadsView.tsx:173
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
@@ -1918,7 +1926,7 @@ msgstr "צילום מסך של {name}, שלב {step}"
 msgid "Screenshot of step {step}"
 msgstr "צילום מסך של שלב {step}"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:171
+#: src/features/settings/components/PrivacyPolicyModal.tsx:208
 msgid "Scroll to the end to confirm."
 msgstr "גלול עד הסוף כדי לאשר."
 
@@ -2065,11 +2073,11 @@ msgstr "סיכום"
 msgid "Summary copied — paste it in the chat with Ctrl+V."
 msgstr "הסיכום הועתק — הדבק אותו בצ'אט עם Ctrl+V."
 
-#: src/features/lectures/utils/materialIndicator.ts:39
+#: src/features/lectures/utils/materialIndicator.ts:37
 msgid "summary did not use {name}"
 msgstr "הסיכום לא השתמש ב-{name}"
 
-#: src/features/lectures/utils/materialIndicator.ts:39
+#: src/features/lectures/utils/materialIndicator.ts:37
 msgid "summary did not use any material"
 msgstr "הסיכום לא השתמש באף חומר"
 
@@ -2077,7 +2085,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
-#: src/features/lectures/utils/materialIndicator.ts:21
+#: src/features/lectures/utils/materialIndicator.ts:20
 msgid "summary with {name}"
 msgstr "סיכום עם {name}"
 
@@ -2199,6 +2207,10 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייווצרו מחדש:"
 
+#: src/features/settings/components/PrivacyPolicyModal.tsx:135
+msgid "The Google access token is stored only on your computer and is never sent to FastStudy's author, who receives no Google user data. You can disconnect Drive in Settings, which deletes the token, or revoke access in your <0>Google account permissions</0>."
+msgstr "אסימון הגישה של Google נשמר רק במחשב שלך ולעולם לא נשלח ליוצר FastStudy, שלא מקבל שום מידע של משתמשי Google. אפשר לנתק את Drive בהגדרות, וזה מוחק את האסימון, או לבטל את הגישה ב<0>הרשאות של חשבון Google</0>."
+
 #: src/features/downloads/components/AccountStatus.tsx:63
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
@@ -2314,7 +2326,7 @@ msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה ה
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:90
+#: src/features/settings/components/PrivacyPolicyModal.tsx:111
 msgid "Third-party services"
 msgstr "שירותי צד שלישי"
 
@@ -2454,7 +2466,7 @@ msgstr "לא נתמך"
 msgid "Updated. Restart to update"
 msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את העדכון"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:141
+#: src/features/settings/components/PrivacyPolicyModal.tsx:186
 msgid "Updates"
 msgstr "עדכונים"
 
@@ -2523,7 +2535,7 @@ msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:125
+#: src/features/settings/components/PrivacyPolicyModal.tsx:170
 msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 msgstr "כשמשהו נכשל, FastStudy שולחת דיווח ל-Sentry. הוא כולל את השגיאה, את המקום בקוד שבו היא קרתה, את גרסת האפליקציה, את מערכת ההפעלה שלך ואת סוף היומן של האפליקציה. <0>נתיבי תיקיות, טקסט בעברית, שמות המשתמש והמחשב ומפתחות API מוסרים לפני השליחה. מפתחות ה־API נשארים כל הזמן מוצפנים במחשב שלכם, נשלחים רק לשירות שהנפיק אותם, ולעולם לא נשלחים לאף שירות חיצוני אחר.</0> הדיווחים משמשים רק לתיקון באגים, ו-Sentry שומרת אותם לזמן מוגבל. אפשר לכבות אותם בכל עת בהגדרות, ומאותו רגע לא נשלח דבר נוסף."
 

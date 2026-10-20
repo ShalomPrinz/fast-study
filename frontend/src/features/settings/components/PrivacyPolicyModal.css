@@ -66,3 +66,9 @@
 .privacy-redaction {
   color: var(--danger);
 }
+
+/* The OAuth scope is a long unbroken URL; let it wrap rather than widen the list. */
+.privacy-scope {
+  font-size: var(--fs-meta);
+  overflow-wrap: anywhere;
+}
