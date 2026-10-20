@@ -563,14 +563,14 @@ def _has(files: dict, name: str) -> bool:
 
 
 def _present(files: dict, name: str) -> bool:
-    """On disk, or deleted by auto-remove: either way the step that produces it is done."""
+    """On disk, or reported removed by the tree: either way the step that produces it is done."""
 
     entry = files.get(name)
     return bool(entry and (entry.get("exists") or entry.get("removed")))
 
 
 def _mark_removed(files: dict, removed: list[str]) -> dict:
-    """Flag the names the database reports auto-removed (the tree's `removed`) on a files map."""
+    """Flag the names the tree's `removed` reports (absent, later artifact on disk) on a files map."""
 
     marked = dict(files)
     for name in removed:
@@ -579,7 +579,7 @@ def _mark_removed(files: dict, removed: list[str]) -> dict:
 
 
 def is_materials_only(files: dict, materials: list) -> bool:
-    """A lecture with material PDFs and no video.mp4 or audio.mp3, neither auto-removed — summarized
+    """A lecture with material PDFs and no video.mp4 or audio.mp3, neither removed — summarized
     from the PDFs alone."""
 
     return (
@@ -591,7 +591,7 @@ def is_materials_only(files: dict, materials: list) -> bool:
 
 def next_step(files: dict, materials_only: bool = False) -> Optional[str]:
     """The first enabled step whose output file is missing, or None once the final output
-    exists; a materials-only lecture skips audio and transcribe. An auto-removed output counts."""
+    exists; a materials-only lecture skips audio and transcribe. A removed output counts."""
 
     if _has(files, final_output()):
         return None
@@ -610,7 +610,7 @@ def summarize_ready(course: str, lecture: str, kind: str) -> bool:
 
 
 def _lecture_pending(files: dict) -> bool:
-    """A lecture is pending iff it has video.mp4 (or auto-removed it) but not the final output."""
+    """A lecture is pending iff it has video.mp4 (or removed it) but not the final output."""
 
     return _present(files, "video.mp4") and not _has(files, final_output())
 
@@ -733,15 +733,15 @@ async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
     files = {
         name: {"exists": exists} for name, exists in zip(names, results, strict=True)
     }
-    if not results[0] and not results[1]:
-        # Neither intermediate on disk: auto-removed or never there, which only the tree tells.
+    if not results[1] and results[2]:
+        # The one case where the tree's `removed` is non-empty: audio gone, transcript kept.
         removed = await asyncio.to_thread(_removed_names, course, lecture, kind)
         files = _mark_removed(files, removed)
     return files
 
 
 def _removed_names(course: str, lecture: str, kind: str) -> list[str]:
-    """The intermediates the database reports auto-removed from one lecture, off the tree."""
+    """The intermediates the tree reports removed from one lecture."""
 
     key = "recitations" if kind == "recitation" else "lectures"
     for node in db_client.get_tree():
@@ -1060,7 +1060,7 @@ async def apply_auto_remove() -> dict:
 
 async def _run_entry(entry: QueueEntry) -> bool:
     """Run one queue entry as far as its depth allows; True iff a full run stopped early on the
-    run-scoped block. An `audio` entry whose audio.mp3 exists or was auto-removed has nothing left."""
+    run-scoped block. An `audio` entry whose audio.mp3 exists or was removed has nothing left."""
 
     if entry.depth == "audio":
         files = await _fetch_files(entry.course, entry.lecture, entry.kind)

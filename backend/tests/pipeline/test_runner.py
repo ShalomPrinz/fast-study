@@ -2209,10 +2209,36 @@ class TestRemovedCountsAsPresent:
         assert runner._present(files, "audio.mp3")
         assert not runner._present(files, "video.mp4")
 
-    def test_fetch_files_skips_the_tree_while_video_is_on_disk(self):
+    def test_audio_deleted_after_transcribe_resumes_at_summarize(self):
+        """Video and transcript on disk, audio gone: the tree calls audio removed, not to redo."""
+
+        tree = [
+            {
+                "name": "C1",
+                "lectures": [{"name": "L1", "files": {}, "removed": ["audio.mp3"]}],
+                "recitations": [],
+            }
+        ]
+        with (
+            patch.object(
+                runner.db_client, "file_exists", _disk("video.mp4", "transcript.txt")
+            ),
+            patch.object(runner.db_client, "get_tree", return_value=tree),
+        ):
+            files = asyncio.run(runner._fetch_files("C1", "L1", "lecture"))
+        assert runner.next_step(files) == "summarize"
+
+    @pytest.mark.parametrize(
+        "on_disk", [("video.mp4",), (), ("video.mp4", "audio.mp3", "transcript.txt")]
+    )
+    def test_fetch_files_reads_the_tree_only_when_audio_is_gone_but_transcript_kept(
+        self, on_disk
+    ):
+        """Fresh video, materials-only (nothing on disk) and a full set all skip the tree walk."""
+
         tree = Mock(side_effect=AssertionError("tree read"))
         with (
-            patch.object(runner.db_client, "file_exists", _disk("video.mp4")),
+            patch.object(runner.db_client, "file_exists", _disk(*on_disk)),
             patch.object(runner.db_client, "get_tree", tree),
         ):
             asyncio.run(runner._fetch_files("C1", "L1", "lecture"))
@@ -2438,6 +2464,28 @@ def test_an_audio_entry_whose_audio_was_auto_removed_has_nothing_left(clean_queu
     with (
         patch.object(
             runner.db_client, "file_exists", _disk("transcript.txt", "summary.pdf")
+        ),
+        patch.object(runner.db_client, "get_tree", return_value=tree),
+        patch.object(runner, "run_step", step),
+    ):
+        assert asyncio.run(runner._run_entry(_entry("L1", "audio"))) is False
+    step.assert_not_called()
+
+
+def test_an_audio_entry_whose_audio_was_deleted_after_transcribe_has_nothing_left(
+    clean_queue,
+):
+    tree = [
+        {
+            "name": "C1",
+            "lectures": [{"name": "L1", "files": {}, "removed": ["audio.mp3"]}],
+            "recitations": [],
+        }
+    ]
+    step = AsyncMock()
+    with (
+        patch.object(
+            runner.db_client, "file_exists", _disk("video.mp4", "transcript.txt")
         ),
         patch.object(runner.db_client, "get_tree", return_value=tree),
         patch.object(runner, "run_step", step),

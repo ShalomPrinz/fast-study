@@ -125,8 +125,8 @@ def delete_file(course: str, lecture: str, kind: str, filename: str) -> None:
 
 
 def remove_files(course: str, lecture: str, kind: str, names: list[str]) -> None:
-    """Delete removable intermediates and have the database record them, all or nothing; an
-    absent name is a no-op. Raises DbClientError (`file_locked` when one is open elsewhere)."""
+    """Delete removable intermediates, all or nothing; an absent name is a no-op. Raises
+    DbClientError (`file_locked` when one is open elsewhere)."""
 
     r = _request(
         "POST",
