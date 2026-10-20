@@ -138,6 +138,23 @@ async function buildHarness() {
 
   const video = path.join(paths.fixtures, 'video.mp4');
   if (!fs.existsSync(video)) await run('ffmpeg', [...VIDEO_ARGS, video]);
+  // The clip's audio as the backend's audio step extracts it, so a transcribed seed holds both.
+  const audio = path.join(paths.fixtures, 'audio.mp3');
+  if (!fs.existsSync(audio)) {
+    await run('ffmpeg', [
+      '-y',
+      '-i',
+      video,
+      '-vn',
+      '-ar',
+      '16000',
+      '-ac',
+      '1',
+      '-b:a',
+      '32k',
+      audio,
+    ]);
+  }
 
   if (!fs.existsSync(path.join(paths.tls, 'cert.pem'))) {
     await run('openssl', [

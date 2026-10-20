@@ -20,7 +20,7 @@ const driveUrl = () => `${PROVIDERS}/drive/view/hunt-seeded`;
 
 // Per course: `[lecture, files, kind]`, files being fixture names in upload order. `material` adds
 // the handout as a material PDF; `summary.pdf` is the handout too, so a lecture can look finished
-// without a render.
+// without a render. A transcribed lecture holds `audio.mp3`, as a run leaves it, or it reads removed.
 export const FLOWS = {
   'hb-mgmt': {
     lectures: [
@@ -40,18 +40,26 @@ export const FLOWS = {
   },
   'hb-edit': {
     lectures: [
-      ['שיעור 1', ['video.mp4', 'transcript.txt', 'summary.md']],
-      ['שיעור 2', ['video.mp4', 'transcript.txt', 'summary.md']],
-      ['Lecture 3', ['video.mp4', 'transcript.txt', 'summary.md']],
+      ['שיעור 1', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
+      ['שיעור 2', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
+      ['Lecture 3', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
     ],
   },
   'hb-nav': {
     lectures: [
       [
         'שיעור 1',
-        ['video.mp4', 'transcript.txt', 'summary.md', 'summary.pdf', 'drive_url.txt', 'material'],
+        [
+          'video.mp4',
+          'audio.mp3',
+          'transcript.txt',
+          'summary.md',
+          'summary.pdf',
+          'drive_url.txt',
+          'material',
+        ],
       ],
-      ['שיעור 2', ['video.mp4', 'transcript.txt', 'summary.md', 'material']],
+      ['שיעור 2', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'material']],
       ['שיעור 3', []],
     ],
   },
@@ -59,10 +67,10 @@ export const FLOWS = {
     // One lecture per stage, so a step can start anywhere; two video-only for queue + lock.
     lectures: [
       ['שיעור 1', ['video.mp4']],
-      ['שיעור 2', ['video.mp4', 'transcript.txt']],
-      ['שיעור 3', ['video.mp4', 'transcript.txt', 'summary.md']],
+      ['שיעור 2', ['video.mp4', 'audio.mp3', 'transcript.txt']],
+      ['שיעור 3', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
       ['שיעור 4', ['video.mp4']],
-      ['שיעור 5', ['video.mp4', 'transcript.txt', 'summary.md', 'summary.pdf']],
+      ['שיעור 5', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']],
       ['שיעור 6', []],
       ['תרגול 1', ['video.mp4'], 'recitation'],
     ],
@@ -70,8 +78,8 @@ export const FLOWS = {
   'hb-fail': {
     lectures: [
       ['שיעור 1', ['video.mp4']],
-      ['שיעור 2', ['video.mp4', 'transcript.txt']],
-      ['שיעור 3', ['video.mp4', 'transcript.txt', 'summary.md']],
+      ['שיעור 2', ['video.mp4', 'audio.mp3', 'transcript.txt']],
+      ['שיעור 3', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
       ['שיעור 4', ['video.mp4']],
     ],
   },
@@ -80,6 +88,7 @@ export const FLOWS = {
 
 const TYPES = {
   'video.mp4': 'video/mp4',
+  'audio.mp3': 'audio/mpeg',
   'transcript.txt': 'text/plain',
   'summary.md': 'text/markdown',
   'summary.pdf': 'application/pdf',
@@ -90,6 +99,7 @@ export async function seed(paths) {
   const fixture = (name) => fs.readFileSync(path.join(paths.fixtures, name));
   const content = {
     'video.mp4': fixture('video.mp4'),
+    'audio.mp3': fixture('audio.mp3'),
     'transcript.txt': fixture('transcript.txt'),
     'summary.md': fixture('summary.md'),
     'summary.pdf': fixture('handout.pdf'),

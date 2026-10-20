@@ -29,6 +29,8 @@ export const SETTINGS = {
   NIGHTLY_RUN: ['nightly_run', 'bool'],
   NIGHTLY_HOUR: ['nightly_hour', 'int'],
   MOODLE_SITE: ['moodle_site', 'string'],
+  AUTO_REMOVE: ['auto_remove', 'string'],
+  AUTO_REMOVE_AFTER: ['auto_remove_after', 'string'],
 };
 
 /** The model the running backend offers first — read live, so the baseline never names one it lacks. */
@@ -48,6 +50,10 @@ export function baselineEnv(paths, geminiModel) {
     // Off: a cron firing mid-sweep would attribute its runs to whatever the agent was doing.
     NIGHTLY_RUN: 'false',
     NIGHTLY_HOUR: '3',
+    // Off, so a rule a flow saved never deletes the next flow's seeded video or audio.
+    AUTO_REMOVE: 'off',
+    // Empty reads as unset in both the store and the backend; omitted, the backend keeps the last value.
+    AUTO_REMOVE_AFTER: '',
     // Set, or the first-run wall would block every run until a site is picked.
     MOODLE_SITE: FAKE_MOODLE_SITE,
   };

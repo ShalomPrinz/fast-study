@@ -70,19 +70,20 @@ baseline again.
 ## The baseline, and one course per flow
 
 A seed wipes both scratch roots and restores everything a flow can change: the scratch `.env` (fake
-keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, nightly off at hour 3,
+keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, `AUTO_REMOVE=off`, nightly off at hour 3,
 `MOODLE_SITE=https://lemida.biu.ac.il`) pushed to the running backend, database and auto-downloader through
 `POST /config`, the Moodle token (after
 `/auth/disconnect`, the only thing that clears the auto-downloader's in-memory "expired"), both
 fakes' modes, the fake Drive store, and Drive **connected**. It then seeds, through `database/`'s
-routes, one course per flow so parallel agents on one stack never share data. The courses are
+routes, one course per flow so parallel agents on one stack never share data. A transcribed seed
+holds `audio.mp3` too, as a run leaves it, so no seeded file reads as removed. The courses are
 named for `/hunt-bugs`' flows, and any task can use them as ready-made fixtures:
 
 | Course         | For                           | What it holds                                                                 |
 | -------------- | ----------------------------- | ----------------------------------------------------------------------------- |
 | `hb-mgmt`      | course and lecture management | a video lecture, `שיעור 10` / `שיעור 10 - המשך`, a very long name, a Latin name, a recitation |
 | `hb-dl`        | downloads                     | the fake site as `source_url`; `שיעור 1` has a video, so recording 1 reads as downloaded |
-| `hb-edit`      | editor and PDF                | three lectures with video, transcript and `summary.md`                        |
+| `hb-edit`      | editor and PDF                | three lectures with video, audio, transcript and `summary.md`                 |
 | `hb-nav`       | search, materials, links      | `שיעור 1` finished (fixture `summary.pdf`, `drive_url.txt`, a material), `שיעור 2` summarised with a material, one empty |
 | `hb-pipeline`  | pipeline and course overview  | one lecture per stage, two video-only for queue + lock, a recitation          |
 | `hb-fail`      | failure surfacing             | video-only, transcribed and summarised lectures to fail at each step          |
