@@ -5,11 +5,12 @@
 //   node .claude/harness/hb.mjs [--harness DIR] <command> [args…]   (or HARNESS_DIR=DIR)
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { ACTIONS, actionRequest } from './lib/act.mjs';
 import { DATABASE, bindPorts, bytes, call, saveSettings } from './lib/api.mjs';
 import { markSeeded, removeLecture, reseed, settingsPatch, unwall, wall } from './lib/baseline.mjs';
 import { serveBefore } from './lib/before.mjs';
-import { SELFCHECK_TAG, harnessPaths, readPorts } from './lib/env.mjs';
+import { HARNESS_ROOT, SELFCHECK_TAG, harnessPaths, readPorts } from './lib/env.mjs';
 import { holdMoodle, releaseMoodle } from './lib/moodle-busy.mjs';
 import { kill, restart, startBrowser } from './lib/stack.mjs';
 import { diff, readLocks, snapshot } from './lib/state.mjs';
@@ -200,6 +201,27 @@ const COMMANDS = {
         await releaseMoodle();
         console.log('moodle free: the held call answered and the cooldown ran out');
       } else throw new Error('usage: moodle-busy on|off');
+    },
+  },
+  download: {
+    usage: 'download <course> <title> [--browser TAG]',
+    summary: "load a course's recordings in Downloads and press one row's Download, found by title",
+    async run(paths, args) {
+      const at = args.indexOf('--browser');
+      const tag = at === -1 ? 'main' : args.splice(at, 2)[1];
+      const [course, title] = args;
+      if (!course || !title || !tag) throw new Error(`usage: ${COMMANDS.download.usage}`);
+      const port = readPorts(paths)[`browser-${tag}`];
+      if (!port)
+        throw new Error(`no browser session "${tag}" — start one with \`hb browser ${tag}\``);
+      // The session runs the same helper the specs import, so both drive the page alike.
+      const helper = pathToFileURL(path.join(HARNESS_ROOT, 'lib', 'downloads.mjs')).href;
+      const body = `const { downloadRecording } = await import(${JSON.stringify(helper)});
+await downloadRecording(page, ${JSON.stringify(course)}, ${JSON.stringify(title)});
+return ${JSON.stringify(`pressed Download on "${title}" in ${course}`)};`;
+      const response = await fetch(`http://127.0.0.1:${port}/eval`, { method: 'POST', body });
+      process.stdout.write(await response.text());
+      if (!response.ok) process.exitCode = 1;
     },
   },
   'forget-probes': {

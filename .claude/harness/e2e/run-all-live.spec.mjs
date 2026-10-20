@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { BACKEND, DATABASE, bytes, call, json, saveSettings } from '../lib/api.mjs';
 import { FAKE_COURSE_URL } from '../lib/env.mjs';
+import { loadRecordings } from '../lib/downloads.mjs';
 import { expect, harness, providers, reseed, reset, site, test } from './fixtures.mjs';
 
 // The fake site's course, alone in the empty scratch root so "Run these now" queues only its lectures.
@@ -57,12 +58,7 @@ test.afterEach(async () => {
 });
 
 async function download(page, { recording, lecture, filter }) {
-  await page.goto('/downloads');
-  await page.locator('.downloads-tabs [role=tab]').first().click();
-  const source = page.locator('.source-row').filter({
-    has: page.locator('.source-row-name', { hasText: new RegExp(`^${COURSE}$`) }),
-  });
-  await source.locator('.source-row-actions .btn').click();
+  await loadRecordings(page, COURSE);
   await page.locator('.mode-toggle-btn', { hasText: new RegExp(`^${filter}`) }).click();
   const card = page.locator('.recording-card').filter({
     has: page.locator('.recording-title', { hasText: recording }),

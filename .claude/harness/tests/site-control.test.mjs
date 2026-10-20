@@ -116,6 +116,31 @@ describe('solve', () => {
   });
 });
 
+describe('clearance', () => {
+  test('revoke makes every handed-out clearance stale and disarms the solve', () => {
+    const site = createSiteControl();
+    const before = site.clearance();
+    assert.equal(site.clearance(), before);
+    site.control({ solve: true });
+    site.control({ revoke: true });
+    assert.notEqual(site.clearance(), before);
+    assert.equal(site.takeSolve(), false);
+  });
+
+  test('a revoke then a solve in one body leaves the solve armed', () => {
+    const site = createSiteControl();
+    site.control({ revoke: true, solve: true });
+    assert.equal(site.takeSolve(), true);
+  });
+
+  test('reset revokes too', () => {
+    const site = createSiteControl();
+    const before = site.clearance();
+    site.control({ reset: true });
+    assert.notEqual(site.clearance(), before);
+  });
+});
+
 describe('tool', () => {
   test('a /die/ URL dies once, then downloads', () => {
     const site = createSiteControl();

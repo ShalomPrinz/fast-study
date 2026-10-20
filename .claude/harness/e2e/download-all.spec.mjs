@@ -2,6 +2,7 @@
 // zoom share through its passcode prompt included — lands every reachable row and sums the run up.
 import { DATABASE, call, saveSettings } from '../lib/api.mjs';
 import { ZOOM_PASSCODE, ZOOM_ROW } from '../lib/env.mjs';
+import { loadRecordings } from '../lib/downloads.mjs';
 import { expect, reseed, reset, site, test, treeLecture } from './fixtures.mjs';
 
 const COURSE = 'hb-dl';
@@ -31,12 +32,7 @@ test("a section's Download all lands every reachable recording", async ({ page }
   await site({ downloadMs: 500 });
   const seededMtime = (await videoOf(SEEDED)).mtime;
 
-  await page.goto('/downloads');
-  await page.locator('.downloads-tabs [role=tab]').first().click();
-  const source = page.locator('.source-row').filter({
-    has: page.locator('.source-row-name', { hasText: new RegExp(`^${COURSE}$`) }),
-  });
-  await source.locator('.source-row-actions .btn').click();
+  await loadRecordings(page, COURSE);
 
   const section = page.locator('.recordings-section').filter({
     has: page.locator('.recordings-section-title', { hasText: new RegExp(`^${SECTION}$`) }),

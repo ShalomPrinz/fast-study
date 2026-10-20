@@ -36,6 +36,7 @@ hb click 'text=…'
 hb fill 'input[placeholder="Course name…"]' 'קורס'
 hb press Enter --shot saved              # click, fill and press take --shot NAME; all take --browser TAG
 hb shot dialog --before --setup "await page.click('text=…')"  # en+he, before+after → evidence/main-dialog-[before-]<lang>.png
+hb download hb-dl 'הקלטה 4 — גרפים'      # Downloads → load the course → press that row's Download
 hb eval <<'JS'                           # JS on stdin (or as one argument), given page and context
 return page.url()
 JS
@@ -56,7 +57,9 @@ with the console errors and failed requests the command caused. Service logs are
 The seeded `hb-*` courses are ready-made fixtures (the README's table says what each holds). Force a
 failure with `curl -s $(hb url providers)/control …` or `$(hb url site)/control …`, or with
 `hb lock` (the file refuses writes with `423 file_locked`, its lecture and course folders refuse a
-rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture`. Restart one service after a code change with
+rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture`. The site's
+`radware` mode walls Moodle until a captcha is solved with `{"solve":true}`; `{"revoke":true}` makes
+the next call meet a fresh captcha, with no reseed. Restart one service after a code change with
 `node .claude/harness/setup.mjs --harness $HARNESS_DIR --restart <service>`. Put the baseline back
 with `hb reseed`.
 
