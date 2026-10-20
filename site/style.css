@@ -665,3 +665,8 @@ details p {
     justify-content: center;
   }
 }
+
+/* Keeps a short bracketed term, e.g. "(Limited Use)" inside Hebrew, on one line. */
+.nowrap {
+  white-space: nowrap;
+}

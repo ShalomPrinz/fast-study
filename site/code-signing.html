@@ -109,10 +109,28 @@
               <li>
                 <span class="he"
                   ><b>Google Drive</b> מקבל את ה־PDF של הסיכום, ורק אם הפעלתם העלאה ל־Drive.
+                  FastStudy מבקשת רק את ההרשאה
+                  <bdi lang="en" dir="ltr"
+                    ><code>https://www.googleapis.com/auth/<wbr />drive.file</code></bdi
+                  >, שנותנת לה גישה רק לקובצי Google Drive המסוימים שבהם אתם משתמשים עם האפליקציה
+                  הזו — בפועל, קובצי ה־PDF של הסיכומים שהיא מעלה. אסימון הגישה של Google נשמר רק
+                  במחשב שלכם ולעולם לא נשלח ליוצר FastStudy, שלא מקבל שום מידע של משתמשי Google.
+                  אפשר לנתק את Drive בהגדרות, וזה מוחק את האסימון, או לבטל את הגישה ב<a
+                    href="https://myaccount.google.com/permissions"
+                    >הרשאות של חשבון Google</a
+                  >.
                   <a href="https://policies.google.com/privacy">מדיניות הפרטיות של Google</a></span
                 >
                 <span class="en"
                   ><b>Google Drive</b> gets the summary PDF, and only if you turned Drive upload on.
+                  FastStudy asks only for the
+                  <code>https://www.googleapis.com/auth/<wbr />drive.file</code> permission, which
+                  gives it access only to the specific Google Drive files you use with this app — in
+                  practice, the summary PDFs it uploads. The Google access token is stored only on
+                  your computer and is never sent to FastStudy's author, who receives no Google user
+                  data. You can disconnect Drive in Settings, which deletes the token, or revoke
+                  access in your
+                  <a href="https://myaccount.google.com/permissions">Google account permissions</a>.
                   <a href="https://policies.google.com/privacy">Google's privacy policy</a></span
                 >
               </li>
@@ -135,6 +153,22 @@
               <span class="en"
                 >Each service handles the data under its own privacy policy, and your API keys are
                 stored encrypted on this computer.</span
+              >
+            </p>
+            <p>
+              <span class="he"
+                >השימוש של FastStudy במידע שמתקבל מ־Google APIs והעברתו יעמדו ב<a
+                  href="https://developers.google.com/terms/api-services-user-data-policy"
+                  >מדיניות נתוני המשתמש של Google API Services</a
+                >, כולל דרישות השימוש המוגבל
+                <span class="nowrap">(<bdi lang="en">Limited Use</bdi>)</span>.</span
+              >
+              <span class="en"
+                >FastStudy's use and transfer of information received from Google APIs will adhere
+                to the
+                <a href="https://developers.google.com/terms/api-services-user-data-policy"
+                  >Google API Services User Data Policy</a
+                >, including the Limited Use requirements.</span
               >
             </p>
 
