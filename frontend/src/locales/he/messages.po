@@ -146,13 +146,13 @@ msgstr "{challengeWindow, select, captcha {אתר האוניברסיטה מבק�
 msgid "{count, plural, other {# materials were used}}"
 msgstr "{count, plural, one {חומר אחד שימש} two {# חומרים שימשו} other {# חומרים שימשו}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:22
-msgid "{count, plural, other {# materials will be used}}"
-msgstr "{count, plural, one {חומר אחד ישמש} two {# חומרים ישמשו} other {# חומרים ישמשו}}"
-
 #: src/features/lectures/utils/materialIndicator.ts:45
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר אחד בלבד} two {הסיכום השתמש ב-{used} מתוך # חומרים בלבד} other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
+
+#: src/features/lectures/utils/materialIndicator.ts:22
+msgid "{count, plural, other {summary with # PDFs}}"
+msgstr "{count, plural, other {סיכום עם # PDFs}}"
 
 #: src/features/lectures/MainView.tsx:301
 msgid "{doneCount} of {stageCount} complete"

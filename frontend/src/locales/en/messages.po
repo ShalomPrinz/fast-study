@@ -146,13 +146,13 @@ msgstr "{challengeWindow, select, captcha {The university site wants you to solv
 msgid "{count, plural, other {# materials were used}}"
 msgstr "{count, plural, other {# materials were used}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:22
-msgid "{count, plural, other {# materials will be used}}"
-msgstr "{count, plural, other {# materials will be used}}"
-
 #: src/features/lectures/utils/materialIndicator.ts:45
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, other {summary used only {used} of # materials}}"
+
+#: src/features/lectures/utils/materialIndicator.ts:22
+msgid "{count, plural, other {summary with # PDFs}}"
+msgstr "{count, plural, other {summary with # PDFs}}"
 
 #: src/features/lectures/MainView.tsx:301
 msgid "{doneCount} of {stageCount} complete"

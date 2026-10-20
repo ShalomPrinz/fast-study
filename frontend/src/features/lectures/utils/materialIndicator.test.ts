@@ -19,7 +19,7 @@ describe('materialIndicator', () => {
 
   it('counts several materials instead of naming them', () => {
     const materials = [material('material.pdf', 100), material('material.2.pdf', 120)]
-    expect(materialIndicator(materials, false, null)!.text).toBe('2 materials will be used')
+    expect(materialIndicator(materials, false, null)!.text).toBe('summary with 2 PDFs')
     expect(materialIndicator(materials, true, 200)!.text).toBe('2 materials were used')
   })
 

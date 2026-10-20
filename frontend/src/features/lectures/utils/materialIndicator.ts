@@ -17,9 +17,7 @@ export function materialIndicator(
     return count
       ? {
           text:
-            count === 1
-              ? t`summary with ${name}`
-              : plural(count, { other: '# materials will be used' }),
+            count === 1 ? t`summary with ${name}` : plural(count, { other: 'summary with # PDFs' }),
           cls: 'material-indicator--will-use',
         }
       : { text: t`no material found`, cls: 'material-indicator--missing' }

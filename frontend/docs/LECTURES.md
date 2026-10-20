@@ -48,8 +48,8 @@ A lecture holds any number of `material[.N].pdf`, carried on the tree entry as `
 They are summarize inputs, not stages, so they render as chips under their own heading, opened and deleted
 **by name**; a delete never renames the rest, so indices gain gaps and held URLs stay valid.
 
-`materialIndicator` drives the Summary row's chip: before a summary, `no material found` / `will be
-used`; after, each material's mtime against the summary's picks all used (green), none used (grey), or
+`materialIndicator` drives the Summary row's chip: before a summary, `no material found`, `summary with
+<name>` for one material or `summary with # PDFs` for several; after, each material's mtime against the summary's picks all used (green), none used (grey), or
 `N of M` (amber), and a summary made with no materials gets no chip. **mtime is a proxy for "was fed to
 the model", not a record** — re-downloading an unchanged PDF reads as unused. Exactness would need the
 backend to persist each run's inputs.
