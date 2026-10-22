@@ -124,6 +124,11 @@
   overflow: hidden;
 }
 
+/* PDF stays on the left in every locale, so Hebrew puts the editor on its reading-start side. */
+:root[dir='rtl'] .edit-panels {
+  flex-direction: row-reverse;
+}
+
 .edit-panel {
   flex: 1;
   min-width: 0;
@@ -134,7 +139,7 @@
 
 /* Kept after `.edit-panel`: both apply to `edit-panel edit-panel--pdf`. */
 .edit-panel--pdf {
-  border-inline-end: 1px solid var(--line);
+  border-right: 1px solid var(--line);
 }
 
 /* The only cue that the buffer differs from disk, so it carries the pane header's weight. */

@@ -49,7 +49,7 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 - Derive steps from `features/lectures/constants/pipeline.ts`; build URLs with `shared/utils/url.ts`;
   route patterns come from `shared/utils/routes.ts`.
 - Every user-facing string goes through a Lingui macro, every direction-sensitive CSS declaration is a
-  logical property, and an input with suggestions takes the UI direction, not `dir="auto"` ([docs/I18N.md](docs/I18N.md)).
+  logical property bar the exceptions listed there, and an input with suggestions takes the UI direction, not `dir="auto"` ([docs/I18N.md](docs/I18N.md)).
 - A service failure renders through `shared/i18n/serviceErrors.ts` and `ServiceError`, never its raw
   `message`; adding a failure means a row there and one in [../docs/ERROR-CODES.md](../docs/ERROR-CODES.md),
   which `shared/i18n/errorCodeDrift.test.ts` holds in step with what the services emit.
