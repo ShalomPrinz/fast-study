@@ -7,6 +7,7 @@ import { statePath } from '@faststudy/runtime';
 import { launchPersistentBrowser } from '../browser/browserLaunch.js';
 import { resolveUserAgent } from '../browser/browserChannel.js';
 import { moodleGate, enterMoodle } from './gate.js';
+import { pageUnreachable } from '../lib/errors.js';
 
 // Chrome clamps it to about -13107, still far off-screen; the flag beats the profile's saved position.
 const OFF_SCREEN = { left: -32000, top: -32000 };
@@ -182,16 +183,31 @@ class ChallengeWindow {
     init = {},
     { lost = () => new Error('the challenge window lost the body') } = {},
   ) {
-    const head = await this._evaluate(
-      pageFetch,
-      {
-        url: String(url),
-        method: init.method ?? 'GET',
-        headers: pageHeaders(init.headers),
-        body: pageBody(init.body),
-      },
-      init.signal,
-    );
+    const method = init.method ?? 'GET';
+    const href = new URL(String(url)).href;
+    // Chrome's reason for this call's failure: the page only ever sees `TypeError: Failed to fetch`.
+    let errorText = null;
+    const onFailed = (req) => {
+      if (req.url() === href && req.method() === method) errorText = req.failure()?.errorText;
+    };
+    this.page.on('requestfailed', onFailed);
+    let head;
+    try {
+      head = await this._evaluate(
+        pageFetch,
+        { url: String(url), method, headers: pageHeaders(init.headers), body: pageBody(init.body) },
+        init.signal,
+      );
+    } catch (err) {
+      // A closed window fails its fetches too; that stays the caller's gone() case.
+      if (this.gone(err)) throw err;
+      if (/TypeError: Failed to fetch/.test(err?.message)) throw pageUnreachable(href, errorText);
+      // A caller's AbortSignal.timeout: stamped as fetchUpstream does, so it maps to site_unreachable.
+      if (err?.name === 'TimeoutError') err.host = new URL(href).hostname;
+      throw err;
+    } finally {
+      this.page.off('requestfailed', onFailed);
+    }
     const headers = new Headers();
     for (const [name, value] of head.headers) {
       // The page hands over a decoded body, so the wire's encoding and length no longer apply.

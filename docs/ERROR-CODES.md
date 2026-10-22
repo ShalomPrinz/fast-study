@@ -375,9 +375,11 @@ from any other path (a pasted link, a link probe) leaves it absent. The videostr
 WS call, so its block carries it.
 
 `site_unreachable` is a 503 with no `status`, so the SPA never mistakes it for a block. It comes from a fetch
-to an upstream host that failed in the network: a connect timeout, a DNS miss or a reset. It answers `/list`,
+to an upstream host that failed in the network (a connect timeout, a DNS miss or a reset), from Node or
+through the challenge window's page. It answers `/list`,
 `/courses`, `/courses/check` and `/resolve` (Moodle WS and Google Drive). `host` is that request's hostname,
-and `detail` is undici's cause verbatim. It is not reported to Sentry, since an unreachable site is not a bug.
+and `detail` is undici's cause verbatim, or through the page only Chrome's `ERR_*` code (`null` when
+none was reported); a timeout's `detail` is its own message on either route. It is not reported to Sentry, since an unreachable site is not a bug.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`
