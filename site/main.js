@@ -39,3 +39,34 @@
     remember(next);
   });
 })();
+
+// The journey carousel: one step at a time, wrapping both ways; "next" follows the reading direction.
+(function () {
+  const carousel = document.querySelector('.journey-carousel');
+  if (!carousel) return;
+  const list = carousel.querySelector('.journey');
+  const slides = list.querySelectorAll(':scope > li');
+  const counters = carousel.querySelectorAll('[data-journey-at]');
+  let at = 0;
+
+  function show(i) {
+    at = (i + slides.length) % slides.length;
+    slides.forEach((li, n) => li.classList.toggle('is-active', n === at));
+    counters.forEach((c) => (c.textContent = at + 1));
+  }
+
+  carousel
+    .querySelectorAll('[data-step]')
+    .forEach((btn) => btn.addEventListener('click', () => show(at + Number(btn.dataset.step))));
+  carousel.addEventListener('keydown', (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const rtl = document.documentElement.dir === 'rtl';
+    show(at + ((e.key === 'ArrowRight') !== rtl ? 1 : -1));
+    e.preventDefault();
+  });
+
+  list.dataset.carousel = '';
+  carousel.querySelector('.journey-nav').hidden = false;
+  show(0);
+})();

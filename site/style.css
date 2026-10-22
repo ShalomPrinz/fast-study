@@ -427,7 +427,7 @@ p {
   stroke-linejoin: round;
 }
 
-/* Lecture journey: one lecture's four numbered screenshots, two per row. */
+/* Lecture journey: one lecture's four numbered steps, one full-width slide at a time once main.js runs. */
 .section-lead {
   color: var(--text-2);
   font-size: 17px;
@@ -435,13 +435,36 @@ p {
   margin-block: -12px 28px;
 }
 
+.journey-carousel {
+  border-radius: 12px;
+}
+
+.journey-carousel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 8px;
+}
+
 .journey {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  gap: 40px;
+}
+
+/* Every slide shares one grid cell, so the tallest sets the height and switching never shifts the page. */
+.journey[data-carousel] > li {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+}
+
+.journey[data-carousel] > li.is-active {
+  visibility: visible;
+  opacity: 1;
 }
 
 .journey li {
@@ -468,6 +491,7 @@ p {
   font-size: 15px;
 }
 
+/* The caption grows so every slide's image sits at the same height. */
 .journey p {
   color: var(--text-2);
   font-size: 15px;
@@ -477,9 +501,73 @@ p {
 }
 
 .journey img {
+  width: 100%;
   border-radius: 10px;
   border: 1px solid var(--line);
   box-shadow: var(--shadow-lg);
+}
+
+.journey-nav:not([hidden]) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-block-start: 22px;
+}
+
+.journey-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-line);
+  background: var(--surface);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.journey-arrow:hover {
+  background: var(--accent-soft);
+}
+
+.journey-arrow svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The chevrons are drawn for LTR; in Hebrew "next" points left, the reading direction. */
+:root[dir='rtl'] .journey-arrow svg {
+  transform: scaleX(-1);
+}
+
+.journey-count {
+  min-width: 7ch;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey[data-carousel] > li {
+    transition: none;
+  }
 }
 
 /* Universities and needs */
@@ -699,8 +787,7 @@ details p {
     padding-block: 32px 44px;
   }
   .features,
-  .steps--four,
-  .journey {
+  .steps--four {
     grid-template-columns: 1fr;
   }
   .journey p {
