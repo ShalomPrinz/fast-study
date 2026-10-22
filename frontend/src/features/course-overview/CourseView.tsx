@@ -19,7 +19,7 @@ import {
 } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { branchStatus, extractorTitle } from '@/features/course-overview/constants/overview'
 import GenerateAllButton from '@/features/course-overview/components/GenerateAllButton'
-import CurrentStudyButton from '@/features/course-overview/components/CurrentStudyButton'
+import CurrentStudy from '@/features/course-overview/components/CurrentStudy'
 import ExtractorRow from '@/features/course-overview/components/ExtractorRow'
 import '@/styles/spinner.css'
 import '@/styles/panel.css'
@@ -100,10 +100,7 @@ function CourseOverviewBody() {
 
       <div className="page-body">
         <div className="page-column">
-          <div className="current-study-row">
-            <CurrentStudyButton course={course} kind="lecture" items={lectures} />
-            <CurrentStudyButton course={course} kind="recitation" items={recitations} />
-          </div>
+          <CurrentStudy course={course} lectures={lectures} recitations={recitations} />
 
           <div className="section-head">
             <h2 className="section-title">

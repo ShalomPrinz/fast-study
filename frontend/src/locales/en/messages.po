@@ -211,7 +211,7 @@ msgid "{file} was not found."
 msgstr "{file} was not found."
 
 #. placeholder {0}: extractors.length
-#: src/features/course-overview/CourseView.tsx:114
+#: src/features/course-overview/CourseView.tsx:110
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
@@ -445,11 +445,11 @@ msgstr "All Generated"
 msgid "All Lectures"
 msgstr "All Lectures"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:38
+#: src/features/course-overview/components/CurrentStudy.tsx:26
 msgid "All lectures done"
 msgstr "All lectures done"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:37
+#: src/features/course-overview/components/CurrentStudy.tsx:31
 msgid "All recitations done"
 msgstr "All recitations done"
 
@@ -902,7 +902,7 @@ msgstr "Course \"{course}\" doesn't exist."
 msgid "Course name…"
 msgstr "Course name…"
 
-#: src/features/course-overview/CourseView.tsx:111
+#: src/features/course-overview/CourseView.tsx:107
 msgid "Course overview"
 msgstr "Course overview"
 
@@ -930,7 +930,7 @@ msgstr "Create"
 msgid "Creating…"
 msgstr "Creating…"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:27
+#: src/features/course-overview/components/CurrentStudy.tsx:41
 msgid "Current lecture"
 msgstr "Current lecture"
 
@@ -938,7 +938,7 @@ msgstr "Current lecture"
 msgid "Current PDF"
 msgstr "Current PDF"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:27
+#: src/features/course-overview/components/CurrentStudy.tsx:48
 msgid "Current recitation"
 msgstr "Current recitation"
 
@@ -1573,7 +1573,7 @@ msgstr "No Google Drive folder is set. Choose one in Settings."
 msgid "No Lectures"
 msgstr "No Lectures"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:35
+#: src/features/course-overview/components/CurrentStudy.tsx:26
 msgid "No lectures yet"
 msgstr "No lectures yet"
 
@@ -1613,7 +1613,7 @@ msgstr "No PDF yet — use \"Save & update PDF\" to create one."
 msgid "No Recitations"
 msgstr "No Recitations"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:34
+#: src/features/course-overview/components/CurrentStudy.tsx:30
 msgid "No recitations yet"
 msgstr "No recitations yet"
 
@@ -1749,11 +1749,11 @@ msgstr "Open the captcha again"
 msgid "Open the FastStudy app to choose a folder."
 msgstr "Open the FastStudy app to choose a folder."
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:30
+#: src/features/course-overview/components/CurrentStudy.tsx:42
 msgid "Open the first lecture you haven't finished yet"
 msgstr "Open the first lecture you haven't finished yet"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:29
+#: src/features/course-overview/components/CurrentStudy.tsx:49
 msgid "Open the first recitation you haven't finished yet"
 msgstr "Open the first recitation you haven't finished yet"
 

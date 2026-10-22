@@ -1,0 +1,148 @@
+/* The overview body's two centred nav tiles above the overview list, with the notes line beneath. */
+.current-study {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-7);
+}
+
+.current-study-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-5) var(--space-7);
+  width: 100%;
+}
+
+.study-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex: 0 1 260px;
+  min-width: 0;
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    border-color 0.15s;
+}
+
+.study-tile:hover:not(:disabled),
+.study-tile:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.study-tile:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
+}
+
+.study-tile:disabled {
+  border-color: var(--line);
+  background: var(--surface-sunken);
+  box-shadow: none;
+  color: var(--text-4);
+  cursor: not-allowed;
+}
+
+.study-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.study-tile-label {
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.study-tile-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-row);
+  font-weight: 600;
+}
+
+.study-tile:disabled .study-tile-label,
+.study-tile-name--empty {
+  color: var(--text-4);
+}
+
+.study-tile-arrow {
+  display: inline-flex;
+  color: var(--text-3);
+  transition:
+    transform 0.15s,
+    color 0.15s;
+}
+
+.study-tile:hover:not(:disabled) .study-tile-arrow,
+.study-tile:focus-visible .study-tile-arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+
+[dir='rtl'] .study-tile-arrow svg {
+  transform: scaleX(-1);
+}
+
+[dir='rtl'] .study-tile:hover:not(:disabled) .study-tile-arrow,
+[dir='rtl'] .study-tile:focus-visible .study-tile-arrow {
+  transform: translateX(-3px);
+}
+
+.study-tile:disabled .study-tile-arrow {
+  color: var(--text-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-tile,
+  .study-tile-arrow {
+    transition: none;
+  }
+
+  .study-tile:hover:not(:disabled),
+  .study-tile:focus-visible,
+  .study-tile:hover:not(:disabled) .study-tile-arrow,
+  .study-tile:focus-visible .study-tile-arrow {
+    transform: none;
+  }
+}
+
+.current-study-notes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  color: var(--ok);
+}
+
+.current-study-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+.current-study-sep {
+  margin-inline-end: var(--space-2);
+  color: var(--text-4);
+}

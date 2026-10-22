@@ -211,7 +211,7 @@ msgid "{file} was not found."
 msgstr "{file} לא נמצא."
 
 #. placeholder {0}: extractors.length
-#: src/features/course-overview/CourseView.tsx:114
+#: src/features/course-overview/CourseView.tsx:110
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
@@ -445,11 +445,11 @@ msgstr "הכול נוצר"
 msgid "All Lectures"
 msgstr "כל ההרצאות"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:38
+#: src/features/course-overview/components/CurrentStudy.tsx:26
 msgid "All lectures done"
 msgstr "סיימת את כל ההרצאות"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:37
+#: src/features/course-overview/components/CurrentStudy.tsx:31
 msgid "All recitations done"
 msgstr "סיימת את כל התרגולים"
 
@@ -902,7 +902,7 @@ msgstr "הקורס \"{course}\" לא קיים."
 msgid "Course name…"
 msgstr "שם הקורס…"
 
-#: src/features/course-overview/CourseView.tsx:111
+#: src/features/course-overview/CourseView.tsx:107
 msgid "Course overview"
 msgstr "סקירת קורס"
 
@@ -930,7 +930,7 @@ msgstr "יצירה"
 msgid "Creating…"
 msgstr "יוצר…"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:27
+#: src/features/course-overview/components/CurrentStudy.tsx:41
 msgid "Current lecture"
 msgstr "ההרצאה הנוכחית"
 
@@ -938,7 +938,7 @@ msgstr "ההרצאה הנוכחית"
 msgid "Current PDF"
 msgstr "ה-PDF הנוכחי"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:27
+#: src/features/course-overview/components/CurrentStudy.tsx:48
 msgid "Current recitation"
 msgstr "התרגול הנוכחי"
 
@@ -1573,7 +1573,7 @@ msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרו
 msgid "No Lectures"
 msgstr "אין הרצאות"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:35
+#: src/features/course-overview/components/CurrentStudy.tsx:26
 msgid "No lectures yet"
 msgstr "אין עדיין הרצאות"
 
@@ -1613,7 +1613,7 @@ msgstr "אין עדיין PDF — השתמש ב\"שמירה ועדכון PDF\" �
 msgid "No Recitations"
 msgstr "אין תרגולים"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:34
+#: src/features/course-overview/components/CurrentStudy.tsx:30
 msgid "No recitations yet"
 msgstr "אין עדיין תרגולים"
 
@@ -1749,11 +1749,11 @@ msgstr "פתיחת החידה מחדש"
 msgid "Open the FastStudy app to choose a folder."
 msgstr "כדי לבחור תיקייה, פתח את FastStudy."
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:30
+#: src/features/course-overview/components/CurrentStudy.tsx:42
 msgid "Open the first lecture you haven't finished yet"
 msgstr "פתיחת ההרצאה הראשונה שעוד לא סיימת"
 
-#: src/features/course-overview/components/CurrentStudyButton.tsx:29
+#: src/features/course-overview/components/CurrentStudy.tsx:49
 msgid "Open the first recitation you haven't finished yet"
 msgstr "פתיחת התרגול הראשון שעוד לא סיימת"
 
