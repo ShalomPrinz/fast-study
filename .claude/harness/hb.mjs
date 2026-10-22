@@ -48,7 +48,7 @@ function shotArgs(args) {
 }
 
 // One /eval for the whole loop: per side and language, reload in that locale, rerun the setup the
-// reload undid, and shoot the full window; then put the session's page and locale back.
+// reload undid, and shoot the full window; then put the session's page and locale back and say where it was left.
 function shotScript(paths, tag, sides, langs, setup) {
   const file = (name) =>
     path.join(paths.evidence, `${tag}-${name.replace(/[^\p{L}\p{N}._-]+/gu, '-')}.png`);
@@ -79,7 +79,11 @@ ${setup}
   await page.evaluate(([key, value]) => value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value), [KEY, saved]);
   await page.reload();
 }
-return files.join('\\n');
+// index.html carries no lang; activateLocale sets it once the catalog loads.
+await page.waitForFunction(() => document.documentElement.lang, null, { timeout: 5000 }).catch(() => {});
+const lang = await page.evaluate(() => document.documentElement.lang || '?');
+const stored = saved === null ? ' (none stored, app default)' : '';
+return [...files, \`left at \${page.url()} · locale \${lang}\${stored}\`].join('\\n');
 `;
 }
 

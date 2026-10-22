@@ -222,7 +222,8 @@ to rebuild the state the reload undid, and shoots. `--before [ref]` (default `HE
 against a second vite serving `frontend/` as the ref had it — copied with `git archive` under
 `$HARNESS_DIR/before/`, never swapped into the live tree — and warns about every other changed file,
 since the services and installs run as the working tree has them. Afterwards the page and locale
-are back where they were.
+are back where they were — `--setup`'s state is not kept — and the last line prints the URL and
+locale the session was left at.
 
 Every route, those included, is also plain HTTP on the session's port:
 
