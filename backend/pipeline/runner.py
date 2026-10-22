@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple, Optional
 
+import sentry_sdk
 from course import runner as course_runner
 from services import db_client, google_auth, settings
 from services.errors import PROVIDER_CONDITION_CODES, CodedError
@@ -829,9 +830,12 @@ async def _run_step_unlocked(
             if result.get("code") in PROVIDER_CONDITION_CODES
             else logging.ERROR
         )
-        log.log(
-            level, "%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg
-        )
+        # One Sentry issue per (step, code): the shared template alone would merge every failure.
+        with sentry_sdk.new_scope() as scope:
+            scope.fingerprint = ["pipeline-step-failed", step, _errors[skey]["code"]]
+            log.log(
+                level, "%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg
+            )
         if not keep_in_flight:
             _in_flight.pop(skey, None)
             db_client.notify()

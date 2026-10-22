@@ -185,3 +185,38 @@ def test_pipeline_step_failure_reports_a_log_event(reload_main, monkeypatch):
     assert event["level"] == "error"
     assert "<hebrew>/<hebrew>" in event["logentry"]["formatted"]
     assert "קורס" not in json.dumps(event, ensure_ascii=False, default=str)
+
+
+def test_pipeline_step_failures_group_by_step_and_code(reload_main, monkeypatch):
+    """Each step failure is fingerprinted by (step, code), so a new failure kind opens its own issue."""
+
+    monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", FAKE_DSN)
+    sentry_policy.set_reporting(True)
+    reload_main()
+
+    async def fail(step, code):
+        async def fake_call(course, lecture, kind, step, **_opts):
+            return {"status": "error", "message": f"{code} happened", "code": code}
+
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            await runner._run_step_unlocked("c", "l", "lecture", step)
+        runner._errors.pop(runner._skey("c", "l", "lecture"), None)
+
+    for step, code in [
+        ("pdf", "pdf_missing_font"),
+        ("pdf", "pdf_render_failed"),
+        ("pdf", "pdf_missing_font"),
+        ("transcribe", None),
+    ]:
+        asyncio.run(fail(step, code))
+
+    prints = [e["fingerprint"] for e in reload_main.transport.events()]
+    assert prints == [
+        ["pipeline-step-failed", "pdf", "pdf_missing_font"],
+        ["pipeline-step-failed", "pdf", "pdf_render_failed"],
+        ["pipeline-step-failed", "pdf", "pdf_missing_font"],
+        ["pipeline-step-failed", "transcribe", "unknown_error"],
+    ]
