@@ -394,7 +394,7 @@ async def put_summary(
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/summary")
-def delete_summary(course: str, lecture: str, kind: str = Query("lecture")):
+async def delete_summary(course: str, lecture: str, kind: str = Query("lecture")):
     """Revert summary.md to the preserved original_summary.md."""
 
     try:

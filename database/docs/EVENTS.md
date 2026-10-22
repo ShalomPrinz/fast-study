@@ -13,6 +13,8 @@ successful upload), and this service itself after a successful course create, re
 lecture create, rename or done toggle, a summary write or restore (so an editor open in another window sees it), and a `POST /config` that applies a new `data_root` — so every open tree
 refetches, not just the window that acted.
 
+A route that calls `broadcast_notify()` is `async def`: the queues are plain `asyncio.Queue`s, not thread-safe, so a push from a threadpool worker can be lost or wake no one.
+
 Delivery is fire-and-forget: per-queue failures are swallowed, and producers neither wait nor
 retry. A missed notify costs a stale view until the next one, never a blocked producer.
 
