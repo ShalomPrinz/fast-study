@@ -31,7 +31,7 @@ the SmartScreen install steps and a short FAQ. The footer links `code-signing.ht
 policy title and the roles SignPath's conditions require. Its role names (Committers and reviewers, Approvers) and the term "Code signing policy" — shown
 in English in the Hebrew view too — follow [SignPath's conditions](https://signpath.org/terms.html) verbatim. Every claim is the app's current behaviour, checked
 against the owning service's docs. `index.html`'s privacy section is the short version and links the
-full policy, whose text mirrors the app's in-app policy; its one contact channel is the repo's GitHub issues.
+full policy, whose text mirrors the app's in-app policy plus one website-only GoatCounter line; its one contact channel is the repo's GitHub issues.
 
 ## The download link is frozen
 
