@@ -164,7 +164,10 @@ are made from inside that browser:
   verifies a stored `unverified` token through the window ([AUTH.md](AUTH.md#connect--events--complete--status--disconnect)).
   A call through the page that still meets the wall reloads the root (`reportBlock`), so the
   page itself may land on a captcha and the 503 says `'captcha'` or `'ready'` (repeat the action). A window closed mid-call fails that call as an unrouted `site_blocked`
-  (no window reopens; the user's repeat goes out on Node). Not routed, so still
+  (no window reopens; the user's repeat goes out on Node). A page fetch that fails in the network (the page sees only
+  `TypeError: Failed to fetch`) answers `site_unreachable` like a Node one: `host` the URL's hostname,
+  `detail` only Chrome's `ERR_*` token from that request's `requestfailed` (matched on URL and method), else
+  `null` — never the URL, which carries the wstoken. Not routed, so still
   `site_blocked` during a block: `openMoodleFile` (it replays a file's recorded headers, which a page cannot
   set) and `lib/probeUrl.js`. A block there opens no window and its 503 carries no `challengeWindow`
   (`WsBlockedError.routed` is false; `reportBlock` skips it).

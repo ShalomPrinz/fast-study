@@ -66,8 +66,17 @@ export async function fetchUpstream(url, init) {
   }
 }
 
-// A thrown error as `site_unreachable {host, detail}` (→ 503), or null when it is not a network
-// failure of a fetchUpstream call. `detail` is the socket error verbatim, as server/ reports it.
+// A page fetch's network failure (Chrome's bare `TypeError: Failed to fetch`) in fetchUpstream's
+// shape, so unreachable() maps it; `detail` is only Chrome's `ERR_*` token, or null when none came.
+export function pageUnreachable(url, errorText) {
+  const err = new TypeError('fetch failed');
+  err.host = new URL(String(url)).hostname;
+  err.detail = /\bERR_[A-Z0-9_]+\b/.exec(errorText ?? '')?.[0] ?? null;
+  return err;
+}
+
+// A network failure of a fetchUpstream call or a page fetch as `site_unreachable {host, detail}`
+// (→ 503), else null; `detail` is the socket error verbatim (as server/ reports it) or the ERR_ token.
 export function unreachable(err) {
   if (!networkFailure(err) || typeof err.host !== 'string') return null;
   // A dual-stack refusal is an AggregateError whose own message is empty; its inner errors name it.
@@ -75,10 +84,10 @@ export function unreachable(err) {
     .map((e) => e?.message)
     .filter(Boolean)
     .join('; ');
-  const detail = err.cause?.message || inner || err.message;
+  const detail = 'detail' in err ? err.detail : err.cause?.message || inner || err.message;
   return new CodedError(
     'site_unreachable',
     { host: err.host, detail },
-    `${err.host} could not be reached: ${detail}`,
+    detail ? `${err.host} could not be reached: ${detail}` : `${err.host} could not be reached`,
   );
 }

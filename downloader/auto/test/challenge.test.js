@@ -12,6 +12,7 @@ import { moodleGate } from '../src/moodle/gate.js';
 import { setCurrentSite } from '../src/moodle/site.js';
 import { writeTokenFile } from '../src/auth/tokenStore.js';
 import { handleList } from '../src/http/server.js';
+import { unreachable } from '../src/lib/errors.js';
 import { siteAuth, authState, authEvents } from '../src/core/registry.js';
 import {
   openChallenge,
@@ -296,6 +297,95 @@ test('the user closing the window mid-call ends block mode with an unrouted site
   assert.equal('challengeWindow' in err.params, false);
   assert.equal(profile.launches.length, 1);
   assert.deepEqual(challengeState(), { open: false, captcha: false });
+});
+
+// The page's fetch rejecting in the network: Chrome tells only requestfailed why, and `others`
+// fail around it (another call's request), whose reasons must not leak into this one.
+function failInNetwork(ctx, errorText, others = []) {
+  ctx.page.evaluate = async (_fn, arg) => {
+    const req = (url, text) => ({
+      url: () => new URL(url).href,
+      method: () => arg.method,
+      failure: () => ({ errorText: text }),
+    });
+    for (const [url, text] of others) ctx.page.emit('requestfailed', req(url, text));
+    if (errorText) ctx.page.emit('requestfailed', req(arg.url, errorText));
+    throw new Error('page.evaluate: TypeError: Failed to fetch');
+  };
+}
+
+test("a page fetch failing in the network is a 503 site_unreachable with Chrome's ERR_ code alone", async (t) => {
+  setCurrentSite(SITE);
+  t.after(() => setCurrentSite(null));
+  writeTokenFile(statePath('auth', 'moodle-token.json'), { site: SITE, wstoken: 'w', userid: 7 });
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  failInNetwork(profile.launches[0], 'net::ERR_CONNECTION_RESET', [
+    [`${SITE}/other.php`, 'net::ERR_TIMED_OUT'],
+  ]);
+  const res = fakeRes();
+  await handleList({ body: { courseUrl: `${SITE}/course/view.php?id=5` } }, res);
+  assert.equal(res.code, 503);
+  assert.deepEqual(
+    { code: res.body.code, params: res.body.params, error: res.body.error },
+    {
+      code: 'site_unreachable',
+      params: { host: 'moodle.test', detail: 'ERR_CONNECTION_RESET' },
+      error: 'moodle.test could not be reached: ERR_CONNECTION_RESET',
+    },
+  );
+  // A failed fetch is not a closed window: block mode stays on.
+  assert.deepEqual(challengeState(), { open: true, captcha: false });
+  assert.equal(profile.launches[0].page.listenerCount('requestfailed'), 0);
+});
+
+test('a page network failure with no ERR_ code of its own answers site_unreachable with no detail', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  failInNetwork(profile.launches[0], null, [[`${SITE}/other.php`, 'net::ERR_TIMED_OUT']]);
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.deepEqual(
+    { code: unreachable(err)?.code, params: unreachable(err)?.params },
+    { code: 'site_unreachable', params: { host: 'moodle.test', detail: null } },
+  );
+  assert.equal(unreachable(err).message, 'moodle.test could not be reached');
+});
+
+test("a caller's timeout on a page call answers site_unreachable naming the host, never the URL", async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  profile.launches[0].page.evaluate = () => new Promise(() => {});
+  // AbortSignal.timeout's own reason; its unref'd timer would let the test's event loop drain.
+  const ctl = new AbortController();
+  setTimeout(
+    () => ctl.abort(new DOMException('The operation was aborted due to timeout', 'TimeoutError')),
+    5,
+  );
+  const err = await challengeRoute(SITE)
+    .fetch(`${SITE}/webservice/rest/server.php?wstoken=secret`, { signal: ctl.signal })
+    .catch((e) => e);
+  assert.equal(err.name, 'TimeoutError');
+  assert.deepEqual(unreachable(err)?.params, {
+    host: 'moodle.test',
+    detail: 'The operation was aborted due to timeout',
+  });
+  assert.doesNotMatch(unreachable(err).message, /secret|server\.php/);
+});
+
+test('a page fetch failing because the window closed under it is still site_blocked', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  failInNetwork(ctx, 'net::ERR_ABORTED');
+  const failing = ctx.page.evaluate;
+  ctx.page.evaluate = async (fn, arg) => {
+    await ctx.close();
+    return failing(fn, arg);
+  };
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.ok(err instanceof WsBlockedError);
+  assert.equal(err.routed, false);
+  assert.equal(unreachable(err), null);
 });
 
 test('only one retry runs on a captcha at a time', async (t) => {
