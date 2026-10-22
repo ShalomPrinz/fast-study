@@ -145,6 +145,7 @@ optional second action row, and `.pipeline-card` holds its rows on the lecture a
 child that takes a ref, opens after 400 ms on hover or on keyboard focus, and renders nothing for an
 empty `content`. `placement` is `top`/`bottom`/`inline-start`/`inline-end`, the logical sides resolved
 against the document's `dir`. A disabled `<button>` needs no wrapper: Chromium fires mouse events on it.
+It is `position: fixed`, so it never grows the window's scroll height, and closes on any ancestor scroll.
 An icon-only control keeps its accessible name as `aria-label`, since the tooltip only describes it.
 
 **No cross-file rule may depend on source order.** Vite's import order differs between dev (per-module

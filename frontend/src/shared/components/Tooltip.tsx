@@ -37,6 +37,8 @@ export default function Tooltip({
   const { refs, floatingStyles, context } = useFloating({
     open: open && enabled,
     onOpenChange: setOpen,
+    // Fixed, so a hint near the window's bottom edge never grows the root's scroll height.
+    strategy: 'fixed',
     placement: physicalPlacement(placement, document.documentElement.dir === 'rtl'),
     whileElementsMounted: autoUpdate,
     middleware: [
@@ -49,7 +51,8 @@ export default function Tooltip({
   const { getReferenceProps, getFloatingProps } = useInteractions([
     useHover(context, { enabled, delay: { open: OPEN_DELAY_MS, close: 0 }, move: false }),
     useFocus(context, { enabled }),
-    useDismiss(context, { enabled }),
+    // Closing on any ancestor scroll keeps a hint from riding its anchor over the sticky header.
+    useDismiss(context, { enabled, ancestorScroll: true }),
     useRole(context, { enabled, role: 'tooltip' }),
   ])
   const childRef = (children as ReactElement & { ref?: Ref<Element> }).ref
