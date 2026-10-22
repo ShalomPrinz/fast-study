@@ -13,7 +13,8 @@ Held here, the queue keeps triggering and the page is a view of it.
 
 `{ id, sectionId, course, targets, at, total, status, paused }`
 
-- **`sectionId`** is the frontend's section identity, `${course}:${media}:${title}`.
+- **`sectionId`** is an opaque key the frontend picks: a section's `${course}:${media}:${title}`, or for
+  one playlist's run that key + U+001F + the playlist's ref (YouTube-only, so it never pauses on a passcode).
 - **`at`** is the 1-based position the queue is on, not a count of work done: rows it only walked past
   (`skipped`, `unsupported`) are behind it, so two skips and one download read `3/3` while that
   download starts.
