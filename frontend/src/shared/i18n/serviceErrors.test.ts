@@ -40,6 +40,17 @@ describe('resolveServiceError', () => {
     expect(headline.length).toBeGreaterThan(0)
   })
 
+  it('withholds the OS text entirely when the app files were blocked', () => {
+    const prose = "[Errno 22] Invalid argument: 'C:\\FastStudy\\services.exe'"
+    const resolved = resolveServiceError({ message: prose, code: 'app_files_blocked', params: {} })
+
+    expect(resolved.detail).toBeNull()
+    expect(resolved.headline).not.toContain('Errno')
+    expect(serviceErrorText({ message: prose, code: 'app_files_blocked', params: {} })).toBe(
+      resolved.headline,
+    )
+  })
+
   it('names the locked file, and still says something when the file is not given', () => {
     const of = (params: Record<string, string | null>) =>
       resolveServiceError({ message: 'x', code: 'file_locked', params }).headline

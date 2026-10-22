@@ -100,6 +100,11 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   drive_folder_not_configured: msg({
     message: 'No Google Drive folder is set. Choose one in Settings.',
   }),
+  // Defender quarantined or locked the app's own files mid-run; the OS text is withheld on purpose.
+  app_files_blocked: msg({
+    message:
+      "That's probably because Windows quarantined the app — restart the app and follow the instructions.",
+  }),
   run_crashed: msg({ message: 'The run stopped unexpectedly on "{course}" / "{lecture}".' }),
   overview_file_not_found: msg({ message: "{file} was not found in the course's overview." }),
 

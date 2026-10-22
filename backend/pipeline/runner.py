@@ -14,7 +14,12 @@ from typing import NamedTuple, Optional
 import sentry_sdk
 from course import runner as course_runner
 from services import db_client, google_auth, settings
-from services.errors import CONDITION_CODES, CodedError
+from services.errors import (
+    CONDITION_CODES,
+    CodedError,
+    app_files_blocked,
+    own_fields,
+)
 from services.llm_client import GeminiRateLimitError
 
 from pipeline.strip_audio import strip_audio
@@ -142,9 +147,9 @@ def _failed(exc: Exception) -> dict:
     itself; an untyped one falls back to `unknown_error` in `_error_record`."""
 
     result = {"status": "error", "message": str(exc)}
-    if isinstance(exc, CodedError):
-        result["code"] = exc.code
-        result["params"] = exc.params
+    fields = own_fields(exc)
+    if fields:
+        result["code"], result["params"] = fields
     return result
 
 
@@ -1125,14 +1130,19 @@ async def run_all() -> dict:
                     blocked_count += 1
             except Exception as e:
                 log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
+                # The crash is logged in full above; a blocked app file hides its OS text.
+                code, params = (
+                    ("app_files_blocked", {})
+                    if app_files_blocked(e)
+                    else (
+                        "run_crashed",
+                        {"course": course, "lecture": lecture, "detail": str(e)},
+                    )
+                )
                 _runner_status["last_error"] = {
                     "message": f"{course}/{lecture}: {e}",
-                    "code": "run_crashed",
-                    "params": {
-                        "course": course,
-                        "lecture": lecture,
-                        "detail": str(e),
-                    },
+                    "code": code,
+                    "params": params,
                 }
             _runner_status["done"] += 1
             # An entry that started no step left the previous lecture held: clear it now.

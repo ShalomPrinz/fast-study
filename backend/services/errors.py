@@ -1,6 +1,12 @@
 """The machine `code` + flat `params` every failure carries beside its English prose.
 Vocabulary and the reasoning behind the split: docs/ERROR-CODES.md at the repo root."""
 
+import logging
+import os
+import sys
+
+log = logging.getLogger("errors")
+
 # Codes naming a condition, not a bug of ours — a provider's availability (Groq/Gemini) or the
 # user's own setup (Drive not connected): they stay out of Sentry. Uncoded failures keep reporting.
 CONDITION_CODES = frozenset(
@@ -32,10 +38,45 @@ def failure(message: str, code: str, /, **params) -> dict:
     return {"error": message, "code": code, "params": params}
 
 
+def _is_own_executable(filename) -> bool:
+    if not isinstance(filename, (str, os.PathLike)):
+        return False
+    same = os.path.normcase(os.path.realpath(filename))
+    return same == os.path.normcase(os.path.realpath(sys.executable))
+
+
+def app_files_blocked(exc: BaseException) -> bool:
+    """True when the frozen bundle's own executable became unreadable mid-run (an antivirus
+    quarantining or locking it): an OSError naming sys.executable anywhere in the chain."""
+
+    if not getattr(sys, "frozen", False):
+        return False
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        if isinstance(cur, OSError) and (
+            _is_own_executable(cur.filename) or _is_own_executable(cur.filename2)
+        ):
+            return True
+        cur = cur.__cause__ or cur.__context__
+    return False
+
+
+def own_fields(exc: BaseException) -> tuple[str, dict] | None:
+    """The (code, params) an exception names, or None when it names none. A blocked app file
+    overrides any code and hides the OS text, so the full exception is logged here instead."""
+
+    if app_files_blocked(exc):
+        log.warning("app files blocked: %s", exc, exc_info=exc)
+        return "app_files_blocked", {}
+    if isinstance(exc, CodedError):
+        return exc.code, exc.params
+    return None
+
+
 def error_fields(exc: BaseException, fallback: str) -> tuple[str, dict]:
     """The (code, params) of any exception: its own when it carries them, else `fallback`
     with str(exc) as `detail` — third-party text never gets a code of its own."""
 
-    if isinstance(exc, CodedError):
-        return exc.code, exc.params
-    return fallback, {"detail": str(exc)}
+    return own_fields(exc) or (fallback, {"detail": str(exc)})
