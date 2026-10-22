@@ -17,6 +17,7 @@
   background: var(--accent);
   border-radius: var(--r-pill);
   transition: width 0.5s linear;
+  animation: progress-grow 0.5s ease-out;
 }
 
 .progress-fill--overflow {
@@ -37,26 +38,35 @@
   font-style: italic;
 }
 
-/* No estimate yet: a short segment sweeps the track, so the bar reads as working, not as stuck at 0.
-   It animates the logical margin, not a transform, so it sweeps start-to-end in RTL too. */
-.progress-fill--indeterminate {
-  width: 30%;
-  transition: none;
-  animation: progress-indeterminate 1.4s ease-in-out infinite;
+/* No estimate yet: the whole track pulses, so nothing in it has a position the real fill could move back from. */
+.progress-track--pulse {
+  background: var(--accent);
+  animation: progress-pulse 1.4s ease-in-out infinite alternate;
 }
 
-@keyframes progress-indeterminate {
+@keyframes progress-pulse {
   from {
-    margin-inline-start: -30%;
+    opacity: 0.15;
   }
   to {
-    margin-inline-start: 100%;
+    opacity: 0.5;
+  }
+}
+
+/* The fill grows from 0 at the start edge when it mounts; the implicit `to` is its inline width. */
+@keyframes progress-grow {
+  from {
+    width: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .progress-fill--indeterminate {
+  .progress-track--pulse {
     animation: none;
-    opacity: 0.4;
+    opacity: 0.3;
+  }
+
+  .progress-fill {
+    animation: none;
   }
 }

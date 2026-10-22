@@ -28,13 +28,12 @@ export default function ProgressBar({ stats, startedAt, completedFraction = 0, c
   const extra = className ? ` ${className}` : ''
 
   // Every state renders the same track + label, so the bar never changes height when stats arrive.
+  // Estimating pulses the whole track and renders no fill, so the fill always mounts fresh and grows from 0.
   if (stats === null || stats === undefined || 'message' in stats) {
     const estimating = !stats
     return (
       <div className={`progress-wrap${extra}`}>
-        <div className="progress-track">
-          {estimating && <div className="progress-fill progress-fill--indeterminate" />}
-        </div>
+        <div className={`progress-track${estimating ? ' progress-track--pulse' : ''}`} />
         <p className="progress-label progress-label--muted">
           {estimating ? t`Estimating…` : t`Not enough data to estimate`}
         </p>

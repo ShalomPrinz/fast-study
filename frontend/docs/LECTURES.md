@@ -31,8 +31,8 @@ content pane is always the window less 536) folds them into `LectureActionsMenu`
 `Run Remaining` so the primary button never moves.
 Completion is carried by the `StatusNode` alone, never a row tint; the running row sits on
 `--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
-`ProgressBar` keeps its track in every state — an indeterminate sweep while estimating, flat gray with
-no estimate — so a host never changes height when the stats arrive.
+`ProgressBar` keeps its track in every state — the whole track pulsing in the accent while estimating, flat gray with
+no estimate — so a host never changes height when the stats arrive; the real fill then grows from 0.
 A missing file whose step is the lecture's `error.step` shows `failed`, or `quota` for a Gemini quota
 code (`utils/stepState.ts`); the row's `data-status` carries the same state.
 
