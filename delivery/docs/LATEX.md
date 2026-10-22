@@ -21,6 +21,8 @@ Its contents come from enumerating the branches in `backend/assets/templates/pan
 and `to_pdf.py`'s `LATEX_HEADER`, not from sampling summaries. Every block pulls in a package, and
 dropping one drops that package from the cache. No summary in the corpus has a callout, table image,
 link or strikeout, so `tcolorbox`, `graphicx` and `ulem` reach the cache only because the sink asks.
+Its doubly-nested `\mathbf` line pulls Latin Modern bold math at 10/7/5pt, which body `\mathbf`
+needs; without it a render fails `pdf_missing_font`.
 
 - **Primed raw**, skipping the bidi preprocessing: `wrap_english_phrases` rewrites a markdown image
   into text ([`backend/docs/BIDI.md`](../../backend/docs/BIDI.md#wrap_english_phrases)), so a
@@ -32,21 +34,24 @@ link or strikeout, so `tcolorbox`, `graphicx` and `ulem` reach the cache only be
 
 ## `cache-supplement.txt`
 
-The sink alone is not enough, and no document can be written that is. Primed from the sink the cache
-holds 457 files, and against it **95 of 126 real summaries fail** — 25 with no PDF, 70 with a
-silently damaged one at exit 0. Eleven more files take the corpus to zero failures (457 → 468).
+The sink alone is not enough, and no document can be written that is. Measured against the sink when
+it primed 457 files, **95 of 126 real summaries fail** — 25 with no PDF, 70 with a silently damaged
+one at exit 0. Primed from the current sink the cache holds 465 files; the supplement's 15 take it to
+480 and the corpus to zero failures.
 
-Only two have a known trigger (inline math in a heading; doubly-nested sub/superscripts); the rest
-come from _interactions_ between constructs, which enumerating template branches cannot reach. So
-the list is hand-maintained with no generator, fetched by name with `tectonic -X bundle cat`, which
-resolves the same default bundle a render does and lands under the same bundle hash.
+Only some have a known trigger — inline math in a heading; doubly-nested sub/superscripts; `\mathbf`
+in a heading, whose bold math is set at the 12pt text size plus its script sizes (`rm-lmbx12`,
+`lmbx6/8/12.pfb`), which body math never loads; the rest come from _interactions_ between
+constructs, which enumerating template branches cannot reach. So the list is hand-maintained with no
+generator, fetched by name with `tectonic -X bundle cat`, which resolves the same default bundle a
+render does and lands under the same bundle hash.
 
 **Re-check it after a template edit or a tectonic bump**: prime a fresh cache, strict-render the real
 corpus against it, and either the diff is empty or it names the files to add.
 
 ## `tectonic-cache-filelist-linux.txt`
 
-A WSL prime of the **sink alone**, kept so a Windows-primed cache can be diffed against it: 457 lines
+A WSL prime of the **sink alone**, kept so a Windows-primed cache can be diffed against it: 465 lines
 under `bundles/` plus the one `formats/` `.fmt`, whose name is the same on both. `prime_cache.py
---filelist` lists both directories, so it diffs 11 lines heavy by design — the supplement; anything
+--filelist` lists both directories, so it diffs 15 lines heavy by design — the supplement; anything
 beyond those, a renamed `.fmt` included, is real drift.

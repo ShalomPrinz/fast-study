@@ -14,3 +14,8 @@ lmr12.pfb
 lmr8.pfb
 lmsy5.pfb
 msbm7.pfb
+
+rm-lmbx12.tfm
+lmbx12.pfb
+lmbx8.pfb
+lmbx6.pfb
