@@ -38,6 +38,7 @@ function node(
     materials: (has.materials ?? []).map(material),
     transcribePartial: null,
     removed: has.removedVideo ? ['video.mp4'] : [],
+    done: false,
   }
 }
 

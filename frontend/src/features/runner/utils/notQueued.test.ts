@@ -20,7 +20,14 @@ function files(...present: string[]): FileStatus {
 }
 
 function lecture(name: string, ...present: string[]): Lecture {
-  return { name, files: files(...present), materials: [], transcribePartial: null, removed: [] }
+  return {
+    name,
+    files: files(...present),
+    materials: [],
+    transcribePartial: null,
+    removed: [],
+    done: false,
+  }
 }
 
 function course(name: string, lectures: Lecture[], recitations: Lecture[] = []): Course {

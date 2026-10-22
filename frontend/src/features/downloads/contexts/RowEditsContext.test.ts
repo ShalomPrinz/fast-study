@@ -17,7 +17,7 @@ function node(name: string): Lecture {
     'summary.pdf': EMPTY,
     'drive_url.txt': EMPTY,
   } satisfies FileStatus
-  return { name, files, materials: [], transcribePartial: null, removed: [] }
+  return { name, files, materials: [], transcribePartial: null, removed: [], done: false }
 }
 
 const COURSES: Course[] = [

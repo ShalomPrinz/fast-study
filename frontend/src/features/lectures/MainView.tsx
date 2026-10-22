@@ -34,6 +34,7 @@ import {
 } from '@/features/lectures/utils/lectureProgress'
 import { lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
+import StudyDoneButton from '@/features/lectures/components/StudyDoneButton'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import StudyWithAiCard from '@/features/lectures/components/StudyWithAiCard'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
@@ -89,6 +90,7 @@ export default function MainView() {
     materials,
     transcribePartial,
     removed,
+    done,
   } = useLectureRoute()
   // Every rule reads removed files as present; `onDisk` is only for what can be deleted.
   const files = onDisk && markRemoved(onDisk, removed)
@@ -278,6 +280,7 @@ export default function MainView() {
         actions={
           <>
             {compactActions && <LectureActionsMenu actions={headerActions} />}
+            <StudyDoneButton course={course} lecture={lecture} kind={kind} done={done} />
             {hasActions && (
               <button className="btn btn--primary" onClick={handleRunRemaining} disabled={inflight}>
                 <Trans>Run Remaining</Trans>

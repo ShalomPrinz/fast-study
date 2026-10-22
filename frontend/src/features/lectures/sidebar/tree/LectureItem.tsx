@@ -9,9 +9,10 @@ import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
-import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { findLecture } from '@/features/lectures/utils/courseTree'
-import { holdsFile, isLectureComplete } from '@/features/lectures/utils/lectureProgress'
+import { holdsFile } from '@/features/lectures/utils/lectureProgress'
+import { trackProgress } from '@/features/lectures/utils/studyProgress'
+import Icon from '@/shared/components/Icon'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
 import { lectureNotFound } from '@/shared/utils/notFound'
@@ -19,6 +20,7 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { usePendingUpload } from '@/features/lectures/sidebar/PendingUploadModal'
 import { useCourseGroup } from './CourseGroupContext'
 import { useLectureListKind } from './LectureListContext'
+import '@/styles/spinner.css'
 import '@/styles/sidebar-tree.css'
 
 export default function LectureItem({ lecture }: { lecture: Lecture }) {
@@ -27,8 +29,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const kind = useLectureListKind()
   const { selected, onSelect } = useSelection()
   const { courses, refreshUntil } = useCourseTreeContext()
-  const { status, isInFlight } = useRunnerStatus()
-  const driveEnabled = useDriveEnabled()
+  const { status } = useRunnerStatus()
   const upload = usePendingUpload()
 
   const [renaming, setRenaming] = useState(false)
@@ -41,9 +42,14 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     selected?.lecture === lecture.name &&
     selected?.kind === kind
 
-  const running = isInFlight(course.name, lecture.name, kind)
+  // Running or queued: the same set that locks a rename, and the one the mark gives way to a spinner for.
   const renameLocked = isLectureRenameLocked(status, course.name, lecture.name, kind)
-  const dotState = isLectureComplete(lecture, driveEnabled) ? 'done' : running ? 'running' : null
+  const track = kind === 'recitation' ? course.recitations : course.lectures
+  const mark = lecture.done
+    ? 'done'
+    : trackProgress(track).current === lecture.name
+      ? 'current'
+      : 'todo'
 
   function startRenaming(e: React.MouseEvent) {
     e.preventDefault()
@@ -139,7 +145,15 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
         >
-          <span className={`lecture-dot${dotState ? ` lecture-dot--${dotState}` : ''}`} />
+          <span className={`lecture-mark lecture-mark--${renameLocked ? 'busy' : mark}`}>
+            {renameLocked ? (
+              <span className="spinner lecture-mark-spinner" />
+            ) : mark === 'done' ? (
+              <Icon icon="check" />
+            ) : mark === 'current' ? (
+              <Icon icon="arrow-end" />
+            ) : null}
+          </span>
           <span className="lecture-name" dir="auto">
             {pendingName ?? lecture.name}
           </span>

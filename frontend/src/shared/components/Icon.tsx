@@ -21,6 +21,7 @@ export type IconName =
   | 'chevron-start'
   | 'chevron-end'
   | 'chevron-down'
+  | 'arrow-end'
   | 'warning'
   | 'check'
   | 'folder'
@@ -311,6 +312,19 @@ const ChevronEndIcon = () => (
   </svg>
 )
 
+// The tree's "current" study mark; points onward along the reading direction, so it mirrors in Hebrew.
+const ArrowEndIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M2 6h7.5M6.5 3L9.5 6l-3 3"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 // Vertical, so unlike `chevron-start` it needs no mirroring in a right-to-left page.
 const ChevronDownIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -417,6 +431,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   'chevron-start': ChevronStartIcon,
   'chevron-end': ChevronEndIcon,
   'chevron-down': ChevronDownIcon,
+  'arrow-end': ArrowEndIcon,
   warning: WarningIcon,
   check: CheckIcon,
   folder: FolderIcon,

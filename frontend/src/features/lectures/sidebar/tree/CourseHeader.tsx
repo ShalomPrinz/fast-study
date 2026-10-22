@@ -8,11 +8,10 @@ import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import Icon from '@/shared/components/Icon'
 import Tooltip from '@/shared/components/Tooltip'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
-import { courseProgress } from '@/features/lectures/utils/lectureProgress'
+import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
 import { courseNotFound } from '@/shared/utils/notFound'
@@ -32,7 +31,6 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { course, add } = useCourseGroup()
   const { selected, onSelect } = useSelection()
   const { refreshCourses, refreshUntil } = useCourseTreeContext()
-  const driveEnabled = useDriveEnabled()
   const shiftHeld = useShiftHeld()
   const { status } = useRunnerStatus()
   const downloading = useCourseDownloading(course.name)
@@ -44,7 +42,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const [renaming, setRenaming] = useState(false)
   const [pendingName, setPendingName] = useState<string | null>(null)
   const renameEdit = useInlineEdit(renaming ? course.name : null)
-  const progress = courseProgress(course, driveEnabled)
+  const progress = trackProgress(course.lectures)
 
   function startRenaming(e: React.MouseEvent) {
     e.preventDefault()
@@ -135,13 +133,13 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             <span className="course-name" dir="auto">
               {pendingName ?? course.name}
             </span>
-            {progress.total > 0 && (
+            {!course.archived && progress.total > 0 && (
               <Tooltip
-                content={renameLocked ? undefined : t`Fully processed lectures`}
+                content={renameLocked ? undefined : t`Lectures you marked done`}
                 placement="inline-end"
               >
                 <span className="course-count">
-                  {progress.complete}/{progress.total}
+                  {progress.done}/{progress.total}
                 </span>
               </Tooltip>
             )}

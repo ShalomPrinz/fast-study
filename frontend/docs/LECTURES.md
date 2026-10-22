@@ -22,7 +22,7 @@ relabels it "Continue transcription".
 ## The lecture view
 
 `MainView` is a `PageHeader` (course eyebrow, lecture title, running step or `Complete`, video duration
-when the MP4 header yields one, material count, the single primary `Run Remaining`, offered only when
+when the MP4 header yields one, material count, the `StudyDoneButton` toggle, the single primary `Run Remaining`, offered only when
 `canRunRemaining` says the backend's `next_step` exists and can start) over one
 `.pipeline-card` holding all stages as rows parted by inset rules. The per-file actions — edit summary,
 open PDF, open in Drive, each once its file exists — sit on a second header row, keeping them off a title
@@ -33,6 +33,9 @@ Completion is carried by the `StatusNode` alone, never a row tint; the running r
 `--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
 A missing file whose step is the lecture's `error.step` shows `failed`, or `quota` for a Gemini quota
 code (`utils/stepState.ts`); the row's `data-status` carries the same state.
+
+`StudyDoneButton` marks the lecture studied (`--info`, "Done"); once done it turns `--success` with a ✓ and a
+tooltip saying a click reverts it. Done is manual and independent of the pipeline, so it is always enabled.
 
 **Rotate** deletes a file _and every later file in `PIPELINE`_ that exists, then re-runs its step — why
 it derives from `PIPELINE` order rather than a per-step list. A refused delete (`file_locked`, the file open in the
@@ -177,9 +180,14 @@ A course, lecture or editor route whose target the tree lacks renders `NotFoundP
 (`shared/utils/notFound.ts`) turns it into the same danger-bordered "Courses failed to load." (`.main-view--failed`)
 when the latest load failed, since a stale or empty tree can't prove the target is gone.
 
-`utils/lectureProgress.ts`: `isLectureComplete` (the last pipeline output exists, mirroring the backend's
-`final_output()`, whatever earlier file is gone) colours each lecture's dot and reads `Complete` on its page; `courseProgress` gives the header's `N/M`, `0/0` for an
-archived course so the badge stays off.
+`utils/lectureProgress.ts`'s `isLectureComplete` (the last pipeline output exists, mirroring the backend's
+`final_output()`, whatever earlier file is gone) reads `Complete` on the lecture page; the tree shows study
+progress instead. Lectures and recitations are two tracks, and `utils/studyProgress.ts`'s `trackProgress`
+reads one in the tree's order: the user's manual `done` marks count toward `done/total`, and its current item
+is the first not done, strictly — an earlier gap stays current. Each row's mark is a ✓ when done, an arrow
+on its track's current item and empty otherwise; a running or queued row shows a spinner in its place.
+Marks are display-only. The course header counts lectures, the Recitations header recitations; an archived
+course shows neither count.
 
 - `CourseTreeContext` exposes `courses`, `loaded`, `loadFailed` and `refreshCourses`; `SnapshotProvider` fills it, refreshing
   on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through

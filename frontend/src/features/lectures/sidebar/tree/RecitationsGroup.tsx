@@ -2,6 +2,7 @@ import Tooltip from '@/shared/components/Tooltip'
 import { Trans, useLingui } from '@lingui/react/macro'
 import type { ExpandHandle } from '@/types'
 import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
+import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import { useCourseGroup } from './CourseGroupContext'
 import { LectureListProvider } from './LectureListContext'
 import LectureList from './LectureList'
@@ -13,8 +14,9 @@ import Chevron from '@/shared/components/Chevron'
 // `expand` is owned by CourseGroup, so this stays open across a course collapse/re-expand.
 export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
   const { t } = useLingui()
-  const { add } = useCourseGroup()
+  const { course, add } = useCourseGroup()
   const shiftHeld = useShiftHeld()
+  const progress = trackProgress(course.recitations)
 
   function startAdding(e: React.MouseEvent) {
     e.stopPropagation()
@@ -32,6 +34,13 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
           <span dir="auto">
             <Trans>Recitations</Trans>
           </span>
+          {!course.archived && progress.total > 0 && (
+            <Tooltip content={t`Recitations you marked done`} placement="inline-end">
+              <span className="course-count">
+                {progress.done}/{progress.total}
+              </span>
+            </Tooltip>
+          )}
         </button>
         {!shiftHeld && (
           <Tooltip content={t`Add recitation`} placement="inline-end">

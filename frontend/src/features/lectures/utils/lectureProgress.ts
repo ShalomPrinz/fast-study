@@ -1,4 +1,4 @@
-import type { Course, FileName, FileStatus, Lecture, MaterialInfo, RemovableFile } from '@/types'
+import type { FileName, FileStatus, Lecture, MaterialInfo, RemovableFile } from '@/types'
 import { PIPELINE } from '@/features/lectures/constants/pipeline'
 
 // The files map every rule below reads: a removed file counts as present, mirroring the
@@ -80,17 +80,4 @@ export function canRunRemaining(
       !skippedStage(p.file, files, materials),
   )
   return !!next && stagePrereqMet(next, files, materials)
-}
-
-// A course's sidebar `N/M`: lectures and recitations together, archived courses contributing nothing.
-export function courseProgress(
-  course: Course,
-  driveEnabled: boolean,
-): { complete: number; total: number } {
-  if (course.archived) return { complete: 0, total: 0 }
-  const items = [...course.lectures, ...course.recitations]
-  return {
-    complete: items.filter((l) => isLectureComplete(l, driveEnabled)).length,
-    total: items.length,
-  }
 }

@@ -61,6 +61,17 @@ export async function setCourseArchived(course: string, archived: boolean): Prom
   await database.patch(path`/courses/${course}/archived`, { json: { archived } })
 }
 
+// Marks a lecture or recitation studied, or back to not; idempotent either way.
+export async function setLectureDone(
+  course: string,
+  lecture: string,
+  done: boolean,
+  kind?: Kind,
+): Promise<void> {
+  const url = `${lectureBase(course, lecture)}/done${kindQuery(kind)}`
+  await (done ? database.put(url) : database.delete(url))
+}
+
 /** Answers the folder name the create made, which the database may have sanitized. */
 export async function createLecture(course: string, name: string, kind?: Kind): Promise<string> {
   const { name: created } = await database.post<{ name: string }>(

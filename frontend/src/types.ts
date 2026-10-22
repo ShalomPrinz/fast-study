@@ -61,6 +61,8 @@ export interface Lecture {
   transcribePartial: TranscribePartial | null
   // The video/audio missing from disk while a later stage's file is there, whoever deleted it; [] otherwise.
   removed: RemovableFile[]
+  // The user marked it studied; always present.
+  done: boolean
 }
 
 export interface Course {

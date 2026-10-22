@@ -19,6 +19,7 @@ import {
 } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { branchStatus, extractorTitle } from '@/features/course-overview/constants/overview'
 import GenerateAllButton from '@/features/course-overview/components/GenerateAllButton'
+import CurrentStudyButton from '@/features/course-overview/components/CurrentStudyButton'
 import ExtractorRow from '@/features/course-overview/components/ExtractorRow'
 import '@/styles/spinner.css'
 import '@/styles/panel.css'
@@ -94,7 +95,13 @@ function CourseOverviewBody() {
             {item}
           </Fragment>
         ))}
-        actions={<GenerateAllButton />}
+        actions={
+          <>
+            <CurrentStudyButton course={course} kind="lecture" items={lectures} />
+            <CurrentStudyButton course={course} kind="recitation" items={recitations} />
+            <GenerateAllButton />
+          </>
+        }
       />
 
       <div className="page-body">

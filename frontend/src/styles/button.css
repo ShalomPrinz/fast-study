@@ -1,5 +1,6 @@
 /* The app's whole button vocabulary: one filled --primary per page, --ghost for row-level
-   actions, --danger for destructive ones. Every button in the UI is a .btn plus one variant. */
+   actions, --danger for destructive ones, and the tinted --info / --success pair for study progress
+   (a not-yet / done state). Every button in the UI is a .btn plus one variant. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -27,7 +28,7 @@
   cursor: not-allowed;
 }
 
-/* The three variants below override .btn's border, colours, padding and font-size on the same
+/* The variants below override .btn's border, colours, padding and font-size on the same
    element at equal specificity, so they must stay in this file, after it. */
 .btn--ghost {
   border-color: var(--control-line);
@@ -73,4 +74,40 @@
   border-color: var(--text-4);
   background: var(--text-4);
   color: var(--surface);
+}
+
+/* Tinted rather than filled, so they sit beside the page's one --primary at its size without competing. */
+.btn--info,
+.btn--success {
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--r);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.btn--info {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.btn--info:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.btn--success {
+  border-color: var(--ok-line);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.btn--success:hover:not(:disabled) {
+  border-color: var(--ok);
+}
+
+.btn--info:disabled,
+.btn--success:disabled {
+  border-color: var(--line);
+  background: var(--surface-sunken);
+  color: var(--text-4);
 }

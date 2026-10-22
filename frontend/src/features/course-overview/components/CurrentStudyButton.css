@@ -1,0 +1,15 @@
+.current-study {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.current-study-note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  color: var(--ok);
+  white-space: nowrap;
+}
