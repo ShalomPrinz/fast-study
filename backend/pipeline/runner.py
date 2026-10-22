@@ -14,7 +14,7 @@ from typing import NamedTuple, Optional
 import sentry_sdk
 from course import runner as course_runner
 from services import db_client, google_auth, settings
-from services.errors import PROVIDER_CONDITION_CODES, CodedError
+from services.errors import CONDITION_CODES, CodedError
 from services.llm_client import GeminiRateLimitError
 
 from pipeline.strip_audio import strip_audio
@@ -824,11 +824,9 @@ async def _run_step_unlocked(
         if result.get("groq_limit"):
             _transcribe_block = {"message": msg, "params": params}
         _errors[skey] = _error_record(step, msg, code=result.get("code"), params=params)
-        # ERROR becomes a Sentry event; a provider's own availability is not ours to report.
+        # ERROR becomes a Sentry event; a provider's availability or the user's setup is not ours to report.
         level = (
-            logging.WARNING
-            if result.get("code") in PROVIDER_CONDITION_CODES
-            else logging.ERROR
+            logging.WARNING if result.get("code") in CONDITION_CODES else logging.ERROR
         )
         # One Sentry issue per (step, code): the shared template alone would merge every failure.
         with sentry_sdk.new_scope() as scope:

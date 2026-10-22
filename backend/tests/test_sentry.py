@@ -11,6 +11,7 @@ import sentry_sdk
 from fastapi.testclient import TestClient
 from pipeline import runner
 from sentry_sdk.transport import HttpTransport, Transport
+from services import google_auth
 
 FAKE_DSN = "https://public@o0.ingest.de.sentry.io/0"
 
@@ -220,3 +221,37 @@ def test_pipeline_step_failures_group_by_step_and_code(reload_main, monkeypatch)
         ["pipeline-step-failed", "pdf", "pdf_missing_font"],
         ["pipeline-step-failed", "transcribe", "unknown_error"],
     ]
+
+
+@pytest.mark.parametrize(
+    "raised, reported",
+    [
+        (google_auth.DriveNotConnected(google_auth.NOT_CONNECTED_MESSAGE), False),
+        (RuntimeError("drive exploded"), True),
+    ],
+)
+def test_drive_not_connected_is_not_reported(
+    reload_main, monkeypatch, raised, reported
+):
+    """An unconnected Drive is the user's setup, not a bug: it logs at WARNING and sends nothing."""
+
+    monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", FAKE_DSN)
+    sentry_policy.set_reporting(True)
+    reload_main()
+
+    def get_credentials(_scope):
+        raise raised
+
+    async def go():
+        with (
+            patch.object(runner.db_client, "file_exists", return_value=True),
+            patch.object(runner.google_auth, "get_credentials", get_credentials),
+            patch.object(runner.db_client, "notify"),
+        ):
+            await runner._run_step_unlocked("c", "l", "lecture", "drive")
+
+    asyncio.run(go())
+    error = runner._errors.pop(runner._skey("c", "l", "lecture"))
+    assert error["step"] == "drive"
+    assert (error["code"] == "drive_not_connected") is not reported
+    assert len(reload_main.transport.events()) == int(reported)
