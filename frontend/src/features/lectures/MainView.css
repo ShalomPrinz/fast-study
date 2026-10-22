@@ -6,8 +6,7 @@
 }
 
 /* Pipeline and the Study with AI card. Stacked by default, as the narrow pane needs; the container query
-   below sets them side by side, the card on the inline-end side, once both columns fit: 380px minimum steps
-   (the widest row, English Summary with its material chip, is ~374px) + 26px gap + the 340px card. */
+   below sets them side by side, the card on the inline-end side, from 334px of steps + 26px gap + a 280px card. */
 .lecture-page-body {
   container-type: inline-size;
 }
@@ -18,7 +17,7 @@
   margin-inline: auto;
 }
 
-@container (width >= 746px) {
+@container (width >= 640px) {
   /* Widens the lectures tree's 660px measure back to the routed pages' 880px; the steps get what the card leaves. */
   .lectures-layout .page-column.lecture-page {
     max-width: 880px;
@@ -26,7 +25,8 @@
 
   .lecture-split {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
+    /* The card grows from 280px to 340px as the steps reach 380px, where the English Summary row stops wrapping. */
+    grid-template-columns: minmax(0, 1fr) clamp(280px, calc(100% - 406px), 340px);
     grid-template-areas:
       'head .'
       'steps ai'

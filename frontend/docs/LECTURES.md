@@ -79,11 +79,11 @@ a step whose input was removed (rotate, or run) is disabled with a tooltip sayin
 
 ## Study with AI
 
-`components/StudyWithAiCard` sits in a 340px column on the inline-end side of the pipeline list, top-aligned
-with it, once the page body (a container) is 746px wide — 380px of steps (the widest row, the English Summary
-row with its material chip, needs ~374px) + 26px gap + the card, a 1362px window with the sidebar and tree
-pane open. The page column then widens to the routed pages' 880px and the steps take what the card leaves,
-380–514px. Narrower, it stacks below the list and last-error block, before Materials, capped at 560px and
+`components/StudyWithAiCard` sits in a column on the inline-end side of the pipeline list, top-aligned
+with it, once the page body (a container) is 640px wide — 334px of steps + 26px gap + a 280px card, so a
+1280px window with the sidebar and tree pane open (664px) splits even with a 17px scrollbar. The card grows
+to 340px as the steps reach 380px (where the English Summary row's material chip stops wrapping, at 746px);
+the page column widens to the routed pages' 880px and the steps take what the card leaves. Narrower, it stacks below the list and last-error block, before Materials, capped at 560px and
 centred. The card lays out tile, title and split button side by side, the subtitle under the title; below
 420px of its own width (the side column included) the subtitle drops to a full-width row under them at
 `--fs-body` with `text-wrap: pretty`, so no lone word ends it, and below 330px the split button takes its own row too. Its split button's main half reads `summary.md`
