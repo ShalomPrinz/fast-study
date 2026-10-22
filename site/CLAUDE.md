@@ -13,7 +13,7 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
 | `capture.mjs` | Recaptures the eleven app screenshots on a live app-harness stack from `capture/` |
 | `capture/`    | The screenshots' own dataset: `dataset.mjs` (courses, lectures, the journey's lecture) and `text/` (Hebrew transcripts and summaries) |
-| `img/`        | The app screenshots (1280×800 JPEG: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
+| `img/`        | The app screenshots (a 1280×800 layout at 2×, 2560×1600 JPEG, sharp at the carousel's 1088px on high-DPI screens: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
 | `sitemap.xml` | Both page URLs, for Search Console; a new page gets a `<url>` here               |
 
 `index.html`'s `<head>` carries the `google-site-verification` meta for the Search Console property
@@ -62,6 +62,7 @@ python3 -m http.server -d /tmp/stage 8080
 on the fakes, and rewrites `hero.jpg`, `feature-*.jpg` and `journey-*.jpg` in Hebrew; it is rerunnable.
 Every name and text a shot shows comes from `capture/`, never the harness fixtures. The journey
 follows `JOURNEY`: downloaded from the fake Moodle course's videostream row, its run held on a slow
-fake Groq, then given its dataset text. The fake videostream download reports no size, so its row
-reads "not enough data to estimate" rather than an ETA bar. The SmartScreen steps come from a real
+fake Groq, then given its dataset text. Its download row reads "not enough data to estimate" rather
+than an ETA bar: auto's videostream resolve proxies an on-site `.mp4` without its size, so the job has
+no `expectedBytes`. The SmartScreen steps come from a real
 Windows install and cannot be captured here.

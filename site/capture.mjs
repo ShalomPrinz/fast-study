@@ -1,4 +1,4 @@
-// Recaptures the page's eleven app screenshots from a live app-harness stack, in Hebrew, 1280×800 JPEG.
+// Recaptures the page's eleven app screenshots from a live app-harness stack, in Hebrew: 1280×800 layout at 2× (2560×1600 JPEG).
 //   node site/capture.mjs --harness DIR      (the stack must be up: node .claude/harness/setup.mjs --harness DIR)
 // It wipes that stack's data and writes the site's own dataset (site/capture/) in its place.
 import { execFileSync } from 'node:child_process';
@@ -12,6 +12,8 @@ const REPO = path.resolve(SITE, '..');
 const IMG = path.join(SITE, 'img');
 const TEXT = path.join(SITE, 'capture', 'text');
 const SIZE = { width: 1280, height: 800 };
+const SCALE = 2;
+const QUALITY = 85;
 
 const harness = process.argv[process.argv.indexOf('--harness') + 1] || process.env.HARNESS_DIR;
 if (!harness || !fs.existsSync(path.join(harness, 'ports.json'))) {
@@ -177,8 +179,8 @@ function summaryPdfShot() {
     'pad = 28',
     'width = box.width + 2 * pad',
     'clip = fitz.Rect(box.x0 - pad, box.y0 - pad, box.x1 + pad, box.y0 - pad + width * 10 / 16)',
-    'zoom = 1280 / width',
-    'page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), clip=clip).save(sys.argv[2], jpg_quality=80)',
+    `zoom = ${SIZE.width * SCALE} / width`,
+    `page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), clip=clip).save(sys.argv[2], jpg_quality=${QUALITY})`,
   ].join('\n');
   execFileSync('uv', ['run', 'python', '-c', script, pdf, path.join(IMG, 'feature-summary.jpg')], {
     cwd: path.join(REPO, 'backend'),
@@ -192,7 +194,7 @@ async function capture() {
     executablePath: installedChromium(),
     args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1'],
   });
-  const context = await browser.newContext({ viewport: SIZE });
+  const context = await browser.newContext({ viewport: SIZE, deviceScaleFactor: SCALE });
   // The sidebar's version tag reads "dev" outside the packaged app, where a user sees a release number.
   await context.addInitScript(() => {
     localStorage.setItem('fast-study:locale', 'he');
@@ -208,7 +210,7 @@ async function capture() {
   const shot = async (name) => {
     await page.mouse.move(0, 0);
     await page.waitForTimeout(800);
-    await page.screenshot({ path: path.join(IMG, `${name}.jpg`), type: 'jpeg', quality: 80 });
+    await page.screenshot({ path: path.join(IMG, `${name}.jpg`), type: 'jpeg', quality: QUALITY });
     console.log(`captured ${name}.jpg`);
   };
   const open = async (route) => {
