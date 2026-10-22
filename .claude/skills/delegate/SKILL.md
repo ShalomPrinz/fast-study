@@ -40,4 +40,5 @@ Launch with the Agent tool and the agent's `subagent_type`, one task at a time. 
 - Verify with commands only: `git status --short`, `git diff --stat`, and the service's suite when the report does not quote it.
 - Check the report for deviations and decisions, and relay them to the user.
 - Route each follow-up the report names for another owner as its own brief.
+- If the agent handed back at a CHECKPOINT, brief the remainder to a **fresh** agent of the same type, with the handback as context. Never continue the same agent with SendMessage: that keeps its full context.
 - Commit with the `git-commit` skill, which runs the `reviewer` first.

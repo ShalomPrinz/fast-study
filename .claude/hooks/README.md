@@ -2,7 +2,8 @@
 
 Three scripts wired to `Stop` and `SubagentStop` in [`../settings.json`](../settings.json), so they
 run at the end of every turn and every subagent. They exist to keep the repo's stated invariants —
-"new code lands lint-clean", "never hand-format" — true without anyone remembering them.
+"new code lands lint-clean", "never hand-format" — true without anyone remembering them. A fourth,
+`checkpoint.py`, is wired to `PostToolUse` — see [the context checkpoint](#the-context-checkpoint).
 
 | Script | Does | Blocks the turn |
 | ------ | ---- | --------------- |
@@ -47,6 +48,17 @@ stylesheet but `styles/tokens.css`, that `tokens.css` holds no class selector, a
 `index.css` hasn't come back. The rule and its rationale live in
 [`../../frontend/docs/ARCHITECTURE.md`](../../frontend/docs/ARCHITECTURE.md); the greps are only its
 enforcement.
+
+## The context checkpoint
+
+`checkpoint.py` runs on `PostToolUse` for `*-dev` subagents only. When one passes 140K context it
+injects, once, an instruction to finish the current concern and hand back what remains — unless
+it is the agent's only concern, which it keeps working on. The `delegate` skill then briefs the
+remainder to a fresh agent. Per-turn cost grows with context, and
+the runs that got that large were multi-concern briefs. The hook gets the parent's
+`transcript_path`, so it reads `<session>/subagents/agent-<agent_id>.jsonl` for usage, and an empty
+`.checkpoint` file beside it keeps it to one firing. It runs synchronously: a full parse of an 8.5 MB
+transcript takes about 45 ms.
 
 ## Scope
 
