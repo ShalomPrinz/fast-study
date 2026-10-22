@@ -31,8 +31,8 @@ its phases as nodes over its files as monospace chips; only the branch's final P
 
 The distinction is `skip_existing`, the feature's core rule:
 
-- **Header button** — `skipExisting=true`, no filter: "Generate All", then "Continue Generating" once any
-  output exists, then a disabled "All Generated". It only fills gaps, so it never overwrites and needs
+- **Header button** — `skipExisting=true`, no filter: "Generate Course Overviews", then "Continue Generating" once any
+  output exists, then a disabled "All Generated"; only the two enabled labels carry a hover hint. It only fills gaps, so it never overwrites and needs
   no confirm.
 - **Per-extractor ↺** — `generate([slug])`, overwriting; the confirm lists every `{slug}.*` rebuilt.
 - **Per-phase** — `generate([slug], phase)`: that phase and every later one. A completed phase node is
@@ -52,7 +52,7 @@ extractor's _last_ file exists, and `warning` is the neutral channel — a skipp
 `{slug}.pdf` that rendered despite LaTeX errors. Either way the row stays green, with a ⚠
 `PdfWarningBadge` and no toast. A skip is not a failure, so `no_snippets_found`, `no_summaries_found` and
 the overview's `missing_prerequisite` read through `serviceErrors.ts` onto that badge rather than an error
-toast; `already_generated` is suppressed, since the row already reads as done and every "Generate All"
+toast; `already_generated` is suppressed, since the row already reads as done and every "Generate Course Overviews"
 pass re-stamps it. With no warning, `branchBadge` shows the ≠ stale badge when an earlier output is newer than
 `{slug}.pdf` — a failed analyze/to_pdf over an already-moved meta range, which survives a backend restart.
 Errors toast once per `(course, slug, failure)` through `useReportOnce`, pruned only

@@ -437,7 +437,7 @@ msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-AI ישוחזר."
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:45
+#: src/features/course-overview/components/GenerateAllButton.tsx:51
 msgid "All Generated"
 msgstr "הכול נוצר"
 
@@ -775,7 +775,7 @@ msgstr "מתחבר…"
 msgid "Contact"
 msgstr "יצירת קשר"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:47
+#: src/features/course-overview/components/GenerateAllButton.tsx:53
 msgid "Continue Generating"
 msgstr "המשך יצירה"
 
@@ -925,6 +925,10 @@ msgstr "לא הצלחנו לטעון את הקורסים."
 #: src/features/downloads/components/AddCourseRow.tsx:133
 msgid "Create"
 msgstr "יצירה"
+
+#: src/features/course-overview/components/GenerateAllButton.tsx:42
+msgid "Creates comprehensive summaries for all lectures and recitations in the course"
+msgstr "יוצר סיכומים מקיפים עבור כל ההרצאות והתרגולים בקורס"
 
 #: src/features/lectures/components/CreateStatus.tsx:15
 msgid "Creating…"
@@ -1292,9 +1296,9 @@ msgstr "המכסה היומית של Gemini נוצלה. היא מתאפסת בח
 msgid "Generate"
 msgstr "יצירה"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:48
-msgid "Generate All"
-msgstr "יצירת הכול"
+#: src/features/course-overview/components/GenerateAllButton.tsx:54
+msgid "Generate Course Overviews"
+msgstr "יצירת סקירות הקורס"
 
 #: src/features/course-overview/CourseView.tsx:76
 msgid "Generating · {runningTitle}"
@@ -1305,7 +1309,7 @@ msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "יצירה משלב {stepLabel} תבנה מחדש את:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:102
-#: src/features/course-overview/components/GenerateAllButton.tsx:43
+#: src/features/course-overview/components/GenerateAllButton.tsx:49
 msgid "Generating…"
 msgstr "יוצר…"
 
@@ -1792,7 +1796,7 @@ msgstr "סקירה"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:74
 #: src/features/course-overview/components/ExtractorRow.tsx:29
-#: src/features/course-overview/components/GenerateAllButton.tsx:28
+#: src/features/course-overview/components/GenerateAllButton.tsx:29
 #: src/features/course-overview/components/StepRow.tsx:39
 msgid "Overview is already running for this course"
 msgstr "יצירת הסקירה כבר מתבצעת בקורס הזה"

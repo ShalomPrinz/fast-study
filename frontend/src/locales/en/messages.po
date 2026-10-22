@@ -437,7 +437,7 @@ msgstr "All caught up — every lecture is finished."
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "All edits will be discarded and the original AI summary restored."
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:45
+#: src/features/course-overview/components/GenerateAllButton.tsx:51
 msgid "All Generated"
 msgstr "All Generated"
 
@@ -775,7 +775,7 @@ msgstr "connecting…"
 msgid "Contact"
 msgstr "Contact"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:47
+#: src/features/course-overview/components/GenerateAllButton.tsx:53
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
@@ -925,6 +925,10 @@ msgstr "Courses failed to load."
 #: src/features/downloads/components/AddCourseRow.tsx:133
 msgid "Create"
 msgstr "Create"
+
+#: src/features/course-overview/components/GenerateAllButton.tsx:42
+msgid "Creates comprehensive summaries for all lectures and recitations in the course"
+msgstr "Creates comprehensive summaries for all lectures and recitations in the course"
 
 #: src/features/lectures/components/CreateStatus.tsx:15
 msgid "Creating…"
@@ -1292,9 +1296,9 @@ msgstr "Gemini's daily quota is used up. It resets at midnight Pacific time."
 msgid "Generate"
 msgstr "Generate"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:48
-msgid "Generate All"
-msgstr "Generate All"
+#: src/features/course-overview/components/GenerateAllButton.tsx:54
+msgid "Generate Course Overviews"
+msgstr "Generate Course Overviews"
 
 #: src/features/course-overview/CourseView.tsx:76
 msgid "Generating · {runningTitle}"
@@ -1305,7 +1309,7 @@ msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "Generating from {stepLabel} step will rebuild:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:102
-#: src/features/course-overview/components/GenerateAllButton.tsx:43
+#: src/features/course-overview/components/GenerateAllButton.tsx:49
 msgid "Generating…"
 msgstr "Generating…"
 
@@ -1792,7 +1796,7 @@ msgstr "Overview"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:74
 #: src/features/course-overview/components/ExtractorRow.tsx:29
-#: src/features/course-overview/components/GenerateAllButton.tsx:28
+#: src/features/course-overview/components/GenerateAllButton.tsx:29
 #: src/features/course-overview/components/StepRow.tsx:39
 msgid "Overview is already running for this course"
 msgstr "Overview is already running for this course"

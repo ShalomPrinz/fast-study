@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { branchStatus, startedSlug } from '@/features/course-overview/constants/overview'
 import { toastInitResult } from '@/services/toaster'
+import Tooltip from '@/shared/components/Tooltip'
 import { toastFailure } from '@/shared/utils/failure'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
@@ -32,20 +33,26 @@ export default function GenerateAllButton() {
     }
   }
 
+  const enabled = !running && extractors !== null && !allDone
+
   return (
-    <button
-      className="btn btn--primary"
-      onClick={handleGenerate}
-      disabled={running || extractors === null || allDone}
+    <Tooltip
+      content={
+        enabled
+          ? t`Creates comprehensive summaries for all lectures and recitations in the course`
+          : undefined
+      }
     >
-      {running && <span className="spinner spinner--sm" />}
-      {running
-        ? t`Generating…`
-        : allDone
-          ? t`All Generated`
-          : hasStarted
-            ? t`Continue Generating`
-            : t`Generate All`}
-    </button>
+      <button className="btn btn--primary" onClick={handleGenerate} disabled={!enabled}>
+        {running && <span className="spinner spinner--sm" />}
+        {running
+          ? t`Generating…`
+          : allDone
+            ? t`All Generated`
+            : hasStarted
+              ? t`Continue Generating`
+              : t`Generate Course Overviews`}
+      </button>
+    </Tooltip>
   )
 }
