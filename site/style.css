@@ -427,6 +427,61 @@ p {
   stroke-linejoin: round;
 }
 
+/* Lecture journey: one lecture's four numbered screenshots, two per row. */
+.section-lead {
+  color: var(--text-2);
+  font-size: 17px;
+  max-width: 60ch;
+  margin-block: -12px 28px;
+}
+
+.journey {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.journey li {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.journey-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.journey b {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+}
+
+.journey p {
+  color: var(--text-2);
+  font-size: 15px;
+  margin-block: 6px 14px;
+  padding-inline-start: 42px;
+  flex: 1;
+}
+
+.journey img {
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+}
+
 /* Universities and needs */
 .split {
   display: grid;
@@ -644,8 +699,12 @@ details p {
     padding-block: 32px 44px;
   }
   .features,
-  .steps--four {
+  .steps--four,
+  .journey {
     grid-template-columns: 1fr;
+  }
+  .journey p {
+    padding-inline-start: 0;
   }
   .privacy li {
     grid-template-columns: 1fr;

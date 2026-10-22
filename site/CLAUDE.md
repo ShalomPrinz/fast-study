@@ -27,7 +27,7 @@ visits, no cookies; both download buttons carry `data-goatcounter-click="downloa
 
 ## What the page covers
 
-Hero, how it works, six features, universities, what you'll need, privacy (error reports included),
+Hero, how it works, the lecture journey (`#journey`: one lecture through its four `journey-*` shots), six features, universities, what you'll need, privacy (error reports included),
 the SmartScreen install steps and a short FAQ. The footer links `code-signing.html`, which carries the
 policy title and the roles SignPath's conditions require. Its role names (Committers and reviewers, Approvers) and the term "Code signing policy" — shown
 in English in the Hebrew view too — follow [SignPath's conditions](https://signpath.org/terms.html) verbatim. Every claim is the app's current behaviour, checked
