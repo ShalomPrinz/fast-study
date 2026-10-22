@@ -28,6 +28,8 @@ SOURCE_URL_MARKER = ".source_url"
 # LaTeX the backend keeps only on a hard render failure. Dotfiles never become tree rows.
 PDF_WARNING_MARKER = ".pdf_warning"
 PDF_BUILD_TEX_MARKER = ".pdf_build.tex"
+# Lecture-dir empty marker: the user studied it. A video upload keeps it — it describes the study, not the video.
+DONE_MARKER = ".done"
 
 # The tree surfaces exactly these and a fresh video.mp4 wipes these plus its side-files — see docs/LAYOUT.md.
 PREDEFINED_FILES = (

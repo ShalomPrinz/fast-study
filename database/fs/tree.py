@@ -6,6 +6,7 @@ from .materials import list_materials
 from .mp4 import read_duration
 from .paths import (
     ARCHIVED_MARKER,
+    DONE_MARKER,
     OVERVIEW_DIR,
     PDF_WARNING_MARKER,
     PREDEFINED_FILES,
@@ -89,6 +90,7 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         "materials": list_materials(lecture_path),
         "transcribePartial": _read_transcribe_partial(lecture_path),
         "removed": _removed(files),
+        "done": (lecture_path / DONE_MARKER).exists(),
     }
 
 

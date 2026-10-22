@@ -51,7 +51,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`); 404 if the course is missing           |
 | `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name |
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file in it is open elsewhere |
-| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials; `423` if one is open elsewhere |
+| `PUT    /courses/{course}/lectures/{lecture}/done`         | mark studied (creates `.done`); idempotent `204`; 404 if the lecture is missing |
+| `DELETE /courses/{course}/lectures/{lecture}/done`         | clear studied (removes `.done`); idempotent `204`; 404 if the lecture is missing |
+| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials and `.done`; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf, optional `?source=` tag; returns `{name}` with the allocated (or adopted) filename |
 | `POST   /courses/{course}/lectures/{lecture}/removed`      | delete intermediates (`{files}`, each `video.mp4` or `audio.mp3`); see Write semantics |

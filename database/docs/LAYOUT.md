@@ -120,6 +120,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | ------------------------ | ----------- | -------------------------------------------------------- |
 | `.archived`              | course dir  | empty marker; course is archived                          |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
+| `.done`                  | lecture dir | empty marker; the user studied it — a fresh video upload keeps it |
 | `.materials.json`        | lecture dir | `{material name: source}` for materials with a download source |
 | `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
@@ -149,7 +150,8 @@ A materials-only lecture has neither, so it reports nothing removed.
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
 `materials` (index-ordered `{name, size, mtime}` plus `source` when it has one, always present and `[]` when none — presence
 in the list *is* existence, so entries carry no `exists`), `transcribePartial`, and `removed` (the
-names derived above, in `REMOVABLE_FILES` order; always present, `[]` when none). Three fields are inlined onto file entries rather than exposed as separate
+names derived above, in `REMOVABLE_FILES` order; always present, `[]` when none), and `done` (`.done`
+exists; always present, `false` when absent). Three fields are inlined onto file entries rather than exposed as separate
 endpoints, because the frontend needs them on every render of the tree:
 
 - `drive_url.txt` → `url` on its own entry.

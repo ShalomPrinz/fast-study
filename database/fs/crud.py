@@ -5,6 +5,7 @@ from pathlib import Path
 from .material_sources import forget_source
 from .paths import (
     ARCHIVED_MARKER,
+    DONE_MARKER,
     OVERVIEW_DIR,
     PDF_BUILD_TEX_MARKER,
     PDF_WARNING_MARKER,
@@ -89,6 +90,21 @@ def set_course_archived(name: str, archived: bool) -> None:
         marker.touch(exist_ok=True)
     elif marker.exists():
         marker.unlink()
+
+
+def set_lecture_done(course: str, lecture: str, kind: str, done: bool) -> None:
+    """Create or remove the .done marker inside a lecture dir (idempotent); LectureNotFound if the dir is gone."""
+
+    d = lecture_dir(course, lecture, kind)
+    if not d.is_dir():
+        raise LectureNotFound(
+            f"{course}/{lecture} does not exist", course=course, lecture=lecture
+        )
+    marker = d / DONE_MARKER
+    if done:
+        marker.touch(exist_ok=True)
+    else:
+        marker.unlink(missing_ok=True)
 
 
 def rename_course(old: str, new: str) -> str:

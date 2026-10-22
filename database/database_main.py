@@ -18,6 +18,7 @@ from fs import summary as summary_fs
 from fs.files import file_path
 from fs.paths import (
     ARCHIVED_MARKER,
+    DONE_MARKER,
     SOURCE_URL_MARKER,
     CodedError,
     CodedValueError,
@@ -227,6 +228,30 @@ async def patch_lecture(
         return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "rename_failed", {"from": lecture, "to": name})
+
+
+@app.put("/courses/{course}/lectures/{lecture}/done")
+async def put_lecture_done(course: str, lecture: str, kind: str = Query("lecture")):
+    """Mark a lecture or recitation studied (creates its .done marker; idempotent)."""
+
+    try:
+        crud.set_lecture_done(course, lecture, kind, True)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": DONE_MARKER})
+
+
+@app.delete("/courses/{course}/lectures/{lecture}/done")
+async def delete_lecture_done(course: str, lecture: str, kind: str = Query("lecture")):
+    """Clear a lecture or recitation's studied mark (removes its .done marker; idempotent)."""
+
+    try:
+        crud.set_lecture_done(course, lecture, kind, False)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_delete_failed", {"file": DONE_MARKER})
 
 
 @app.put("/courses/{course}/lectures/{lecture}/video")
