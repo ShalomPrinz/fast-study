@@ -95,17 +95,16 @@ function CourseOverviewBody() {
             {item}
           </Fragment>
         ))}
-        actions={
-          <>
-            <CurrentStudyButton course={course} kind="lecture" items={lectures} />
-            <CurrentStudyButton course={course} kind="recitation" items={recitations} />
-            <GenerateAllButton />
-          </>
-        }
+        actions={<GenerateAllButton />}
       />
 
       <div className="page-body">
         <div className="page-column">
+          <div className="current-study-row">
+            <CurrentStudyButton course={course} kind="lecture" items={lectures} />
+            <CurrentStudyButton course={course} kind="recitation" items={recitations} />
+          </div>
+
           <div className="section-head">
             <h2 className="section-title">
               <Trans>Course overview</Trans>

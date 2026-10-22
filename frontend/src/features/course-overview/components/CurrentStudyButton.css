@@ -1,3 +1,12 @@
+/* The overview body's row of both tracks' buttons, above the overview list at the inline-start. */
+.current-study-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-7);
+  margin-bottom: var(--space-7);
+}
+
 .current-study {
   display: inline-flex;
   align-items: center;

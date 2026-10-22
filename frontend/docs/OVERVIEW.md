@@ -20,8 +20,8 @@ the caller toasts a `busy` `RunInitResult` and the rejection a refused run throw
 ## The view
 
 `CourseView` shares the lecture view's frame: a `PageHeader` (the generating extractor, lecture and
-recitation counts, how many are fully processed, a `CurrentStudyButton` per track, `GenerateAllButton`) over
-one `.pipeline-card` of branch rows. Each `CurrentStudyButton` opens its track's current item
+recitation counts, how many are fully processed, `GenerateAllButton`) over a body row of one
+`CurrentStudyButton` per track, then one `.pipeline-card` of branch rows. Each `CurrentStudyButton` opens its track's current item
 ([LECTURES.md](LECTURES.md) §Tree pane); with none — all done, or the track is empty — it disables and a green
 note beside it says which. A running branch shows its phase and a clock counting up from `startedAt` where a lecture shows an
 ETA — elapsed, since `timing.db` records no overview operation to estimate from. Expanding a branch shows
