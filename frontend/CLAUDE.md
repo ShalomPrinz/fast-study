@@ -31,7 +31,7 @@ back to those overrides, then the dev ports — see
 | [DOWNLOADS.md](docs/DOWNLOADS.md)          | downloads page: tabs, auth, the Moodle lock, session, discovery, row edits, already-downloaded rule |
 | [EXTENSION.md](docs/EXTENSION.md)          | the Downloads Extension tab's guide: steps, bridge-absent state, screenshot drop-in |
 | [JOBS.md](docs/JOBS.md)                    | following a download: the jobs reflection, grouping by `ref`, bars, retry         |
-| [BULK.md](docs/BULK.md)                    | a section's "Download all": the reflected run, derived outcome, passcode          |
+| [BULK.md](docs/BULK.md)                    | a section's or playlist's "Download all": the reflected run, derived outcome, passcode |
 | [SETTINGS.md](docs/SETTINGS.md)            | the settings, the store, the first-run wall, prerequisites, accounts, Drive consent |
 | [SEARCH.md](docs/SEARCH.md)                | client-side corpus, find → group → build, snippets, paging                        |
 | [I18N.md](docs/I18N.md)                    | translated chrome vs. untranslated data, Hebrew voice and vocabulary, extract, RTL |

@@ -4,7 +4,8 @@ import type { ReactNode } from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import type { SectionRun } from '../services/downloadServer'
-import { coursesWithActiveRuns } from './SectionRunsContext'
+import { playlistRunId } from '../utils/sections'
+import { coursesWithActiveRuns, nestedRuns } from './SectionRunsContext'
 
 const noop = () => {}
 
@@ -31,6 +32,19 @@ describe('coursesWithActiveRuns', () => {
       run('Cancelled', 'cancelled'),
     ])
     expect([...active].sort()).toEqual(['Algo', 'Logic'])
+  })
+})
+
+describe('nestedRuns', () => {
+  it('files each playlist run under its section and leaves section runs out', () => {
+    const section = run('Algo', 'done')
+    const playlist = {
+      ...run('Algo', 'running'),
+      sectionId: playlistRunId(section.sectionId, 'pl1'),
+    }
+    const nested = nestedRuns([section, playlist])
+    expect([...nested.keys()]).toEqual([section.sectionId])
+    expect(nested.get(section.sectionId)).toEqual([playlist])
   })
 })
 

@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from 'react'
 import type { SectionRun } from '../services/downloadServer'
 import { fetchRuns, subscribeRuns } from '../services/downloadServer'
+import { runSectionKey } from '../utils/sections'
 import { sequencedRefresh } from '../utils/sequencedRefresh'
 import { createCaptchaCatches } from '../utils/zoomCaptcha'
 import { useDownloadsActions } from './DownloadsSessionContext'
@@ -16,6 +17,9 @@ import { useDownloadsActions } from './DownloadsSessionContext'
 // Module store of `GET /runs` by section id with per-section subscriptions; it outlives the provider,
 // which clears it on unmount.
 let runsBySection: ReadonlyMap<string, SectionRun> = new Map()
+// The playlist runs nested under each section key, so a section can tell one is holding its rows.
+let playlistRunsBySection: ReadonlyMap<string, readonly SectionRun[]> = new Map()
+const NO_RUNS: readonly SectionRun[] = Object.freeze([])
 let pausedRuns: readonly SectionRun[] = []
 let activeCourses: ReadonlySet<string> = new Set()
 // Paused run ids whose passcode prompt the user closed without cancelling; the banner reopens it.
@@ -37,6 +41,7 @@ export function coursesWithActiveRuns(snapshot: readonly SectionRun[]): Readonly
 
 function publish(snapshot: SectionRun[]) {
   runsBySection = new Map(snapshot.map((run) => [run.sectionId, run]))
+  playlistRunsBySection = nestedRuns(snapshot)
   activeCourses = coursesWithActiveRuns(snapshot)
   const paused = snapshot.filter((run) => run.status === 'paused')
   // Same parked ids keep the previous array, or every ping would re-render the banner. Keyed by id
@@ -47,6 +52,19 @@ function publish(snapshot: SectionRun[]) {
   if ([...dismissedRuns].some((id) => !paused.some((run) => run.id === id)))
     dismissedRuns = new Set([...dismissedRuns].filter((id) => paused.some((run) => run.id === id)))
   notify()
+}
+
+// Groups the playlist runs by the section key they sit under; a section's own run is not nested.
+export function nestedRuns(snapshot: readonly SectionRun[]): ReadonlyMap<string, SectionRun[]> {
+  const nested = new Map<string, SectionRun[]>()
+  for (const run of snapshot) {
+    const section = runSectionKey(run.sectionId)
+    if (section === run.sectionId) continue
+    const runs = nested.get(section)
+    if (runs) runs.push(run)
+    else nested.set(section, [run])
+  }
+  return nested
 }
 
 function notify() {
@@ -78,6 +96,19 @@ export function useSectionRun(sectionId: string | null): SectionRun | null {
     subscribe,
     useCallback(
       () => (sectionId === null ? null : (runsBySection.get(sectionId) ?? null)),
+      [sectionId],
+    ),
+  )
+}
+
+// The playlist runs inside one section, or a stable empty array — always for the synthetic bucket.
+export function usePlaylistRuns(sectionId: string | null): readonly SectionRun[] {
+  if (!useContext(SectionRunsContext))
+    throw new Error('usePlaylistRuns must be used inside <SectionRunsProvider>')
+  return useSyncExternalStore(
+    subscribe,
+    useCallback(
+      () => (sectionId === null ? NO_RUNS : (playlistRunsBySection.get(sectionId) ?? NO_RUNS)),
       [sectionId],
     ),
   )

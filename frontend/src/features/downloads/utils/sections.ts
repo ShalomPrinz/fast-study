@@ -30,8 +30,23 @@ export function sectionId(course: string, media: Media, title: string): string {
   return `${course}:${media}:${title}`
 }
 
-// The inverse. Course names are NTFS-sanitized on disk so they never hold a `:`, and the media is a
-// known enum — so the first two colons delimit, and everything after the second is the title.
+// Joins a playlist's run key onto its section's: a control character no Moodle heading or ref carries,
+// so a playlist key never collides with a section key and splits back unambiguously.
+const PLAYLIST_SEP = '\u001f'
+
+// A playlist's own run key, nested under its section's so the section can find the runs inside it.
+export function playlistRunId(sectionKey: string, ref: string): string {
+  return `${sectionKey}${PLAYLIST_SEP}${ref}`
+}
+
+// The section key a run key belongs to: itself for a section's run, the prefix for a playlist's.
+export function runSectionKey(runKey: string): string {
+  const sep = runKey.indexOf(PLAYLIST_SEP)
+  return sep < 0 ? runKey : runKey.slice(0, sep)
+}
+
+// The inverse of a section key. Course names are NTFS-sanitized on disk so they never hold a `:`, and
+// the media is a known enum — so the first two colons delimit, and everything after the second is the title.
 export function parseSectionId(id: string): { course: string; media: Media; title: string } | null {
   const first = id.indexOf(':')
   const second = id.indexOf(':', first + 1)
@@ -79,4 +94,12 @@ export function leafCount(items: Item[], childrenOf: (ref: string) => Item[] | n
 // Unknown is the only segment hidden when empty: most courses have no Drive rows at all.
 export function showsMediaSegment(media: Media, count: number): boolean {
   return media !== 'unknown' || count > 0
+}
+
+// Which kind of collapsible group a header heads, and the stable-selector prefix each one carries.
+export type GroupScope = 'section' | 'playlist'
+
+export const GROUP_SELECTOR: Record<GroupScope, string> = {
+  section: 'recordings-section',
+  playlist: 'recording-playlist',
 }

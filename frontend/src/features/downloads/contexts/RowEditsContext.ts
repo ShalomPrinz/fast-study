@@ -22,6 +22,8 @@ export interface RowEditsDispatch {
   setName: (ref: string, name: string) => void
   setKind: (ref: string, kind: Kind) => void
   lock: (ref: string, lock: RowLock) => void
+  // The current edits and locks, read at call time, so a bulk submit needs no subscription to the map.
+  read: () => { edits: Record<string, RowEdit>; locks: Record<string, RowLock> }
 }
 
 // Per-row (name, kind) overrides keyed by ref. State and dispatch are split so a keystroke re-renders

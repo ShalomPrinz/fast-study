@@ -1,6 +1,6 @@
 # Bulk download
 
-A section's "Download all", and the Zoom passcode gate it can park on.
+A section's or a playlist's "Download all", and the Zoom passcode gate it can park on.
 
 ## The page starts a run and then only reflects it
 
@@ -15,7 +15,9 @@ the section on "Downloading…"), and a module store keyed by `sectionId`, read 
 `useSectionRun(id)`. The key is `${course}:${media}:${title}` — both qualifiers matter, since one heading
 usually holds a video and its slides and a run outlives the course it started in. `sectionId` /
 `parseSectionId` (`utils/sections.ts`) build and parse it; parsing takes the first two colons as
-delimiters, which holds because a course name cannot contain one and media is an enum.
+delimiters, which holds because a course name cannot contain one and media is an enum. A playlist's run
+key is `playlistRunId(sectionKey, ref)` — the section key, U+001F, the playlist's ref — which no
+Moodle heading or ref contains, so it never collides with a section key and `runSectionKey` splits it back.
 
 `RunTarget` (`{ ref, name, kind, media, disposition }`) is a **cross-wire contract**: TypeScript in
 `services/downloadServer.ts`, plain JS in the server's `runs.js`. Change one, change the other.
@@ -44,6 +46,24 @@ The server triggers rows sequentially, since the auto-downloader drives one shar
 downloads themselves overlap. A 401 stops the run at `reconnect`, a 409 parks it `paused`, a 422 records
 `unsupported`, anything else `queue-failed` and continues. The run's recorded verdicts also feed
 `ResolvedMediaContext`, once per ref.
+
+## Playlists
+
+`SectionGroup` renders an `expandable` row as `PlaylistGroup`: the section's own `GroupHeader` (caret,
+bold title, whole-line toggle, hover tint) over its children, indented with a side rule and hidden, not
+unmounted, when collapsed. The first click fetches the children (`expandItem`, spinner in the caret);
+until then the header shows no count and its "Download all" is disabled with "Expand this playlist
+first", as a section's waits for every playlist instead of auto-expanding. Its run is the section's machinery
+(`useBulkRun`, `BulkRunControls`, `BulkRunNotes`) over the children alone, under the playlist's run key.
+The children are YouTube, so the playlist run waits out the Moodle lock only when auto flagged a child
+`moodle`, as a single row does. A playlist run never parks at a passcode gate — its children are YouTube
+and only a Zoom share asks for one — so `BulkRunNotes` renders the prompt for a section run only, and the
+banner only ever lists section runs.
+
+The section's "Download all" still queues every playlist's children. Two runs over one row would download it
+twice, so each waits out the other (`bulkGate`'s `other-run`): a playlist's button is disabled while its
+section's run is busy, and a section's while any playlist run inside it is (`usePlaylistRuns`, `runBusy`) —
+busy meaning queue walking or a download it started still running.
 
 ## Deriving the outcome
 
@@ -76,7 +96,8 @@ Two limits of deriving with no memory: for one SSE round-trip after a retry the 
 flickers the target through `failed`; and a half-failed zoom pair reads `downloaded`, since `.1` on disk
 satisfies `targetLanded` — per-half accounting would need job ids from the POST.
 
-The header shows `Downloading {at}/{total}…` while `running`/`paused`, else `Downloading n more…` for
+`bulkRunState` derives the header's facts from the run, and `bulkGate` decides the button: expand first,
+then its own busy run, then the other run, then the Moodle lock. The header shows `Downloading {at}/{total}…` while `running`/`paused`, else `Downloading n more…` for
 targets with a running job, else the summary. The bulk run never toasts per item. A run ending at
 `reconnect` raises the session-expired hint from the provider, once per run id, with a `primed` flag so a
 run already aborted before load is history.

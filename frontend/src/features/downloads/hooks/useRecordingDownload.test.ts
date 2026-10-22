@@ -70,7 +70,7 @@ function wrapper({ children }: { children: ReactNode }) {
       { value: resolveMedia },
       createElement(
         RowEditsDispatchContext.Provider,
-        { value: { setName, setKind, lock } },
+        { value: { setName, setKind, lock, read: () => ({ edits: {}, locks: {} }) } },
         children,
       ),
     ),
@@ -108,7 +108,7 @@ function renderUnderBusyLock(moodle: boolean) {
         { value: resolveMedia },
         createElement(
           RowEditsDispatchContext.Provider,
-          { value: { setName, setKind, lock } },
+          { value: { setName, setKind, lock, read: () => ({ edits: {}, locks: {} }) } },
           children,
         ),
       ),

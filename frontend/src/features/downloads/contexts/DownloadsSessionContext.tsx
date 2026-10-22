@@ -30,7 +30,7 @@ interface DownloadsSessionActions {
   reconnectHint: () => void
   resolveMedia: ResolveMedia
   // The lock is DownloadsView's, not the session's: it must not outlive the page.
-  rowEdits: Omit<RowEditsDispatch, 'lock'>
+  rowEdits: Omit<RowEditsDispatch, 'lock' | 'read'>
 }
 
 // The Downloads page session, mounted in `Layout` so discovery, edits and expansions outlive the

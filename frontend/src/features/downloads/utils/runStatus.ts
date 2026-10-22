@@ -2,7 +2,7 @@ import { plural } from '@lingui/core/macro'
 import type { Course } from '@/types'
 import type { JobProgress, JobsByRef } from '../contexts/DownloadJobsContext'
 import { jobsForRef, jobsForTarget } from '../contexts/DownloadJobsContext'
-import type { RunTarget } from '../services/downloadServer'
+import type { RunTarget, SectionRun } from '../services/downloadServer'
 import { targetLanded } from './existingItems'
 
 // `unsupported` is a permanent verdict, not a run failure; `pending` is a row the queue has not
@@ -102,4 +102,64 @@ export function summarize(
   if (count('unsupported')) parts.push(plural(count('unsupported'), { other: '# unsupported' }))
   if (count('skipped')) parts.push(plural(count('skipped'), { other: '# already there' }))
   return parts.join(', ')
+}
+
+// A run's header facts: `queueing` is the server's status, and `busy` ORs in the live jobs, which
+// outlive the queue (docs/BULK.md §Deriving the outcome).
+export interface BulkRunState {
+  queueing: boolean
+  // Targets with a running job.
+  active: number
+  busy: boolean
+  // Rows a stopped run can no longer account for, and rows it never reached; zero while queueing.
+  stalled: number
+  notStarted: number
+}
+
+export function bulkRunState(
+  run: SectionRun | null,
+  courses: Course[],
+  course: string,
+  jobsByRef: JobsByRef,
+): BulkRunState {
+  const targets = run?.targets ?? []
+  const queueing = run?.status === 'running' || run?.status === 'paused'
+  const active = runningCount(targets, course, jobsByRef)
+  return {
+    queueing,
+    active,
+    busy: queueing || active > 0,
+    stalled: queueing ? 0 : unverifiedCount(targets, courses, course, jobsByRef),
+    notStarted: queueing ? 0 : notStartedCount(targets),
+  }
+}
+
+// Whether a run still holds its recordings: its queue is walking, or a download it started is running.
+export function runBusy(run: SectionRun, course: string, jobsByRef: JobsByRef): boolean {
+  return (
+    run.status === 'running' ||
+    run.status === 'paused' ||
+    runningCount(run.targets, course, jobsByRef) > 0
+  )
+}
+
+// Why "Download all" can't start, first reason wins; a busy run has no tooltip, its label says so.
+// `otherBusy` is the other run over the same rows (section vs playlist), which would download them twice.
+export function bulkGate(args: {
+  ready: boolean
+  busy: boolean
+  otherBusy: boolean
+  locked: boolean
+}): { disabled: boolean; reason: 'expand' | 'other-run' | 'moodle' | null } {
+  const { ready, busy, otherBusy, locked } = args
+  const reason = !ready
+    ? 'expand'
+    : busy
+      ? null
+      : otherBusy
+        ? 'other-run'
+        : locked
+          ? 'moodle'
+          : null
+  return { disabled: busy || reason !== null, reason }
 }

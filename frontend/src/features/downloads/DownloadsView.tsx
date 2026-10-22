@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Link } from 'react-router-dom'
 import { ResolvedMediaContext } from './contexts/ResolvedMediaContext'
@@ -57,7 +57,13 @@ export default function DownloadsView() {
   const [tab, selectTab] = useDownloadsTab()
   // Held here rather than in the session, so leaving the page drops every lock.
   const { locks, lock } = useRowLocks()
-  const dispatch = useMemo(() => ({ ...rowEdits, lock }), [rowEdits, lock])
+  // Mirrored into a ref so `read` keeps the dispatch bag's identity stable across keystrokes.
+  const rows = useRef({ edits, locks })
+  useEffect(() => {
+    rows.current = { edits, locks }
+  }, [edits, locks])
+  const read = useCallback(() => rows.current, [])
+  const dispatch = useMemo(() => ({ ...rowEdits, lock, read }), [rowEdits, lock, read])
 
   const countOf = (media: Media) => items.filter((i) => i.media === media).length
 

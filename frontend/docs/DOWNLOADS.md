@@ -224,12 +224,13 @@ recognised by title, and has **no run identity**: `section.id = null`, no "Downl
 bulk queue. Giving it an id would collide with a real heading of the same name in the server's run map.
 `useSectionRun(null)` reads as "no run".
 
-A playlist row is `expandable`. Expansion state and fetched children live in a module store
-(`RowExpansionsContext.ts`), not the row: the bulk queue needs resolved children, "Download all" needs to
-know every playlist is expanded, and the state must survive a segment switch. Each row subscribes to its
+A playlist row is `expandable` and renders as a collapsible group (`PlaylistGroup`, with its own
+"Download all" — [BULK.md](BULK.md) §Playlists). Expansion state and fetched children live in a module store
+(`RowExpansionsContext.ts`), not the row: the section's bulk queue needs resolved children, its "Download all" needs to
+know every playlist is expanded, and the state must survive a segment switch. Each playlist subscribes to its
 own ref; children are cached on first expand; the session's `clear()` calls `clearExpansions()`.
 
-Each section header's caret + title is a toggle whose hit area stretches over the whole line (only
+Each section header (`GroupHeader`, shared with playlists) has a caret + title toggle whose hit area stretches over the whole line (only
 "Download all" sits above it); it hides (never unmounts) everything below it — the rows and the passcode
 prompt hold in-flight state. Collapsed keys live in
 a sibling module store (`SectionCollapseContext.ts`, keyed `section.id`, or `course:media` for the synthetic pile, open by
@@ -253,7 +254,8 @@ displayed values from the override plus the live tree. So an untouched name keep
 toggle, and the green row and the bulk skip read the same resolved values. Edits persist for the whole
 course (SSE refresh, segment switch, navigation) and reset on another course or close, so refs never
 collide. State and dispatch are split: only `SectionGroup` and `ChildRows` subscribe to the map, and the
-memoized `RecordingRow` takes its slice as a prop, so a keystroke re-renders one row.
+memoized `RecordingRow` takes its slice as a prop, so a keystroke re-renders one row. A bulk submit reads
+the map at click time through the dispatch bag's identity-stable `read()`, so a playlist header never subscribes.
 
 **A download locks its row's name.** An untitled row's suggestion is the tree's next free name, so once
 its lecture lands the suggestion would move on and the row would lose its bars and green state. A

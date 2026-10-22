@@ -1,90 +1,8 @@
-/* One Moodle section: its heading and bulk control above the cards it holds. */
+/* One Moodle section: its heading (`GroupHeader`) and bulk control above the cards it holds. */
 .recordings-section {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-}
-
-/* Padded out into the gutter so its hover tint frames the line while the title stays aligned with the
-   cards below. */
-.recordings-section-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  margin-inline: calc(-1 * var(--space-3));
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--r-sm);
-}
-
-/* The header line reads as one control, except over the bulk button, which has its own hover. */
-.recordings-section-header:hover:not(:has(.recordings-section-run:hover)) {
-  background: var(--surface-sunken);
-}
-
-.recordings-section-header:hover:not(:has(.recordings-section-run:hover))
-  .recordings-section-title {
-  color: var(--accent);
-}
-
-/* Caret and title are the toggle's label, but its ::after stretches over the whole header, so a click
-   anywhere on the line — count, progress, empty space — collapses the body; only the bulk button sits
-   above it. */
-.recordings-section-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.recordings-section-toggle::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  border-radius: var(--r-sm);
-  cursor: pointer;
-}
-
-.recordings-section-toggle:focus-visible {
-  outline: none;
-}
-
-.recordings-section-toggle:focus-visible::after {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.recordings-section-caret {
-  flex-shrink: 0;
-  font-size: var(--fs-section);
-  color: var(--text-4);
-}
-
-.recordings-section-title {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-body);
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* How many cards the section holds, and — once it has been run — how that run ended. Both are quiet
-   facts about the heading, so they share its line. */
-.recordings-section-count,
-.recordings-section-progress {
-  flex-shrink: 0;
-  font-size: var(--fs-fine);
-  color: var(--text-4);
 }
 
 /* The body carries the section's own column rhythm, since it replaces the rows as direct children. */
@@ -97,21 +15,4 @@
 /* `display: flex` above outranks the UA's `[hidden]` rule, so collapse needs its own. */
 .recordings-section-body[hidden] {
   display: none;
-}
-
-/* The bulk control sits at the far end, whichever of the facts before it are showing, and above the
-   toggle's stretched hit area so its click never collapses the section. */
-.recordings-section-run {
-  position: relative;
-  z-index: 2;
-  margin-inline-start: auto;
-}
-
-/* Not an error — the run simply can't account for these rows, and nothing here can resolve them. */
-.recordings-section-stalled {
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--r-sm);
-  background: var(--warn-soft);
-  font-size: var(--fs-meta);
-  color: var(--warn);
 }

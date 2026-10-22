@@ -79,44 +79,6 @@
   opacity: 0.55;
 }
 
-/* A playlist: a caret and a title, with its resolved children indented beneath. */
-.recording-playlist,
-.recording-children {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.recording-children {
-  margin-inline-start: var(--space-5);
-  padding-inline-start: var(--space-5);
-  border-inline-start: 2px solid var(--line);
-}
-
-.recording-playlist-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding-inline: var(--space-2);
-  color: var(--text-3);
-}
-
-.recording-caret {
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
-  background: none;
-  border: none;
-  line-height: 1;
-  font-size: var(--fs-fine);
-  color: var(--text-4);
-  cursor: pointer;
-}
-
-.recording-caret:disabled {
-  cursor: default;
-}
-
 /* Split cards (a zoom pair) delegate re-download/retry to the per-clip buttons, so the main control
    is a plain status label — bare `.btn` metrics, no variant, so no chrome and no hover.
    Outspecifies `.btn`'s colour rather than relying on cross-file order. */
@@ -125,7 +87,7 @@
   cursor: default;
 }
 
-/* .recording-spinner lives here rather than beside RecordingJobList, which also renders it. */
+/* .recording-spinner lives here rather than beside RecordingJobList or GroupHeader, which also render it. */
 .recording-spinner {
   width: 13px;
   height: 13px;

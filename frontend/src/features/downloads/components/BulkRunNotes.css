@@ -1,0 +1,8 @@
+/* Not an error — the run simply can't account for these rows, and nothing here can resolve them. */
+.bulk-run-note {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--r-sm);
+  background: var(--warn-soft);
+  font-size: var(--fs-meta);
+  color: var(--warn);
+}

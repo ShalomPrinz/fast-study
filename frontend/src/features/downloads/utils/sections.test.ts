@@ -10,6 +10,8 @@ import {
   groupSections,
   leafCount,
   parseSectionId,
+  playlistRunId,
+  runSectionKey,
   sectionId,
   sectionTitle,
   showsMediaSegment,
@@ -168,6 +170,21 @@ describe('parseSectionId', () => {
     expect(parseSectionId('')).toBeNull()
     expect(parseSectionId(':video:Week 1')).toBeNull()
     expect(parseSectionId('Algebra:video:')).toBeNull()
+  })
+})
+
+describe('playlistRunId', () => {
+  const section = sectionId('Algebra', 'video', 'Week 1')
+  const ref = 'https://www.youtube.com/playlist?list=PL1:x'
+
+  it('never equals a section key, even one whose title spells the ref', () => {
+    expect(playlistRunId(section, ref)).not.toBe(sectionId('Algebra', 'video', `Week 1${ref}`))
+    expect(playlistRunId(section, ref)).not.toBe(section)
+  })
+
+  it('maps back to its section key, and a section key to itself', () => {
+    expect(runSectionKey(playlistRunId(section, ref))).toBe(section)
+    expect(runSectionKey(section)).toBe(section)
   })
 })
 

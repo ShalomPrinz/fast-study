@@ -17,12 +17,7 @@ import {
   useRowJobs,
 } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { RowEdit, RowLock } from '@/features/downloads/contexts/RowEditsContext'
-import {
-  useRowEdit,
-  useRowEdits,
-  useRowLocksMap,
-} from '@/features/downloads/contexts/RowEditsContext'
-import { useRowExpansion } from '@/features/downloads/contexts/RowExpansionsContext'
+import { useRowEdit } from '@/features/downloads/contexts/RowEditsContext'
 import {
   existingNames,
   hasResource,
@@ -42,7 +37,6 @@ import '@/styles/segmented.css'
 import '@/styles/pipeline-card.css'
 import '@/features/downloads/DownloadsView.css'
 import './RecordingRow.css'
-import Chevron from '@/shared/components/Chevron'
 import Icon from '@/shared/components/Icon'
 
 interface Props {
@@ -51,8 +45,6 @@ interface Props {
   lock: RowLock | undefined
   course: string
   onReconnect: () => void
-  // Absent for a playlist's children, which are never expandable themselves.
-  onToggle?: (item: Item) => void
 }
 
 // The resolved-type chip's copy; an unresolved 'unknown' row shows '?'.
@@ -62,16 +54,9 @@ const RESOLVED_LABEL: Record<ResolvedMedia, MessageDescriptor> = {
   unsupported: msg`Unsupported`,
 }
 
-// One recording as a two-line card, or a playlist's recursive children. Memoized on its own `edit`
+// One recording as a two-line card; a playlist is `PlaylistGroup`. Memoized on its own `edit`
 // slice, so typing in one card leaves its siblings untouched.
-const RecordingRow = memo(function RecordingRow({
-  item,
-  edit,
-  lock,
-  course,
-  onReconnect,
-  onToggle,
-}: Props) {
+const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onReconnect }: Props) {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   // Name/kind live in SectionGroup so this row and the bulk queue agree.
@@ -87,9 +72,6 @@ const RecordingRow = memo(function RecordingRow({
   // name and kind; a running download re-attaches after a reload. Subscribed per row, so another
   // row's job change doesn't re-render this one.
   const jobs = jobsForTarget(useRowJobs(course, item.ref), effectiveName, kind)
-  // Subscribed per ref, so expanding one playlist leaves every other row alone. The state itself is
-  // SectionGroup's — the bulk queue needs the same children cache.
-  const expand = useRowExpansion(item.ref)
   // Auto's cached probe answer, updated in place by a download this session (single-row or bulk) —
   // so the type column resolves on the same interaction, with no re-list.
   const resolved = item.resolvedMedia
@@ -191,41 +173,6 @@ const RecordingRow = memo(function RecordingRow({
           run: () => retryClip(job),
         })
       : retryClip(job)
-
-  if (item.expandable && onToggle) {
-    return (
-      <div className="recording-playlist">
-        <div className="recording-playlist-head">
-          <button
-            className="recording-caret"
-            aria-label={expand.expanded ? t`Collapse` : t`Expand`}
-            aria-expanded={expand.expanded}
-            onClick={() => onToggle(item)}
-            disabled={expand.expanding}
-          >
-            {expand.expanding ? (
-              <span className="recording-spinner" />
-            ) : (
-              <Chevron open={expand.expanded} />
-            )}
-          </button>
-          <Tooltip content={item.title}>
-            <span className="recording-title" dir="auto">
-              {item.title}
-            </span>
-          </Tooltip>
-        </div>
-        {expand.error && (
-          <div className="recordings-status recordings-status--error">{expand.error}</div>
-        )}
-        {expand.expanded && expand.children && (
-          <div className="recording-children">
-            <ChildRows items={expand.children} course={course} onReconnect={onReconnect} />
-          </div>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div
@@ -398,32 +345,3 @@ const RecordingRow = memo(function RecordingRow({
 })
 
 export default RecordingRow
-
-// Slices the edits map for a playlist's children, so only non-leaf rows subscribe to it — a leaf that
-// did would re-render on every keystroke in the section.
-function ChildRows({
-  items,
-  course,
-  onReconnect,
-}: {
-  items: Item[]
-  course: string
-  onReconnect: () => void
-}) {
-  const edits = useRowEdits()
-  const locks = useRowLocksMap()
-  return (
-    <>
-      {items.map((child) => (
-        <RecordingRow
-          key={child.ref}
-          item={child}
-          edit={edits[child.ref]}
-          lock={locks[child.ref]}
-          course={course}
-          onReconnect={onReconnect}
-        />
-      ))}
-    </>
-  )
-}

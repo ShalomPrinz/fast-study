@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
-import type { DownloadJob, RunTarget } from '../services/downloadServer'
+import type { DownloadJob, RunTarget, SectionRun } from '../services/downloadServer'
 import { groupJobsByRef } from '../contexts/DownloadJobsContext'
 import {
+  bulkGate,
+  bulkRunState,
   collidingNames,
+  runBusy,
   notStartedCount,
   runningCount,
   summarize,
@@ -293,5 +296,105 @@ describe('summarize', () => {
       target({ ref: 'r3', name: 'Lecture 3', disposition: 'pending' }),
     ]
     expect(summarize(targets, tree([]), 'Algebra', NO_JOBS)).toBe('0 downloaded, 1 already there')
+  })
+})
+
+function run(over: Partial<SectionRun> = {}): SectionRun {
+  return {
+    id: 'run1',
+    sectionId: 'Algebra:video:Week 1',
+    course: 'Algebra',
+    targets: [target()],
+    at: 1,
+    total: 1,
+    status: 'done',
+    paused: null,
+    ...over,
+  }
+}
+
+describe('runBusy', () => {
+  it('holds while the queue walks or waits at a passcode gate', () => {
+    expect(runBusy(run({ status: 'running' }), 'Algebra', NO_JOBS)).toBe(true)
+    expect(runBusy(run({ status: 'paused' }), 'Algebra', NO_JOBS)).toBe(true)
+  })
+
+  it('holds past the queue while a download it started is running', () => {
+    const jobs = groupJobsByRef([job({ id: 'a' })])
+    expect(runBusy(run(), 'Algebra', jobs)).toBe(true)
+  })
+
+  it('frees once the queue stopped and nothing it started is running', () => {
+    const jobs = groupJobsByRef([job({ id: 'a', status: 'done' })])
+    expect(runBusy(run(), 'Algebra', jobs)).toBe(false)
+    expect(runBusy(run({ status: 'cancelled' }), 'Algebra', NO_JOBS)).toBe(false)
+  })
+})
+
+describe('bulkRunState', () => {
+  it('reads idle with no run', () => {
+    expect(bulkRunState(null, tree([]), 'Algebra', NO_JOBS)).toEqual({
+      queueing: false,
+      active: 0,
+      busy: false,
+      stalled: 0,
+      notStarted: 0,
+    })
+  })
+
+  it('withholds the stopped-run warnings while the queue walks', () => {
+    const state = bulkRunState(
+      run({
+        status: 'running',
+        targets: [target(), target({ ref: 'r2', disposition: 'pending' })],
+      }),
+      tree([]),
+      'Algebra',
+      NO_JOBS,
+    )
+    expect(state).toMatchObject({ queueing: true, busy: true, stalled: 0, notStarted: 0 })
+  })
+
+  it('counts unverified and never-reached rows once the run stopped', () => {
+    const state = bulkRunState(
+      run({
+        status: 'reconnect',
+        targets: [target(), target({ ref: 'r2', disposition: 'pending' })],
+      }),
+      tree([]),
+      'Algebra',
+      NO_JOBS,
+    )
+    expect(state).toMatchObject({ queueing: false, busy: false, stalled: 1, notStarted: 1 })
+  })
+})
+
+describe('bulkGate', () => {
+  const idle = { ready: true, busy: false, otherBusy: false, locked: false }
+
+  it('starts when ready, idle, unblocked and unlocked', () => {
+    expect(bulkGate(idle)).toEqual({ disabled: false, reason: null })
+  })
+
+  it('asks to expand first, even while busy', () => {
+    expect(bulkGate({ ...idle, ready: false, busy: true })).toEqual({
+      disabled: true,
+      reason: 'expand',
+    })
+  })
+
+  it('is disabled without a reason while its own run is busy', () => {
+    expect(bulkGate({ ...idle, busy: true, otherBusy: true, locked: true })).toEqual({
+      disabled: true,
+      reason: null,
+    })
+  })
+
+  it('waits out the other run over the same rows before the Moodle lock', () => {
+    expect(bulkGate({ ...idle, otherBusy: true, locked: true })).toEqual({
+      disabled: true,
+      reason: 'other-run',
+    })
+    expect(bulkGate({ ...idle, locked: true })).toEqual({ disabled: true, reason: 'moodle' })
   })
 })
