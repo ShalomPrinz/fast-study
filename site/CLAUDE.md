@@ -61,8 +61,7 @@ python3 -m http.server -d /tmp/stage 8080
 `capture/` dataset through the database routes, renders its PDFs and Drive links with the real steps
 on the fakes, and rewrites `hero.jpg`, `feature-*.jpg` and `journey-*.jpg` in Hebrew; it is rerunnable.
 Every name and text a shot shows comes from `capture/`, never the harness fixtures. The journey
-follows `JOURNEY`: downloaded from the fake Moodle course's videostream row, its run held on a slow
-fake Groq, then given its dataset text. Its download row reads "not enough data to estimate" rather
-than an ETA bar: auto's videostream resolve proxies an on-site `.mp4` without its size, so the job has
-no `expectedBytes`. The SmartScreen steps come from a real
-Windows install and cannot be captured here.
+follows `JOURNEY`: downloaded from the fake Moodle course's plain-link row `הקלטה 3 — עצים`, whose
+probed size gives the download card a bar with time left, its run held on a slow fake Groq, then
+given its dataset text. `feature-search` is shot after it, so the journey lecture is among the hits.
+The SmartScreen steps come from a real Windows install and cannot be captured here.

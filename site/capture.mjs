@@ -229,11 +229,6 @@ async function capture() {
   await openEditor(page);
   await shot('feature-editor');
 
-  await open('/search');
-  await page.selectOption('.search-course-select', { label: SEARCH.course });
-  await page.fill('.search-input', SEARCH.query);
-  await shot('feature-search');
-
   // The harness baseline turns the daily run off; the shot shows the app's default, on, unsaved.
   await open('/settings');
   const daily = page.getByLabel('להריץ מדי יום הרצאות שלא הסתיימו');
@@ -244,6 +239,11 @@ async function capture() {
   await shot('feature-auto');
 
   await journey(page, open, shot, lectureRoute);
+
+  await open('/search');
+  await page.selectOption('.search-course-select', { label: SEARCH.course });
+  await page.fill('.search-input', SEARCH.query);
+  await shot('feature-search');
   await browser.close();
 }
 
@@ -267,12 +267,15 @@ async function journey(page, open, shot, lectureRoute) {
   await call('POST', `${SITE_FAKE}/control`, { downloadMs: 30_000 });
   await open('/downloads');
   await page.click('text=טעינת הקלטות');
+  // A plain-link row is unprobed until downloaded, so it lists under "unknown" rather than "video".
+  await page.click('.recordings-panel >> text=לא ידוע');
   const row = page.locator('.recording-card', { hasText: JOURNEY.recording });
   await row.locator('.recording-name-input').fill(lecture);
   await row.locator('.recording-download-btn').click();
   await page.waitForTimeout(4000);
   await page.evaluate(() => document.querySelector('.recordings-panel').scrollIntoView());
   await shot('journey-download');
+  await page.click('.recordings-panel >> text=וידאו');
   await page.click('.recording-playlist [aria-controls]');
   await page.waitForSelector('.recording-playlist .recording-children .recording-card');
   await page.evaluate(() =>
@@ -315,10 +318,10 @@ async function journey(page, open, shot, lectureRoute) {
   await openEditor(page);
   // An edit in progress: a new bullet under the lesson's goals (Enter continues the list), so the
   // save button reads live.
-  await page.locator('.cm-line', { hasText: 'ומסלולים קצרים ביותר' }).first().click();
+  await page.locator('.cm-line', { hasText: 'למה הגובה קובע את זמן הריצה' }).first().click();
   await page.keyboard.press('End');
   await page.keyboard.press('Enter');
-  await page.keyboard.type('תרגיל: BFS על מפת הקמפוס');
+  await page.keyboard.type('תרגיל: מה קורה כשמכניסים מפתחות ממוינים');
   await shot('journey-edit');
 }
 

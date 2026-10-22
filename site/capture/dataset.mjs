@@ -6,7 +6,7 @@
 export const COURSES = [
   {
     name: 'מבני נתונים',
-    // Linked to the fake Moodle course, whose "הקלטה 4 — גרפים" is the journey's recording.
+    // Linked to the fake Moodle course, whose plain-link "הקלטה 3 — עצים" is the journey's recording.
     moodle: true,
     lectures: [
       { name: 'הרצאה 1 — מבוא', text: 'ds-intro', minutes: 84, state: 'done', studied: true },
@@ -17,7 +17,6 @@ export const COURSES = [
         state: 'done',
         studied: true,
       },
-      { name: 'הרצאה 3 — עצים', text: 'ds-trees', minutes: 87, state: 'done' },
       {
         name: 'תרגול 1 — ניתוח לולאות',
         kind: 'recitation',
@@ -57,17 +56,19 @@ export const COURSES = [
 ];
 
 // The one lecture the page's journey follows: downloaded from the fake Moodle course on camera,
-// then given its dataset text once its pipeline has run on the fakes.
+// then given its dataset text once its pipeline has run on the fakes. A plain-link row, so auto
+// probes its size and the download card shows a bar with time left.
 export const JOURNEY = {
   course: 'מבני נתונים',
-  lecture: 'הרצאה 4 — גרפים',
-  recording: 'הקלטה 4 — גרפים',
-  text: 'ds-graphs',
-  minutes: 89,
+  lecture: 'הרצאה 3 — עצים',
+  recording: 'הקלטה 3 — עצים',
+  text: 'ds-trees',
+  minutes: 87,
 };
 
 // What each feature shot opens.
 export const HERO = { course: 'מבני נתונים', lecture: 'הרצאה 2 — סיבוכיות' };
 export const OVERVIEW = 'אלגוריתמים';
 export const EDITOR = { course: 'מבוא למדעי המחשב', lecture: 'הרצאה 1 — משתנים וטיפוסים' };
+// Shot after the journey, so its lecture is among the hits.
 export const SEARCH = { course: 'מבני נתונים', query: 'חיפוש בינארי' };
