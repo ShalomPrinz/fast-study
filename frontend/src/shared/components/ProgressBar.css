@@ -36,3 +36,27 @@
 .progress-label--muted {
   font-style: italic;
 }
+
+/* No estimate yet: a short segment sweeps the track, so the bar reads as working, not as stuck at 0.
+   It animates the logical margin, not a transform, so it sweeps start-to-end in RTL too. */
+.progress-fill--indeterminate {
+  width: 30%;
+  transition: none;
+  animation: progress-indeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  from {
+    margin-inline-start: -30%;
+  }
+  to {
+    margin-inline-start: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill--indeterminate {
+    animation: none;
+    opacity: 0.4;
+  }
+}

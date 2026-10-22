@@ -122,14 +122,12 @@
   color: var(--text-3);
 }
 
-/* `ProgressBar` carries the class on its wrapper when it has an estimate and on the bare label when
-   it has none; `display: contents` lifts the track and label into the row grid in the first case. */
+/* `display: contents` lifts `ProgressBar`'s track and label into the row grid. */
 .progress-wrap.pipeline-progress {
   display: contents;
 }
 
-.pipeline-progress .progress-label,
-.progress-label.pipeline-progress {
+.pipeline-progress .progress-label {
   grid-row: 1;
   grid-column: 2;
   margin-top: 0;

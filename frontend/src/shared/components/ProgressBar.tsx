@@ -27,15 +27,18 @@ export default function ProgressBar({ stats, startedAt, completedFraction = 0, c
 
   const extra = className ? ` ${className}` : ''
 
-  if (stats === null || stats === undefined) {
-    return <p className={`progress-label progress-label--muted${extra}`}>{t`Estimating…`}</p>
-  }
-
-  if ('message' in stats) {
+  // Every state renders the same track + label, so the bar never changes height when stats arrive.
+  if (stats === null || stats === undefined || 'message' in stats) {
+    const estimating = !stats
     return (
-      <p
-        className={`progress-label progress-label--muted${extra}`}
-      >{t`Not enough data to estimate`}</p>
+      <div className={`progress-wrap${extra}`}>
+        <div className="progress-track">
+          {estimating && <div className="progress-fill progress-fill--indeterminate" />}
+        </div>
+        <p className="progress-label progress-label--muted">
+          {estimating ? t`Estimating…` : t`Not enough data to estimate`}
+        </p>
+      </div>
     )
   }
 

@@ -23,16 +23,14 @@
 }
 
 /* The pipeline bar re-laid out for a card: the card's own gap already parts it from the line above.
-   The class lands on the <p> directly in the bar's label-only states, hence both selectors — and
-   both outspecify ProgressBar.css rather than relying on cross-file order. */
+   Both rules outspecify ProgressBar.css rather than relying on cross-file order. */
 .progress-wrap.recording-progress {
   width: 100%;
   margin-top: 0;
   gap: var(--space-1);
 }
 
-.recording-progress .progress-label,
-p.recording-progress {
+.recording-progress .progress-label {
   margin-top: 0;
   line-height: 1.3;
 }
