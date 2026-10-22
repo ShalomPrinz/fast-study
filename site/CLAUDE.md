@@ -21,6 +21,9 @@ property. Each page's `<meta name="description">` is English only, since it is w
 shows; it names what sets the app apart from the other "FastStudy"s. No `robots.txt`: under a project
 page it would sit at `/fast-study/robots.txt`, which crawlers never read.
 
+Both pages load GoatCounter (site code `faststudy`, dashboard https://faststudy.goatcounter.com) for
+visits, no cookies; both download buttons carry `data-goatcounter-click="download"`, one shared click count.
+
 ## What the page covers
 
 Hero, how it works, six features, universities, what you'll need, privacy (error reports included),
