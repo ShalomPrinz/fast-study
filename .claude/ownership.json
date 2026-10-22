@@ -3,7 +3,17 @@
     "backend-dev": ["backend/"],
     "database-dev": ["database/"],
     "frontend-dev": ["frontend/"],
-    "downloader-dev": ["downloader/"],
+    "downloader-server-dev": [
+      "downloader/server/",
+      "downloader/CLAUDE.md",
+      "downloader/README.md",
+      "downloader/package.json",
+      "downloader/package-lock.json",
+      "downloader/.npmrc",
+      "downloader/stub/"
+    ],
+    "downloader-auto-dev": ["downloader/auto/"],
+    "downloader-extension-dev": ["downloader/extension/"],
     "lib-dev": ["lib/"],
     "electron-dev": ["electron/"],
     "delivery-dev": ["delivery/", ".github/workflows/build.yml", ".github/workflows/publish.yml"],

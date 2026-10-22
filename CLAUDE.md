@@ -103,7 +103,7 @@ safe to delete, and point at that file from a one-line comment on the code.
 
 ## Service subagents
 
-Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent, with a brief written by the [`delegate`](.claude/skills/delegate/SKILL.md) skill; `.claude/ownership.json` says which agent owns which path. Subagents never commit; the main session commits what they report.
+Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. `downloader/` is split three ways — `downloader-server-dev` (`server/` plus the workspace root), `downloader-auto-dev` and `downloader-extension-dev` — and each reports a follow-up in a sibling package rather than editing it. Route any work touching a service through its subagent, with a brief written by the [`delegate`](.claude/skills/delegate/SKILL.md) skill; `.claude/ownership.json` says which agent owns which path. Subagents never commit; the main session commits what they report.
 
 A service agent reports in 300 words or fewer: files changed, docs updated and why, test and lint results, deviations and decisions made, follow-ups another owner needs, and anything left open. A brief or an agent file may ask for more; `reviewer` has its own format.
 
