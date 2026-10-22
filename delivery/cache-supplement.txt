@@ -1,21 +1,134 @@
 # LaTeX cache files kitchen-sink.md does not pull, added to the primed cache by name.
 # Hand-maintained: nothing derives this list. See docs/LATEX.md.
 
+# Text at the 12pt heading size.
 lmroman12-regular.otf
 lmroman12-bold.otf
+
+# OT1 lmr, m/n: \mathrm and digits.
+rm-lmr9.tfm
 rm-lmr12.tfm
-
-lmmi12.pfb
-lmmi12.tfm
-lmmi8.pfb
-lmmi5.pfb
-
-lmr12.pfb
+rm-lmr17.tfm
+lmr6.pfb
 lmr8.pfb
-lmsy5.pfb
-msbm7.pfb
+lmr9.pfb
+lmr12.pfb
+lmr17.pfb
 
+# OT1 lmr, bx/n: \mathbf.
+rm-lmbx9.tfm
 rm-lmbx12.tfm
-lmbx12.pfb
-lmbx8.pfb
 lmbx6.pfb
+lmbx8.pfb
+lmbx9.pfb
+lmbx12.pfb
+
+# OT1 lmr, m/it: \mathit.
+rm-lmri7.tfm
+rm-lmri8.tfm
+rm-lmri9.tfm
+rm-lmri10.tfm
+rm-lmri12.tfm
+lmri7.pfb
+lmri8.pfb
+lmri9.pfb
+lmri10.pfb
+lmri12.pfb
+
+# OT1 lmss: \mathsf.
+ot1lmss.fd
+rm-lmss8.tfm
+rm-lmss9.tfm
+rm-lmss10.tfm
+rm-lmss12.tfm
+rm-lmss17.tfm
+rm-lmssbx10.tfm
+lmss8.pfb
+lmss9.pfb
+lmss10.pfb
+lmss12.pfb
+lmss17.pfb
+lmssbx10.pfb
+
+# OT1 lmtt: \mathtt.
+ot1lmtt.fd
+lm-rmtt.enc
+rm-lmtt8.tfm
+rm-lmtt9.tfm
+rm-lmtt10.tfm
+rm-lmtt12.tfm
+lmtt8.pfb
+lmtt9.pfb
+lmtt10.pfb
+lmtt12.pfb
+
+# OML lmm, m and b: math italic and \boldsymbol.
+lmmi9.tfm
+lmmi12.tfm
+lmmi5.pfb
+lmmi6.pfb
+lmmi8.pfb
+lmmi9.pfb
+lmmi12.pfb
+lmmib5.tfm
+lmmib7.tfm
+lmmib10.tfm
+lmmib5.pfb
+lmmib7.pfb
+lmmib10.pfb
+
+# OMS lmsy, m and b: symbols and bold symbols.
+lmsy9.tfm
+lmsy5.pfb
+lmsy6.pfb
+lmsy8.pfb
+lmsy9.pfb
+lmbsy5.tfm
+lmbsy7.tfm
+lmbsy10.tfm
+lmbsy5.pfb
+lmbsy7.pfb
+lmbsy10.pfb
+
+# U msa: amssymb's first symbol font, \checkmark among it.
+msam6.tfm
+msam8.tfm
+msam9.tfm
+msam5.pfb
+msam6.pfb
+msam7.pfb
+msam8.pfb
+msam9.pfb
+msam10.pfb
+
+# U msb: \mathbb and amssymb's second symbol font.
+msbm6.tfm
+msbm8.tfm
+msbm9.tfm
+msbm5.pfb
+msbm6.pfb
+msbm7.pfb
+msbm8.pfb
+msbm9.pfb
+
+# U euf: \mathfrak. eufm/eufb 6, 8 and 9 have no .pfb in the bundle; ueuf.fd maps them to 5/7/10.
+ueuf.fd
+mt-euf.cfg
+eufm5.tfm
+eufm6.tfm
+eufm7.tfm
+eufm8.tfm
+eufm9.tfm
+eufm10.tfm
+eufm5.pfb
+eufm7.pfb
+eufm10.pfb
+eufb5.tfm
+eufb6.tfm
+eufb7.tfm
+eufb8.tfm
+eufb9.tfm
+eufb10.tfm
+eufb5.pfb
+eufb7.pfb
+eufb10.pfb
