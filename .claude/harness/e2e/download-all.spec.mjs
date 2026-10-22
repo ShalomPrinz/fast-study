@@ -49,7 +49,7 @@ test("a section's Download all lands every reachable recording", async ({ page }
 
   // Videos: the in-site stream, the YouTube playlist's children and the zoom share.
   await expect(run).toBeDisabled();
-  await section.locator('.recording-playlist .recording-caret').click();
+  await section.locator('.recording-playlist-toggle').click();
   await expect(run).toHaveText('Download all 4');
   // auto keeps a zoom capture per target name for the session, so a fresh name asks for the
   // passcode again on a rerun against the same stack, as the first download of a session does.
