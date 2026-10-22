@@ -11,8 +11,9 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | `style.css`   | The app's own tokens, light only, logical properties for both directions        |
 | `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>` |
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
-| `capture.mjs` | Recaptures the seven app screenshots on a live app-harness stack                 |
-| `img/`        | The screenshots (1280×800 JPEG), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
+| `capture.mjs` | Recaptures the eleven app screenshots on a live app-harness stack from `capture/` |
+| `capture/`    | The screenshots' own dataset: `dataset.mjs` (courses, lectures, the journey's lecture) and `text/` (Hebrew transcripts and summaries) |
+| `img/`        | The app screenshots (1280×800 JPEG: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
 | `sitemap.xml` | Both page URLs, for Search Console; a new page gets a `<url>` here               |
 
 `index.html`'s `<head>` carries the `google-site-verification` meta for the Search Console property
@@ -56,6 +57,11 @@ python3 -m http.server -d /tmp/stage 8080
 ## Screenshots
 
 `node site/capture.mjs --harness DIR` against a running stack (`node .claude/harness/setup.mjs
---harness DIR`) reseeds it, renames the `hb-*` fixture courses to real-looking ones, runs the real
-audio and PDF steps and the overview on the fakes, and rewrites the seven `img/*.jpg` in Hebrew. The
-SmartScreen steps come from a real Windows install and cannot be captured here.
+--harness DIR`) restores the harness baseline (`hb reseed`), wipes the scratch data root, writes the
+`capture/` dataset through the database routes, renders its PDFs and Drive links with the real steps
+on the fakes, and rewrites `hero.jpg`, `feature-*.jpg` and `journey-*.jpg` in Hebrew; it is rerunnable.
+Every name and text a shot shows comes from `capture/`, never the harness fixtures. The journey
+follows `JOURNEY`: downloaded from the fake Moodle course's videostream row, its run held on a slow
+fake Groq, then given its dataset text. The fake videostream download reports no size, so its row
+reads "not enough data to estimate" rather than an ETA bar. The SmartScreen steps come from a real
+Windows install and cannot be captured here.
