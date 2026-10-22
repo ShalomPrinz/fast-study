@@ -144,7 +144,7 @@ msgstr "{challengeWindow, select, captcha {אתר האוניברסיטה מבק�
 
 #: src/features/lectures/utils/materialIndicator.ts:31
 msgid "{count, plural, other {# materials were used}}"
-msgstr "{count, plural, one {חומר אחד שימש} two {# חומרים שימשו} other {# חומרים שימשו}}"
+msgstr "{count, plural, one {סוכם עם PDF אחד} two {סוכם עם # PDFs} other {סוכם עם # PDFs}}"
 
 #: src/features/lectures/utils/materialIndicator.ts:43
 msgid "{count, plural, other {summary used only {used} of # materials}}"
@@ -253,7 +253,7 @@ msgstr "{more_count, plural, =0 {משהו בסיכום מנע את בניית ה
 
 #: src/features/lectures/utils/materialIndicator.ts:31
 msgid "{name} was used"
-msgstr "{name} שימש"
+msgstr "סוכם עם {name}"
 
 #: src/features/downloads/components/SectionGroup.tsx:336
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
