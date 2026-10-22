@@ -414,7 +414,8 @@ The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`)
 bare video to Drive, a video dropped on a tree row (new and replacing), a course created, filled
 and renamed from the tree, a summary edited, reloaded over another window's edit and restored, a
 materials-only lecture made from course PDFs attached in Downloads, the first-run wall then a
-data-folder switch, and a section's bulk "Download all" — and run with
+data-folder switch, a section's bulk "Download all", and study progress (done marks, the current
+arrow, the counts and the overview's current-item buttons) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to a running
 `setup.mjs --harness DIR`; the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to `main` and on pull
