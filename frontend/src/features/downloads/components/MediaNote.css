@@ -9,9 +9,10 @@
   color: var(--text-2);
 }
 
+/* One line tall, so the viewBox centres the glyph on the first line however the text wraps. */
 .media-note svg {
   flex-shrink: 0;
-  margin-block-start: var(--space-1);
+  block-size: 1lh;
   color: var(--accent-ink);
 }
 
