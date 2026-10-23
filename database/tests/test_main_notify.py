@@ -39,6 +39,7 @@ def seeded(data_root):
         ("post", "/courses", {"name": "New"}),
         ("patch", "/courses/Algo", {"name": "Algo2"}),
         ("patch", "/courses/Algo/archived", {"archived": True}),
+        ("patch", "/courses/Algo/lectures_only", {"lectures_only": True}),
         ("post", "/courses/Algo/lectures", {"name": "L2"}),
         ("post", "/courses/Algo/lectures?kind=recitation", {"name": "R2"}),
         ("patch", "/courses/Algo/lectures/L1", {"name": "L9"}),
@@ -57,6 +58,8 @@ def test_tree_mutation_notifies_once(client, seeded, notifies, method, url, body
         ("post", "/courses", {"name": "Algo"}),
         ("patch", "/courses/Missing", {"name": "X"}),
         ("patch", "/courses/Algo/archived", {}),
+        ("patch", "/courses/Algo/lectures_only", {}),
+        ("patch", "/courses/Missing/lectures_only", {"lectures_only": True}),
         ("post", "/courses/Algo/lectures", {"name": "L1"}),
         ("patch", "/courses/Algo/lectures/Missing", {"name": "X"}),
     ],
@@ -104,4 +107,16 @@ def test_summary_revert_notifies_once(client, seeded, notifies):
 def test_failed_summary_write_does_not_notify(client, seeded, notifies):
     r = client.put("/courses/Algo/lectures/Missing/summary", content=b"# x")
     assert r.status_code >= 400
+    assert notifies == []
+
+
+def test_config_course_structure_notifies_once(client, notifies):
+    r = client.post("/config", json={"course_structure": "lectures_all"})
+    assert r.status_code == 204
+    assert len(notifies) == 1
+
+
+def test_config_rejected_course_structure_does_not_notify(client, notifies):
+    r = client.post("/config", json={"course_structure": "sideways"})
+    assert r.status_code == 400
     assert notifies == []

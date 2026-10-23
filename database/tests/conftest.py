@@ -17,4 +17,6 @@ def data_root(tmp_path, monkeypatch):
     root = tmp_path / "data"
     root.mkdir()
     monkeypatch.setattr("fs.paths._data_root", root)
+    # The live course-structure mode is module state too, so a test that sets it never leaks.
+    monkeypatch.setattr("fs.tree._course_structure", "split")
     return root

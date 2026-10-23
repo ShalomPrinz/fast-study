@@ -7,6 +7,7 @@ from .mp4 import read_duration
 from .paths import (
     ARCHIVED_MARKER,
     DONE_MARKER,
+    LECTURES_ONLY_MARKER,
     OVERVIEW_DIR,
     PDF_WARNING_MARKER,
     PREDEFINED_FILES,
@@ -14,6 +15,34 @@ from .paths import (
     SOURCE_URL_MARKER,
     data_root,
 )
+
+# The live course-structure mode, written only by set_course_structure(); see docs/SETTINGS.md.
+_course_structure = "split"
+
+
+def set_course_structure(mode: str) -> None:
+    """Set the course-structure mode every later tree read resolves `lectures_only` against."""
+
+    global _course_structure
+    _course_structure = mode
+
+
+def course_structure() -> str:
+    """Return the live course-structure mode, the one /tree resolves against."""
+
+    return _course_structure
+
+
+def _lectures_only(course_path: Path) -> bool:
+    """Resolve whether a course is lectures-only from the live mode and the course's own pick."""
+
+    # The marker counts only under `lectures_some`, so picks survive a mode switch and come back with it.
+    if _course_structure == "lectures_all":
+        return True
+    return (
+        _course_structure == "lectures_some"
+        and (course_path / LECTURES_ONLY_MARKER).exists()
+    )
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
@@ -137,6 +166,7 @@ def read_course(name: str) -> Optional[dict]:
     return {
         "name": name,
         "archived": (course_path / ARCHIVED_MARKER).exists(),
+        "lectures_only": _lectures_only(course_path),
         "source_url": _read_source_url(course_path),
         "lectures": _read_lectures(course_path),
         "recitations": _read_recitations(course_path),

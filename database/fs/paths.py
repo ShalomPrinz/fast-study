@@ -20,8 +20,9 @@ MAX_NAME_LEN = 80
 # Course-level dir for overview pipeline outputs (files belong to the course, not a lecture).
 OVERVIEW_DIR = "overview"
 
-# Course-dir dotfiles: empty archived flag, and the auto-downloader's lecture-site URL.
+# Course-dir dotfiles: empty archived flag, empty lectures-only pick, and the auto-downloader's lecture-site URL.
 ARCHIVED_MARKER = ".archived"
+LECTURES_ONLY_MARKER = ".lectures_only"
 SOURCE_URL_MARKER = ".source_url"
 
 # Lecture-dir dotfiles: one line of LaTeX warning text for summary.pdf, and the generated

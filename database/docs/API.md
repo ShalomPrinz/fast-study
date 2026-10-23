@@ -44,11 +44,12 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | Method+Path                                                | Purpose                                                                   |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `GET    /health`                                           | launcher liveness; `200 {status: ok}` even with no data root configured   |
-| `GET    /tree`                                             | full course tree; `video.mp4` entries carry `duration` (seconds; omitted when unknown) |
+| `GET    /tree`                                             | full course tree; each course carries the resolved `lectures_only` bool; `video.mp4` entries carry `duration` (seconds; omitted when unknown) |
 | `POST   /courses`                                          | create course (`{name}`, optional `{source_url}`)                         |
 | `PATCH  /courses/{course}`                                 | rename course (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file under it is open elsewhere |
 | `PATCH  /courses/{course}/source_url`                      | set/clear source_url; empty or null clears                                |
-| `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`); 404 if the course is missing           |
+| `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`); 404 if the course is missing; `400` `setting_must_be_boolean` on a non-bool |
+| `PATCH  /courses/{course}/lectures_only`                   | pick/unpick as lectures-only (`{lectures_only}`, toggles `.lectures_only`); 404 if the course is missing; `400` `setting_must_be_boolean` on a non-bool |
 | `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name |
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file in it is open elsewhere |
 | `PUT    /courses/{course}/lectures/{lecture}/done`         | mark studied (creates `.done`); idempotent `204`; 404 if the lecture is missing |
@@ -74,12 +75,13 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/overview/meta`                   | merge one slug's entry (`{slug, entry}`)                                  |
 | `GET    /settings`                                         | the browser-dev settings store; API keys report set/unset only            |
 | `PUT    /settings`                                         | merge a partial settings object into the repo-root `.env`                 |
+| `GET    /course_structure`                                 | `{course_structure}`, the live mode `/tree` resolves against — never null, unlike `/settings`' `.env` view |
 | `POST   /settings/data-root/probe`                         | judge a candidate `{data_root}` without creating anything; `200` verdict  |
-| `POST   /config`                                           | apply `{data_root, error_reports}` to the running process                 |
+| `POST   /config`                                           | apply `{data_root, error_reports, course_structure}` to the running process |
 | `GET    /events`                                           | SSE stream of `notify` events                                             |
 | `POST   /notify`                                           | broadcast a `notify` event                                                |
 
-Course create/rename/archive, lecture create/rename, `POST /…/removed` and a `POST /config` carrying `data_root` broadcast
+Course create/rename/archive/lectures-only pick, lecture create/rename, `POST /…/removed` and a `POST /config` carrying `data_root` or `course_structure` broadcast
 a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
 
 ## Write semantics
@@ -170,7 +172,7 @@ merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
 | --------------- | -------------------------------------------------------------------------------------------------------- |
 | `GET /settings` | `200` with every field, `null` when unset; `500` `settings_store_io_failed` if the store is unreadable   |
 | `PUT /settings` | `200` with the same shape; `400` on a rejected value                                                     |
-| `POST /config`  | `204`, clearing the unconfigured state; `400` on a data root that is relative, not a dir, or unwritable, or a non-boolean `error_reports` (`setting_must_be_boolean`) |
+| `POST /config`  | `204`, clearing the unconfigured state; `400` on a data root that is relative, not a dir, or unwritable, or a non-boolean `error_reports` (`setting_must_be_boolean`), or a `course_structure` off the list (`setting_invalid_choice`) |
 | `POST /settings/data-root/probe` | `200` `{ok: true, path}` or `{ok: false, error, code, params}`; `400` `bad_request_body` without `data_root` |
 
 A rejected value names which rule it broke: `setting_must_be_string`, `setting_must_be_boolean`,

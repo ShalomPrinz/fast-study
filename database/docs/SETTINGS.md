@@ -25,6 +25,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `nightly_run` (bool), `nightly_hour` (int)         | `NIGHTLY_RUN`, `NIGHTLY_HOUR`                     |
 | `ai_provider` (the "Study with AI" pick)           | `AI_PROVIDER`                                     |
 | `auto_remove`, `auto_remove_after`                 | `AUTO_REMOVE`, `AUTO_REMOVE_AFTER`                |
+| `course_structure`                                 | `COURSE_STRUCTURE`                                |
 
 Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` — which is all the store
 knows about a value. It validates the _type_ and nothing else: `nightly_hour` is stored as any
@@ -35,7 +36,9 @@ mode as `full`; the list is a deliberate copy of the backend's `AUTO_RUN_MODES`.
 the same rule against `claude`/`chatgpt`/`gemini`, mirroring `electron/store.js`, and reads back `null`
 when the stored value is not one of them; no service reads it, only the renderer. `auto_remove`
 (`off`/`video`/`audio`, cumulative: `audio` removes the video too) and `auto_remove_after`
-(`pdf`/`drive`) follow the same rule, mirroring `electron/store.js`; the backend owns their defaults. An int that is unparsable in
+(`pdf`/`drive`) follow the same rule, mirroring `electron/store.js`; the backend owns their defaults. `course_structure`
+(`split`/`lectures_all`/`lectures_some`; the client defaults `null` to `split`) follows it too, and is this
+service's own: see [The course-structure mode](#the-course-structure-mode). An int that is unparsable in
 `.env` reads back as `null`, the same as an absent one, so a hand-edited typo falls back to the
 client's default instead of erroring. `PUT` rejects a boolean for an int field, which Python would
 otherwise store as `1`.
@@ -98,3 +101,16 @@ Changing the root **re-points only and never moves data**, so a change mid-run s
 across two roots. That is a different condition from the unset root above, and its guard is
 advisory: it lives in the frontend, which knows what is in flight, and no status code is returned
 for it here.
+
+## The course-structure mode
+
+The live mode is module state in `fs/tree.py`, written only by `set_course_structure()`: seeded at
+import from the `COURSE_STRUCTURE` env var (the loaded `.env` in dev, the launcher's store env under
+Electron; absent or invalid is `split`) and set again by `POST /config {course_structure}`, which
+broadcasts a `notify` so every open tree re-reads its flags. Like `DATA_ROOT`, `PUT /settings` only
+rewrites `.env`; the client applies the change live through `POST /config` after either store write.
+`GET /course_structure` reads the live mode back — the only source under Electron, where `.env` is empty.
+
+`read_tree` resolves it per course into `lectures_only`: true under `lectures_all`, true under
+`lectures_some` only for a course holding `.lectures_only`, false under `split`. Markers are never
+touched by a mode change, so switching back to `lectures_some` restores the earlier picks.

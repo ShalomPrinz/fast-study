@@ -577,3 +577,26 @@ def test_auto_remove_fields_read_null_when_unset(env_file):
     stored = settings.read_settings()
     assert stored["auto_remove"] is None
     assert stored["auto_remove_after"] is None
+
+
+@pytest.mark.parametrize("mode", ["split", "lectures_all", "lectures_some"])
+def test_each_course_structure_is_accepted(env_file, mode):
+    assert (
+        settings.write_settings({"course_structure": mode})["course_structure"] == mode
+    )
+
+
+def test_put_rejects_an_unknown_course_structure(client, env_file):
+    r = client.put("/settings", json={"course_structure": "sideways"})
+    assert r.status_code == 400
+    assert r.json()["code"] == "setting_invalid_choice"
+    assert r.json()["params"] == {"field": "course_structure", "value": "sideways"}
+
+
+@pytest.mark.parametrize(
+    "stored,expected", [(None, None), ("bogus", None), ("Lectures_All", "lectures_all")]
+)
+def test_course_structure_reads_null_unless_a_known_mode(env_file, stored, expected):
+    if stored is not None:
+        env_file.write_text(f"COURSE_STRUCTURE={stored}\n", encoding="utf-8")
+    assert settings.read_settings()["course_structure"] == expected

@@ -6,6 +6,7 @@ from .material_sources import forget_source
 from .paths import (
     ARCHIVED_MARKER,
     DONE_MARKER,
+    LECTURES_ONLY_MARKER,
     OVERVIEW_DIR,
     PDF_BUILD_TEX_MARKER,
     PDF_WARNING_MARKER,
@@ -87,6 +88,18 @@ def set_course_archived(name: str, archived: bool) -> None:
         raise CourseNotFound(f"course not found: {name}", course=name)
     marker = course_dir(name) / ARCHIVED_MARKER
     if archived:
+        marker.touch(exist_ok=True)
+    elif marker.exists():
+        marker.unlink()
+
+
+def set_course_lectures_only(name: str, lectures_only: bool) -> None:
+    """Create or remove the .lectures_only marker inside a course dir (idempotent); CourseNotFound if the dir is gone."""
+
+    if not course_dir(name).is_dir():
+        raise CourseNotFound(f"course not found: {name}", course=name)
+    marker = course_dir(name) / LECTURES_ONLY_MARKER
+    if lectures_only:
         marker.touch(exist_ok=True)
     elif marker.exists():
         marker.unlink()

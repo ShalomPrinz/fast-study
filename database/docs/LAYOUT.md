@@ -119,6 +119,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | File                     | Where       | Holds                                                    |
 | ------------------------ | ----------- | -------------------------------------------------------- |
 | `.archived`              | course dir  | empty marker; course is archived                          |
+| `.lectures_only`         | course dir  | empty marker; picked as lectures-only, counted only under `lectures_some` ([SETTINGS.md](SETTINGS.md)) |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
 | `.done`                  | lecture dir | empty marker; the user studied it — a fresh video upload keeps it |
 | `.materials.json`        | lecture dir | `{material name: source}` for materials with a download source |
@@ -144,8 +145,9 @@ A materials-only lecture has neither, so it reports nothing removed.
 
 ## Tree shape
 
-`read_tree` returns one node per course: `name`, `archived`, `source_url`, `lectures`,
-`recitations`. `Recitations` and `overview` are skipped as lectures.
+`read_tree` returns one node per course: `name`, `archived`, `lectures_only`, `source_url`,
+`lectures`, `recitations`. `lectures_only` is resolved, never raw: `course_structure == lectures_all`,
+or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations` and `overview` are skipped as lectures.
 
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
 `materials` (index-ordered `{name, size, mtime}` plus `source` when it has one, always present and `[]` when none — presence

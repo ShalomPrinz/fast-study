@@ -19,6 +19,7 @@ from fs.files import file_path
 from fs.paths import (
     ARCHIVED_MARKER,
     DONE_MARKER,
+    LECTURES_ONLY_MARKER,
     SOURCE_URL_MARKER,
     CodedError,
     CodedValueError,
@@ -54,6 +55,11 @@ DEFAULT_PORT = 8001
 # state the first-run wall exists for, and POST /config is how it gets filled in.
 if os.environ.get("DATA_ROOT"):
     paths.set_data_root(os.environ["DATA_ROOT"])
+
+# Seeded like the root: `.env` in dev, the launcher's store env under Electron; POST /config changes it live.
+tree.set_course_structure(
+    settings.stored_course_structure(os.environ.get("COURSE_STRUCTURE"))
+)
 
 
 @asynccontextmanager
@@ -185,17 +191,41 @@ async def patch_course_source_url(course: str, request: Request):
         return _failure(e, 400, "file_write_failed", {"file": SOURCE_URL_MARKER})
 
 
+def _bool_field(body: dict, field: str) -> bool:
+    """Return body[field], refusing anything but a JSON boolean."""
+
+    # A truth test would let the string "false" switch the flag on.
+    if not isinstance(body[field], bool):
+        raise CodedValueError(
+            f"{field} must be a boolean", "setting_must_be_boolean", field=field
+        )
+    return body[field]
+
+
 @app.patch("/courses/{course}/archived")
 async def patch_course_archived(course: str, request: Request):
     """Archive or unarchive a course (toggles its .archived marker)."""
 
     try:
         body = await request.json()
-        crud.set_course_archived(course, body["archived"])
+        crud.set_course_archived(course, _bool_field(body, "archived"))
         broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": ARCHIVED_MARKER})
+
+
+@app.patch("/courses/{course}/lectures_only")
+async def patch_course_lectures_only(course: str, request: Request):
+    """Pick or unpick a course as lectures-only (toggles its .lectures_only marker)."""
+
+    try:
+        body = await request.json()
+        crud.set_course_lectures_only(course, _bool_field(body, "lectures_only"))
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": LECTURES_ONLY_MARKER})
 
 
 @app.post("/courses/{course}/lectures")
@@ -540,6 +570,13 @@ async def put_settings(request: Request):
         return _failure(e, 400, "settings_store_io_failed")
 
 
+@app.get("/course_structure")
+def get_course_structure():
+    """Return the live course-structure mode — what POST /config last set, unlike /settings' .env view."""
+
+    return {"course_structure": tree.course_structure()}
+
+
 @app.post("/settings/data-root/probe")
 async def probe_data_root(request: Request):
     """Judge a candidate {data_root} for the first-run wall without creating or writing anything."""
@@ -558,27 +595,29 @@ async def probe_data_root(request: Request):
 
 @app.post("/config")
 async def post_config(request: Request):
-    """Apply {data_root, error_reports} to the running process, so a settings change needs no restart."""
+    """Apply {data_root, error_reports, course_structure} to the running process, so a settings change needs no restart."""
 
     try:
         body = await request.json()
+        # Validated before anything applies, so a bad mode cannot leave a half-applied body behind.
+        mode = (
+            settings.incoming_course_structure(body["course_structure"])
+            if body.get("course_structure") is not None
+            else None
+        )
         if "error_reports" in body:
-            # A truth test would let the string "false" turn reports on.
-            if not isinstance(body["error_reports"], bool):
-                raise CodedValueError(
-                    "error_reports must be a boolean",
-                    "setting_must_be_boolean",
-                    field="error_reports",
-                )
             # Not an env var: the switch is the Sentry transport gate, so it stops sending from this call on.
-            sentry_policy.set_reporting(body["error_reports"])
+            sentry_policy.set_reporting(_bool_field(body, "error_reports"))
         if "data_root" in body:
             # The setter is the only writer of fs.paths' root state, so this takes effect at once.
             root = settings.prepare_data_root(body["data_root"])
             paths.set_data_root(root)
             # lib/sentry's scrubber reads DATA_ROOT from os.environ per event, so it redacts the new root at once.
             os.environ["DATA_ROOT"] = root
-            # Every open tree still lists the old root's courses until it refetches.
+        if mode is not None:
+            tree.set_course_structure(mode)
+        # Every open tree still shows the old root's courses or the old lectures_only flags until it refetches.
+        if "data_root" in body or mode is not None:
             broadcast_notify()
         return Response(status_code=204)
     except Exception as e:

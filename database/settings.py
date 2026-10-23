@@ -53,12 +53,16 @@ AUTO_RUN_MODES = ("off", "audio", "full")
 # Mirrors electron/store.js's `ai_provider` rule; renderer-only, so no service reads it.
 AI_PROVIDERS = ("claude", "chatgpt", "gemini")
 
+# The course-structure modes; the database resolves them per course into the tree's `lectures_only`.
+COURSE_STRUCTURES = ("split", "lectures_all", "lectures_some")
+
 # Closed-list fields: field → (env var, choices). Stored lowercased; a stored value off the list reads `null`.
 # The auto-remove lists mirror electron/store.js and the backend, which owns their defaults and meaning.
 CHOICE_FIELDS = {
     "ai_provider": ("AI_PROVIDER", AI_PROVIDERS),
     "auto_remove": ("AUTO_REMOVE", ("off", "video", "audio")),
     "auto_remove_after": ("AUTO_REMOVE_AFTER", ("pdf", "drive")),
+    "course_structure": ("COURSE_STRUCTURE", COURSE_STRUCTURES),
 }
 
 
@@ -153,6 +157,18 @@ def _choice(value, choices: tuple[str, ...]) -> str | None:
     text = _text(value)
     text = text.lower() if text else None
     return text if text in choices else None
+
+
+def stored_course_structure(value) -> str:
+    """Read a course-structure mode from env text, falling back to `split` when absent or invalid."""
+
+    return _choice(value, COURSE_STRUCTURES) or "split"
+
+
+def incoming_course_structure(value) -> str:
+    """Validate an incoming course-structure mode, refusing anything off the list."""
+
+    return _incoming_choice("course_structure", value, COURSE_STRUCTURES)
 
 
 def _incoming_flag(field: str, value) -> str:
