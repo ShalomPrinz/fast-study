@@ -615,6 +615,10 @@ msgstr "החידה נפתרה. ממשיכים."
 msgid "Caught the Zoom video. The download is in progress."
 msgstr "הסרטון מ-Zoom נתפס. ההורדה בתהליך."
 
+#: src/features/downloads/components/MediaNote.tsx:30
+msgid "Change in Settings"
+msgstr "שינוי בהגדרות"
+
 #: src/features/settings/SettingsView.tsx:587
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
@@ -1846,6 +1850,10 @@ msgstr "ה-PDF ישן יותר מהסיכום הזה"
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
+#: src/features/downloads/components/MediaNote.tsx:19
+msgid "PDFs you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary."
+msgstr "קובצי PDF שאפשר לצרף לכל הרצאה או תרגול. הם ממתינים עד שההקלטה תורד או עד שתריץ את הסיכום."
+
 #: src/features/extension/ExtensionGuide.tsx:129
 msgid "Pin FastStudy to the toolbar"
 msgstr "הצמדת FastStudy לסרגל הכלים"
@@ -1936,6 +1944,18 @@ msgstr "התחברות מחדש"
 #: src/features/downloads/DownloadsView.tsx:179
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
+
+#: src/features/downloads/components/MediaNote.tsx:17
+msgid "Recordings. Downloading one extracts its audio right away; you start the summary."
+msgstr "הקלטות. הורדת הקלטה מחלצת מיד את השמע שלה, ואת הסיכום תתחיל בעצמך."
+
+#: src/features/downloads/components/MediaNote.tsx:16
+msgid "Recordings. Downloading one starts its full summary right away."
+msgstr "הקלטות. הורדת הקלטה מתחילה מיד את יצירת הסיכום המלא שלה."
+
+#: src/features/downloads/components/MediaNote.tsx:18
+msgid "Recordings. Downloading one starts nothing; you run the summary yourself."
+msgstr "הקלטות. הורדת הקלטה לא מפעילה דבר, ואת הסיכום תריץ בעצמך."
 
 #: src/app/ErrorBoundary.tsx:112
 msgid "Reload"
@@ -2419,6 +2439,10 @@ msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי
 #: src/features/runner/RunnerView.tsx:335
 msgid "the runner takes these in order"
 msgstr "ההרצות מתבצעות לפי הסדר"
+
+#: src/features/downloads/components/MediaNote.tsx:20
+msgid "The site doesn't say what these files are. Each turns out to be a video or a material, known only after download."
+msgstr "האתר לא מציין מה הקבצים האלה. כל אחד מהם מתברר כווידאו או כחומר, ורק אחרי ההורדה."
 
 #: src/features/downloads/utils/downloadErrors.ts:98
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."

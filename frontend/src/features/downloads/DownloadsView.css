@@ -33,11 +33,14 @@
   color: var(--danger);
 }
 
-/* The open course's recordings. `ModeToggle` emits segments and body as siblings, so the panel puts
-   the segments beside the close control on row 1 and lets the body span both columns beneath. */
+/* The open course's recordings. `ModeToggle` emits cards and body as siblings, so the panel centres the
+   cards in row 1 between two close-button-wide tracks — the close control in the end one — and the
+   body spans all three beneath. A container, so the cards' floor can yield to a narrow panel. */
 .recordings-panel {
+  --recordings-close-size: 28px;
+  container-type: inline-size;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: var(--recordings-close-size) minmax(0, 1fr) var(--recordings-close-size);
   gap: var(--space-5);
   padding: var(--space-6);
   border: 1px solid var(--line);
@@ -49,14 +52,22 @@
   grid-column: 1 / -1;
 }
 
-.recordings-panel > .mode-toggle {
-  grid-column: 1;
+/* Each card's floor is capped at a third of the middle track, so three cards never outgrow it. */
+.recordings-panel > .mode-toggle.mode-toggle--cards {
+  grid-column: 2;
   grid-row: 1;
-  justify-self: start;
+  justify-self: center;
+  grid-auto-columns: minmax(
+    min(
+      calc(var(--space-8) * 4),
+      (100cqi - 2 * (var(--recordings-close-size) + var(--space-5)) - 2 * var(--space-3)) / 3
+    ),
+    1fr
+  );
 }
 
 .recordings-panel > .recordings-close {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1;
   align-self: center;
 }
@@ -65,8 +76,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: var(--recordings-close-size);
+  height: var(--recordings-close-size);
   background: none;
   border: none;
   border-radius: var(--r-sm);

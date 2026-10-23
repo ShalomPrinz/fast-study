@@ -113,11 +113,13 @@ its mode persisted in `localStorage`. The insertion order of `modes` is both seg
 and a stored or chosen key absent from `modes` falls back to it (`effectiveMode`), so a caller may hide
 a segment without losing the choice. A mode names a zero-prop `Component`, or the caller passes
 `children(mode, selectMode)` — `selectMode` lets the body switch segments itself (the paused-runs banner).
-A mode may carry a `count`.
+A mode may carry a `count` and an `icon` (an `IconName`, drawn above the label).
 
 `.mode-toggle` is styled for the dark sidebar; `.mode-toggle--light` is the same control on a light
-surface, shared by the downloads segments and each recording's kind toggle so they read as one family.
-`LanguageSwitcher` reuses the dark CSS without the component.
+surface, shared by the Downloads page tabs, the manual download and each recording's kind toggle so they
+read as one family.
+`.mode-toggle--cards` turns the segments into equal-width icon cards, the chosen one filled with the
+accent — the downloads media switch. `LanguageSwitcher` reuses the dark CSS without the component.
 
 ## Styling
 

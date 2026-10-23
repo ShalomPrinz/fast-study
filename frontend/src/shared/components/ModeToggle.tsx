@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { effectiveMode, storedMode } from '@/shared/utils/modeToggle'
+import Icon from '@/shared/components/Icon'
+import type { IconName } from '@/shared/components/Icon'
 import '@/styles/segmented.css'
 
 export interface ModeConfig {
   label: string
   // How many rows the segment holds, shown beside its label. Optional — most switches count nothing.
   count?: number
+  // A glyph above the label, for the card-style switch (`mode-toggle--cards`).
+  icon?: IconName
   Component?: ComponentType
 }
 
@@ -42,14 +46,17 @@ export default function ModeToggle<M extends string>({
   return (
     <>
       <div className={className ? `mode-toggle ${className}` : 'mode-toggle'}>
-        {entries.map(([m, { label, count }]) => (
+        {entries.map(([m, { label, count, icon }]) => (
           <button
             key={m}
             className={`mode-toggle-btn${shown === m ? ' active' : ''}`}
             onClick={() => selectMode(m)}
           >
-            {label}
-            {count !== undefined && <span className="mode-toggle-count">{count}</span>}
+            {icon && <Icon icon={icon} />}
+            <span className="mode-toggle-label">
+              {label}
+              {count !== undefined && <span className="mode-toggle-count">{count}</span>}
+            </span>
           </button>
         ))}
       </div>

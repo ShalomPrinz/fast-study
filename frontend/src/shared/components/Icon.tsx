@@ -28,6 +28,7 @@ export type IconName =
   | 'home'
   | 'sparkle'
   | 'info'
+  | 'question'
 
 const ExternalLinkIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -408,6 +409,21 @@ const InfoIcon = () => (
   </svg>
 )
 
+// A circled question mark — a file whose type is only known once it is downloaded.
+const QuestionIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
+    <path
+      d="M6.2 6.3a1.9 1.9 0 0 1 3.7.5c0 1.3-1.9 1.6-1.9 2.8"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="8" cy="11.6" r="0.8" fill="currentColor" />
+  </svg>
+)
+
 const icons: Record<IconName, () => JSX.Element> = {
   'external-link': ExternalLinkIcon,
   edit: EditIcon,
@@ -438,6 +454,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   home: HomeIcon,
   sparkle: SparkleIcon,
   info: InfoIcon,
+  question: QuestionIcon,
 }
 
 export default function Icon({ icon }: { icon: IconName }) {

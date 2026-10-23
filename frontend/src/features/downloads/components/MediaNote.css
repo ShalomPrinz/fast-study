@@ -1,0 +1,21 @@
+/* Centred under the centred cards, so the hint reads as their caption. */
+.media-note {
+  justify-self: center;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-inline-size: 100%;
+  font-size: var(--fs-body);
+  color: var(--text-2);
+}
+
+.media-note svg {
+  flex-shrink: 0;
+  margin-block-start: var(--space-1);
+  color: var(--accent-ink);
+}
+
+.media-note a {
+  color: var(--accent-ink);
+  font-weight: 500;
+}

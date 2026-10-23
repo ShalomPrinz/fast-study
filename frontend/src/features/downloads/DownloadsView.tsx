@@ -14,6 +14,7 @@ import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
 import CourseSourceRow from '@/features/downloads/components/CourseSourceRow'
 import AddCourseRow from '@/features/downloads/components/AddCourseRow'
 import ManualDownload from '@/features/downloads/components/ManualDownload'
+import MediaNote from '@/features/downloads/components/MediaNote'
 import FolderJobList from '@/features/downloads/components/FolderJobList'
 import SectionGroup from '@/features/downloads/components/SectionGroup'
 import PausedRunsBanner from '@/features/downloads/components/PausedRunsBanner'
@@ -69,9 +70,9 @@ export default function DownloadsView() {
 
   // Order matters: it drives the segment order and the default side (videos).
   const allMediaModes: Record<Media, ModeConfig> = {
-    video: { label: t`Videos`, count: countOf('video') },
-    material: { label: t`Materials`, count: countOf('material') },
-    unknown: { label: t`Unknown`, count: countOf('unknown') },
+    video: { label: t`Videos`, count: countOf('video'), icon: 'lecture' },
+    material: { label: t`Materials`, count: countOf('material'), icon: 'file' },
+    unknown: { label: t`Unknown`, count: countOf('unknown'), icon: 'question' },
   }
   const mediaModes = Object.fromEntries(
     Object.entries(allMediaModes).filter(([media, { count }]) =>
@@ -191,12 +192,13 @@ export default function DownloadsView() {
                             <ModeToggle
                               modes={mediaModes}
                               storageKey="fastStudyDownloadsMedia"
-                              className="mode-toggle--light"
+                              className="mode-toggle--cards"
                             >
                               {(media, selectMedia) => {
                                 const sections = groupSections(items, media)
                                 return (
                                   <>
+                                    <MediaNote media={media} />
                                     <PausedRunsBanner
                                       course={selected}
                                       media={media}

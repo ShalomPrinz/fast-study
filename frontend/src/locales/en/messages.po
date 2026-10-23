@@ -615,6 +615,10 @@ msgstr "Captcha solved. Continuing."
 msgid "Caught the Zoom video. The download is in progress."
 msgstr "Caught the Zoom video. The download is in progress."
 
+#: src/features/downloads/components/MediaNote.tsx:30
+msgid "Change in Settings"
+msgstr "Change in Settings"
+
 #: src/features/settings/SettingsView.tsx:587
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
@@ -1846,6 +1850,10 @@ msgstr "PDF is older than this summary"
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
+#: src/features/downloads/components/MediaNote.tsx:19
+msgid "PDFs you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary."
+msgstr "PDFs you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary."
+
 #: src/features/extension/ExtensionGuide.tsx:129
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
@@ -1936,6 +1944,18 @@ msgstr "Reconnect"
 #: src/features/downloads/DownloadsView.tsx:179
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
+
+#: src/features/downloads/components/MediaNote.tsx:17
+msgid "Recordings. Downloading one extracts its audio right away; you start the summary."
+msgstr "Recordings. Downloading one extracts its audio right away; you start the summary."
+
+#: src/features/downloads/components/MediaNote.tsx:16
+msgid "Recordings. Downloading one starts its full summary right away."
+msgstr "Recordings. Downloading one starts its full summary right away."
+
+#: src/features/downloads/components/MediaNote.tsx:18
+msgid "Recordings. Downloading one starts nothing; you run the summary yourself."
+msgstr "Recordings. Downloading one starts nothing; you run the summary yourself."
 
 #: src/app/ErrorBoundary.tsx:112
 msgid "Reload"
@@ -2419,6 +2439,10 @@ msgstr "the run was cancelled. Run the section again to pick them up."
 #: src/features/runner/RunnerView.tsx:335
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
+
+#: src/features/downloads/components/MediaNote.tsx:20
+msgid "The site doesn't say what these files are. Each turns out to be a video or a material, known only after download."
+msgstr "The site doesn't say what these files are. Each turns out to be a video or a material, known only after download."
 
 #: src/features/downloads/utils/downloadErrors.ts:98
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."

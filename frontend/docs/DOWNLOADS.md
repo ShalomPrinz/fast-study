@@ -30,8 +30,10 @@ fits a recording's second line: kind toggle, name input and action side by side.
 
 A source row is three grid tracks with the side ones equal, so every row's URL sits at the midpoint and
 lines up down the list; only the action track is floored at its content, so a narrow window costs the
-URL its centring rather than sliding the buttons over it. `ModeToggle` emits its segments and body as
-siblings, so the panel is a two-column grid: segments and close button on row 1, the body spanning both.
+URL its centring rather than sliding the buttons over it. `ModeToggle` emits its cards and body as
+siblings, so the panel is a three-column grid: the cards centred in row 1 between two close-button-wide
+tracks, the close button in the end one, the body spanning all three beneath; each card's floor yields to
+a third of the middle track, so the cards never run under the close button.
 
 A recording is a two-line card — what it is, then where it is going (`Save as`, kind toggle, name,
 action). States are tints: accent while downloading, `--ok` once the target is in the course (an
@@ -224,8 +226,10 @@ Google Drive row — no filename, so only a download-time probe can tell). The d
 server-side from the opaque `ref`; the frontend branches its own affordances on `media` and never sends
 it.
 
-A `ModeToggle` splits the three segments, each with its count — Unknown only while it holds a row
-(`showsMediaSegment`) — and `groupSections(items, media)` filters
+A `ModeToggle` (`mode-toggle--cards`) splits the three segments, each an icon card with its count — Unknown
+only while it holds a row (`showsMediaSegment`). `MediaNote` captions the chosen card: `mediaNote(media,
+autoRun)` picks the hint, and only the video side's follows AUTO_RUN and links to Settings, since only a
+video download starts a pipeline step. Then `groupSections(items, media)` filters
 by media _before_ grouping by Moodle heading (first-seen order, blank → "Other"), so a section with
 nothing on the active side does not render and "Download all" covers one media only.
 
@@ -262,7 +266,12 @@ Retry (`rowAction`).
 ## Row name and kind
 
 `RowEditsContext` stores **only overrides** (`{ name?, kind? }` per `ref`); `resolveRow` derives the
-displayed values from the override plus the live tree. So an untouched name keeps tracking the kind
+displayed values from the override plus the live tree. In a lectures-only course it ignores the kind
+override and auto's keyword guess and hides the toggle: the name keeps the guess's prefix (a `תרגול 5`
+recording never takes `Lecture 5`'s name) and the kind follows the name — `lecture`, unless it is an
+existing recitation's (`lecturesOnlyKind`), so one downloaded before the switch still reads as on disk.
+The Manual tab does the same, reading a course the tree lacks yet as lectures-only under `lectures_all`
+(`useNewCoursesLecturesOnly`, the database's live `GET /course_structure`). So an untouched name keeps tracking the kind
 toggle, and the green row and the bulk skip read the same resolved values. Edits persist for the whole
 course (SSE refresh, segment switch, navigation) and reset on another course or close, so refs never
 collide. State and dispatch are split: only `SectionGroup` and `ChildRows` subscribe to the map, and the
