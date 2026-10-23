@@ -1,7 +1,6 @@
 import Tooltip from '@/shared/components/Tooltip'
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import type { Lecture } from '@/types'
 import { renameLecture } from '@/services/database'
 import { toastFailure } from '@/shared/utils/failure'
 import { toast } from '@/services/toaster'
@@ -9,7 +8,12 @@ import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
-import { findLecture } from '@/features/lectures/utils/courseTree'
+import {
+  findLecture,
+  lectureTrack,
+  recitationTrack,
+  type TrackItem,
+} from '@/features/lectures/utils/courseTree'
 import { holdsFile } from '@/features/lectures/utils/lectureProgress'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import Icon from '@/shared/components/Icon'
@@ -23,10 +27,11 @@ import { useLectureListKind } from './LectureListContext'
 import '@/styles/spinner.css'
 import '@/styles/sidebar-tree.css'
 
-export default function LectureItem({ lecture }: { lecture: Lecture }) {
+export default function LectureItem({ lecture }: { lecture: TrackItem }) {
   const { t } = useLingui()
   const { course } = useCourseGroup()
-  const kind = useLectureListKind()
+  const list = useLectureListKind()
+  const { kind } = lecture
   const { selected, onSelect } = useSelection()
   const { courses, refreshUntil } = useCourseTreeContext()
   const { status } = useRunnerStatus()
@@ -44,10 +49,12 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
 
   // Running or queued: the same set that locks a rename, and the one the mark gives way to a spinner for.
   const renameLocked = isLectureRenameLocked(status, course.name, lecture.name, kind)
-  const track = kind === 'recitation' ? course.recitations : course.lectures
+  const current = trackProgress(
+    list === 'recitation' ? recitationTrack(course) : lectureTrack(course),
+  ).current
   const mark = lecture.done
     ? 'done'
-    : trackProgress(track).current === lecture.name
+    : current?.name === lecture.name && current.kind === kind
       ? 'current'
       : 'todo'
 

@@ -69,6 +69,8 @@ export interface Course {
   name: string
   archived: boolean
   source_url: string | null
+  // The database's resolved course-structure flag: its recitations list among its lectures.
+  lectures_only: boolean
   lectures: Lecture[]
   recitations: Lecture[]
 }

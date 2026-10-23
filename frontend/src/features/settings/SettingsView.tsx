@@ -7,6 +7,7 @@ import {
   fetchSettings,
   type AutoRemoveAfter,
   type AutoRun,
+  toCourseStructure,
   type ConfigOptions,
   type Settings,
   type SettingsPatch,
@@ -34,6 +35,7 @@ import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import AutoRemoveField from './components/AutoRemoveField'
+import CourseStructureField from './components/CourseStructureField'
 import AutoRemoveSummary from './components/AutoRemoveSummary'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import {
@@ -436,6 +438,17 @@ export default function SettingsView() {
               onChecking={setSiteChecking}
             />
             <MoodleAccountField site={stored.moodleSite} choice={form.moodleSite} />
+          </section>
+
+          <section className="settings-section">
+            <h2 className="settings-section-title">
+              <Trans>Courses</Trans>
+            </h2>
+            <CourseStructureField
+              value={form.courseStructure}
+              saved={toCourseStructure(stored.courseStructure)}
+              onChange={(v) => setForm({ ...form, courseStructure: v })}
+            />
           </section>
 
           <section className="settings-section">

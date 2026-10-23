@@ -54,6 +54,14 @@ describe('ownerBodies', () => {
     expect(database).toEqual({ data_root: '/d' })
   })
 
+  it('applies the course structure live on the database, which resolves every course flag', () => {
+    expect(ownerBodies({ courseStructure: 'lectures_some' })).toEqual({
+      backend: null,
+      database: { course_structure: 'lectures_some' },
+      auto: null,
+    })
+  })
+
   it('routes the Moodle site to the auto-downloader alone', () => {
     expect(ownerBodies({ moodleSite: 'https://lemida.biu.ac.il' })).toEqual({
       backend: null,

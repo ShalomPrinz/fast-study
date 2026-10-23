@@ -9,6 +9,7 @@ const courses: Course[] = [
     name: 'Operating Systems',
     archived: false,
     source_url: null,
+    lectures_only: false,
     lectures: [lecture('Lecture 1')],
     recitations: [lecture('Tirgul 3')],
   },

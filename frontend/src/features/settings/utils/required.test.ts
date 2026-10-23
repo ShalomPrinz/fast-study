@@ -30,6 +30,7 @@ const SETTINGS: Settings = {
   errorReports: null,
   privacyConfirmed: false,
   aiProvider: null,
+  courseStructure: null,
 }
 
 describe('missingEntries', () => {

@@ -3,6 +3,7 @@ import type { Course, Kind } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import type { Item } from '../services/autoDownloader'
 import { suggestItemName } from '../utils/nameFromTitle'
+import { lecturesOnly, lecturesOnlyKind } from '@/features/lectures/utils/courseTree'
 
 // Overrides only — an absent field means "still following the suggestion".
 export interface RowEdit {
@@ -73,6 +74,8 @@ export function resolveRow(
   course: string,
   lock?: RowLock,
 ): Resolved {
+  if (lecturesOnly(courses, course, false))
+    return resolveLecturesOnly(item, edit, courses, course, lock)
   const kind = edit?.kind ?? item.kind
   const suggestion =
     lock && lock.course === course && lock.kind === kind
@@ -80,6 +83,25 @@ export function resolveRow(
       : suggestItemName(item.title, kind, courses, course)
   const value = edit?.name ?? suggestion
   return { kind, suggestion, value, name: value.trim() || suggestion }
+}
+
+// A lectures-only course ignores the row's kind toggle and auto's keyword guess: the name keeps the
+// guess's prefix, and the kind follows the name (`lecturesOnlyKind`) — a lecture unless it is an
+// existing recitation's, so a recitation downloaded before the switch still reads as on disk.
+function resolveLecturesOnly(
+  item: Item,
+  edit: RowEdit | undefined,
+  courses: Course[],
+  course: string,
+  lock?: RowLock,
+): Resolved {
+  const suggestion =
+    lock && lock.course === course
+      ? lock.name
+      : suggestItemName(item.title, 'lecture', courses, course, item.kind)
+  const value = edit?.name ?? suggestion
+  const name = value.trim() || suggestion
+  return { kind: lecturesOnlyKind(courses, course, name), suggestion, value, name }
 }
 
 export function useRowEdit(

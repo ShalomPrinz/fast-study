@@ -27,6 +27,7 @@ const BASE: Settings = {
   errorReports: null,
   privacyConfirmed: false,
   aiProvider: null,
+  courseStructure: null,
 }
 
 const stored = (autoRemove: string | null, autoRemoveAfter: string | null): Settings => ({

@@ -1,5 +1,7 @@
 import {
   toAutoRun,
+  toCourseStructure,
+  type CourseStructure,
   toNightlyHour,
   type AutoRun,
   type ConfigOptions,
@@ -27,6 +29,7 @@ export interface SettingsForm {
   // Set by answering the privacy policy, either way; never unset again.
   privacyConfirmed: boolean
   aiProvider: AiProvider
+  courseStructure: CourseStructure
 }
 
 // The model the form shows: a stored one the options no longer list reads as the first, so Save sends
@@ -58,6 +61,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     errorReports: stored.errorReports === true,
     privacyConfirmed: stored.privacyConfirmed,
     aiProvider: toAiProvider(stored.aiProvider),
+    courseStructure: toCourseStructure(stored.courseStructure),
   }
 }
 
@@ -105,6 +109,9 @@ export function buildPatch(
   }
   if (form.privacyConfirmed && !stored.privacyConfirmed) patch.privacyConfirmed = true
   if (form.aiProvider !== toAiProvider(stored.aiProvider)) patch.aiProvider = form.aiProvider
+  if (form.courseStructure !== toCourseStructure(stored.courseStructure)) {
+    patch.courseStructure = form.courseStructure
+  }
   return patch
 }
 

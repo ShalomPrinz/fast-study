@@ -8,6 +8,7 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { courseNotFound, routeMiss } from '@/shared/utils/notFound'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
+import { lectureTrack, recitationTrack } from '@/features/lectures/utils/courseTree'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import { toast } from '@/services/toaster'
@@ -53,9 +54,10 @@ function CourseOverviewBody() {
   }, [status, course, extractors])
 
   const treeEntry = courses.find((c) => c.name === course)
-  const lectures = treeEntry?.lectures ?? []
-  const recitations = treeEntry?.recitations ?? []
-  const processed = [...lectures, ...recitations].filter((l) =>
+  // A lectures-only course counts and studies its recitations as lectures, in the sidebar's order.
+  const lectures = treeEntry ? lectureTrack(treeEntry) : []
+  const recitations = treeEntry && !treeEntry.lectures_only ? recitationTrack(treeEntry) : null
+  const processed = [...lectures, ...(recitations ?? [])].filter((l) =>
     isLectureComplete(l, driveEnabled),
   ).length
 
@@ -79,9 +81,11 @@ function CourseOverviewBody() {
     <span>
       <Plural value={lectures.length} one="# lecture" other="# lectures" />
     </span>,
-    <span>
-      <Plural value={recitations.length} one="# recitation" other="# recitations" />
-    </span>,
+    recitations ? (
+      <span>
+        <Plural value={recitations.length} one="# recitation" other="# recitations" />
+      </span>
+    ) : null,
     <span>{t`${processed} fully processed`}</span>,
   ].filter((item) => item !== null)
 

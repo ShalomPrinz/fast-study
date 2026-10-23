@@ -26,6 +26,8 @@ import {
   toastDownloadError,
 } from '@/features/downloads/utils/downloadErrors'
 import { useManualStart } from '@/features/downloads/hooks/useManualStart'
+import { useNewCoursesLecturesOnly } from '@/shared/hooks/useNewCoursesLecturesOnly'
+import { lecturesOnly, lecturesOnlyKind } from '@/features/lectures/utils/courseTree'
 import { JobProgressBar } from './RecordingJobList'
 import CourseCombobox from './CourseCombobox'
 import '@/styles/pipeline-card.css'
@@ -58,7 +60,8 @@ function ManualForm() {
   const entries = useManualEntries()
   const active = courses.filter((c) => !c.archived)
   // In the module store, so a trip to another page keeps what was typed; null fields follow defaults.
-  const { url, course: typed, kind, name } = useManualDraft()
+  const { url, course: typed, kind: picked, name } = useManualDraft()
+  const newCoursesLecturesOnly = useNewCoursesLecturesOnly()
   const [pending, setPending] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const { locked: lockedFor, start } = useManualStart()
@@ -67,7 +70,11 @@ function ManualForm() {
   const existing = matchCourse(active, courseText)
   const course = existing ?? courseText.trim()
   const claimed = entries.map((e) => ({ ...e.target, kind: e.request.kind }))
-  const lecture = name ?? (course ? suggestManualName(courses, course, kind, claimed) : '')
+  // A lectures-only course hides the toggle: a new item is a lecture, an existing recitation's name its own.
+  const onlyLectures = !!course && lecturesOnly(courses, course, newCoursesLecturesOnly)
+  const suggestKind = onlyLectures ? 'lecture' : picked
+  const lecture = name ?? (course ? suggestManualName(courses, course, suggestKind, claimed) : '')
+  const kind = onlyLectures ? lecturesOnlyKind(courses, course, lecture.trim()) : picked
   const locked = lockedFor(url)
   const ready = !!url.trim() && !!course && !!lecture.trim() && !pending && !locked
 
@@ -132,25 +139,27 @@ function ManualForm() {
         />
       </div>
       {/* Buttons, not an input, so the caption names the group rather than a control. */}
-      <div className="manual-download-field" role="group" aria-labelledby={`${id}-kind`}>
-        <span className="manual-download-label" id={`${id}-kind`}>
-          <Trans>Type</Trans>
-        </span>
-        <div className="mode-toggle mode-toggle--light">
-          <button
-            className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-            onClick={() => updateManualDraft({ kind: 'lecture' })}
-          >
-            <Trans>Lecture</Trans>
-          </button>
-          <button
-            className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-            onClick={() => updateManualDraft({ kind: 'recitation' })}
-          >
-            <Trans>Recitation</Trans>
-          </button>
+      {!onlyLectures && (
+        <div className="manual-download-field" role="group" aria-labelledby={`${id}-kind`}>
+          <span className="manual-download-label" id={`${id}-kind`}>
+            <Trans>Type</Trans>
+          </span>
+          <div className="mode-toggle mode-toggle--light">
+            <button
+              className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+              onClick={() => updateManualDraft({ kind: 'lecture' })}
+            >
+              <Trans>Lecture</Trans>
+            </button>
+            <button
+              className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+              onClick={() => updateManualDraft({ kind: 'recitation' })}
+            >
+              <Trans>Recitation</Trans>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       <div className="manual-download-field manual-download-name">
         <label className="manual-download-label" htmlFor={`${id}-name`}>
           <Trans>Name in the course</Trans>

@@ -26,6 +26,17 @@ export type AutoRemove = (typeof AUTO_REMOVE_MODES)[number]
 export const AUTO_REMOVE_AFTER = ['pdf', 'drive'] as const
 export type AutoRemoveAfter = (typeof AUTO_REMOVE_AFTER)[number]
 
+// How a course lists its recitations: apart (`split`), among its lectures in every course, or only
+// in the courses picked. Unset reads as `split`, as the database reads it.
+export const COURSE_STRUCTURES = ['split', 'lectures_all', 'lectures_some'] as const
+export type CourseStructure = (typeof COURSE_STRUCTURES)[number]
+
+export function toCourseStructure(stored: string | null): CourseStructure {
+  return (COURSE_STRUCTURES as readonly string[]).includes(stored ?? '')
+    ? (stored as CourseStructure)
+    : 'split'
+}
+
 // The hour the nightly catch-up pass fires. The backend clamps an unset or out-of-range value to
 // the same 3, so a store holding anything else still shows the hour that will actually run.
 export const DEFAULT_NIGHTLY_HOUR = 3
@@ -51,6 +62,7 @@ export interface Settings {
   autoRemoveAfter: string | null
   // The university's Moodle root, always the canonical `wwwroot` the site probe answered.
   moodleSite: string | null
+  courseStructure: string | null
   // Launcher-only, like `privacyConfirmed`. Unset means off: nothing is sent before an explicit yes.
   errorReports: boolean | null
   // Whether the user answered the privacy policy, either way.
@@ -81,6 +93,7 @@ export interface SettingsPatch {
   autoRemove?: AutoRemove
   autoRemoveAfter?: AutoRemoveAfter
   moodleSite?: string
+  courseStructure?: CourseStructure
   errorReports?: boolean
   privacyConfirmed?: boolean
   aiProvider?: AiProvider
@@ -101,6 +114,7 @@ const WIRE: Record<SettingsField, string> = {
   autoRemove: 'auto_remove',
   autoRemoveAfter: 'auto_remove_after',
   moodleSite: 'moodle_site',
+  courseStructure: 'course_structure',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
   aiProvider: 'ai_provider',
@@ -122,7 +136,7 @@ const BACKEND_FIELDS: SettingsField[] = [
   'autoRemove',
   'autoRemoveAfter',
 ]
-const DATABASE_FIELDS: SettingsField[] = ['dataRoot']
+const DATABASE_FIELDS: SettingsField[] = ['dataRoot', 'courseStructure']
 const AUTO_FIELDS: SettingsField[] = ['moodleSite']
 
 interface RawSettings {
@@ -138,6 +152,7 @@ interface RawSettings {
   auto_remove: string | null
   auto_remove_after: string | null
   moodle_site: string | null
+  course_structure: string | null
   ai_provider: string | null
 }
 
@@ -155,6 +170,7 @@ function normalize(raw: RawSettings): Settings {
     autoRemove: raw.auto_remove ?? null,
     autoRemoveAfter: raw.auto_remove_after ?? null,
     moodleSite: raw.moodle_site ?? null,
+    courseStructure: raw.course_structure ?? null,
     aiProvider: raw.ai_provider ?? null,
     // The browser-dev store has neither; the switch and its privacy answer are Electron-only.
     errorReports: null,

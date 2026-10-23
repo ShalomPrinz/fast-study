@@ -39,6 +39,18 @@ export async function fetchTree(): Promise<Course[]> {
   return database.get<Course[]>('/tree')
 }
 
+// The live course-structure mode, never null; only what a course the tree lacks yet would be.
+export async function fetchCourseStructure(): Promise<string> {
+  const raw = await database.get<{ course_structure: string }>('/course_structure')
+  return raw.course_structure
+}
+
+export async function setCourseLecturesOnly(course: string, lecturesOnly: boolean): Promise<void> {
+  await database.patch(path`/courses/${course}/lectures_only`, {
+    json: { lectures_only: lecturesOnly },
+  })
+}
+
 export async function createCourse(name: string, source_url?: string | null): Promise<void> {
   await database.post('/courses', { json: { name, source_url: source_url || null } })
 }

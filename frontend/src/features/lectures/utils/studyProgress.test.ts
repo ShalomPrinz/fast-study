@@ -10,7 +10,7 @@ describe('trackProgress', () => {
       item('Lecture 2', false),
       item('Lecture 3', false),
     ])
-    expect(p).toEqual({ current: 'Lecture 2', done: 1, total: 3 })
+    expect(p).toEqual({ current: item('Lecture 2', false), done: 1, total: 3 })
   })
 
   it('keeps an earlier gap current even when later items are done', () => {
@@ -19,7 +19,7 @@ describe('trackProgress', () => {
       item('Lecture 2', false),
       item('Lecture 3', true),
     ])
-    expect(p).toEqual({ current: 'Lecture 2', done: 2, total: 3 })
+    expect(p).toEqual({ current: item('Lecture 2', false), done: 2, total: 3 })
   })
 
   it('has no current once every item is done', () => {

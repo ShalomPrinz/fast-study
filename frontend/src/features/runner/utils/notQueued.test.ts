@@ -31,7 +31,7 @@ function lecture(name: string, ...present: string[]): Lecture {
 }
 
 function course(name: string, lectures: Lecture[], recitations: Lecture[] = []): Course {
-  return { name, archived: false, source_url: null, lectures, recitations }
+  return { name, archived: false, source_url: null, lectures_only: false, lectures, recitations }
 }
 
 const queued = (c: string, l: string): QueueEntry => ({

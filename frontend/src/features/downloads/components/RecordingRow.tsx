@@ -6,6 +6,7 @@ import type { MessageDescriptor } from '@lingui/core'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
+import { lectureTrack, lecturesOnly } from '@/features/lectures/utils/courseTree'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item, ResolvedMedia } from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
@@ -101,6 +102,13 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   })
 
   const listId = useId()
+  const onlyLectures = lecturesOnly(courses, course, false)
+  // A lectures-only course lists its recitations among the lectures, so a material can reach either.
+  const node = courses.find((c) => c.name === course)
+  const attachable =
+    onlyLectures && node
+      ? lectureTrack(node).map((i) => i.name)
+      : existingNames(kind, courses, course)
   // Non-blocking state note: a material download appends, so the count is shown rather than confirmed.
   const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
   // Live tree, so a completed download's SSE refresh flips the card green.
@@ -205,20 +213,23 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
           <Trans>Save as</Trans>
         </span>
 
-        <div className="mode-toggle mode-toggle--light">
-          <button
-            className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-            onClick={() => setKind('lecture')}
-          >
-            <Trans>Lecture</Trans>
-          </button>
-          <button
-            className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-            onClick={() => setKind('recitation')}
-          >
-            <Trans>Recitation</Trans>
-          </button>
-        </div>
+        {/* A lectures-only course saves every new recording as a lecture. */}
+        {!onlyLectures && (
+          <div className="mode-toggle mode-toggle--light">
+            <button
+              className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+              onClick={() => setKind('lecture')}
+            >
+              <Trans>Lecture</Trans>
+            </button>
+            <button
+              className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+              onClick={() => setKind('recitation')}
+            >
+              <Trans>Recitation</Trans>
+            </button>
+          </div>
+        )}
 
         {/* Material picks an existing lecture to attach to, so the input offers them — while
             staying free text, since the lecture may not exist yet. */}
@@ -234,7 +245,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
         />
         {material && (
           <datalist id={listId}>
-            {existingNames(kind, courses, course).map((n) => (
+            {attachable.map((n) => (
               <option key={n} value={n} />
             ))}
           </datalist>

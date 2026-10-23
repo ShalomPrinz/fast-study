@@ -12,6 +12,7 @@ import Icon from '@/shared/components/Icon'
 import Tooltip from '@/shared/components/Tooltip'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
+import { lectureTrack } from '@/features/lectures/utils/courseTree'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
 import { courseNotFound } from '@/shared/utils/notFound'
@@ -42,7 +43,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const [renaming, setRenaming] = useState(false)
   const [pendingName, setPendingName] = useState<string | null>(null)
   const renameEdit = useInlineEdit(renaming ? course.name : null)
-  const progress = trackProgress(course.lectures)
+  const progress = trackProgress(lectureTrack(course))
 
   function startRenaming(e: React.MouseEvent) {
     e.preventDefault()

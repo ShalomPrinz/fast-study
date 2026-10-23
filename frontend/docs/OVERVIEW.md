@@ -23,7 +23,8 @@ the caller toasts a `busy` `RunInitResult` and the rejection a refused run throw
 recitation counts, how many are fully processed, `GenerateAllButton`) over `CurrentStudy` — one centred
 nav tile per track — then one `.pipeline-card` of branch rows. Each tile names and opens its track's current item
 ([LECTURES.md](LECTURES.md) §Tree pane); with none — all done, or the track is empty — it disables, and one
-green line beneath both tiles joins each such track's note. A running branch shows its phase and a clock counting up from `startedAt` where a lecture shows an
+green line beneath both tiles joins each such track's note. A lectures-only course has one track, so one
+tile and no recitation count. A running branch shows its phase and a clock counting up from `startedAt` where a lecture shows an
 ETA — elapsed, since `timing.db` records no overview operation to estimate from. Expanding a branch shows
 its phases as nodes over its files as monospace chips; only the branch's final PDF opens.
 
@@ -59,4 +60,5 @@ Errors toast once per `(course, slug, failure)` through `useReportOnce`, pruned 
 within the current course so switching back does not re-toast.
 
 `overview/meta` gives per-slug lecture/recitation ranges and `generatedAt`, rendered by `formatRange`
-("Lectures 2-9, Recitations 1-4") and a short date with the full timestamp on hover.
+("Lectures 2-9, Recitations 1-4"; a lectures-only course shows one "Lectures 1-9" span over both
+ranges, whatever meta it was generated with) and a short date with the full timestamp on hover.

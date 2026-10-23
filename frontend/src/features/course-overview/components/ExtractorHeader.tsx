@@ -18,6 +18,7 @@ import StatusNode from '@/shared/components/StatusNode'
 import type { StatusNodeState } from '@/shared/components/StatusNode'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
+import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
 import '@/styles/pipeline-card.css'
 import '@/styles/button.css'
@@ -50,6 +51,7 @@ export default function ExtractorHeader() {
   const title = extractorTitle(extractor)
   const bs = branchStatus(status, files, slug, phases)
   const entry = meta[slug]
+  const lecturesOnly = useCourseTreeContext().courses.find((c) => c.name === course)?.lectures_only
 
   const state: StatusNodeState = bs.running
     ? 'running'
@@ -89,7 +91,7 @@ export default function ExtractorHeader() {
           <span className="overview-branch-name">{title}</span>
           {entry && (
             <span className="overview-branch-subtitle">
-              {formatRange(entry)} ·{' '}
+              {formatRange(entry, lecturesOnly)} ·{' '}
               <Tooltip content={formatFullTimestamp(entry.generatedAt)}>
                 <span>{formatMonthDate(entry.generatedAt)}</span>
               </Tooltip>

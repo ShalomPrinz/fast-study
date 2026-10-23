@@ -25,6 +25,7 @@ const COURSES: Course[] = [
     name: 'Algebra',
     archived: false,
     source_url: null,
+    lectures_only: false,
     lectures: [node('Lecture 1'), node('Lecture 2')],
     recitations: [node('Recitation 4')],
   },
@@ -86,7 +87,14 @@ describe('resolveRow', () => {
 
 describe('a download lock', () => {
   const EMPTY_COURSE: Course[] = [
-    { name: 'Algebra', archived: false, source_url: null, lectures: [], recitations: [] },
+    {
+      name: 'Algebra',
+      archived: false,
+      source_url: null,
+      lectures_only: false,
+      lectures: [],
+      recitations: [],
+    },
   ]
   // The SSE refresh after the first download lands.
   const LANDED: Course[] = [{ ...EMPTY_COURSE[0], lectures: [node('Lecture 1')] }]
@@ -133,5 +141,30 @@ describe('a download lock', () => {
     expect(resolveRow(untitled('r1'), undefined, LANDED, 'Algebra', elsewhere).name).toBe(
       'Lecture 2',
     )
+  })
+})
+
+describe('resolveRow in a lectures-only course', () => {
+  const ONLY: Course[] = [{ ...COURSES[0], lectures_only: true }]
+  const recitation = (title: string): Item => ({ ...item('video', title), kind: 'recitation' })
+
+  it("saves a new recitation-guessed row as a lecture, keeping the guess's prefix", () => {
+    const row = resolveRow(recitation('תרגול 5'), undefined, ONLY, 'Algebra')
+    expect(row).toMatchObject({ kind: 'lecture', name: 'Recitation 5' })
+  })
+
+  it('ignores a kind toggled before the switch', () => {
+    const row = resolveRow(item('video', 'הרצאה 3'), { kind: 'recitation' }, ONLY, 'Algebra')
+    expect(row).toMatchObject({ kind: 'lecture', name: 'Lecture 3' })
+  })
+
+  it("keeps an existing recitation's own kind, so its download still reads as on disk", () => {
+    const row = resolveRow(recitation('תרגול 4'), undefined, ONLY, 'Algebra')
+    expect(row).toMatchObject({ kind: 'recitation', name: 'Recitation 4' })
+  })
+
+  it('numbers a numberless row past lectures and recitations together', () => {
+    const row = resolveRow(recitation('intro'), undefined, ONLY, 'Algebra')
+    expect(row).toMatchObject({ kind: 'lecture', name: 'Lecture 5' })
   })
 })

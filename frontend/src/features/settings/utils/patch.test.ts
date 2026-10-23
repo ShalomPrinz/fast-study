@@ -18,6 +18,7 @@ const STORED: Settings = {
   errorReports: null,
   privacyConfirmed: false,
   aiProvider: null,
+  courseStructure: null,
 }
 
 const UNCHANGED: SettingsForm = {
@@ -35,6 +36,7 @@ const UNCHANGED: SettingsForm = {
   errorReports: false,
   privacyConfirmed: false,
   aiProvider: 'claude',
+  courseStructure: 'split',
 }
 
 describe('buildPatch', () => {
@@ -137,6 +139,13 @@ describe('buildPatch', () => {
       aiProvider: 'gemini',
     })
     expect(buildPatch(UNCHANGED, { ...STORED, aiProvider: 'copilot' }, true)).toEqual({})
+  })
+
+  it('stores a changed course structure, and reads nothing stored as split', () => {
+    expect(buildPatch({ ...UNCHANGED, courseStructure: 'lectures_all' }, STORED, true)).toEqual({
+      courseStructure: 'lectures_all',
+    })
+    expect(buildPatch(UNCHANGED, { ...STORED, courseStructure: 'bogus' }, true)).toEqual({})
   })
 
   it('stores a newly answered privacy policy, and never unsets an answered one', () => {

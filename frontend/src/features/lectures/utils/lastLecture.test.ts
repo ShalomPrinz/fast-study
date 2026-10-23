@@ -23,6 +23,7 @@ const courses: Course[] = [
     name: 'אלגברה',
     archived: false,
     source_url: null,
+    lectures_only: false,
     lectures: [lecture('Lecture 1')],
     recitations: [lecture('Recitation 1')],
   },

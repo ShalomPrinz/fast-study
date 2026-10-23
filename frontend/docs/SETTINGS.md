@@ -22,6 +22,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Auto-remove after | none — the user must choose               | the PDF, the Drive upload | `backend/`    |
 | Error reports     | off until answered; the wall starts it on | on                    | `electron/`, live    |
 | AI chat provider  | Claude                                    | ChatGPT, Gemini       | `electron/`, renderer-only |
+| Course structure  | lectures and recitations (`split`)        | lectures only: every course, chosen courses | `database/`, live |
 
 The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
@@ -64,6 +65,13 @@ and starts in one go (`wallMustAskPrivacy`); closing it saves nothing.
 **The AI chat provider** is the chat "Study with AI" opens ([LECTURES.md](LECTURES.md)), read through
 `useAiProvider`, where unset or unknown is Claude. It is renderer-only: no service reads it, so a save writes
 it to the store alone, the launcher's in the packaged app and the database's `.env` in browser dev.
+
+**Course structure** applies live through the database's `/config`, which re-resolves every course's
+`lectures_only` and notifies. Everything but this field reads only that per-course flag
+([LECTURES.md](LECTURES.md)). Under "chosen courses" (`CourseStructureField`) a checklist of the active
+courses writes each pick at once (`PATCH /courses/{course}/lectures_only`), like archiving, and the box
+reads the tree's flag — which is the pick only while that mode is live, so until it is saved the field
+says to save first (`checklistState`). A new course starts unchecked.
 
 ## What is not a setting
 

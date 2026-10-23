@@ -46,7 +46,14 @@ export function suggestManualName(
     ? courses
     : [
         ...courses,
-        { name: course, archived: false, source_url: null, lectures: [], recitations: [] },
+        {
+          name: course,
+          archived: false,
+          source_url: null,
+          lectures_only: false,
+          lectures: [],
+          recitations: [],
+        },
       ]
   const extra = claimed
     .filter((c) => c.course === course && c.kind === kind)

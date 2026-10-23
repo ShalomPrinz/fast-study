@@ -72,6 +72,7 @@ const STORE: Settings = {
   errorReports: null,
   privacyConfirmed: false,
   aiProvider: null,
+  courseStructure: null,
 }
 
 describe('toNightlyHour', () => {

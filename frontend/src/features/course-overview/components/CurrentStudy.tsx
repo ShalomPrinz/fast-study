@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
-import type { Kind, Lecture } from '@/types'
+import type { Kind } from '@/types'
+import type { TrackItem } from '@/features/lectures/utils/courseTree'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import { lectureRoute } from '@/shared/utils/url'
 import Icon from '@/shared/components/Icon'
@@ -8,23 +9,24 @@ import Tooltip from '@/shared/components/Tooltip'
 import './CurrentStudy.css'
 
 // One nav tile per track opening its current item — its first lecture or recitation not marked done —
-// over one line of green notes for the tracks with none (all done, or the track is empty).
+// over one line of green notes for the tracks with none (all done, or the track is empty). A
+// lectures-only course has one track (`recitations` null), whose current item may be a recitation.
 export default function CurrentStudy({
   course,
   lectures,
   recitations,
 }: {
   course: string
-  lectures: Lecture[]
-  recitations: Lecture[]
+  lectures: TrackItem[]
+  recitations: TrackItem[] | null
 }) {
   const { t } = useLingui()
   const lecture = trackProgress(lectures)
-  const recitation = trackProgress(recitations)
+  const recitation = recitations && trackProgress(recitations)
 
   const notes = [
     lecture.current ? null : lecture.total === 0 ? t`No lectures yet` : t`All lectures done`,
-    recitation.current
+    !recitation || recitation.current
       ? null
       : recitation.total === 0
         ? t`No recitations yet`
@@ -36,18 +38,18 @@ export default function CurrentStudy({
       <div className="current-study-tiles">
         <StudyTile
           course={course}
-          kind="lecture"
           current={lecture.current}
           label={t`Current lecture`}
           hint={t`Open the first lecture you haven't finished yet`}
         />
-        <StudyTile
-          course={course}
-          kind="recitation"
-          current={recitation.current}
-          label={t`Current recitation`}
-          hint={t`Open the first recitation you haven't finished yet`}
-        />
+        {recitation && (
+          <StudyTile
+            course={course}
+            current={recitation.current}
+            label={t`Current recitation`}
+            hint={t`Open the first recitation you haven't finished yet`}
+          />
+        )}
       </div>
       {notes.length > 0 && (
         <p className="current-study-notes">
@@ -67,14 +69,12 @@ export default function CurrentStudy({
 // With no current item the tile disables and holds a muted dash where the name goes, keeping its height.
 function StudyTile({
   course,
-  kind,
   current,
   label,
   hint,
 }: {
   course: string
-  kind: Kind
-  current: string | null
+  current: { name: string; kind: Kind } | null
   label: string
   hint: string
 }) {
@@ -84,13 +84,13 @@ function StudyTile({
       <button
         className="study-tile"
         disabled={!current}
-        onClick={() => current && navigate(lectureRoute(course, current, kind))}
+        onClick={() => current && navigate(lectureRoute(course, current.name, current.kind))}
       >
         <span className="study-tile-text">
           <span className="study-tile-label">{label}</span>
           {current ? (
             <span className="study-tile-name">
-              <bdi>{current}</bdi>
+              <bdi>{current.name}</bdi>
             </span>
           ) : (
             <span className="study-tile-name study-tile-name--empty" aria-hidden="true">

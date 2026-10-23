@@ -6,6 +6,7 @@ import { failureNode } from '@/shared/utils/failure'
 import { canSetErrorReports, canStoreApiKeys, runtimeBridge } from '@/services/runtime'
 import {
   toAutoRun,
+  toCourseStructure,
   toNightlyHour,
   fetchConfigOptions,
   saveSettings,
@@ -98,6 +99,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     errorReports: stored.errorReports ?? true,
     privacyConfirmed: stored.privacyConfirmed,
     aiProvider: toAiProvider(stored.aiProvider),
+    courseStructure: toCourseStructure(stored.courseStructure),
   })
   const [dataRootUnusable, setDataRootUnusable] = useState(false)
   const [saving, setSaving] = useState(false)

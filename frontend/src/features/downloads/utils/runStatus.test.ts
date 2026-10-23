@@ -34,7 +34,16 @@ function node(name: string, video = false): Lecture {
 }
 
 function tree(lectures: Lecture[]): Course[] {
-  return [{ name: 'Algebra', archived: false, source_url: null, lectures, recitations: [] }]
+  return [
+    {
+      name: 'Algebra',
+      archived: false,
+      source_url: null,
+      lectures_only: false,
+      lectures,
+      recitations: [],
+    },
+  ]
 }
 
 function job(over: Partial<DownloadJob> & Pick<DownloadJob, 'id'>): DownloadJob {

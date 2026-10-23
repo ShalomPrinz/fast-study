@@ -63,13 +63,16 @@ export default function CourseGroup({ course }: { course: Course }) {
               <AddLectureInput />
             </LectureListProvider>
 
-            <RecitationsGroup
-              expand={{
-                isOpen: recExpanded,
-                toggle: () => setRecExpanded((v) => !v),
-                open: () => setRecExpanded(true),
-              }}
-            />
+            {/* A lectures-only course lists its recitations among the lectures above. */}
+            {!course.lectures_only && (
+              <RecitationsGroup
+                expand={{
+                  isOpen: recExpanded,
+                  toggle: () => setRecExpanded((v) => !v),
+                  open: () => setRecExpanded(true),
+                }}
+              />
+            )}
           </ul>
         )}
       </div>

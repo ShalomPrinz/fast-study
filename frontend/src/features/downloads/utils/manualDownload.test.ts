@@ -32,6 +32,7 @@ function course(name: string, lectures: string[], recitations: string[] = []): C
     name,
     archived: false,
     source_url: null,
+    lectures_only: false,
     lectures: lectures.map(node),
     recitations: recitations.map(node),
   } as Course

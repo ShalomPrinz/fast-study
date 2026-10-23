@@ -18,17 +18,19 @@ function subNumber(rest: string): number | null {
 }
 
 // First integer → "<prefix> N" plus any sub-marker as a decimal, the prefix the course's own; no
-// number falls back to the tree's next name.  'הרצאה 11a' -> 'הרצאה 11.1'
+// number falls back to the tree's next name.  'הרצאה 11a' -> 'הרצאה 11.1'. `prefixKind` names the
+// prefix when it differs from the kind saved: a lectures-only course keeps a recitation's own prefix.
 export function suggestItemName(
   title: string,
   kind: Kind,
   courses: Course[],
   course: string,
+  prefixKind: Kind = kind,
 ): string {
   const text = String(title ?? '')
   const m = text.match(/\d+/)
   if (m) {
-    const prefix = sessionPrefix(courses, course, kind) ?? fallbackPrefix(kind)
+    const prefix = sessionPrefix(courses, course, prefixKind) ?? fallbackPrefix(prefixKind)
     const number = parseInt(m[0], 10)
     const sub = subNumber(text.slice(m.index! + m[0].length))
     return sub === null ? `${prefix} ${number}` : `${prefix} ${number}.${sub}`

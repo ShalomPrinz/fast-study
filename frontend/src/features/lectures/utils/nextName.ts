@@ -56,16 +56,28 @@ export function fallbackPrefix(kind: Kind): string {
 
 // These become directory names under DATA_ROOT, so they follow the course's own naming rather than
 // any fixed language; only a course with nothing to copy falls back to the UI locale's wording.
+// A lectures-only course numbers on past its recitations too: the newest item in merged order
+// (number, lecture before recitation, sub) decides, and the prefix always comes from the lectures.
 function suggestLectureName(courses: Course[], courseName: string): string {
   const course = courses.find((c) => c.name === courseName)
   if (!course) return ''
-  const latest = latestName(
+  const lectures = latestName(
     course.lectures.map((l) => l.name),
     'lecture',
   )
-  if (!latest) return `${fallbackPrefix('lecture')} 1`
-  if (latest.sub === 1) return `${latest.prefix} ${latest.n}.2`
-  return `${latest.prefix} ${latest.n + 1}`
+  const prefix = lectures?.prefix ?? fallbackPrefix('lecture')
+  const recitation = course.lectures_only
+    ? latestName(
+        (course.recitations ?? []).map((r) => r.name),
+        'recitation',
+      )
+    : null
+  // On a tie the recitation is newest: it lists after every lecture of its number, subs included.
+  if (recitation && (!lectures || recitation.n >= lectures.n))
+    return `${prefix} ${recitation.n + 1}`
+  if (!lectures) return `${fallbackPrefix('lecture')} 1`
+  if (lectures.sub === 1) return `${prefix} ${lectures.n}.2`
+  return `${prefix} ${lectures.n + 1}`
 }
 
 function suggestRecitationName(courses: Course[], courseName: string): string {

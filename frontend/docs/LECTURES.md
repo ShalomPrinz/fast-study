@@ -191,6 +191,14 @@ on its track's current item and empty otherwise; a running or queued row shows a
 Marks are display-only. The course header counts lectures, the Recitations header recitations; an archived
 course shows neither count.
 
+**A lectures-only course** (the tree's resolved `lectures_only`, never the setting — [SETTINGS.md](SETTINGS.md))
+has one track: `utils/courseTree.ts`'s `lectureTrack` merges its recitations into the lecture list with no
+badge and no Recitations group, in `lectureSort.ts`'s `compareMerged` order — by number, a lecture before
+the recitation of the same number, then sub; unnumbered names last, by name. Each `TrackItem` keeps its real
+kind, so routes, requests and the header count, `CurrentStudy` and next-name logic all read the same list.
+Only new items are forced to `lecture` (add-item, both download forms); a name that is an existing
+recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
+
 - `CourseTreeContext` exposes `courses`, `loaded`, `loadFailed` and `refreshCourses`; `SnapshotProvider` fills it, refreshing
   on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through
   `sortLectures`. Everything reads it directly, no props
@@ -220,5 +228,7 @@ holds it — usually the database's own notify, which lands before the rename's 
 resets on window blur, because an alt-tab mid-hold never delivers `keyup`.
 
 `nextName.ts` suggests `<prefix> N+1`, except a trailing `N.1` suggests `N.2` (a split session's second
-half); recitations have no sub-sessions ([I18N.md](I18N.md) for the prefix). `lectureSort.ts` orders by
+half); recitations have no sub-sessions ([I18N.md](I18N.md) for the prefix). In a lectures-only course the
+newest item in merged order decides — a recitation newest suggests the next whole number — and the prefix
+is always the lectures', matching the extension popup. `lectureSort.ts` orders by
 `(number, sub-number, name)` parsed with the same any-prefix regex; unparsed names sort first, alphabetically.

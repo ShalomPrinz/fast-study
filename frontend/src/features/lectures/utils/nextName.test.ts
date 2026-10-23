@@ -4,11 +4,16 @@ import { latestName, suggestName } from './nextName'
 
 const lecture = (name: string) => ({ name }) as Lecture
 
-const course = (lectures: string[], recitations: string[] = []): Course[] => [
+const course = (
+  lectures: string[],
+  recitations: string[] = [],
+  lectures_only = false,
+): Course[] => [
   {
     name: 'Algebra',
     archived: false,
     source_url: null,
+    lectures_only,
     lectures: lectures.map(lecture),
     recitations: recitations.map(lecture),
   },
@@ -67,5 +72,38 @@ describe('suggestName', () => {
   it('has nothing to suggest for a course that is not in the tree', () => {
     expect(suggestName(course([]), 'Missing', 'lecture')).toBe('')
     expect(suggestName(course([]), 'Missing', 'recitation')).toBe('Recitation 1')
+  })
+})
+
+describe('suggestName in a lectures-only course', () => {
+  it('numbers the next lecture past its recitations, keeping the lectures prefix', () => {
+    expect(
+      suggestName(
+        course(['Lecture 1'], ['Recitation 1', 'Recitation 2'], true),
+        'Algebra',
+        'lecture',
+      ),
+    ).toBe('Lecture 3')
+    expect(
+      suggestName(course(['Lecture 1', 'Lecture 2'], ['Recitation 1'], true), 'Algebra', 'lecture'),
+    ).toBe('Lecture 3')
+  })
+
+  it('falls back to the lecture prefix when only recitations exist', () => {
+    expect(suggestName(course([], ['תרגול 4'], true), 'Algebra', 'lecture')).toMatch(/ 5$/)
+    expect(suggestName(course([], ['תרגול 4'], true), 'Algebra', 'lecture')).not.toMatch(/^תרגול/)
+  })
+
+  it('moves past a recitation that shares the newest lecture number, sub-sessions included', () => {
+    expect(suggestName(course(['L 3.1'], ['R 3'], true), 'Algebra', 'lecture')).toBe('L 4')
+    expect(
+      suggestName(course(['הרצאה 1', 'הרצאה 2.1'], ['תרגול 3'], true), 'Algebra', 'lecture'),
+    ).toBe('הרצאה 4')
+  })
+
+  it('ignores recitations in a split course', () => {
+    expect(suggestName(course(['Lecture 1'], ['Recitation 7']), 'Algebra', 'lecture')).toBe(
+      'Lecture 2',
+    )
   })
 })
