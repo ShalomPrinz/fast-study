@@ -93,7 +93,7 @@ Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, 
 `FASTSTUDY_ERROR_REPORTS` (`1` when the stored switch is on, else `0` — never absent, so a value in
 main's own env is not inherited past the switch),
 the peers it calls, and the settings store's contents as the env vars each owning service reads (`DATA_ROOT`,
-`GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `AUTO_REMOVE`, `AUTO_REMOVE_AFTER`, `MOODLE_SITE`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
+`GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `AUTO_REMOVE`, `AUTO_REMOVE_AFTER`, `COURSE_STRUCTURE`, `MOODLE_SITE`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
 `GROQ_API_KEY`). Packaged, it also gets `FASTSTUDY_BIN_DIR` and `TECTONIC_CACHE_DIR`.
 
 `auto` alone also gets `FASTSTUDY_TOKEN_KEY`, the 32-byte key it encrypts its Moodle token with

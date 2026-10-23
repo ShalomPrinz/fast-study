@@ -15,6 +15,7 @@ const full = {
   autoRun: 'audio',
   autoRemove: 'video',
   autoRemoveAfter: 'drive',
+  courseStructure: 'lectures_some',
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
   errorReports: false,
@@ -92,6 +93,31 @@ test('a hand-edited auto-remove value reads normalized, or unset when invalid', 
   assert.deepEqual(store.serviceEnv(), { AUTO_REMOVE_AFTER: 'drive' });
 });
 
+test('courseStructure is lowercased, stored, and reaches the child env as COURSE_STRUCTURE', () => {
+  const view = store.write({ courseStructure: ' Lectures_All ' });
+
+  assert.equal(view.courseStructure, 'lectures_all');
+  assert.deepEqual(store.serviceEnv(), { COURSE_STRUCTURE: 'lectures_all' });
+});
+
+test('an unknown courseStructure is refused and nothing is written', () => {
+  store.write({ courseStructure: 'split' });
+  const before = fs.readFileSync(store.file());
+
+  assert.throws(
+    () => store.write({ dataRoot: '/data/root', courseStructure: 'flat' }),
+    /courseStructure must be one of split, lectures_all, lectures_some/,
+  );
+  assert.deepEqual(fs.readFileSync(store.file()), before);
+});
+
+test('a hand-edited courseStructure outside the list reads null and stays out of the env', () => {
+  fs.writeFileSync(store.file(), JSON.stringify({ course_structure: 'nested' }));
+
+  assert.equal(store.read().courseStructure, null);
+  assert.deepEqual(store.serviceEnv(), {});
+});
+
 test('moodleSite round-trips trimmed and reaches the child env as MOODLE_SITE', () => {
   const view = store.write({ moodleSite: '  https://x.ac.il/moodle  ' });
 
@@ -126,6 +152,7 @@ test('echoing a read back blanks nothing', () => {
     autoRun: written.autoRun,
     autoRemove: written.autoRemove,
     autoRemoveAfter: written.autoRemoveAfter,
+    courseStructure: written.courseStructure,
     moodleSite: written.moodleSite,
     errorReports: written.errorReports,
     privacyConfirmed: written.privacyConfirmed,
@@ -162,6 +189,7 @@ test('an unset store reads as all-null, bar privacyConfirmed, which reads false'
     autoRun: null,
     autoRemove: null,
     autoRemoveAfter: null,
+    courseStructure: null,
     moodleSite: null,
     errorReports: null,
     privacyConfirmed: false,
@@ -221,6 +249,7 @@ test('serviceEnv maps every field onto its service env var', () => {
     MOODLE_SITE: 'https://lemida.biu.ac.il',
     AUTO_REMOVE: 'video',
     AUTO_REMOVE_AFTER: 'drive',
+    COURSE_STRUCTURE: 'lectures_some',
     DRIVE_ENABLED: 'true',
     GEMINI_API_KEY: 'gemini-secret',
     GROQ_API_KEY: 'groq-secret',

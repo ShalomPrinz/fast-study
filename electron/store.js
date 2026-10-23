@@ -13,15 +13,17 @@ const STRING_FIELDS = {
   moodle_site: 'MOODLE_SITE',
   auto_remove: 'AUTO_REMOVE',
   auto_remove_after: 'AUTO_REMOVE_AFTER',
+  course_structure: 'COURSE_STRUCTURE',
 };
 // Fields whose write is refused outside a fixed list. auto_run mirrors AUTO_RUN_MODES in
-// backend/services/settings.py; the auto-remove pair mirrors database/settings.py.
+// backend/services/settings.py; the auto-remove pair and course_structure mirror database/settings.py.
 const CHOICES = {
   auto_run: ['off', 'audio', 'full'],
   // The renderer's chosen AI chat, launcher-only like `privacy_confirmed`; unset or unknown reads null.
   ai_provider: ['claude', 'chatgpt', 'gemini'],
   auto_remove: ['off', 'video', 'audio'],
   auto_remove_after: ['pdf', 'drive'],
+  course_structure: ['split', 'lectures_all', 'lectures_some'],
 };
 const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED' };
 // Booleans no service gets as a settings env var: `error_reports` main turns into each process's
@@ -39,6 +41,7 @@ const FIELDS = {
   autoRun: 'auto_run',
   autoRemove: 'auto_remove',
   autoRemoveAfter: 'auto_remove_after',
+  courseStructure: 'course_structure',
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
   errorReports: 'error_reports',
@@ -114,6 +117,7 @@ function read() {
     autoRun: text(stored.auto_run),
     autoRemove: choice('auto_remove', stored.auto_remove),
     autoRemoveAfter: choice('auto_remove_after', stored.auto_remove_after),
+    courseStructure: choice('course_structure', stored.course_structure),
     moodleSite: text(stored.moodle_site),
     errorReports: bool(stored.error_reports),
     // Unset reads false: nothing was confirmed until the renderer says so.
