@@ -2,14 +2,17 @@ import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
 import type { DownloadJob, RunTarget, SectionRun } from '../services/downloadServer'
 import { groupJobsByRef } from '../contexts/DownloadJobsContext'
+import type { Item } from '../services/autoDownloader'
 import {
   bulkGate,
   bulkRunState,
+  captchaTimeoutCount,
   collidingNames,
   runBusy,
   notStartedCount,
   runningCount,
   summarize,
+  targetOf,
   targetStatus,
   unverifiedCount,
 } from './runStatus'
@@ -339,6 +342,7 @@ describe('bulkRunState', () => {
       busy: false,
       stalled: 0,
       notStarted: 0,
+      captchaTimedOut: 0,
     })
   })
 
@@ -396,5 +400,43 @@ describe('bulkGate', () => {
       reason: 'other-run',
     })
     expect(bulkGate({ ...idle, locked: true })).toEqual({ disabled: true, reason: 'moodle' })
+  })
+})
+
+describe('targetOf', () => {
+  const item: Item = {
+    ref: 'r1',
+    title: 'Recording',
+    kind: 'lecture',
+    media: 'unknown',
+    expandable: false,
+    section: 'Week 1',
+    moodle: true,
+  }
+
+  it("sends the item's moodle flag and its best-known media", () => {
+    expect(targetOf(item, 'Lecture 1', 'lecture')).toEqual({
+      ref: 'r1',
+      name: 'Lecture 1',
+      kind: 'lecture',
+      media: 'unknown',
+      moodle: true,
+    })
+    expect(
+      targetOf({ ...item, moodle: false, resolvedMedia: 'video' }, 'L', 'recitation'),
+    ).toMatchObject({ media: 'video', moodle: false, kind: 'recitation' })
+  })
+})
+
+describe('captchaTimeoutCount', () => {
+  it('counts only targets the run failed on an unsolved captcha', () => {
+    const targets = [
+      target({ ref: 'r1', disposition: 'queue-failed', code: 'site_captcha_timeout' }),
+      target({ ref: 'r2', disposition: 'queue-failed', code: 'site_captcha_timeout' }),
+      target({ ref: 'r3', disposition: 'queue-failed' }),
+      target({ ref: 'r4' }),
+    ]
+    expect(captchaTimeoutCount(targets)).toBe(2)
+    expect(captchaTimeoutCount([target()])).toBe(0)
   })
 })

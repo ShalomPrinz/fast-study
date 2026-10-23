@@ -143,12 +143,21 @@ are made from inside that browser:
   clearance still holds: it stays off-screen and `moodleFetch` resends the same call through it once
   (the wall means Moodle never processed it; bodies are strings or forms, so they send twice), so
   the caller never sees the block. Landing anywhere else is the captcha: the window moves on screen
-  (CDP `Browser.setWindowBounds`), comes to the front, holds the Moodle lock for the user's retry
-  ([GATE.md](GATE.md#holds-that-outlive-the-request)) and the call throws `site_blocked` with
-  `params.challengeWindow:'captcha'` (`POST /window/show` raises it again, as for zoom's
-  [captcha](ZOOM.md#captcha-browserzoomcaptchajs)); `false`: no browser could launch. `getPublicConfig` opts out
-  (`reopen:false`) — its 3xx or HTML may be a real redirect or a non-Moodle server — so the probe
-  opens the window itself and reports `challengeWindow`, `'ready'` included. A block while it is up reuses it (Chrome locks the profile, so a second launch would
+  (CDP `Browser.setWindowBounds`), comes to the front and holds the Moodle lock
+  ([GATE.md](GATE.md#holds-that-outlive-the-request)) (`POST /window/show` raises it again, as for zoom's
+  [captcha](ZOOM.md#captcha-browserzoomcaptchajs)), and the call waits for the user's solve
+  (`waitChallenge`): the page landing back on the site resends it through the window once and it
+  returns normally, so the caller never sees the captcha either. A human is solving it, so this is
+  no retry loop: one resend, no backoff. Unsolved 10 minutes after it went on screen (`captchaMs`, one
+  deadline per captcha that no later call or waiter restarts, so a call joining at minute 9 waits
+  about one; it also closes the window) the call throws `503 site_captcha_timeout {}` with no `status`;
+  the user closing the window mid-wait throws an unrouted `site_blocked` (below). The wait follows
+  the request's abort signal (the gate ticket's, or `/moodle/file`'s own), so a caller that hangs up
+  stops waiting alone. `false`: no browser could launch, and the call throws `site_blocked` with
+  `params.challengeWindow:false`. `getPublicConfig` opts out
+  (`reopen:false`) — its 3xx or HTML may be a real redirect or a non-Moodle server — so it never
+  waits and the probe opens the window itself and reports `challengeWindow`, `'captcha'` and
+  `'ready'` included (none when the window closed while it loaded), holding the lock for a press as before any wait. A block while it is up reuses it (Chrome locks the profile, so a second launch would
   fail), reloading its root when the page itself was challenged.
 - **The route.** While it is open, `moodleFetch` sends every call on its site — WS calls, the public
   config, the pluginfile preflight and stream — as a `fetch` from the page. The site's own scripts
@@ -157,13 +166,16 @@ are made from inside that browser:
   iframe the call adds once per document (again after a navigation) (`redirect:'manual'`,
   `credentials:'include'`, `cache:'no-store'`, no `User-Agent`, `Range` passed through, form bodies
   serialized) and rebuilds a Node `Response`, so the wall checks run unchanged: the page's unreadable
-  `opaqueredirect` reads as a 302, and the body crosses back in 4 MB base64 slices. A page still on
-  the captcha sends nothing and throws `WsBlockedError`. The page landing back on the site (the
+  `opaqueredirect` reads as a 302, and the body crosses back in 4 MB base64 slices. A call while
+  the page is still on the captcha sends nothing and waits on the same solve (`getPublicConfig`
+  alone is refused `site_blocked` unsent). The page landing back on the site (the
   solve), or the first call through it that is not wall-shaped, moves the window back off-screen
   and lets the lock go; the solve also emits `challengeEvents` `'solved'`, on which the registry
   verifies a stored `unverified` token through the window ([AUTH.md](AUTH.md#connect--events--complete--status--disconnect)).
-  A call through the page that still meets the wall reloads the root (`reportBlock`), so the
-  page itself may land on a captcha and the 503 says `'captcha'` or `'ready'` (repeat the action). A window closed mid-call fails that call as an unrouted `site_blocked`
+  A call through the page that still meets the wall reloads the root: landing on a captcha it
+  waits and resends once more — at most one wait beyond the first per call, so a site that walls
+  the solved browser cannot spin — and otherwise throws `site_blocked`, whose 503 says
+  `'captcha'` or `'ready'` (repeat the action). A window closed mid-call, mid-wait or while it loads fails that call as an unrouted `site_blocked`
   (no window reopens; the user's repeat goes out on Node). A page fetch that fails in the network (the page sees only
   `TypeError: Failed to fetch`) answers `site_unreachable` like a Node one: `host` the URL's hostname,
   `detail` only Chrome's `ERR_*` token from that request's `requestfailed` (matched on URL and method), else
@@ -173,12 +185,12 @@ are made from inside that browser:
   (`WsBlockedError.routed` is false; `reportBlock` skips it).
 - **Off.** Block mode ends when the browser closes: the user closing it, `disconnect()` (which then
   deletes the profile), a new `connect()`, a site switch, or 60 s with no call through it — 10 minutes while a
-  captcha is on screen (a user mid-solve) or a body is open, unfinished and uncancelled (a paused
-  `/moodle/file` reader; every answer `wsClient.js` throws on without reading is cancelled first, so
-  only a reader's pause stretches it). A page call still running defers it. The
+  body is open, unfinished and uncancelled (a paused `/moodle/file` reader; every answer `wsClient.js` throws
+  on without reading is cancelled first, so only a reader's pause stretches it). A captcha on screen instead
+  closes it at its fixed deadline (`captchaMs`, above), which no call restarts. A page call still running defers it. The
   profile is kept, so the next walled call reopens it hidden — usually with no new captcha — and
   passes through it.
-- `/auth/events` carries `challenge: { open, captcha }` ([AUTH.md](AUTH.md#connect--events--complete--status--disconnect)).
+- `/auth/events` carries `challenge: { open, captcha, solved }` ([AUTH.md](AUTH.md#connect--events--complete--status--disconnect)).
 
 ### `core_webservice_get_site_info`
 

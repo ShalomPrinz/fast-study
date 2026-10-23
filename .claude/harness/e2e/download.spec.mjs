@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DATABASE, call, saveSettings } from '../lib/api.mjs';
 import { removeLecture } from '../lib/baseline.mjs';
+import { loadRecordings, recordingCard } from '../lib/downloads.mjs';
 import { expect, reset, site, test } from './fixtures.mjs';
 
 const COURSE = 'hb-dl';
@@ -36,18 +37,8 @@ test.afterEach(async () => {
 
 test('a recording downloaded from the course site lands as a lecture video', async ({ page }) => {
   await site({ downloadMs: 500 });
-  await page.goto('/downloads');
-  await page.locator('.downloads-tabs [role=tab]').first().click();
-
-  const source = page.locator('.source-row').filter({
-    has: page.locator('.source-row-name', { hasText: new RegExp(`^${COURSE}$`) }),
-  });
-  await source.locator('.source-row-actions .btn').click();
-  await expect(source.locator('.chip--accent')).toBeVisible();
-
-  const card = page.locator('.recording-card').filter({
-    has: page.locator('.recording-title', { hasText: RECORDING }),
-  });
+  await loadRecordings(page, COURSE);
+  const card = recordingCard(page, RECORDING);
   await expect(card).toBeVisible();
   await expect(card).not.toHaveClass(/recording-card--downloaded/);
   await expect(card.locator('.recording-name-input')).toHaveValue(LECTURE);

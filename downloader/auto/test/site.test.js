@@ -14,6 +14,7 @@ process.on('exit', () => fs.rmSync(STATE_DIR, { recursive: true, force: true }))
 
 import { candidateRoots, currentSite, setCurrentSite, underSite } from '../src/moodle/site.js';
 import { probeSite } from '../src/moodle/probe.js';
+import { SiteCaptchaTimeoutError } from '../src/moodle/wsClient.js';
 import { handleAuthStatus, handleConfig, handleList, handleSiteProbe } from '../src/http/server.js';
 import { gated } from './gated.js';
 
@@ -183,6 +184,16 @@ test('a network failure or a timeout is unverified with what failed', async (t) 
     throw new DOMException('timed out', 'TimeoutError');
   };
   assert.equal((await gated(() => probeSite('https://x.ac.il'))).params.detail, 'timeout');
+});
+
+test('an unsolved captcha is unverified as a timeout, never site_blocked', async (t) => {
+  stubFetch(t, () => {
+    throw new SiteCaptchaTimeoutError();
+  });
+  assert.deepEqual((await gated(() => probeSite('https://x.ac.il'))).params, {
+    site: 'https://x.ac.il',
+    detail: 'timeout',
+  });
 });
 
 // A 3xx carrying `location` and `type`, with `body` as its JSON (Ariel's 302 carries Moodle's own).

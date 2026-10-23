@@ -113,6 +113,11 @@ test("a re-resolve maps auto's statuses to its own codes", () => {
     reresolveFailure(503, { status: 'blocked', message: 'walled', code: 'site_blocked', params }),
     { error: 'walled', code: 'site_blocked', params },
   );
+  // A captcha nobody solved keeps auto's code too; its 503 body carries `error`, not `message`.
+  assert.deepEqual(
+    reresolveFailure(503, { error: 'unsolved', code: 'site_captcha_timeout', params: {} }),
+    { error: 'unsolved', code: 'site_captcha_timeout', params: {} },
+  );
   // status 0 is "never reached auto at all", and reads as the network failure it is.
   assert.deepEqual(reresolveFailure(0, null).params, { detail: 'HTTP network' });
 });

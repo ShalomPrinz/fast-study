@@ -25,6 +25,9 @@ export const MODES = [
 export function createSiteControl() {
   const state = { mode: 'ok', downloadMs: DEFAULT_DOWNLOAD_MS, hold: false };
   let solveArmed = false;
+  // The clearance a solve hands out: a cookie from an older generation is walled again, as a verdict
+  // Radware's cloud dropped.
+  let clearance = 1;
   const died = new Set();
   // Moodle requests parked by `hold`, each answered once it lifts.
   let parked = [];
@@ -35,13 +38,14 @@ export function createSiteControl() {
   };
   return {
     state,
-    // `reset` is what a reseed sends; any other field sets only itself. Fields apply in order, so a
-    // bad one throws after the ones before it have landed.
+    // `reset` is what a reseed sends, a revoke included; any other field sets only itself. Fields
+    // apply in order, so a bad one throws after the ones before it have landed.
     control(body) {
       if (body.reset) {
         state.mode = 'ok';
         state.downloadMs = DEFAULT_DOWNLOAD_MS;
         solveArmed = false;
+        clearance++;
         died.clear();
         state.hold = false;
       }
@@ -59,6 +63,12 @@ export function createSiteControl() {
         state.hold = body.hold;
       }
       if (!state.hold) release();
+      // Revokes every clearance handed out and disarms an unused solve: the next walled call meets a
+      // captcha again, even from a profile that solved one.
+      if (body.revoke) {
+        clearance++;
+        solveArmed = false;
+      }
       // Arms one solve: the next captcha page that asks clears its browser.
       if (body.solve) solveArmed = true;
       return { mode: state.mode, downloadMs: state.downloadMs, hold: state.hold };
@@ -70,6 +80,8 @@ export function createSiteControl() {
       else answer();
     },
     parked: () => parked.length,
+    // The `harness_clearance` cookie value a solve sets now, and the only one the wall lets through.
+    clearance: () => String(clearance),
     // Asked by an open captcha page; true once per armed solve.
     takeSolve() {
       const solved = solveArmed;

@@ -29,8 +29,9 @@ export interface AuthStatus {
   unverified?: boolean
   // The global Moodle lock (a request, its 3 s cooldown, a login or an open challenge window); pushed only.
   moodleBusy?: boolean
-  // Block mode's challenge window: up, and on screen waiting for a captcha; pushed only.
-  challenge?: { open: boolean; captcha: boolean }
+  // Block mode's challenge window: up, and on screen waiting for a captcha; pushed only. `solved`
+  // counts this auto process's captcha solves, rising by one in the frame that turns `captcha` false.
+  challenge?: { open: boolean; captcha: boolean; solved?: number }
   // A zoom download waits for the user to solve a captcha in the on-screen Chrome window; pushed only,
   // and false on a frame from a server that predates the field.
   zoomCaptcha?: boolean
@@ -248,11 +249,14 @@ export async function fetchAuthStatus(): Promise<AuthStatus> {
   }
 }
 
-// The service's current login state on subscribe and again on every change (unnamed frames; no replay, so
-// a reconnect is answered by the fresh current state). Its own EventSource per subscriber, never toasting:
-// a downed service just keeps the native retry going.
-export function subscribeAuth(onState: (state: AuthStatus) => void): () => void {
+// The login state on subscribe and on every change, no replay; a downed service keeps the native retry.
+// `onOpen` fires on every (re)connect, before that connection's first frame.
+export function subscribeAuth(
+  onState: (state: AuthStatus) => void,
+  onOpen?: () => void,
+): () => void {
   const es = new EventSource(withSecretParam(autoDownloader.url('/auth/events')))
+  if (onOpen) es.onopen = onOpen
   es.onmessage = (e) => {
     try {
       const { storedSite, ...frame } = JSON.parse(e.data) as AuthFrame

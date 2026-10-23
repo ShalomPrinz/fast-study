@@ -79,27 +79,27 @@ msgid "{0, plural, one {Show # past course} other {Show # past courses}}"
 msgstr "{0, plural, one {הצגת קורס קודם אחד} two {הצגת # קורסים קודמים} other {הצגת # קורסים קודמים}}"
 
 #. placeholder {0}: count('skipped')
-#: src/features/downloads/utils/runStatus.ts:103
+#: src/features/downloads/utils/runStatus.ts:110
 msgid "{0, plural, other {# already there}}"
 msgstr "{0, plural, one {כבר קיימות: #} two {כבר קיימות: #} other {כבר קיימות: #}}"
 
 #. placeholder {0}: count('cancelled')
-#: src/features/downloads/utils/runStatus.ts:101
+#: src/features/downloads/utils/runStatus.ts:108
 msgid "{0, plural, other {# cancelled}}"
 msgstr "{0, plural, one {בוטלו: #} two {בוטלו: #} other {בוטלו: #}}"
 
 #. placeholder {0}: count('downloaded')
-#: src/features/downloads/utils/runStatus.ts:99
+#: src/features/downloads/utils/runStatus.ts:106
 msgid "{0, plural, other {# downloaded}}"
 msgstr "{0, plural, one {הורדו: #} two {הורדו: #} other {הורדו: #}}"
 
 #. placeholder {0}: count('failed')
-#: src/features/downloads/utils/runStatus.ts:100
+#: src/features/downloads/utils/runStatus.ts:107
 msgid "{0, plural, other {# failed}}"
 msgstr "{0, plural, one {נכשלו: #} two {נכשלו: #} other {נכשלו: #}}"
 
 #. placeholder {0}: count('unsupported')
-#: src/features/downloads/utils/runStatus.ts:102
+#: src/features/downloads/utils/runStatus.ts:109
 msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, one {לא נתמכות: #} two {לא נתמכות: #} other {לא נתמכות: #}}"
 
@@ -129,7 +129,7 @@ msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "המפתח נדחה. צור מפתח חדש בלוח הבקרה של {0}."
 
 #. placeholder {0}: formatDuration(remaining)
-#: src/shared/components/ProgressBar.tsx:64
+#: src/shared/components/ProgressBar.tsx:63
 msgid "{0} remaining"
 msgstr "נותרו {0}"
 
@@ -137,6 +137,10 @@ msgstr "נותרו {0}"
 #: src/features/lectures/MainView.tsx:234
 msgid "{0} video"
 msgstr "וידאו באורך {0}"
+
+#: src/features/downloads/components/BulkRunNotes.tsx:48
+msgid "{captchaTimedOut, plural, one {# recording wasn't downloaded: {unsolvedBecause}} other {# recordings weren't downloaded: {unsolvedBecause}}}"
+msgstr "{captchaTimedOut, plural, one {הקלטה אחת לא הורדה: {unsolvedBecause}} two {# הקלטות לא הורדו: {unsolvedBecause}} other {# הקלטות לא הורדו: {unsolvedBecause}}}"
 
 #: src/shared/i18n/serviceErrors.ts:216
 msgid "{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
@@ -174,7 +178,7 @@ msgstr "{effectiveName} כבר קיים ב{course}. להוריד שוב ולדר
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {existing} הקיימים ב{course}. להוריד בכל זאת?"
 
-#: src/shared/i18n/serviceErrors.ts:252
+#: src/shared/i18n/serviceErrors.ts:256
 msgid "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 msgstr "{ext, select, undefined {{url} הוא דף אינטרנט, לא קובץ. פתח אותו בדפדפן והורד ידנית.} other {{url} הוא קובץ {ext}, לא וידאו. פתח אותו בדפדפן והורד ידנית.}}"
 
@@ -215,7 +219,7 @@ msgstr "{file} לא נמצא."
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
-#: src/shared/i18n/serviceErrors.ts:220
+#: src/shared/i18n/serviceErrors.ts:224
 msgid "{host} could not be reached. Check your internet connection and try again."
 msgstr "לא ניתן להתחבר אל {host}. בדוק את החיבור לאינטרנט ונסה שוב."
 
@@ -255,7 +259,7 @@ msgstr "{more_count, plural, =0 {משהו בסיכום מנע את בניית ה
 msgid "{name} was used"
 msgstr "סוכם עם {name}"
 
-#: src/features/downloads/components/BulkRunNotes.tsx:47
+#: src/features/downloads/components/BulkRunNotes.tsx:59
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {ההורדה של הקלטה אחת לא התחילה — {stoppedBecause}} two {ההורדה של # הקלטות לא התחילה — {stoppedBecause}} other {ההורדה של # הקלטות לא התחילה — {stoppedBecause}}}"
 
@@ -287,11 +291,11 @@ msgstr "{provider, select, gemini {מפתח ה-API של Gemini לא מוגדר. 
 msgid "{provider, select, gemini {The Gemini API key was rejected. Check it in Settings.} groq {The Groq API key was rejected. Check it in Settings.} other {The {provider} API key was rejected. Check it in Settings.}}"
 msgstr "{provider, select, gemini {מפתח ה-API של Gemini נדחה. בדוק אותו בהגדרות.} groq {מפתח ה-API של Groq נדחה. בדוק אותו בהגדרות.} other {מפתח ה-API של {provider} נדחה. בדוק אותו בהגדרות.}}"
 
-#: src/shared/i18n/serviceErrors.ts:226
+#: src/shared/i18n/serviceErrors.ts:230
 msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 msgstr "{reason, select, incorrect {קוד הגישה של Zoom שגוי. הזן אותו שוב.} other {ההקלטה הזו ב-Zoom דורשת קוד גישה.}}"
 
-#: src/shared/i18n/serviceErrors.ts:239
+#: src/shared/i18n/serviceErrors.ts:243
 msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} videostream_unavailable {This university's Moodle doesn't let the Moodle app open its lecture videos. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
 msgstr "{reason, select, not_moodle {הכתובת הזו אינה אתר Moodle. בדוק אותה ונסה שוב.} mobile_service_off {ה-Moodle של האוניברסיטה הזו לא מאפשר התחברות מאפליקציית Moodle, ו-FastStudy נשענת עליה.} maintenance {ה-Moodle של האוניברסיטה הזו בתחזוקה כרגע. נסה שוב מאוחר יותר.} missing_function {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle לקרוא את תוכן הקורסים ({function}), ולכן FastStudy לא יכולה לעבוד איתו.} downloads_disabled {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle להוריד קבצים, ולכן FastStudy לא יכולה לעבוד איתו.} videostream_unavailable {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle לפתוח את סרטוני ההרצאות. שאר ההקלטות וקובצי הקורס עדיין עובדים.} other {אי אפשר להשתמש ב-Moodle של האוניברסיטה הזו עם FastStudy.}}"
 
@@ -311,7 +315,7 @@ msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. �
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stepCount}"
 
-#: src/features/downloads/components/BulkRunNotes.tsx:56
+#: src/features/downloads/components/BulkRunNotes.tsx:68
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.}}"
 
@@ -335,7 +339,7 @@ msgstr "הכלי {tool} לא פועל כראוי, ולכן חלקים ב-FastStu
 msgid "{tool} is missing, so the parts of FastStudy that need it will fail. Reinstall FastStudy to fix this."
 msgstr "הכלי {tool} חסר, ולכן חלקים ב-FastStudy שזקוקים לו לא יעבדו. התקן מחדש את FastStudy כדי לתקן זאת."
 
-#: src/shared/i18n/serviceErrors.ts:256
+#: src/shared/i18n/serviceErrors.ts:260
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
@@ -395,7 +399,7 @@ msgstr "הגדרה חד־פעמית של כשלוש דקות."
 msgid "A section is waiting for a passcode"
 msgstr "יחידה ממתינה לקוד גישה"
 
-#: src/features/downloads/components/AccountStatus.tsx:255
+#: src/features/downloads/components/AccountStatus.tsx:260
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "נפתח חלון באתר האוניברסיטה. פתור שם את החידה, והחיבור יושלם מעצמו."
 
@@ -562,7 +566,7 @@ msgstr "דפדפן להורדת הקלטות"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "בניית ה-PDF נמשכה יותר מדי זמן ונעצרה אחרי {seconds} שניות."
 
-#: src/features/downloads/utils/downloadErrors.ts:43
+#: src/features/downloads/utils/downloadErrors.ts:48
 msgid "Can't download {name} while it's being processed or waiting in line"
 msgstr "אי אפשר להוריד את {name} בזמן עיבוד או המתנה בתור"
 
@@ -599,6 +603,14 @@ msgstr "ביטול"
 msgid "Cancelled"
 msgstr "בוטל"
 
+#: src/features/downloads/utils/captchaBanner.ts:45
+msgid "Captcha solved."
+msgstr "החידה נפתרה."
+
+#: src/features/downloads/utils/captchaBanner.ts:45
+msgid "Captcha solved. Continuing."
+msgstr "החידה נפתרה. ממשיכים."
+
 #: src/features/downloads/utils/zoomCaptcha.ts:9
 msgid "Caught the Zoom video. The download is in progress."
 msgstr "הסרטון מ-Zoom נתפס. ההורדה בתהליך."
@@ -611,7 +623,7 @@ msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מע
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
-#: src/features/downloads/components/AccountStatus.tsx:144
+#: src/features/downloads/components/AccountStatus.tsx:149
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -745,12 +757,12 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "אושרה ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:223
+#: src/features/downloads/components/AccountStatus.tsx:228
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחברות"
 
-#: src/features/downloads/components/AccountStatus.tsx:229
+#: src/features/downloads/components/AccountStatus.tsx:234
 msgid "Connect anyway?"
 msgstr "להתחבר בכל זאת?"
 
@@ -763,7 +775,7 @@ msgstr "לחבר את Google Drive עכשיו?"
 msgid "Connect your university account first"
 msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
 
-#: src/features/downloads/components/AccountStatus.tsx:123
+#: src/features/downloads/components/AccountStatus.tsx:128
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
@@ -820,7 +832,7 @@ msgstr "לא ניתן למחוק את {file}."
 msgid "Could not extract the audio from the video."
 msgstr "לא ניתן לחלץ את השמע מהווידאו."
 
-#: src/shared/i18n/serviceErrors.ts:270
+#: src/shared/i18n/serviceErrors.ts:274
 msgid "Could not list the playlist."
 msgstr "לא ניתן לטעון את הפלייליסט."
 
@@ -842,7 +854,7 @@ msgstr "לא ניתן לקרוא את השמע ב-{file}."
 msgid "Could not rename \"{from}\" to \"{to}\"."
 msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 
-#: src/shared/i18n/serviceErrors.ts:259
+#: src/shared/i18n/serviceErrors.ts:263
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר תשובה ברורה."
 
@@ -855,12 +867,12 @@ msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "לא ניתן להוריד את \"{lecture}\". נסה שוב."
 
 #: src/features/downloads/components/FolderJobList.tsx:132
-#: src/features/downloads/utils/downloadErrors.ts:62
-#: src/features/downloads/utils/downloadErrors.ts:81
+#: src/features/downloads/utils/downloadErrors.ts:67
+#: src/features/downloads/utils/downloadErrors.ts:86
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 
-#: src/features/downloads/utils/downloadErrors.ts:73
+#: src/features/downloads/utils/downloadErrors.ts:78
 msgid "Couldn't load entries. Try again."
 msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 
@@ -880,7 +892,7 @@ msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastS
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:287
+#: src/shared/i18n/serviceErrors.ts:291
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נסה שוב."
 
@@ -969,17 +981,17 @@ msgstr "מחיקת {0}"
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
-#: src/features/downloads/components/AccountStatus.tsx:184
-#: src/features/downloads/components/AccountStatus.tsx:205
+#: src/features/downloads/components/AccountStatus.tsx:189
+#: src/features/downloads/components/AccountStatus.tsx:210
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "התנתקות"
 
-#: src/features/downloads/components/AccountStatus.tsx:122
+#: src/features/downloads/components/AccountStatus.tsx:127
 msgid "Disconnect the university account?"
 msgstr "לנתק את חשבון האוניברסיטה?"
 
-#: src/features/downloads/components/AccountStatus.tsx:205
+#: src/features/downloads/components/AccountStatus.tsx:210
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
@@ -1129,7 +1141,7 @@ msgstr "דיווחי השגיאות כבויים עכשיו. חלקים מ-FastS
 msgid "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 msgstr "דיווחי השגיאות מופעלים עכשיו. חלקים מ-FastStudy יתחילו לשלוח אותם רק אחרי שתפעיל מחדש את האפליקציה."
 
-#: src/shared/components/ProgressBar.tsx:39
+#: src/shared/components/ProgressBar.tsx:38
 msgid "Estimating…"
 msgstr "מחשב זמן משוער…"
 
@@ -1259,7 +1271,7 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:152
+#: src/features/downloads/components/AccountStatus.tsx:157
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
@@ -1367,11 +1379,11 @@ msgstr "דף הבית"
 msgid "How do I get a key?"
 msgstr "איך משיגים מפתח?"
 
-#: src/features/downloads/components/AccountStatus.tsx:243
+#: src/features/downloads/components/AccountStatus.tsx:248
 msgid "I confirmed, try again"
 msgstr "אישרתי, לנסות שוב"
 
-#: src/features/downloads/components/AccountStatus.tsx:240
+#: src/features/downloads/components/AccountStatus.tsx:245
 msgid "I solved the captcha"
 msgstr "פתרתי את החידה"
 
@@ -1516,7 +1528,7 @@ msgstr "חומר"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:293
+#: src/shared/i18n/serviceErrors.ts:297
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1549,11 +1561,11 @@ msgstr "אין קורסים בארכיון"
 msgid "No Chrome or Edge found on this computer."
 msgstr "לא נמצא Chrome או Edge במחשב הזה."
 
-#: src/shared/i18n/serviceErrors.ts:230
+#: src/shared/i18n/serviceErrors.ts:234
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "לא נמצא Chrome או Edge במחשב הזה. התקן את Chrome ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:294
+#: src/shared/i18n/serviceErrors.ts:298
 msgid "No Chrome window is waiting on a captcha anymore."
 msgstr "כבר אין חלון Chrome שמחכה לפתרון חידה."
 
@@ -1585,7 +1597,7 @@ msgstr "אין עדיין הרצאות"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:292
+#: src/shared/i18n/serviceErrors.ts:296
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
@@ -1625,15 +1637,15 @@ msgstr "אין עדיין תרגולים"
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/features/downloads/components/AccountStatus.tsx:161
+#: src/features/downloads/components/AccountStatus.tsx:166
 msgid "no university chosen"
 msgstr "לא נבחרה אוניברסיטה"
 
-#: src/shared/i18n/serviceErrors.ts:236
+#: src/shared/i18n/serviceErrors.ts:240
 msgid "No university is chosen yet. Choose yours in Settings."
 msgstr "עדיין לא נבחרה אוניברסיטה. בחר אותה בהגדרות."
 
-#: src/shared/i18n/serviceErrors.ts:273
+#: src/shared/i18n/serviceErrors.ts:277
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
@@ -1646,12 +1658,12 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "עוד לא אושרה"
 
-#: src/features/downloads/components/AccountStatus.tsx:215
+#: src/features/downloads/components/AccountStatus.tsx:220
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "לא מחובר"
 
-#: src/shared/components/ProgressBar.tsx:39
+#: src/shared/components/ProgressBar.tsx:38
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
@@ -1699,7 +1711,7 @@ msgstr "מותרים קבצי .mp4 בלבד"
 msgid "Only technical error details are sent, never your files or keys. It's anonymous, and it helps us improve FastStudy."
 msgstr "נשלחים רק פרטים טכניים על שגיאות, אף פעם לא הקבצים או המפתחות שלך. זה אנונימי, ועוזר לנו לשפר את FastStudy."
 
-#: src/shared/i18n/serviceErrors.ts:267
+#: src/shared/i18n/serviceErrors.ts:271
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {host}."
 
@@ -1745,7 +1757,7 @@ msgstr "פתיחת החומר"
 msgid "Open PDF"
 msgstr "פתיחת ה-PDF"
 
-#: src/features/downloads/components/AccountStatus.tsx:241
+#: src/features/downloads/components/AccountStatus.tsx:246
 msgid "Open the captcha again"
 msgstr "פתיחת החידה מחדש"
 
@@ -1765,7 +1777,7 @@ msgstr "פתיחת התרגול הראשון שעוד לא סיימת"
 msgid "Open the sign-in page"
 msgstr "פתיחת דף ההתחברות"
 
-#: src/features/downloads/components/AccountStatus.tsx:273
+#: src/features/downloads/components/AccountStatus.tsx:278
 msgid "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 msgstr "פתח את אתר האוניברסיטה בדפדפן שלך ופתור שם את החידה, ואז לחץ על \"אישרתי, לנסות שוב\"."
 
@@ -1917,7 +1929,7 @@ msgstr "תרגולים {0}-{1}"
 msgid "Recitations you marked done"
 msgstr "תרגולים שסיימת"
 
-#: src/features/downloads/components/AccountStatus.tsx:223
+#: src/features/downloads/components/AccountStatus.tsx:228
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
@@ -2083,7 +2095,7 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "Send error reports"
 msgstr "שליחת דיווחי שגיאות"
 
-#: src/features/downloads/components/AccountStatus.tsx:215
+#: src/features/downloads/components/AccountStatus.tsx:220
 msgid "session expired"
 msgstr "תוקף החיבור פג"
 
@@ -2097,7 +2109,7 @@ msgstr "הגדרות"
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
-#: src/features/downloads/hooks/useBulkRun.ts:84
+#: src/features/downloads/hooks/useBulkRun.ts:89
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה את השמות והרץ שוב."
 
@@ -2215,7 +2227,7 @@ msgstr "סיכום עם {name}"
 
 #. placeholder {0}: formatDuration(elapsed)
 #. placeholder {1}: formatDuration(longest)
-#: src/shared/components/ProgressBar.tsx:63
+#: src/shared/components/ProgressBar.tsx:62
 msgid "Taking longer than expected · {0} · longest recorded: {1}"
 msgstr "לוקח יותר זמן מהצפוי · {0} · הזמן הארוך ביותר עד כה: {1}"
 
@@ -2223,11 +2235,11 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הזמן הארוך בי
 msgid "Technion"
 msgstr "הטכניון"
 
-#: src/shared/i18n/serviceErrors.ts:251
+#: src/shared/i18n/serviceErrors.ts:255
 msgid "That course link doesn't point to a specific course: {url}."
 msgstr "קישור הקורס לא מוביל לקורס מסוים: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:233
+#: src/shared/i18n/serviceErrors.ts:237
 msgid "That course link is not from your university's site ({site}): {url}."
 msgstr "קישור הקורס אינו מאתר האוניברסיטה שלך ({site}): {url}."
 
@@ -2243,7 +2255,7 @@ msgstr "תהליך ההורדה הזה אינו מושהה."
 msgid "That download run no longer exists."
 msgstr "תהליך ההורדה הזה כבר לא קיים."
 
-#: src/shared/i18n/serviceErrors.ts:266
+#: src/shared/i18n/serviceErrors.ts:270
 msgid "That is not a Google Drive file link: {url}."
 msgstr "זה אינו קישור לקובץ ב-Google Drive: {url}."
 
@@ -2251,7 +2263,7 @@ msgstr "זה אינו קישור לקובץ ב-Google Drive: {url}."
 msgid "That lecture is no longer queued"
 msgstr "ההרצאה הזו כבר לא בתור"
 
-#: src/shared/i18n/serviceErrors.ts:243
+#: src/shared/i18n/serviceErrors.ts:247
 msgid "That link isn't a course's main page. Copy the address that ends in course/view.php?id= and a number: {url}."
 msgstr "הקישור הזה אינו העמוד הראשי של קורס. העתק את הכתובת שמסתיימת ב-⁦course/view.php?id=⁩ ובמספר: ⁦{url}⁩."
 
@@ -2259,7 +2271,7 @@ msgstr "הקישור הזה אינו העמוד הראשי של קורס. העת
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/shared/i18n/serviceErrors.ts:271
+#: src/shared/i18n/serviceErrors.ts:275
 msgid "That playlist has no entries."
 msgstr "אין פריטים בפלייליסט הזה."
 
@@ -2279,9 +2291,13 @@ msgstr "כנראה ש-Windows העביר את האפליקציה להסגר — 
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "מפתחות ה-API ומודל הסיכום לא זמינים כרגע. הם יחזרו לכאן מעצמם."
 
-#: src/features/downloads/components/AccountStatus.tsx:260
+#: src/features/downloads/components/AccountStatus.tsx:265
 msgid "The captcha is solved. Finishing the connection…"
 msgstr "החידה נפתרה. משלימים את החיבור…"
+
+#: src/shared/i18n/serviceErrors.ts:220
+msgid "The captcha on the university site wasn't solved within 10 minutes. Solve it when its window opens, then try again."
+msgstr "החידה באתר האוניברסיטה לא נפתרה תוך 10 דקות. פתור אותה כשהחלון שלה נפתח, ואז נסה שוב."
 
 #: src/shared/i18n/serviceErrors.ts:34
 msgid "The course \"{course}\" was not found."
@@ -2343,15 +2359,15 @@ msgstr "הקבצים הבאים ייווצרו מחדש:"
 msgid "The Google access token is stored only on your computer and is never sent to FastStudy's author, who receives no Google user data. You can disconnect Drive in Settings, which deletes the token, or revoke access in your <0>Google account permissions</0>."
 msgstr "אסימון הגישה של Google נשמר רק במחשב שלך ולעולם לא נשלח ליוצר FastStudy, שלא מקבל שום מידע של משתמשי Google. אפשר לנתק את Drive בהגדרות, וזה מוחק את האסימון, או לבטל את הגישה ב<0>הרשאות של חשבון Google</0>."
 
-#: src/features/downloads/components/AccountStatus.tsx:63
+#: src/features/downloads/components/AccountStatus.tsx:68
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:289
+#: src/shared/i18n/serviceErrors.ts:293
 msgid "The login window was closed before login finished. Connect again."
 msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:288
+#: src/shared/i18n/serviceErrors.ts:292
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
 
@@ -2380,11 +2396,11 @@ msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור 
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:39
+#: src/features/downloads/components/BulkRunNotes.tsx:40
 msgid "the run stopped early. Run the playlist again to pick them up."
 msgstr "תהליך ההורדה נעצר מוקדם. הרץ את הפלייליסט שוב כדי להשלים אותן."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:38
+#: src/features/downloads/components/BulkRunNotes.tsx:39
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -2392,11 +2408,11 @@ msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה ש
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:36
+#: src/features/downloads/components/BulkRunNotes.tsx:37
 msgid "the run was cancelled. Run the playlist again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את הפלייליסט שוב כדי להשלים אותן."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:35
+#: src/features/downloads/components/BulkRunNotes.tsx:36
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -2404,7 +2420,7 @@ msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי
 msgid "the runner takes these in order"
 msgstr "ההרצות מתבצעות לפי הסדר"
 
-#: src/features/downloads/utils/downloadErrors.ts:93
+#: src/features/downloads/utils/downloadErrors.ts:98
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."
 msgstr "האתר סירב להורדה. הקישור הזה דורש התחברות, ולכן אי אפשר להוריד אותו כאן."
 
@@ -2412,15 +2428,15 @@ msgstr "האתר סירב להורדה. הקישור הזה דורש התחבר�
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
-#: src/features/downloads/components/AccountStatus.tsx:251
+#: src/features/downloads/components/AccountStatus.tsx:256
 msgid "The university is checking the connection."
 msgstr "האוניברסיטה בודקת את החיבור."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:32
+#: src/features/downloads/components/BulkRunNotes.tsx:33
 msgid "the university session expired. Reconnect, then run the playlist again."
 msgstr "תוקף החיבור לאוניברסיטה פג. התחבר מחדש והרץ את הפלייליסט שוב."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:31
+#: src/features/downloads/components/BulkRunNotes.tsx:32
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "תוקף החיבור לאוניברסיטה פג. התחבר מחדש והרץ את היחידה שוב."
 
@@ -2428,8 +2444,8 @@ msgstr "תוקף החיבור לאוניברסיטה פג. התחבר מחדש �
 msgid "The university site is asking for a captcha in a Chrome window. Solve it there to continue."
 msgstr "אתר האוניברסיטה מבקש לפתור חידה בחלון Chrome. פתור אותה שם כדי להמשיך."
 
-#: src/features/downloads/utils/downloadErrors.ts:38
-#: src/shared/i18n/serviceErrors.ts:223
+#: src/features/downloads/utils/downloadErrors.ts:43
+#: src/shared/i18n/serviceErrors.ts:227
 msgid "The university site is busy with another request. Try again in a moment."
 msgstr "אתר האוניברסיטה עסוק בבקשה אחרת. נסה שוב בעוד רגע."
 
@@ -2457,19 +2473,19 @@ msgstr "הווידאו של כל הרצאה שכבר הועלתה ל-Drive יי�
 msgid "The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered."
 msgstr "הווידאו של כל הרצאה שכבר יש לה PDF יימחק מהמחשב. אי אפשר יהיה לשחזר אותו."
 
-#: src/features/downloads/components/AccountStatus.tsx:268
+#: src/features/downloads/components/AccountStatus.tsx:273
 msgid "The window on the university site passed, with no captcha to solve. Press “Try again”."
 msgstr "החלון באתר האוניברסיטה עבר את הבדיקה, ואין חידה לפתור. לחץ על \"לנסות שוב\"."
 
-#: src/features/downloads/components/AccountStatus.tsx:262
+#: src/features/downloads/components/AccountStatus.tsx:267
 msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 msgstr "החלון נסגר לפני שהחידה נפתרה. לחץ על \"פתיחת החידה מחדש\" כדי להחזיר אותה."
 
-#: src/shared/i18n/serviceErrors.ts:283
+#: src/shared/i18n/serviceErrors.ts:287
 msgid "The Zoom captcha wasn't solved within 10 minutes. Try the download again."
 msgstr "החידה של Zoom לא נפתרה תוך 10 דקות. נסה להוריד שוב."
 
-#: src/shared/i18n/serviceErrors.ts:277
+#: src/shared/i18n/serviceErrors.ts:281
 msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
@@ -2520,11 +2536,11 @@ msgstr "לא ניתן היה לדווח על השגיאה הזו אוטומטי�
 msgid "This error was reported automatically. Reference: <0>{eventId}</0>"
 msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 
-#: src/shared/i18n/serviceErrors.ts:262
+#: src/shared/i18n/serviceErrors.ts:266
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:272
+#: src/shared/i18n/serviceErrors.ts:276
 msgid "This lecture's video isn't a downloadable MP4 file."
 msgstr "הווידאו של ההרצאה הזו אינו קובץ MP4 שאפשר להוריד."
 
@@ -2540,7 +2556,7 @@ msgstr "צריך לעשות את זה רק פעם אחת."
 msgid "This recording needs a passcode."
 msgstr "ההקלטה הזו דורשת קוד גישה."
 
-#: src/shared/i18n/serviceErrors.ts:286
+#: src/shared/i18n/serviceErrors.ts:290
 msgid "This recording type can't be downloaded."
 msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 
@@ -2572,7 +2588,7 @@ msgstr "תמלול השמע נכשל."
 msgid "Transcript"
 msgstr "תמלול"
 
-#: src/features/downloads/components/AccountStatus.tsx:242
+#: src/features/downloads/components/AccountStatus.tsx:247
 msgid "Try again"
 msgstr "לנסות שוב"
 
@@ -2606,7 +2622,7 @@ msgstr "אוניברסיטה"
 msgid "University account"
 msgstr "חשבון האוניברסיטה"
 
-#: src/features/downloads/components/AccountStatus.tsx:198
+#: src/features/downloads/components/AccountStatus.tsx:203
 msgid "University account connected"
 msgstr "חשבון האוניברסיטה מחובר"
 
@@ -2662,7 +2678,7 @@ msgstr "ההעלאה ל-Google Drive נכשלה."
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
-#: src/features/downloads/components/AccountStatus.tsx:279
+#: src/features/downloads/components/AccountStatus.tsx:284
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ופתור שם את החידה. ואז לחץ על \"אישרתי, לנסות שוב\"."
 
@@ -2684,7 +2700,7 @@ msgstr "קישור לווידאו"
 msgid "Videos"
 msgstr "וידאו"
 
-#: src/features/downloads/components/AccountStatus.tsx:170
+#: src/features/downloads/components/AccountStatus.tsx:175
 msgid "waiting for you to solve the captcha"
 msgstr "ממתין שתפתור את החידה"
 
@@ -2756,7 +2772,7 @@ msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברס
 msgid "You must read the privacy policy before you continue."
 msgstr "עליך לקרוא את מדיניות הפרטיות לפני שתמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:228
+#: src/features/downloads/components/AccountStatus.tsx:233
 msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
 msgstr "אתה מחובר לחשבון ב-{foreignName}. התחברות כאן תנתק אותך ממנו."
 
@@ -2772,7 +2788,7 @@ msgstr "שני מפתחות ה-API שלך"
 msgid "Your university"
 msgstr "האוניברסיטה שלך"
 
-#: src/shared/i18n/serviceErrors.ts:247
+#: src/shared/i18n/serviceErrors.ts:251
 msgid "Your university account can't open that course. It may not exist, or you may not be enrolled in it: {url}."
 msgstr "חשבון האוניברסיטה שלך לא יכול לפתוח את הקורס הזה. ייתכן שהוא לא קיים, או שאינך רשום אליו: ⁦{url}⁩."
 
@@ -2784,7 +2800,7 @@ msgstr "תוקף החיבור לאוניברסיטה פג. חבר מחדש את 
 msgid "Your university's Moodle address"
 msgstr "כתובת ה-Moodle של האוניברסיטה"
 
-#: src/shared/i18n/serviceErrors.ts:280
+#: src/shared/i18n/serviceErrors.ts:284
 msgid "Zoom asked for a captcha, and solving it is only supported on Windows."
 msgstr "Zoom ביקש לפתור חידה, ופתרון החידה נתמך רק ב-Windows."
 

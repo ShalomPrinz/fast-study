@@ -31,6 +31,8 @@ const deps = {
 let win = null;
 let opening = null;
 let closing = Promise.resolve();
+// Captchas solved since this process started: /auth/events carries it, so the frontend sees each solve.
+let solves = 0;
 
 /**
  * 'change' whenever `challengeState()` may have changed (/auth/events subscribes); 'solved' (site)
@@ -49,9 +51,12 @@ export function configureChallenge(overrides) {
 /** Where the window's profile — and with it the bot manager's clearance — lives. */
 export const profileDir = () => statePath('moodle-profile');
 
-/** `{ open, captcha }`: a window is up; it is on screen waiting for the user to solve a captcha. */
+/**
+ * `{ open, captcha, solved }`: a window is up; it is on screen waiting for the user to solve a
+ * captcha; how many captchas the user solved since auto started.
+ */
 export function challengeState() {
-  return { open: win !== null, captcha: win?.captcha === true };
+  return { open: win !== null, captcha: win?.captcha === true, solved: solves };
 }
 
 const originOf = (url) => {
@@ -148,10 +153,16 @@ class ChallengeWindow {
     this.captcha = false;
     this.lease = null;
     this.timer = null;
+    // When the captcha's cap runs out: fixed once it goes on screen, so no later call extends it.
+    this.deadline = 0;
     // Page calls in flight: the idle close waits for them, since closing would cut them off.
     this.busy = 0;
     // Bodies a reader has not finished or cancelled: they stretch the idle close to captchaMs.
     this.bodies = 0;
+    // Routed calls waiting on the captcha's solve, sharing one outcome: 'solved', 'timeout' or 'closed'.
+    // While any waits, the captcha's lease admits no press (docs/GATE.md).
+    this.waiters = 0;
+    this.solve = null;
     this.ended = false;
     this.closed = new Promise((resolve) => context.once('close', resolve));
     this.closed.then(() => this._ended());
@@ -276,6 +287,8 @@ class ChallengeWindow {
   async passed() {
     if (!this.captcha) return;
     this.captcha = false;
+    solves++;
+    this._finish('solved');
     this._release();
     this.touch();
     publish();
@@ -283,21 +296,38 @@ class ChallengeWindow {
   }
 
   // Load the site root (under the caller's Moodle lock) and show the window only on a captcha.
-  async land() {
+  async land(waiter) {
     await enterMoodle(this.site);
     await this.page.goto(this.site, { waitUntil: 'load' }).catch(() => {});
-    return this.settle();
+    return this.settle(waiter);
   }
 
-  /** → 'ready' when on the site, else 'captcha': on screen, in front, holding the Moodle lock. */
-  async settle() {
+  /**
+   * → 'ready' on the site, else 'captcha': on screen, in front, holding the Moodle lock. A `waiter` joins
+   * the solve's waiters first, so no state between admits a press; 'closed' on an ended window, 'solved' mid-hold.
+   */
+  async settle(waiter = null) {
     this.touch();
     if (this.onSite()) {
       if (this.captcha) await this.passed();
       return 'ready';
     }
-    if (!this.lease) this.lease = await moodleGate.hold('challenge window', { admit: true });
+    // Closed during land()'s goto: no captcha is left to report or wait on, so every caller hears 'closed'.
+    if (this.ended) return 'closed';
+    if (waiter) this._join(waiter);
+    if (!this.captcha) this.deadline = Date.now() + deps.captchaMs;
+    // Set before the lease's own 'change', so no frame reads its hold without the captcha.
     this.captcha = true;
+    if (!this.lease) {
+      const lease = await moodleGate.hold('challenge window', { admit: () => this.waiters === 0 });
+      // Solved or closed while the hold was taken: nothing is left for it to hold.
+      if (this.captcha && !this.ended) this.lease = lease;
+      else lease.release();
+      // Closed while the hold was taken: _ended() left captcha set, but no window is left to solve it.
+      if (this.ended) return 'closed';
+      // A waiter joined before the solve, so its call is resent like after any solve.
+      if (!this.captcha) return waiter ? 'solved' : 'ready';
+    }
     this.touch();
     publish();
     await this._bounds(ON_SCREEN);
@@ -305,19 +335,19 @@ class ChallengeWindow {
     return 'captcha';
   }
 
-  // Block mode ends once the window sits idle: no call through it for idleMs, or captchaMs while a
-  // captcha waits or a body is half-read (bounding one never read). A running page call defers it.
+  // Ends block mode after idleMs with no call (captchaMs while a body is half-read), or at a captcha's
+  // fixed deadline, which no call re-arms. A running page call defers it: _evaluate's finally re-arms.
   touch() {
     clearTimeout(this.timer);
     if (this.ended) return;
-    this.timer = setTimeout(
-      () => {
-        if (win !== this) return;
-        if (this.busy > 0) return this.touch();
-        void closeChallenge();
-      },
-      this.captcha || this.bodies > 0 ? deps.captchaMs : deps.idleMs,
-    );
+    let ms = this.bodies > 0 ? deps.captchaMs : deps.idleMs;
+    if (this.captcha) ms = Math.max(0, this.deadline - Date.now());
+    this.timer = setTimeout(() => {
+      if (win !== this || this.busy > 0) return;
+      this._finish('timeout');
+      this._release();
+      void closeChallenge();
+    }, ms);
     this.timer.unref?.();
   }
 
@@ -326,9 +356,38 @@ class ChallengeWindow {
     this.lease = null;
   }
 
+  // Count `waiter` among the captcha's waiters; the press-admitting state reads it at once.
+  _join(waiter) {
+    this.solve ??= deferred();
+    waiter.window = this;
+    waiter.solve = this.solve;
+    this.waiters++;
+    moodleGate.refresh();
+  }
+
+  // One waiter gone (its outcome reached, or its caller hung up); the others keep waiting.
+  _leave(waiter) {
+    if (!waiter.solve || waiter.left) return;
+    waiter.left = true;
+    if (waiter.solve !== this.solve) return;
+    this.waiters--;
+    moodleGate.refresh();
+  }
+
+  // Hand every waiter the captcha's outcome. The caller drops the lease in the same tick, so the
+  // waiting state and the captcha clear in one /auth/events frame.
+  _finish(outcome) {
+    const solve = this.solve;
+    if (!solve) return;
+    this.solve = null;
+    this.waiters = 0;
+    solve.resolve(outcome);
+  }
+
   _ended() {
     this.ended = true;
     clearTimeout(this.timer);
+    this._finish('closed');
     this._release();
     if (win === this) win = null;
     publish();
@@ -358,14 +417,13 @@ class ChallengeWindow {
 }
 
 /**
- * Turn block mode on for `site` (or report on the window already up), under the caller's Moodle
- * lock. → 'captcha' (on screen for the user to solve), 'ready' (hidden: the profile's clearance
- * still holds, so repeating the action passes) or false (no browser could launch).
- * @returns {Promise<'captcha'|'ready'|false>}
+ * Block mode on for `site`, or report on the window already up, under the caller's lock → 'captcha' (on screen),
+ * 'ready' (clearance holds: a repeat passes), 'closed' (gone while it loaded), false (no browser); a `waiter` also 'solved'.
+ * @returns {Promise<'captcha'|'ready'|'solved'|'closed'|false>}
  */
-export async function openChallenge(site) {
+export async function openChallenge(site, waiter = null) {
   while (opening) await opening;
-  const run = openOnce(site);
+  const run = openOnce(site, waiter);
   opening = run.then(
     () => {},
     () => {},
@@ -377,10 +435,10 @@ export async function openChallenge(site) {
   }
 }
 
-async function openOnce(site) {
+async function openOnce(site, waiter) {
   if (win && win.origin !== originOf(site)) await closeWindow();
   // Already up: a block through it means the browser itself was challenged, so reload the root.
-  if (win) return win.onSite() ? win.land() : win.settle();
+  if (win) return win.onSite() ? win.land(waiter) : win.settle(waiter);
   // Chrome locks a profile while it runs, so a relaunch waits for the last window to be gone.
   await closing;
   let context;
@@ -401,11 +459,33 @@ async function openOnce(site) {
     win = w;
     closing = w.closed;
     publish();
-    return await w.land();
+    return await w.land(waiter);
   } catch {
     await context?.close().catch(() => {});
     return false;
   }
+}
+
+/**
+ * openChallenge for a routed call waiting out a captcha (docs/MOODLE.md § Bot protection) → 'ready',
+ * 'solved', 'timeout' (past captchaMs), 'closed' or false (no browser). `signal` ends only this wait.
+ */
+export async function waitChallenge(site, signal) {
+  const waiter = { window: null };
+  try {
+    signal?.throwIfAborted();
+    const state = await openChallenge(site, waiter);
+    if (state !== 'captcha') return state;
+    return await abortable(waiter.solve.promise, signal);
+  } finally {
+    waiter.window?._leave(waiter);
+  }
+}
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((r) => (resolve = r));
+  return { promise, resolve };
 }
 
 /**
@@ -416,7 +496,9 @@ async function openOnce(site) {
 export async function reportBlock(err, site) {
   if (!err.routed) return;
   if (err.params && 'challengeWindow' in err.params) return;
-  err.params = { ...err.params, challengeWindow: site ? await openChallenge(site) : false };
+  const state = site ? await openChallenge(site) : false;
+  // A window closed while it loaded reports nothing, like one closed mid-wait.
+  if (state !== 'closed') err.params = { ...err.params, challengeWindow: state };
 }
 
 async function closeWindow() {

@@ -5,6 +5,7 @@ import {
   dismissPasscode,
   usePasscodeDismissed,
 } from '@/features/downloads/contexts/SectionRunsContext'
+import { captchaTimeoutReason } from '@/features/downloads/utils/downloadErrors'
 import type { GroupScope } from '@/features/downloads/utils/sections'
 import { GROUP_SELECTOR } from '@/features/downloads/utils/sections'
 import PasscodePrompt from './PasscodePrompt'
@@ -23,7 +24,7 @@ export default function BulkRunNotes({ bulk, scope }: Props) {
   const { run, state, passcode } = bulk
   const paused = run?.status === 'paused' ? run.paused : null
   const dismissed = usePasscodeDismissed(run?.id ?? null)
-  const { stalled, notStarted } = state
+  const { stalled, notStarted, captchaTimedOut } = state
   const section = scope === 'section'
   const stoppedBecause =
     run?.status === 'reconnect'
@@ -38,8 +39,19 @@ export default function BulkRunNotes({ bulk, scope }: Props) {
           ? t`the run stopped early. Run the section again to pick them up.`
           : t`the run stopped early. Run the playlist again to pick them up.`
 
+  const unsolvedBecause = captchaTimeoutReason()
+
   return (
     <>
+      {captchaTimedOut > 0 && (
+        <div className={`bulk-run-note ${GROUP_SELECTOR[scope]}-stalled`}>
+          {plural(captchaTimedOut, {
+            one: `# recording wasn't downloaded: ${unsolvedBecause}`,
+            other: `# recordings weren't downloaded: ${unsolvedBecause}`,
+          })}
+        </div>
+      )}
+
       {/* Rows the run stopped short of. The summary omits them, so a run halted at row 3 of 20 would
           read exactly like a finished one — and unlike the unverified rows, this one has an action. */}
       {notStarted > 0 && (

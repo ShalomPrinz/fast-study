@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { accountView, captchaSeen, connectConfirmOpen, loginToast } from './accountView'
+import {
+  accountView,
+  captchaSeen,
+  connectConfirmOpen,
+  loginToast,
+  siteSolveToasts,
+} from './accountView'
 import type { AuthStatus } from '../services/autoDownloader'
 
 const ok: AuthStatus = { connected: true, expired: false, phase: 'connected' }
@@ -137,5 +143,24 @@ describe('connectConfirmOpen', () => {
     expect(connectConfirmOpen(true, 'connected', true)).toBe(false)
     expect(connectConfirmOpen(true, 'finishing', true)).toBe(false)
     expect(connectConfirmOpen(false, 'disconnected', true)).toBe(false)
+  })
+})
+
+describe('siteSolveToasts', () => {
+  const solvedFrame = { open: true, captcha: false, solved: 1 }
+
+  it("stays quiet for the unverified login's solve while an account panel is on screen to say it", () => {
+    expect(siteSolveToasts(blocked('captcha', solvedFrame), true)).toBe(false)
+  })
+
+  it('toasts that same solve when no account panel is mounted', () => {
+    expect(siteSolveToasts(blocked('captcha', solvedFrame), false)).toBe(true)
+  })
+
+  it('toasts a solve the panel does not announce: connected, mid-login, closed window, ready', () => {
+    expect(siteSolveToasts({ ...ok, challenge: solvedFrame }, true)).toBe(true)
+    expect(siteSolveToasts({ ...pending, challenge: solvedFrame }, true)).toBe(true)
+    expect(siteSolveToasts(blocked('captcha', { ...solvedFrame, open: false }), true)).toBe(true)
+    expect(siteSolveToasts(blocked('ready', solvedFrame), true)).toBe(true)
   })
 })

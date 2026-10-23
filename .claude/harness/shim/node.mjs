@@ -27,6 +27,7 @@ if (HARNESS) {
     'drive.google.com',
     'docs.google.com',
     'validate.perfdrive.com',
+    '*.objectstorage.il-jerusalem-1.oraclecloud.com',
   ];
   const isServed = (host) => {
     const name = String(host).toLowerCase();
@@ -140,6 +141,13 @@ if (HARNESS) {
     const { pathToFileURL } = await import('node:url');
     const gate = path.join(REPO_ROOT, 'downloader', 'auto', 'src', 'moodle', 'gate.js');
     (await import(pathToFileURL(gate).href)).moodleGate.cooldownMs = 200;
+    // A spec's short captcha wait, set by restarting auto/ with HARNESS_CAPTCHA_MS; unset or empty
+    // keeps auto/'s own 10 minutes, the time an agent has to send the solve by hand.
+    const captchaMs = Number(process.env.HARNESS_CAPTCHA_MS);
+    if (captchaMs > 0) {
+      const challenge = path.join(REPO_ROOT, 'downloader', 'auto', 'src', 'moodle', 'challenge.js');
+      (await import(pathToFileURL(challenge).href)).configureChallenge({ captchaMs });
+    }
     const browserType = Object.getPrototypeOf(chromium);
     const originalLaunch = browserType.launch;
     browserType.launch = async function launch(options) {

@@ -466,7 +466,7 @@ test('a blocked login verification reopens the window and passes through it, no 
   assert.deepEqual(profile.launches[0].visited, [SITE]);
   assert.equal(JSON.parse(fs.readFileSync(tokenPath, 'utf8')).userid, 7);
   // Verifying ends nothing: the window stays up as the transport.
-  assert.deepEqual(challengeState(), { open: true, captcha: false });
+  assert.deepEqual(challengeState(), { open: true, captcha: false, solved: 0 });
 });
 
 test('with no site configured a block keeps the token unverified; complete() verifies through the window', async (t) => {
@@ -566,7 +566,7 @@ test('a new connect() closes the challenge window and keeps its profile; disconn
   await gated(() => auth.connect());
   assert.equal(first.closed, true);
   assert.equal(fs.existsSync(first.dir), true);
-  assert.deepEqual(challengeState(), { open: false, captcha: false });
+  assert.deepEqual(challengeState(), { open: false, captcha: false, solved: 0 });
   await auth.disconnect();
   assert.equal(fs.existsSync(first.dir), false);
 });

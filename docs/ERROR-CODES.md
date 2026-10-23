@@ -27,6 +27,7 @@ already had.
 | Runner crash    | `runner.last_error` — `{message, code, params}` or `null`                   | `backend/pipeline/runner.py`                                 |
 | Overview status | `{status, phase, message, code, params, started_at}` per extractor          | `backend/course/runner.py`                                   |
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
+| Run target      | `{…, disposition, code?}` per target on `GET /runs` and the runs SSE        | `downloader/server/src/runs.js`                              |
 | Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
 | Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
 
@@ -277,6 +278,9 @@ the Moodle site can answer auto's `moodle_busy`, `link_not_a_video`, `link_dead`
 `link_probe_inconclusive`; `autodl_unreachable` reaches `/download-url` for any URL, since only auto
 can say which URLs are Moodle's.
 
+A section run's target carries a `code` only as auto's `site_captcha_timeout` (no params): on the row
+whose resolve timed out on the captcha, and on each later `moodle` row the run then fails unsent.
+
 The `general_folder_*` codes are a general-video download into the user's chosen folder: `missing` and
 `not_writable` answer `POST /general-folder` (400) and the three download routes (409); `save_failed`
 ends a folder job, or answers a folder `/upload-pdf` with 500.
@@ -288,8 +292,8 @@ on both channels unchanged, so `database_store_failed` is only the fallback for 
 `downloaders/runner.js` likewise ends a job whose file on auto was refused with auto's own
 `code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_reconnect_required`,
 `moodle_file_unknown`); a body that is not auto's envelope falls back to `download_tool_failed` /
-`download_auth_failed`. A re-resolve that auto answers `503 site_blocked` likewise ends the job with
-that code and params, never `recapture_failed`.
+`download_auth_failed`. A re-resolve that auto answers `503 site_blocked` or `site_captcha_timeout`
+likewise ends the job with that code and params, never `recapture_failed`.
 
 The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live only in `progress.js`'s
 `console` wrappers; `services/database.js` logs the emoji line and returns the bare error, so nothing
@@ -314,6 +318,7 @@ services; `state` stays as the developer-facing reason.
 | ------------------------------- | ----------------------------- | ------------------------ | ----- |
 | `http/server.js` `sendReconnect`| `moodle_reconnect_required`   | —                        | user  |
 | `moodle/wsClient.js`            | `site_blocked`                | `detail`, `challengeWindow`? | user  |
+| `moodle/wsClient.js`            | `site_captcha_timeout`        | —                        | user  |
 | `lib/errors.js` `unreachable`   | `site_unreachable`            | `host`, `detail`         | user  |
 | `http/server.js` `sendPasscode` | `zoom_passcode_required`      | `reason`, `course`, `name` | user |
 | `browser/browserChannel.js`     | `browser_missing`             | `detail`                 | user  |
@@ -368,9 +373,12 @@ so the login connects (and reports it to Sentry) and a videostream row's `/resol
 `timeout`, `network`), plus `challengeWindow` beside a `site_blocked`.
 
 `site_blocked`'s `challengeWindow` is present only on a block from a call the challenge window can
-carry (a WS call, a Moodle PDF): `'captcha'` when the window is on screen showing a captcha, `false`
-when no browser could launch. A window that opens hidden with its clearance still valid carries the
-call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
+carry (a WS call, a Moodle PDF): `false` when no browser could launch. A routed call that meets a
+captcha waits for the user's solve and resends itself through the window, so no 503 is sent; it ends
+on `site_captcha_timeout` when the captcha stays unsolved for the window's 10-minute cap, and on
+`site_blocked` with no `challengeWindow` when the user closes the window, while it loads included. `'captcha'` reaches a client
+only from `/site/probe` or a call that wait cannot cover (the window's reopen cap spent). A window that
+opens hidden with its clearance still valid carries the call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
 `/site/probe` or from a call already going through the window whose reload landed on the site. A block
 from any other path (a pasted link, a link probe) leaves it absent. The videostream handler call is a
 WS call, so its block carries it.

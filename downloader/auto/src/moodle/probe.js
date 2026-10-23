@@ -2,6 +2,7 @@
 // Asked of the no-login public config, so it needs no account. See docs/MOODLE.md § Checking a site.
 import {
   NotMoodleError,
+  SiteCaptchaTimeoutError,
   WsBlockedError,
   WsError,
   WsRedirectError,
@@ -17,8 +18,10 @@ const unsupported = (site, reason) => ({
   params: { site, reason },
 });
 
-// Why a candidate could not be asked, as the `detail` an unverified answer carries.
+// Why a candidate could not be asked, as the `detail` an unverified answer carries; an unsolved
+// captcha is a timeout, never a block.
 function failureDetail(err) {
+  if (err instanceof SiteCaptchaTimeoutError) return 'timeout';
   if (err instanceof WsBlockedError) return 'site_blocked';
   if (err?.name === 'TimeoutError' || err?.name === 'AbortError') return 'timeout';
   return 'network';

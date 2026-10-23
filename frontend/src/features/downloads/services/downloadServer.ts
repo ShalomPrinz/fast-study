@@ -214,6 +214,10 @@ export interface RunTarget {
   kind: Kind
   media: Media | 'unsupported'
   disposition: 'pending' | 'queued' | 'skipped' | 'unsupported' | 'queue-failed'
+  // The discovery Item's `moodle`, sent so a captcha timeout fails the run's later Moodle rows unsent.
+  moodle?: boolean
+  // On a `queue-failed` row only: the captcha went unsolved, on this row or an earlier Moodle one.
+  code?: 'site_captcha_timeout'
   // Set once this row's own zoom capture waited on the captcha and caught the player; never false.
   captchaSolved?: true
 }

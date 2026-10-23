@@ -31,11 +31,17 @@ export function reresolveFailure(status, body) {
       code: 'recapture_unsupported',
       params: { detail: body?.message ?? null },
     };
-  // A block is auto's own refusal, relayed as the runner relays one from /moodle/file.
-  if (status === 503 && body?.code === 'site_blocked')
-    return { error: body.message ?? 'site blocked', code: body.code, params: body.params ?? {} };
+  // A block, or a captcha left unsolved, is auto's own refusal, relayed as the runner relays one from /moodle/file.
+  if (status === 503 && SITE_REFUSALS.has(body?.code))
+    return {
+      error: body.message ?? body.error ?? 'site blocked',
+      code: body.code,
+      params: body.params ?? {},
+    };
   return recaptureFailed(body?.error ?? `HTTP ${status || 'network'}`);
 }
+
+const SITE_REFUSALS = new Set(['site_blocked', 'site_captcha_timeout']);
 
 function recaptureFailed(detail) {
   return { error: `re-capture failed: ${detail}`, code: 'recapture_failed', params: { detail } };

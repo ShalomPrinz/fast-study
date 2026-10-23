@@ -11,6 +11,8 @@ function targetError(target) {
     return invalidRequest('ref', 'each target needs a valid ref');
   if (!storedName(target.name))
     return invalidRequest('name', 'each target needs a name with a legal character');
+  if (target.moodle !== undefined && typeof target.moodle !== 'boolean')
+    return invalidRequest('moodle', 'moodle must be a boolean');
   return validateKind(target.kind);
 }
 

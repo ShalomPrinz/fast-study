@@ -59,7 +59,7 @@ exits 0 on a refusal, is classified by the 401/403 status curl dumped instead (`
   That failure is built in `routes/downloadItem.js`, because what auto's statuses mean is the
   resolver edge's knowledge, not the source-agnostic runner's: 401 → `recapture_reconnect_required`,
   409 → `recapture_passcode_required`, 422 → `recapture_unsupported {detail}`, a 503 → auto's own
-  `site_blocked {detail, challengeWindow?}`, anything else (a 2xx
+  `site_blocked {detail, challengeWindow?}` or `site_captcha_timeout {}`, anything else (a 2xx
   with no usable target included) → `recapture_failed {detail}`.
 - **otherwise** → finalized as-is; a fresh-capture auth failure reads "authentication failed", and a
   refusal from auto/ keeps auto's own `code`/`params`.

@@ -40,6 +40,8 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
         context.visited.push(u);
         url = state.lands === 'site' ? u : CAPTCHA_URL;
         context.document = fakeDocument();
+        // A test's hook into the navigation, e.g. the user closing the window mid-load.
+        await state.onGoto?.(context);
       },
       evaluate: async (fn, arg) => {
         globalThis.document = context.document;

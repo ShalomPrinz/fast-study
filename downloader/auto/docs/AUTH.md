@@ -41,27 +41,30 @@ auth state's `storedSite` names that site beforehand so the frontend can confirm
   `connected` or `idle`; `storedSite` is the stored token's site when it holds a `wstoken` for a site
   other than the selected one (no site set included) — the token a Connect would delete, so the
   frontend can confirm first — else `null`; `error` is `{ code, params }` of the last failed attempt (`moodle_login_abandoned`,
-  `moodle_login_timeout`, `moodle_site_unsupported`, `site_blocked` with `challengeWindow`,
+  `moodle_login_timeout`, `moodle_site_unsupported`, `site_blocked` (`challengeWindow` when set), `site_captcha_timeout`,
   `moodle_reconnect_required`), cleared by the next `connect()`. The stream (`core/registry.js`'s
   `authEvents`, one emitter whichever site is set) sends `state()` as an unnamed `data:` frame on
   subscribe and again on every change (`connect`, run end, retry, lazy verification, `markExpired`,
   `disconnect`, a site switch; idle when no site is set). Every frame also carries `moodleBusy`, the
-  Moodle lock's state ([GATE.md](GATE.md)), and `challenge: { open, captcha }`, block mode's window
-  — up, and on screen showing a captcha until the page lands back on the site
-  ([MOODLE.md](MOODLE.md#the-rest-api)), and `zoomCaptcha`, true while a zoom window is on screen for
+  Moodle lock's state ([GATE.md](GATE.md)) — true while a call waits on the captcha's solve, in
+  frames that always show `challenge.captcha:true` — and `challenge: { open, captcha, solved }`, block
+  mode's window — up, and on screen showing a captcha until the page lands back on the site — plus
+  `solved`, the captchas solved since auto started (from 0, one per landing back on the site, in the
+  frame that clears `captcha`), so a rise is a solve ([MOODLE.md](MOODLE.md#the-rest-api)), and `zoomCaptcha`, true while a zoom window is on screen for
   the user to solve a captcha ([ZOOM.md](ZOOM.md#captcha-browserzoomcaptchajs)); changes to any of them send a frame too. No replay and no heartbeat. `EventSource`
   cannot set a header, so the launch secret rides as `?secret=`, which `requireSecret` honours.
 - `complete()` — re-verifies the stored `unverified` token now and answers as a WS call would; its
   outcome is also announced on the stream. Throws `moodle_login_not_pending` when no unverified token
   is stored. A fallback: a normal login never needs it, and solving the captcha runs the same
-  verification by itself (`verifyAfterSolve`, a waiting request of its own, skipped while a login runs).
+  verification by itself (`verifyAfterSolve`, a waiting request of its own, skipped while a login
+  runs) — for a token left unverified when the call that met the captcha hung up.
 - Verification outcomes: `invalidtoken` or a refused site (`moodle_site_unsupported`) on the **stored** token **delete**
   it (a fresh capture is simply discarded); a bot-protection block (`site_blocked`), timeout or network failure never do. A block keeps
-  the token and turns block mode on, adding `params.challengeWindow` (`'captcha'`, `'ready'` or
-  `false`) as every routed call's `site_blocked` does ([MOODLE.md](MOODLE.md#the-rest-api)). A window that
-  opens `'ready'` carries the verification through at once, so the login connects; on `'captcha'` or
-  `false` the run ends with phase `unverified` and the `site_blocked` error, and the user solving the
-  captcha verifies it. Solving the captcha does not clear Node: the clearance belongs to the window's
+  the token and turns block mode on, as for every routed call ([MOODLE.md](MOODLE.md#the-rest-api)). A window that
+  opens `'ready'` carries the verification through at once, so the login connects; one on a captcha
+  holds the verification until the user solves it, then connects. With no browser (`site_blocked`,
+  `challengeWindow:false`), the window closed mid-wait (`site_blocked`) or the captcha unsolved for
+  10 minutes (`site_captcha_timeout`), the run ends with phase `unverified` and that error. Solving the captcha does not clear Node: the clearance belongs to the window's
   browser, so the verification passes only because it goes out from that window. A successful verification leaves the window open as the transport; a new `connect()`
   or a site switch closes it (keeping its profile) and `disconnect()`, or a `connect()` replacing
   another site's token, closes it and deletes the profile.

@@ -50,6 +50,11 @@ export function captchaSeen(prev: boolean, status: AuthStatus | null): boolean {
   return Boolean(status?.challenge?.open) && prev
 }
 
+// Whether a site captcha solve toasts: not when a mounted account panel already says it was solved.
+export function siteSolveToasts(status: AuthStatus, accountPanelShown: boolean): boolean {
+  return !accountPanelShown || accountView('idle', status, true).panel !== 'solved'
+}
+
 // The block's `challengeWindow` as recorded, corrected by the live `challenge` frame when it has one. A
 // recorded captcha gone from a still-open window was solved, and abandoned once the window closed.
 function unverifiedPanel(status: AuthStatus, seen: boolean): AccountPanel {

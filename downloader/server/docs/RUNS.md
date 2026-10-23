@@ -52,7 +52,8 @@ disable the section's button until a restart.
 
 ## Dispositions
 
-Each target is `{ ref, name, kind, media, disposition }`:
+Each target is `{ ref, name, kind, media, disposition, moodle?, code? }` — `moodle` as submitted,
+`code` only `site_captcha_timeout` (below):
 
 | disposition    | meaning                                                                    |
 | -------------- | -------------------------------------------------------------------------- |
@@ -77,6 +78,14 @@ The driver maps `downloadItem`'s status (the same function `POST /download-item`
 - **409** → `status:'paused'` at this index (below).
 - **422** → `unsupported`, continue — one row's verdict, not the run's.
 - **anything else** (500, 502, auto unreachable) → `queue-failed`, continue.
+
+**A captcha left unsolved stops the Moodle rows.** A row answered `503 site_captcha_timeout` (auto
+waited 10 minutes on a captcha nobody solved) is `queue-failed` with `code:'site_captcha_timeout'`,
+and every later row with `moodle:true` gets the same at once, with no resolve sent — nobody is at
+the window. Rows without it (Zoom, Drive, YouTube) still run. `moodle` is the discovery Item's own
+flag (auto's `reachesMoodle`), which the caller passes on each target; absent reads as not Moodle.
+The stop lasts until the run is resumed: a resume shows the user is back, so the Moodle rows still
+pending are sent again. Rows the stop already failed stay failed — resume never walks backwards.
 
 ## Pause and resume
 

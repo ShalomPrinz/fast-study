@@ -113,6 +113,7 @@ node .claude/harness/hb.mjs lock 'hb-nav/שיעור 1/summary.pdf'        # held
 node .claude/harness/hb.mjs unlock            # every lock off (or name the globs to drop)
 node .claude/harness/hb.mjs forget-probes     # every probed link back to unprobed ('?')
 node .claude/harness/hb.mjs moodle-busy on    # auto/'s Moodle lock held until `moodle-busy off` (≤ 5 min)
+node .claude/harness/hb.mjs download hb-dl 'הקלטה 4 — גרפים'          # load a course's recordings, press one row's Download
 node .claude/harness/hb.mjs refused --since 2026-09-25T09:00Z        # real escapes only
 node .claude/harness/hb.mjs browser dl        # one more browser session, stopped by --down
 node .claude/harness/hb.mjs kill database     # take one service down; setup.mjs --restart brings it back
@@ -156,6 +157,10 @@ held call times out after undici's 5-minute headers limit and frees the lock whi
 so run `off` then `on` again for a longer hold. Only
 a row auto/ flags `moodle` locks, so a zoom row's passcode Submit never does; a re-download's
 overwrite confirm on the videostream row does.
+
+`download` drives the `main` session (or `--browser TAG`) through `lib/downloads.mjs`, the helpers
+the specs import: Downloads → University, the course's Load, the segment holding the title, its
+Download. An overwrite confirm or a passcode prompt it opens is left for the next action.
 
 `kill` ends one service's whole recorded process group, the server with the `uv`/`npm` parent
 wrapping it, so the port stops answering; a bare `kill` of the recorded pid can leave the server up.
@@ -344,7 +349,12 @@ persistent profile, launched through `launchPersistentContext`, patched like `la
 can click in that window, so the captcha page polls the site: `/control {"solve":true}` arms one solve,
 the page takes it, visits `/__harness/clear` for the cookie and lands on the site root. The cookie
 lives in `$FASTSTUDY_STATE_DIR/moodle-profile`, so a reopened window passes hidden until Disconnect
-deletes the profile.
+deletes the profile or `/control {"revoke":true}` (a reset too) makes every cookie handed out stale
+and disarms an unused solve: the next walled call meets a captcha again, window open or not.
+
+The shim leaves auto/'s 10-minute captcha wait (`captchaMs`) alone, the time an agent has to send the
+solve. `--restart downloader-auto HARNESS_CAPTCHA_MS=<ms>` cuts it, `HARNESS_CAPTCHA_MS=` puts it
+back, as the timeout spec does.
 
 A zoom share runs auto/'s real `ZoomExtractor` in that same patched browser. The `הרצאות` section's
 summary lists `https://zoom.us/rec/share/harness-05` under the label `הרצאה מספר 5`, and the fake site
@@ -358,9 +368,12 @@ replays skips the gate until `hb forget-probes`.
 A videostream recording needs no browser. The fake course lists one `videostream` activity
 (`הקלטה 4 — גרפים`), and the site answers its `tool_mobile_get_content` call — a POST naming
 `mod_videostream`/`view_videostream` with the course's and module's ids among the args, anything else
-`invalidrecord` — with an app template whose `<source>` names `/media/videostream-04.mp4` on the
-site itself, so auto/ resolves it to its own gated proxy. `core_course_get_course_module` answers for
-that cmid too, for a resolve that arrives without the course id. Site info lists both functions.
+`invalidrecord` — with an app template whose `<source>` names an `.mp4` on
+`harness.compat.objectstorage.il-jerusalem-1.oraclecloud.com`, the Oracle object storage BIU's
+recordings live on. The fake serves that host too, outside every mode, wall and hold, so auto/ hands
+the URL to curl as is and the download never meets the captcha its resolve did.
+`core_course_get_course_module` answers for that cmid too, for a resolve that arrives without the
+course id. Site info lists both functions.
 
 ## The guarantees, each proved before handover
 
@@ -378,8 +391,8 @@ token by itself, `missing_function` refuses it with `moodle_site_unsupported`, a
 Groq's `429`, `500`, `empty` and `slow`, Gemini's those and `invalidkey`, a targeted rule and a
 draining one, and the site's `blocked`, `invalidtoken`, `missing_function`, `downloads_disabled`,
 `not_moodle`, `mobile_service_off` and `downloadMs` each change the answer they should and switch
-back — Gemini's `429min` and the site's `blocked_ws`, `radware`, `no_enrol_function`, `hold` and
-`solve` are not; Drive disconnects and reconnects through
+back — Gemini's `429min` and the site's `blocked_ws`, `radware`, `no_enrol_function`, `hold`,
+`solve` and `revoke` are not; Drive disconnects and reconnects through
 the backend's routes, left connected; the app, loaded in headless chromium from this stack's
 frontend, lists every non-archived course and reaches each service's `/health` from that origin, so
 a CORS allowlist that refuses its port, or a SPA pointed at another stack, fails here
@@ -396,7 +409,7 @@ npm run test:harness     # from the repo root: node:test, then pytest — second
 ```
 
 `tests/` unit-tests the harness's own logic: the providers' rule parsing, whole-segment `match`
-and `times` draining, the site's `/control`, its Moodle `hold` and one-time `/die/` drop, the fake tool's argv and
+and `times` draining, the site's `/control`, its Moodle `hold`, clearance `revoke` and one-time `/die/` drop, the fake tool's argv and
 failure table, `hb state`'s diff, the env and baseline helpers, `start`'s port handshake (reuse, the fallback on a held port, a
 child that never reports, a restart that keeps its port), and the DOM timeline's retention,
 change and flicker logic (its recorder and replay run in a browser, so the live stack proves them), and `hb`'s
@@ -414,8 +427,9 @@ The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`)
 bare video to Drive, a video dropped on a tree row (new and replacing), a course created, filled
 and renamed from the tree, a summary edited, reloaded over another window's edit and restored, a
 materials-only lecture made from course PDFs attached in Downloads, the first-run wall then a
-data-folder switch, a section's bulk "Download all", and study progress (done marks, the current
-arrow, the counts and the overview's current-item buttons) — and run with
+data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
+out the site's captcha (and failing `site_captcha_timeout` unsolved), and study progress (done
+marks, the current arrow, the counts and the overview's current-item buttons) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to a running
 `setup.mjs --harness DIR`; the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to `main` and on pull
@@ -436,7 +450,8 @@ real Windows lock, the launcher's boot and the updater belong to the release smo
 `e2e/fixtures.mjs` holds what more than one spec needs: the stack's levers (`providers`, `site`, `lock`,
 `reseed`, `reset`), a lecture view's `step` rows and `expectStepsDone`, `treeLecture` over the database's
 `/tree`, `driveFile` walking the fake Drive's folder chain, and `dropFile`, which drops a local file on an
-element the way a drag from the file manager does.
+element the way a drag from the file manager does. `lib/downloads.mjs` loads a course's recordings
+and finds or downloads a row by title, for the specs and `hb download` alike.
 
 ## Driving failures
 
@@ -451,9 +466,10 @@ curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/ש
 curl -s $P/control -d '{"reset":true}'     # every provider back to ok
 curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | blocked_ws | radware | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled | no_enrol_function
 curl -s $S/control -d '{"solve":true}'     # radware: the open captcha page solves itself
+curl -s $S/control -d '{"revoke":true}'    # radware: every clearance stale, an unused solve disarmed
 curl -s $S/control -d '{"downloadMs":60000}' # how long each download takes (3000)
 curl -s $S/control -d '{"hold":true}'      # park every Moodle-host request until {"hold":false}
-curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, hold off, every /die/ re-armed
+curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, hold off, revoked, every /die/ re-armed
 ```
 
 The four modes after `invalidtoken` are a site auto/ must refuse. `not_moodle` answers the probe's
@@ -523,4 +539,5 @@ Open the PNG to check the Hebrew RTL layout by eye; `get_text()` returns the log
 
 The Electron shell and the installer (this is the dev stack), real provider behaviour and real
 quota accounting, a real site's SSO and MFA pages (the fake `launch.php` redirects at once), the
-zoom login, the real zoom player (its captcha, two-clip shares, a share that never shows a player), an off-site videostream `.mp4` (the fake serves it from the Moodle host), and Google Drive's own semantics beyond create/update.
+zoom login, the real zoom player (its captcha, two-clip shares, a share that never shows a player), a videostream
+`.mp4` hosted on the Moodle site itself (auto/'s proxied path; the fake's is off-site, as BIU's), and Google Drive's own semantics beyond create/update.

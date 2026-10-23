@@ -21,7 +21,12 @@ import {
   splitSiblings,
 } from '@/features/downloads/utils/existingItems'
 import type { BulkRunState } from '@/features/downloads/utils/runStatus'
-import { bulkRunState, collidingNames, summarize } from '@/features/downloads/utils/runStatus'
+import {
+  bulkRunState,
+  collidingNames,
+  summarize,
+  targetOf,
+} from '@/features/downloads/utils/runStatus'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
 import { startAndLock } from '@/features/downloads/utils/rowLocks'
@@ -152,8 +157,8 @@ function buildTargets(
   const { edits, locks, courses, course, runner } = ctx
   return queue.map((item) => {
     const { name, kind } = resolveRow(item, edits[item.ref], courses, course, locks[item.ref])
-    const media = item.resolvedMedia ?? item.media
-    const target = { ref: item.ref, name, kind, media }
+    const target = targetOf(item, name, kind)
+    const { media } = target
     if (item.resolvedMedia === 'unsupported') return { ...target, disposition: 'unsupported' }
     // The lectures this target may write — a video's split siblings too, as the row's own lock.
     const lands =

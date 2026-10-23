@@ -1,6 +1,7 @@
 // The fake lecture site: a Moodle Web-Services endpoint, its pluginfile PDFs and its media files.
 // The node shim redirects every request for a university host here, so `auto/`'s token check, WS
 // parsing, discovery, extractors and probes all run for real against Moodle-shaped answers.
+// It also stands in for the object store BIU's videostream .mp4s live on, a host no wall covers.
 // Listens twice — plain for :80, TLS for :443 — because the URLs in the fixtures are https.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -29,7 +30,7 @@ const SITE_HOST = new URL(SITE).hostname;
 const COURSE_ID = Number(new URL(FAKE_COURSE_URL).searchParams.get('id'));
 
 // One course, shaped exactly like core_course_get_contents: sections of modules, names as HTML.
-// It carries a row per path the downloader can take — direct mp4, an in-site videostream, YouTube, a
+// It carries a row per path the downloader can take — direct mp4, a videostream, YouTube, a
 // PDF resource, a plain web page (unsupported), a dead link, a 403 and a mid-download drop — plus
 // Hebrew names, one multi-file resource and a passcode-gated zoom share in a section summary.
 function courseContents() {
@@ -90,12 +91,17 @@ function videostream(name) {
   return { id, modname: 'videostream', name, url: `${SITE}/mod/videostream/view.php?id=${id}` };
 }
 
+// BIU's videostream .mp4s live on Oracle object storage, off the Moodle host: no token, no cookie,
+// never behind the site's bot wall. The fake serves this one path on that host.
+const OBJECT_STORE_HOST = 'harness.compat.objectstorage.il-jerusalem-1.oraclecloud.com';
+const VIDEOSTREAM_MP4 = `https://${OBJECT_STORE_HOST}/video_bucket/3d/3dac113ed4a4b0299883cc4dca27d65008f266f4.mp4`;
+
 // mod_videostream's Moodle-app page, shaped like the real reply: the template's <video> names the
-// .mp4 in a <source>, served from /media/ like the course's direct recordings.
+// .mp4 in a <source>, on the object store as on BIU.
 function videostreamContent() {
   const html = `<div class="mod-videostream-mobile">
     <video id="my-player" controls preload="auto" poster="${SITE}/local/video_directory/thumb.php?id=4">
-    <source src="${SITE}/media/videostream-04.mp4" type="video/mp4" />
+    <source src="${VIDEOSTREAM_MP4}" type="video/mp4" />
     <track kind="subtitles" srclang="he" src="${SITE}/local/video_directory/subs.php?video_id=4&amp;language=he" default />
     </video>
 </div>`;
@@ -254,12 +260,13 @@ function challenge(res) {
 
 // Radware's real shape in 'radware' mode: a request without the clearance cookie is sent to the
 // captcha host, and only a browser that solved it there ever holds the cookie — Node never does.
-// Long-lived like `__uzma`, so it outlives a relaunch of the persistent profile.
-const CLEARANCE = 'harness_clearance=1';
+// Long-lived like `__uzma`, so it outlives a relaunch of the persistent profile; `/control
+// {"revoke":true}` (or a reset) makes every cookie already handed out stale.
 const CAPTCHA_HOST = 'validate.perfdrive.com';
+const clearanceCookie = () => `harness_clearance=${site.clearance()}`;
 
 function hasClearance(req) {
-  return (req.headers.cookie ?? '').split(/;\s*/).includes(CLEARANCE);
+  return (req.headers.cookie ?? '').split(/;\s*/).includes(clearanceCookie());
 }
 
 function toCaptcha(res) {
@@ -345,7 +352,15 @@ function handle(req, res) {
 
   const host = (req.headers.host ?? '').split(':')[0];
   if (host === 'zoom.us' || host.endsWith('.zoom.us')) return serveZoom(req, res, route);
-  // Only the Moodle host is held: the zoom share and the captcha page are other sites.
+  if (host === OBJECT_STORE_HOST) {
+    if (route === new URL(VIDEOSTREAM_MP4).pathname) return serveFile(req, res, VIDEO, 'video/mp4');
+    return json(
+      res,
+      { code: 'ObjectNotFound', message: `harness object store has no ${route}` },
+      404,
+    );
+  }
+  // Only the Moodle host is held: the zoom share, the object store and the captcha page are other sites.
   if (host === SITE_HOST) return site.admit(() => serveSite(req, res, url, route, host));
   return serveSite(req, res, url, route, host);
 }
@@ -358,7 +373,7 @@ function serveSite(req, res, url, route, host) {
   }
   if (route === '/__harness/clear') {
     res.writeHead(302, {
-      'set-cookie': `${CLEARANCE}; Path=/; Secure; Max-Age=315360000`,
+      'set-cookie': `${clearanceCookie()}; Path=/; Secure; Max-Age=315360000`,
       location: `${SITE}/`,
     });
     return res.end();

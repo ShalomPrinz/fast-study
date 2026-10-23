@@ -1,7 +1,8 @@
 import { plural } from '@lingui/core/macro'
-import type { Course } from '@/types'
+import type { Course, Kind } from '@/types'
 import type { JobProgress, JobsByRef } from '../contexts/DownloadJobsContext'
 import { jobsForRef, jobsForTarget } from '../contexts/DownloadJobsContext'
+import type { Item } from '../services/autoDownloader'
 import type { RunTarget, SectionRun } from '../services/downloadServer'
 import { targetLanded } from './existingItems'
 
@@ -17,6 +18,12 @@ function targetJobs(
   target: RunTarget,
 ): readonly JobProgress[] {
   return jobsForTarget(jobsForRef(jobsByRef, course, target.ref), target.name, target.kind)
+}
+
+// A queue leaf as a target, before its disposition: the row's resolved name and kind, its best-known
+// media, and auto's `moodle` flag, which lets the server fail later Moodle rows after a captcha timeout.
+export function targetOf(item: Item, name: string, kind: Kind): Omit<RunTarget, 'disposition'> {
+  return { ref: item.ref, name, kind, media: item.resolvedMedia ?? item.media, moodle: item.moodle }
 }
 
 // Names two or more about-to-download video targets share. They would race into one lecture, the
@@ -114,6 +121,8 @@ export interface BulkRunState {
   // Rows a stopped run can no longer account for, and rows it never reached; zero while queueing.
   stalled: number
   notStarted: number
+  // Rows failed on an unsolved captcha; counted while queueing too, as the summary only says "failed".
+  captchaTimedOut: number
 }
 
 export function bulkRunState(
@@ -131,6 +140,7 @@ export function bulkRunState(
     busy: queueing || active > 0,
     stalled: queueing ? 0 : unverifiedCount(targets, courses, course, jobsByRef),
     notStarted: queueing ? 0 : notStartedCount(targets),
+    captchaTimedOut: captchaTimeoutCount(targets),
   }
 }
 
@@ -162,4 +172,10 @@ export function bulkGate(args: {
           ? 'moodle'
           : null
   return { disabled: busy || reason !== null, reason }
+}
+
+// Targets the run failed because the site's captcha went unsolved — the row that waited and every
+// later Moodle row, which the run never sent. See docs/BULK.md.
+export function captchaTimeoutCount(targets: readonly RunTarget[]): number {
+  return targets.filter((t) => t.code === 'site_captcha_timeout').length
 }

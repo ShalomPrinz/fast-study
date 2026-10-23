@@ -19,10 +19,12 @@ delimiters, which holds because a course name cannot contain one and media is an
 key is `playlistRunId(sectionKey, ref)` — the section key, U+001F, the playlist's ref — which no
 Moodle heading or ref contains, so it never collides with a section key and `runSectionKey` splits it back.
 
-`RunTarget` (`{ ref, name, kind, media, disposition }`) is a **cross-wire contract**: TypeScript in
+`RunTarget` (`{ ref, name, kind, media, disposition, moodle?, code? }`) is a **cross-wire contract**: TypeScript in
 `services/downloadServer.ts`, plain JS in the server's `runs.js`. Change one, change the other.
 `disposition` is what the run decided — `pending` (not reached), `skipped`, `unsupported`,
-`queue-failed`, or `queued`, the only one whose outcome is still open.
+`queue-failed`, or `queued`, the only one whose outcome is still open. `moodle` is the Item's own flag,
+sent per target; `code` is only `site_captcha_timeout`, on the row whose captcha went unsolved and every
+later `moodle` row the server then fails unsent.
 
 ## Submit
 
@@ -84,8 +86,11 @@ tree and the jobs are all live reflections a remount simply re-reads.
 only targets with a `running` job — the same rule a single row's button uses. A running job cannot outlive
 the work, so the section always frees its button.
 
-Once the run has stopped, two warning lines cover what the summary cannot:
+Warning lines cover what the summary cannot; the first shows at once, the other two once the run has stopped:
 
+- **Captcha unsolved** (`captchaTimeoutCount`): targets carrying `code: 'site_captcha_timeout'`, with
+  that code's catalog sentence. Shown while the run still walks its non-Moodle rows too, since those
+  targets are already final.
 - **Unverified** (`unverifiedCount`): `queued`, no jobs, not in the tree — the lecture was deleted or
   renamed, the name desynced, or the tree fetch failed (it publishes an empty tree). No action, since
   none is fixable from here.

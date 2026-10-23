@@ -55,6 +55,7 @@ import {
   openPluginfile,
   openMoodleFile,
   pluginfileUrl,
+  SiteCaptchaTimeoutError,
 } from '../moodle/wsClient.js';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -142,12 +143,19 @@ export function sendUnsupported(res, err) {
   });
 }
 
-// Distinct "the site served a bot-protection challenge" signal. 503: the site is refusing us for
-// now; nothing about the request is wrong. Block mode goes on first, so `params.challengeWindow`
-// says whether a captcha waits on screen (docs/MOODLE.md § Bot protection).
-async function sendBlocked(res, err) {
-  await reportBlock(err, currentSite());
-  send(res, 503, { status: 'blocked', message: err.message, code: err.code, params: err.params });
+// 503 for a bot-protection challenge, after block mode goes on (docs/MOODLE.md § Bot protection),
+// or for a captcha the call waited on unsolved — not a block, so no `status`, as Zoom's has none.
+async function sentWall(res, route, e) {
+  if (e instanceof SiteCaptchaTimeoutError) {
+    logResult(route, `captcha timeout (503): ${e.message}`);
+    send(res, 503, failureOf(e));
+    return true;
+  }
+  if (!blocked(e)) return false;
+  logResult(route, `blocked (503): ${e.message}`);
+  await reportBlock(e, currentSite());
+  send(res, 503, { status: 'blocked', message: e.message, code: e.code, params: e.params });
+  return true;
 }
 
 // Distinct "the upstream host could not be reached" signal (a refused, timed-out or unresolved
@@ -268,7 +276,9 @@ export const handleSiteProbe = gated('/site/probe', async (req, res) => {
   if (!result) return send(res, 400, invalid('url', 'a site URL is required'));
   // A wall on the probe turns block mode on for the site it was asking, as any 503 does.
   if (result.status === 'unverified' && result.params.detail === 'site_blocked') {
-    result.params.challengeWindow = await openChallenge(result.site);
+    const state = await openChallenge(result.site);
+    // Closed while it loaded: no window to report, so the verdict carries no challengeWindow.
+    if (state !== 'closed') result.params.challengeWindow = state;
   }
   logResult(
     '/site/probe',
@@ -346,9 +356,8 @@ async function tokenOr(res, auth, route, { answerUnreachable = false } = {}) {
     } else if (e instanceof UnsupportedError) {
       logResult(route, `unsupported (422): ${e.message}`);
       sendUnsupported(res, e);
-    } else if (blocked(e)) {
-      logResult(route, `blocked (503): ${e.message}`);
-      await sendBlocked(res, e);
+    } else if (await sentWall(res, route, e)) {
+      return null;
     } else if (answerUnreachable && unreachable(e)) {
       sendUnreachable(res, route, unreachable(e));
     } else throw e;
@@ -371,10 +380,7 @@ export const handleAuthComplete = gated('/auth/complete', async (req, res) => {
       logResult('/auth/complete', 'reconnect (401)');
       return sendReconnect(res);
     }
-    if (blocked(e)) {
-      logResult('/auth/complete', `blocked (503): ${e.message}`);
-      return sendBlocked(res, e);
-    }
+    if (await sentWall(res, '/auth/complete', e)) return;
     throw e;
   }
   send(res, 200, { connected: true });
@@ -441,11 +447,7 @@ async function sentWsFailure(res, e, auth, route, courseUrl) {
     sendReconnect(res);
     return true;
   }
-  if (blocked(e)) {
-    logResult(route, `blocked (503): ${e.message}`);
-    await sendBlocked(res, e);
-    return true;
-  }
+  if (await sentWall(res, route, e)) return true;
   const down = unreachable(e);
   if (down) {
     sendUnreachable(res, route, down);
@@ -721,10 +723,7 @@ async function resolveItem(req, res) {
         logResult('/resolve', 'reconnect (401)');
         return sendReconnect(res);
       }
-      if (blocked(e)) {
-        logResult('/resolve', `blocked (503): ${e.message}`);
-        return sendBlocked(res, e);
-      }
+      if (await sentWall(res, '/resolve', e)) return;
       throw e;
     }
     logResult('/resolve', `ok (${targets.length} target, material)`);
@@ -758,10 +757,7 @@ async function resolveItem(req, res) {
         logResult('/resolve', 'reconnect (401)');
         return sendReconnect(res);
       }
-      if (blocked(e)) {
-        logResult('/resolve', `blocked (503): ${e.message}`);
-        return sendBlocked(res, e);
-      }
+      if (await sentWall(res, '/resolve', e)) return;
       throw e;
     }
     logResult('/resolve', `ok (${targets.length} target, video)`);
@@ -916,10 +912,7 @@ export const handleMoodleFile = gated('/moodle/file', async (req, res) => {
       logResult('/moodle/file', 'reconnect (401)');
       return sendReconnect(res);
     }
-    if (blocked(e)) {
-      logResult('/moodle/file', `blocked (503): ${e.message}`);
-      return sendBlocked(res, e);
-    }
+    if (await sentWall(res, '/moodle/file', e)) return;
     throw e;
   }
   res.status(upstream.status);

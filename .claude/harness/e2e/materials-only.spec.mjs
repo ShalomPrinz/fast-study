@@ -1,6 +1,7 @@
 // A lecture made only of course PDFs attached from Downloads skips video, audio and transcript, stays
 // out of the automatic queue, and runs by hand from its materials to a finished lecture on Drive.
 import { DATABASE, call, saveSettings } from '../lib/api.mjs';
+import { loadRecordings } from '../lib/downloads.mjs';
 import { test, expect, expectStepsDone, reseed, reset, treeLecture } from './fixtures.mjs';
 
 const COURSE = 'hb-dl';
@@ -30,12 +31,7 @@ test.afterEach(async () => {
 test('course PDFs attached to a new lecture summarise on their own to Drive', async ({ page }) => {
   test.setTimeout(150_000);
 
-  await page.goto('/downloads');
-  await page.locator('.downloads-tabs [role=tab]').first().click();
-  const source = page.locator('.source-row').filter({
-    has: page.locator('.source-row-name', { hasText: new RegExp(`^${COURSE}$`) }),
-  });
-  await source.locator('.source-row-actions .btn').click();
+  await loadRecordings(page, COURSE);
   await page.locator('.recordings-panel .mode-toggle-btn', { hasText: 'Materials' }).click();
 
   const section = page.locator('.recordings-section').filter({
