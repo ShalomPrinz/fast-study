@@ -50,9 +50,12 @@
   let at = 0;
 
   function show(i) {
+    const held = [...slides].some((li) => li.contains(document.activeElement));
     at = (i + slides.length) % slides.length;
     slides.forEach((li, n) => li.classList.toggle('is-active', n === at));
     counters.forEach((c) => (c.textContent = at + 1));
+    // A focused screenshot goes hidden with its slide and drops focus to <body>, which arrows never reach.
+    if (held) (slides[at].querySelector('.zoomable') || carousel).focus();
   }
 
   carousel
@@ -69,4 +72,35 @@
   list.dataset.carousel = '';
   carousel.querySelector('.journey-nav').hidden = false;
   show(0);
+})();
+
+// Every content screenshot enlarges over a dimmed page; any click or Esc closes it and focus returns to its opener.
+(function () {
+  const shots = document.querySelectorAll('main img');
+  if (!shots.length) return;
+  const dialog = document.createElement('dialog');
+  dialog.className = 'zoom';
+  dialog.innerHTML =
+    '<img alt="" /><button type="button"><span class="he">סגירה</span><span class="en">Close</span></button>';
+  const big = dialog.querySelector('img');
+  document.body.append(dialog);
+  let opener = null;
+
+  dialog.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('close', () => opener?.focus());
+
+  shots.forEach((img) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'zoomable';
+    img.replaceWith(button);
+    button.append(img);
+    button.addEventListener('click', () => {
+      opener = button;
+      big.src = img.currentSrc || img.src;
+      big.alt = img.alt;
+      dialog.showModal();
+      dialog.querySelector('button').focus();
+    });
+  });
 })();

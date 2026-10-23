@@ -465,6 +465,8 @@ p {
 .journey[data-carousel] > li.is-active {
   visibility: visible;
   opacity: 1;
+  /* Visible at once, so main.js can move focus into the incoming slide; only the outgoing one waits. */
+  transition: opacity 0.2s;
 }
 
 .journey li {
@@ -507,8 +509,6 @@ p {
   box-shadow: var(--shadow-lg);
 }
 
-.journey-nav:not([hidden]) {
-  display: flex;
 /* The slide's screenshot sits at 85% of the slide's width, centred under its caption. */
 .journey li > img,
 .journey li > .zoomable {
@@ -516,6 +516,8 @@ p {
   align-self: center;
 }
 
+.journey-nav:not([hidden]) {
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 18px;
@@ -572,9 +574,83 @@ p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .journey[data-carousel] > li {
+  .journey[data-carousel] > li,
+  .journey[data-carousel] > li.is-active {
     transition: none;
   }
+}
+
+/* A screenshot main.js wraps in a button: a click or Enter enlarges it in the overlay below. */
+.zoomable {
+  display: block;
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: zoom-in;
+  border-radius: 10px;
+}
+
+.zoomable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* The overlay fills the window; the screenshot fits it at most its own pixel size, Close below. */
+.zoom[open] {
+  --zoom-close-h: 40px;
+  position: fixed;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  max-inline-size: none;
+  max-block-size: none;
+  margin: 0;
+  border: 0;
+  padding: 32px 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: rgba(23, 23, 31, 0.6);
+  cursor: zoom-out;
+}
+
+.zoom::backdrop {
+  background: transparent;
+}
+
+.zoom img {
+  max-inline-size: 100%;
+  max-block-size: calc(100% - var(--zoom-close-h) - 18px);
+  inline-size: auto;
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+}
+
+.zoom button {
+  flex: none;
+  block-size: var(--zoom-close-h);
+  padding-inline: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.zoom button:hover {
+  background: var(--surface-sunken);
+}
+
+.zoom button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Universities and needs */
