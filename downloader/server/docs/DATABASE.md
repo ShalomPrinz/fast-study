@@ -7,8 +7,11 @@ the latter.
 ## `listCourses()` — `/tree` reshape
 
 `/tree` returns rich lecture objects, but the popup's autocomplete wants names only, so they are
-reshaped here to `[{name, lectures, recitations}]` rather than changing a `/tree` contract the
-frontend depends on. Archived courses are dropped so finished ones don't clutter suggestions.
+reshaped here to `[{name, lectures_only, lectures, recitations}]` rather than changing a `/tree`
+contract the frontend depends on. Archived courses are dropped so finished ones don't clutter
+suggestions. `lectures_only` is the database's per-course resolution, passed through so the popup
+hides the Lecture/Recitation choice; `getCourseStructure()` proxies `GET /course_structure` (the
+live global mode) for a course typed in that the tree doesn't hold yet.
 
 ## `ensureCourse()` — the extension may name a new course
 

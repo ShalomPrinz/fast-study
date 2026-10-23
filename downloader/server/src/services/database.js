@@ -23,8 +23,8 @@ function refused(body, status) {
   return { error, code: body.code, params: body.params ?? {} };
 }
 
-// /tree returns rich lecture/recitation objects; the popup only wants the names,
-// and archived courses are dropped so finished ones don't clutter suggestions.
+// /tree returns rich lecture/recitation objects; the popup only wants the names and each course's
+// resolved `lectures_only`, and archived courses are dropped so finished ones don't clutter suggestions.
 export async function listCourses() {
   const res = await fetch(`${DATABASE_URL}/tree`, { headers: peerHeaders() });
   if (!res.ok) throw new Error(`database /tree returned ${res.status}`);
@@ -33,9 +33,18 @@ export async function listCourses() {
     .filter((c) => !c.archived)
     .map((c) => ({
       name: c.name,
+      lectures_only: c.lectures_only === true,
       lectures: (c.lectures ?? []).map((l) => l.name),
       recitations: (c.recitations ?? []).map((r) => r.name),
     }));
+}
+
+// The live global course-structure mode, `{course_structure}` — what a course not in the tree yet resolves to.
+export async function getCourseStructure() {
+  const res = await fetch(`${DATABASE_URL}/course_structure`, { headers: peerHeaders() });
+  if (!res.ok) throw new Error(`database /course_structure returned ${res.status}`);
+  const { course_structure } = await res.json();
+  return { course_structure };
 }
 
 // Create the course so the extension can target a new one; 409 `name_taken` means it exists, also success.

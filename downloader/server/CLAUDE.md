@@ -62,7 +62,8 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `GET  /health`                            | `{status:'ok'}` at once — what the launcher waits on                                                              |
 | `GET  /tools`                             | `{tools}` once the boot probe settles — the frontend's broken-tool toasts                                         |
 | `POST /config`                            | `{error_reports?}` → `{status:'ok', applied}`; 400 `invalid_request` on a non-boolean — the launcher's live switch |
-| `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                        |
+| `GET  /courses`                           | database `/tree` reshaped to name arrays + `lectures_only`, archived dropped                                                        |
+| `GET  /course-structure`                  | `{course_structure}` proxied from the database — the global mode a new course gets |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged GET)                                                                  |
 | `POST /download`                          | curl header-replay capture; creates a missing course first; 200 with a `jobId`, runs in the background; `dest:'folder'` + `fileName` saves into the general folder instead ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
 | `POST /download-file`                     | plain-URL capture added to the lecture's materials; 200 at once with a `jobId`                                    |
