@@ -128,8 +128,8 @@ const SearchIcon = () => (
 // A lecture: a frame with a play mark. Sized larger than the row icons — it labels an empty state.
 const LectureIcon = () => (
   <svg width="19" height="19" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2.5 3.5h11v9h-11z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-    <path d="M6 6.5l3.5 2L6 10.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    <path d="M2.5 3.5h11v9h-11z" stroke="currentColor" />
+    <path d="M6.25 6l3.5 2L6.25 10z" stroke="currentColor" />
   </svg>
 )
 
