@@ -24,6 +24,24 @@ class TestMergedKey:
         ]
         assert _order(items) == ["Lecture 2", "Recitation 2.2", "Lecture 10"]
 
+    def test_whole_number_then_kind_then_sub(self):
+        items = [
+            ("L 4", "lecture"),
+            ("R 3", "recitation"),
+            ("L 3.2", "lecture"),
+            ("L 3.1", "lecture"),
+        ]
+        assert _order(items) == ["L 3.1", "L 3.2", "R 3", "L 4"]
+
+    def test_only_trailing_number_counts(self):
+        # A number mid-name is prefix; with nothing trailing the name is unnumbered.
+        items = [
+            ("Part 2 Lecture 5", "lecture"),
+            ("Lecture 3", "lecture"),
+            ("2024 review", "lecture"),
+        ]
+        assert _order(items) == ["Lecture 3", "Part 2 Lecture 5", "2024 review"]
+
     def test_unnumbered_after_numbered_by_name(self):
         items = [
             ("Summary", "lecture"),

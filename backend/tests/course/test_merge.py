@@ -145,8 +145,8 @@ class TestBuildAllLecturesMd:
     def test_merged_interleaves_recitations_by_number(self):
         rec = [("Recitation 2", "# R\n\nbody r\n")]
         md = build_all_lectures_md([self.A, self.B], rec, merged=True)
-        # 2 sorts before 2.2, so the recitation leads.
-        assert md.index("תרגול 2") < md.index("הרצאה 2.2") < md.index("הרצאה 10.1")
+        # Whole number 2 first, a lecture before a recitation on it, so 2.2 leads.
+        assert md.index("הרצאה 2.2") < md.index("תרגול 2") < md.index("הרצאה 10.1")
         assert md.count("\n---\n") == 2
 
 

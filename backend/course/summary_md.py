@@ -5,8 +5,6 @@ import re
 
 from pipeline.pdf.text import DIV_MARKER_RE  # noqa: F401 — re-exported for merge.py
 
-from course import ranges
-
 # Built-in H2 sections from summarize.md that are boilerplate, not lecture content.
 BUILTINS = {"תקציר", "הערות אישיות והדגשות המרצה", "סיכום", "משימות נדרשות"}
 
@@ -18,6 +16,10 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 # A markdown horizontal rule on its own line.
 RULE_RE = re.compile(r"^(?:-{3,}|\*{3,}|_{3,})$")
 
+# Mirrors the frontend's nextName.ts PATTERN: any prefix, whitespace, then a TRAILING number with an
+# optional `.sub`; `[0-9]` and fullmatch match JS `\d` and `$` exactly.
+_TRAILING_NUM_RE = re.compile(r"(.+?)\s+([0-9]+)(?:\.([0-9]+))?")
+
 
 def natural_key(name: str) -> list:
     """Sort key reading digit runs as ints, so "Lecture 2.2" orders before "Lecture 10.1"."""
@@ -26,14 +28,14 @@ def natural_key(name: str) -> list:
 
 
 def merged_key(name: str, kind: str) -> tuple:
-    """Lectures-only course order: by the name's number, a lecture before a recitation on the
-    same number, then names with no number by name."""
+    """Lectures-only course order, as the frontend's compareMerged: by the trailing number, a
+    lecture before a recitation on it, then sub; names with no trailing number after, by name."""
 
-    token = ranges.number_token(name)
+    m = _TRAILING_NUM_RE.fullmatch(name)
     rank = 0 if kind == "lecture" else 1
-    if token is None:
+    if m is None:
         return (1, natural_key(name), rank)
-    return (0, ranges.numeric_key(token), rank, natural_key(name))
+    return (0, int(m[2]), rank, int(m[3] or 0), natural_key(name))
 
 
 def ordered_entries(
