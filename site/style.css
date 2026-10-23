@@ -509,6 +509,13 @@ p {
 
 .journey-nav:not([hidden]) {
   display: flex;
+/* The slide's screenshot sits at 85% of the slide's width, centred under its caption. */
+.journey li > img,
+.journey li > .zoomable {
+  inline-size: 85%;
+  align-self: center;
+}
+
   align-items: center;
   justify-content: center;
   gap: 18px;

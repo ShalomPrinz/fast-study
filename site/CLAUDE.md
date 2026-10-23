@@ -13,7 +13,7 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
 | `capture.mjs` | Recaptures the eleven app screenshots on a live app-harness stack from `capture/` |
 | `capture/`    | The screenshots' own dataset: `dataset.mjs` (courses, lectures, the journey's lecture) and `text/` (Hebrew transcripts and summaries) |
-| `img/`        | The app screenshots (a 1280×800 layout at 2×, 2560×1600 JPEG, sharp at the carousel's 1088px on high-DPI screens: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
+| `img/`        | The app screenshots (a 1280×800 layout at 2×, 2560×1600 JPEG, sharp at the carousel's 925px (85% of the 1088px slide) on high-DPI screens: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
 | `sitemap.xml` | Both page URLs, for Search Console; a new page gets a `<url>` here               |
 
 `index.html`'s `<head>` carries the `google-site-verification` meta for the Search Console property
