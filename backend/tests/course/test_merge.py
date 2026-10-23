@@ -106,14 +106,23 @@ class TestBlankCollapse:
 
 class TestRenderEntry:
     def test_lecture_h1_then_demoted_body(self):
-        out = render_entry("Lecture 5.2", "# מרוצי נתונים\n\n## נושא\n\nגוף\n")
+        out = render_entry(
+            "Lecture 5.2", "lecture", "# מרוצי נתונים\n\n## נושא\n\nגוף\n"
+        )
         lines = out.split("\n")
         assert lines[0] == "# הרצאה 5.2"
         assert lines[2] == "## מרוצי נתונים"
         assert "### נושא" in lines
 
+    def test_recitation_keeps_its_label(self):
+        assert render_entry("Recitation 3", "recitation", "## נושא\n").startswith(
+            "# תרגול 3"
+        )
+
     def test_summary_with_only_builtins_gives_header_alone(self):
-        out = render_entry("Lecture 1", "## תקציר\n\nטקסט\n\n## סיכום\n\nעוד\n")
+        out = render_entry(
+            "Lecture 1", "lecture", "## תקציר\n\nטקסט\n\n## סיכום\n\nעוד\n"
+        )
         assert out == "# הרצאה 1"
 
 
@@ -132,6 +141,13 @@ class TestBuildAllLecturesMd:
 
     def test_single_lecture_has_no_rule(self):
         assert "---" not in build_all_lectures_md([self.A])
+
+    def test_merged_interleaves_recitations_by_number(self):
+        rec = [("Recitation 2", "# R\n\nbody r\n")]
+        md = build_all_lectures_md([self.A, self.B], rec, merged=True)
+        # 2 sorts before 2.2, so the recitation leads.
+        assert md.index("תרגול 2") < md.index("הרצאה 2.2") < md.index("הרצאה 10.1")
+        assert md.count("\n---\n") == 2
 
 
 class TestRunMerge:
@@ -161,8 +177,8 @@ class TestRunMerge:
             "params": {},
         }
 
-    def test_recitations_never_included(self, monkeypatch):
-        # Lectures-only by design: a course with recitations but no lecture summaries skips.
+    def test_split_course_excludes_recitations(self, monkeypatch):
+        # A split course's document is the lecture content: recitation summaries alone skip.
         monkeypatch.setattr(
             db_client,
             "put_overview_file",
@@ -211,6 +227,43 @@ class TestRunMerge:
         )
         run_merge(self.COURSE, node)
         assert kinds == ["lecture"]
+
+    def test_lectures_only_includes_recitations_in_merged_order(self, monkeypatch):
+        puts, patches, gets = {}, [], []
+        monkeypatch.setattr(
+            db_client,
+            "get_summary",
+            lambda c, l, k: gets.append((l, k)) or "# T\n\n## נושא\n\nגוף\n",
+        )
+        monkeypatch.setattr(
+            db_client,
+            "put_overview_file",
+            lambda c, f, d: puts.__setitem__(f, d.decode("utf-8")),
+        )
+        monkeypatch.setattr(
+            db_client, "patch_overview_meta", lambda c, s, e: patches.append(e)
+        )
+        node = self._node(
+            lectures=[("Lecture 1", True), ("Lecture 2", True)],
+            recitations=[("Recitation 1", True), ("Recitation 3", True)],
+        )
+        node["lectures_only"] = True
+
+        assert run_merge(self.COURSE, node) == {"status": "done"}
+        assert ("Recitation 1", "recitation") in gets
+        md = puts["all-lectures.md"]
+        order = [md.index(h) for h in ("הרצאה 1", "תרגול 1", "הרצאה 2", "תרגול 3")]
+        assert order == sorted(order)
+        assert patches[0]["lectures"] == {"start": "1", "end": "2"}
+        assert patches[0]["recitations"] == {"start": "1", "end": "3"}
+
+    def test_lectures_only_with_only_recitations_is_done(self, monkeypatch):
+        monkeypatch.setattr(db_client, "get_summary", lambda *a: "# T\n")
+        monkeypatch.setattr(db_client, "put_overview_file", lambda *a: None)
+        monkeypatch.setattr(db_client, "patch_overview_meta", lambda *a: None)
+        node = self._node(recitations=[("Recitation 1", True)])
+        node["lectures_only"] = True
+        assert run_merge(self.COURSE, node) == {"status": "done"}
 
 
 class TestCallouts:

@@ -1,4 +1,5 @@
-"""Overview compile phase: merge every lecture's summary.md into one `all-lectures.md`.
+"""Overview compile phase: merge every lecture's summary.md (and a lectures-only course's
+recitations) into one `all-lectures.md`.
 Sibling of collect.py, which keeps headings only; this keeps the bodies."""
 
 from datetime import datetime
@@ -14,7 +15,7 @@ from course.summary_md import (
     bullet,
     display_name,
     lines_with_code_flag,
-    natural_key,
+    ordered_entries,
 )
 
 SLUG = "all-lectures"
@@ -84,35 +85,44 @@ def strip_and_demote(md: str) -> str:
     return _collapse_blanks(kept)
 
 
-def render_entry(name: str, summary: str) -> str:
-    """One lecture block: an H1 of the display name, then its demoted, built-in-free body."""
+def render_entry(name: str, kind: str, summary: str) -> str:
+    """One entry block: an H1 of the display name, then its demoted, built-in-free body."""
 
-    header = bullet("#", display_name(name, "lecture"))
+    header = bullet("#", display_name(name, kind))
     body = strip_and_demote(summary)
     return f"{header}\n\n{body}" if body else header
 
 
-def build_all_lectures_md(lectures: list[tuple[str, str]]) -> str:
-    """Assemble all-lectures.md: natural-sorted lecture blocks separated by a `---` rule."""
+def build_all_lectures_md(
+    lectures: list[tuple[str, str]],
+    recitations: list[tuple[str, str]] = (),
+    merged: bool = False,
+) -> str:
+    """Assemble all-lectures.md: entry blocks in overview order separated by a `---` rule."""
 
     blocks = [
-        render_entry(n, s) for n, s in sorted(lectures, key=lambda t: natural_key(t[0]))
+        render_entry(n, k, s)
+        for n, k, s in ordered_entries(list(lectures), list(recitations), merged)
     ]
     return "\n\n---\n\n".join(blocks) + "\n"
 
 
 def run_merge(course: str, course_node: dict) -> dict:
     """Merge every lecture summary into all-lectures.md; raises on I/O failure so the runner
-    records it as "error". Recitations are deliberately excluded — this is the lecture content."""
+    records it as "error". Recitations join only in a lectures-only course, in merged order."""
 
-    collected: list[tuple[str, str]] = []
-    for entry in course_node.get("lectures") or []:
-        if not ((entry.get("files") or {}).get("summary.md") or {}).get("exists"):
-            continue
-        collected.append(
-            (entry["name"], db_client.get_summary(course, entry["name"], "lecture"))
-        )
-    if not collected:
+    merged = bool(course_node.get("lectures_only"))
+    groups = [("lecture", course_node.get("lectures") or [])]
+    if merged:
+        groups.append(("recitation", course_node.get("recitations") or []))
+    collected: dict[str, list[tuple[str, str]]] = {"lecture": [], "recitation": []}
+    for kind, entries in groups:
+        for entry in entries:
+            if not ((entry.get("files") or {}).get("summary.md") or {}).get("exists"):
+                continue
+            summary = db_client.get_summary(course, entry["name"], kind)
+            collected[kind].append((entry["name"], summary))
+    if not collected["lecture"] and not collected["recitation"]:
         return {
             "status": "skipped",
             "message": "no summaries found",
@@ -120,16 +130,21 @@ def run_merge(course: str, course_node: dict) -> dict:
             "params": {},
         }
 
-    md = build_all_lectures_md(collected)
+    md = build_all_lectures_md(collected["lecture"], collected["recitation"], merged)
     db_client.put_overview_file(course, f"{SLUG}.md", md.encode("utf-8"))
 
     # Snapshot the source range at generation time; later-phase re-runs leave it intact.
+    # A split course's recitation range stays None — they are not in this document.
     db_client.patch_overview_meta(
         course,
         SLUG,
         {
-            "lectures": ranges.name_range([n for n, _ in collected]),
-            "recitations": None,
+            "lectures": ranges.name_range([n for n, _ in collected["lecture"]]),
+            "recitations": (
+                ranges.name_range([n for n, _ in collected["recitation"]])
+                if merged
+                else None
+            ),
             "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         },
     )

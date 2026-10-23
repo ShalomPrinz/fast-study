@@ -5,6 +5,8 @@ import re
 
 from pipeline.pdf.text import DIV_MARKER_RE  # noqa: F401 — re-exported for merge.py
 
+from course import ranges
+
 # Built-in H2 sections from summarize.md that are boilerplate, not lecture content.
 BUILTINS = {"תקציר", "הערות אישיות והדגשות המרצה", "סיכום", "משימות נדרשות"}
 
@@ -21,6 +23,33 @@ def natural_key(name: str) -> list:
     """Sort key reading digit runs as ints, so "Lecture 2.2" orders before "Lecture 10.1"."""
 
     return [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", name)]
+
+
+def merged_key(name: str, kind: str) -> tuple:
+    """Lectures-only course order: by the name's number, a lecture before a recitation on the
+    same number, then names with no number by name."""
+
+    token = ranges.number_token(name)
+    rank = 0 if kind == "lecture" else 1
+    if token is None:
+        return (1, natural_key(name), rank)
+    return (0, ranges.numeric_key(token), rank, natural_key(name))
+
+
+def ordered_entries(
+    lectures: list[tuple[str, str]],
+    recitations: list[tuple[str, str]],
+    merged: bool,
+) -> list[tuple[str, str, str]]:
+    """(name, kind, summary) in overview order: one merged list for a lectures-only course,
+    else natural-sorted lectures then natural-sorted recitations."""
+
+    entries = [(n, "lecture", s) for n, s in lectures] + [
+        (n, "recitation", s) for n, s in recitations
+    ]
+    if merged:
+        return sorted(entries, key=lambda e: merged_key(e[0], e[1]))
+    return sorted(entries, key=lambda e: (e[1] != "lecture", natural_key(e[0])))
 
 
 def display_name(name: str, kind: str) -> str:

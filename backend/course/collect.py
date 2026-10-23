@@ -6,7 +6,13 @@ from datetime import datetime
 from services import db_client
 
 from course import ranges
-from course.summary_md import BUILTINS, bullet, display_name, headings, natural_key
+from course.summary_md import (
+    BUILTINS,
+    bullet,
+    display_name,
+    headings,
+    ordered_entries,
+)
 
 
 def parse_summary(md: str) -> dict:
@@ -55,29 +61,26 @@ def render_entry(name: str, kind: str, summary: str) -> str:
 
 
 def build_topics_md(
-    lectures: list[tuple[str, str]], recitations: list[tuple[str, str]]
+    lectures: list[tuple[str, str]],
+    recitations: list[tuple[str, str]],
+    merged: bool = False,
 ) -> str:
-    """Assemble topics.md: natural-sorted lectures, a `---` rule, then natural-sorted recitations."""
+    """Assemble topics.md: natural-sorted lectures, a `---` rule, then natural-sorted recitations;
+    a lectures-only course (`merged`) gets one list in merged order with no rule."""
 
-    lec = [
-        render_entry(n, "lecture", s)
-        for n, s in sorted(lectures, key=lambda t: natural_key(t[0]))
-    ]
-    rec = [
-        render_entry(n, "recitation", s)
-        for n, s in sorted(recitations, key=lambda t: natural_key(t[0]))
-    ]
-    blocks = list(lec)
-    if rec:
-        if blocks:
+    blocks: list[str] = []
+    prev_kind = None
+    for name, kind, summary in ordered_entries(lectures, recitations, merged):
+        if not merged and prev_kind == "lecture" and kind == "recitation":
             blocks.append("---")
-        blocks.extend(rec)
+        blocks.append(render_entry(name, kind, summary))
+        prev_kind = kind
     return "\n\n".join(blocks) + "\n"
 
 
 def run_collect(course: str, course_node: dict) -> dict:
     """Collect every lecture/recitation summary into topics.md; raises on I/O failure so
-    the runner records it as "error"."""
+    the runner records it as "error". A lectures-only course lists both in merged order."""
 
     groups = [
         ("lecture", course_node.get("lectures") or []),
@@ -99,7 +102,11 @@ def run_collect(course: str, course_node: dict) -> dict:
             "params": {},
         }
 
-    md = build_topics_md(collected["lecture"], collected["recitation"])
+    md = build_topics_md(
+        collected["lecture"],
+        collected["recitation"],
+        bool(course_node.get("lectures_only")),
+    )
     db_client.put_overview_file(course, "topics.md", md.encode("utf-8"))
 
     # Snapshot the source range at generation time; later-phase re-runs leave it intact.

@@ -93,6 +93,17 @@ class TestBuildTopicsMd:
         assert "\n---\n" in md
         assert md.index("הרצאה 5.2") < md.index("---") < md.index("תרגול 3.1")
 
+    def test_merged_has_no_divider_and_interleaves(self):
+        lec1 = ("Lecture 1", "# א\n\n## נ\n")
+        rec1 = ("Recitation 1", "# ב\n\n## נ\n")
+        lec2 = ("Lecture 2", "# ג\n\n## נ\n")
+        md = build_topics_md([lec2, lec1], [rec1], merged=True)
+        assert "---" not in md
+        assert md.index("הרצאה 1") < md.index("תרגול 1") < md.index("הרצאה 2")
+
+    def test_divider_with_only_recitations_is_absent(self):
+        assert "---" not in build_topics_md([], [self.REC])
+
     def test_no_divider_without_recitations(self):
         md = build_topics_md([self.LEC], [])
         assert "---" not in md
@@ -219,6 +230,25 @@ class TestRunCollect:
         )
         run_collect(self.COURSE, node)
         assert gets == [("Lecture 1", "lecture"), ("Recitation 1", "recitation")]
+
+    def test_lectures_only_lists_one_merged_order(self, monkeypatch):
+        puts = {}
+        monkeypatch.setattr(db_client, "get_summary", lambda c, l, k: "# T\n\n## X\n")
+        monkeypatch.setattr(
+            db_client,
+            "put_overview_file",
+            lambda c, f, d: puts.__setitem__(f, d.decode("utf-8")),
+        )
+        monkeypatch.setattr(db_client, "patch_overview_meta", lambda *a: None)
+        node = self._node(
+            lectures=[("Lecture 1", True), ("Lecture 2", True)],
+            recitations=[("Recitation 1", True)],
+        )
+        node["lectures_only"] = True
+        run_collect(self.COURSE, node)
+        md = puts["topics.md"]
+        assert "---" not in md
+        assert md.index("הרצאה 1") < md.index("תרגול 1") < md.index("הרצאה 2")
 
 
 class TestCallouts:
