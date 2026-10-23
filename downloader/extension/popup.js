@@ -25,6 +25,10 @@ let tabTitle = '';
 // 'app' saves into a course in FastStudy; 'general' into the computer folder the server keeps.
 let mode = 'app';
 let generalFolder = '';
+// The live course-structure mode, for a typed-in course not in `courses` yet; null when unknown.
+let courseStructure = null;
+// Whether the course in the field takes only lectures: its kind choice is hidden and new items are lectures.
+let lecturesOnly = false;
 
 function $(id) {
   return document.getElementById(id);
@@ -44,6 +48,7 @@ function translateStatic() {
 function applyMode(next) {
   mode = next;
   for (const el of document.querySelectorAll('[data-mode]')) el.hidden = el.dataset.mode !== mode;
+  $('kinds').hidden ||= lecturesOnly;
   document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
 }
 
@@ -62,8 +67,26 @@ function suggestFileName(title) {
     .replace(/[. ]+$/, '');
 }
 
+// A lectures-only course sends `lecture`, except for a name that is already one of its recitations,
+// which keeps its real kind so a PDF attaches to it instead of creating a lecture beside it.
 function getKind() {
+  if (lecturesOnly) {
+    const course = findCourse($('course').value);
+    const name = $('lecture').value.trim();
+    const isRecitation = course?.recitations?.includes(name) && !course.lectures.includes(name);
+    return isRecitation ? 'recitation' : 'lecture';
+  }
   return document.querySelector('input[name="kind"]:checked').value;
+}
+
+function findCourse(name) {
+  return courses.find((c) => c.name === name);
+}
+
+// A listed course carries its own flag; a typed-in one follows the live mode, visible when unknown.
+function isLecturesOnly(courseName) {
+  const course = findCourse(courseName);
+  return course ? !!course.lectures_only : courseStructure === 'lectures_all';
 }
 
 function setStatus(text, danger = false) {
@@ -92,25 +115,52 @@ const isolate = (text) => `⁨${text}⁩`;
 
 const PATTERN = /^(.+?)\s+(\d+)(?:\.(\d+))?$/;
 
+function parseName(name, kind) {
+  const m = name.match(PATTERN);
+  if (!m) return null;
+  if (kind === 'recitation' && m[3]) return null;
+  const sub = m[3] ? parseInt(m[3], 10) : 0;
+  return { name, kind, prefix: m[1], n: parseInt(m[2], 10), sub };
+}
+
+// The newest parsed name: highest number, then a recitation after a lecture on the same number (the
+// merged order of a lectures-only course), then highest sub. Null when none parse.
+function newest(parsed) {
+  const items = parsed.filter(Boolean);
+  if (!items.length) return null;
+  const rank = (p) => (p.kind === 'recitation' ? 1 : 0);
+  const later = (a, b) => a.n - b.n || rank(a) - rank(b) || a.sub - b.sub;
+  return items.reduce((a, b) => (later(a, b) > 0 ? a : b));
+}
+
 function latestName(names, kind) {
-  const parsed = names
-    .map((name) => {
-      const m = name.match(PATTERN);
-      if (!m) return null;
-      if (kind === 'recitation' && m[3]) return null;
-      return { name, prefix: m[1], n: parseInt(m[2], 10), sub: m[3] ? parseInt(m[3], 10) : 0 };
-    })
-    .filter(Boolean);
-  if (!parsed.length) return null;
-  return parsed.reduce((a, b) => (a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b));
+  return newest(names.map((name) => parseName(name, kind)));
+}
+
+// A lectures-only course's newest item over its lectures and recitations together.
+function latestMerged(course) {
+  return newest([
+    ...course.lectures.map((name) => parseName(name, 'lecture')),
+    ...(course.recitations ?? []).map((name) => parseName(name, 'recitation')),
+  ]);
 }
 
 function fallbackPrefix(kind) {
   return msg(kind === 'recitation' ? 'dirRecitation' : 'dirLecture');
 }
 
+// The number comes from both lists, the prefix from the lectures, since the new item is a lecture.
+function nextMergedName(course) {
+  const latest = latestMerged(course);
+  const prefix = latestName(course.lectures, 'lecture')?.prefix ?? fallbackPrefix('lecture');
+  if (!latest) return `${prefix} 1`;
+  if (latest.kind === 'lecture' && latest.sub === 1) return `${prefix} ${latest.n}.2`;
+  return `${prefix} ${latest.n + 1}`;
+}
+
 function nextLectureName(course) {
   if (!course) return '';
+  if (course.lectures_only) return nextMergedName(course);
   const latest = latestName(course.lectures, 'lecture');
   if (!latest) return `${fallbackPrefix('lecture')} 1`;
   if (latest.sub === 1) return `${latest.prefix} ${latest.n}.2`;
@@ -125,8 +175,9 @@ function nextRecitationName(course) {
 // mode 'next' names a fresh session (a video); 'latest' the newest existing one (a PDF attaches to
 // the lecture just watched), empty when there is none.
 function suggestName(courseName, kind, mode) {
-  const course = courses.find((c) => c.name === courseName);
+  const course = findCourse(courseName);
   if (mode === 'latest') {
+    if (course?.lectures_only) return latestMerged(course)?.name ?? '';
     const items = kind === 'recitation' ? (course?.recitations ?? []) : (course?.lectures ?? []);
     return latestName(items, kind)?.name ?? '';
   }
@@ -145,12 +196,17 @@ function fillDatalist(list, names) {
 
 function refreshLectureSuggestions() {
   const courseName = $('course').value;
-  const course = courses.find((c) => c.name === courseName);
-  const kind = getKind();
-  fillDatalist(
-    $('lectures-list'),
-    kind === 'recitation' ? (course?.recitations ?? []) : (course?.lectures ?? []),
-  );
+  const course = findCourse(courseName);
+  lecturesOnly = isLecturesOnly(courseName);
+  $('kinds').hidden = mode !== 'app' || lecturesOnly;
+  // In a lectures-only course the name picks the kind, so suggestions go by the lecture side.
+  const kind = lecturesOnly ? 'lecture' : getKind();
+  const names = lecturesOnly
+    ? [...(course?.lectures ?? []), ...(course?.recitations ?? [])]
+    : kind === 'recitation'
+      ? (course?.recitations ?? [])
+      : (course?.lectures ?? []);
+  fillDatalist($('lectures-list'), names);
   $('lecture').placeholder = msg(
     kind === 'recitation' ? 'placeholderRecitation' : 'placeholderLecture',
   );
@@ -159,6 +215,15 @@ function refreshLectureSuggestions() {
 }
 
 // False when the server is unreachable, which the status line then says.
+// The live mode decides the kind choice for a course the request will create; a failure leaves the
+// choice visible.
+async function loadCourseStructure() {
+  try {
+    const res = await api('/course-structure');
+    if (res.ok) courseStructure = (await res.json()).course_structure;
+  } catch {}
+}
+
 async function loadCourses() {
   try {
     const res = await api('/courses');
@@ -406,7 +471,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyMode(popupMode === 'general' ? 'general' : 'app');
   server = await discoverServer();
   if (server.running === false) return setStatus(msg('statusAppClosed'), true);
-  const [online, status] = await Promise.all([loadCourses(), loadSource(), loadFolder()]);
+  const [online, status] = await Promise.all([
+    loadCourses(),
+    loadSource(),
+    loadFolder(),
+    loadCourseStructure(),
+  ]);
   const hasSource = !!(youtubeUrl || capture || pdfUrl);
   if (!online) setStatus(msg('statusOffline'), true);
   else setStatus(status);

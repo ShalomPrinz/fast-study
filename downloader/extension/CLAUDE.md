@@ -27,6 +27,7 @@ Extension ID: **`hknnjgdhokbapjodjklfodhobjekjlnn`**, pinned by the public `key`
 - **Per-page isolation** is by exact `pageUrl === activeTab.url` (query and hash included), so captures from other tabs never leak in and navigating away hides earlier ones.
 - **Sizes** come from the server's `POST /probe-size`, since `Cookie` is a forbidden `fetch` header; `[…]` while pending, `[?]` when unknown.
 - **PDF** is fetched by the popup itself with `credentials: 'include'`, so the user's session cookies authenticate, then uploaded as bytes.
+- **Lectures-only course**: a listed course's `lectures_only` flag, or for a typed-in course the server's `GET /course-structure` being `lectures_all` (fetched once per open; a failure keeps the choice), hides the kind choice and sends `kind=lecture` — except a name already among its recitations, which keeps `recitation`. Re-evaluated on every course edit.
 - **Mode** (`popupMode` in storage): "App lecture" sends course/kind/name; "General video" sends `dest:'folder'` + a file name prefilled from the tab title, and shows the server's folder read-only. "Choose folder…" asks the server to have the app window open its picker (the popup can't host one); the new folder shows on the next open ([DOWNLOAD.md](../server/docs/DOWNLOAD.md)).
 
 ## MV3 rules this relies on
@@ -41,7 +42,7 @@ Extension ID: **`hknnjgdhokbapjodjklfodhobjekjlnn`**, pinned by the public `key`
 - Language follows Chrome's UI language (`chrome.i18n`), not the app's setting: `<html dir>` from `@@bidi_dir`, `lang` from `@@ui_locale`; static strings fill from `data-i18n` / `data-i18n-placeholder` at load. No user-facing literal in `popup.html`/`popup.js`; CSS uses logical properties only.
 - A server failure shows a translated headline with the server's `error` prose verbatim beneath, never translated.
 - Light theme only; `popup.css` copies the tokens it uses from `frontend/src/styles/tokens.css` and the `.btn--primary` rules from `button.css`.
-- `suggestName` in `popup.js` is a port of `frontend/src/features/lectures/utils/nextName.ts` (prefix inferred from the course's own names; `next` for a video, `latest` for a PDF). The fallback prefix comes from `_locales` (`dirLecture`/`dirRecitation`). Change both together.
+- `suggestName` in `popup.js` is a port of `frontend/src/features/lectures/utils/nextName.ts` (prefix inferred from the course's own names; `next` for a video, `latest` for a PDF; a lectures-only course takes the number over lectures + recitations, a recitation after a lecture on the same number, and the prefix from its lectures). The fallback prefix comes from `_locales` (`dirLecture`/`dirRecitation`). Change both together.
 - A brand-new course needs nothing here: the server creates it before the job starts.
 
 ## Testing
