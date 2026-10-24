@@ -80,7 +80,7 @@ export function resolveRow(
   const suggestion =
     lock && lock.course === course && lock.kind === kind
       ? lock.name
-      : suggestItemName(item.title, kind, courses, course)
+      : suggestItemName(item.title, kind, courses, course, kind, item.section)
   const value = edit?.name ?? suggestion
   return { kind, suggestion, value, name: value.trim() || suggestion }
 }
@@ -98,7 +98,7 @@ function resolveLecturesOnly(
   const suggestion =
     lock && lock.course === course
       ? lock.name
-      : suggestItemName(item.title, 'lecture', courses, course, item.kind)
+      : suggestItemName(item.title, 'lecture', courses, course, item.kind, item.section)
   const value = edit?.name ?? suggestion
   const name = value.trim() || suggestion
   return { kind: lecturesOnlyKind(courses, course, name), suggestion, value, name }

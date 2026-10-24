@@ -40,4 +40,42 @@ describe('suggestItemName', () => {
       'תרגול 4',
     )
   })
+
+  describe('section heading', () => {
+    const c = course(['הרצאה 3'])
+    it('numbers a numberless title from a keyword section, sub-marker included', () => {
+      expect(suggestItemName('הקלטה', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 1: מבוא')).toBe(
+        'הרצאה 1',
+      )
+      expect(suggestItemName('שקפים', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 1: מבוא')).toBe(
+        'הרצאה 1',
+      )
+      expect(suggestItemName('x', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 3א')).toBe('הרצאה 3.1')
+    })
+    it('lets a title number beat the section', () => {
+      expect(suggestItemName('הרצאה 7', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 1')).toBe(
+        'הרצאה 7',
+      )
+    })
+    it('ignores date ranges and week headings', () => {
+      const next = suggestItemName('x', 'lecture', c, 'Algebra')
+      expect(suggestItemName('x', 'lecture', c, 'Algebra', 'lecture', '12/03 - 18/03')).toBe(next)
+      expect(suggestItemName('x', 'lecture', c, 'Algebra', 'lecture', 'שבוע 3')).toBe(next)
+      expect(suggestItemName('x', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 12.05.24')).toBe(next)
+      expect(suggestItemName('x', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 12/3')).toBe(next)
+    })
+    it('takes the first number of a range heading, no sub-marker', () => {
+      expect(suggestItemName('x', 'lecture', c, 'Algebra', 'lecture', 'הרצאות 3-4')).toBe('הרצאה 3')
+      expect(suggestItemName('x', 'lecture', c, 'Algebra', 'lecture', 'הרצאות 3–4')).toBe('הרצאה 3')
+    })
+    it('accepts a trailing period', () => {
+      expect(suggestItemName('x', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 3.')).toBe('הרצאה 3')
+    })
+    it('keeps the recitation prefix in a lectures-only course', () => {
+      const lo = [{ ...course(['הרצאה 1'], ['תרגול 1'])[0], lectures_only: true }]
+      expect(suggestItemName('x', 'lecture', lo, 'Algebra', 'recitation', 'תרגול 2')).toBe(
+        'תרגול 2',
+      )
+    })
+  })
 })

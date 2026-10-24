@@ -317,7 +317,10 @@ reads "Attach material to".
 
 `suggestItemName` turns the title's first integer into `<prefix> N`, plus at most one sub-session marker
 glued to it as a decimal (a Latin letter, a Hebrew letter א–י, or a digit after a separator). Ambiguity
-voids the marker rather than guessing; a title with no number falls back to the tree's next name.
+voids the marker rather than guessing. A title with no number takes the number from its Moodle section
+heading, only when a lecture/recitation keyword precedes it ("הרצאה 3א: …", sub-marker included); date
+ranges and "שבוע 3" don't count, a range heading ("הרצאות 3-4") takes its first number, and numberless items of one section share the name. Otherwise it falls
+back to the tree's next name.
 
 A row's failure to _start_ flips its button to "Retry ✗" and toasts through `toastDownloadError`;
 reconnect, passcode and a cancelled prompt don't toast, they steer the UI. A coded failure — here, in a

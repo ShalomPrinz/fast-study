@@ -17,22 +17,33 @@ function subNumber(rest: string): number | null {
   return index < 0 ? null : index + 1
 }
 
-// First integer → "<prefix> N" plus any sub-marker as a decimal, the prefix the course's own; no
-// number falls back to the tree's next name.  'הרצאה 11a' -> 'הרצאה 11.1'. `prefixKind` names the
-// prefix when it differs from the kind saved: a lectures-only course keeps a recitation's own prefix.
+// A section heading counts only as "<lecture/recitation keyword> N"; date ranges and "שבוע 3" don't.
+const SECTION_NUMBER =
+  /(?:הרצאות|הרצאה|תרגולים|תרגול|תרגיל|lecture|recitation|tutorial|tirgul)[\s#:.\-–]*(\d+)(?![\d/])(?!\.\d)/i
+
+// Title: first integer plus sub-marker -> 'הרצאה 11.1'. Numberless title: its section's keyword heading
+// number (a range takes its first), else the tree's next name. `prefixKind` overrides the prefix's kind.
 export function suggestItemName(
   title: string,
   kind: Kind,
   courses: Course[],
   course: string,
   prefixKind: Kind = kind,
+  section = '',
 ): string {
   const text = String(title ?? '')
+  const heading = String(section ?? '')
   const m = text.match(/\d+/)
-  if (m) {
+  const hit = m ? null : heading.match(SECTION_NUMBER)
+  const found = m ?? hit
+  if (found) {
+    const source = m ? text : heading
+    const digits = m ? m[0] : hit![1]
+    const end = m ? m.index! + m[0].length : hit!.index! + hit![0].length
     const prefix = sessionPrefix(courses, course, prefixKind) ?? fallbackPrefix(prefixKind)
-    const number = parseInt(m[0], 10)
-    const sub = subNumber(text.slice(m.index! + m[0].length))
+    const rest = source.slice(end)
+    const sub = !m && /^\s*[-–]\s*\d/.test(rest) ? null : subNumber(rest)
+    const number = parseInt(digits, 10)
     return sub === null ? `${prefix} ${number}` : `${prefix} ${number}.${sub}`
   }
   return suggestName(courses, course, kind)
