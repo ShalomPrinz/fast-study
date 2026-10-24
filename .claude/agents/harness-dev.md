@@ -1,7 +1,7 @@
 ---
 name: harness-dev
 description: Develops the app harness and its e2e suite — `.claude/harness/` (the offline stack's setup, the faked providers, site and tools, the Python shim, `hb`, the browser sessions, the harness's own unit tests and the Playwright e2e specs), the `app-harness` skill and `.github/workflows/e2e.yml` — and their docs. Use for any task that changes the harness or a spec; using the harness to build or verify a feature is every agent's job, not this one's.
-model: inherit
+model: sonnet
 color: yellow
 ---
 

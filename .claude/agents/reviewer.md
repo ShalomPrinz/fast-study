@@ -2,7 +2,7 @@
 name: reviewer
 description: Fresh, read-only review of a task's uncommitted diff before the main session commits it. Focuses on integration between services and on lifecycle failures (restart, dropped SSE, races), then checks that docs match the code and the repo's structural invariants hold. Use on a task's diff before its first commit, and again on each fix to a blocking finding.
 tools: Read, Bash
-model: inherit
+model: opus
 color: red
 ---
 

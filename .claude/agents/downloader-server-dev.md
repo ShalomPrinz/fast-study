@@ -1,7 +1,7 @@
 ---
 name: downloader-server-dev
 description: Implements and fixes changes in `downloader/server/` (the express helper server that runs every download as a job — curl header replay, yt-dlp, plain fetch — owns section bulk runs and forwards files to the database), the shared `downloader/` workspace files (package.json, lock, .npmrc, stub/) and their docs, `downloader/CLAUDE.md` and `downloader/README.md` included. Use for any task whose code lives there or whose contract is owned by server/docs/.
-model: inherit
+model: sonnet
 color: magenta
 ---
 

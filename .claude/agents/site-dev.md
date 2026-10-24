@@ -1,7 +1,7 @@
 ---
 name: site-dev
 description: Implements and fixes changes in `site/` and `.github/workflows/pages.yml` — the public download landing page on GitHub Pages (plain HTML/CSS/JS, Hebrew RTL with an English toggle) and the workflow that stamps the latest release's version and size into it and deploys it. Use for any task whose files live there.
-model: inherit
+model: sonnet
 color: green
 ---
 

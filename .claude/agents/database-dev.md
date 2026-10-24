@@ -1,7 +1,7 @@
 ---
 name: database-dev
 description: Implements and fixes changes in the `database/` FastAPI service (every read, write and listing under DATA_ROOT, the on-disk layout, tree/summary/files/crud logic, settings, the SSE notify bus on port 8001) and its docs. Use for any task whose code lives under database/ or whose contract is owned by database/docs/.
-model: inherit
+model: sonnet
 color: yellow
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: backend-dev
 description: Implements and fixes changes in the `backend/` FastAPI pipeline service (video → audio → transcript → summary → PDF → Drive; ffmpeg, Groq Whisper, Gemini, pandoc + tectonic, Google Drive; per-lecture locking, timing.db) and its docs. Use for any task whose code lives under backend/ or whose contract is owned by backend/docs/.
-model: inherit
+model: sonnet
 color: blue
 ---
 

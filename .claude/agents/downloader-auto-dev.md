@@ -1,7 +1,7 @@
 ---
 name: downloader-auto-dev
 description: Implements and fixes changes in `downloader/auto/` (the Playwright auto-downloader service — the configured Moodle site's checks and WS token auth, course discovery, the one-request-at-a-time Moodle gate, the challenge window, zoom capture, resolving a row into download targets) and its docs. Use for any task whose code lives under downloader/auto/ or whose contract is owned by auto/docs/.
-model: inherit
+model: sonnet
 color: purple
 ---
 

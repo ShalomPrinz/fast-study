@@ -1,7 +1,7 @@
 ---
 name: downloader-extension-dev
 description: Implements and fixes changes in `downloader/extension/` (the Chrome MV3 extension — the toolbar popup, the service worker's `.mp4` header capture, server discovery through the `com.faststudy.bridge` native host, its `_locales`) and its docs. Use for any task whose code lives under downloader/extension/.
-model: inherit
+model: sonnet
 color: pink
 ---
 
