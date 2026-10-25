@@ -516,32 +516,35 @@ function stopChildren() {
   return Promise.all(reaping);
 }
 
-/** Open one DATA_ROOT file in the user's own app; `database/` resolves the path (docs/RENDERER.md). */
+/** Open one DATA_ROOT file in the user's own app: `undefined` or `{error}`; `database/` resolves the
+ *  path (docs/RENDERER.md). */
 async function openDataFile(target) {
-  const resolved = await dataFilePath(target, { url: serviceUrls.database, secret: SECRET });
-  if (!resolved.ok) return resolved;
+  const { path: file, error } = await dataFilePath(target, {
+    url: serviceUrls.database,
+    secret: SECRET,
+  });
+  if (error !== undefined) return { error };
   // openPath answers the empty string on success and the OS's reason otherwise — it never throws.
-  const failure = await shell.openPath(resolved.path);
-  return failure ? { ok: false, error: failure } : { ok: true, error: null };
+  const failure = await shell.openPath(file);
+  if (failure) return { error: failure };
 }
 
-/** Open a link in the user's browser. http(s) only: `openExternal` launches whatever handler a
- *  scheme is registered to, so an unchecked scheme is a way to start a program from a renderer. */
+/** Open a link in the user's browser: `undefined` or `{error}`. http(s) only: `openExternal`
+ *  launches whatever handler a scheme is registered to, so an unchecked one can start a program. */
 async function openExternalUrl(target) {
   let parsed;
   try {
     parsed = new URL(target);
   } catch {
-    return { ok: false, error: `not a URL: ${target}` };
+    return { error: `not a URL: ${target}` };
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    return { ok: false, error: `refused scheme: ${parsed.protocol}` };
+    return { error: `refused scheme: ${parsed.protocol}` };
   }
   try {
     await shell.openExternal(parsed.href);
-    return { ok: true, error: null };
   } catch (error) {
-    return { ok: false, error: error.message };
+    return { error: error.message };
   }
 }
 

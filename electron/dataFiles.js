@@ -11,49 +11,48 @@ function dataFileRoute({ course, lecture, assignment, name, kind }) {
   return `/courses/${q(course)}/overview/files/${q(name)}/path`;
 }
 
-/** Resolve a target to its absolute path through `database/` — `{ok: true, path}` or `{ok: false,
- *  error}`. Identifiers in: the renderer never hands main a path (docs/RENDERER.md). */
+/** Resolve a target to its absolute path through `database/` — `{path}` or `{error}`.
+ *  Identifiers in: the renderer never hands main a path (docs/RENDERER.md). */
 async function dataFilePath(target, { url, secret }) {
-  if (!url) return { ok: false, error: 'the database service is not running' };
+  if (!url) return { error: 'the database service is not running' };
   try {
     const response = await fetch(`${url}${dataFileRoute(target ?? {})}`, {
       headers: { 'X-FastStudy-Secret': secret },
     });
-    if (!response.ok) return { ok: false, error: `database answered ${response.status}` };
+    if (!response.ok) return { error: `database answered ${response.status}` };
     const { path } = await response.json();
-    return { ok: true, path };
+    return { path };
   } catch (error) {
-    return { ok: false, error: error.message };
+    return { error: error.message };
   }
 }
 
-/** Windows' "Open with" chooser on one data file. Windows-only: off it, `unsupported` without asking
- *  the database. Settles on the child's `spawn` or `error` event, never on the call returning. */
+/** Windows' "Open with" chooser on one data file: `undefined` or `{error}`. Off Windows, `unsupported`
+ *  without asking the database. Settles on the child's `spawn` or `error` event, never on the call. */
 async function openDataFileWith(target, database, platform = process.platform) {
-  if (platform !== 'win32') return { ok: false, error: 'unsupported' };
-  const resolved = await dataFilePath(target, database);
-  if (!resolved.ok) return resolved;
+  if (platform !== 'win32') return { error: 'unsupported' };
+  const { path, error } = await dataFilePath(target, database);
+  if (error !== undefined) return { error };
   return new Promise((resolve) => {
     // An argv array, never a shell: the path is passed to rundll32 verbatim.
-    const child = spawn('rundll32.exe', ['shell32.dll,OpenAs_RunDLL', resolved.path], {
+    const child = spawn('rundll32.exe', ['shell32.dll,OpenAs_RunDLL', path], {
       detached: true,
       stdio: 'ignore',
     });
     child.once('spawn', () => {
       child.unref();
-      resolve({ ok: true, error: null });
+      resolve();
     });
-    child.once('error', (error) => resolve({ ok: false, error: error.message }));
+    child.once('error', (failure) => resolve({ error: failure.message }));
   });
 }
 
-/** Select one data file in the OS file manager; `show` is `shell.showItemInFolder`, injected so the
- *  tests run without Electron. `showItemInFolder` reports nothing, so a resolved path is success. */
+/** Select one data file in the OS file manager: `undefined` or `{error}`. `show` is injected so the
+ *  tests run without Electron; `showItemInFolder` reports nothing, so a resolved path is success. */
 async function revealDataFile(target, database, show) {
-  const resolved = await dataFilePath(target, database);
-  if (!resolved.ok) return resolved;
-  show(resolved.path);
-  return { ok: true, error: null };
+  const { path, error } = await dataFilePath(target, database);
+  if (error !== undefined) return { error };
+  show(path);
 }
 
 module.exports = { dataFilePath, dataFileRoute, openDataFileWith, revealDataFile };

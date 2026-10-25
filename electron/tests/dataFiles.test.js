@@ -38,7 +38,7 @@ test('each target shape resolves through its own database route', async () => {
     [{ course: 'A', name: 'syllabus.pdf' }, '/courses/A/overview/files/syllabus.pdf/path'],
   ];
   for (const [target] of cases) {
-    assert.deepEqual(await dataFilePath(target, DATABASE), { ok: true, path: '/data/file.pdf' });
+    assert.deepEqual(await dataFilePath(target, DATABASE), { path: '/data/file.pdf' });
   }
   assert.deepEqual(
     requests.map((r) => r.url),
@@ -50,11 +50,9 @@ test('each target shape resolves through its own database route', async () => {
 test('a failed lookup is a failure the caller passes through', async () => {
   stubFetch(404);
   assert.deepEqual(await dataFilePath({ course: 'A', name: 'x' }, DATABASE), {
-    ok: false,
     error: 'database answered 404',
   });
   assert.deepEqual(await dataFilePath({ course: 'A', name: 'x' }, { url: '', secret: '' }), {
-    ok: false,
     error: 'the database service is not running',
   });
 });
@@ -64,7 +62,7 @@ test('open-with answers unsupported off Windows without asking the database', as
   for (const platform of ['linux', 'darwin']) {
     assert.deepEqual(
       await openDataFileWith({ course: 'A', assignment: 'HW', name: 'q.pdf' }, DATABASE, platform),
-      { ok: false, error: 'unsupported' },
+      { error: 'unsupported' },
     );
   }
   assert.equal(requests.length, 0);
@@ -74,10 +72,7 @@ test('reveal shows the path the database resolved', async () => {
   stubFetch();
   const shown = [];
   const target = { course: 'A', assignment: 'HW', name: 'q.pdf' };
-  assert.deepEqual(await revealDataFile(target, DATABASE, (path) => shown.push(path)), {
-    ok: true,
-    error: null,
-  });
+  assert.equal(await revealDataFile(target, DATABASE, (path) => shown.push(path)), undefined);
   assert.deepEqual(shown, ['/data/file.pdf']);
   assert.equal(requests[0].url, `${DATABASE.url}/courses/A/assignments/HW/files/q.pdf/path`);
 });
@@ -87,7 +82,7 @@ test('reveal passes a database failure through and shows nothing', async () => {
   const shown = [];
   assert.deepEqual(
     await revealDataFile({ course: 'A', name: 'x' }, DATABASE, (path) => shown.push(path)),
-    { ok: false, error: 'database answered 404' },
+    { error: 'database answered 404' },
   );
   assert.deepEqual(shown, []);
 });

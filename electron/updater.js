@@ -102,10 +102,9 @@ function onUpdateState(listener) {
 }
 
 /** Kill via `stop()`, then install and relaunch — `quitAndInstall` spawns NSIS before `will-quit`.
- *  A throwing kill or a synchronous install error calls `recover()`; see docs/UPDATES.md. */
+ *  Answers `undefined` or `{error}`; a throwing kill or synchronous install error calls `recover()`. */
 function restartToUpdate(stop, recover, log) {
-  if (shown !== 'downloaded')
-    return Promise.resolve({ ok: false, error: 'no update is downloaded' });
+  if (shown !== 'downloaded') return Promise.resolve({ error: 'no update is downloaded' });
   // A second click while the first is still killing joins it rather than installing twice.
   restarting ??= (async () => {
     // Only a synchronous `error` event is caught; a failed installer launch arrives after quit is scheduled.
@@ -120,12 +119,12 @@ function restartToUpdate(stop, recover, log) {
     } finally {
       autoUpdater.off('error', onError);
     }
-    if (!failure) return { ok: true };
+    if (!failure) return;
     restarting = null;
     log('updater', `restart failed: ${failure.message}`);
     // The services may already be dead; `shown` stays `downloaded`, so Restart now stays offered.
     recover();
-    return { ok: false, error: failure.message };
+    return { error: failure.message };
   })();
   return restarting;
 }

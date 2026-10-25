@@ -68,17 +68,21 @@ assignment `{ course, assignment, name }`, and overview `{ course, name }` (a co
 - **`open.file(target)`** hands the resolved path to `shell.openPath` — the user's own app, not a
   Chromium tab.
 - **`open.fileWith(target)`** opens Windows' "Open with" chooser on it (`rundll32.exe
-  shell32.dll,OpenAs_RunDLL <path>`, argv, no shell). Off Windows it answers `error: 'unsupported'`
+  shell32.dll,OpenAs_RunDLL <path>`, argv, no shell). Off Windows it rejects with message `unsupported`
   without asking the database; the frontend offers it only when `platform` is `win32`.
 - **`open.reveal(target)`** selects it in the OS file manager (`shell.showItemInFolder`), on every
-  platform. That call reports nothing, so a resolved path answers `ok: true`.
+  platform. That call reports nothing, so a resolved path is success.
 - **`open.external(url)`** opens an http(s) link in the user's browser. Any other scheme is refused:
   `shell.openExternal` launches whatever handler a scheme is registered to, so an unchecked one is a
   way to start a program from a renderer.
 
 **The renderer sends identifiers, never a path.** `database/` stays the single owner of the
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
-bridge. All answer `{ ok, error }` — main does not toast; the frontend does.
+bridge. Each resolves with nothing on success and rejects with an `Error` whose `message` is the exact
+OS, spawn or fetch text, `database answered <status>`, `the database service is not running`,
+`unsupported`, `not a URL: <url>` or `refused scheme: <proto>:`; main does not toast, the frontend does. Main's handler answers `undefined` or `{ error }` and never throws — Electron prefixes a
+thrown message with "Error invoking remote method …" — and the preload turns `{ error }` into the
+rejection. The `Error` carries no `code`, since the context bridge strips custom properties.
 
 **`pickFolder(defaultPath?)`** opens the OS folder dialog — for the data-folder field and for the general
 downloads folder the extension asks for — and resolves to the chosen absolute path, or `null` on cancel.

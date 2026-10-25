@@ -4,6 +4,13 @@ const { contextBridge, ipcRenderer } = require('electron');
 // keeps the secret off the command line — see docs/RENDERER.md.
 const config = ipcRenderer.sendSync('faststudy:config');
 
+// An action call: main answers `undefined` or `{error}` and never throws, since Electron would prefix
+// the message. Only `message` crosses the context bridge, so `'unsupported'` is matched by text.
+const action = (channel) => async (arg) => {
+  const failure = await ipcRenderer.invoke(channel, arg);
+  if (failure) throw new Error(failure.error);
+};
+
 contextBridge.exposeInMainWorld('faststudy', {
   urls: config.urls,
   secret: config.secret,
@@ -27,17 +34,17 @@ contextBridge.exposeInMainWorld('faststudy', {
     read: () => ipcRenderer.invoke('faststudy:settings-read'),
     write: (patch) => ipcRenderer.invoke('faststudy:settings-write', patch),
   },
-  // Identifiers, never a path, for a file; http(s) only for a link.
+  // Identifiers, never a path, for a file; http(s) only for a link. Each resolves empty or rejects.
   open: {
-    file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
-    fileWith: (target) => ipcRenderer.invoke('faststudy:open-file-with', target),
-    reveal: (target) => ipcRenderer.invoke('faststudy:open-reveal', target),
-    external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
+    file: action('faststudy:open-file'),
+    fileWith: action('faststudy:open-file-with'),
+    reveal: action('faststudy:open-reveal'),
+    external: action('faststudy:open-external'),
   },
   // The OS folder dialog, raising the window first; resolves to an absolute path, or `null` on cancel.
   pickFolder: (defaultPath) => ipcRenderer.invoke('faststudy:pick-folder', defaultPath),
   // The app's update row: `'downloading' | 'downloaded' | null`, pushed on every check. `restart()`
-  // installs a downloaded update and relaunches, answering `{ ok, error }` — see docs/UPDATES.md.
+  // installs a downloaded update and relaunches, or rejects — see docs/UPDATES.md.
   updates: {
     snapshot: () => ipcRenderer.invoke('faststudy:update-state'),
     // Returns the unsubscribe, for an effect's cleanup.
@@ -46,7 +53,7 @@ contextBridge.exposeInMainWorld('faststudy', {
       ipcRenderer.on('faststudy:update', listener);
       return () => ipcRenderer.removeListener('faststudy:update', listener);
     },
-    restart: () => ipcRenderer.invoke('faststudy:update-restart'),
+    restart: action('faststudy:update-restart'),
   },
   // The folder Chrome loads the extension unpacked from, and `reveal()` opening it in the file manager.
   extension: {
