@@ -35,7 +35,7 @@ The rule, in order:
 | Drop    | `<` `>` `:` `"` `/` `\` `\|` `?` `*` and control characters — removed, never substituted |
 | Trim    | Whitespace, then trailing dots and spaces — Windows strips those silently, which would desync the name from the directory |
 | Cap     | 80 characters, leaving headroom under `MAX_PATH` for `DATA_ROOT` + `Recitations/` + the longest artifact name |
-| Reserve | `CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9` take a `_` suffix — reserved with an extension too, so `CON.txt` is refused |
+| Reserve | `CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9` get a `_` right after the base, before the first dot (`CON_`, `com1_.txt`, `con _.x`) — reserved with an extension too |
 | Reject  | A name with nothing legal left raises, surfacing as a `400`                              |
 
 Illegal characters are dropped rather than substituted because a separator would have to be a legal

@@ -225,14 +225,25 @@ def data_root() -> Path:
     return _data_root
 
 
+def defuse_reserved(name: str) -> str:
+    """Insert `_` after a reserved device base, before the first dot (`com1.txt` -> `com1_.txt`).
+
+    Win32 matches the text before the first dot with trailing spaces stripped, so a suffix at the end would not help.
+    """
+
+    head, dot, rest = name.partition(".")
+    if head.rstrip(" ").upper() in RESERVED_NAMES:
+        return f"{head}_{dot}{rest}"
+    return name
+
+
 def safe_name(name: str) -> str:
     """Reduce a course/lecture name to a component that is legal on NTFS as well as ext4."""
 
     cleaned = "".join(c for c in name if c not in ILLEGAL_NAME_CHARS).strip()
     # Windows silently strips trailing dots and spaces, which would desync the name from disk.
-    cleaned = cleaned[:MAX_NAME_LEN].rstrip(". ")
-    if cleaned.split(".")[0].upper() in RESERVED_NAMES:
-        cleaned += "_"
+    # Defuse before the cap (the `_` must not overflow), and again after: a cut inside trailing spaces drops it.
+    cleaned = defuse_reserved(defuse_reserved(cleaned)[:MAX_NAME_LEN].rstrip(". "))
     if not cleaned:
         raise CodedValueError(
             f"name has no legal characters: {name!r}",
