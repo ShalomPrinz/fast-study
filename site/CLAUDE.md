@@ -9,7 +9,7 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | `index.html`  | Every section, both languages' copy side by side as `.he` / `.en` spans          |
 | `code-signing.html` | The code signing policy SignPath Foundation requires: its title and team roles on top, the full privacy policy as the last section (`#privacy`) — also the privacy URL Google OAuth brand verification holds, so it keeps the Drive scope, token and Limited Use lines |
 | `style.css`   | The app's own tokens, light only, logical properties for both directions        |
-| `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>`. Also the journey carousel, and the zoom overlay every `main img` opens (a `<dialog>`; Esc or any click closes, focus returns) |
+| `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>`. Also the journey carousel, and the zoom overlay every `main img` opens (a `<dialog>`; Esc or a click anywhere but the arrows closes, focus returns). A journey shot's zoom also steps the four shots (edge arrows, ←/→ by reading direction, N of 4 counter, wrapping) by driving the carousel's `show()`, and the carousel and focus end on the last one viewed |
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
 | `capture.mjs` | Recaptures the eleven app screenshots on a live app-harness stack from `capture/` |
 | `capture/`    | The screenshots' own dataset: `dataset.mjs` (courses, lectures, the journey's lecture) and `text/` (Hebrew transcripts and summaries) |

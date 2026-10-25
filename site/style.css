@@ -631,7 +631,52 @@ p {
   box-shadow: var(--shadow-lg);
 }
 
-.zoom button {
+.zoom-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Stepping lives only in a journey shot's zoom: round arrows on the screen edges, a counter beside Close. */
+.zoom .journey-arrow,
+.zoom-count {
+  display: none;
+}
+
+.zoom.is-journey .journey-arrow {
+  display: grid;
+  position: absolute;
+  inset-block-start: calc(50% - 29px);
+  transform: translateY(-50%);
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+  cursor: pointer;
+}
+
+.zoom.is-journey .journey-arrow[data-step='-1'] {
+  inset-inline-start: 16px;
+}
+
+.zoom.is-journey .journey-arrow[data-step='1'] {
+  inset-inline-end: 16px;
+}
+
+.zoom.is-journey .zoom-count {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.zoom .journey-arrow:hover {
+  background: var(--accent-soft);
+}
+
+.zoom button.zoom-close {
   flex: none;
   block-size: var(--zoom-close-h);
   padding-inline: 24px;
@@ -644,7 +689,7 @@ p {
   cursor: pointer;
 }
 
-.zoom button:hover {
+.zoom .zoom-close:hover {
   background: var(--surface-sunken);
 }
 
