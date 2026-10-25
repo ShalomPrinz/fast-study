@@ -32,7 +32,15 @@ function lecture(name: string, ...present: string[]): Lecture {
 }
 
 function course(name: string, lectures: Lecture[], recitations: Lecture[] = []): Course {
-  return { name, archived: false, source_url: null, lectures_only: false, lectures, recitations }
+  return {
+    name,
+    archived: false,
+    source_url: null,
+    lectures_only: false,
+    lectures,
+    recitations,
+    assignments: [],
+  }
 }
 
 const queued = (c: string, l: string): QueueEntry => ({

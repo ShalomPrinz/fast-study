@@ -1,6 +1,6 @@
 import { t } from '@lingui/core/macro'
 import type { Kind } from '@/types'
-import { materialUrl, overviewFileUrl } from './database'
+import { assignmentFileUrl, materialUrl, overviewFileUrl } from './database'
 import { runtimeBridge } from './runtime'
 import { toast } from './toaster'
 
@@ -72,4 +72,45 @@ export async function openExternalUrl(url: string | undefined): Promise<void> {
   } catch (e) {
     toast('error', t`Could not open the link: ${(e as Error).message}`)
   }
+}
+
+/** One file of a course assignment: the OS default app packaged, a new tab in browser dev. */
+export async function openAssignmentFile(
+  course: string,
+  assignment: string,
+  name: string,
+): Promise<void> {
+  const bridge = runtimeBridge()
+  if (!bridge) {
+    window.open(assignmentFileUrl(course, assignment, name), '_blank')
+    return
+  }
+  await openFile(bridge.open.file({ course, assignment, name }))
+}
+
+/** The OS's "Open with…" picker for an assignment file; callers gate on `canOpenWith`. */
+export async function openAssignmentFileWith(
+  course: string,
+  assignment: string,
+  name: string,
+): Promise<void> {
+  const fileWith = runtimeBridge()?.open.fileWith
+  if (!fileWith) return
+  await openFile(fileWith({ course, assignment, name }))
+}
+
+/** Whether the launcher can show a file in its folder; browser dev and older launchers cannot. */
+export function canReveal(): boolean {
+  return !!runtimeBridge()?.open.reveal
+}
+
+/** Shows an assignment file in the OS file manager; callers gate on `canReveal`. */
+export async function revealAssignmentFile(
+  course: string,
+  assignment: string,
+  name: string,
+): Promise<void> {
+  const reveal = runtimeBridge()?.open.reveal
+  if (!reveal) return
+  await openFile(reveal({ course, assignment, name }))
 }

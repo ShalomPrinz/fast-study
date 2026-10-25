@@ -74,6 +74,7 @@ export function resolveRow(
   course: string,
   lock?: RowLock,
 ): Resolved {
+  if (item.media === 'assignment') return resolveAssignment(item, edit, course, lock)
   if (lecturesOnly(courses, course, false))
     return resolveLecturesOnly(item, edit, courses, course, lock)
   const kind = edit?.kind ?? item.kind
@@ -83,6 +84,19 @@ export function resolveRow(
       : suggestItemName(item.title, kind, courses, course, kind, item.section)
   const value = edit?.name ?? suggestion
   return { kind, suggestion, value, name: value.trim() || suggestion }
+}
+
+// An assignment row names an assignment, not a lecture: the suggestion is Moodle's own title verbatim —
+// no number extraction, so two assignments never merge — and the kind is moot (always 'lecture').
+function resolveAssignment(
+  item: Item,
+  edit: RowEdit | undefined,
+  course: string,
+  lock?: RowLock,
+): Resolved {
+  const suggestion = lock && lock.course === course ? lock.name : (item.assignment ?? item.title)
+  const value = edit?.name ?? suggestion
+  return { kind: 'lecture', suggestion, value, name: value.trim() || suggestion }
 }
 
 // A lectures-only course ignores the row's kind toggle and auto's keyword guess: the name keeps the

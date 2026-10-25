@@ -17,10 +17,17 @@ import '@/styles/chip.css'
 import './MaterialChip.css'
 
 // The file's name as a button that opens it in the OS default app; an assignment file row reuses it.
-export function MaterialNameButton({ label, onOpen }: { label: string; onOpen: () => void }) {
-  const { t } = useLingui()
+export function MaterialNameButton({
+  label,
+  hint,
+  onOpen,
+}: {
+  label: string
+  hint: string
+  onOpen: () => void
+}) {
   return (
-    <Tooltip content={t`Open material`}>
+    <Tooltip content={hint}>
       <button className="material-chip-name" onClick={onOpen} dir="auto">
         {label}
       </button>
@@ -77,6 +84,7 @@ export default function MaterialChip({
       <Icon icon="file" />
       <MaterialNameButton
         label={name}
+        hint={t`Open material`}
         onOpen={() => openLectureFile(course, lecture, material.name, kind)}
       />
       {tooLarge && (

@@ -2,6 +2,11 @@
 import type { SettingsBacking } from './settings'
 import type { Kind } from '@/types'
 
+/** What the bridge opens: a lecture file, a course `overview/` file (no `lecture`) or an assignment file. */
+export type OpenTarget =
+  | { course: string; lecture?: string; name: string; kind?: Kind }
+  | { course: string; assignment: string; name: string }
+
 /** The launcher's update phase; only these two cross the bridge, everything else is `null`. */
 export type UpdateState = 'downloading' | 'downloaded' | null
 
@@ -43,27 +48,12 @@ declare global {
       // resolves the path; a `target` without `lecture` is a course-level `overview/` file. Each call
       // resolves `void` and rejects with an `Error` whose `message` is the exact failure text.
       open: {
-        file: (target: {
-          course: string
-          lecture?: string
-          name: string
-          kind?: Kind
-        }) => Promise<void>
+        file: (target: OpenTarget) => Promise<void>
         external: (url: string | undefined) => Promise<void>
         // Windows only ("Open with…"); rejects `unsupported` elsewhere. Absent on older launchers.
-        fileWith?: (target: {
-          course: string
-          lecture?: string
-          name: string
-          kind?: Kind
-        }) => Promise<void>
+        fileWith?: (target: OpenTarget) => Promise<void>
         // Shows the file in its folder. Absent on older launchers.
-        reveal?: (target: {
-          course: string
-          lecture?: string
-          name: string
-          kind?: Kind
-        }) => Promise<void>
+        reveal?: (target: OpenTarget) => Promise<void>
       }
       // `process.platform`; absent in browser dev and on an older launcher.
       platform?: string

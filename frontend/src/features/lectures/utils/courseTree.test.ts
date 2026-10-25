@@ -11,6 +11,7 @@ const node = (lectures: string[], recitations: string[], lectures_only: boolean)
   // The tree arrives with each list in `sortLectures` order, as SnapshotProvider hands it out.
   lectures: sortLectures(lectures.map((name) => ({ name }) as Lecture)),
   recitations: sortLectures(recitations.map((name) => ({ name }) as Lecture)),
+  assignments: [],
 })
 
 const shown = (c: Course) => lectureTrack(c).map((i) => `${i.kind}:${i.name}`)

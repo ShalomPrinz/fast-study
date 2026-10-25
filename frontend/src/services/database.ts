@@ -7,7 +7,13 @@ import type {
   OverviewMetaRaw,
   OverviewMeta,
 } from '@/types'
-import { path, kindQuery, lectureBase, courseOverviewBase } from '@/shared/utils/url'
+import {
+  path,
+  kindQuery,
+  lectureBase,
+  assignmentBase,
+  courseOverviewBase,
+} from '@/shared/utils/url'
 import { createClient } from './http'
 import { reportVideoArrived } from './backend'
 import { DATABASE_URL } from './runtime'
@@ -46,6 +52,11 @@ export async function setMaterialAttach(
   await database.patch(lectureBase(course, lecture) + path`/materials/${name}` + kindQuery(kind), {
     json: { attach },
   })
+}
+
+// One file of a course assignment, for the browser-dev new tab; packaged opens go through the bridge.
+export function assignmentFileUrl(course: string, assignment: string, name: string): string {
+  return database.url(assignmentBase(course, assignment) + path`/files/${name}`)
 }
 
 export async function fetchTree(): Promise<Course[]> {

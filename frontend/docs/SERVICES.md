@@ -62,7 +62,7 @@ is type-only, so the mutual import with `settings.ts` is erased.
 ## `open.ts` — opening a file or a link outside the app
 
 Packaged, a fresh navigation cannot carry `X-FastStudy-Secret`, so a service URL opened in a new window
-is a `401` and a blank page. `openLectureFile`, `openLectureFileWith` (Windows packaged only, no browser fallback; gate on `canOpenWith()`), `openOverviewFile` and `openExternalUrl` hand
+is a `401` and a blank page. `openLectureFile`, `openLectureFileWith` (Windows packaged only, no browser fallback; gate on `canOpenWith()`), `openOverviewFile`, `openAssignmentFile`, `openAssignmentFileWith`, `revealAssignmentFile`, `canReveal` and `openExternalUrl` hand
 **identifiers** to `window.faststudy.open`, which resolves the path through `database/` and opens it in
 the user's own app — a path never reaches the renderer, so a compromised one gets no open-any-file
 primitive. A failure toasts its English prose inside a translated wrapper — the bridge is not a service and sends no code.

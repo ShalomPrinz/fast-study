@@ -43,6 +43,22 @@ function node(
   }
 }
 
+// `name@source,…` per assignment: [name, [file specs]].
+function withAssignments(courses: Course[], specs: [string, string[]][]): Course[] {
+  return courses.map((c) => ({
+    ...c,
+    assignments: specs.map(([name, files]) => ({
+      name,
+      files: files.map((f) => {
+        const [fname, source] = f.split('@')
+        return source
+          ? { name: fname, size: 1, mtime: 1, source }
+          : { name: fname, size: 1, mtime: 1 }
+      }),
+    })),
+  }))
+}
+
 function tree(lectures: Lecture[], recitations: Lecture[] = []): Course[] {
   return [
     {
@@ -52,6 +68,7 @@ function tree(lectures: Lecture[], recitations: Lecture[] = []): Course[] {
       lectures_only: false,
       lectures,
       recitations,
+      assignments: [],
     },
   ]
 }
@@ -235,5 +252,40 @@ describe('holdsVideo', () => {
   it('is false for a lecture with no video and for a missing one', () => {
     expect(holdsVideo('Never had one', 'lecture', courses, 'Algebra')).toBe(false)
     expect(holdsVideo('Nowhere', 'lecture', courses, 'Algebra')).toBe(false)
+  })
+})
+
+describe('assignment rows', () => {
+  const courses = withAssignments(tree([node('Lecture 1', { video: true })]), [
+    ['תרגיל 1', ['a.pdf@refA', 'b.pdf']],
+    ['תרגילון 1', ['c.pdf@refC']],
+  ])
+  const row = (ref: string, name: string) =>
+    hasResource({ ref, media: 'assignment' }, name, 'lecture', courses, 'Algebra')
+
+  it('is on disk only when a file of the named assignment came from this ref', () => {
+    expect(row('refA', 'תרגיל 1')).toBe(true)
+    expect(row('refA', 'תרגילון 1')).toBe(false)
+    expect(row('refB', 'תרגיל 1')).toBe(false)
+    expect(row('refA', 'Lecture 1')).toBe(false)
+  })
+
+  it('never matches a ref-less caller or a source-less file', () => {
+    expect(hasResource({ media: 'assignment' }, 'תרגיל 1', 'lecture', courses, 'Algebra')).toBe(
+      false,
+    )
+  })
+
+  it('reads a target as landed by the same rule, never through split siblings', () => {
+    const target = (name: string) =>
+      targetLanded({ ref: 'refA', name, kind: 'lecture', media: 'assignment' }, courses, 'Algebra')
+    expect(target('תרגיל 1')).toBe(true)
+    expect(target('תרגיל')).toBe(false)
+  })
+
+  it('never counts as overwriting a stored video', () => {
+    expect(
+      overwritesVideo({ media: 'assignment' }, 'Lecture 1', 'lecture', courses, 'Algebra'),
+    ).toBe(false)
   })
 })

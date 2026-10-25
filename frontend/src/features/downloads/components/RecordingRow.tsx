@@ -20,6 +20,8 @@ import {
 import type { RowEdit, RowLock } from '@/features/downloads/contexts/RowEditsContext'
 import { useRowEdit } from '@/features/downloads/contexts/RowEditsContext'
 import {
+  assignmentFilesOf,
+  existingAssignmentNames,
   existingNames,
   hasResource,
   materialsOf,
@@ -81,9 +83,11 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   const verdict = resolved === 'video' || resolved === 'unsupported' ? resolved : undefined
   // A material row attaches a file to an existing lecture instead of creating one from a video.
   const material = item.media === 'material'
+  // An assignment row files into a named assignment: no kind, no lecture, so the pipeline never touches it.
+  const assignment = item.media === 'assignment'
   // The split siblings on disk a video row could overwrite (a zoom recording lands as `${name}.1`/`.2`),
   // so both the overwrite confirm and the pipeline lock cover them.
-  const siblings = material ? [] : splitSiblings(effectiveName, kind, courses, course)
+  const siblings = material || assignment ? [] : splitSiblings(effectiveName, kind, courses, course)
   const {
     download,
     retryClip,
@@ -104,12 +108,15 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   const onlyLectures = lecturesOnly(courses, course, false)
   // A lectures-only course lists its recitations among the lectures, so a material can reach either.
   const node = courses.find((c) => c.name === course)
-  const attachable =
-    onlyLectures && node
+  const attachable = assignment
+    ? existingAssignmentNames(courses, course)
+    : onlyLectures && node
       ? lectureTrack(node).map((i) => i.name)
       : existingNames(kind, courses, course)
   // Non-blocking state note: a material download appends, so the count is shown rather than confirmed.
   const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
+  // Every file of one assignment lands in the same node, so the target's file count is shown instead.
+  const fileCount = assignment ? assignmentFilesOf(effectiveName, courses, course).length : 0
   // Live tree, so a completed download's SSE refresh flips the card green.
   const alreadyDownloaded = hasResource(
     { ref: item.ref, media: item.media, resolvedMedia: resolved },
@@ -126,9 +133,9 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   const action = rowAction({ pending, unsupported, failed, done: status === 'done' })
   // The pipeline is running or queued on a lecture this row would write; the hook re-checks on start.
   const { status: runner } = useRunnerStatus()
-  const inPipeline = [effectiveName, ...siblings].some((n) =>
-    isLectureRenameLocked(runner, course, n, kind),
-  )
+  const inPipeline =
+    !assignment &&
+    [effectiveName, ...siblings].some((n) => isLectureRenameLocked(runner, course, n, kind))
   const busyTitle = t`Can't download while this lecture is being processed or waiting in line`
   // Download, Download again and clip retry wait out the lock only on a row auto flagged `moodle`.
   const locked = rowLocked(item.moodle, useMoodleLockState())
@@ -138,10 +145,10 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   // (the whole-row download or one clip's retry). Null means no modal.
   const [confirm, setConfirm] = useState<{ message: string; run: () => void } | null>(null)
 
-  // A material appends as the next material.N.<ext> and lazy zoom splits are a video-only hazard, so a
-  // material row never confirms — the row's material count is the whole signal.
+  // A material appends as the next material.N.<ext> and an assignment file lands beside its siblings;
+  // lazy zoom splits are a video-only hazard, so neither row confirms — the row's count is the signal.
   const onDownloadClick = () => {
-    if (material) {
+    if (material || assignment) {
       download()
       return
     }
@@ -211,7 +218,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
         </span>
 
         {/* A lectures-only course saves every new recording as a lecture. */}
-        {!onlyLectures && (
+        {!onlyLectures && !assignment && (
           <div className="mode-toggle mode-toggle--light">
             <button
               className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
@@ -228,24 +235,31 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
           </div>
         )}
 
-        {/* Material picks an existing lecture to attach to, so the input offers them — while
-            staying free text, since the lecture may not exist yet. */}
+        {/* Material and assignment rows pick an existing lecture or assignment, so the input offers
+            them — while staying free text, since the target may not exist yet. */}
         <input
           className="source-row-input recording-name-input"
           value={value}
           onChange={(e) => setName(e.target.value)}
           placeholder={suggestion}
-          list={material ? listId : undefined}
-          aria-label={material ? t`Attach material to` : t`Lecture name`}
+          list={material || assignment ? listId : undefined}
+          aria-label={
+            assignment ? t`Assignment` : material ? t`Attach material to` : t`Lecture name`
+          }
           // A suggestion input follows the UI direction so its text aligns with the list (I18N.md).
-          dir={material ? undefined : 'auto'}
+          dir={material || assignment ? undefined : 'auto'}
         />
-        {material && (
+        {(material || assignment) && (
           <datalist id={listId}>
             {attachable.map((n) => (
               <option key={n} value={n} />
             ))}
           </datalist>
+        )}
+        {fileCount > 0 && (
+          <span className="recording-material-count">
+            <Plural value={fileCount} one="# file" other="# files" />
+          </span>
         )}
         {materialCount > 0 && (
           <span className="recording-material-count">

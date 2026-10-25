@@ -72,6 +72,11 @@ export default function DownloadsView() {
   const allMediaModes: Record<Media, ModeConfig> = {
     video: { label: t`Videos`, count: countOf('video'), icon: 'lecture' },
     material: { label: t`Materials`, count: countOf('material'), icon: 'file' },
+    assignment: {
+      label: t`Assignments`,
+      count: countOf('assignment'),
+      icon: 'document',
+    },
     unknown: { label: t`Unknown`, count: countOf('unknown'), icon: 'question' },
   }
   const mediaModes = Object.fromEntries(
@@ -83,6 +88,7 @@ export default function DownloadsView() {
   const emptyState: Record<Media, string> = {
     video: t`No recordings found.`,
     material: t`No materials found.`,
+    assignment: t`No assignments found.`,
     unknown: t`No files of unknown type found.`,
   }
 

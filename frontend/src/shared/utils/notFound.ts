@@ -35,3 +35,14 @@ export function routeMiss(
     ? { message: t`Courses failed to load.`, failed: true }
     : { message: missing, failed: false }
 }
+
+export function assignmentNotFound(
+  courses: Course[],
+  course: string,
+  assignment: string,
+): string | null {
+  const found = courses.find((c) => c.name === course)
+  if (!found) return courseNotFound(courses, course)
+  if (found.assignments.some((a) => a.name === assignment)) return null
+  return t`"${course}" has no assignment named "${assignment}".`
+}

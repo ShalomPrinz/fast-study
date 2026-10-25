@@ -54,7 +54,7 @@ export function challengeWindowOf(params: ErrorParams | null | undefined): Chall
 
 // Which file the item lands on disk as; the destination is derived server-side from `ref`.
 // A Google Drive row is 'unknown': its file type is only knowable from a download-time probe.
-export type Media = 'video' | 'material' | 'unknown'
+export type Media = 'video' | 'material' | 'assignment' | 'unknown'
 
 // What a probe found the file to be. A probed row resolves to video only; 'unsupported' is any other
 // file auto can't use (a PDF or .zip included).
@@ -76,6 +76,11 @@ export interface Item {
   // Auto's verdict that downloading this row reaches the Moodle host, so it waits out the Moodle lock.
   // Advisory: the gate still enforces, and a wrong `false` is only the quiet 429.
   moodle: boolean
+  // An assignment file only (`origin: 'assign'`): the Moodle assignment title verbatim — the row's
+  // suggested destination — and the file's original name.
+  origin?: string
+  assignment?: string
+  filename?: string
 }
 
 // HTTP 401 { status: 'reconnect' }: the stored Moodle session is gone. Distinct type so the UI

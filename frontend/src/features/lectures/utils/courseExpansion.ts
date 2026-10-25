@@ -1,6 +1,7 @@
 export interface CourseExpansion {
   expanded: boolean
   recExpanded: boolean
+  assignExpanded?: boolean
 }
 
 // Module scope outlives the tree pane's unmount, so active courses reopen as the user left them.

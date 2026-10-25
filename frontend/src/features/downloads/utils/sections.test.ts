@@ -239,3 +239,28 @@ describe('showsMediaSegment', () => {
     expect(showsMediaSegment('material', 0)).toBe(true)
   })
 })
+
+describe('groupSections with assignment items', () => {
+  it('groups assignment files by Moodle heading and sends a blank one to Other', () => {
+    const items = [
+      item('a', 'Week 1', 'assignment'),
+      item('b', '', 'assignment'),
+      item('c', 'Week 1', 'assignment'),
+      item('d', 'Week 1'),
+    ]
+    expect(refs(groupSections(items, 'assignment'))).toEqual([
+      ['Week 1', ['a', 'c']],
+      [OTHER_SECTION, ['b']],
+    ])
+    expect(refs(groupSections(items, 'video'))).toEqual([['Week 1', ['d']]])
+  })
+
+  it('keys a run per course and media, and parses it back', () => {
+    const id = sectionId('Algebra', 'assignment', 'Week 1')
+    expect(parseSectionId(id)).toEqual({ course: 'Algebra', media: 'assignment', title: 'Week 1' })
+  })
+
+  it('shows the Assignments segment even while empty', () => {
+    expect(showsMediaSegment('assignment', 0)).toBe(true)
+  })
+})

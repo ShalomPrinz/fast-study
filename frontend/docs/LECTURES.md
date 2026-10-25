@@ -96,6 +96,15 @@ rule reads that map, so a stripped lecture is never materials-only and resumes w
 Its row shows the grey `removed` `StatusNode`, a greyed name and "Removed", with no action (`stageControl`);
 a step whose input was removed (rotate, or run) is disabled with a tooltip saying so. `.pipeline-row--removed` marks the row.
 
+## Assignment view
+
+`/course/:course/assignment/:assignment` (`AssignmentView`, `assignmentRoute`; four segments, so no lecture or
+overview URL reaches it) lists the assignment's files with sizes. A name opens through
+`openAssignmentFile` (bridge `open.file`, else a new tab on the database route), via the same
+`MaterialNameButton` the material chips use. "Open with…" (`OpenWithMenu`) shows on Windows packaged only,
+and "Show in folder" calls `open.reveal` — disabled with a tooltip without `canReveal()` (browser dev, older
+launcher). A rejected bridge call toasts its message. No viewer, delete or rename.
+
 ## Study with AI
 
 `components/StudyWithAiCard` sits in a column on the inline-end side of the pipeline list, top-aligned
@@ -187,7 +196,7 @@ page) while the tree still has it, else `/`.
 
 ## Tree pane
 
-`LecturesTreePane` renders beside `/`, the overview and `/:course/:lecture` only. It holds the active
+`LecturesTreePane` renders beside `/`, the overview, an assignment and `/:course/:lecture` only. It holds the active
 `CourseGroup`s, `ArchivedSection` and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
 lecture row can prompt. With no active course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. An expanded course opens with an Overview row; the course header only toggles.
 
@@ -220,8 +229,11 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
   on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through
   `sortLectures`. Everything reads it directly, no props
   or outlet context.
-- `CourseGroup` owns `expanded` and `recExpanded`, so the recitations sub-group survives collapsing the
-  course. It auto-expands when one of its lectures or its overview is the open route (deep links).
+- `CourseGroup` owns `expanded`, `recExpanded` and `assignExpanded`, so the sub-groups survive collapsing the
+  course. It auto-expands when one of its lectures, its overview or an assignment is the open route (deep links).
+- `AssignmentsGroup` lists the course's `assignments` after the recitations, styled like them, whatever
+  `lectures_only` says and never folded into the lectures; nothing creates one by hand, so a course
+  without any shows no group.
 - The pane unmounts on other routes; only each course's expansion (a module map in
   `utils/courseExpansion.ts`, moved to the new name on a course rename) and the nav's scroll position
   survive, the latter saved on each scroll because a detached nav reads 0. The auto-expand re-runs on

@@ -1,6 +1,7 @@
 // The browser route patterns App.tsx declares; also fed to useMatch/matchPath so they cannot drift.
 export const ROUTES = {
   overview: '/course/:course/overview',
+  assignment: '/course/:course/assignment/:assignment',
   lecture: '/:course/:lecture',
   editor: '/:course/:lecture/edit',
   downloads: '/downloads',

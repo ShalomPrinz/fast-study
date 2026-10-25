@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from '@/app/Layout'
 import InitGate from '@/app/InitGate'
 import { SettingsProvider } from '@/shared/contexts/SettingsContext'
+import AssignmentView from '@/features/lectures/AssignmentView'
 import MainView from '@/features/lectures/MainView'
 import LecturesLayout from '@/features/lectures/LecturesLayout'
 import EditSummaryView from '@/features/lectures/EditSummaryView'
@@ -62,6 +63,7 @@ export default function App() {
             <Route element={<LecturesLayout />}>
               <Route index element={<EmptyState />} />
               <Route path={ROUTES.overview} element={<CourseView />} />
+              <Route path={ROUTES.assignment} element={<AssignmentView />} />
               <Route path={ROUTES.lecture} element={<MainView />} />
             </Route>
             <Route path={ROUTES.downloads} element={<DownloadsView />} />

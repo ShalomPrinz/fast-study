@@ -74,6 +74,14 @@ export interface Lecture {
   done: boolean
 }
 
+// One file of a course assignment; `source` is the discovery row's `ref`, absent on a hand-placed file.
+export type AssignmentFile = { name: string; size: number; mtime: number; source?: string }
+
+export interface Assignment {
+  name: string
+  files: AssignmentFile[]
+}
+
 export interface Course {
   name: string
   archived: boolean
@@ -82,6 +90,8 @@ export interface Course {
   lectures_only: boolean
   lectures: Lecture[]
   recitations: Lecture[]
+  // Always present, [] when none; never folded into lectures, whatever `lectures_only` says.
+  assignments: Assignment[]
 }
 
 export type Kind = 'lecture' | 'recitation'

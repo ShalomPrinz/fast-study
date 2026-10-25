@@ -221,12 +221,13 @@ cleared, rediscovers from the new one (`sourceChangeAction`, called from `Course
 ## Discovery
 
 `listRecordings(sourceUrl)` returns a flat `Item[]` in page order. `media` is `'video'` (lands as
-`video.mp4`), `'material'` (a Moodle file of any type, appended as the next `material.N.<ext>`) or `'unknown'` (a
+`video.mp4`), `'material'` (a Moodle file of any type, appended as the next `material.N.<ext>`), `'assignment'` (a file of a
+Moodle assignment, `origin: 'assign'`, carrying `assignment` — its title verbatim — and `filename`) or `'unknown'` (a
 Google Drive row — no filename, so only a download-time probe can tell). The destination is derived
 server-side from the opaque `ref`; the frontend branches its own affordances on `media` and never sends
 it.
 
-A `ModeToggle` (`mode-toggle--cards`) splits the three segments, each an icon card with its count — Unknown
+A `ModeToggle` (`mode-toggle--cards`) splits the segments Videos · Materials · Assignments · Unknown, each an icon card with its count — Unknown
 only while it holds a row (`showsMediaSegment`). `MediaNote` captions the chosen card: `mediaNote(media,
 autoRun)` picks the hint, and only the video side's follows AUTO_RUN and links to Settings, since only a
 video download starts a pipeline step. Then `groupSections(items, media)` filters
@@ -257,7 +258,7 @@ the passcode prompt can't stay hidden.
 
 An `unknown` row carries a chip — `?`, then `Video` / `Unsupported` — and **never changes
 segment** once resolved. A probe resolves to video only: any other file (a PDF included) is `unsupported`,
-since the app cannot tell a material from an assignment. `resolvedMedia` comes from auto's session probe cache on listing, or from a
+since the app cannot tell a material from an assignment (those arrive as their own `media`). `resolvedMedia` comes from auto's session probe cache on listing, or from a
 download: `POST /download-item`'s `media` and a 422 `UnsupportedError` are both verdicts, reported
 through the dispatch-only `ResolvedMediaContext` and stamped onto the item. It sits above the segments
 because a segment switch unmounts every row. An `unsupported` row (a dead link included) fades with Download disabled, never offering
@@ -296,18 +297,27 @@ match — no client-side sanitizing, which would only hide the desync.
 holds `video.mp4` for a video (`holdsVideo`, a removed one included, so bulk skips the lecture and a
 manual re-download still confirms), or for a material a material whose `source` equals the row's `ref`
 (equality only; a source-less manual or legacy file matches no row), so several materials share one
-node. It also decides the bulk skip and `targetLanded`. An unprobed `unknown` or an `unsupported` row
+node; for an assignment row `name` is the assignment and a file of it with `source === ref` counts the same way. It also decides the bulk skip and `targetLanded`. An unprobed `unknown` or an `unsupported` row
 is always false rather than ever showing a wrong "downloaded". The overwrite guard is the separate
 `overwritesVideo`: any non-material, non-unsupported row — an unprobed `unknown` included, since it may be a
 video and a video PUT wipes the transcript and summary — confirms when its target holds `video.mp4` in the tree — never because of a job;
 `splitSiblings` also catches `${name}.1`/`.2` (a zoom row splits into those) with a "might
-overwrite" confirm. **A material row never confirms** — it appends, and shows the target's material
+overwrite" confirm. **Material and assignment rows never confirm** — they append, and show the target's material or file
 count instead.
 
 A row whose target lecture — or, for a video row, a `splitSiblings` name — the pipeline is running or
 queued on is disabled with a tooltip, and `useRecordingDownload` re-checks at start (a confirm replays an
 older render): a video PUT would wipe the folder under a run that keeps writing the old video's outputs,
-and a material would race the summary. "Download all" skips such targets instead (see `BULK.md`).
+and a material would race the summary. "Download all" skips such targets instead (see `BULK.md`). An
+assignment row is never pipeline-locked: it writes no lecture.
+
+## Assignment rows
+
+An assignment row has no kind toggle and its input is a `<datalist>` of the course's assignment names (free
+text for a new one; `aria-label` "Assignment"). The suggestion is `item.assignment` verbatim (`resolveRow`'s
+assignment branch) — no number extraction, so `תרגיל 1` and `תרגילון 1` never merge and every file of one
+assignment lands in one node. The segment groups rows by Moodle heading, a blank one under "Other". The
+download carries the assignment name where a lecture's goes and `kind: 'lecture'`, which is moot.
 
 ## Material rows and name suggestion
 

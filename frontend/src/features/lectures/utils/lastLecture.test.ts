@@ -26,6 +26,7 @@ const courses: Course[] = [
     lectures_only: false,
     lectures: [lecture('Lecture 1')],
     recitations: [lecture('Recitation 1')],
+    assignments: [],
   },
 ]
 
