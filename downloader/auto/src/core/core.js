@@ -296,7 +296,7 @@ export async function resolveDriveFile({
   let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
-    // yt-dlp resolves the /file/d/ page itself; /download-file needs the direct-download URL.
+    // yt-dlp resolves the /file/d/ page itself, so the cap keeps the page URL.
     cap = { url: recording.pageUrl };
     cacheCap(course, name, kind, media, cap, ref);
   }

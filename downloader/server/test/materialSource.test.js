@@ -93,7 +93,7 @@ test("a job started with a row's ref uploads its material with that ref as sourc
   assert.equal(posts[0].searchParams.get('source'), REF);
 });
 
-test('a job started with no ref (/download-file, /download-url) uploads no source', async () => {
+test('a job started with no ref (/download-url) uploads no source', async () => {
   const id = startJob(
     pdfDownloader,
     { url: 'http://example.invalid/b.pdf' },

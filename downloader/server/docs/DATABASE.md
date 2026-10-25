@@ -42,8 +42,8 @@ extension. `uploadPdf` (the extension, PDF-only) sends none, so it lands as `.pd
 A material downloaded from a discovery row — `/download-item` or a section run — also sends
 `&source=<ref>`: the row's `ref`, verbatim as `/list` gave it, which the database stores as the
 material's identity so the frontend can tell this row's file from another one in the same lecture
-(`startJob`'s `ref` → the runner's `source` → `uploadMaterial`). Every other path (`/download-file`,
-`/download-url`, `/upload-pdf`) sends none, and a video upload never carries one. The match holds
+(`startJob`'s `ref` → the runner's `source` → `uploadMaterial`). Every other path
+(`/download-url`, `/upload-pdf`) sends none, and a video upload never carries one. The match holds
 only because `auto/`'s ref is a pure function of the WS listing ([BROWSING.md](../../auto/docs/BROWSING.md#the-item--ref-contract)).
 
 `uploadVideo` and `uploadMaterial` are the job path: they stream from the temp dir, remove it either
