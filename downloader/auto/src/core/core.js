@@ -56,6 +56,40 @@ function mapModules(sections, courseId) {
   return activities;
 }
 
+// One activity per assignment file (`introattachments` + `introfiles`, any mimetype, deduped by
+// fileurl). `cmid` joins the contents' module `id` for the section; no match → '' (hidden module).
+function mapAssignments(sections, assignmentsAnswer, courseId) {
+  const sectionOf = new Map();
+  for (const section of sections ?? []) {
+    for (const module of section.modules ?? [])
+      sectionOf.set(String(module.id), stripTags(section.name || ''));
+  }
+  const activities = [];
+  for (const course of assignmentsAnswer?.courses ?? []) {
+    for (const assign of course.assignments ?? []) {
+      const assignment = stripTags(assign.name || '');
+      const sectionName = sectionOf.get(String(assign.cmid)) ?? '';
+      const seen = new Set();
+      for (const file of [...(assign.introattachments ?? []), ...(assign.introfiles ?? [])]) {
+        if (!file.fileurl || seen.has(file.fileurl)) continue;
+        seen.add(file.fileurl);
+        activities.push({
+          modType: 'assign',
+          title: `${assignment} — ${file.filename}`,
+          assignment,
+          fileurl: file.fileurl,
+          filename: file.filename,
+          mimetype: file.mimetype,
+          sectionName,
+          courseId,
+          kind: 'lecture', // not meaningful for an assignment file
+        });
+      }
+    }
+  }
+  return activities;
+}
+
 /**
  * LISTING PATH: enumerate a course's recordings from the stateless WS contents — no
  * browser needed. Merges module cards with zoom-share links parsed out of each
@@ -63,10 +97,15 @@ function mapModules(sections, courseId) {
  * @param {Array<{ name?: string, summary?: string, modules?: object[] }>} sections
  *   core_course_get_contents result
  * @param {string} [courseId]  the listed course, carried on a videostream row for its resolve
+ * @param {object} [assignmentsAnswer]  mod_assign_get_assignments result, absent when the site refuses it
  * @returns {import('../extractors/VideoExtractor.js').Recording[]}
  */
-export function listRecordings(sections, courseId) {
-  const activities = [...mapModules(sections, courseId), ...parseZoomSummaries(sections)];
+export function listRecordings(sections, courseId, assignmentsAnswer) {
+  const activities = [
+    ...mapModules(sections, courseId),
+    ...parseZoomSummaries(sections),
+    ...mapAssignments(sections, assignmentsAnswer, courseId),
+  ];
   const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
@@ -158,12 +197,15 @@ export async function resolveMoodleFile({
   ref,
   forceCapture = false,
 }) {
-  let cap = forceCapture ? null : getCap(course, name, kind, 'material')?.cap;
+  // An assignment's files share its name, so the fileurl tells them apart in the cache.
+  const key = recording.assignment ? `${name}\u001f${recording.fileurl}` : name;
+  const media = recording.assignment ? 'assignment' : 'material';
+  let cap = forceCapture ? null : getCap(course, key, kind, media)?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
     const size = await assertPluginfileReadable(pluginfileUrl(recording.fileurl, wstoken));
     cap = proxyCap({ fileurl: recording.fileurl, size });
-    cacheCap(course, name, kind, 'material', cap, ref);
+    cacheCap(course, key, kind, media, cap, ref);
   }
   const target = toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache });
   // The original name rides to server/, which hands it to the database for the disk extension.

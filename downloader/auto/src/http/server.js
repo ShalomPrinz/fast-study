@@ -48,6 +48,7 @@ import * as passcodes from '../lib/passcodes.js';
 import {
   courseIdFrom,
   getCourseContents,
+  getAssignments,
   getUserCourses,
   invalidToken,
   WsError,
@@ -68,7 +69,7 @@ const PROBED = new Set(['google-drive', 'direct-url']);
 
 // Which file a row lands as, decided with no network call.
 function mediaOf(recording) {
-  if (recording.strategy === 'moodle-file') return 'material';
+  if (recording.strategy === 'moodle-file') return recording.assignment ? 'assignment' : 'material';
   return PROBED.has(recording.strategy) ? 'unknown' : 'video';
 }
 
@@ -103,6 +104,13 @@ function toItem(recording) {
     moodle: reachesMoodle(recording),
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
     section: recording.section ?? '',
+    ...(recording.assignment
+      ? {
+          origin: 'assign',
+          assignment: recording.assignment,
+          filename: recording.filename,
+        }
+      : {}),
   };
 }
 
@@ -539,6 +547,9 @@ export const handleCourseCheck = gated('/courses/check', async (req, res) => {
   send(res, 200, { ok: true });
 });
 
+// Logged once per process: every /list of a refusing site would repeat it.
+let warnedNoAssignments = false;
+
 export const handleList = gated('/list', async (req, res) => {
   const { courseUrl } = req.body;
   logReq('POST', '/list', courseUrl);
@@ -566,7 +577,21 @@ export const handleList = gated('/list', async (req, res) => {
     if (await sentWsFailure(res, e, auth, '/list', courseUrl)) return;
     throw e;
   }
-  const recordings = listRecordings(sections, courseId);
+  let assignments;
+  try {
+    assignments = await getAssignments(site, stored.wstoken, courseId);
+  } catch (e) {
+    // The contents call just passed with this token, so accessexception is the site's refusal of the function.
+    if (e instanceof WsError && e.errorcode === 'accessexception') {
+      if (!warnedNoAssignments)
+        console.warn('moodle: mod_assign_get_assignments refused; listing without assignments');
+      warnedNoAssignments = true;
+    } else {
+      if (await sentWsFailure(res, e, auth, '/list', courseUrl)) return;
+      throw e;
+    }
+  }
+  const recordings = listRecordings(sections, courseId, assignments);
   logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
 });
@@ -726,8 +751,9 @@ async function resolveItem(req, res) {
       if (await sentWall(res, '/resolve', e)) return;
       throw e;
     }
-    logResult('/resolve', `ok (${targets.length} target, material)`);
-    return send(res, 200, { media: 'material', targets });
+    const media = recording.assignment ? 'assignment' : 'material';
+    logResult('/resolve', `ok (${targets.length} target, ${media})`);
+    return send(res, 200, { media, targets });
   }
 
   // videostream needs no browser either: the plugin's Moodle-app handler names the .mp4 in one WS

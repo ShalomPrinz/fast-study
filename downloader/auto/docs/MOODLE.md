@@ -207,6 +207,13 @@ The whole course as an array of sections — `{ section, name, summary, modules[
 (not enrolled, no such course) is `422 course_not_accessible {url, detail}` on `/list` and
 `/courses/check`, `detail` Moodle's own message.
 
+### `mod_assign_get_assignments(courseids[0])`
+
+`{ courses: [{ id, assignments: [{ cmid, name, introattachments[], introfiles[] }] }], warnings }`; a file is
+`{ filename, mimetype, fileurl }`. Called by `/list` right after the contents (assignment modules carry no files
+there), see [BROWSING.md](BROWSING.md#assignment-files). A token service without it answers
+`accessexception` (`webservice_access_exception`), which `/list` skips quietly.
+
 ### `core_enrol_get_users_courses(userid)`
 
 The account's enrolled courses — `{ id, shortname, fullname, displayname, visible, hidden?, enddate, … }`.
@@ -240,6 +247,7 @@ user saved anyway still lists.
 | `videostream`   | `videostream`                                         | `module.url`'s `id` (the cmid) + the course id → the plugin's app handler      |
 | `url`           | `youtube-playlist`, `google-drive` or `direct-url`    | `contents[0].fileurl`, the **external** target — no redirect hop needed        |
 | `resource`      | `moodle-file` (any file but video, audio, HTML)      | each `contents[]` entry with `type:'file'` — one module can hold several       |
+| `assign`        | `moodle-file` (any file, as `media:'assignment'`)     | `mod_assign_get_assignments`, not the contents                                 |
 | (section summary) | `zoom`                                              | `rec/share` links in `section.summary` HTML, not modules                        |
 
 Routing is in [BROWSING.md](BROWSING.md). Recitation vs lecture is a keyword match over heading +

@@ -50,17 +50,33 @@ grey in place as unsupported.
 is exact, and the errors aren't symmetric: a listed grade sheet costs one ignored row, a missed
 slide deck costs the material. The resolved target carries the original `filename`, which `server/` hands to the database for the disk extension.
 
+## Assignment files
+
+`/list` makes one more WS call after the contents, `mod_assign_get_assignments` (same gated request, so the
+lock is held across both). Assignments are not in `core_course_get_contents` (their modules carry no
+`contents`), so this is the only place a course's assignment files live: each `assignments[]` entry has
+`introattachments[]` and `introfiles[]` (`{ filename, mimetype, fileurl }`), the same file often in both —
+deduped by `fileurl`, every mimetype kept. `cmid` joins a contents module's `id` for the row's `section`; no
+match (a hidden module) leaves it `''`. `MoodleFileExtractor` claims these (`modType:'assign'`), so they resolve
+through the `moodle-file` fetch as `media:'assignment'` with the target's `filename`. A site whose token
+service lacks the function answers `accessexception`; as the contents call just passed, that is read as the
+refusal — the listing carries no assignment rows, no error, one log line per process. Any other failure
+is handled as the contents call's. Folder modules are out of scope.
+
 ## The `Item` / `ref` contract
 
 The frontend never sees the mechanism. `/list` and `/list/expand` return
-`Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle }`:
+`Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle, origin?, assignment?, filename? }`:
 
-- `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture material of any file type), never how it is
+- `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture material of any file type, `'assignment'` = an assignment's attached file), never how it is
   fetched. `'unknown'` for every `google-drive` and `direct-url` row (which resolve to `'video'` or a 422, never `'material'`): the WS payload names no file
   and `/list` never probes (a round-trip per row). A `material` item is never `expandable`.
 - `resolvedMedia` — what a row was probed as this session (`'video'` or
   `'unsupported'`), read off the probe cache so it survives a re-list; absent when never probed. A
   resolved row keeps its original `media` rather than moving segments.
+- `origin`, `assignment`, `filename` — only on an assignment file (`media:'assignment'`, `origin:'assign'`): the
+  assignment's title verbatim and the file's original name; `title` is `"<assignment> — <filename>"` and `kind` is
+  not meaningful. See § Assignment files.
 - `ref` — the internal `Recording`, base64url JSON (`src/lib/ref.js`): stateless, round-tripped,
   never parsed by the frontend. `strategy`/`pageUrl`/`passcode` and the like must never appear in a
   response outside it. It is a pure function of the WS listing (fixed key order, no minted id, token
