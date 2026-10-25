@@ -13,7 +13,7 @@ const store = require('./store');
 const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
 const { reapChildren, signalChildren } = require('./teardown');
 const windowState = require('./windowState');
-const { dataFilePath, openDataFileWith } = require('./dataFiles');
+const { dataFilePath, openDataFileWith, revealDataFile } = require('./dataFiles');
 const {
   registerHost,
   removeBridge,
@@ -640,6 +640,9 @@ function createWindow(checks) {
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
   ipcMain.handle('faststudy:open-file-with', (event, target) =>
     openDataFileWith(target, { url: serviceUrls.database, secret: SECRET }),
+  );
+  ipcMain.handle('faststudy:open-reveal', (event, target) =>
+    revealDataFile(target, { url: serviceUrls.database, secret: SECRET }, shell.showItemInFolder),
   );
   ipcMain.handle('faststudy:open-external', (event, url) => openExternalUrl(url));
   ipcMain.handle('faststudy:pick-folder', (event, defaultPath) =>

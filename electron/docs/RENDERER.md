@@ -61,7 +61,7 @@ where every other process on the machine could read it.
 
 A service URL handed to a fresh browser navigation cannot carry the `X-FastStudy-Secret` header, so
 in the packaged app every such navigation is a `401` and a blank window. `open` is the way out, and
-it is three calls. A data-file target takes one of three shapes, each resolved by `dataFiles.js`
+it is four calls. A data-file target takes one of three shapes, each resolved by `dataFiles.js`
 through its `database/` `…/files/{name}/path` route: lecture `{ course, lecture, name, kind }`,
 assignment `{ course, assignment, name }`, and overview `{ course, name }` (a course-level `overview/` file).
 
@@ -70,6 +70,8 @@ assignment `{ course, assignment, name }`, and overview `{ course, name }` (a co
 - **`open.fileWith(target)`** opens Windows' "Open with" chooser on it (`rundll32.exe
   shell32.dll,OpenAs_RunDLL <path>`, argv, no shell). Off Windows it answers `error: 'unsupported'`
   without asking the database; the frontend offers it only when `platform` is `win32`.
+- **`open.reveal(target)`** selects it in the OS file manager (`shell.showItemInFolder`), on every
+  platform. That call reports nothing, so a resolved path answers `ok: true`.
 - **`open.external(url)`** opens an http(s) link in the user's browser. Any other scheme is refused:
   `shell.openExternal` launches whatever handler a scheme is registered to, so an unchecked one is a
   way to start a program from a renderer.

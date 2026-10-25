@@ -47,4 +47,13 @@ async function openDataFileWith(target, database, platform = process.platform) {
   });
 }
 
-module.exports = { dataFilePath, dataFileRoute, openDataFileWith };
+/** Select one data file in the OS file manager; `show` is `shell.showItemInFolder`, injected so the
+ *  tests run without Electron. `showItemInFolder` reports nothing, so a resolved path is success. */
+async function revealDataFile(target, database, show) {
+  const resolved = await dataFilePath(target, database);
+  if (!resolved.ok) return resolved;
+  show(resolved.path);
+  return { ok: true, error: null };
+}
+
+module.exports = { dataFilePath, dataFileRoute, openDataFileWith, revealDataFile };

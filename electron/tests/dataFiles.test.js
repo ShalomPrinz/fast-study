@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { afterEach, test } = require('node:test');
 
-const { dataFilePath, openDataFileWith } = require('../dataFiles');
+const { dataFilePath, openDataFileWith, revealDataFile } = require('../dataFiles');
 
 const DATABASE = { url: 'http://127.0.0.1:9', secret: 's3cret' };
 const realFetch = globalThis.fetch;
@@ -68,4 +68,26 @@ test('open-with answers unsupported off Windows without asking the database', as
     );
   }
   assert.equal(requests.length, 0);
+});
+
+test('reveal shows the path the database resolved', async () => {
+  stubFetch();
+  const shown = [];
+  const target = { course: 'A', assignment: 'HW', name: 'q.pdf' };
+  assert.deepEqual(await revealDataFile(target, DATABASE, (path) => shown.push(path)), {
+    ok: true,
+    error: null,
+  });
+  assert.deepEqual(shown, ['/data/file.pdf']);
+  assert.equal(requests[0].url, `${DATABASE.url}/courses/A/assignments/HW/files/q.pdf/path`);
+});
+
+test('reveal passes a database failure through and shows nothing', async () => {
+  stubFetch(404);
+  const shown = [];
+  assert.deepEqual(
+    await revealDataFile({ course: 'A', name: 'x' }, DATABASE, (path) => shown.push(path)),
+    { ok: false, error: 'database answered 404' },
+  );
+  assert.deepEqual(shown, []);
 });

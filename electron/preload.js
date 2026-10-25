@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('faststudy', {
   open: {
     file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
     fileWith: (target) => ipcRenderer.invoke('faststudy:open-file-with', target),
+    reveal: (target) => ipcRenderer.invoke('faststudy:open-reveal', target),
     external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
   },
   // The OS folder dialog, raising the window first; resolves to an absolute path, or `null` on cancel.
