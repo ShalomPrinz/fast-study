@@ -103,6 +103,7 @@ function toItem(recording) {
     moodle: reachesMoodle(recording),
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
     section: recording.section ?? '',
+    ...(recording.modifiedAt ? { modifiedAt: recording.modifiedAt } : {}),
   };
 }
 
