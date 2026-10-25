@@ -66,7 +66,7 @@ exits 0 on a refusal, is classified by the 401/403 status curl dumped instead (`
 
 A job's input is `{url}` (`fetch`/`ytdlp`) or `{url, headers}` (`curl`); a Moodle material target's
 optional `filename` (its original name) joins a `fetch` input in `toRun`, which single downloads, section
-runs and the re-resolve all share, and `uploadMaterial` forwards it to the database.
+runs and the re-resolve all share, and `uploadMaterial` forwards it to the database. A `media: 'assignment'` answer makes `toRun` pick `fetchAssignment` instead (docs/DATABASE.md); its job's `lecture` is the assignment name.
 
 A target on auto/ (any file on the Moodle host) always says `fromCache:true`: its url is an id in auto/'s memory, which a
 restart forgets (auto answers `401 moodle_file_unknown`), so a failed fetch is always worth the one
@@ -120,17 +120,17 @@ stem until `done`, then the name actually saved (`Talk (2).mp4`). `operation` (`
 `message` is English and developer-facing; `code`/`params` are what a client renders from (repo-root
 [`docs/ERROR-CODES.md`](../../../docs/ERROR-CODES.md)). All three are `null` on a job that succeeded or was cancelled.
 
-| code                          | params                       | when                                            |
-| ----------------------------- | ---------------------------- | ----------------------------------------------- |
-| `download_tool_spawn_failed`  | `tool`, `detail`             | the child never started                          |
-| `download_tool_failed`        | `tool`, `exit_code`, `detail`| non-zero exit; `detail` is the stderr tail       |
-| `download_auth_failed`        | `tool`, `exit_code`, `detail`| the same exit, classified by `isAuthError`       |
-| `download_failed`             | `tool`, `detail`             | the probe or command build threw                 |
-| `database_store_failed`       | `detail`                     | the bytes never reached the database             |
-| the database's own code      | as the database sent them    | the database refused the store (`docs/DATABASE.md`) |
-| auto's own code               | as auto sent them            | auto refused a file fetch (`site_blocked` with `challengeWindow`, …); a non-envelope body is `download_tool_failed`, a 401/403 `download_auth_failed` |
-| `recapture_*`                 | see above                    | the one silent re-resolve failed                 |
-| `general_folder_save_failed`  | `folder`, `detail`           | a folder job's move into the folder failed       |
+| code                         | params                        | when                                                                                                                                                  |
+| ---------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `download_tool_spawn_failed` | `tool`, `detail`              | the child never started                                                                                                                               |
+| `download_tool_failed`       | `tool`, `exit_code`, `detail` | non-zero exit; `detail` is the stderr tail                                                                                                            |
+| `download_auth_failed`       | `tool`, `exit_code`, `detail` | the same exit, classified by `isAuthError`                                                                                                            |
+| `download_failed`            | `tool`, `detail`              | the probe or command build threw                                                                                                                      |
+| `database_store_failed`      | `detail`                      | the bytes never reached the database                                                                                                                  |
+| the database's own code      | as the database sent them     | the database refused the store (`docs/DATABASE.md`)                                                                                                   |
+| auto's own code              | as auto sent them             | auto refused a file fetch (`site_blocked` with `challengeWindow`, …); a non-envelope body is `download_tool_failed`, a 401/403 `download_auth_failed` |
+| `recapture_*`                | see above                     | the one silent re-resolve failed                                                                                                                      |
+| `general_folder_save_failed` | `folder`, `detail`            | a folder job's move into the folder failed                                                                                                            |
 
 ## Timing samples
 

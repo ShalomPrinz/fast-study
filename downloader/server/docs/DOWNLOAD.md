@@ -5,7 +5,7 @@ The server never downloads inline. Each source is a `src/downloaders/*.js` descr
 `downloaders/index.js`, and `runner.js#runDownloadJob` is source-agnostic: private temp dir, size
 probe, the silent child spawned in that dir, and on a clean exit the source's `upload` —
 `uploadVideo` for curl/yt-dlp, `uploadMaterial` for `fetch` (temp file `material.bin`, the original
-name carried in the input's `filename` and sent to the database, which picks the disk extension). A new source is a new module + one
+name carried in the input's `filename` and sent to the database, which picks the disk extension). `fetchAssignment` is `fetch` with the assignment-files upload, chosen in `toRun` when the `/resolve` answer's `media` is `assignment`; an assignment answer that is not a `fetch` target with a `filename` is refused (`toRun` → `null`, the 502). A new source is a new module + one
 registry line.
 
 ## General mode — into a computer folder (`src/generalFolder.js`)

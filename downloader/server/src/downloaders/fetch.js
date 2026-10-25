@@ -1,6 +1,6 @@
 import { MATERIAL_TEMP_FILENAME } from '../config.js';
 import { probeContentLength } from '../services/probe.js';
-import { uploadMaterial } from '../services/database.js';
+import { uploadMaterial, uploadAssignmentFile } from '../services/database.js';
 import { curlTransferArgs, autodlHeaderList, readAutodlRefusal } from '../services/autodl.js';
 
 // No captured-header replay: the URL authenticates by its own query-string token, or is a file on
@@ -30,4 +30,12 @@ export const fetchFile = {
   probeSize: ({ url }) => probeContentLength(url, autodlHeaderList(url)),
   refusal: (tempDir) => readAutodlRefusal(tempDir, MATERIAL_TEMP_FILENAME),
   buildCommand: ({ url }, tempDir) => ({ command: 'curl', args: buildFetchArgs(url, tempDir) }),
+};
+
+// A `media: 'assignment'` target: fetched the same way, forwarded to the assignment-files route
+// (the job's `lecture` is the assignment name). No backend call follows.
+export const fetchAssignment = {
+  ...fetchFile,
+  upload: (tempDir, course, assignment, _kind, tool, source, input) =>
+    uploadAssignmentFile(tempDir, course, assignment, tool, source, input?.filename),
 };
