@@ -31,6 +31,9 @@ export function url(name) {
 /** POST a body to the fake providers' /control, e.g. `{ gemini: { mode: '429', times: 1 } }`. */
 export const providers = async (body) => (await json(`${PROVIDERS}/control`, 'POST', body)).body;
 
+/** Each file the backend uploaded to the fake Gemini since the last reset: `{mimeType, size, lecture}`. */
+export const geminiUploads = async () => (await json(`${PROVIDERS}/uploads`, 'GET')).body.uploads;
+
 /** POST a body to the fake lecture site's /control, e.g. `{ mode: 'missing_function' }`. */
 export const site = async (body) => (await json(`${SITE}/control`, 'POST', body)).body;
 

@@ -15,6 +15,7 @@ import {
   ZOOM_PASSCODE,
   ZOOM_ROW,
 } from '../lib/env.mjs';
+import { COURSE_FILES } from '../lib/course-files.mjs';
 import { createSiteControl } from './site-control.mjs';
 
 const HARNESS = process.env.HARNESS_DIR;
@@ -55,7 +56,10 @@ function courseContents() {
       id: 2,
       name: 'תרגולים',
       summary: '',
-      modules: [mod('url', 'תרגול 1 — חזרה', `${SITE}/media/recitation-01.mp4`)],
+      modules: [
+        mod('url', 'תרגול 1 — חזרה', `${SITE}/media/recitation-01.mp4`),
+        assignModule(ASSIGNMENTS[1]),
+      ],
     },
     {
       id: 3,
@@ -67,10 +71,67 @@ function courseContents() {
           ['tirgul-01.pdf', 2],
           ['tirgul-02.pdf', 3],
         ]),
+        resource('שקפי שיעור 3', [['lecture3-slides.pptx', 4]]),
+        resource('תרשים עצים', [['diagram.png', 5]]),
+        resource('דוגמאות קוד', [['code-samples.zip', 6]]),
+        resource('הקלטת שמע שיעור 3', [['lecture3-audio.mp3', 7]]),
+        resource('נספח גדול', [['big-appendix.pdf', 8]]),
+        assignModule(ASSIGNMENTS[0]),
       ],
     },
   ];
 }
+
+const ASSIGNMENTS = [
+  {
+    id: 1,
+    name: 'תרגיל בית 1',
+    files: [
+      ['ex1-instructions.pdf', 9],
+      ['ex1-starter.py', 10],
+    ],
+  },
+  { id: 2, name: 'תרגיל בית 2', files: [['ex2-instructions.pdf', 11]] },
+];
+
+const cmidOf = (assign) => 9000 + assign.id;
+
+// A bare `assign` module as core_course_get_contents lists it: no contents, the files are in the WS call.
+function assignModule(assign) {
+  return {
+    id: cmidOf(assign),
+    modname: 'assign',
+    name: assign.name,
+    url: `${SITE}/mod/assign/view.php?id=${cmidOf(assign)}`,
+  };
+}
+
+function assignments() {
+  return {
+    courses: [
+      {
+        id: COURSE_ID,
+        fullname: 'harness',
+        assignments: ASSIGNMENTS.map((assign) => ({
+          id: assign.id,
+          cmid: cmidOf(assign),
+          course: COURSE_ID,
+          name: assign.name,
+          introattachments: assign.files.map(([filename, id]) => ({
+            filename,
+            filepath: '/',
+            filesize: 1024,
+            mimetype: mimeOf(filename),
+            fileurl: `${SITE}/pluginfile.php/${id}/mod_assign/introattachment/0/${filename}`,
+          })),
+        })),
+      },
+    ],
+    warnings: [],
+  };
+}
+
+const mimeOf = (filename) => COURSE_FILES[filename]?.mime ?? 'application/pdf';
 
 function mod(modname, name, fileurl) {
   return {
@@ -184,7 +245,7 @@ function resource(name, files) {
     contents: files.map(([filename, id]) => ({
       type: 'file',
       filename,
-      mimetype: 'application/pdf',
+      mimetype: mimeOf(filename),
       fileurl: `${SITE}/pluginfile.php/${id}/mod_resource/content/1/${filename}`,
     })),
   };
@@ -457,6 +518,7 @@ function serveSite(req, res, url, route, host) {
         'core_course_get_course_module',
         'tool_mobile_get_content',
         'core_enrol_get_users_courses',
+        'mod_assign_get_assignments',
       ]
         .filter((name) => state.mode !== 'missing_function' || name !== 'core_course_get_contents')
         .filter(
@@ -493,6 +555,12 @@ function serveSite(req, res, url, route, host) {
       );
       return json(res, enrolled ? courseContents() : invalidRecord('course'));
     }
+    if (fn === 'mod_assign_get_assignments') {
+      const enrolled = enrolledCourses().some(
+        (c) => c.id === Number(url.searchParams.get('courseids[0]')),
+      );
+      return json(res, enrolled ? assignments() : { courses: [], warnings: [] });
+    }
     if (fn === 'core_course_get_course_module') {
       const cmid = Number(url.searchParams.get('cmid'));
       if (cmid !== VIDEOSTREAM_CMID) return json(res, invalidRecord('course_modules'));
@@ -522,7 +590,12 @@ function serveSite(req, res, url, route, host) {
     });
   }
 
-  if (route.startsWith('/pluginfile.php/')) return serveFile(req, res, PDF, 'application/pdf');
+  if (route.startsWith('/pluginfile.php/')) {
+    const name = decodeURIComponent(route.slice(route.lastIndexOf('/') + 1));
+    const file = COURSE_FILES[name];
+    if (!file) return serveFile(req, res, PDF, 'application/pdf');
+    return serveFile(req, res, path.join(HARNESS, 'fixtures', file.from ?? name), file.mime);
+  }
   // /deny/ and /die/ probe as a video like /media/; they fail only on the download auto streams.
   if (/^\/(media|deny|die)\//.test(route)) {
     const fault = site.fault(route, { method: req.method, range: req.headers.range });
