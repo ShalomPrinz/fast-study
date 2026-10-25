@@ -247,8 +247,8 @@ async function capture() {
   await browser.close();
 }
 
-// Timing samples, sent as the pipeline records its own, so the held step's bar shows a remaining
-// time rather than "taking longer than expected" against the fakes' one-second runs.
+// Timing samples, sent as the app records its own, so the held step's and the download's bars show a
+// remaining time rather than "taking longer than expected" or "not enough data".
 async function calibrate(operation, bytes, seconds) {
   for (const scale of [0.8, 0.9, 1.1, 1.2])
     await call('POST', `${BACKEND}/timing`, {
@@ -265,6 +265,8 @@ async function journey(page, open, shot, lectureRoute) {
   // The fake site serves a 20-second clip; the run starts by hand once a lecture-length video replaces it.
   await call('POST', `${BACKEND}/config`, { auto_run: 'off' });
   await call('POST', `${SITE_FAKE}/control`, { downloadMs: 30_000 });
+  // Samples for the download's own bar (a curl-replayed link), so it shows time left, not "not enough data".
+  await calibrate('download:curl', 470_000, 30);
   await open('/downloads');
   await page.click('text=טעינת הקלטות');
   // A plain-link row is unprobed until downloaded, so it lists under "unknown" rather than "video".
@@ -278,9 +280,21 @@ async function journey(page, open, shot, lectureRoute) {
   await page.click('.recordings-panel >> text=וידאו');
   await page.click('.recording-playlist [aria-controls]');
   await page.waitForSelector('.recording-playlist .recording-children .recording-card');
-  await page.evaluate(() =>
-    document.querySelector('.recording-playlist').scrollIntoView({ block: 'center' }),
-  );
+  // The page's header is a fixed panel above the scrolling body; put the cards just below it.
+  await page.evaluate(() => {
+    const scroller = (function up(e) {
+      for (; e; e = e.parentElement)
+        if (e.scrollHeight > e.clientHeight && /auto|scroll/.test(getComputedStyle(e).overflowY))
+          return e;
+      return document.scrollingElement;
+    })(document.querySelector('.recordings-panel'));
+    const cards = document.querySelector('.recordings-panel .mode-toggle--cards');
+    // The document scroller's rect top is -scrollY, so its viewport top is 0.
+    const scrollerTop =
+      scroller === document.scrollingElement ? 0 : scroller.getBoundingClientRect().top;
+    const delta = cards.getBoundingClientRect().top - scrollerTop - 16;
+    scroller.scrollBy({ top: delta, behavior: 'instant' });
+  });
   await shot('feature-download');
   await call('POST', `${SITE_FAKE}/control`, { reset: true });
   await waitFor('the recording', () => hasFile(course, lecture, 'video.mp4'), 60_000);
