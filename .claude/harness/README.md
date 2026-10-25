@@ -288,6 +288,17 @@ covers the next target. An unexpected native dialog is logged and dismissed — 
 Chromium runs with every host name but loopback unresolvable, so the page is as offline as the
 services; a link off the machine fails as `failed … ERR_NAME_NOT_RESOLVED` in the log.
 
+The browser also runs in a network namespace of its own (`unshare -rn`), so a host network change
+(Wi-Fi roam, DHCP renew, a Windows adapter under mirrored WSL) never aborts its requests with
+`net::ERR_NETWORK_CHANGED`: Chromium fails every in-flight request on any IP change, loopback ones
+too. `launchChromium` (`lib/browser.mjs`, used by `openBrowser` and `e2e/fixtures.mjs`) launches a
+wrapper that enters the namespace, brings `lo` up and relays the page's ports (the four services
+and the frontend; never the fakes) through Unix sockets in a temp dir to the real `127.0.0.1`
+ports (`lib/relay.mjs`, `lib/netns.mjs`, `lib/netns-inner.mjs`). Only the browser is isolated. The
+sockets go when the browser disconnects. Where `unshare -rn` or `ip link set lo up` fails (an Ubuntu 24.04
+runner restricts user namespaces), or `HB_BROWSER_NETNS=0` is set, it launches in the host and prints
+`# harness: browser not network-isolated (<reason>)` once; that never fails a setup or spec.
+
 The browser is the newest `chromium_headless_shell-*` (else `chromium-*`) in `~/.cache/ms-playwright`
 (or `PLAYWRIGHT_BROWSERS_PATH`), not the revision downloader/auto's Playwright pins, which is often
 not installed. Playwright itself is resolved from `downloader/auto`, which finds it in the shared `downloader/node_modules`.
@@ -417,7 +428,8 @@ browser actions — real `hb.mjs` argv against a stand-in session, so what it re
 that logic in a side-effect-free sibling (`provider-rules.mjs`, `site-control.mjs`,
 `tool-args.mjs`) so a test imports it without a port or a fixture. `test_shim.py` runs the real
 Python shim in a child interpreter per case, since its patches are process-wide: lock globs as tail
-matches, the Windows `winerror` 32 and 5 refusals, and `fs.crud` reading `win32`.
+matches, the Windows `winerror` 32 and 5 refusals, and `fs.crud` reading `win32`. `netns.test.mjs` covers
+the isolate-or-fall-back decision and the relays' byte-for-byte piping, SSE and WebSocket upgrade included.
 
 They run in CI's `internal-tests` job beside the lib tests.
 

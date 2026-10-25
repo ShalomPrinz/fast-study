@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DATABASE, PROVIDERS, SITE, bindPorts, call, json } from '../lib/api.mjs';
 import { markSeeded, reseed as reseedStack } from '../lib/baseline.mjs';
-import { OFFLINE_ARGS, installedChromium } from '../lib/browser.mjs';
+import { launchChromium } from '../lib/browser.mjs';
 import { harnessPaths, readPorts } from '../lib/env.mjs';
 import { readLocks } from '../lib/state.mjs';
 
@@ -127,10 +127,7 @@ export async function dropFile(target, filePath, type) {
 export const test = base.extend({
   browser: [
     async ({ playwright }, use) => {
-      const browser = await playwright.chromium.launch({
-        executablePath: installedChromium(),
-        args: OFFLINE_ARGS,
-      });
+      const browser = await launchChromium(playwright.chromium);
       await use(browser);
       await browser.close();
     },
