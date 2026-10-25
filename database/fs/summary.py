@@ -36,15 +36,16 @@ def write_summary(
     summary_path, original_path = _paths(course, lecture, kind)
     try:
         if fresh:
-            # Probe both first, so a lock on summary.md cannot leave the snapshot deleted and the write undone.
-            check_none_locked((summary_path, original_path))
+            # Probe all first, so a lock on any of them cannot leave another deleted and the write undone.
+            marker_path = summary_path.parent / SUMMARY_MATERIALS_MARKER
+            check_none_locked((summary_path, original_path, marker_path))
             try:
                 original_path.unlink(missing_ok=True)
             except PermissionError as e:
                 reject_if_locked(e, original_path.name)
                 raise
             # The record names the run that wrote the old text; the backend re-PUTs it after this write.
-            (summary_path.parent / SUMMARY_MATERIALS_MARKER).unlink(missing_ok=True)
+            marker_path.unlink(missing_ok=True)
         elif not original_path.exists() and summary_path.exists():
             summary_path.rename(original_path)
         summary_path.write_text(content, encoding="utf-8")

@@ -344,6 +344,19 @@ class TestPutSummary:
         assert r.json() == _locked_body("summary.md")
         assert (summarized / "original_summary.md").exists()
 
+    def test_fresh_write_with_a_locked_materials_record_names_the_record(
+        self, client, summarized, monkeypatch
+    ):
+        (summarized / ".summary_materials.json").write_text("{}", encoding="utf-8")
+        monkeypatch.setattr(
+            "pathlib.Path.open", _deny_for(".summary_materials.json", "open")
+        )
+
+        r = client.put("/courses/Algo/lectures/L1/summary?fresh=true", content=b"new")
+        assert r.status_code == 423
+        assert r.json() == _locked_body(".summary_materials.json")
+        assert (summarized / "summary.md").read_text(encoding="utf-8") == "pipeline"
+
 
 class TestRevertSummary:
     @pytest.fixture
