@@ -15,6 +15,7 @@ from .paths import (
     SOURCE_URL_MARKER,
     data_root,
 )
+from .summary import read_summary_materials
 
 # The live course-structure mode, written only by set_course_structure(); see docs/SETTINGS.md.
 _course_structure = "split"
@@ -117,6 +118,7 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         "name": name,
         "files": files,
         "materials": list_materials(lecture_path),
+        "summaryMaterials": read_summary_materials(lecture_path),
         "transcribePartial": _read_transcribe_partial(lecture_path),
         "removed": _removed(files),
         "done": (lecture_path / DONE_MARKER).exists(),

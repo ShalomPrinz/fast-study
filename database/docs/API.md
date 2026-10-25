@@ -56,7 +56,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `DELETE /courses/{course}/lectures/{lecture}/done`         | clear studied (removes `.done`); idempotent `204`; 404 if the lecture is missing |
 | `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials and `.done`; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
-| `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf, optional `?source=` tag; returns `{name}` with the allocated (or adopted) filename |
+| `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material of any type, optional `?source=` and `?filename=` (original name; ext source, default `.pdf`); returns `{name}` with the allocated (or adopted) filename |
+| `PATCH  /courses/{course}/lectures/{lecture}/materials/{name}` | body `{attach: bool}` sets the meta flag; `204`; `404` `file_not_found` for a non-material or absent name; `400` `bad_request_body` for another body; `500` `file_write_failed` if the sidecar can't be written |
+| `PUT    /courses/{course}/lectures/{lecture}/summary-materials` | body `{materials: [str]}` records what the current `summary.md` was built from; `204`; `404` if the lecture is missing; `400` `bad_request_body` for another body |
 | `POST   /courses/{course}/lectures/{lecture}/removed`      | delete intermediates (`{files}`, each `video.mp4` or `audio.mp3`); see Write semantics |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `404` if the lecture is missing; `423` if it is open in another program |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |
@@ -64,7 +66,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}/path` | `{path}`, the absolute on-disk path; 404 if absent                   |
 | `DELETE /courses/{course}/lectures/{lecture}/files/{name}` | delete one file; `423` if it is open in another program                   |
 | `GET    /courses/{course}/lectures/{lecture}/summary`      | `{content, hasOriginal}`                                                  |
-| `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8); `?fresh=true` drops the snapshot; `404` if the lecture is missing |
+| `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8); `?fresh=true` drops the snapshot and `.summary_materials.json`; `404` if the lecture is missing |
 | `DELETE /courses/{course}/lectures/{lecture}/summary`      | revert to `original_summary.md`                                           |
 | `GET    /courses/{course}/summaries`                       | every non-empty summary in a course; 404 if the course is missing         |
 | `PUT    /courses/{course}/overview/files/{name}`           | write a course-level file; 404 if the course is missing; `423` if it is open in another program |
@@ -93,9 +95,9 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   the _old_ video. Materials stay: they are attached, not derived. The wipe is all-or-nothing: the whole set is probed for locks first, so one
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand (the downloader uploads to brand-new lectures) but never the course: a missing one is `404` `course_not_found`.
-- **`POST /…/materials`** appends an attached PDF, allocating its name server-side (see
+- **`POST /…/materials`** appends an attached file (any extension), allocating its name server-side (see
   [LAYOUT.md](LAYOUT.md#materials)) and returning it. An optional `?source=` records the opaque download source,
-  echoed as `source` on the entry; a byte-identical source-less material is adopted instead of duplicated. Like the video upload, it creates the lecture dir on demand, never the course. Callers that already know
+  echoed as `source` on the entry, and `?filename=` is echoed as `filename`; a byte-identical source-less material is adopted instead of duplicated. Like the video upload, it creates the lecture dir on demand, never the course. Callers that already know
   the exact filename keep using `PUT /…/files/{name}`; delete/get/head go through the files
   routes unchanged. `GET /…/materials` returns the same entries the tree inlines, so a caller
   needing one lecture's materials doesn't pull the whole tree; a missing lecture yields `[]`
@@ -133,7 +135,7 @@ Renaming a course or lecture folder is the one exception: on Windows it fails wi
 read/write/delete, so no pre-probe of the files catches it. The rename routes answer `423`
 `folder_in_use` `{name}` for exactly that case and leave every other `PermissionError` a `400`.
 
-`DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
+`DELETE /…/files/summary.md` additionally drops `.summary_materials.json`; `GET /…/files/{name}` (and the overview twin) takes its media type from `mimetypes.guess_type`. `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
 chokepoint for that rule — a warning describes THIS pdf and cannot outlive it — so backend
 teardown, frontend deletes, and re-render resets all get it without repeating the logic.
 

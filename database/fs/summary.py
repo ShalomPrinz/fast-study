@@ -1,4 +1,15 @@
-from .paths import LectureNotFound, check_none_locked, lecture_dir, reject_if_locked
+import json
+import os
+from pathlib import Path
+
+from .paths import (
+    SUMMARY_MATERIALS_MARKER,
+    CodedValueError,
+    LectureNotFound,
+    check_none_locked,
+    lecture_dir,
+    reject_if_locked,
+)
 
 
 def _paths(course: str, lecture: str, kind: str):
@@ -32,6 +43,8 @@ def write_summary(
             except PermissionError as e:
                 reject_if_locked(e, original_path.name)
                 raise
+            # The record names the run that wrote the old text; the backend re-PUTs it after this write.
+            (summary_path.parent / SUMMARY_MATERIALS_MARKER).unlink(missing_ok=True)
         elif not original_path.exists() and summary_path.exists():
             summary_path.rename(original_path)
         summary_path.write_text(content, encoding="utf-8")
@@ -68,4 +81,43 @@ def revert_summary(course: str, lecture: str, kind: str) -> None:
         original_path.unlink()
     except PermissionError as e:
         reject_if_locked(e, original_path.name)
+        raise
+
+
+def read_summary_materials(d: Path) -> list[str] | None:
+    """Return the material names the current summary.md was built from, or None when absent or unreadable."""
+
+    try:
+        raw = json.loads((d / SUMMARY_MATERIALS_MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    names = raw.get("materials") if isinstance(raw, dict) else None
+    if isinstance(names, list) and all(isinstance(n, str) for n in names):
+        return names
+    return None
+
+
+def write_summary_materials(course: str, lecture: str, kind: str, names) -> None:
+    """Atomically record the material names sent to Gemini for the current summary; no mkdir, so a gone lecture 404s."""
+
+    if not isinstance(names, list) or not all(isinstance(n, str) for n in names):
+        raise CodedValueError(
+            "materials must be a list of strings",
+            "bad_request_body",
+            detail="materials must be a list of strings",
+        )
+    d = lecture_dir(course, lecture, kind)
+    if not d.is_dir():
+        raise LectureNotFound(
+            f"{course}/{lecture} does not exist", course=course, lecture=lecture
+        )
+    # Swap in a whole file: the threadpool tree reads concurrently, and a torn read degrades to null.
+    tmp = d / (SUMMARY_MATERIALS_MARKER + ".tmp")
+    tmp.write_text(
+        json.dumps({"materials": names}, ensure_ascii=False), encoding="utf-8"
+    )
+    try:
+        os.replace(tmp, d / SUMMARY_MATERIALS_MARKER)
+    except PermissionError as e:
+        reject_if_locked(e, SUMMARY_MATERIALS_MARKER)
         raise

@@ -1,5 +1,6 @@
 import errno
 import os
+import re
 import stat
 import sys
 from pathlib import Path
@@ -46,11 +47,14 @@ PREDEFINED_FILES = (
 # The only files the remove route will delete; when to remove them is the backend's policy.
 REMOVABLE_FILES = ("video.mp4", "audio.mp3")
 
-# Material PDFs are a numbered family, not a predefined name: material.pdf, material.2.pdf, …
+# Materials of any extension are a numbered family, not a predefined name: material.pdf, material.2.pptx, …
 MATERIAL_PREFIX = "material"
-MATERIAL_EXT = ".pdf"
-# Lecture-dir sidecar mapping a material filename to the download source it came from.
-MATERIAL_SOURCES_MARKER = ".materials.json"
+# Same rule as auto's NAMED_FILE (1-5 lower-case alphanumerics), but never all digits: material.2 is no material.
+MATERIAL_EXT_RE = re.compile(r"(?![0-9]+$)[a-z0-9]{1,5}")
+# Lecture-dir sidecar mapping a material filename to its meta: {source, filename, attach}.
+MATERIAL_META_MARKER = ".materials.json"
+# Lecture-dir record of the material names sent to Gemini by the run that wrote the current summary.md.
+SUMMARY_MATERIALS_MARKER = ".summary_materials.json"
 
 # The data root as explicit module state: unset until database_main.py seeds it or POST /config sets it.
 _data_root: Path | None = None
@@ -175,24 +179,32 @@ def check_none_locked(paths) -> None:
             continue
 
 
-def material_name(index: int) -> str:
-    """Build the material filename for a 1-based index; index 1 is the unnumbered material.pdf."""
+def material_name(index: int, ext: str = ".pdf") -> str:
+    """Build the material filename for a 1-based index and a dotted ext; index 1 is the unnumbered material<ext>."""
 
+    ext = ext.lower()
     if index <= 1:
-        return f"{MATERIAL_PREFIX}{MATERIAL_EXT}"
-    return f"{MATERIAL_PREFIX}.{index}{MATERIAL_EXT}"
+        return f"{MATERIAL_PREFIX}{ext}"
+    return f"{MATERIAL_PREFIX}.{index}{ext}"
 
 
 def material_index(name: str) -> int | None:
     """Return the 1-based index of a material filename, or None if the name isn't one."""
 
-    if not name.startswith(f"{MATERIAL_PREFIX}.") or not name.endswith(MATERIAL_EXT):
+    parts = name.split(".")
+    if parts[0] != MATERIAL_PREFIX or len(parts) not in (2, 3):
         return None
-    middle = name[len(MATERIAL_PREFIX) + 1 : -len(MATERIAL_EXT)]
-    if not middle:
+    if not MATERIAL_EXT_RE.fullmatch(parts[-1]):
+        return None
+    if len(parts) == 2:
         return 1
-    # Reject padded/signed forms so each index has exactly one spelling on disk.
-    return int(middle) if middle.isdigit() and not middle.startswith("0") else None
+    # Reject padded/signed forms and 0/1 so each index has exactly one spelling on disk.
+    mid = parts[1]
+    return (
+        int(mid)
+        if mid.isdigit() and not mid.startswith("0") and int(mid) >= 2
+        else None
+    )
 
 
 def set_data_root(value: str | Path) -> None:

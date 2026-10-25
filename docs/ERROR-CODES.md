@@ -217,7 +217,7 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `data_root_not_absolute`        | `path`            | user      |
 | `settings.py`         | `data_root_not_a_directory`     | `path`            | user      |
 | `settings.py`         | `data_root_not_writable`        | `path`, `detail`  | user      |
-| `database_main.py`, `fs/crud.py` | `bad_request_body`  | `detail`          | dev       |
+| `database_main.py`, `fs/crud.py`, `fs/summary.py` | `bad_request_body` | `detail` | dev       |
 | `database_main.py`    | `create_dir_failed`             | `path`, `detail`  | user      |
 | `database_main.py`    | `rename_failed`                 | `from`, `to`, `detail` | user |
 | `database_main.py`    | `file_write_failed`             | `file`, `detail`  | user      |

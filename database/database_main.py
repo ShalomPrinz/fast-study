@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 import os
 import signal
 from contextlib import asynccontextmanager
@@ -300,7 +301,7 @@ async def put_video(
 
 @app.get("/courses/{course}/lectures/{lecture}/materials")
 def get_materials(course: str, lecture: str, kind: str = Query("lecture")):
-    """List a lecture's material pdfs, index-ordered; [] for an empty or missing lecture, as the tree degrades."""
+    """List a lecture's materials, index-ordered; [] for an empty or missing lecture, as the tree degrades."""
 
     try:
         return {
@@ -317,16 +318,61 @@ async def post_material(
     request: Request,
     kind: str = Query("lecture"),
     source: str | None = Query(None),
+    filename: str | None = Query(None),
 ):
-    """Save a raw-body PDF as the lecture's next material, tagged with its opaque source, and return its {name}."""
+    """Save a raw-body file as the lecture's next material, tagged with its opaque source and display filename, and return its {name}."""
 
     try:
         data = await request.body()
-        name = materials.write_material(course, lecture, kind, data, source)
+        name = materials.write_material(course, lecture, kind, data, source, filename)
         return JSONResponse({"name": name})
     except Exception as e:
         # The name is allocated inside the failing write, so only the OS detail is knowable here.
         return _failure(e, 400, "file_write_failed")
+
+
+@app.patch("/courses/{course}/lectures/{lecture}/materials/{name}")
+async def patch_material(
+    course: str, lecture: str, name: str, request: Request, kind: str = Query("lecture")
+):
+    """Set a material's attach flag (body: {attach: bool}); 404 when the name isn't an existing material."""
+
+    # On the loop, like delete: it rewrites .materials.json, which only the single async writer may do.
+    try:
+        body = await request.json()
+        if not isinstance(body, dict) or not isinstance(body.get("attach"), bool):
+            raise CodedValueError(
+                "attach must be a boolean",
+                "bad_request_body",
+                detail="attach must be a boolean",
+            )
+        if not materials.set_attach(course, lecture, kind, name, body["attach"]):
+            return _error("Not found", 404, "file_not_found", {"file": name})
+        broadcast_notify()
+        return Response(status_code=204)
+    except OSError as e:
+        # The flag lives only in the sidecar, so a failed write is a server fault, not a bad request.
+        return _failure(e, 500, "file_write_failed", {"file": name})
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": name})
+
+
+@app.put("/courses/{course}/lectures/{lecture}/summary-materials")
+async def put_summary_materials(
+    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+):
+    """Record which materials the current summary.md was built from (body: {materials: [str]})."""
+
+    try:
+        body = await request.json()
+        names = body.get("materials") if isinstance(body, dict) else None
+        summary_fs.write_summary_materials(course, lecture, kind, names)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(
+            e, 400, "file_write_failed", {"file": paths.SUMMARY_MATERIALS_MARKER}
+        )
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -445,7 +491,7 @@ def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture"))
         return _failure(e, 400, "file_read_failed", {"file": name})
     if not p.exists():
         return _error("Not found", 404, "file_not_found", {"file": name})
-    media_type = "application/pdf" if name.endswith(".pdf") else None
+    media_type = mimetypes.guess_type(name)[0]
     return FileResponse(str(p), media_type=media_type)
 
 
@@ -532,7 +578,7 @@ def get_overview_file(course: str, name: str):
         return _failure(e, 400, "overview_read_failed")
     if not p.exists():
         return _error("Not found", 404, "file_not_found", {"file": name})
-    media_type = "application/pdf" if name.endswith(".pdf") else None
+    media_type = mimetypes.guess_type(name)[0]
     return FileResponse(str(p), media_type=media_type)
 
 

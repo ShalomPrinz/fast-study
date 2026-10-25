@@ -73,17 +73,22 @@ frontend. Adding a pipeline artifact means adding it here.
 `original_summary.md` and `transcript.partial.meta.json` are deliberately outside the tuple —
 the first is edit state read through the summary endpoint, the second is progress metadata
 inlined as `transcribePartial` — but the video wipe takes both, since each describes the old video.
-Material PDFs are outside it too: they are a numbered family (below), not a fixed name.
+Materials are outside it too: they are a numbered family (below), not a fixed name.
 
 ## Materials
 
-A lecture can hold any number of attached PDFs, named `material.pdf`, `material.2.pdf`,
-`material.3.pdf`, … — `fs/paths.py` owns the pattern (`material_name` / `material_index`) and
-`fs/materials.py` owns listing and allocation. No other service knows the filename shape.
+A lecture can hold any number of attached files of any extension, named `material.<ext>` (index 1),
+`material.2.<ext>`, `material.3.<ext>`, … — `fs/paths.py` owns the pattern (`material_name` /
+`material_index`) and `fs/materials.py` owns listing and allocation. No other service knows the
+filename shape. `ext` is 1-5 lower-case alphanumerics and never all digits, so `material.2` is no
+material. `POST …/materials?filename=` takes the disk ext from the original name's extension, else
+`.pdf`; the original name is stored for display only and never used as a path.
 
-A new material always takes **highest existing index + 1** (bare `material.pdf` counts as 1).
-Gaps left by deletes are never reused and never backfilled: `material.pdf` + `material.3.pdf`
-allocates `material.4.pdf`. Deleting removes only the named file and never renames the rest,
+A new material always takes **highest existing index + 1 across all extensions** (bare
+`material.pdf` counts as 1), so a `.pdf` and a `.pptx` never share an index. Gaps left by deletes
+are never reused and never backfilled: `material.pdf` + `material.3.pptx` allocates
+`material.4.pdf`. A hand-made collision (`material.2.pdf` + `material.2.pptx`) lists sorted by
+`(index, name)`. Deleting removes only the named file and never renames the rest,
 because the frontend holds material URLs by name.
 
 Allocation happens here, at write time, because a client that picked its own name would race
@@ -95,9 +100,12 @@ worker each invalidate that and would put two uploads on one name.
 A fresh `video.mp4` never touches materials: they are attached, not derived from the video, and a
 handout routinely arrives before its recording.
 
-A material may carry its download **source**: an opaque string the downloader passes as `?source=`
-on `POST /…/materials` (its discovery row's `ref`), never parsed here. Sources live in
-`.materials.json` (`{material name: source}`, sourced files only), read and written inside the same
+A material may carry **meta** in `.materials.json`: `{material name: {source?, filename?, attach?}}`,
+every key optional, an entry with no keys removed. `source` is the opaque string the downloader
+passes as `?source=` (its discovery row's `ref`), never parsed here; `filename` is the original
+name from `?filename=` (trimmed, capped at 255); `attach` is the user's boolean set through
+`PATCH …/materials/{name}` and surfaced only when set. A legacy bare-string value reads as
+`{"source": value}` (temporary, tracked in the repo-root `docs/MIGRATIONS.md`). The sidecar is read and written inside the same
 no-`await` section as allocation. Deleting a material through the files route drops its entry; the
 video wipe leaves the sidecar alone. Every sidecar writer is an `async def` route with no `await`
 across its read-modify-write, so the event loop serialises them; a writer moved to a plain `def`
@@ -122,12 +130,14 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.lectures_only`         | course dir  | empty marker; picked as lectures-only, counted only under `lectures_some` ([SETTINGS.md](SETTINGS.md)) |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
 | `.done`                  | lecture dir | empty marker; the user studied it — a fresh video upload keeps it |
-| `.materials.json`        | lecture dir | `{material name: source}` for materials with a download source |
+| `.materials.json`        | lecture dir | `{material name: {source?, filename?, attach?}}` per-material meta |
+| `.summary_materials.json` | lecture dir | `{"materials": [...]}` — the names sent to Gemini by the run that wrote the current `summary.md`; `[]` = transcript only |
 | `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
 | `.{slug}.pdf_warning`    | overview/   | same, per overview pdf (see OVERVIEW.md)                  |
 
 Deleting `summary.pdf` drops both of its render markers — each describes that one build and can never outlive it.
+`.summary_materials.json` follows `summary.md` the same way: deleting `summary.md` or a new `video.mp4` removes it; editing or reverting the summary text keeps it, and a fresh (re-summarize) write drops it until the backend records the new run.
 
 ## Removed intermediates
 
@@ -150,9 +160,9 @@ A materials-only lecture has neither, so it reports nothing removed.
 or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations` and `overview` are skipped as lectures.
 
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
-`materials` (index-ordered `{name, size, mtime}` plus `source` when it has one, always present and `[]` when none — presence
+`materials` (index-ordered `{name, size, mtime}` plus `source`, `filename` and `attach` when set, always present and `[]` when none — presence
 in the list *is* existence, so entries carry no `exists`), `transcribePartial`, and `removed` (the
-names derived above, in `REMOVABLE_FILES` order; always present, `[]` when none), and `done` (`.done`
+names derived above, in `REMOVABLE_FILES` order; always present, `[]` when none), `summaryMaterials` (`string[]` from `.summary_materials.json`, `null` when absent or unreadable), and `done` (`.done`
 exists; always present, `false` when absent). Three fields are inlined onto file entries rather than exposed as separate
 endpoints, because the frontend needs them on every render of the tree:
 
@@ -172,4 +182,4 @@ field stay backwards-compatible.
 Every metadata read (`transcript.partial.meta.json`, both `.pdf_warning` readers,
 `overview/meta.json`, `.materials.json`) swallows parse and read errors and falls back to "absent". A corrupt
 side-file must never take down a whole tree or listing; the next write self-heals it.
-Writing `.materials.json` degrades the same way: a failed write is logged and the upload or delete still succeeds, untagged.
+Writing `.materials.json` degrades the same way: a failed write is logged and the upload or delete still succeeds, untagged. The one exception is `PATCH …/materials/{name}`: the flag lives only in the sidecar, so a failed write answers `500 file_write_failed` and does not notify.
