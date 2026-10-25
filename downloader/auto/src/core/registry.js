@@ -97,7 +97,7 @@ const EXTRACTORS = [
   new YoutubePlaylistExtractor(), // modType 'url'      → YouTube playlist
   new GoogleDriveExtractor(), // modType 'url'          → single Google Drive file → probed on download
   new ZoomExtractor(), // modType 'zoom' (synthetic) → passcode-gated zoom share .mp4
-  new MoodleFileExtractor(), // modType 'resource'     → course-hosted PDF → lecture material
+  new MoodleFileExtractor(), // modType 'resource'     → course-hosted non-audio/video file → lecture material
   new DirectUrlExtractor(), // modType 'url' (last)    → any other off-site link → probed on download
 ];
 
@@ -123,7 +123,7 @@ export function resolveExtractorForRecording(recording) {
 
 /**
  * Route one activity to its extractor. Returns null (no throw) when no strategy
- * handles it — null means skip (e.g. a non-PDF `resource` file).
+ * handles it — null means skip (e.g. a video, audio or HTML `resource` file).
  * @param {import('../extractors/VideoExtractor.js').Activity} activity
  * @returns {import('../extractors/VideoExtractor.js').VideoExtractor | null}
  */

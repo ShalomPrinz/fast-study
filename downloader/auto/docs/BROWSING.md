@@ -46,16 +46,16 @@ grey in place as unsupported.
 
 ## Mimetype gating (`resource` files)
 
-`MoodleFileExtractor` claims a `resource` file on `mimetype === 'application/pdf'` alone. A mimetype
-is exact, and the errors aren't symmetric: a listed grade-sheet PDF costs one ignored row, a missed
-slide deck costs the material. Non-PDF files stay unclaimed.
+`MoodleFileExtractor` claims every `resource` file by mimetype/name alone, except `video/*` (too large for a material) audio (`audio/*` or an audio extension, `isAudioFile`) and HTML (`text/html`, indistinguishable from a block page at preflight). A mimetype
+is exact, and the errors aren't symmetric: a listed grade sheet costs one ignored row, a missed
+slide deck costs the material. The resolved target carries the original `filename`, which `server/` hands to the database for the disk extension.
 
 ## The `Item` / `ref` contract
 
 The frontend never sees the mechanism. `/list` and `/list/expand` return
 `Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle }`:
 
-- `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture PDF), never how it is
+- `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture material of any file type), never how it is
   fetched. `'unknown'` for every `google-drive` and `direct-url` row (which resolve to `'video'` or a 422, never `'material'`): the WS payload names no file
   and `/list` never probes (a round-trip per row). A `material` item is never `expandable`.
 - `resolvedMedia` — what a row was probed as this session (`'video'` or
@@ -95,8 +95,8 @@ ones resolve exactly one target, so `only` doesn't apply; all but the pasted lin
 plain URL (for a Moodle file, a path on auto). A row none of these takes is refused `422`
 `recording_strategy_unsupported {strategy}`, never sent to a browser.
 
-Only `kind` (`lecture`/`recitation`) picks the folder; the database names the file, so a second PDF
-into one lecture appends (`material.2.pdf`).
+Only `kind` (`lecture`/`recitation`) picks the folder; the database names the file, so a second material
+into one lecture appends (`material.2.<ext>`).
 
 ## YouTube playlists — lazy expansion
 
@@ -156,7 +156,7 @@ add to one plain file), sized from the probe's own answer ([GATE.md](GATE.md#fil
 
 Browserless: `/resolve` finds the university from the ref's `fileurl`, preflights it with the WS token,
 and returns a `fetch` target whose url is `/moodle/file/<id>` on auto, which streams the bytes under
-the Moodle lock ([GATE.md](GATE.md#files)) — a tracked job, so a PDF gets the same progress, retry
+the Moodle lock ([GATE.md](GATE.md#files)) — a tracked job, so a material gets the same progress, retry
 and `ref` grouping as a video. A missing token is `401`. A _dead_ one needs the one-byte preflight
 `assertPluginfileReadable`, because pluginfile answers it with HTTP 200 + a JSON exception body that
 `server/`'s job would save as the material ([MOODLE.md](MOODLE.md)). The target always says

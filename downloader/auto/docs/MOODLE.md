@@ -60,7 +60,7 @@ Every authenticated call still treats a redirect as the bot wall.
 refuses the login as `moodle_site_unsupported` `reason:'missing_function'` (`params.function`), and
 `downloadfiles` other than `1` (it is `VALUE_OPTIONAL`, so absent counts) as `downloads_disabled` —
 both `422 {status:'unsupported'}` from `/auth/complete` (and as the login's `moodle_site_unsupported` error on the stream). Lacking only `tool_mobile_get_content`
-still connects: discovery and PDFs work, and a `videostream` resolve is refused later as
+still connects: discovery and files work, and a `videostream` resolve is refused later as
 `422 {status:'unsupported'}`, `moodle_site_unsupported` `reason:'videostream_unavailable'` ([Videostream](#videostream)).
 Lacking `core_enrol_get_users_courses` also connects, saving `coursesAvailable:false` in the token
 record ([The course picker](#the-course-picker)); it is reported as `reason:'courses_unavailable'`.
@@ -239,7 +239,7 @@ user saved anyway still lists.
 | --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `videostream`   | `videostream`                                         | `module.url`'s `id` (the cmid) + the course id → the plugin's app handler      |
 | `url`           | `youtube-playlist`, `google-drive` or `direct-url`    | `contents[0].fileurl`, the **external** target — no redirect hop needed        |
-| `resource`      | `moodle-file` (PDF files only)                        | each `contents[]` entry with `type:'file'` — one module can hold several       |
+| `resource`      | `moodle-file` (any file but video, audio, HTML)      | each `contents[]` entry with `type:'file'` — one module can hold several       |
 | (section summary) | `zoom`                                              | `rec/share` links in `section.summary` HTML, not modules                        |
 
 Routing is in [BROWSING.md](BROWSING.md). Recitation vs lecture is a keyword match over heading +
@@ -259,8 +259,8 @@ the size `HEAD` answers. `openPluginfile` applies the same checks when the strea
 
 - a dead token answers HTTP 200 + the JSON exception body → `WsError`, which `invalidToken` recognizes;
 - a bot-protection challenge is HTTP 200 too, and `curl --fail` would save the captcha page as the
-  PDF → an HTML (or redirected) answer is `WsBlockedError`. Keying on HTML is safe because only files
-  the WS declared `application/pdf` are routed here (`MoodleFileExtractor.canHandle`).
+  file → an HTML (or redirected) answer is `WsBlockedError`. Keying on HTML is safe because a resource
+  declared `text/html` is never routed here (`MoodleFileExtractor.canHandle`), so an HTML reply is a block page.
 
 ## Videostream
 

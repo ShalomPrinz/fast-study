@@ -113,6 +113,24 @@ test('a Moodle file resolves to a path on auto, and streams through it whole or 
   assert.equal(asked.at(-1).range, 'bytes=5-');
 });
 
+test('a resolved Moodle material target carries the original filename', async (t) => {
+  const base = await serve(t);
+  const { local } = stubMoodle(t, base);
+  const ref = encodeRef({
+    strategy: 'moodle-file',
+    fileurl: FILEURL,
+    kind: 'lecture',
+    filename: 'Lecture3_slides.pptx',
+  });
+  const res = await local(`${base}/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ref, course: 'C', name: 'L9', kind: 'lecture' }),
+  });
+  const { targets } = await res.json();
+  assert.equal(targets[0].filename, 'Lecture3_slides.pptx');
+});
+
 test('an id this process never minted is 401, so server/ re-resolves instead of saving a body', async (t) => {
   const base = await serve(t);
   const head = await fetch(`${base}/moodle/file/not-an-id`, { method: 'HEAD' });
@@ -228,4 +246,22 @@ test('a link that redirects onto the Moodle host is gated at that hop, and proxi
   ).then((r) => r.targets);
   assert.match(target.url, /^\/moodle\/file\//);
   assert.equal(target.tool, 'curl');
+});
+
+test('MoodleFileExtractor claims every resource but video, audio and HTML', async () => {
+  const { MoodleFileExtractor } = await import('../src/extractors/MoodleFileExtractor.js');
+  const x = new MoodleFileExtractor();
+  const a = (mimetype, filename = 'f', modType = 'resource') => ({ modType, mimetype, filename });
+  for (const m of [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/zip',
+    'image/png',
+  ])
+    assert.ok(x.canHandle(a(m)), m);
+  assert.equal(x.canHandle(a('audio/mpeg')), false);
+  assert.equal(x.canHandle(a('application/octet-stream', 'rec.mp3')), false);
+  assert.equal(x.canHandle(a('video/mp4')), false);
+  assert.equal(x.canHandle(a('text/html')), false);
+  assert.equal(x.canHandle(a('application/pdf', 'a.pdf', 'url')), false);
 });

@@ -8,6 +8,36 @@ export const NAMED_FILE = /^(.+)\.([A-Za-z0-9]{1,5})$/;
 // Containers yt-dlp actually produces here; anything else it cannot turn into video.mp4.
 const VIDEO_EXTENSIONS = new Set(['mp4', 'mkv', 'mov', 'webm', 'm4v', 'avi']);
 
+const AUDIO_EXTENSIONS = new Set([
+  'mp3',
+  'm4a',
+  'wav',
+  'aac',
+  'flac',
+  'ogg',
+  'oga',
+  'opus',
+  'wma',
+  'amr',
+]);
+
+/**
+ * True for an `audio/*` mimetype or an audio extension: audio is never a material.
+ * @param {string|null|undefined} mime
+ * @param {string|null|undefined} filename
+ * @returns {boolean}
+ */
+export function isAudioFile(mime, filename) {
+  if (
+    String(mime ?? '')
+      .toLowerCase()
+      .startsWith('audio/')
+  )
+    return true;
+  const ext = NAMED_FILE.exec(String(filename ?? ''))?.[2]?.toLowerCase();
+  return Boolean(ext) && AUDIO_EXTENSIONS.has(ext);
+}
+
 /**
  * 'video' (yt-dlp) for a video filename, else null: a probe can't tell whether any other file is
  * a material, an assignment or something else, so it never claims one.

@@ -70,7 +70,7 @@ export function listRecordings(sections, courseId) {
   const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
-    if (!extractor) continue; // non-PDF resource / non-http url target / unknown modType → skip
+    if (!extractor) continue; // video, audio or HTML resource / non-http url target / unknown modType → skip
     for (const recording of extractor.toRecordings(activity)) recordings.push(recording);
   }
   return recordings;
@@ -165,7 +165,9 @@ export async function resolveMoodleFile({
     cap = proxyCap({ fileurl: recording.fileurl, size });
     cacheCap(course, name, kind, 'material', cap, ref);
   }
-  return [toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache })];
+  const target = toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache });
+  // The original name rides to server/, which hands it to the database for the disk extension.
+  return [recording.filename ? { ...target, filename: recording.filename } : target];
 }
 
 // The first `<source … type="video/mp4">` of the handler's templates, `&amp;` decoded, or null;

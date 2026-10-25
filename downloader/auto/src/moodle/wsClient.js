@@ -369,7 +369,7 @@ export function pluginfileUrl(fileurl, token) {
 }
 
 // Why a pluginfile answer is not the file, or null when it is: a dead token and a bot challenge
-// both answer HTTP 200, and either would be saved as the PDF. See docs/MOODLE.md.
+// both answer HTTP 200, and either would be saved as the file. See docs/MOODLE.md.
 async function pluginfileFault(res, url) {
   if (res.status >= 300 && res.status < 400)
     return new WsBlockedError(`pluginfile: HTTP ${res.status} redirect`, ROUTED);

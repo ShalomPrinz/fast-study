@@ -17,3 +17,13 @@ test('a malformed RFC 5987 escape falls back to the plain filename', () => {
   );
   assert.equal(filenameFromDisposition(`attachment; filename*=UTF-8''%`), null);
 });
+
+test('audio detection by mimetype or extension', async () => {
+  const { isAudioFile } = await import('../src/lib/fileMedia.js');
+  assert.ok(isAudioFile('audio/mpeg', 'x'));
+  assert.ok(isAudioFile('application/octet-stream', 'rec.M4A'));
+  assert.ok(isAudioFile(undefined, 'a.opus'));
+  assert.equal(isAudioFile('application/pdf', 'a.pdf'), false);
+  assert.equal(isAudioFile('video/mp4', 'a.mp4'), false);
+  assert.equal(isAudioFile(null, null), false);
+});
