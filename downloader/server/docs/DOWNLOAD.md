@@ -4,7 +4,8 @@ The server never downloads inline. Each source is a `src/downloaders/*.js` descr
 `{ tool, measure, upload, probeSize(input), buildCommand(input, tempDir) }` registered in
 `downloaders/index.js`, and `runner.js#runDownloadJob` is source-agnostic: private temp dir, size
 probe, the silent child spawned in that dir, and on a clean exit the source's `upload` —
-`uploadVideo` for curl/yt-dlp, `uploadMaterial` for `fetch`. A new source is a new module + one
+`uploadVideo` for curl/yt-dlp, `uploadMaterial` for `fetch` (temp file `material.bin`, the original
+name carried in the input's `filename` and sent to the database, which picks the disk extension). A new source is a new module + one
 registry line.
 
 ## General mode — into a computer folder (`src/generalFolder.js`)

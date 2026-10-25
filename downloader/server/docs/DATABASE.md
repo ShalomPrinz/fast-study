@@ -30,14 +30,18 @@ wipes any derived `audio.mp3` / `transcript.txt` / `summary.*`** — correct for
 
 ## `uploadMaterial` / `uploadPdf` — the `/materials` POST appends and wipes nothing
 
-Both POST PDF bytes to `/courses/{course}/lectures/{lecture}/materials?kind=` and get back `{name}`.
+Both POST bytes to `/courses/{course}/lectures/{lecture}/materials?kind=` and get back `{name}`.
 The **database allocates the filename** (`material.pdf`, `material.2.pdf`, …) atomically, so a second
 upload appends instead of overwriting and the server names nothing. Derived artifacts survive:
 attaching material shouldn't invalidate an existing summary.
 
+`uploadMaterial` sends `application/octet-stream` (the database ignores the type) and, when the
+resolved target carried one, `&filename=<original name>`, from which the database picks the disk
+extension. `uploadPdf` (the extension, PDF-only) sends none, so it lands as `.pdf`.
+
 A material downloaded from a discovery row — `/download-item` or a section run — also sends
 `&source=<ref>`: the row's `ref`, verbatim as `/list` gave it, which the database stores as the
-material's identity so the frontend can tell this row's PDF from another one in the same lecture
+material's identity so the frontend can tell this row's file from another one in the same lecture
 (`startJob`'s `ref` → the runner's `source` → `uploadMaterial`). Every other path (`/download-file`,
 `/download-url`, `/upload-pdf`) sends none, and a video upload never carries one. The match holds
 only because `auto/`'s ref is a pure function of the WS listing ([BROWSING.md](../../auto/docs/BROWSING.md#the-item--ref-contract)).

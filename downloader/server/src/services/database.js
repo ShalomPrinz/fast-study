@@ -108,21 +108,32 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
 
 // The appending /materials URL. `source` is the discovery row's ref, stored as the material's
 // identity so the frontend can match the row; a download from no row sends none.
-function materialsUrl(course, lecture, kind, source = null) {
-  const base = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
-  return source ? `${base}&source=${encodeURIComponent(source)}` : base;
+// `filename` is the original name (display, and the database's disk extension); none sends none.
+export function materialsUrl(course, lecture, kind, source = null, filename = null) {
+  let url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
+  if (source) url += `&source=${encodeURIComponent(source)}`;
+  if (filename) url += `&filename=${encodeURIComponent(filename)}`;
+  return url;
 }
 
-// Stream the temp PDF to the appending /materials, removing the temp dir either way. Never
+// Stream the temp file to the appending /materials, removing the temp dir either way. Never
 // throws: null on success, else the job's failure.
-export async function uploadMaterial(tempDir, course, lecture, kind, tool, source = null) {
+export async function uploadMaterial(
+  tempDir,
+  course,
+  lecture,
+  kind,
+  tool,
+  source = null,
+  filename = null,
+) {
   const file = path.join(tempDir, MATERIAL_TEMP_FILENAME);
   try {
-    const url = materialsUrl(course, lecture, kind, source);
+    const url = materialsUrl(course, lecture, kind, source, filename);
     // duplex: 'half' is required when a fetch body is a stream (undici).
     const res = await fetch(url, {
       method: 'POST',
-      headers: peerHeaders({ 'Content-Type': 'application/pdf' }),
+      headers: peerHeaders({ 'Content-Type': 'application/octet-stream' }),
       body: Readable.toWeb(fs.createReadStream(file)),
       duplex: 'half',
     });

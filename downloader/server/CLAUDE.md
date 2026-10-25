@@ -124,8 +124,8 @@ These bytes are terminal-only; the job registry reads the same entries but pushe
   traversal and rewrites the rest into the spelling the database stores (a port of
   `database/fs/paths.py::safe_name` — change one, change the other); `null` is a 400. What it
   rewrote comes back as `renames` from `/download-item` and `/download-section`.
-- Saved video is always `video.mp4` (general mode excepted: a user-named file in a user folder); PDFs are POSTed to the database's `/materials`, which allocates
-  the name (`material.pdf`, `material.2.pdf`, …), so a lecture can hold several.
+- Saved video is always `video.mp4` (general mode excepted: a user-named file in a user folder); materials are POSTed to the database's `/materials` (temp name `material.bin`, original `filename` forwarded), which allocates
+  the name (`material.pdf`, `material.2.pptx`, …), so a lecture can hold several.
 - Add a download source = a new `downloaders/*.js` + one registry line; never edit the runner.
 - HTTP goes through `fetch` (the one exception is `/resolve`, above). Node's `fetch` has no forbidden-header list, so it replays a captured
   `Cookie`, and drops it on a cross-origin redirect on its own.

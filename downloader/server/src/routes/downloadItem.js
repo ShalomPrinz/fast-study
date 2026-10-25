@@ -6,15 +6,23 @@ import { startJob } from './download.js';
 
 const router = Router();
 
+// `filename` (a Moodle material's original name) rides to the material upload when auto sends it.
+function inputFor(target, url) {
+  if (target.tool === 'curl') return { url, headers: target.headers };
+  return typeof target.filename === 'string' && target.filename
+    ? { url, filename: target.filename }
+    : { url };
+}
+
 // A resolved target → the downloader + input pair a job runs it with. Only curl replays
 // captured headers; the other two take a bare url.
-function toRun(target) {
+export function toRun(target) {
   const downloader = downloaders[target?.tool];
   if (!downloader) return null;
   const url = targetUrl(target.url);
   return {
     downloader,
-    input: target.tool === 'curl' ? { url, headers: target.headers } : { url },
+    input: inputFor(target, url),
   };
 }
 

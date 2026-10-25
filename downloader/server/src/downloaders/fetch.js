@@ -18,13 +18,15 @@ function buildFetchArgs(url, tempDir) {
   ];
 }
 
-// Plain-URL file capture saved as the lecture's material. input: { url }.
+// Plain-URL file capture saved as the lecture's material. input: { url, filename? } — filename is the original name, for the database.
 // measure 'dir' (not 'file', which stats VIDEO_FILENAME): beside this output the temp dir holds at
 // most the header file for auto, which the sum leaves out.
 export const fetchFile = {
   tool: 'fetch',
   measure: 'dir',
-  upload: uploadMaterial, // not uploadVideo: the material upload must not wipe derived artifacts
+  // not uploadVideo: the material upload must not wipe derived artifacts
+  upload: (tempDir, course, lecture, kind, tool, source, input) =>
+    uploadMaterial(tempDir, course, lecture, kind, tool, source, input?.filename),
   probeSize: ({ url }) => probeContentLength(url, autodlHeaderList(url)),
   refusal: (tempDir) => readAutodlRefusal(tempDir, MATERIAL_TEMP_FILENAME),
   buildCommand: ({ url }, tempDir) => ({ command: 'curl', args: buildFetchArgs(url, tempDir) }),

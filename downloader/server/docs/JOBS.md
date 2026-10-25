@@ -64,6 +64,10 @@ exits 0 on a refusal, is classified by the 401/403 status curl dumped instead (`
 - **otherwise** → finalized as-is; a fresh-capture auth failure reads "authentication failed", and a
   refusal from auto/ keeps auto's own `code`/`params`.
 
+A job's input is `{url}` (`fetch`/`ytdlp`) or `{url, headers}` (`curl`); a Moodle material target's
+optional `filename` (its original name) joins a `fetch` input in `toRun`, which single downloads, section
+runs and the re-resolve all share, and `uploadMaterial` forwards it to the database.
+
 A target on auto/ (any file on the Moodle host) always says `fromCache:true`: its url is an id in auto/'s memory, which a
 restart forgets (auto answers `401 moodle_file_unknown`), so a failed fetch is always worth the one
 re-resolve. The re-resolve waits its turn at auto's Moodle lock rather than being refused.
