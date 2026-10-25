@@ -13,7 +13,7 @@ export function cacheProbe(probeKey, media, filename, reason, finalUrl) {
 /**
  * What a link was probed as, or undefined when it was never probed.
  * @param {string} probeKey
- * @returns {'video'|'material'|null|undefined}
+ * @returns {'video'|null|undefined}
  */
 export function getProbedMedia(probeKey) {
   return entries.has(probeKey) ? entries.get(probeKey).media : undefined;

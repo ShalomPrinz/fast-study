@@ -95,7 +95,7 @@ function unsharedError(url) {
  * included). Throws UnsupportedError (→ 422) when Drive serves no name. See docs/BROWSING.md.
  * @param {string} url
  * @param {{ force?: boolean }} [opts] force = ignore the cached verdict and probe fresh.
- * @returns {Promise<{ fileId: string, filename: string, media: 'video'|'material'|null,
+ * @returns {Promise<{ fileId: string, filename: string, media: 'video'|null,
  *                     downloadUrl: string }>} media null = a real file this service can't use.
  */
 export async function probeDriveFile(url, { force = false } = {}) {

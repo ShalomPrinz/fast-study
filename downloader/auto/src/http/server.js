@@ -764,8 +764,7 @@ async function resolveItem(req, res) {
     return send(res, 200, { media: 'video', targets });
   }
 
-  // A Drive file needs no browser either, but only the filename probe knows whether it lands
-  // as a video or as a material — it reports back which.
+  // A Drive file needs no browser either: the filename probe resolves it to a video or a 422.
   if (recording.strategy === 'google-drive') {
     const { targets, media } = await resolveDriveFile({
       recording,

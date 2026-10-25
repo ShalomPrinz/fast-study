@@ -6,14 +6,12 @@
  * replaying its captured headers (curl); yt-dlp owns the pages whose real stream it resolves
  * itself (YouTube, a Drive or direct video); everything else is a plain tokened URL.
  * @param {string} strategy  the Recording strategy
- * @param {'video'|'material'} [media]  only the probed strategies need it — the probe decides theirs
  * @returns {'curl'|'fetch'|'ytdlp'}
  */
-export function toolFor(strategy, media) {
+export function toolFor(strategy) {
   if (strategy === 'moodle-file') return 'fetch';
   if (strategy === 'youtube-playlist') return 'ytdlp';
-  if (strategy === 'google-drive' || strategy === 'direct-url')
-    return media === 'video' ? 'ytdlp' : 'fetch';
+  if (strategy === 'google-drive' || strategy === 'direct-url') return 'ytdlp'; // probed rows are video-only
   return 'curl'; // videostream (a plain .mp4 URL), zoom (a browser capture)
 }
 

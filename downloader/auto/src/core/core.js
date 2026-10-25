@@ -267,11 +267,11 @@ export async function resolveYtDlp({ recording, course, name, kind, ref, forceCa
 
 /**
  * RESOLVE PATH (HTTP), no browser: a single Google Drive file, routed by its probed filename
- * (video → yt-dlp, PDF → material, else 422). `forceCapture` also re-probes. See docs/BROWSING.md.
+ * (video → yt-dlp, else 422). `forceCapture` also re-probes. See docs/BROWSING.md.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
- * @returns {Promise<{ targets: object[], media: 'video'|'material' }>} one download target,
+ * @returns {Promise<{ targets: object[], media: 'video' }>} one download target,
  *   plus what the file turned out to be.
  */
 export async function resolveDriveFile({
@@ -282,7 +282,7 @@ export async function resolveDriveFile({
   ref,
   forceCapture = false,
 }) {
-  const { filename, media, downloadUrl } = await probeDriveFile(recording.pageUrl, {
+  const { filename, media } = await probeDriveFile(recording.pageUrl, {
     force: forceCapture,
   });
   if (!media) {
@@ -297,10 +297,10 @@ export async function resolveDriveFile({
   const fromCache = Boolean(cap);
   if (!cap) {
     // yt-dlp resolves the /file/d/ page itself; /download-file needs the direct-download URL.
-    cap = { url: media === 'video' ? recording.pageUrl : downloadUrl };
+    cap = { url: recording.pageUrl };
     cacheCap(course, name, kind, media, cap, ref);
   }
-  const tool = toolFor(recording.strategy, media);
+  const tool = toolFor(recording.strategy);
   return { targets: [toTarget({ name, cap, tool, fromCache })], media };
 }
 
@@ -340,11 +340,8 @@ function notAVideo(url, filename) {
 // fresh probe and a proxied curl target. Never the replay cache — nothing stable keys it (GATE.md).
 export async function resolvePastedLink({ url, name }) {
   if (!onMoodleHost(url))
-    return [
-      toTarget({ name, cap: { url }, tool: toolFor('direct-url', 'video'), fromCache: false }),
-    ];
+    return [toTarget({ name, cap: { url }, tool: toolFor('direct-url'), fromCache: false })];
   const { media, filename, size } = await probeLink(url, true);
-  // The manual form is video-only; a PDF or page here is refused rather than saved as a material.
   if (media !== 'video') throw notAVideo(url, filename);
   return [toTarget({ name, cap: proxyCap({ url, size }), tool: 'curl', fromCache: false })];
 }
@@ -355,7 +352,7 @@ export async function resolvePastedLink({ url, name }) {
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
- * @returns {Promise<{ targets: object[], media: 'video'|'material' }>} one download target,
+ * @returns {Promise<{ targets: object[], media: 'video' }>} one download target,
  *   plus what the link turned out to be.
  */
 export async function resolveDirectUrl({
@@ -378,7 +375,7 @@ export async function resolveDirectUrl({
     cacheCap(course, name, kind, media, cap, ref);
   }
   // A proxied video is one plain file on auto, which curl fetches; yt-dlp has no use for it.
-  const tool = cap.proxied && media === 'video' ? 'curl' : toolFor(recording.strategy, media);
+  const tool = cap.proxied ? 'curl' : toolFor(recording.strategy);
   return { targets: [toTarget({ name, cap, tool, fromCache })], media };
 }
 

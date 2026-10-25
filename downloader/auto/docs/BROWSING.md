@@ -56,9 +56,9 @@ The frontend never sees the mechanism. `/list` and `/list/expand` return
 `Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle }`:
 
 - `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture PDF), never how it is
-  fetched. `'unknown'` for every `google-drive` and `direct-url` row: the WS payload names no file
+  fetched. `'unknown'` for every `google-drive` and `direct-url` row (which resolve to `'video'` or a 422, never `'material'`): the WS payload names no file
   and `/list` never probes (a round-trip per row). A `material` item is never `expandable`.
-- `resolvedMedia` — what a row was probed as this session (`'video'`, `'material'`, or
+- `resolvedMedia` — what a row was probed as this session (`'video'` or
   `'unsupported'`), read off the probe cache so it survives a re-list; absent when never probed. A
   resolved row keeps its original `media` rather than moving segments.
 - `ref` — the internal `Recording`, base64url JSON (`src/lib/ref.js`): stateless, round-tripped,
@@ -111,9 +111,10 @@ distinct from a 500 "try again".
 A Drive item is one file, but nothing in the WS payload says _what_ (a Drive link in a recordings
 section is as easily `L1.zip`). `server/`'s job is fire-and-forget once started, so `/resolve` decides
 here: `probeDriveFile` reads the real filename and routes on its extension via `classifyFilename`
-(`lib/fileMedia.js`) — video → a `ytdlp` target on the Drive link itself, `.pdf` → a `fetch` target on the
-direct-download URL, anything else → `422` (`link_not_a_video {source:'drive', url, ext}`) naming the
-extension. The filename is a fact about the file, unlike yt-dlp's stderr wording.
+(`lib/fileMedia.js`) — video → a `ytdlp` target on the Drive link itself, anything else (a PDF included) → `422`
+(`link_not_a_video {source:'drive', url, ext}`) naming the extension. A probe can tell a video for
+sure but not whether another file is a material, an assignment or something else, so it never
+claims one; materials come only from Moodle `resource` rows. The filename is a fact about the file, unlike yt-dlp's stderr wording.
 
 The name comes from `Content-Disposition` on `uc?export=download&id=<ID>` (one request); a large
 file's confirm interstitial and `/file/d/<ID>/view`'s `<title>` are the fallbacks. A file not shared
@@ -130,10 +131,10 @@ strongest first:
 
 1. the `Content-Disposition` filename — the host naming the file. It beats the type: `L1.zip` under a
    sloppy `video/mp4` is still a definite no.
-2. `Content-Type` — `text/html` is a definite no (a login wall, a share page, a syllabus).
+2. `Content-Type` — `text/html` and `application/pdf` are a definite no (a login wall, a share page, a syllabus).
 3. the URL's own filename (the redirect target's first), as a **fallback only**: an SSO-walled
-   `…/syllabus.pdf` answers `200 text/html` with the login page, and `curl -L --fail` would save that
-   as the material. The type vetoes the guess, which is why the URL is never read first.
+   `…/lecture.mp4` answers `200 text/html` with the login page, and `curl -L --fail` would save that
+   as the video. The type vetoes the guess, which is why the URL is never read first.
 
 All of it routes through the one table in `lib/fileMedia.js`, so a Drive link and a plain URL can
 never disagree about what a `.mp4` is.
