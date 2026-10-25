@@ -134,7 +134,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.done`                  | lecture dir | empty marker; the user studied it — a fresh video upload keeps it |
 | `.materials.json`        | lecture dir | `{material name: {source?, filename?, attach?}}` per-material meta |
 | `.assignment_files.json` | assignment dir | `{filename: source}` (opaque string) for files written with a source |
-| `.summary_materials.json` | lecture dir | `{"materials": [...]}` — the names sent to Gemini by the run that wrote the current `summary.md`; `[]` = transcript only |
+| `.summary_materials.json` | lecture dir | `{"materials": [...]}` — the materials attached at the last Summarize (the run that wrote the current `summary.md`), including attached files it skipped; `[]` = nothing attached |
 | `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
 | `.{slug}.pdf_warning`    | overview/   | same, per overview pdf (see OVERVIEW.md)                  |

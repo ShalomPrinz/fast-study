@@ -178,7 +178,7 @@ def test_oversized_unattached_file_is_fine():
     assert result["status"] == "done"
 
 
-def test_records_names_sent_and_skips_empty(put_materials):
+def test_records_attached_names_including_skipped_empty(put_materials):
     listing = [
         {"name": "material.pdf", "size": 3},
         {"name": "material.2.pdf", "size": 0},
@@ -186,7 +186,9 @@ def test_records_names_sent_and_skips_empty(put_materials):
     ]
     result, *_ = _exec(listing, {"material.pdf": b"abc", "material.2.pdf": b""})
     assert result == {"status": "done", "usedMaterial": True}
-    put_materials.assert_called_once_with("C", "L", "lecture", ["material.pdf"])
+    put_materials.assert_called_once_with(
+        "C", "L", "lecture", ["material.pdf", "material.2.pdf"]
+    )
 
 
 def test_transcript_only_records_empty_list(put_materials):

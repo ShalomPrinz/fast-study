@@ -57,7 +57,7 @@ MATERIAL_PREFIX = "material"
 MATERIAL_EXT_RE = re.compile(r"(?![0-9]+$)[a-z0-9]{1,5}")
 # Lecture-dir sidecar mapping a material filename to its meta: {source, filename, attach}.
 MATERIAL_META_MARKER = ".materials.json"
-# Lecture-dir record of the material names sent to Gemini by the run that wrote the current summary.md.
+# Lecture-dir record of the materials attached at the last Summarize (the run that wrote the current summary.md).
 SUMMARY_MATERIALS_MARKER = ".summary_materials.json"
 
 # The data root as explicit module state: unset until database_main.py seeds it or POST /config sets it.

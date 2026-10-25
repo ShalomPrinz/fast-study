@@ -425,6 +425,58 @@ def test_exec_summarize_all_materials_empty_runs_transcript_only():
     assert seen["names"] == []
 
 
+def test_exec_summarize_records_attached_names_including_skipped(put_materials):
+    """The record is the attached selection: an empty or text-less one still counts, an
+    unattached or unsupported one does not."""
+    contents = {
+        "a.pdf": b"%PDF-a",
+        "empty.pdf": b"",
+        "off.pdf": b"%PDF-off",
+        "notes.zip": b"zip",
+    }
+    listing = [
+        {"name": n, "size": len(b), **({"attach": False} if n == "off.pdf" else {})}
+        for n, b in contents.items()
+    ]
+    with (
+        patch.object(runner.db_client, "file_exists", return_value=True),
+        patch.object(runner.db_client, "list_materials", return_value=listing),
+        patch.object(
+            runner.db_client,
+            "get_file_bytes",
+            side_effect=lambda c, l, k, name: contents.get(name, b"transcript"),
+        ),
+        patch.object(runner, "summarize", return_value="# s"),
+        patch.object(runner.db_client, "put_summary"),
+    ):
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    assert result == {"status": "done", "usedMaterial": True}
+    put_materials.assert_called_once_with("C1", "L1", "lecture", ["a.pdf", "empty.pdf"])
+
+
+def test_exec_summarize_records_textless_office_file(put_materials):
+    contents = {"a.pdf": b"%PDF-a", "blank.docx": b"not a zip"}
+    with (
+        patch.object(runner.db_client, "file_exists", return_value=True),
+        patch.object(
+            runner.db_client,
+            "list_materials",
+            return_value=[{"name": n, "size": len(b)} for n, b in contents.items()],
+        ),
+        patch.object(
+            runner.db_client,
+            "get_file_bytes",
+            side_effect=lambda c, l, k, name: contents.get(name, b"transcript"),
+        ),
+        patch.object(runner, "summarize", return_value="# s"),
+        patch.object(runner.db_client, "put_summary"),
+    ):
+        runner._exec_summarize("C1", "L1", "lecture")
+    put_materials.assert_called_once_with(
+        "C1", "L1", "lecture", ["a.pdf", "blank.docx"]
+    )
+
+
 # ---- summarize: materials-only (no video) ----
 
 

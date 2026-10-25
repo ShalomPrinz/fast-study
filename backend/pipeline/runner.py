@@ -433,7 +433,8 @@ def _summarize_source(course: str, lecture: str, kind: str) -> list[dict] | None
 
 
 def _record_used_materials(course: str, lecture: str, kind: str, names: list[str]):
-    """Best-effort: the summary is already written, so a failed record never fails the run."""
+    """Record the attached selection (skipped files included, so it matches what the UI has
+    attached). Best-effort: the summary is already written, so a failed record never fails the run."""
 
     try:
         db_client.put_summary_materials(course, lecture, kind, names)
@@ -462,6 +463,7 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
         if entries:
             _check_sizes(entries)
             summary, used = _summarize_from_materials(course, lecture, kind, entries)
+            recorded = [e["name"] for e in entries]
             # A video that landed mid-summarize supersedes the materials: write nothing and fail,
             # so the run stops and the video path (transcribe) is what runs next.
             if db_client.file_exists(course, lecture, kind, "video.mp4"):
@@ -493,10 +495,11 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                 )
                 summary = summarize(transcript, [p for _, p in sent])
                 used = [n for n, _ in sent]
+                recorded = [e["name"] for e in selected]
         # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
         db_client.put_summary(course, lecture, kind, summary, fresh=True)
-        _record_used_materials(course, lecture, kind, used)
+        _record_used_materials(course, lecture, kind, recorded)
         return {"status": "done", "usedMaterial": bool(used)}
     except GeminiRateLimitError as e:
         return {**_failed(e), "daily_quota": e.info["is_daily"]}

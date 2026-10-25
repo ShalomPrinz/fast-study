@@ -99,7 +99,7 @@ def read_summary_materials(d: Path) -> list[str] | None:
 
 
 def write_summary_materials(course: str, lecture: str, kind: str, names) -> None:
-    """Atomically record the material names sent to Gemini for the current summary; no mkdir, so a gone lecture 404s."""
+    """Atomically record the materials attached at the last Summarize; no mkdir, so a gone lecture 404s."""
 
     if not isinstance(names, list) or not all(isinstance(n, str) for n in names):
         raise CodedValueError(
