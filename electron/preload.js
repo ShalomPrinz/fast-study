@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('faststudy', {
   errorReports: config.errorReports,
   // False in an unpackaged run, which never updates; the frontend's version tag reads "dev" then.
   packaged: config.packaged,
+  // `process.platform`, for the frontend to offer OS-specific actions such as `open.fileWith`.
+  platform: config.platform,
   // The renderer's `SettingsBacking`: main owns the store, so a stored API key never crosses here —
   // `read()` reports the two keys as set/unset flags only.
   settings: {
@@ -28,6 +30,7 @@ contextBridge.exposeInMainWorld('faststudy', {
   // Identifiers, never a path, for a file; http(s) only for a link.
   open: {
     file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
+    fileWith: (target) => ipcRenderer.invoke('faststudy:open-file-with', target),
     external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
   },
   // The OS folder dialog, raising the window first; resolves to an absolute path, or `null` on cancel.

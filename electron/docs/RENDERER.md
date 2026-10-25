@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, updates, open, pickFolder, extension, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, platform, updates, open, pickFolder, extension, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -61,18 +61,22 @@ where every other process on the machine could read it.
 
 A service URL handed to a fresh browser navigation cannot carry the `X-FastStudy-Secret` header, so
 in the packaged app every such navigation is a `401` and a blank window. `open` is the way out, and
-it is two calls:
+it is three calls. A data-file target takes one of three shapes, each resolved by `dataFiles.js`
+through its `database/` `…/files/{name}/path` route: lecture `{ course, lecture, name, kind }`,
+assignment `{ course, assignment, name }`, and overview `{ course, name }` (a course-level `overview/` file).
 
-- **`open.file({ course, lecture, name, kind })`** resolves the file through `database/`'s
-  `/files/{name}/path` routes and hands the absolute path to `shell.openPath` — the user's own PDF
-  app, not a Chromium tab. `lecture` absent addresses a course-level `overview/` file instead.
+- **`open.file(target)`** hands the resolved path to `shell.openPath` — the user's own app, not a
+  Chromium tab.
+- **`open.fileWith(target)`** opens Windows' "Open with" chooser on it (`rundll32.exe
+  shell32.dll,OpenAs_RunDLL <path>`, argv, no shell). Off Windows it answers `error: 'unsupported'`
+  without asking the database; the frontend offers it only when `platform` is `win32`.
 - **`open.external(url)`** opens an http(s) link in the user's browser. Any other scheme is refused:
   `shell.openExternal` launches whatever handler a scheme is registered to, so an unchecked one is a
   way to start a program from a renderer.
 
 **The renderer sends identifiers, never a path.** `database/` stays the single owner of the
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
-bridge. Both answer `{ ok, error }` — main does not toast; the frontend does.
+bridge. All answer `{ ok, error }` — main does not toast; the frontend does.
 
 **`pickFolder(defaultPath?)`** opens the OS folder dialog — for the data-folder field and for the general
 downloads folder the extension asks for — and resolves to the chosen absolute path, or `null` on cancel.

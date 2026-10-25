@@ -13,6 +13,7 @@ const store = require('./store');
 const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
 const { reapChildren, signalChildren } = require('./teardown');
 const windowState = require('./windowState');
+const { dataFilePath, openDataFileWith } = require('./dataFiles');
 const {
   registerHost,
   removeBridge,
@@ -515,26 +516,13 @@ function stopChildren() {
   return Promise.all(reaping);
 }
 
-/** Open one DATA_ROOT file in the user's own app. Identifiers in, `database/` resolves the path —
- *  no open-any-file primitive for the renderer (docs/RENDERER.md). No `lecture`: an overview file. */
-async function openDataFile({ course, lecture, name, kind }) {
-  if (!serviceUrls.database) return { ok: false, error: 'the database service is not running' };
-  const q = encodeURIComponent;
-  const route = lecture
-    ? `/courses/${q(course)}/lectures/${q(lecture)}/files/${q(name)}/path?kind=${q(kind ?? 'lecture')}`
-    : `/courses/${q(course)}/overview/files/${q(name)}/path`;
-  try {
-    const response = await fetch(`${serviceUrls.database}${route}`, {
-      headers: { 'X-FastStudy-Secret': SECRET },
-    });
-    if (!response.ok) return { ok: false, error: `database answered ${response.status}` };
-    const { path: filePath } = await response.json();
-    // openPath answers the empty string on success and the OS's reason otherwise — it never throws.
-    const failure = await shell.openPath(filePath);
-    return failure ? { ok: false, error: failure } : { ok: true, error: null };
-  } catch (error) {
-    return { ok: false, error: error.message };
-  }
+/** Open one DATA_ROOT file in the user's own app; `database/` resolves the path (docs/RENDERER.md). */
+async function openDataFile(target) {
+  const resolved = await dataFilePath(target, { url: serviceUrls.database, secret: SECRET });
+  if (!resolved.ok) return resolved;
+  // openPath answers the empty string on success and the OS's reason otherwise — it never throws.
+  const failure = await shell.openPath(resolved.path);
+  return failure ? { ok: false, error: failure } : { ok: true, error: null };
 }
 
 /** Open a link in the user's browser. http(s) only: `openExternal` launches whatever handler a
@@ -641,6 +629,7 @@ function createWindow(checks) {
       errorReports: reportsOn(),
       packaged: app.isPackaged,
       extensionPath: EXTENSION_DIR,
+      platform: process.platform,
     };
   });
   // Resolves either way: a folder that cannot open is logged, and the guide shows the path anyway.
@@ -649,6 +638,9 @@ function createWindow(checks) {
     if (failure) log('main', `could not open ${EXTENSION_DIR}: ${failure}`);
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
+  ipcMain.handle('faststudy:open-file-with', (event, target) =>
+    openDataFileWith(target, { url: serviceUrls.database, secret: SECRET }),
+  );
   ipcMain.handle('faststudy:open-external', (event, url) => openExternalUrl(url));
   ipcMain.handle('faststudy:pick-folder', (event, defaultPath) =>
     pickFolder(event.sender, defaultPath),
