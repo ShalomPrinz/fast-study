@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import {
   formatBytes,
   formatClockTime,
+  formatDateTime,
   formatDuration,
   formatFullTimestamp,
   formatMonthDate,
@@ -80,5 +81,26 @@ describe('formatClockTime', () => {
     expect(formatClockTime(iso)).toContain('32')
     activate('he')
     expect(formatClockTime(iso)).toBe('14:32')
+  })
+})
+
+describe('formatDateTime', () => {
+  const ms = new Date('2026-10-12T14:30:00').getTime()
+
+  it('renders date and 24h time in English', () => {
+    activate('en')
+    const out = formatDateTime(ms)
+    expect(out).toContain('12')
+    expect(out).toContain('Oct')
+    expect(out).toContain('2026')
+    expect(out).toContain('14:30')
+  })
+
+  it('renders in Hebrew', () => {
+    activate('he')
+    const out = formatDateTime(ms)
+    expect(out).toContain('2026')
+    expect(out).toContain('14:30')
+    expect(out).not.toContain('Oct')
   })
 })

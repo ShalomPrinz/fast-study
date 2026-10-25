@@ -38,6 +38,7 @@ import '@/styles/segmented.css'
 import '@/styles/pipeline-card.css'
 import '@/features/downloads/DownloadsView.css'
 import './RecordingRow.css'
+import { formatDateTime } from '@/shared/utils/format'
 import Icon from '@/shared/components/Icon'
 
 interface Props {
@@ -199,6 +200,11 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
             {item.title}
           </span>
         </Tooltip>
+        {item.modifiedAt !== undefined && (
+          <Tooltip content={t`Last modified on Moodle`}>
+            <span className="recording-modified">{formatDateTime(item.modifiedAt)}</span>
+          </Tooltip>
+        )}
         {unknown && (
           <Tooltip content={t`File type`}>
             <span className="chip chip--neutral">
