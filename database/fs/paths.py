@@ -6,6 +6,10 @@ import sys
 from pathlib import Path
 
 RECITATIONS_DIR = "Recitations"
+# Course-level dir of assignment folders (a third node kind, outside lecture_dir); reserved as a lecture name.
+ASSIGNMENTS_DIR = "Assignments"
+# Assignment-dir dotfile: {filename: source} for files written with a source.
+ASSIGNMENT_FILES_MARKER = ".assignment_files.json"
 
 # Windows rejects these in a path component
 ILLEGAL_NAME_CHARS = set('<>:"/\\|?*') | {chr(c) for c in range(32)}
@@ -277,3 +281,9 @@ def lecture_dir(course: str, lecture: str, kind: str = "lecture") -> Path:
     if kind == "recitation":
         return course_dir(course) / RECITATIONS_DIR / safe_name(lecture)
     return course_dir(course) / safe_name(lecture)
+
+
+def assignment_dir(course: str, name: str) -> Path:
+    """Resolve an assignment's directory; deliberately not a lecture kind, so no lecture route can address it."""
+
+    return course_dir(course) / ASSIGNMENTS_DIR / safe_name(name)

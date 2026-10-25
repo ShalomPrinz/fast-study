@@ -13,7 +13,7 @@ from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fs import crud, materials, overview, paths, tree
+from fs import assignments, crud, materials, overview, paths, tree
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
@@ -506,6 +506,54 @@ def get_file_path(course: str, lecture: str, name: str, kind: str = Query("lectu
     if not p.exists():
         return _error("Not found", 404, "file_not_found", {"file": name})
     return {"path": str(p)}
+
+
+@app.post("/courses/{course}/assignments/{name}/files")
+async def post_assignment_file(
+    course: str,
+    name: str,
+    request: Request,
+    filename: str = Query(...),
+    source: str | None = Query(None),
+):
+    """Save a raw-body file in an assignment under a collision-free name; answer the effective {assignment, name}."""
+
+    try:
+        data = await request.body()
+        # No await between here and the write: allocation is lock-free only that way.
+        assignment, effective = assignments.write_assignment_file(
+            course, name, filename, data, source
+        )
+        broadcast_notify()
+        return {"assignment": assignment, "name": effective}
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": filename})
+
+
+@app.get("/courses/{course}/assignments/{name}/files/{file}/path")
+def get_assignment_file_path(course: str, name: str, file: str):
+    """Return an assignment file's absolute on-disk path, for the launcher's open, open-with and reveal."""
+
+    try:
+        p = assignments.assignment_file_path(course, name, file)
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed", {"file": file})
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": file})
+    return {"path": str(p)}
+
+
+@app.get("/courses/{course}/assignments/{name}/files/{file}")
+def get_assignment_file(course: str, name: str, file: str):
+    """Stream an assignment file's bytes, for browser dev's open."""
+
+    try:
+        p = assignments.assignment_file_path(course, name, file)
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed", {"file": file})
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": file})
+    return FileResponse(str(p), media_type=mimetypes.guess_type(file)[0])
 
 
 @app.get("/courses/{course}/summaries")

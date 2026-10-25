@@ -31,11 +31,11 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   `name` being the sanitized folder that collided, not the typed name;
   a case-only rename (the same dir on NTFS) is not a collision.
 - `409` `name_reserved` `{name}` refuses a lecture/recitation create, rename, `PUT /…/video` or
-  `POST /…/materials` whose sanitized name is `overview` or `Recitations`, in any case
+  `POST /…/materials` whose sanitized name is `overview`, `Recitations` or `Assignments`, in any case
   ([LAYOUT.md](LAYOUT.md#names)); the last two create the dir on demand, so they check too.
 - `404` `lecture_not_found` `{course, lecture}` answers a neutral write (`PUT /…/files/{name}`,
   `PUT /…/summary`) to a lecture dir that does not exist; nothing is written.
-- `404` `course_not_found` `{course}` answers a course route, a lecture/recitation create, `PUT /…/video` or `POST /…/materials`, whose course dir is gone (renamed away).
+- `404` `course_not_found` `{course}` answers a course route, a lecture/recitation create, `PUT /…/video`, `POST /…/materials` or `POST /…/assignments/{name}/files`, whose course dir is gone (renamed away).
 - A file that is not there answers `404` `file_not_found` `{file}` on the stream and `/path` routes.
   `HEAD` answers a bodyless `404` instead: absence is its normal answer, not a failure.
 
@@ -59,6 +59,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material of any type, optional `?source=` and `?filename=` (original name; ext source, default `.pdf`); returns `{name}` with the allocated (or adopted) filename |
 | `PATCH  /courses/{course}/lectures/{lecture}/materials/{name}` | body `{attach: bool}` sets the meta flag; `204`; `404` `file_not_found` for a non-material or absent name; `400` `bad_request_body` for another body; `500` `file_write_failed` if the sidecar can't be written |
 | `PUT    /courses/{course}/lectures/{lecture}/summary-materials` | body `{materials: [str]}` records what the current `summary.md` was built from; `204`; `404` if the lecture is missing; `400` `bad_request_body` for another body |
+| `POST   /courses/{course}/assignments/{name}/files`        | raw body, `?filename=` (required), optional `?source=`; name sanitized for NTFS like folder names, then saved collision-free (`stem (2).ext`); returns `{assignment, name}` (effective folder and file names), then notifies; `400` `unsafe_path_segment` for a bad filename |
+| `GET    /courses/{course}/assignments/{name}/files/{file}/path` | `{path}`, the absolute path; `404` `file_not_found`; `400` `unsafe_path_segment` for a dotfile |
+| `GET    /courses/{course}/assignments/{name}/files/{file}` | the bytes, media type from `mimetypes.guess_type`; `404` `file_not_found` |
 | `POST   /courses/{course}/lectures/{lecture}/removed`      | delete intermediates (`{files}`, each `video.mp4` or `audio.mp3`); see Write semantics |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `404` if the lecture is missing; `423` if it is open in another program |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |

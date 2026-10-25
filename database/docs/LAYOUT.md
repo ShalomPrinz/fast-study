@@ -6,11 +6,13 @@ build paths; they pass `(course, lecture, kind)` and let `fs/paths.py` resolve t
 ```
 {DATA_ROOT}/{course}/{lecture}/...              lectures
 {DATA_ROOT}/{course}/Recitations/{name}/...     recitations
+{DATA_ROOT}/{course}/Assignments/{name}/...     assignments: a named folder of files, filenames sanitized like folder names
 {DATA_ROOT}/{course}/overview/...               course-level files (see OVERVIEW.md)
 ```
 
 `lecture_dir(course, lecture, kind)` is the only resolver — `kind="recitation"` inserts the
-`Recitations` level. Re-encoding this layout anywhere else (here or in another service) is the
+`Recitations` level. `assignment_dir(course, name)` resolves an assignment; assignments are not a
+lecture kind, so no video, summary, materials or pipeline route can address one. Re-encoding this layout anywhere else (here or in another service) is the
 one thing that breaks the arrangement.
 
 Every resolver runs course and lecture names through `safe_name()` first (below). A file name
@@ -46,7 +48,7 @@ resolvers depend on; a replacement rule has to be written carefully not to colla
 on a second pass. This is deliberately not exposed as a setting: reversing it is a migration once
 directories exist on disk, not a config change.
 
-A lecture or recitation whose sanitized name matches `overview` or `Recitations`, case-insensitively
+A lecture or recitation whose sanitized name matches `overview`, `Recitations` or `Assignments`, case-insensitively
 since NTFS is, is refused on create and rename with `409` `name_reserved`: the tree skips those folders,
 so the lecture would vanish into the course's own. Course names need no such check — nothing else
 lives at the data root.
@@ -131,6 +133,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
 | `.done`                  | lecture dir | empty marker; the user studied it — a fresh video upload keeps it |
 | `.materials.json`        | lecture dir | `{material name: {source?, filename?, attach?}}` per-material meta |
+| `.assignment_files.json` | assignment dir | `{filename: source}` (opaque string) for files written with a source |
 | `.summary_materials.json` | lecture dir | `{"materials": [...]}` — the names sent to Gemini by the run that wrote the current `summary.md`; `[]` = transcript only |
 | `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
@@ -156,8 +159,9 @@ A materials-only lecture has neither, so it reports nothing removed.
 ## Tree shape
 
 `read_tree` returns one node per course: `name`, `archived`, `lectures_only`, `source_url`,
-`lectures`, `recitations`. `lectures_only` is resolved, never raw: `course_structure == lectures_all`,
-or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations` and `overview` are skipped as lectures.
+`lectures`, `recitations`, `assignments`. `lectures_only` is resolved, never raw: `course_structure == lectures_all`,
+or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations`, `Assignments` and `overview` are skipped as lectures.
+`assignments` is always present (`[]` when none): `[{name, files: [{name, size, mtime[, source]}]}]`, both levels sorted by name, `source` omitted when absent, dotfiles never rows.
 
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
 `materials` (index-ordered `{name, size, mtime}` plus `source`, `filename` and `attach` when set, always present and `[]` when none — presence
@@ -183,3 +187,11 @@ Every metadata read (`transcript.partial.meta.json`, both `.pdf_warning` readers
 `overview/meta.json`, `.materials.json`) swallows parse and read errors and falls back to "absent". A corrupt
 side-file must never take down a whole tree or listing; the next write self-heals it.
 Writing `.materials.json` degrades the same way: a failed write is logged and the upload or delete still succeeds, untagged. The one exception is `PATCH …/materials/{name}`: the flag lives only in the sidecar, so a failed write answers `500 file_write_failed` and does not notify.
+
+## Assignments
+
+A named folder of files under `Assignments/`, created on demand (the course dir must exist, else `404` `course_not_found`). The
+folder name goes through `safe_name()`; a file name goes through `check_safe_segment()` then the same NTFS cleanup (illegal chars dropped, trailing dots/spaces stripped, `CON.pdf` → `CON_.pdf`, extension kept); a leading dot is
+refused on POST and GET (dotfiles are sidecars). A taken name allocates `stem (2).ext`, `stem (3).ext`, … in `fs/assignments.py`, scan and write
+with no `await`, like materials; `POST` answers the effective assignment and file names. `.assignment_files.json` shares the
+`.materials.json` atomic read/write primitives: unreadable reads as `{}`, a failed write is logged and the upload still succeeds.

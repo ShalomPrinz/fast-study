@@ -5,6 +5,7 @@ from pathlib import Path
 from .material_meta import forget_meta
 from .paths import (
     ARCHIVED_MARKER,
+    ASSIGNMENTS_DIR,
     DONE_MARKER,
     LECTURES_ONLY_MARKER,
     OVERVIEW_DIR,
@@ -32,7 +33,11 @@ from .paths import (
 )
 
 # Course-level folders the tree skips as lectures; casefolded because NTFS matches names case-insensitively.
-_RESERVED_LECTURE_NAMES = {OVERVIEW_DIR.casefold(), RECITATIONS_DIR.casefold()}
+_RESERVED_LECTURE_NAMES = {
+    OVERVIEW_DIR.casefold(),
+    RECITATIONS_DIR.casefold(),
+    ASSIGNMENTS_DIR.casefold(),
+}
 
 
 def _mkdir_new(d: Path) -> None:

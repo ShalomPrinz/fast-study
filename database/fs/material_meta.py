@@ -11,15 +11,40 @@ log = logging.getLogger("db")
 _KEYS = {"source": str, "filename": str, "attach": bool}
 
 
+def read_json_dict(d: Path, marker: str) -> dict:
+    """Read a sidecar's JSON object; absent, corrupt, unreadable or not an object reads as {}."""
+
+    try:
+        raw = json.loads((d / marker).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def write_json_dict(d: Path, marker: str, data: dict, strict: bool = False) -> None:
+    """Persist a sidecar atomically (temp file + os.replace), removing it once empty; best-effort unless strict (raises OSError), event loop only."""
+
+    # A failure only loses a tag (the file itself is saved), so it never fails the request;
+    # on Windows os.replace can hit a sharing violation while a threadpool reader has the file open.
+    p = d / marker
+    try:
+        if not data:
+            p.unlink(missing_ok=True)
+            return
+        # Swap in a whole file: the threadpool tree/listing reads concurrently, and a torn read degrades to {}.
+        tmp = d / (marker + ".tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, p)
+    except OSError as e:
+        if strict:
+            raise
+        log.warning("%s not saved in %s: %s", marker, d, e)
+
+
 def read_meta(d: Path) -> dict[str, dict]:
     """Read a lecture's {material name: {source?, filename?, attach?}} map; absent, corrupt or unreadable reads as {}."""
 
-    try:
-        raw = json.loads((d / MATERIAL_META_MARKER).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-    if not isinstance(raw, dict):
-        return {}
+    raw = read_json_dict(d, MATERIAL_META_MARKER)
     meta = {}
     for name, v in raw.items():
         # A bare string is the pre-meta shape; removal tracked in docs/MIGRATIONS.md.
@@ -40,22 +65,9 @@ def read_meta(d: Path) -> dict[str, dict]:
 def write_meta(d: Path, meta: dict[str, dict], strict: bool = False) -> None:
     """Persist the map atomically, removing it once empty; best-effort unless strict (raises OSError), event loop only."""
 
-    # A failure only loses a tag (the file itself is saved), so it never fails the request;
-    # on Windows os.replace can hit a sharing violation while a threadpool reader has the file open.
-    p = d / MATERIAL_META_MARKER
-    meta = {n: e for n, e in meta.items() if e}
-    try:
-        if not meta:
-            p.unlink(missing_ok=True)
-            return
-        # Swap in a whole file: the threadpool tree/listing reads concurrently, and a torn read degrades to {}.
-        tmp = d / (MATERIAL_META_MARKER + ".tmp")
-        tmp.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
-        os.replace(tmp, p)
-    except OSError as e:
-        if strict:
-            raise
-        log.warning("material meta not saved in %s: %s", d, e)
+    write_json_dict(
+        d, MATERIAL_META_MARKER, {n: e for n, e in meta.items() if e}, strict
+    )
 
 
 def forget_meta(d: Path, name: str) -> None:
