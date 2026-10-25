@@ -255,12 +255,12 @@ the passcode prompt can't stay hidden.
 
 ## Unknown rows
 
-An `unknown` row carries a chip — `?`, then `Video` / `Material` / `Unsupported` — and **never changes
-segment** once resolved. `resolvedMedia` comes from auto's session probe cache on listing, or from a
+An `unknown` row carries a chip — `?`, then `Video` / `Unsupported` — and **never changes
+segment** once resolved. A probe resolves to video only: any other file (a PDF included) is `unsupported`,
+since the app cannot tell a material from an assignment. `resolvedMedia` comes from auto's session probe cache on listing, or from a
 download: `POST /download-item`'s `media` and a 422 `UnsupportedError` are both verdicts, reported
 through the dispatch-only `ResolvedMediaContext` and stamped onto the item. It sits above the segments
-because a segment switch unmounts every row. A row resolved to `material` gets the whole material
-affordance; an `unsupported` one (a dead link included) fades with Download disabled, never offering
+because a segment switch unmounts every row. An `unsupported` row (a dead link included) fades with Download disabled, never offering
 Retry (`rowAction`).
 
 ## Row name and kind

@@ -2,7 +2,7 @@ import { createClient, httpError } from '@/services/http'
 import { DOWNLOAD_SERVER_URL, secretHeaders, withSecretParam } from '@/services/runtime'
 import type { DownloadOperation, Kind, ToolReport } from '@/types'
 import type { ErrorParams } from '@/shared/i18n/serviceErrors'
-import type { Media, PasscodeError, ProbedMedia } from './autoDownloader'
+import type { Media, PasscodeError, ResolvedMedia } from './autoDownloader'
 import { postReconnectAware } from './autoDownloader'
 
 // Feature-local boundary for the downloader server, which queues every background download job and
@@ -19,7 +19,7 @@ export interface Rename {
 // `captchaSolved` is present (only ever true) when this item's zoom capture waited on screen for a
 // captcha and then caught the player; it is per-answer, so it never names another queued download.
 export interface DownloadItemResult {
-  media: ProbedMedia
+  media: ResolvedMedia
   jobIds: string[]
   renames?: Rename[]
   captchaSolved?: true

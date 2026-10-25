@@ -26,7 +26,7 @@ export function materialsOf(
 // The single "already on disk" rule for the green row, bulk skip and landed check; a material matches by
 // `source === ref`, so several share a node. An unprobed 'unknown' or 'unsupported' row is always false.
 export function hasResource(
-  item: { ref?: string; media: Media; resolvedMedia?: ResolvedMedia },
+  item: { ref?: string; media: Media; resolvedMedia?: Media | ResolvedMedia },
   name: string,
   kind: Kind,
   courses: Course[],
@@ -55,7 +55,7 @@ export function holdsVideo(name: string, kind: Kind, courses: Course[], course: 
 // skip's rule. Unlike `hasResource` an unprobed 'unknown' counts: it may be a video, and a video PUT
 // wipes the lecture's transcript and summary.
 export function overwritesVideo(
-  item: { media: Media; resolvedMedia?: ResolvedMedia },
+  item: { media: Media; resolvedMedia?: Media | ResolvedMedia },
   name: string,
   kind: Kind,
   courses: Course[],

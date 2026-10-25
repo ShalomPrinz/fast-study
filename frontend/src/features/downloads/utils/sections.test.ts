@@ -63,7 +63,7 @@ describe('groupSections', () => {
   it('keeps a resolved unknown row in the unknown segment', () => {
     const items = [
       item('a', 'Week 1', 'unknown', 'video'),
-      item('b', 'Week 1', 'unknown', 'material'),
+      item('b', 'Week 1', 'unknown', 'unsupported'),
     ]
     expect(refs(groupSections(items, 'unknown'))).toEqual([['Week 1', ['a', 'b']]])
     expect(groupSections(items, 'video')).toEqual([])

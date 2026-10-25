@@ -69,7 +69,12 @@ export function useBulkRun(runKey: string | null, course: string, label: string)
   // per ref, since every ping re-reads the same targets.
   useEffect(() => {
     for (const target of targets ?? []) {
-      if (target.media === 'unknown' || reported.current.has(target.ref)) continue
+      if (
+        target.media === 'unknown' ||
+        target.media === 'material' ||
+        reported.current.has(target.ref)
+      )
+        continue
       if (target.disposition !== 'queued' && target.disposition !== 'unsupported') continue
       reported.current.add(target.ref)
       resolveMedia(target.ref, target.media)

@@ -148,12 +148,6 @@ describe('hasResource', () => {
     expect(hasResource(row('unknown', 'video'), 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(
       true,
     )
-    expect(
-      hasResource(row('unknown', 'material'), 'Lecture 4', 'lecture', courses, 'Algebra'),
-    ).toBe(true)
-    expect(
-      hasResource(row('unknown', 'material'), 'Lecture 1', 'lecture', courses, 'Algebra'),
-    ).toBe(false)
   })
 
   it('is false for a row probed as unsupported — nothing of it can land on disk', () => {
@@ -188,7 +182,6 @@ describe('overwritesVideo', () => {
 
   it('is false for a material or unsupported row, which never replaces a video', () => {
     expect(overwrites(row('material'), 'Lecture 1')).toBe(false)
-    expect(overwrites(row('unknown', 'material'), 'Lecture 1')).toBe(false)
     expect(overwrites(row('unknown', 'unsupported'), 'Lecture 1')).toBe(false)
   })
 })

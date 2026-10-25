@@ -8,7 +8,7 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import { lectureTrack, lecturesOnly } from '@/features/lectures/utils/courseTree'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import type { Item, ResolvedMedia } from '@/features/downloads/services/autoDownloader'
+import type { Item, ProbedMedia } from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingJobList from './RecordingJobList'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
@@ -49,9 +49,8 @@ interface Props {
 }
 
 // The resolved-type chip's copy; an unresolved 'unknown' row shows '?'.
-const RESOLVED_LABEL: Record<ResolvedMedia, MessageDescriptor> = {
+const RESOLVED_LABEL: Record<ProbedMedia | 'unsupported', MessageDescriptor> = {
   video: msg`Video`,
-  material: msg`Material`,
   unsupported: msg`Unsupported`,
 }
 
@@ -79,9 +78,9 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   // Only an 'unknown' (Google Drive) row has a type worth showing; elsewhere it restates the segment.
   const unknown = item.media === 'unknown'
   const unsupported = unknown && resolved === 'unsupported'
-  // A material row attaches a PDF to an existing lecture instead of creating one from a video —
-  // including an 'unknown' row the probe resolved to a PDF.
-  const material = item.media === 'material' || (unknown && resolved === 'material')
+  const verdict = resolved === 'video' || resolved === 'unsupported' ? resolved : undefined
+  // A material row attaches a PDF to an existing lecture instead of creating one from a video.
+  const material = item.media === 'material'
   // The split siblings on disk a video row could overwrite (a zoom recording lands as `${name}.1`/`.2`),
   // so both the overwrite confirm and the pipeline lock cover them.
   const siblings = material ? [] : splitSiblings(effectiveName, kind, courses, course)
@@ -201,9 +200,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
         </Tooltip>
         {unknown && (
           <Tooltip content={t`File type`}>
-            <span className="chip chip--neutral">
-              {resolved ? t(RESOLVED_LABEL[resolved]) : '?'}
-            </span>
+            <span className="chip chip--neutral">{verdict ? t(RESOLVED_LABEL[verdict]) : '?'}</span>
           </Tooltip>
         )}
       </div>

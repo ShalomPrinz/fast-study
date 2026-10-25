@@ -56,9 +56,11 @@ export function challengeWindowOf(params: ErrorParams | null | undefined): Chall
 // A Google Drive row is 'unknown': its file type is only knowable from a download-time probe.
 export type Media = 'video' | 'material' | 'unknown'
 
-// What a probe found the file to be. 'unsupported' is a real file auto can't use (e.g. a .zip).
-export type ProbedMedia = 'video' | 'material'
-export type ResolvedMedia = ProbedMedia | 'unsupported'
+// What a probe found the file to be. A probed row resolves to video only; 'unsupported' is any other
+// file auto can't use (a PDF or .zip included).
+export type ProbedMedia = 'video'
+// A download answer's settled identity: a probe verdict, or a Moodle resource row's 'material'.
+export type ResolvedMedia = Exclude<Media, 'unknown'> | 'unsupported'
 
 // A discovery item; `ref` is opaque — round-trip it, never parse it. `resolvedMedia` and
 // `likelyRecording` are covered in docs/DOWNLOADS.md §Discovery.
