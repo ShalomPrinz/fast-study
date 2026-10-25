@@ -511,6 +511,8 @@ one (shortname `868922001`, a multilang `fullname` the fake reduces to `moodlews
 picker shows two current courses and two under "Show past courses". `core_course_get_contents` answers the fake course's rows for any enrolled
 id and `invalidrecord` for any other, so a pasted unknown id reads as not accessible.
 
+Every module carries Moodle's unix-seconds `timemodified` (each `contents[]` entry, each file of a multi-file resource; `contentsinfo.lastmodified` on the content-less videostream and on resources), ascending in listing order from 2026-02-22, so Downloads rows show a last-modified time. Zoom links in a section summary are not modules and have none.
+
 The fake course has a row per failure, each a URL switch (titles in `FAILURE_ROWS`, `lib/env.mjs`;
 the self-check proves all three are listed):
 
