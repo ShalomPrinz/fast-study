@@ -122,7 +122,8 @@ given, so a refusal the user can act on is caught by the route instead and re-em
 | --------------------------------------- | --------------------------- | ------------------------------- | ----- |
 | `pipeline/runner.py` step guards        | `missing_prerequisite`      | `file`, `step`                  | user  |
 | `pipeline/runner.py` `_require_nonempty`| `empty_file`                | `file`                          | user  |
-| `pipeline/runner.py` materials-only summarize | `materials_empty`     | —                               | user  |
+| `pipeline/runner.py` summarize materials | `materials_empty`          | —                               | user  |
+| `pipeline/runner.py` `_check_sizes`     | `material_too_large`        | `files`, `limit_mb`, `size_mb`  | user  |
 | `services/errors.py` `own_fields`       | `app_files_blocked`         | —                               | user  |
 | `pipeline/strip_audio.py`               | `audio_extraction_failed`   | `detail`                        | user  |
 | `pipeline/transcribe.py`                | `transcription_failed`      | `detail`                        | user  |

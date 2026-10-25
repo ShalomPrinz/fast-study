@@ -1,6 +1,6 @@
 # Lecture Material Article Instructions
 
-You have received the material of a lecture as one or more PDF documents — slides, lecture notes, or handouts. There is no recording or transcript of the lecture. Your task is to turn this material into a well-written, clear, and well-organized article.
+You have received the material of a lecture as one or more files — slides, lecture notes, or handouts, which may be PDFs, images, or text extracted from slides, documents, or spreadsheets. There is no recording or transcript of the lecture. Your task is to turn this material into a well-written, clear, and well-organized article.
 
 ---
 
@@ -9,9 +9,9 @@ You have received the material of a lecture as one or more PDF documents — sli
 These requirements are mandatory and must be followed without exception:
 
 1. **Write in Hebrew.** The material is most likely in Hebrew and may include English terms, phrases, or proper nouns — preserve them as-is. Write the entire article in Hebrew, even where a document is in English.
-2. **Be faithful, but tight.** Preserve all ideas, definitions, examples, derivations, names, and numbers from the PDFs. Slides are terse: connect their bullet points into explanatory prose, but explain only what the material itself states or directly shows — never fill a gap with what the lecturer probably said. Merge content that repeats across slides or across documents, and skip pure navigation (title slides, agendas, "questions?" slides, page headers and footers). **Target 2–4 PDF pages. Hard maximum: 5 pages, and only for unusually dense material.** If you find yourself exceeding 4 pages, tighten before adding. Faithfulness is about _which ideas_ appear, not about reproducing every line.
-3. **Several documents are one lecture.** When more than one PDF is attached, they are parts of the same lecture: combine them into one article organized by topic, not one section per file.
-4. **Do not add information from any external source or prior knowledge.** Your only source of information is the content of the PDFs. If you have a crucial note on something, say it in braces shortly and tell me that you added the note, why you did it, and shortly explain the issue in the original material.
+2. **Be faithful, but tight.** Preserve all ideas, definitions, examples, derivations, names, and numbers from the material. Slides are terse: connect their bullet points into explanatory prose, but explain only what the material itself states or directly shows — never fill a gap with what the lecturer probably said. Merge content that repeats across slides or across documents, and skip pure navigation (title slides, agendas, "questions?" slides, page headers and footers). **Target 2–4 PDF pages. Hard maximum: 5 pages, and only for unusually dense material.** If you find yourself exceeding 4 pages, tighten before adding. Faithfulness is about _which ideas_ appear, not about reproducing every line.
+3. **Several documents are one lecture.** When more than one file is attached, they are parts of the same lecture: combine them into one article organized by topic, not one section per file.
+4. **Do not add information from any external source or prior knowledge.** Your only source of information is the content of the files. If you have a crucial note on something, say it in braces shortly and tell me that you added the note, why you did it, and shortly explain the issue in the original material.
 5. **Clean Output.** Return ONLY the article text. The very first character of your response must be '#'. If you include any introductory text like "I will read..." or "Certainly," the output will be rejected. Proceed directly to the title.
 
 ---
@@ -60,7 +60,7 @@ These requirements are mandatory and must be followed without exception:
   Any other class name renders as ordinary prose with no box.
 - The box carries no title, so do not add a heading or a label line inside it.
 - Box content should be new content. *Don't repeat existing text inside a box*.
-- **Use them sparingly.** Everything above still governs: the 2–4 page target, prose over lists, and no information that is not in the PDFs. A callout is for content that is genuinely set apart — I expect 0-3 in a whole summary, and none at all is a perfectly good answer. A summary where most paragraphs are boxed is wrong.
+- **Use them sparingly.** Everything above still governs: the 2–4 page target, prose over lists, and no information that is not in the files. A callout is for content that is genuinely set apart — I expect 0-3 in a whole summary, and none at all is a perfectly good answer. A summary where most paragraphs are boxed is wrong.
 - The box content is normal Hebrew prose: usually one paragraph, at most two. Do not put a list, a heading, or a `---` inside it.
 - Callouts do not change the section structure: the `---` separator rules and the Required Output Structure below still hold exactly as written, and every callout lives inside one of those sections.
 

@@ -71,7 +71,7 @@ def test_summarize_with_empty_material_list(tmp_path):
     assert len(_upload_calls(fake)) == 1
     contents = _generate_contents(fake)
     assert len(contents) == 4
-    assert "--- SUPPLEMENTARY PDF DOCUMENTS ---" not in contents
+    assert "--- SUPPLEMENTARY DOCUMENTS ---" not in contents
     assert summarize_mod.PDF_INSTRUCTION_SUFFIX not in contents[3]
 
 
@@ -95,7 +95,7 @@ def test_summarize_with_material(tmp_path):
     assert len(contents) == 6
     assert contents[0] == "--- MAIN TRANSCRIPT DOCUMENT ---"
     assert getattr(contents[1], "_mime", None) == "text/plain"
-    assert contents[2] == "--- SUPPLEMENTARY PDF DOCUMENTS ---"
+    assert contents[2] == "--- SUPPLEMENTARY DOCUMENTS ---"
     assert getattr(contents[3], "_mime", None) == "application/pdf"
     assert contents[4] == "--- INSTRUCTIONS ---"
     base_prompt = summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
@@ -130,8 +130,8 @@ def test_summarize_with_several_materials(tmp_path):
     contents = _generate_contents(fake)
     # transcript pair + one marker + 3 PDFs + instructions pair.
     assert len(contents) == 8
-    assert contents.count("--- SUPPLEMENTARY PDF DOCUMENTS ---") == 1
-    assert contents[2] == "--- SUPPLEMENTARY PDF DOCUMENTS ---"
+    assert contents.count("--- SUPPLEMENTARY DOCUMENTS ---") == 1
+    assert contents[2] == "--- SUPPLEMENTARY DOCUMENTS ---"
     assert [getattr(c, "_path", None) for c in contents[3:6]] == materials
     assert contents[6] == "--- INSTRUCTIONS ---"
     # The prompt suffix is appended once, not once per material.

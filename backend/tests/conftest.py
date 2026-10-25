@@ -22,3 +22,15 @@ def isolate_timing_db(tmp_path, monkeypatch):
 def no_auto_remove(monkeypatch):
     monkeypatch.delenv("AUTO_REMOVE", raising=False)
     monkeypatch.delenv("AUTO_REMOVE_AFTER", raising=False)
+
+
+# A summary run records its materials through the database; tests read the call off this mock.
+@pytest.fixture(autouse=True)
+def put_materials(monkeypatch):
+    from unittest.mock import MagicMock
+
+    from services import db_client
+
+    mock = MagicMock()
+    monkeypatch.setattr(db_client, "put_summary_materials", mock)
+    return mock

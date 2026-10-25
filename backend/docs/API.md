@@ -24,11 +24,16 @@ When `FASTSTUDY_SECRET` is set, every request but `GET /health` must carry it; t
 `GET /tools`
 `{"tools": {name: "ok" | {code, state, params}}}` for `ffmpeg`, `pandoc` and `tectonic` — the record is [lib/tools](../../lib/tools/CLAUDE.md)'s, relayed unchanged. The probe runs once per process on a background thread started at import, so it never delays startup; a call before it settles waits for it. The frontend calls it once after the window opens.
 
+## Materials
+
+`GET /materials/supported`
+`{"extensions": ["pdf", "png", …]}` — the file types a summary can send to Gemini (`pipeline/material_types.py`); the rest are stored but never sent.
+
 ## Per-lecture
 
 `POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}[&fresh=true]`
 `step ∈ {audio, transcribe, summarize, pdf, drive}`, `kind` defaults to `lecture`. `fresh=true` (pdf only; other steps ignore it) deletes the old `summary.pdf` through the database once the run holds the lecture's lock, before the render; a failed delete is the pdf step's error with the database's own code (`file_locked` for a PDF another program holds open) and nothing renders. A `busy` answer touches no file.
-Unknown step → 404. Validates that the step's prerequisite file exists (`_STEP_CONFIG`; for `summarize`, `runner.summarize_ready`: `transcript.txt`, or no `video.mp4`, no `audio.mp3` and at least one material PDF), answering 409 `"<file> is required — run <previous step> first"` otherwise; a step a setting has switched off is 409 `"<step> is disabled in settings"`. On success → `{"status": "started"|"busy"}`.
+Unknown step → 404. Validates that the step's prerequisite file exists (`_STEP_CONFIG`; for `summarize`, `runner.summarize_ready`: `transcript.txt`, or no `video.mp4`, no `audio.mp3` and at least one attached, supported material), answering 409 `"<file> is required — run <previous step> first"` otherwise; a step a setting has switched off is 409 `"<step> is disabled in settings"`. On success → `{"status": "started"|"busy"}`.
 
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`. Both this and `run/{step}` pull a lecture waiting in the runner queue out of it when they start it.

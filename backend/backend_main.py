@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from logging_setup import setup_logging
 from pipeline import runner, schedule
+from pipeline.material_types import supported_extensions
 from pydantic import BaseModel
 from sentry_sdk.integrations.google_genai import GoogleGenAIIntegration
 from sentry_sdk.transport import HttpTransport
@@ -139,6 +140,13 @@ async def tools_status():
     return {"tools": await asyncio.wrap_future(_tool_probe)}
 
 
+@app.get("/materials/supported")
+def materials_supported():
+    """The material file extensions a summary can send to Gemini."""
+
+    return {"extensions": supported_extensions()}
+
+
 # Per step: the file it reads, the step that produces it, and that step's display label. The id
 # is what the wire carries; the label exists only for the English prose.
 _STEP_CONFIG: dict[str, tuple[str, str, str]] = {
@@ -189,7 +197,7 @@ async def run_step(
         )
 
     # Each step depends on the previous step's output file.
-    # Summarize also runs off material PDFs alone when the lecture has no video.
+    # Summarize also runs off materials alone when the lecture has no video.
     required_file, prev_step, prev_label = _STEP_CONFIG[step]
     if step == "summarize":
         ready = await asyncio.to_thread(runner.summarize_ready, course, lecture, kind)

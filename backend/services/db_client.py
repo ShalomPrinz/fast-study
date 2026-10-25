@@ -138,7 +138,7 @@ def remove_files(course: str, lecture: str, kind: str, names: list[str]) -> None
 
 
 def list_materials(course: str, lecture: str, kind: str) -> list[dict]:
-    """List a lecture's material PDFs as [{name, size, mtime}] — empty when it has none.
+    """List a lecture's materials as [{name, size, mtime[, source][, filename][, attach]}] — empty when it has none.
     The database service owns their naming, so never construct a material filename here."""
 
     r = _request(
@@ -148,6 +148,20 @@ def list_materials(course: str, lecture: str, kind: str) -> list[dict]:
     )
     _raise_for_status(r)
     return r.json().get("materials", [])
+
+
+def put_summary_materials(
+    course: str, lecture: str, kind: str, names: list[str]
+) -> None:
+    """Record which materials the summary was built from ([] for a transcript-only run)."""
+
+    r = _request(
+        "PUT",
+        f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/summary-materials",
+        params={"kind": kind},
+        json={"materials": names},
+    )
+    _raise_for_status(r)
 
 
 def _overview_url(course: str, name: str) -> str:

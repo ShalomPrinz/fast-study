@@ -5,6 +5,8 @@ from services.llm_client import LLMClient
 from services.resources import resource_path
 from timing import timed_pipeline
 
+from pipeline.material_types import gemini_mime
+
 PROMPT_FILE = resource_path("assets", "instructions", "summarize.md")
 MATERIALS_PROMPT_FILE = resource_path(
     "assets", "instructions", "summarize_materials.md"
@@ -17,15 +19,16 @@ LENGTH_BUDGET_SUFFIX = (
     "If a draft is running long, tighten phrasing and drop filler before adding more content."
 )
 
-# Appended to the base prompt when one or more supplementary PDFs are attached.
+# Appended to the base prompt when one or more supplementary files are attached.
 PDF_INSTRUCTION_SUFFIX = (
-    "\n\nOne or more supplementary PDFs have been attached alongside the transcript. "
+    "\n\nOne or more supplementary files, which may be PDFs, images, or text extracted from slides and documents, "
+    "have been attached alongside the transcript. "
     "Cross-reference their contents with the transcript and incorporate relevant insights into the final summary."
 )
 
 TRANSCRIPT_MARKER = "--- MAIN TRANSCRIPT DOCUMENT ---"
-SUPPLEMENTARY_MARKER = "--- SUPPLEMENTARY PDF DOCUMENTS ---"
-LECTURE_MATERIALS_MARKER = "--- LECTURE MATERIAL PDF DOCUMENTS ---"
+SUPPLEMENTARY_MARKER = "--- SUPPLEMENTARY DOCUMENTS ---"
+LECTURE_MATERIALS_MARKER = "--- LECTURE MATERIAL DOCUMENTS ---"
 INSTRUCTIONS_MARKER = "--- INSTRUCTIONS ---"
 
 
@@ -56,13 +59,13 @@ def _generate(prompt: str, groups: list[tuple[str, list[tuple[Path, str]]]]) -> 
 
 @timed_pipeline("summarize")
 def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -> str:
-    """Summarize a transcript (plus any number of material PDFs) with Gemini."""
+    """Summarize a transcript (plus any number of material files) with Gemini."""
 
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
     groups = [(TRANSCRIPT_MARKER, [(transcript_path, "text/plain")])]
     if material_paths:
         groups.append(
-            (SUPPLEMENTARY_MARKER, [(p, "application/pdf") for p in material_paths])
+            (SUPPLEMENTARY_MARKER, [(p, gemini_mime(p.name)) for p in material_paths])
         )
         prompt += PDF_INSTRUCTION_SUFFIX
     return _generate(prompt + LENGTH_BUDGET_SUFFIX, groups)
@@ -70,8 +73,8 @@ def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -
 
 @timed_pipeline("summarize_materials")
 def summarize_materials(material_paths: list[Path]) -> str:
-    """Summarize a lecture from its material PDFs alone, for one that has no recording."""
+    """Summarize a lecture from its material files alone, for one that has no recording."""
 
     prompt = MATERIALS_PROMPT_FILE.read_text(encoding="utf-8") + LENGTH_BUDGET_SUFFIX
-    pdfs = [(p, "application/pdf") for p in material_paths]
-    return _generate(prompt, [(LECTURE_MATERIALS_MARKER, pdfs)])
+    parts = [(p, gemini_mime(p.name)) for p in material_paths]
+    return _generate(prompt, [(LECTURE_MATERIALS_MARKER, parts)])
