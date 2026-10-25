@@ -23,6 +23,9 @@ import { toastFailure } from '@/shared/utils/failure'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { stageControl, stepState } from '@/features/lectures/utils/stepState'
+import { useSupportedMaterials } from '@/shared/contexts/SupportedMaterialsContext'
+import { attachedMaterials, displayName } from '@/features/lectures/utils/materials'
+import MaterialChip from '@/features/lectures/components/MaterialChip'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import {
   canRunRemaining,
@@ -69,12 +72,21 @@ function MaterialIndicator({
   materials,
   summaryExists,
   summaryMtime,
+  summaryMaterials,
 }: {
   materials: MaterialInfo[]
   summaryExists: boolean
   summaryMtime: number | null
+  summaryMaterials: string[] | null
 }) {
-  const indicator = materialIndicator(materials, summaryExists, summaryMtime)
+  const supported = useSupportedMaterials()
+  const indicator = materialIndicator(
+    materials,
+    summaryExists,
+    summaryMtime,
+    summaryMaterials,
+    supported,
+  )
   if (!indicator) return null
 
   return <span className={`chip material-indicator ${indicator.cls}`}>{indicator.text}</span>
@@ -88,10 +100,14 @@ export default function MainView() {
     kind,
     files: onDisk,
     materials,
+    summaryMaterials,
     transcribePartial,
     removed,
     done,
   } = useLectureRoute()
+  const supported = useSupportedMaterials()
+  // Only what Summarize would send counts toward the materials-only rule and the ETA.
+  const attached = attachedMaterials(materials, supported)
   // Every rule reads removed files as present; `onDisk` is only for what can be deleted.
   const files = onDisk && markRemoved(onDisk, removed)
   const { courses, loaded, loadFailed, refreshCourses } = useCourseTreeContext()
@@ -109,7 +125,7 @@ export default function MainView() {
     lecture,
     kind,
     files,
-    materials,
+    materials: attached,
     transcribePartial,
   })
 
@@ -131,13 +147,13 @@ export default function MainView() {
 
   const stages = visiblePipeline(driveEnabled, files)
   // A materials-only lecture's skipped stages are left out of every count and step number.
-  const counted = stages.filter(({ file }) => !skippedStage(file, files, materials))
+  const counted = stages.filter(({ file }) => !skippedStage(file, files, attached))
   const runningFile = remote ? STEP_FILE[remote.step] : null
   const hasAnyStepFile = stages.some(({ file, step }) => step && files[file].exists)
   const pdfExists = files['summary.pdf'].exists
   const pdfUploaded = files['drive_url.txt'].exists
   const summaryExists = files['summary.md'].exists
-  const hasActions = canRunRemaining(files, materials, driveEnabled)
+  const hasActions = canRunRemaining(files, attached, driveEnabled)
   const complete = filesComplete(files, driveEnabled)
 
   const summaryMtime = files['summary.md'].mtime
@@ -188,6 +204,13 @@ export default function MainView() {
       .filter((f) => onDisk![f].exists)
     setRotateTarget({ file, step, toDelete })
   }
+
+  function deleteLabel(name: string): string {
+    const m = materials.find((x) => x.name === name)
+    return m ? displayName(m) : name
+  }
+
+  const deleteName = materialToDelete ? deleteLabel(materialToDelete) : ''
 
   async function confirmDeleteMaterial(name: string) {
     setMaterialToDelete(null)
@@ -320,10 +343,10 @@ export default function MainView() {
                 const { file, step, stageLabel, runningLabel, actionLabel } = stage
                 const exists = files[file].exists
                 const isRunning = runningFile === file
-                const skipped = skippedStage(file, files, materials)
+                const skipped = skippedStage(file, files, attached)
                 const isRemoved = (removed as FileName[]).includes(file)
                 const state = stepState(isRemoved, exists, isRunning, step, lectureError)
-                const prereqMet = stagePrereqMet(stage, files, materials)
+                const prereqMet = stagePrereqMet(stage, files, attached)
                 const control = stageControl({
                   removed: isRemoved,
                   exists,
@@ -376,11 +399,12 @@ export default function MainView() {
                             materials={materials}
                             summaryExists={summaryExists}
                             summaryMtime={summaryMtime}
+                            summaryMaterials={summaryMaterials}
                           />
                         )}
                         {file === 'summary.pdf' && <PdfWarningBadge badge={pdfBadge(files)} />}
                       </div>
-                      {file === 'summary.md' && summarizedFromMaterials(files, materials) && (
+                      {file === 'summary.md' && summarizedFromMaterials(files, attached) && (
                         <p className="pipeline-materials-note">
                           <Trans>summarized from materials only</Trans>
                         </p>
@@ -475,28 +499,15 @@ export default function MainView() {
               </div>
               <div className="material-chips">
                 {materials.map((m) => (
-                  <span key={m.name} className="chip material-chip">
-                    <Icon icon="file" />
-                    <Tooltip content={t`Open material`}>
-                      <button
-                        className="material-chip-name"
-                        onClick={() => openLectureFile(course, lecture, m.name, kind)}
-                        dir="auto"
-                      >
-                        {m.name}
-                      </button>
-                    </Tooltip>
-                    <Tooltip content={t`Delete ${m.name}`}>
-                      <button
-                        className="material-chip-delete"
-                        aria-label={t`Delete ${m.name}`}
-                        onClick={() => setMaterialToDelete(m.name)}
-                        disabled={inflight}
-                      >
-                        <Icon icon="trash" />
-                      </button>
-                    </Tooltip>
-                  </span>
+                  <MaterialChip
+                    key={m.name}
+                    course={course}
+                    lecture={lecture}
+                    kind={kind}
+                    material={m}
+                    inflight={inflight}
+                    onDelete={setMaterialToDelete}
+                  />
                 ))}
               </div>
             </>
@@ -522,7 +533,7 @@ export default function MainView() {
 
       {materialToDelete && (
         <ConfirmModal
-          message={t`${materialToDelete} will be deleted.`}
+          message={t`${deleteName} will be deleted.`}
           postMessage={t`The other materials keep their names.`}
           onConfirm={() => confirmDeleteMaterial(materialToDelete)}
           onCancel={() => setMaterialToDelete(null)}

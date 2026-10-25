@@ -9,6 +9,8 @@ import { useAutoRun, useDriveEnabled, useNightlyRun } from '@/shared/contexts/Se
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { PIPELINE, stepPosition, visiblePipeline } from '@/features/lectures/constants/pipeline'
 import { markRemoved, skippedStage } from '@/features/lectures/utils/lectureProgress'
+import { attachedMaterials } from '@/features/lectures/utils/materials'
+import { useSupportedMaterials } from '@/shared/contexts/SupportedMaterialsContext'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
@@ -121,7 +123,7 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
   const node = findLecture(courses, entry.course, entry.lecture, entry.kind)
   // Removed files count as present, so the rail and ETA match the backend's next step.
   const files = node ? markRemoved(node.files, node.removed) : null
-  const materials = node?.materials ?? []
+  const materials = attachedMaterials(node?.materials ?? [], useSupportedMaterials())
   const remote = useRemoteInflightState({
     course: entry.course,
     lecture: entry.lecture,

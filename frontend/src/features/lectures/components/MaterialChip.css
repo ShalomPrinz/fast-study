@@ -1,0 +1,121 @@
+/* Outlined rather than filled, so a material never reads as a state chip. Outspecifies `.chip`'s
+   own background and padding, which live in another file. */
+.chip.material-chip {
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--fs-meta);
+}
+
+/* Direct child only — the delete button holds an svg of its own. */
+.material-chip > svg {
+  color: var(--text-4);
+  flex-shrink: 0;
+}
+
+.material-chip-name {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.material-chip-name:hover {
+  color: var(--accent);
+}
+
+.material-chip-delete {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-4);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.material-chip-delete:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.material-chip-delete:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.chip.material-chip.material-chip--muted {
+  background: var(--surface-sunken);
+  color: var(--text-4);
+}
+
+.chip.material-chip.material-chip--warn {
+  border-color: var(--warn);
+}
+
+.material-chip-large {
+  display: inline-flex;
+  color: var(--warn);
+}
+
+/* A native checkbox as a switch, so keyboard and screen readers keep working. */
+.material-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.material-switch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.material-switch-track {
+  position: relative;
+  width: 24px;
+  height: 14px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  transition: background 0.12s;
+}
+
+.material-switch-track::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--surface);
+  transition: inset-inline-start 0.12s;
+}
+
+.material-switch input:checked + .material-switch-track {
+  background: var(--accent);
+}
+
+.material-switch input:checked + .material-switch-track::after {
+  inset-inline-start: 12px;
+}
+
+.material-switch input:focus-visible + .material-switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.material-switch input:disabled {
+  cursor: not-allowed;
+}
+
+.material-switch input:disabled + .material-switch-track {
+  opacity: 0.4;
+}

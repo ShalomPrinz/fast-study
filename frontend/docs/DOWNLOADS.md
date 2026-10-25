@@ -221,7 +221,7 @@ cleared, rediscovers from the new one (`sourceChangeAction`, called from `Course
 ## Discovery
 
 `listRecordings(sourceUrl)` returns a flat `Item[]` in page order. `media` is `'video'` (lands as
-`video.mp4`), `'material'` (a Moodle PDF, appended as the next `material.N.pdf`) or `'unknown'` (a
+`video.mp4`), `'material'` (a Moodle file of any type, appended as the next `material.N.<ext>`) or `'unknown'` (a
 Google Drive row — no filename, so only a download-time probe can tell). The destination is derived
 server-side from the opaque `ref`; the frontend branches its own affordances on `media` and never sends
 it.
@@ -295,7 +295,7 @@ match — no client-side sanitizing, which would only hide the desync.
 `hasResource(item, name, kind, courses, course)` is the single already-downloaded rule: the named node
 holds `video.mp4` for a video (`holdsVideo`, a removed one included, so bulk skips the lecture and a
 manual re-download still confirms), or for a material a material whose `source` equals the row's `ref`
-(equality only; a source-less manual or legacy PDF matches no row), so several materials share one
+(equality only; a source-less manual or legacy file matches no row), so several materials share one
 node. It also decides the bulk skip and `targetLanded`. An unprobed `unknown` or an `unsupported` row
 is always false rather than ever showing a wrong "downloaded". The overwrite guard is the separate
 `overwritesVideo`: any non-material, non-unsupported row — an unprobed `unknown` included, since it may be a

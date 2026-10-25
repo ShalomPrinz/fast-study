@@ -50,7 +50,23 @@ declare global {
           kind?: Kind
         }) => Promise<void>
         external: (url: string | undefined) => Promise<void>
+        // Windows only ("Open with…"); rejects `unsupported` elsewhere. Absent on older launchers.
+        fileWith?: (target: {
+          course: string
+          lecture?: string
+          name: string
+          kind?: Kind
+        }) => Promise<void>
+        // Shows the file in its folder. Absent on older launchers.
+        reveal?: (target: {
+          course: string
+          lecture?: string
+          name: string
+          kind?: Kind
+        }) => Promise<void>
       }
+      // `process.platform`; absent in browser dev and on an older launcher.
+      platform?: string
     }
   }
 }

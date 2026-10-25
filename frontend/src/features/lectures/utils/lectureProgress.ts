@@ -25,10 +25,11 @@ export function isLectureComplete(lecture: Lecture, driveEnabled: boolean): bool
   return filesComplete(lecture.files, driveEnabled)
 }
 
-// Every rule from here on takes the `markRemoved` map.
+// Every rule from here on takes the `markRemoved` map, and `materials` is the attached set
+// (`attachedMaterials`) — a material Summarize would not send does not make a lecture materials-only.
 
-// No video.mp4, no audio.mp3 and at least one material PDF: summarized from the PDFs alone, mirroring
-// the backend's `is_materials_only()` / `_summarize_source()`.
+// No video.mp4, no audio.mp3 and at least one attached material: summarized from the materials alone,
+// mirroring the backend's `is_materials_only()` / `_summarize_source()`.
 export function isMaterialsOnly(files: FileStatus, materials: MaterialInfo[]): boolean {
   return !files['video.mp4'].exists && !files['audio.mp3'].exists && materials.length > 0
 }
@@ -54,7 +55,7 @@ export function skippedStage(
   return SKIPPABLE.includes(file) && !files[file].exists && isMaterialsOnly(files, materials)
 }
 
-// Whether a stage's step has its input; summarize also runs off a materials-only lecture's PDFs.
+// Whether a stage's step has its input; summarize also runs off a materials-only lecture's materials.
 export function stagePrereqMet(
   stage: { file: FileName; prereq?: FileName },
   files: FileStatus,

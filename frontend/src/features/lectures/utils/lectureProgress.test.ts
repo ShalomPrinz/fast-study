@@ -9,6 +9,7 @@ import {
   stagePrereqMet,
   summarizedFromMaterials,
 } from './lectureProgress'
+import { attachedMaterials } from './materials'
 
 const FILES: FileName[] = [
   'video.mp4',
@@ -33,6 +34,7 @@ const lecture = (name: string, present: FileName[]): Lecture => ({
   name,
   files: files(present),
   materials: [],
+  summaryMaterials: null,
   transcribePartial: null,
   removed: [],
   done: false,
@@ -169,5 +171,28 @@ describe('removed files count as present', () => {
   it('leaves an empty record as the same map', () => {
     const f = files(['video.mp4'])
     expect(markRemoved(f, [])).toBe(f)
+  })
+})
+
+describe('materials-only follows the attached set', () => {
+  const SUPPORTED = new Set(['pdf'])
+  const only = (mats: MaterialInfo[]) => attachedMaterials(mats, SUPPORTED)
+
+  it('is not materials-only when every material is switched off or unsupported', () => {
+    const off = [{ name: 'material.pdf', size: 1, mtime: 1, attach: false }]
+    const odd = [{ name: 'material.pptx', size: 1, mtime: 1 }]
+    for (const mats of [off, odd]) {
+      expect(isMaterialsOnly(files([]), only(mats))).toBe(false)
+      expect(canRunRemaining(files([]), only(mats), true)).toBe(false)
+      expect(skippedStage('transcript.txt', files([]), only(mats))).toBe(false)
+    }
+  })
+
+  it('is materials-only once one material is attached', () => {
+    const mats = [
+      { name: 'material.pdf', size: 1, mtime: 1, attach: false },
+      { name: 'material.2.pdf', size: 1, mtime: 1 },
+    ]
+    expect(isMaterialsOnly(files([]), only(mats))).toBe(true)
   })
 })

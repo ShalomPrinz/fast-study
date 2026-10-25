@@ -72,6 +72,11 @@ export async function fetchBackendTools(): Promise<ToolReport> {
   return (await backend.get<{ tools: ToolReport }>('/tools')).tools
 }
 
+// The file extensions Gemini can read, lower-case and dot-less.
+export async function fetchSupportedMaterials(): Promise<string[]> {
+  return (await backend.get<{ extensions: string[] }>('/materials/supported')).extensions
+}
+
 export async function fetchTimingStats(
   operation: TimingOperation,
   fileSizeBytes: number,

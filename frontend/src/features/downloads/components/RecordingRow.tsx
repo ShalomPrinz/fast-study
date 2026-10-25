@@ -79,7 +79,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   const unknown = item.media === 'unknown'
   const unsupported = unknown && resolved === 'unsupported'
   const verdict = resolved === 'video' || resolved === 'unsupported' ? resolved : undefined
-  // A material row attaches a PDF to an existing lecture instead of creating one from a video.
+  // A material row attaches a file to an existing lecture instead of creating one from a video.
   const material = item.media === 'material'
   // The split siblings on disk a video row could overwrite (a zoom recording lands as `${name}.1`/`.2`),
   // so both the overwrite confirm and the pipeline lock cover them.
@@ -138,7 +138,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   // (the whole-row download or one clip's retry). Null means no modal.
   const [confirm, setConfirm] = useState<{ message: string; run: () => void } | null>(null)
 
-  // A material appends as the next material.N.pdf and lazy zoom splits are a video-only hazard, so a
+  // A material appends as the next material.N.<ext> and lazy zoom splits are a video-only hazard, so a
   // material row never confirms — the row's material count is the whole signal.
   const onDownloadClick = () => {
     if (material) {

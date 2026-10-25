@@ -24,6 +24,7 @@ function lecture(name: string, ...present: string[]): Lecture {
     name,
     files: files(...present),
     materials: [],
+    summaryMaterials: null,
     transcribePartial: null,
     removed: [],
     done: false,

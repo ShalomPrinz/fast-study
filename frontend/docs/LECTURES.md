@@ -49,18 +49,35 @@ A provider quota or rate limit is an error like any other: `gemini_quota_*` and 
 
 ## Materials
 
-A lecture holds any number of `material[.N].pdf`, carried on the tree entry as `materials` beside `files`.
-They are summarize inputs, not stages, so they render as chips under their own heading, opened and deleted
-**by name**; a delete never renames the rest, so indices gain gaps and held URLs stay valid.
+A lecture holds any number of `material[.N].<ext>` of any file type, carried on the tree entry as `materials`
+beside `files`. They are summarize inputs, not stages, so they render as `MaterialChip`s under their own
+heading, opened and deleted **by name**; a delete never renames the rest, so indices gain gaps and held URLs
+stay valid. A chip shows `displayName` (the sidecar's original `filename`, else the disk name) everywhere
+the material is named, and holds, in order: the name button (OS default app; `MaterialNameButton` is the
+reusable piece), the **attach switch**, "Open with…" in an `OpenWithMenu` overflow, and delete.
 
-`materialIndicator` drives the Summary row's chip: before a summary, `no material found`, `summary with
-<name>` for one material or `summary with # PDFs` for several; after, each material's mtime against the summary's picks all used (green), none used (grey), or
-`N of M` (amber), and a summary made with no materials gets no chip. **mtime is a proxy for "was fed to
-the model", not a record** — re-downloading an unchanged PDF reads as unused. Exactness would need the
-backend to persist each run's inputs.
+**Attach.** The switch decides whether Summarize sends the material to Gemini (`setMaterialAttach`; the tree's
+SSE refresh brings the new state). It is disabled while a run is on the lecture, until the support set
+loads, and for a type Gemini can't read. "Open with…" shows only where `canOpenWith()` (bridge has
+`open.fileWith` and `platform === 'win32'`). A material that is not sent reads muted; an attached one over
+10 MB (`MAX_GEMINI_FILE_BYTES`, mirroring the backend's) shows a warning, since Summarize would fail.
 
-**Materials-only lectures.** No `video.mp4`, no `audio.mp3` and at least one material (`isMaterialsOnly`, mirroring the
-backend) summarizes from the PDFs alone. `lectureProgress.ts` holds the shared predicates: `skippedStage`
+**Support set.** `GET /materials/supported` is read once after load (`app/supportedMaterials.ts`, beside the
+tool probe) into `SupportedMaterialsContext`. Before it answers every material counts as supported; if the
+read fails only `pdf` does. `materialAttached(m, supported)` = supported and `m.attach ?? true`; the lectures'
+rules below take `attachedMaterials(...)`, never the raw list.
+
+`materialIndicator` drives the Summary row's chip over the attached set: before a summary, `no material found`,
+`no material will be sent` (materials, none attached), `summary with <name>` or `summary with # materials`.
+After one, with the tree's `summaryMaterials` record (the disk names attached at the last Summarize): the same set as
+the currently attached names is "used"; any difference — a toggle, a new download, a delete — is the
+amber "Attachments changed since the summary" (`attachmentsChanged`, which never reports a change while the support read is pending or fell back to `FALLBACK_SUPPORTED`). Without a record (`null`, a summary
+made before it existed) each material's mtime against the summary's picks all used (green), none used
+(grey), or `N of M` (amber), and nothing attached gets no chip; **mtime is a proxy for "was fed to the
+model"** — re-downloading an unchanged file reads as unused.
+
+**Materials-only lectures.** No `video.mp4`, no `audio.mp3` and at least one attached material (`isMaterialsOnly`, mirroring the
+backend) summarizes from the materials alone. `lectureProgress.ts` holds the shared predicates: `skippedStage`
 marks the missing Video, Audio and Transcript rows "skipped (no video)" with no button, and leaves them out
 of "N of M complete", "step N of M" and the runner rail; `stagePrereqMet` lets Summarize start without a
 transcript; `canRunRemaining` skips them as `next_step` does. Runs are manual only — `notQueued` and the
@@ -138,7 +155,7 @@ not each one run-all then stopped at summarize.
 entry, else from `transcript.partial.txt` for a transcribe step. `useTimingStats(step, bytes)` fetches the
 backend's regression estimate for the step's _input_ size and drops answers for a key the caller left.
 `timingKey` picks the key: a materials-only summarize with no transcript reads the backend's own
-`summarize_materials` bucket over the summed material bytes, so PDF-only runs never borrow the transcript ETA.
+`summarize_materials` bucket over the summed attached-material bytes, so materials-only runs never borrow the transcript ETA.
 
 ## summary.pdf badges
 

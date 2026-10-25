@@ -36,6 +36,7 @@ function node(
     name,
     files,
     materials: (has.materials ?? []).map(material),
+    summaryMaterials: null,
     transcribePartial: null,
     removed: has.removedVideo ? ['video.mp4'] : [],
     done: false,

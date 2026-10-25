@@ -35,6 +35,19 @@ export async function deleteMaterial(
   await database.delete(lectureBase(course, lecture) + path`/files/${name}` + kindQuery(kind))
 }
 
+// Sets whether Summarize sends this material to Gemini; the tree's SSE refresh brings the new state.
+export async function setMaterialAttach(
+  course: string,
+  lecture: string,
+  name: string,
+  attach: boolean,
+  kind?: Kind,
+): Promise<void> {
+  await database.patch(lectureBase(course, lecture) + path`/materials/${name}` + kindQuery(kind), {
+    json: { attach },
+  })
+}
+
 export async function fetchTree(): Promise<Course[]> {
   return database.get<Course[]>('/tree')
 }
