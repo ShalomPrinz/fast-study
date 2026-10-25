@@ -82,7 +82,6 @@
   dialog.className = 'zoom';
   dialog.innerHTML =
     '<img alt="" /><button type="button"><span class="he">סגירה</span><span class="en">Close</span></button>';
-  const big = dialog.querySelector('img');
   document.body.append(dialog);
   let opener = null;
 
@@ -97,8 +96,11 @@
     button.append(img);
     button.addEventListener('click', () => {
       opener = button;
+      // A fresh <img> each time: re-pointing one that shows a bitmap keeps painting it until the new JPEG decodes.
+      const big = new Image();
       big.src = img.currentSrc || img.src;
       big.alt = img.alt;
+      dialog.querySelector('img').replaceWith(big);
       dialog.showModal();
       dialog.querySelector('button').focus();
     });
