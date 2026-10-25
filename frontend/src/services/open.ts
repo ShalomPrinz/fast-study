@@ -2,18 +2,17 @@ import { t } from '@lingui/core/macro'
 import type { Kind } from '@/types'
 import { materialUrl, overviewFileUrl } from './database'
 import { runtimeBridge } from './runtime'
-import type { OpenResult } from './runtime'
 import { toast } from './toaster'
 
 // Opens files and links outside the app: through the bridge when packaged, since a new window cannot
 // carry the secret; a plain new tab in browser dev — see docs/SERVICES.md.
 
-function reportFile(result: OpenResult): void {
-  if (!result.ok) toast('error', t`Could not open the file: ${result.error ?? 'unknown error'}`)
-}
-
-function reportLink(result: OpenResult): void {
-  if (!result.ok) toast('error', t`Could not open the link: ${result.error ?? 'unknown error'}`)
+async function openFile(call: Promise<void>): Promise<void> {
+  try {
+    await call
+  } catch (e) {
+    toast('error', t`Could not open the file: ${(e as Error).message}`)
+  }
 }
 
 /** One of a lecture's files — `summary.pdf` or a material alike. `materialUrl` builds the same
@@ -29,7 +28,7 @@ export async function openLectureFile(
     window.open(materialUrl(course, lecture, name, kind), '_blank')
     return
   }
-  reportFile(await bridge.open.file({ course, lecture, name, kind }))
+  await openFile(bridge.open.file({ course, lecture, name, kind }))
 }
 
 /** A generated file under a course's `overview/`. */
@@ -39,7 +38,7 @@ export async function openOverviewFile(course: string, name: string): Promise<vo
     window.open(overviewFileUrl(course, name), '_blank')
     return
   }
-  reportFile(await bridge.open.file({ course, name }))
+  await openFile(bridge.open.file({ course, name }))
 }
 
 /** An http(s) link; the bridge refuses and reports anything else. Call from `onClick` with
@@ -50,5 +49,9 @@ export async function openExternalUrl(url: string | undefined): Promise<void> {
     window.open(url, '_blank')
     return
   }
-  reportLink(await bridge.open.external(url))
+  try {
+    await bridge.open.external(url)
+  } catch (e) {
+    toast('error', t`Could not open the link: ${(e as Error).message}`)
+  }
 }

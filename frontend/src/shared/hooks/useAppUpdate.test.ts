@@ -61,7 +61,7 @@ describe('useUpdateState', () => {
 
 describe('useRestartToUpdate', () => {
   it('restarts at once when idle, and holds the overlay while the app quits', async () => {
-    const restart = vi.fn(() => Promise.resolve({ ok: true }))
+    const restart = vi.fn(() => Promise.resolve())
     fakeUpdates(restart)
     const { result } = renderHook(() => useRestartToUpdate(false))
     await act(async () => result.current.request())
@@ -71,7 +71,7 @@ describe('useRestartToUpdate', () => {
   })
 
   it('asks first when busy; No restarts nothing, Yes restarts', async () => {
-    const restart = vi.fn(() => Promise.resolve({ ok: true }))
+    const restart = vi.fn(() => Promise.resolve())
     fakeUpdates(restart)
     const { result } = renderHook(() => useRestartToUpdate(true))
     act(() => result.current.request())
@@ -90,8 +90,8 @@ describe('useRestartToUpdate', () => {
     let refuse!: () => void
     const restart = vi.fn(
       () =>
-        new Promise<{ ok: boolean; error?: string }>(
-          (r) => (refuse = () => r({ ok: false, error: 'x' })),
+        new Promise<void>(
+          (_, reject) => (refuse = () => reject(new Error('no update is downloaded'))),
         ),
     )
     fakeUpdates(restart)
