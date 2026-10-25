@@ -174,4 +174,4 @@ Both catch bugs, never style — undefined names, unused symbols and arguments (
 
 Style is separate and automatic: `ruff format` + import sort for Python, prettier for JS/TS/CSS (`.prettierrc` keeps `frontend/` semicolon-free and `downloader/` semicolon'd, matching what each already was). Never hand-format — `.claude/hooks/format.sh` rewrites changed files at the end of every turn.
 
-`.claude/hooks/lint.sh` runs both linters on changed files at the end of every turn and every subagent, and `.claude/hooks/typecheck.sh` typechecks `frontend/` the same way. A green hook means the code parses and typechecks — never that it works. How the three hooks work is in [`.claude/hooks/README.md`](.claude/hooks/README.md).
+`.claude/hooks/lint.sh` runs both linters on changed files at the end of every turn and every subagent, and `.claude/hooks/typecheck.sh` typechecks `frontend/` the same way. A green hook means the code parses and typechecks — never that it works. `.claude/hooks/extract.sh` re-extracts the Lingui catalogs when `frontend-dev` finishes and blocks on a missing Hebrew translation. How the hooks work is in [`.claude/hooks/README.md`](.claude/hooks/README.md).

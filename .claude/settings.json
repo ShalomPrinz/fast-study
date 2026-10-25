@@ -49,6 +49,11 @@
             "type": "command",
             "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/hooks/typecheck.sh\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/hooks/typecheck.sh\" ]; then bash \"$d/.claude/hooks/typecheck.sh\"; fi",
             "timeout": 120
+          },
+          {
+            "type": "command",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/hooks/extract.sh\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/hooks/extract.sh\" ]; then bash \"$d/.claude/hooks/extract.sh\"; fi",
+            "timeout": 120
           }
         ]
       }
