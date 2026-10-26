@@ -37,14 +37,7 @@
 
 .assignment-section-head--inline {
   justify-content: flex-start;
-  column-gap: 0;
-}
-
-.assignment-section-head--inline .assignment-section-title::after {
-  content: '·';
-  margin-inline: var(--space-3);
-  color: var(--text-3);
-  font-weight: 400;
+  column-gap: var(--space-3);
 }
 
 .assignment-cards {
