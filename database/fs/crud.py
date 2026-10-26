@@ -2,9 +2,10 @@ import os
 import sys
 from pathlib import Path
 
-from .material_sources import forget_source
+from .material_meta import forget_meta
 from .paths import (
     ARCHIVED_MARKER,
+    ASSIGNMENTS_DIR,
     DONE_MARKER,
     LECTURES_ONLY_MARKER,
     OVERVIEW_DIR,
@@ -14,6 +15,7 @@ from .paths import (
     RECITATIONS_DIR,
     REMOVABLE_FILES,
     SOURCE_URL_MARKER,
+    SUMMARY_MATERIALS_MARKER,
     CodedError,
     CodedValueError,
     CourseNotFound,
@@ -31,7 +33,11 @@ from .paths import (
 )
 
 # Course-level folders the tree skips as lectures; casefolded because NTFS matches names case-insensitively.
-_RESERVED_LECTURE_NAMES = {OVERVIEW_DIR.casefold(), RECITATIONS_DIR.casefold()}
+_RESERVED_LECTURE_NAMES = {
+    OVERVIEW_DIR.casefold(),
+    RECITATIONS_DIR.casefold(),
+    ASSIGNMENTS_DIR.casefold(),
+}
 
 
 def _mkdir_new(d: Path) -> None:
@@ -180,6 +186,7 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
             "transcript.partial.meta.json",
             PDF_WARNING_MARKER,
             PDF_BUILD_TEX_MARKER,
+            SUMMARY_MATERIALS_MARKER,
         )
     ]
     # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
@@ -208,7 +215,9 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
             reject_if_locked(e, file)
             raise
     if material_index(file) is not None:
-        forget_source(d, file)
+        forget_meta(d, file)
+    if file == "summary.md":
+        (d / SUMMARY_MATERIALS_MARKER).unlink(missing_ok=True)
     if file == "summary.pdf":
         (d / PDF_WARNING_MARKER).unlink(missing_ok=True)
         (d / PDF_BUILD_TEX_MARKER).unlink(missing_ok=True)

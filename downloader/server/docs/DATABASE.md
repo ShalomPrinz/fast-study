@@ -30,19 +30,32 @@ wipes any derived `audio.mp3` / `transcript.txt` / `summary.*`** — correct for
 
 ## `uploadMaterial` / `uploadPdf` — the `/materials` POST appends and wipes nothing
 
-Both POST PDF bytes to `/courses/{course}/lectures/{lecture}/materials?kind=` and get back `{name}`.
+Both POST bytes to `/courses/{course}/lectures/{lecture}/materials?kind=` and get back `{name}`.
 The **database allocates the filename** (`material.pdf`, `material.2.pdf`, …) atomically, so a second
 upload appends instead of overwriting and the server names nothing. Derived artifacts survive:
 attaching material shouldn't invalidate an existing summary.
 
+`uploadMaterial` sends `application/octet-stream` (the database ignores the type) and, when the
+resolved target carried one, `&filename=<original name>`, from which the database picks the disk
+extension. `uploadPdf` (the extension, PDF-only) sends none, so it lands as `.pdf`.
+
 A material downloaded from a discovery row — `/download-item` or a section run — also sends
 `&source=<ref>`: the row's `ref`, verbatim as `/list` gave it, which the database stores as the
-material's identity so the frontend can tell this row's PDF from another one in the same lecture
-(`startJob`'s `ref` → the runner's `source` → `uploadMaterial`). Every other path (`/download-file`,
-`/download-url`, `/upload-pdf`) sends none, and a video upload never carries one. The match holds
+material's identity so the frontend can tell this row's file from another one in the same lecture
+(`startJob`'s `ref` → the runner's `source` → `uploadMaterial`). Every other path
+(`/download-url`, `/upload-pdf`) sends none, and a video upload never carries one. The match holds
 only because `auto/`'s ref is a pure function of the WS listing ([BROWSING.md](../../auto/docs/BROWSING.md#the-item--ref-contract)).
 
-`uploadVideo` and `uploadMaterial` are the job path: they stream from the temp dir, remove it either
+## `uploadAssignmentFile` — a `media: 'assignment'` target
+
+A target whose `/resolve` answered `media: 'assignment'` is fetched like a material (`material.bin`) and
+POSTed to `/courses/{course}/assignments/{name}/files?filename=&source=` (all URL-encoded), where `name`
+is the submission's destination name (the job's `lecture`), `filename` the target's original name and
+`source` the row's `ref`. It makes no backend call (no `/video-arrived`, no auto-run); the `/timing`
+sample is recorded as for any fetch. The database's `{assignment, name}` answer is only logged: `renames`
+carries the stored spelling of the submitted `name`, as for every submission.
+
+`uploadVideo`, `uploadMaterial` and `uploadAssignmentFile` are the job path: they stream from the temp dir, remove it either
 way, and never throw — `null` on success, else the failure body the runner turns into the job's
 terminal state. `uploadPdf` forwards bytes the extension already fetched: it throws on a network error
 (route → 500) and returns the failure body on a database-level failure (route → 502).

@@ -2,7 +2,7 @@
 
 import pytest
 from fs import crud
-from fs.paths import MAX_NAME_LEN, lecture_dir, safe_name
+from fs.paths import MAX_NAME_LEN, defuse_reserved, lecture_dir, safe_name
 
 
 class TestSafeName:
@@ -15,7 +15,8 @@ class TestSafeName:
 
     def test_suffixes_reserved_device_names_with_extension_too(self):
         assert safe_name("CON") == "CON_"
-        assert safe_name("com1.txt") == "com1.txt_"
+        assert safe_name("com1.txt") == "com1_.txt"
+        assert safe_name("con .x") == "con _.x"
 
     def test_truncates_to_the_max_path_budget(self):
         assert len(safe_name("א" * 200)) == MAX_NAME_LEN
@@ -40,3 +41,21 @@ class TestSanitizedResolution:
         crud.create_lecture("Algo", "שיעור 3: מבוא", "recitation")
 
         assert lecture_dir("Algo", "שיעור 3: מבוא", "recitation").is_dir()
+
+
+def test_safe_name_reserved_at_cap_round_trips():
+    """A reserved device name near the cap stays within MAX_NAME_LEN and is a fixed point."""
+
+    for raw in (
+        "nul." + "x" * 76,
+        "nul.",
+        "com1.txt",
+        "CON ",
+        "aux" + "." * 90,
+        "con" + " " * 77 + ".x",
+        "con" + " " * 90 + ".x",
+    ):
+        once = safe_name(raw)
+        assert len(once) <= MAX_NAME_LEN
+        assert defuse_reserved(once) == once
+        assert safe_name(once) == once

@@ -12,6 +12,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { bindPorts, call } from './lib/api.mjs';
 import { appServices, appUrl } from './lib/browser.mjs';
+import { COURSE_FILES, oversizePdf } from './lib/course-files.mjs';
 import {
   BANNER,
   FAKE_COURSE_URL,
@@ -135,6 +136,13 @@ async function buildHarness() {
     path.join(paths.fixtures, 'summary.md'),
   );
   fs.writeFileSync(path.join(paths.fixtures, 'handout.pdf'), MINIMAL_PDF);
+  fs.writeFileSync(
+    path.join(paths.fixtures, 'big-appendix.pdf'),
+    oversizePdf(Buffer.from(MINIMAL_PDF)),
+  );
+  for (const [name, file] of Object.entries(COURSE_FILES)) {
+    if (file.build) fs.writeFileSync(path.join(paths.fixtures, name), file.build());
+  }
 
   const video = path.join(paths.fixtures, 'video.mp4');
   if (!fs.existsSync(video)) await run('ffmpeg', [...VIDEO_ARGS, video]);

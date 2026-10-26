@@ -62,6 +62,40 @@ function mapModules(sections, courseId) {
   return activities;
 }
 
+// One activity per assignment file (`introattachments` + `introfiles`, any mimetype, deduped by
+// fileurl). `cmid` joins the contents' module `id` for the section; no match → '' (hidden module).
+function mapAssignments(sections, assignmentsAnswer, courseId) {
+  const sectionOf = new Map();
+  for (const section of sections ?? []) {
+    for (const module of section.modules ?? [])
+      sectionOf.set(String(module.id), stripTags(section.name || ''));
+  }
+  const activities = [];
+  for (const course of assignmentsAnswer?.courses ?? []) {
+    for (const assign of course.assignments ?? []) {
+      const assignment = stripTags(assign.name || '');
+      const sectionName = sectionOf.get(String(assign.cmid)) ?? '';
+      const seen = new Set();
+      for (const file of [...(assign.introattachments ?? []), ...(assign.introfiles ?? [])]) {
+        if (!file.fileurl || seen.has(file.fileurl)) continue;
+        seen.add(file.fileurl);
+        activities.push({
+          modType: 'assign',
+          title: `${assignment} — ${file.filename}`,
+          assignment,
+          fileurl: file.fileurl,
+          filename: file.filename,
+          mimetype: file.mimetype,
+          sectionName,
+          courseId,
+          kind: 'lecture', // not meaningful for an assignment file
+        });
+      }
+    }
+  }
+  return activities;
+}
+
 /**
  * LISTING PATH: enumerate a course's recordings from the stateless WS contents — no
  * browser needed. Merges module cards with zoom-share links parsed out of each
@@ -69,14 +103,19 @@ function mapModules(sections, courseId) {
  * @param {Array<{ name?: string, summary?: string, modules?: object[] }>} sections
  *   core_course_get_contents result
  * @param {string} [courseId]  the listed course, carried on a videostream row for its resolve
+ * @param {object} [assignmentsAnswer]  mod_assign_get_assignments result, absent when the site refuses it
  * @returns {import('../extractors/VideoExtractor.js').Recording[]}
  */
-export function listRecordings(sections, courseId) {
-  const activities = [...mapModules(sections, courseId), ...parseZoomSummaries(sections)];
+export function listRecordings(sections, courseId, assignmentsAnswer) {
+  const activities = [
+    ...mapModules(sections, courseId),
+    ...parseZoomSummaries(sections),
+    ...mapAssignments(sections, assignmentsAnswer, courseId),
+  ];
   const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
-    if (!extractor) continue; // non-PDF resource / non-http url target / unknown modType → skip
+    if (!extractor) continue; // video, audio or HTML resource / non-http url target / unknown modType → skip
     for (const recording of extractor.toRecordings(activity)) {
       // Non-enumerable so it stays out of the ref (JSON.stringify), which must be stable across lists.
       if (activity.modifiedAt) {
@@ -170,14 +209,19 @@ export async function resolveMoodleFile({
   ref,
   forceCapture = false,
 }) {
-  let cap = forceCapture ? null : getCap(course, name, kind, 'material')?.cap;
+  // Several files share one lecture/assignment name, so the fileurl tells them apart in the cache.
+  const key = `${name}\u001f${recording.fileurl}`;
+  const media = recording.assignment ? 'assignment' : 'material';
+  let cap = forceCapture ? null : getCap(course, key, kind, media)?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
     const size = await assertPluginfileReadable(pluginfileUrl(recording.fileurl, wstoken));
     cap = proxyCap({ fileurl: recording.fileurl, size });
-    cacheCap(course, name, kind, 'material', cap, ref);
+    cacheCap(course, key, kind, media, cap, ref);
   }
-  return [toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache })];
+  const target = toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache });
+  // The original name rides to server/, which hands it to the database for the disk extension.
+  return [recording.filename ? { ...target, filename: recording.filename } : target];
 }
 
 // The first `<source … type="video/mp4">` of the handler's templates, `&amp;` decoded, or null;
@@ -279,11 +323,11 @@ export async function resolveYtDlp({ recording, course, name, kind, ref, forceCa
 
 /**
  * RESOLVE PATH (HTTP), no browser: a single Google Drive file, routed by its probed filename
- * (video → yt-dlp, PDF → material, else 422). `forceCapture` also re-probes. See docs/BROWSING.md.
+ * (video → yt-dlp, else 422). `forceCapture` also re-probes. See docs/BROWSING.md.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
- * @returns {Promise<{ targets: object[], media: 'video'|'material' }>} one download target,
+ * @returns {Promise<{ targets: object[], media: 'video' }>} one download target,
  *   plus what the file turned out to be.
  */
 export async function resolveDriveFile({
@@ -294,7 +338,7 @@ export async function resolveDriveFile({
   ref,
   forceCapture = false,
 }) {
-  const { filename, media, downloadUrl } = await probeDriveFile(recording.pageUrl, {
+  const { filename, media } = await probeDriveFile(recording.pageUrl, {
     force: forceCapture,
   });
   if (!media) {
@@ -308,11 +352,11 @@ export async function resolveDriveFile({
   let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
-    // yt-dlp resolves the /file/d/ page itself; /download-file needs the direct-download URL.
-    cap = { url: media === 'video' ? recording.pageUrl : downloadUrl };
+    // yt-dlp resolves the /file/d/ page itself, so the cap keeps the page URL.
+    cap = { url: recording.pageUrl };
     cacheCap(course, name, kind, media, cap, ref);
   }
-  const tool = toolFor(recording.strategy, media);
+  const tool = toolFor(recording.strategy);
   return { targets: [toTarget({ name, cap, tool, fromCache })], media };
 }
 
@@ -352,11 +396,8 @@ function notAVideo(url, filename) {
 // fresh probe and a proxied curl target. Never the replay cache — nothing stable keys it (GATE.md).
 export async function resolvePastedLink({ url, name }) {
   if (!onMoodleHost(url))
-    return [
-      toTarget({ name, cap: { url }, tool: toolFor('direct-url', 'video'), fromCache: false }),
-    ];
+    return [toTarget({ name, cap: { url }, tool: toolFor('direct-url'), fromCache: false })];
   const { media, filename, size } = await probeLink(url, true);
-  // The manual form is video-only; a PDF or page here is refused rather than saved as a material.
   if (media !== 'video') throw notAVideo(url, filename);
   return [toTarget({ name, cap: proxyCap({ url, size }), tool: 'curl', fromCache: false })];
 }
@@ -367,7 +408,7 @@ export async function resolvePastedLink({ url, name }) {
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
- * @returns {Promise<{ targets: object[], media: 'video'|'material' }>} one download target,
+ * @returns {Promise<{ targets: object[], media: 'video' }>} one download target,
  *   plus what the link turned out to be.
  */
 export async function resolveDirectUrl({
@@ -390,7 +431,7 @@ export async function resolveDirectUrl({
     cacheCap(course, name, kind, media, cap, ref);
   }
   // A proxied video is one plain file on auto, which curl fetches; yt-dlp has no use for it.
-  const tool = cap.proxied && media === 'video' ? 'curl' : toolFor(recording.strategy, media);
+  const tool = cap.proxied ? 'curl' : toolFor(recording.strategy);
   return { targets: [toTarget({ name, cap, tool, fromCache })], media };
 }
 

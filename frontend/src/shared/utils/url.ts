@@ -31,6 +31,16 @@ export function lectureBase(course: string, lecture: string): string {
   return path`/courses/${course}/lectures/${lecture}`
 }
 
+// Browser route for an assignment; four segments, so no lecture or overview URL can reach it.
+export function assignmentRoute(course: string, assignment: string): string {
+  return path`/course/${course}/assignment/${assignment}`
+}
+
+// API path for an assignment: `/courses/{c}/assignments/{a}`. Already encoded — don't re-`path` it.
+export function assignmentBase(course: string, assignment: string): string {
+  return path`/courses/${course}/assignments/${assignment}`
+}
+
 // Browser route for a course overview; three segments so no `/:course/:lecture` URL can reach it.
 export function courseRoute(course: string): string {
   return path`/course/${course}/overview`

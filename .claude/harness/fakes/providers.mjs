@@ -44,6 +44,11 @@ async function failure(provider, req, honoured) {
 
 let chunk = 0;
 let uploads = 0;
+let startedUploads = 0;
+// Each file the backend sent Gemini, as finalized: its declared mime type and the bytes received.
+// `pending` holds the mime type a started upload declared until its bytes arrive.
+let uploaded = [];
+const pending = new Map();
 
 function json(res, status, body, headers = {}) {
   const payload = Buffer.from(JSON.stringify(body), 'utf8');
@@ -151,7 +156,10 @@ async function handle(req, res) {
     } catch (error) {
       return json(res, 400, { error: error.message });
     }
-    if (body.reset) chunk = 0; // the transcript restarts at its first paragraph
+    if (body.reset) {
+      chunk = 0; // the transcript restarts at its first paragraph
+      uploaded = [];
+    }
     // A new rule for a provider ends its held calls, so a test lifts a hold the moment it is done.
     for (const provider of ['groq', 'gemini']) {
       if (body.reset || body[provider] !== undefined)
@@ -160,6 +168,7 @@ async function handle(req, res) {
     return json(res, 200, { mode });
   }
   if (route === '/health') return json(res, 200, { status: 'ok', mode });
+  if (route === '/uploads') return json(res, 200, { uploads: uploaded });
 
   // A key containing `bad` is rejected the way each real provider rejects one — Groq 401, Gemini
   // 400 API_KEY_INVALID — so the settings screen's rejected-key path is drivable by typing one.
@@ -201,9 +210,14 @@ async function handle(req, res) {
     return json(res, 200, { models: [{ name: 'models/harness-fake' }] });
   }
   if (route.includes('/upload/') && route.endsWith('/files')) {
-    await readBody(req);
-    if (url.searchParams.has('upload_id')) {
+    const bytes = await readBody(req);
+    const uploadId = url.searchParams.get('upload_id');
+    if (uploadId) {
       uploads += 1;
+      const declared = pending.get(uploadId);
+      pending.delete(uploadId);
+      const mimeType = declared?.mimeType ?? 'application/pdf';
+      uploaded.push({ mimeType, size: bytes.length, lecture: declared?.lecture ?? null });
       // `x-goog-upload-status: final` is what the SDK reads to decide the upload finished; without
       // it every upload fails as "Upload status is not finalized" however good the body is.
       return json(
@@ -213,20 +227,25 @@ async function handle(req, res) {
           file: {
             name: `files/hunt-${uploads}`,
             uri: `http://127.0.0.1:${PORT}/gemini/v1beta/files/hunt-${uploads}`,
-            mimeType: 'application/pdf',
-            sizeBytes: '1024',
+            mimeType,
+            sizeBytes: String(bytes.length),
             state: 'ACTIVE',
           },
         },
         { 'x-goog-upload-status': 'final' },
       );
     }
+    startedUploads += 1;
+    pending.set(String(startedUploads), {
+      mimeType: req.headers['x-goog-upload-header-content-type'],
+      lecture: req.headers['x-harness-lecture'] ?? null,
+    });
     return json(
       res,
       200,
       {},
       {
-        'x-goog-upload-url': `http://127.0.0.1:${PORT}${route}?upload_id=${uploads + 1}`,
+        'x-goog-upload-url': `http://127.0.0.1:${PORT}${route}?upload_id=${startedUploads}`,
         'x-goog-upload-status': 'active',
       },
     );

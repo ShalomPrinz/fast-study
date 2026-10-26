@@ -73,7 +73,7 @@ Every byte on the Moodle host reaches `server/` through auto: a target there is 
 relative to auto, and `proxyCap` (`moodle/files.js`, memory only) keeps what it stands for under a
 random id. These kinds land there:
 
-- a `moodle-file` PDF — `{ fileurl, size }`; the WS token is added at stream time, never handed out;
+- a `moodle-file` material — `{ fileurl, size }`; the WS token is added at stream time, never handed out;
 - a `direct-url` link on the Moodle host, or one whose redirects end there — `{ url, size }`, fetched
   as it is, redirects and all, under the lock (a video goes as `curl`);
 - a link pasted into the manual form (`/resolve` with `{url}` and no `ref`) on the Moodle host —

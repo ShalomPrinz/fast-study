@@ -66,7 +66,6 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `GET  /course-structure`                  | `{course_structure}` proxied from the database — the global mode a new course gets |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged GET)                                                                  |
 | `POST /download`                          | curl header-replay capture; creates a missing course first; 200 with a `jobId`, runs in the background; `dest:'folder'` + `fileName` saves into the general folder instead ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
-| `POST /download-file`                     | plain-URL capture added to the lecture's materials; 200 at once with a `jobId`                                    |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); creates a missing course first; 200 with a `jobId`; takes `dest:'folder'` like `/download` |
 | `POST /download-url`                      | any http(s) URL (the Downloads page's manual entry) → auto/ `/resolve`, then one job: plain yt-dlp off the Moodle site, curl on auto's proxy on it; auto's refusals forwarded verbatim; 200 with a `jobId` ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames, captchaSolved?}` — `captchaSolved:true` relayed from auto when the zoom capture waited for the user to solve a captcha on screen (auto's 4xx forwarded verbatim, `429 moodle_busy` included) |
@@ -124,8 +123,8 @@ These bytes are terminal-only; the job registry reads the same entries but pushe
   traversal and rewrites the rest into the spelling the database stores (a port of
   `database/fs/paths.py::safe_name` — change one, change the other); `null` is a 400. What it
   rewrote comes back as `renames` from `/download-item` and `/download-section`.
-- Saved video is always `video.mp4` (general mode excepted: a user-named file in a user folder); PDFs are POSTed to the database's `/materials`, which allocates
-  the name (`material.pdf`, `material.2.pdf`, …), so a lecture can hold several.
+- Saved video is always `video.mp4` (general mode excepted: a user-named file in a user folder); materials are POSTed to the database's `/materials` (temp name `material.bin`, original `filename` forwarded), which allocates
+  the name (`material.pdf`, `material.2.pptx`, …), so a lecture can hold several.
 - Add a download source = a new `downloaders/*.js` + one registry line; never edit the runner.
 - HTTP goes through `fetch` (the one exception is `/resolve`, above). Node's `fetch` has no forbidden-header list, so it replays a captured
   `Cookie`, and drops it on a cross-origin redirect on its own.

@@ -13,9 +13,9 @@ test('the browserless strategies map to fetch / ytdlp', () => {
   assert.equal(toolFor('youtube-playlist'), 'ytdlp');
 });
 
-test('a Drive file routes on the media the probe resolved', () => {
-  assert.equal(toolFor('google-drive', 'video'), 'ytdlp');
-  assert.equal(toolFor('google-drive', 'material'), 'fetch');
+test('probed rows are video-only, so yt-dlp', () => {
+  assert.equal(toolFor('google-drive'), 'ytdlp');
+  assert.equal(toolFor('direct-url'), 'ytdlp');
 });
 
 // The array shape is load-bearing: server/'s curl iterates it as `[{name, value}]`, the same

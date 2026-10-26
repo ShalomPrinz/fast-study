@@ -5,7 +5,7 @@
  * several, hence one activity per file).
  * `courseId` is the listed course's id, which a videostream resolve needs.
  * @typedef {{ title: string, modType: string, viewUrl: string, externalUrl?: string,
- *             fileurl?: string, filename?: string, mimetype?: string,
+ *             fileurl?: string, filename?: string, mimetype?: string, assignment?: string,
  *             sectionName: string, courseId?: string, kind: 'lecture'|'recitation' }} Activity
  *
  * A listed recording — cheap metadata + which download strategy resolves it.
@@ -15,7 +15,7 @@
  * Every strategy but `moodle-file` carries a `pageUrl`; `moodle-file` carries the Moodle
  * `fileurl` the tokened download URL is built from instead. A `videostream` row carries its
  * `courseId`, absent on a row listed by an older build.
- * @typedef {{ title: string, pageUrl?: string, fileurl?: string, filename?: string,
+ * @typedef {{ title: string, pageUrl?: string, fileurl?: string, filename?: string, assignment?: string,
  *             courseId?: string, kind: 'lecture'|'recitation',
  *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file'|'direct-url',
  *             section: string, likelyRecording?: boolean }} Recording

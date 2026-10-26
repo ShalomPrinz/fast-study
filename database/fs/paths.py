@@ -1,10 +1,15 @@
 import errno
 import os
+import re
 import stat
 import sys
 from pathlib import Path
 
 RECITATIONS_DIR = "Recitations"
+# Course-level dir of assignment folders (a third node kind, outside lecture_dir); reserved as a lecture name.
+ASSIGNMENTS_DIR = "Assignments"
+# Assignment-dir dotfile: {filename: source} for files written with a source.
+ASSIGNMENT_FILES_MARKER = ".assignment_files.json"
 
 # Windows rejects these in a path component
 ILLEGAL_NAME_CHARS = set('<>:"/\\|?*') | {chr(c) for c in range(32)}
@@ -46,11 +51,14 @@ PREDEFINED_FILES = (
 # The only files the remove route will delete; when to remove them is the backend's policy.
 REMOVABLE_FILES = ("video.mp4", "audio.mp3")
 
-# Material PDFs are a numbered family, not a predefined name: material.pdf, material.2.pdf, …
+# Materials of any extension are a numbered family, not a predefined name: material.pdf, material.2.pptx, …
 MATERIAL_PREFIX = "material"
-MATERIAL_EXT = ".pdf"
-# Lecture-dir sidecar mapping a material filename to the download source it came from.
-MATERIAL_SOURCES_MARKER = ".materials.json"
+# Same rule as auto's NAMED_FILE (1-5 lower-case alphanumerics), but never all digits: material.2 is no material.
+MATERIAL_EXT_RE = re.compile(r"(?![0-9]+$)[a-z0-9]{1,5}")
+# Lecture-dir sidecar mapping a material filename to its meta: {source, filename, attach}.
+MATERIAL_META_MARKER = ".materials.json"
+# Lecture-dir record of the materials attached at the last Summarize (the run that wrote the current summary.md).
+SUMMARY_MATERIALS_MARKER = ".summary_materials.json"
 
 # The data root as explicit module state: unset until database_main.py seeds it or POST /config sets it.
 _data_root: Path | None = None
@@ -175,24 +183,32 @@ def check_none_locked(paths) -> None:
             continue
 
 
-def material_name(index: int) -> str:
-    """Build the material filename for a 1-based index; index 1 is the unnumbered material.pdf."""
+def material_name(index: int, ext: str = ".pdf") -> str:
+    """Build the material filename for a 1-based index and a dotted ext; index 1 is the unnumbered material<ext>."""
 
+    ext = ext.lower()
     if index <= 1:
-        return f"{MATERIAL_PREFIX}{MATERIAL_EXT}"
-    return f"{MATERIAL_PREFIX}.{index}{MATERIAL_EXT}"
+        return f"{MATERIAL_PREFIX}{ext}"
+    return f"{MATERIAL_PREFIX}.{index}{ext}"
 
 
 def material_index(name: str) -> int | None:
     """Return the 1-based index of a material filename, or None if the name isn't one."""
 
-    if not name.startswith(f"{MATERIAL_PREFIX}.") or not name.endswith(MATERIAL_EXT):
+    parts = name.split(".")
+    if parts[0] != MATERIAL_PREFIX or len(parts) not in (2, 3):
         return None
-    middle = name[len(MATERIAL_PREFIX) + 1 : -len(MATERIAL_EXT)]
-    if not middle:
+    if not MATERIAL_EXT_RE.fullmatch(parts[-1]):
+        return None
+    if len(parts) == 2:
         return 1
-    # Reject padded/signed forms so each index has exactly one spelling on disk.
-    return int(middle) if middle.isdigit() and not middle.startswith("0") else None
+    # Reject padded/signed forms and 0/1 so each index has exactly one spelling on disk.
+    mid = parts[1]
+    return (
+        int(mid)
+        if mid.isdigit() and not mid.startswith("0") and int(mid) >= 2
+        else None
+    )
 
 
 def set_data_root(value: str | Path) -> None:
@@ -213,14 +229,25 @@ def data_root() -> Path:
     return _data_root
 
 
+def defuse_reserved(name: str) -> str:
+    """Insert `_` after a reserved device base, before the first dot (`com1.txt` -> `com1_.txt`).
+
+    Win32 matches the text before the first dot with trailing spaces stripped, so a suffix at the end would not help.
+    """
+
+    head, dot, rest = name.partition(".")
+    if head.rstrip(" ").upper() in RESERVED_NAMES:
+        return f"{head}_{dot}{rest}"
+    return name
+
+
 def safe_name(name: str) -> str:
     """Reduce a course/lecture name to a component that is legal on NTFS as well as ext4."""
 
     cleaned = "".join(c for c in name if c not in ILLEGAL_NAME_CHARS).strip()
     # Windows silently strips trailing dots and spaces, which would desync the name from disk.
-    cleaned = cleaned[:MAX_NAME_LEN].rstrip(". ")
-    if cleaned.split(".")[0].upper() in RESERVED_NAMES:
-        cleaned += "_"
+    # Defuse before the cap (the `_` must not overflow), and again after: a cut inside trailing spaces drops it.
+    cleaned = defuse_reserved(defuse_reserved(cleaned)[:MAX_NAME_LEN].rstrip(". "))
     if not cleaned:
         raise CodedValueError(
             f"name has no legal characters: {name!r}",
@@ -254,3 +281,9 @@ def lecture_dir(course: str, lecture: str, kind: str = "lecture") -> Path:
     if kind == "recitation":
         return course_dir(course) / RECITATIONS_DIR / safe_name(lecture)
     return course_dir(course) / safe_name(lecture)
+
+
+def assignment_dir(course: str, name: str) -> Path:
+    """Resolve an assignment's directory; deliberately not a lecture kind, so no lecture route can address it."""
+
+    return course_dir(course) / ASSIGNMENTS_DIR / safe_name(name)

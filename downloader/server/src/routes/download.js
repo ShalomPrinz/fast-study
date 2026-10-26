@@ -105,22 +105,6 @@ router.post('/download', async (req, res) => {
   await ensureThenStart(res, downloaders.curl, { url, headers }, { ...names, kind });
 });
 
-// Plain URL (no header replay) added to the lecture's materials.
-router.post('/download-file', (req, res) => {
-  const { url, course, lecture, kind = 'lecture' } = req.body ?? {};
-  if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
-    return res.status(400).json(invalidRequest('url', 'valid url required'));
-  }
-  const names = storedNames(course, lecture);
-  if (!names) {
-    return res.status(400).json(namesError(course, lecture));
-  }
-  const kindErr = validateKind(kind);
-  if (kindErr) return res.status(400).json(kindErr);
-
-  startAndAnswer(res, downloaders.fetch, { url }, { ...names, kind });
-});
-
 router.post('/download-youtube', async (req, res) => {
   const { url, course, lecture, kind = 'lecture', dest, fileName } = req.body ?? {};
   let host = '';

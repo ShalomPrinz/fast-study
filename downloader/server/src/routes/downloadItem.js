@@ -1,20 +1,32 @@
 import { Router } from 'express';
 import { downloaders } from '../downloaders/index.js';
+import { fetchAssignment } from '../downloaders/fetch.js';
 import { invalidRequest, storedName, validateKind } from '../validate.js';
 import { resolve, resolved, targetUrl } from '../services/autodl.js';
 import { startJob } from './download.js';
 
 const router = Router();
 
+// `filename` (a Moodle material's original name) rides to the material upload when auto sends it.
+function inputFor(target, url) {
+  if (target.tool === 'curl') return { url, headers: target.headers };
+  return typeof target.filename === 'string' && target.filename
+    ? { url, filename: target.filename }
+    : { url };
+}
+
 // A resolved target → the downloader + input pair a job runs it with. Only curl replays
 // captured headers; the other two take a bare url.
-function toRun(target) {
-  const downloader = downloaders[target?.tool];
+// An assignment answer must be a fetch target with a `filename` (the database requires it); anything
+// else is refused rather than run as a video.
+export function toRun(target, media) {
+  if (media === 'assignment' && (target?.tool !== 'fetch' || !target.filename)) return null;
+  const downloader = media === 'assignment' ? fetchAssignment : downloaders[target?.tool];
   if (!downloader) return null;
   const url = targetUrl(target.url);
   return {
     downloader,
-    input: target.tool === 'curl' ? { url, headers: target.headers } : { url },
+    input: inputFor(target, url),
   };
 }
 
@@ -66,7 +78,7 @@ function makeReresolve({ ref, url, course, name, kind }) {
     });
     if (!resolved(status)) return { failure: reresolveFailure(status, body) };
     const fresh = body?.targets?.find((t) => t.name === name) ?? body?.targets?.[0];
-    const run = fresh && toRun(fresh);
+    const run = fresh && toRun(fresh, body.media);
     // A 2xx we can't run is still a failed re-resolve; it reads as the generic failure because
     // no status describes it — auto's own was a 200.
     if (!run) return { failure: recaptureFailed('auto returned no usable target') };
@@ -110,7 +122,7 @@ export async function downloadItem({
   if (!resolved(status)) return refusal(status, body);
 
   const targets = body?.targets ?? [];
-  const runs = targets.map(toRun);
+  const runs = targets.map((t) => toRun(t, body.media));
   if (!targets.length || runs.some((r) => !r)) {
     return {
       status: 502,
@@ -162,7 +174,7 @@ export async function downloadUrl({ url, course, lecture, kind }) {
   const { status, body } = await resolve({ url, course, name: lecture, kind });
   if (!resolved(status)) return refusal(status, body);
   const target = body?.targets?.[0];
-  const run = target && toRun(target);
+  const run = target && toRun(target, body.media);
   if (!run) {
     return {
       status: 502,

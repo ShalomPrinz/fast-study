@@ -311,6 +311,11 @@ export function getCourseContents(site, token, courseId) {
   return callWs(site, token, 'core_course_get_contents', { courseid: courseId });
 }
 
+/** mod_assign_get_assignments(courseids[0]) → { courses: [{ id, assignments[] }], warnings }. */
+export function getAssignments(site, token, courseId) {
+  return callWs(site, token, 'mod_assign_get_assignments', { 'courseids[0]': courseId });
+}
+
 /**
  * core_enrol_get_users_courses(userid) → the user's enrolled courses (id, shortname, fullname, visible, enddate, …).
  * With `lang`, Moodle's multilang filter reduces each name to that language; sites without it ignore the flags.
@@ -369,7 +374,7 @@ export function pluginfileUrl(fileurl, token) {
 }
 
 // Why a pluginfile answer is not the file, or null when it is: a dead token and a bot challenge
-// both answer HTTP 200, and either would be saved as the PDF. See docs/MOODLE.md.
+// both answer HTTP 200, and either would be saved as the file. See docs/MOODLE.md.
 async function pluginfileFault(res, url) {
   if (res.status >= 300 && res.status < 400)
     return new WsBlockedError(`pluginfile: HTTP ${res.status} redirect`, ROUTED);

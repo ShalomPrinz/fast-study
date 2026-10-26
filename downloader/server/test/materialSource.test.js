@@ -28,7 +28,9 @@ test.after(() => {
 process.env.DATABASE_URL = `http://127.0.0.1:${peer.address().port}`;
 process.env.BACKEND_URL = process.env.DATABASE_URL;
 
-const { uploadMaterial, uploadPdf } = await import('../src/services/database.js');
+const { uploadMaterial, uploadPdf, materialsUrl } = await import('../src/services/database.js');
+const { fetchFile } = await import('../src/downloaders/fetch.js');
+const { toRun } = await import('../src/routes/downloadItem.js');
 const { startJob } = await import('../src/routes/download.js');
 const { listJobs } = await import('../src/jobs.js');
 
@@ -41,7 +43,7 @@ test.beforeEach(() => {
 
 function tempWithPdf() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fast-study-src-'));
-  fs.writeFileSync(path.join(dir, 'material.pdf'), '%PDF-1.4');
+  fs.writeFileSync(path.join(dir, 'material.bin'), '%PDF-1.4');
   return dir;
 }
 
@@ -55,10 +57,10 @@ const pdfDownloader = {
   tool: 'fetch',
   measure: 'dir',
   probeSize: async () => 8,
-  upload: uploadMaterial,
+  upload: fetchFile.upload,
   buildCommand: () => ({
     command: process.execPath,
-    args: ['-e', "require('fs').writeFileSync('material.pdf', '%PDF-1.4')"],
+    args: ['-e', "require('fs').writeFileSync('material.bin', '%PDF-1.4')"],
   }),
 };
 
@@ -91,7 +93,7 @@ test("a job started with a row's ref uploads its material with that ref as sourc
   assert.equal(posts[0].searchParams.get('source'), REF);
 });
 
-test('a job started with no ref (/download-file, /download-url) uploads no source', async () => {
+test('a job started with no ref (/download-url) uploads no source', async () => {
   const id = startJob(
     pdfDownloader,
     { url: 'http://example.invalid/b.pdf' },
@@ -104,4 +106,31 @@ test('a job started with no ref (/download-file, /download-url) uploads no sourc
   await until(() => listJobs().find((j) => j.id === id)?.status === 'done');
   assert.equal(posts.length, 1);
   assert.equal(posts[0].searchParams.has('source'), false);
+});
+
+test('materialsUrl carries source and filename, each only when given', () => {
+  const u = new URL(materialsUrl('C', 'L', 'lecture', REF, 'Lecture 3.pptx'));
+  assert.equal(u.searchParams.get('source'), REF);
+  assert.equal(u.searchParams.get('filename'), 'Lecture 3.pptx');
+  assert.equal(new URL(materialsUrl('C', 'L', 'lecture')).searchParams.has('filename'), false);
+});
+
+test("a target's filename rides into the job input and up to the upload", async () => {
+  const { downloader, input } = toRun({
+    tool: 'fetch',
+    url: 'http://example.invalid/x',
+    filename: 'a b.pptx',
+  });
+  assert.deepEqual(input, { url: 'http://example.invalid/x', filename: 'a b.pptx' });
+  assert.deepEqual(toRun({ tool: 'fetch', url: 'http://example.invalid/x' }).input, {
+    url: 'http://example.invalid/x',
+  });
+  const id = startJob({ ...pdfDownloader, upload: downloader.upload }, input, {
+    course: 'C',
+    lecture: 'L3',
+    kind: 'lecture',
+    ref: REF,
+  });
+  await until(() => listJobs().find((j) => j.id === id)?.status === 'done');
+  assert.equal(posts[0].searchParams.get('filename'), 'a b.pptx');
 });

@@ -17,7 +17,7 @@ import { CodedError, PasscodeError, UnsupportedError, failureOf } from '../src/l
 import { siteAuthFor } from '../src/core/registry.js';
 import { setCurrentSite } from '../src/moodle/site.js';
 import { courseIdFrom, getCourseContents, pluginfileUrl } from '../src/moodle/wsClient.js';
-import { resolveDirectUrl } from '../src/core/core.js';
+import { resolveDirectUrl, resolveDriveFile } from '../src/core/core.js';
 import { probeDriveFile } from '../src/extractors/GoogleDriveExtractor.js';
 import { YoutubePlaylistExtractor } from '../src/extractors/YoutubePlaylistExtractor.js';
 import {
@@ -579,4 +579,46 @@ test('a walled videostream content call with no browser is 503 site_blocked, nev
     { code: res.body.code, params: res.body.params },
     { code: 'site_blocked', params: { detail: 'HTTP 200, text/html', challengeWindow: false } },
   );
+});
+
+test('a PDF is refused as link_not_a_video, from a Drive link and a plain URL alike', async (t) => {
+  stubFetch(t, async (url) => ({
+    ok: true,
+    status: 200,
+    url,
+    headers: {
+      get: (h) =>
+        h.toLowerCase() === 'content-disposition'
+          ? 'attachment; filename="handout.pdf"'
+          : h.toLowerCase() === 'content-type'
+            ? 'application/pdf'
+            : null,
+    },
+    body: { cancel: async () => {} },
+  }));
+  const driveUrl = 'https://drive.google.com/file/d/1pdf-fixture-id/view';
+  const drive = await thrown(() =>
+    resolveDriveFile({
+      recording: { pageUrl: driveUrl, strategy: 'google-drive', kind: 'lecture' },
+      course: 'C',
+      name: 'L',
+      kind: 'lecture',
+    }),
+  );
+  assert.deepEqual(codeOf(drive), {
+    code: 'link_not_a_video',
+    params: { source: 'drive', url: driveUrl, ext: 'pdf' },
+  });
+  const direct = await thrown(() =>
+    resolveDirectUrl({
+      recording: directUrlRecording('https://files.test/e9/handout.pdf'),
+      course: 'C',
+      name: 'L',
+      kind: 'lecture',
+    }),
+  );
+  assert.deepEqual(codeOf(direct), {
+    code: 'link_not_a_video',
+    params: { source: 'link', url: 'https://files.test/e9/handout.pdf', ext: 'pdf' },
+  });
 });

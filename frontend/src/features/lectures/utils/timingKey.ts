@@ -3,10 +3,11 @@ import { STEP_INPUT_FILE } from '@/features/lectures/constants/pipeline'
 import { isMaterialsOnly } from '@/features/lectures/utils/lectureProgress'
 
 // The ETA bucket for a running step: its input file's size, except a summarize with no transcript
-// on a materials-only lecture, which the backend times as `summarize_materials` over the PDFs' bytes.
+// on a materials-only lecture, which the backend times as `summarize_materials` over the attached materials' bytes.
 export function timingKey(
   step: Step,
   files: FileStatus,
+  // The attached set (`attachedMaterials`), the one the backend sends.
   materials: MaterialInfo[],
 ): { operation: TimingOperation; bytes: number } {
   if (

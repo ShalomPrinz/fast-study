@@ -1,8 +1,10 @@
 import { VideoExtractor } from './VideoExtractor.js';
+import { isAudioFile } from '../lib/fileMedia.js';
 
 /**
- * Moodle `resource` module file — a course-hosted PDF that lands as one of the lecture's
- * materials. No capture phase: the WS token makes `fileurl` a plain URL `server/` fetches.
+ * Moodle `resource` module file — a course-hosted file of any type but audio or video that lands as one of the lecture's
+ * materials — or an `assign` activity's file (any type, audio and video included), which lands under the
+ * assignment. No capture phase: the WS token makes `fileurl` a plain URL `server/` fetches.
  */
 export class MoodleFileExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -11,13 +13,17 @@ export class MoodleFileExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a resource file by mimetype alone — exact where a keyword is a guess, and a listed
-   * grade-sheet PDF costs less than a missed slide deck.
+   * Claim every assignment file, and every resource except video (too large for a material), audio (not a material) and HTML
+   * (indistinguishable from a block page at preflight).
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */
   canHandle(activity) {
-    return activity.modType === 'resource' && activity.mimetype === 'application/pdf';
+    if (activity.modType === 'assign') return Boolean(activity.assignment); // a bare assign module has no file
+    if (activity.modType !== 'resource') return false;
+    const mime = String(activity.mimetype ?? '').toLowerCase();
+    if (mime.startsWith('video/') || mime === 'text/html') return false;
+    return !isAudioFile(activity.mimetype, activity.filename);
   }
 
   // A course file: the preflight and every byte come from Moodle.
@@ -40,6 +46,8 @@ export class MoodleFileExtractor extends VideoExtractor {
         kind: activity.kind,
         strategy: 'moodle-file',
         section: activity.sectionName,
+        // Only an assignment file: a material's ref stays byte-identical (docs/BROWSING.md).
+        ...(activity.assignment ? { assignment: activity.assignment } : {}),
       },
     ];
   }

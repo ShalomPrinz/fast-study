@@ -52,9 +52,7 @@ export function useRestartToUpdate(busy: boolean): RestartFlow {
       started.current = false
       setRestarting(false)
     }
-    updates.restart().then((result) => {
-      if (!result.ok) drop()
-    }, drop)
+    updates.restart().catch(drop)
   }, [])
 
   const request = useCallback(() => {

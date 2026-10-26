@@ -153,7 +153,7 @@
   text-align: start;
 }
 
-/* Five semantic states on one chip (the class string is built by materialIndicator()). Each
+/* Six semantic states on one chip (the class string is built by materialIndicator()). Each
    outspecifies `.chip`'s own colours, which live in another file — never source order. */
 .chip.material-indicator--will-use {
   background: var(--accent-soft);
@@ -172,6 +172,10 @@
   background: var(--warn-soft);
   color: var(--warn);
 }
+.chip.material-indicator--changed {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
 .chip.material-indicator--was-missing {
   background: var(--line-soft);
   color: var(--text-3);
@@ -183,56 +187,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-}
-
-/* Outlined rather than filled, so a material never reads as a state chip. Outspecifies `.chip`'s
-   own background and padding, which live in another file. */
-.chip.material-chip {
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: var(--fs-meta);
-}
-
-/* Direct child only — the delete button holds an svg of its own. */
-.material-chip > svg {
-  color: var(--text-4);
-  flex-shrink: 0;
-}
-
-.material-chip-name {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
-.material-chip-name:hover {
-  color: var(--accent);
-}
-
-.material-chip-delete {
-  display: inline-flex;
-  align-items: center;
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--text-4);
-  cursor: pointer;
-  transition: color 0.12s;
-}
-
-.material-chip-delete:hover:not(:disabled) {
-  color: var(--danger);
-}
-
-.material-chip-delete:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
 }
 
 .lecture-error {

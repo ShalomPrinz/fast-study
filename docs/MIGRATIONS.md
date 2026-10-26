@@ -23,6 +23,16 @@ one-line comment pointing at this file.
   duplicate. PDFs saved by the Chrome extension never carry a
   source, so they never adopt either way. They are not a reason to keep this.
 
+## Bare-string material source
+
+- **Code:** `database/fs/material_meta.py`, the `isinstance(v, str)` branch of `read_meta`.
+- **Old state:** a lecture's `.materials.json` written before material meta holds `{name: "<source>"}`
+  instead of `{name: {"source": …}}`.
+- **What it does:** reads a bare string as `{"source": value}`; every write produces the new shape.
+- **Remove when:** every install has rewritten its sidecars. A sidecar is rewritten on any material
+  write, delete or toggle in that lecture, so one that never sees such a change stays in the old shape
+  and, after removal, loses its sources: a still-unadopted old material is offered again as one duplicate.
+
 ## Plaintext Moodle token
 
 - **Code:** `downloader/auto/src/auth/tokenStore.js`, the plaintext branch of `readTokenFile`.

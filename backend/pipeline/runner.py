@@ -22,6 +22,12 @@ from services.errors import (
 )
 from services.llm_client import GeminiRateLimitError
 
+from pipeline.extract_text import extract_text
+from pipeline.material_types import (
+    MAX_GEMINI_FILE_BYTES,
+    attached_materials,
+    needs_extraction,
+)
 from pipeline.strip_audio import strip_audio
 from pipeline.summarize import summarize, summarize_materials
 from pipeline.to_pdf import PdfRenderError, convert_to_pdf
@@ -331,15 +337,36 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
         return _failed(e)
 
 
+def _display_name(entry: dict) -> str:
+    return entry.get("filename") or entry["name"]
+
+
+def _check_sizes(entries: list[dict]) -> None:
+    """Refuse a selection holding a file over Gemini's cap, before anything is downloaded."""
+
+    big = [e for e in entries if e.get("size", 0) > MAX_GEMINI_FILE_BYTES]
+    if big:
+        largest = max(e["size"] for e in big)
+        files = ", ".join(_display_name(e) for e in big)
+        limit_mb = MAX_GEMINI_FILE_BYTES // (1024 * 1024)
+        raise CodedError(
+            f"attached materials over {limit_mb} MB: {files} — turn them off",
+            "material_too_large",
+            files=files,
+            limit_mb=limit_mb,
+            size_mb=round(largest / (1024 * 1024), 1),
+        )
+
+
 def _download_materials(
     course: str, lecture: str, kind: str, dest: Path, entries: list[dict] | None = None
-) -> list[Path]:
-    """Fetch every material PDF of a lecture (or the given listing) into `dest`. Unlike the
-    fixed pipeline files, an empty material is skipped with a warning, not fatal."""
+) -> list[tuple[str, Path]]:
+    """Fetch the attached materials (or the given selection) into `dest` as (name, file to send);
+    an Office file is sent as extracted text. An empty or unreadable one is skipped, not fatal."""
 
     if entries is None:
-        entries = db_client.list_materials(course, lecture, kind)
-    paths: list[Path] = []
+        entries = attached_materials(db_client.list_materials(course, lecture, kind))
+    sent: list[tuple[str, Path]] = []
     for entry in entries:
         name = entry["name"]
         data = db_client.get_file_bytes(course, lecture, kind, name)
@@ -350,26 +377,51 @@ def _download_materials(
             continue
         path = dest / name
         path.write_bytes(data)
-        paths.append(path)
-    return paths
+        if needs_extraction(name):
+            try:
+                text = extract_text(path, name.rsplit(".", 1)[-1].lower())
+            except Exception as e:
+                log.warning(
+                    "%s/%s (%s): skipping unreadable material %s: %s",
+                    course,
+                    lecture,
+                    kind,
+                    name,
+                    e,
+                )
+                continue
+            if not text.strip():
+                log.warning(
+                    "%s/%s (%s): skipping material %s with no text",
+                    course,
+                    lecture,
+                    kind,
+                    name,
+                )
+                continue
+            path = dest / f"{name}.txt"
+            path.write_text(text, encoding="utf-8")
+        sent.append((name, path))
+    return sent
 
 
 def _summarize_from_materials(
     course: str, lecture: str, kind: str, entries: list[dict]
-) -> str:
-    """Summarize a materials-only lecture from its PDFs alone; every one empty is a step error."""
+) -> tuple[str, list[str]]:
+    """Summarize a materials-only lecture from its attached files alone; every one empty is a
+    step error. Returns the summary and the names sent."""
 
     with tempfile.TemporaryDirectory() as tmp:
-        materials = _download_materials(course, lecture, kind, Path(tmp), entries)
-        if not materials:
-            raise CodedError("every material PDF is empty", "materials_empty")
-        log.info("Summarize: no transcript — %d materials only", len(materials))
-        return summarize_materials(materials)
+        sent = _download_materials(course, lecture, kind, Path(tmp), entries)
+        if not sent:
+            raise CodedError("every attached material is empty", "materials_empty")
+        log.info("Summarize: no transcript — %d materials only", len(sent))
+        return summarize_materials([p for _, p in sent]), [n for n, _ in sent]
 
 
 def _summarize_source(course: str, lecture: str, kind: str) -> list[dict] | None:
-    """The single summarize readiness rule: [] for the transcript path, the material listing for
-    a lecture with no video.mp4/audio.mp3, or None when there is no input yet."""
+    """The single summarize readiness rule: [] for the transcript path, the attached material
+    listing for a lecture with no video.mp4/audio.mp3, or None when there is no input yet."""
 
     if db_client.file_exists(course, lecture, kind, "transcript.txt"):
         return []
@@ -377,12 +429,28 @@ def _summarize_source(course: str, lecture: str, kind: str) -> list[dict] | None
         course, lecture, kind, "video.mp4"
     ) or db_client.file_exists(course, lecture, kind, "audio.mp3"):
         return None
-    return db_client.list_materials(course, lecture, kind) or None
+    return attached_materials(db_client.list_materials(course, lecture, kind)) or None
+
+
+def _record_used_materials(course: str, lecture: str, kind: str, names: list[str]):
+    """Record the attached selection (skipped files included, so it matches what the UI has
+    attached). Best-effort: the summary is already written, so a failed record never fails the run."""
+
+    try:
+        db_client.put_summary_materials(course, lecture, kind, names)
+    except Exception as e:
+        log.warning(
+            "%s/%s (%s): could not record summary materials: %s",
+            course,
+            lecture,
+            kind,
+            e,
+        )
 
 
 def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
-    """Summarize transcript.txt → summary.md via Gemini, passing every material PDF present;
-    a materials-only lecture summarizes from its PDFs alone. A daily Gemini 429 is flagged."""
+    """Summarize transcript.txt → summary.md via Gemini, passing every attached material;
+    a materials-only lecture summarizes from them alone. A daily Gemini 429 is flagged."""
 
     try:
         entries = _summarize_source(course, lecture, kind)
@@ -393,8 +461,10 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                 "transcribe",
             )
         if entries:
-            summary = _summarize_from_materials(course, lecture, kind, entries)
-            # A video that landed mid-summarize supersedes the PDFs: write nothing and fail,
+            _check_sizes(entries)
+            summary, used = _summarize_from_materials(course, lecture, kind, entries)
+            recorded = [e["name"] for e in entries]
+            # A video that landed mid-summarize supersedes the materials: write nothing and fail,
             # so the run stops and the video path (transcribe) is what runs next.
             if db_client.file_exists(course, lecture, kind, "video.mp4"):
                 log.info(
@@ -405,26 +475,32 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                     "transcript.txt",
                     "transcribe",
                 )
-            materials = entries
         else:
+            selected = attached_materials(
+                db_client.list_materials(course, lecture, kind)
+            )
+            _check_sizes(selected)
             with _db_workspace(
                 course, lecture, kind, download=["transcript.txt"]
             ) as ws:
                 transcript = ws["transcript.txt"]
-                materials = _download_materials(
-                    course, lecture, kind, transcript.parent
+                sent = _download_materials(
+                    course, lecture, kind, transcript.parent, selected
                 )
                 log.info(
                     "Summarize: %s",
-                    f"{len(materials)} materials found — passing to Gemini"
-                    if materials
+                    f"{len(sent)} materials found — passing to Gemini"
+                    if sent
                     else "no materials found — transcript only",
                 )
-                summary = summarize(transcript, materials)
+                summary = summarize(transcript, [p for _, p in sent])
+                used = [n for n, _ in sent]
+                recorded = [e["name"] for e in selected]
         # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
         db_client.put_summary(course, lecture, kind, summary, fresh=True)
-        return {"status": "done", "usedMaterial": bool(materials)}
+        _record_used_materials(course, lecture, kind, recorded)
+        return {"status": "done", "usedMaterial": bool(used)}
     except GeminiRateLimitError as e:
         return {**_failed(e), "daily_quota": e.info["is_daily"]}
     except Exception as e:
@@ -585,13 +661,13 @@ def _mark_removed(files: dict, removed: list[str]) -> dict:
 
 
 def is_materials_only(files: dict, materials: list) -> bool:
-    """A lecture with material PDFs and no video.mp4 or audio.mp3, neither removed — summarized
-    from the PDFs alone."""
+    """A lecture with attached materials and no video.mp4 or audio.mp3, neither removed —
+    summarized from the materials alone."""
 
     return (
         not _present(files, "video.mp4")
         and not _present(files, "audio.mp3")
-        and bool(materials)
+        and bool(attached_materials(materials))
     )
 
 

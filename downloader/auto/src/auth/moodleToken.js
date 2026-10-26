@@ -13,7 +13,7 @@ const URLSCHEME = 'moodlemobile';
 const TOKEN_PREFIX = `${URLSCHEME}://token=`;
 // Bounded wait from Connect for the user to finish a first Microsoft login plus SMS in the headed window.
 export const CAPTURE_TIMEOUT_MS = 600_000;
-// What discovery and PDFs need from the token's service; videostream also needs the app's content call.
+// What discovery and files need from the token's service; videostream also needs the app's content call.
 const REQUIRED_FUNCTION = 'core_course_get_contents';
 const VIDEOSTREAM_FUNCTION = 'tool_mobile_get_content';
 // The course picker's list; saved at login as `coursesAvailable`, since asking for a disallowed

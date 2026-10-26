@@ -120,7 +120,9 @@ export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
               <Trans>Groq gets a lecture's audio to transcribe it.</Trans>
             </li>
             <li>
-              <Trans>Gemini gets the transcript and any PDFs you add, to write the summary.</Trans>
+              <Trans>
+                Gemini gets the transcript and any materials you add, to write the summary.
+              </Trans>
             </li>
             <li>
               <Trans>

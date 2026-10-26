@@ -49,18 +49,35 @@ A provider quota or rate limit is an error like any other: `gemini_quota_*` and 
 
 ## Materials
 
-A lecture holds any number of `material[.N].pdf`, carried on the tree entry as `materials` beside `files`.
-They are summarize inputs, not stages, so they render as chips under their own heading, opened and deleted
-**by name**; a delete never renames the rest, so indices gain gaps and held URLs stay valid.
+A lecture holds any number of `material[.N].<ext>` of any file type, carried on the tree entry as `materials`
+beside `files`. They are summarize inputs, not stages, so they render as `MaterialChip`s under their own
+heading, opened and deleted **by name**; a delete never renames the rest, so indices gain gaps and held URLs
+stay valid. A chip shows `displayName` (the sidecar's original `filename`, else the disk name) everywhere
+the material is named, and holds, in order: the name button (OS default app; `MaterialNameButton` is the
+reusable piece), the **attach switch**, "Open with…" in an `OpenWithMenu` overflow, and delete.
 
-`materialIndicator` drives the Summary row's chip: before a summary, `no material found`, `summary with
-<name>` for one material or `summary with # PDFs` for several; after, each material's mtime against the summary's picks all used (green), none used (grey), or
-`N of M` (amber), and a summary made with no materials gets no chip. **mtime is a proxy for "was fed to
-the model", not a record** — re-downloading an unchanged PDF reads as unused. Exactness would need the
-backend to persist each run's inputs.
+**Attach.** The switch decides whether Summarize sends the material to Gemini (`setMaterialAttach`; the tree's
+SSE refresh brings the new state). It is disabled while a run is on the lecture, until the support set
+loads, and for a type Gemini can't read. "Open with…" shows only where `canOpenWith()` (bridge has
+`open.fileWith` and `platform === 'win32'`). A material that is not sent reads muted; an attached one over
+10 MB (`MAX_GEMINI_FILE_BYTES`, mirroring the backend's) shows a warning, since Summarize would fail.
 
-**Materials-only lectures.** No `video.mp4`, no `audio.mp3` and at least one material (`isMaterialsOnly`, mirroring the
-backend) summarizes from the PDFs alone. `lectureProgress.ts` holds the shared predicates: `skippedStage`
+**Support set.** `GET /materials/supported` is read once after load (`app/supportedMaterials.ts`, beside the
+tool probe) into `SupportedMaterialsContext`. Before it answers every material counts as supported; if the
+read fails only `pdf` does. `materialAttached(m, supported)` = supported and `m.attach ?? true`; the lectures'
+rules below take `attachedMaterials(...)`, never the raw list.
+
+`materialIndicator` drives the Summary row's chip over the attached set: before a summary, `no material found`,
+`no material will be sent` (materials, none attached), `summary with <name>` or `summary with # materials`.
+After one, with the tree's `summaryMaterials` record (the disk names attached at the last Summarize): the same set as
+the currently attached names is "used"; any difference — a toggle, a new download, a delete — is the
+amber "Attachments changed since the summary" (`attachmentsChanged`, which never reports a change while the support read is pending or fell back to `FALLBACK_SUPPORTED`). Without a record (`null`, a summary
+made before it existed) each material's mtime against the summary's picks all used (green), none used
+(grey), or `N of M` (amber), and nothing attached gets no chip; **mtime is a proxy for "was fed to the
+model"** — re-downloading an unchanged file reads as unused.
+
+**Materials-only lectures.** No `video.mp4`, no `audio.mp3` and at least one attached material (`isMaterialsOnly`, mirroring the
+backend) summarizes from the materials alone. `lectureProgress.ts` holds the shared predicates: `skippedStage`
 marks the missing Video, Audio and Transcript rows "skipped (no video)" with no button, and leaves them out
 of "N of M complete", "step N of M" and the runner rail; `stagePrereqMet` lets Summarize start without a
 transcript; `canRunRemaining` skips them as `next_step` does. Runs are manual only — `notQueued` and the
@@ -78,6 +95,15 @@ rule reads that map, so a stripped lecture is never materials-only and resumes w
 `next_step` does; `notQueued` and the sidebar's drop confirm count a removed video too (`holdsFile`).
 Its row shows the grey `removed` `StatusNode`, a greyed name and "Removed", with no action (`stageControl`);
 a step whose input was removed (rotate, or run) is disabled with a tooltip saying so. `.pipeline-row--removed` marks the row.
+
+## Assignment view
+
+`/course/:course/assignment/:assignment` (`AssignmentView`, `assignmentRoute`; four segments, so no lecture or
+overview URL reaches it) lists the assignment's files with sizes. A name opens through
+`openAssignmentFile` (bridge `open.file`, else a new tab on the database route), via the same
+`MaterialNameButton` the material chips use. "Open with…" (`OpenWithMenu`) shows on Windows packaged only,
+and "Show in folder" calls `open.reveal` — disabled with a tooltip without `canReveal()` (browser dev, older
+launcher). A rejected bridge call toasts its message. The header carries `StudyDoneButton` (`kind="assignment"`, `setAssignmentDone`), the same toggle as the lecture page. No viewer, delete or rename.
 
 ## Study with AI
 
@@ -138,7 +164,7 @@ not each one run-all then stopped at summarize.
 entry, else from `transcript.partial.txt` for a transcribe step. `useTimingStats(step, bytes)` fetches the
 backend's regression estimate for the step's _input_ size and drops answers for a key the caller left.
 `timingKey` picks the key: a materials-only summarize with no transcript reads the backend's own
-`summarize_materials` bucket over the summed material bytes, so PDF-only runs never borrow the transcript ETA.
+`summarize_materials` bucket over the summed attached-material bytes, so materials-only runs never borrow the transcript ETA.
 
 ## summary.pdf badges
 
@@ -170,7 +196,7 @@ page) while the tree still has it, else `/`.
 
 ## Tree pane
 
-`LecturesTreePane` renders beside `/`, the overview and `/:course/:lecture` only. It holds the active
+`LecturesTreePane` renders beside `/`, the overview, an assignment and `/:course/:lecture` only. It holds the active
 `CourseGroup`s, `ArchivedSection` and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
 lecture row can prompt. With no active course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. An expanded course opens with an Overview row; the course header only toggles.
 
@@ -184,12 +210,13 @@ when the latest load failed, since a stale or empty tree can't prove the target 
 
 `utils/lectureProgress.ts`'s `isLectureComplete` (the last pipeline output exists, mirroring the backend's
 `final_output()`, whatever earlier file is gone) reads `Complete` on the lecture page; the tree shows study
-progress instead. Lectures and recitations are two tracks, and `utils/studyProgress.ts`'s `trackProgress`
+progress instead. Lectures, recitations and assignments are three tracks, and `utils/studyProgress.ts`'s `trackProgress`
 reads one in the tree's order: the user's manual `done` marks count toward `done/total`, and its current item
 is the first not done, strictly — an earlier gap stays current. Each row's mark is a ✓ when done, an arrow
 on its track's current item and empty otherwise; a running or queued row shows a spinner in its place.
-Marks are display-only. The course header counts lectures, the Recitations header recitations; an archived
-course shows neither count.
+Marks are display-only. The course header counts lectures, the Recitations header recitations, the Assignments header assignments
+(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. An
+archived course shows no count.
 
 **A lectures-only course** (the tree's resolved `lectures_only`, never the setting — [SETTINGS.md](SETTINGS.md))
 has one track: `utils/courseTree.ts`'s `lectureTrack` merges its recitations into the lecture list with no
@@ -203,8 +230,11 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
   on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through
   `sortLectures`. Everything reads it directly, no props
   or outlet context.
-- `CourseGroup` owns `expanded` and `recExpanded`, so the recitations sub-group survives collapsing the
-  course. It auto-expands when one of its lectures or its overview is the open route (deep links).
+- `CourseGroup` owns `expanded`, `recExpanded` and `assignExpanded`, so the sub-groups survive collapsing the
+  course. It auto-expands when one of its lectures, its overview or an assignment is the open route (deep links).
+- `AssignmentsGroup` lists the course's `assignments` after the recitations, styled like them, whatever
+  `lectures_only` says and never folded into the lectures; nothing creates one by hand, so a course
+  without any shows no group. Rows carry ✓/arrow marks and a done/total count.
 - The pane unmounts on other routes; only each course's expansion (a module map in
   `utils/courseExpansion.ts`, moved to the new name on a course rename) and the nav's scroll position
   survive, the latter saved on each scroll because a detached nav reads 0. The auto-expand re-runs on

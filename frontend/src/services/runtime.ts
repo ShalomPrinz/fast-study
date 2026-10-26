@@ -2,8 +2,10 @@
 import type { SettingsBacking } from './settings'
 import type { Kind } from '@/types'
 
-/** What the two `open` calls answer; `error` is English prose from the OS or the database service. */
-export type OpenResult = { ok: boolean; error: string | null }
+/** What the bridge opens: a lecture file, a course `overview/` file (no `lecture`) or an assignment file. */
+export type OpenTarget =
+  | { course: string; lecture?: string; name: string; kind?: Kind }
+  | { course: string; assignment: string; name: string }
 
 /** The launcher's update phase; only these two cross the bridge, everything else is `null`. */
 export type UpdateState = 'downloading' | 'downloaded' | null
@@ -43,12 +45,12 @@ declare global {
       locale?: string
       // `app.isPackaged`; an unpackaged launcher never updates and its version is not a release.
       packaged?: boolean
-      // The sidebar's update row. `restart()` never rejects: `ok` means the app is quitting into the
-      // update; a failure after the kill reloads the window, so only a refusal before it may arrive.
+      // The sidebar's update row. `restart()` resolves when the app is quitting into the update and
+      // rejects on failure; a failure after the kill reloads the window, so that rejection may never arrive.
       updates?: {
         snapshot: () => Promise<UpdateState>
         subscribe: (callback: (state: UpdateState) => void) => () => void
-        restart: () => Promise<{ ok: boolean; error?: string }>
+        restart: () => Promise<void>
       }
       // The packaged data folder the init wall starts from (`%LOCALAPPDATA%\FastStudy\data`).
       defaultDataRoot?: string
@@ -61,16 +63,18 @@ declare global {
       // The folder Chrome loads the extension unpacked from; `reveal()` opens it and always resolves.
       extension?: { path: string; reveal: () => Promise<void> }
       // Not optional: the bridge's absence is the browser-dev test. Identifiers only — `database/`
-      // resolves the path; a `target` without `lecture` is a course-level `overview/` file.
+      // resolves the path; a `target` without `lecture` is a course-level `overview/` file. Each call
+      // resolves `void` and rejects with an `Error` whose `message` is the exact failure text.
       open: {
-        file: (target: {
-          course: string
-          lecture?: string
-          name: string
-          kind?: Kind
-        }) => Promise<OpenResult>
-        external: (url: string | undefined) => Promise<OpenResult>
+        file: (target: OpenTarget) => Promise<void>
+        external: (url: string | undefined) => Promise<void>
+        // Windows only ("Open with…"); rejects `unsupported` elsewhere. Absent on older launchers.
+        fileWith?: (target: OpenTarget) => Promise<void>
+        // Shows the file in its folder. Absent on older launchers.
+        reveal?: (target: OpenTarget) => Promise<void>
       }
+      // `process.platform`; absent in browser dev and on an older launcher.
+      platform?: string
     }
   }
 }

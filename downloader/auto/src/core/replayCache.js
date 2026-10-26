@@ -2,7 +2,7 @@
 // passcode, sniff the .mp4), so each cap is kept under its FINAL download target for retries.
 
 // Collision-safe key over the download target:
-// course/lecture/kind pick the folder, `media` ('video'|'material') picks which file it becomes
+// course/lecture/kind pick the folder, `media` ('video'|'material'|'assignment') picks which file it becomes
 function keyOf(course, lecture, kind, media) {
   return JSON.stringify([course, lecture, kind, media]);
 }

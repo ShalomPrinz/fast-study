@@ -219,7 +219,7 @@ export async function runDownloadJob(
       // The job turns `done` only once the database has them.
       const uploadError = save
         ? await save(tempDir, jobId)
-        : await downloader.upload(tempDir, course, lecture, kind, downloader.tool, source);
+        : await downloader.upload(tempDir, course, lecture, kind, downloader.tool, source, input);
       if (uploadError)
         finishJob(jobId, 'error', uploadError.error, uploadError.code, uploadError.params);
       else finishJob(jobId, 'done');

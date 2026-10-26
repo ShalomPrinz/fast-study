@@ -115,7 +115,7 @@ test('restart refuses before an update is downloaded', async (t) => {
     () => assert.fail('recovered'),
     log,
   );
-  assert.deepEqual(result, { ok: false, error: 'no update is downloaded' });
+  assert.deepEqual(result, { error: 'no update is downloaded' });
   assert.equal(stopped, false);
 });
 
@@ -135,8 +135,8 @@ test('restart stops the services before it installs, once for two clicks', async
     restartToUpdate(stop, never, log),
   ]);
   assert.deepEqual(order, ['stopped', 'install false true']);
-  assert.deepEqual(a, { ok: true });
-  assert.equal(a, b);
+  assert.equal(a, undefined);
+  assert.equal(b, undefined);
 });
 
 test('a failed install reboots, keeps Restart offered, and allows another try', async (t) => {
@@ -154,7 +154,7 @@ test('a failed install reboots, keeps Restart offered, and allows another try', 
     () => (recovered += 1),
     log,
   );
-  assert.deepEqual(result, { ok: false, error: 'no installer' });
+  assert.deepEqual(result, { error: 'no installer' });
   assert.ok(lines.includes('restart failed: no installer'));
   assert.equal(recovered, 1);
   assert.equal(updateState(), 'downloaded');
@@ -179,6 +179,6 @@ test('a kill that throws also reboots', async (t) => {
     throw new Error('kill failed');
   };
   const result = await restartToUpdate(stop, () => (recovered = true), log);
-  assert.deepEqual(result, { ok: false, error: 'kill failed' });
+  assert.deepEqual(result, { error: 'kill failed' });
   assert.equal(recovered, true);
 });

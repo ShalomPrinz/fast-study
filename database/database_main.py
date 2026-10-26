@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 import os
 import signal
 from contextlib import asynccontextmanager
@@ -12,7 +13,7 @@ from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fs import crud, materials, overview, paths, tree
+from fs import assignments, crud, materials, overview, paths, tree
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
@@ -300,7 +301,7 @@ async def put_video(
 
 @app.get("/courses/{course}/lectures/{lecture}/materials")
 def get_materials(course: str, lecture: str, kind: str = Query("lecture")):
-    """List a lecture's material pdfs, index-ordered; [] for an empty or missing lecture, as the tree degrades."""
+    """List a lecture's materials, index-ordered; [] for an empty or missing lecture, as the tree degrades."""
 
     try:
         return {
@@ -317,16 +318,61 @@ async def post_material(
     request: Request,
     kind: str = Query("lecture"),
     source: str | None = Query(None),
+    filename: str | None = Query(None),
 ):
-    """Save a raw-body PDF as the lecture's next material, tagged with its opaque source, and return its {name}."""
+    """Save a raw-body file as the lecture's next material, tagged with its opaque source and display filename, and return its {name}."""
 
     try:
         data = await request.body()
-        name = materials.write_material(course, lecture, kind, data, source)
+        name = materials.write_material(course, lecture, kind, data, source, filename)
         return JSONResponse({"name": name})
     except Exception as e:
         # The name is allocated inside the failing write, so only the OS detail is knowable here.
         return _failure(e, 400, "file_write_failed")
+
+
+@app.patch("/courses/{course}/lectures/{lecture}/materials/{name}")
+async def patch_material(
+    course: str, lecture: str, name: str, request: Request, kind: str = Query("lecture")
+):
+    """Set a material's attach flag (body: {attach: bool}); 404 when the name isn't an existing material."""
+
+    # On the loop, like delete: it rewrites .materials.json, which only the single async writer may do.
+    try:
+        body = await request.json()
+        if not isinstance(body, dict) or not isinstance(body.get("attach"), bool):
+            raise CodedValueError(
+                "attach must be a boolean",
+                "bad_request_body",
+                detail="attach must be a boolean",
+            )
+        if not materials.set_attach(course, lecture, kind, name, body["attach"]):
+            return _error("Not found", 404, "file_not_found", {"file": name})
+        broadcast_notify()
+        return Response(status_code=204)
+    except OSError as e:
+        # The flag lives only in the sidecar, so a failed write is a server fault, not a bad request.
+        return _failure(e, 500, "file_write_failed", {"file": name})
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": name})
+
+
+@app.put("/courses/{course}/lectures/{lecture}/summary-materials")
+async def put_summary_materials(
+    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+):
+    """Record which materials the current summary.md was built from (body: {materials: [str]})."""
+
+    try:
+        body = await request.json()
+        names = body.get("materials") if isinstance(body, dict) else None
+        summary_fs.write_summary_materials(course, lecture, kind, names)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(
+            e, 400, "file_write_failed", {"file": paths.SUMMARY_MATERIALS_MARKER}
+        )
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -445,7 +491,7 @@ def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture"))
         return _failure(e, 400, "file_read_failed", {"file": name})
     if not p.exists():
         return _error("Not found", 404, "file_not_found", {"file": name})
-    media_type = "application/pdf" if name.endswith(".pdf") else None
+    media_type = mimetypes.guess_type(name)[0]
     return FileResponse(str(p), media_type=media_type)
 
 
@@ -460,6 +506,78 @@ def get_file_path(course: str, lecture: str, name: str, kind: str = Query("lectu
     if not p.exists():
         return _error("Not found", 404, "file_not_found", {"file": name})
     return {"path": str(p)}
+
+
+@app.post("/courses/{course}/assignments/{name}/files")
+async def post_assignment_file(
+    course: str,
+    name: str,
+    request: Request,
+    filename: str = Query(...),
+    source: str | None = Query(None),
+):
+    """Save a raw-body file in an assignment under a collision-free name; answer the effective {assignment, name}."""
+
+    try:
+        data = await request.body()
+        # No await between here and the write: allocation is lock-free only that way.
+        assignment, effective = assignments.write_assignment_file(
+            course, name, filename, data, source
+        )
+        broadcast_notify()
+        return {"assignment": assignment, "name": effective}
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": filename})
+
+
+@app.put("/courses/{course}/assignments/{name}/done")
+async def put_assignment_done(course: str, name: str):
+    """Mark an assignment studied (creates its .done marker; idempotent)."""
+
+    try:
+        assignments.set_assignment_done(course, name, True)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": DONE_MARKER})
+
+
+@app.delete("/courses/{course}/assignments/{name}/done")
+async def delete_assignment_done(course: str, name: str):
+    """Clear an assignment's studied mark (removes its .done marker; idempotent)."""
+
+    try:
+        assignments.set_assignment_done(course, name, False)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_delete_failed", {"file": DONE_MARKER})
+
+
+@app.get("/courses/{course}/assignments/{name}/files/{file}/path")
+def get_assignment_file_path(course: str, name: str, file: str):
+    """Return an assignment file's absolute on-disk path, for the launcher's open, open-with and reveal."""
+
+    try:
+        p = assignments.assignment_file_path(course, name, file)
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed", {"file": file})
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": file})
+    return {"path": str(p)}
+
+
+@app.get("/courses/{course}/assignments/{name}/files/{file}")
+def get_assignment_file(course: str, name: str, file: str):
+    """Stream an assignment file's bytes, for browser dev's open."""
+
+    try:
+        p = assignments.assignment_file_path(course, name, file)
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed", {"file": file})
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": file})
+    return FileResponse(str(p), media_type=mimetypes.guess_type(file)[0])
 
 
 @app.get("/courses/{course}/summaries")
@@ -532,7 +650,7 @@ def get_overview_file(course: str, name: str):
         return _failure(e, 400, "overview_read_failed")
     if not p.exists():
         return _error("Not found", 404, "file_not_found", {"file": name})
-    media_type = "application/pdf" if name.endswith(".pdf") else None
+    media_type = mimetypes.guess_type(name)[0]
     return FileResponse(str(p), media_type=media_type)
 
 

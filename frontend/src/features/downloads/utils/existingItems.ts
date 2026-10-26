@@ -1,4 +1,4 @@
-import type { Course, Kind, Lecture, MaterialInfo } from '@/types'
+import type { AssignmentFile, Course, Kind, Lecture, MaterialInfo } from '@/types'
 import { holdsFile } from '@/features/lectures/utils/lectureProgress'
 import type { Media, ResolvedMedia } from '../services/autoDownloader'
 
@@ -23,10 +23,33 @@ export function materialsOf(
   return existingNodes(kind, courses, course).find((l) => l.name === name)?.materials ?? []
 }
 
+// The course's assignment names — the assignment row's dropdown options.
+export function existingAssignmentNames(courses: Course[], course: string): string[] {
+  return (courses.find((c) => c.name === course)?.assignments ?? []).map((a) => a.name)
+}
+
+// The files already in the assignment named `name`, [] if it has none or doesn't exist.
+export function assignmentFilesOf(
+  name: string,
+  courses: Course[],
+  course: string,
+): AssignmentFile[] {
+  return (
+    courses.find((c) => c.name === course)?.assignments?.find((a) => a.name === name)?.files ?? []
+  )
+}
+
+// True when `name` is an existing assignment of the course that the user marked done.
+export function isAssignmentDone(name: string, courses: Course[], course: string): boolean {
+  return (
+    courses.find((c) => c.name === course)?.assignments?.find((a) => a.name === name)?.done ?? false
+  )
+}
+
 // The single "already on disk" rule for the green row, bulk skip and landed check; a material matches by
 // `source === ref`, so several share a node. An unprobed 'unknown' or 'unsupported' row is always false.
 export function hasResource(
-  item: { ref?: string; media: Media; resolvedMedia?: ResolvedMedia },
+  item: { ref?: string; media: Media; resolvedMedia?: Media | ResolvedMedia },
   name: string,
   kind: Kind,
   courses: Course[],
@@ -38,6 +61,13 @@ export function hasResource(
     // A ref-less caller (a manual download) or a source-less material never matches.
     return (
       ref !== undefined && materialsOf(name, kind, courses, course).some((m) => m.source === ref)
+    )
+  }
+  if (media === 'assignment') {
+    const { ref } = item
+    // `name` is the assignment; `kind` means nothing to it. Several files share one assignment.
+    return (
+      ref !== undefined && assignmentFilesOf(name, courses, course).some((f) => f.source === ref)
     )
   }
   if (media !== 'video') return false
@@ -55,14 +85,14 @@ export function holdsVideo(name: string, kind: Kind, courses: Course[], course: 
 // skip's rule. Unlike `hasResource` an unprobed 'unknown' counts: it may be a video, and a video PUT
 // wipes the lecture's transcript and summary.
 export function overwritesVideo(
-  item: { media: Media; resolvedMedia?: ResolvedMedia },
+  item: { media: Media; resolvedMedia?: Media | ResolvedMedia },
   name: string,
   kind: Kind,
   courses: Course[],
   course: string,
 ): boolean {
   const media = item.resolvedMedia ?? item.media
-  if (media === 'material' || media === 'unsupported') return false
+  if (media === 'material' || media === 'assignment' || media === 'unsupported') return false
   return holdsVideo(name, kind, courses, course)
 }
 
@@ -92,5 +122,7 @@ export function targetLanded(
   const item = { ref: target.ref, media: 'unknown' as const, resolvedMedia: target.media }
   // Every candidate goes through `hasResource`'s one rule — a sibling must hold the media itself, or a
   // bare node left by an earlier run reads as landed on a row the queue's own skip would not skip.
-  return [name, `${name}.1`, `${name}.2`].some((n) => hasResource(item, n, kind, courses, course))
+  // An assignment never splits, so only its own name can hold the file.
+  const candidates = target.media === 'assignment' ? [name] : [name, `${name}.1`, `${name}.2`]
+  return candidates.some((n) => hasResource(item, n, kind, courses, course))
 }

@@ -4,7 +4,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 // keeps the secret off the command line — see docs/RENDERER.md.
 const config = ipcRenderer.sendSync('faststudy:config');
 
-contextBridge.exposeInMainWorld('faststudy', {
+// An action call: main answers `undefined` or `{error, code?}` and never throws, since Electron would
+// prefix the message. It stays a plain reply here; `rejectOnFailure` below turns it into the rejection.
+const action = (channel) => (arg) => ipcRenderer.invoke(channel, arg);
+
+const api = {
   urls: config.urls,
   secret: config.secret,
   // Machine facts probed once at boot; the settings screens degrade on them.
@@ -19,6 +23,8 @@ contextBridge.exposeInMainWorld('faststudy', {
   errorReports: config.errorReports,
   // False in an unpackaged run, which never updates; the frontend's version tag reads "dev" then.
   packaged: config.packaged,
+  // `process.platform`, for the frontend to offer OS-specific actions such as `open.fileWith`.
+  platform: config.platform,
   // The renderer's `SettingsBacking`: main owns the store, so a stored API key never crosses here —
   // `read()` reports the two keys as set/unset flags only.
   settings: {
@@ -31,15 +37,17 @@ contextBridge.exposeInMainWorld('faststudy', {
       return result;
     },
   },
-  // Identifiers, never a path, for a file; http(s) only for a link.
+  // Identifiers, never a path, for a file; http(s) only for a link. Each resolves empty or rejects.
   open: {
-    file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
-    external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
+    file: action('faststudy:open-file'),
+    fileWith: action('faststudy:open-file-with'),
+    reveal: action('faststudy:open-reveal'),
+    external: action('faststudy:open-external'),
   },
   // The OS folder dialog, raising the window first; resolves to an absolute path, or `null` on cancel.
   pickFolder: (defaultPath) => ipcRenderer.invoke('faststudy:pick-folder', defaultPath),
   // The app's update row: `'downloading' | 'downloaded' | null`, pushed on every check. `restart()`
-  // installs a downloaded update and relaunches, answering `{ ok, error }` — see docs/UPDATES.md.
+  // installs a downloaded update and relaunches, or rejects — see docs/UPDATES.md.
   updates: {
     snapshot: () => ipcRenderer.invoke('faststudy:update-state'),
     // Returns the unsubscribe, for an effect's cleanup.
@@ -48,7 +56,7 @@ contextBridge.exposeInMainWorld('faststudy', {
       ipcRenderer.on('faststudy:update', listener);
       return () => ipcRenderer.removeListener('faststudy:update', listener);
     },
-    restart: () => ipcRenderer.invoke('faststudy:update-restart'),
+    restart: action('faststudy:update-restart'),
   },
   // OS sleep and wake, pushed as `'suspend' | 'resume'`; no snapshot, since a page loaded after waking
   // needs none. Returns the unsubscribe.
@@ -71,4 +79,30 @@ contextBridge.exposeInMainWorld('faststudy', {
     retry: () => ipcRenderer.send('faststudy:boot-retry'),
     quit: () => ipcRenderer.send('faststudy:boot-quit'),
   },
+};
+
+// The context bridge copies only `message` and `stack` of a thrown Error, so the rejection is built in
+// the page's own world, where `code` survives. The function is serialised: it closes over nothing.
+contextBridge.executeInMainWorld({
+  func: (bridged) => {
+    const rejectOnFailure = (call) => async (arg) => {
+      const failure = await call(arg);
+      if (!failure) return;
+      const error = new Error(failure.error);
+      if (failure.code) error.code = failure.code;
+      throw error;
+    };
+    const open = {};
+    for (const name of Object.keys(bridged.open)) open[name] = rejectOnFailure(bridged.open[name]);
+    const updates = { ...bridged.updates, restart: rejectOnFailure(bridged.updates.restart) };
+    Object.defineProperty(globalThis, 'faststudy', {
+      value: Object.freeze({
+        ...bridged,
+        open: Object.freeze(open),
+        updates: Object.freeze(updates),
+      }),
+      enumerable: true,
+    });
+  },
+  args: [api],
 });

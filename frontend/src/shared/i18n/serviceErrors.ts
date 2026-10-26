@@ -52,7 +52,11 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   empty_file: msg({ message: '{file} came out empty. Run the step that creates it again.' }),
   materials_empty: msg({
     message:
-      'Every material PDF is empty, so there is nothing to summarize. Replace them and try again.',
+      'Every attached material is empty, so there is nothing to summarize. Replace them and try again.',
+  }),
+  material_too_large: msg({
+    message:
+      'These materials are over {limit_mb} MB: {files}. Turn them off for the summary, then try again.',
   }),
   audio_extraction_failed: msg({ message: 'Could not extract the audio from the video.' }),
   transcription_failed: msg({ message: 'Transcribing the audio failed.' }),

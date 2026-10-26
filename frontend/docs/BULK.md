@@ -37,8 +37,8 @@ because they read the live tree — `skipped` (`hasResource`, the rule that tint
 pipeline running or queued on the target or a video's split sibling, which a single row refuses; the
 header counts it among "already there") and
 `unsupported` (a probe already condemned it; skipping it saves a probe round-trip per run). Everything
-else goes as `pending`. A submit where two `pending` non-material targets share a kind and name
-(`collidingNames`) is refused with a toast: they would race into one lecture and the later PUT would
+else goes as `pending`. A submit where two `pending` video targets share a kind and name
+(`collidingNames`; a material or an assignment file appends, so it never collides) is refused with a toast: they would race into one lecture and the later PUT would
 replace the earlier. A new run replaces the section's old one.
 
 Two accepted costs of server ownership: a name typed while the queue runs is not picked up, and a row
@@ -103,7 +103,7 @@ satisfies `targetLanded` — per-half accounting would need job ids from the POS
 
 `bulkRunState` derives the header's facts from the run, and `bulkGate` decides the button: expand first,
 then its own busy run, then the other run, then the Moodle lock. The header shows `Downloading {at}/{total}…` while `running`/`paused`, else `Downloading n more…` for
-targets with a running job, else the summary. The bulk run never toasts per item. A run ending at
+targets with a running job, else the summary. An assignment file lands in no lecture, so the pipeline lock never skips it. The bulk run never toasts per item. A run ending at
 `reconnect` raises the session-expired hint from the provider, once per run id, with a `primed` flag so a
 run already aborted before load is history.
 

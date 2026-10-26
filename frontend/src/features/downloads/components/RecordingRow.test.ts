@@ -48,7 +48,7 @@ vi.mock('@/features/downloads/contexts/RowEditsContext', async (importOriginal) 
 vi.mock('@/features/downloads/utils/existingItems', () => ({
   existingNames: () => [],
   materialsOf: () => [],
-  hasResource: () => true,
+  hasResource: (item: { media: string }) => item.media === 'video',
   overwritesVideo: () => true,
   splitSiblings: () => [],
 }))
@@ -129,5 +129,29 @@ describe('RecordingRow modals under the Moodle lock', () => {
     fireEvent.click(button(AGAIN))
     expect(document.querySelectorAll('.modal')).toHaveLength(1)
     expect(button(SUBMIT).disabled).toBe(false)
+  })
+})
+
+describe('RecordingRow unknown rows', () => {
+  it('shows Unsupported with Download disabled for a row probed as a non-video file', () => {
+    const item = { ...ITEM, media: 'unknown', resolvedMedia: 'unsupported' } as Item
+    render(
+      createElement(I18nProvider, {
+        i18n,
+        children: createElement(MoodleLockProvider, {
+          frame: { moodleBusy: false },
+          children: createElement(RecordingRow, {
+            item,
+            edit: undefined,
+            lock: undefined,
+            course: 'Algebra',
+            onReconnect: vi.fn(),
+          }),
+        }),
+      }),
+    )
+    expect(document.querySelector('.chip--neutral')?.textContent).toBe('Unsupported')
+    expect(document.body.textContent).not.toContain('Material')
+    expect(button('.recording-download-btn').disabled).toBe(true)
   })
 })

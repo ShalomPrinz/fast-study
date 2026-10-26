@@ -46,21 +46,37 @@ grey in place as unsupported.
 
 ## Mimetype gating (`resource` files)
 
-`MoodleFileExtractor` claims a `resource` file on `mimetype === 'application/pdf'` alone. A mimetype
-is exact, and the errors aren't symmetric: a listed grade-sheet PDF costs one ignored row, a missed
-slide deck costs the material. Non-PDF files stay unclaimed.
+`MoodleFileExtractor` claims every `resource` file by mimetype/name alone, except `video/*` (too large for a material) audio (`audio/*` or an audio extension, `isAudioFile`) and HTML (`text/html`, indistinguishable from a block page at preflight). A mimetype
+is exact, and the errors aren't symmetric: a listed grade sheet costs one ignored row, a missed
+slide deck costs the material. The resolved target carries the original `filename`, which `server/` hands to the database for the disk extension.
+
+## Assignment files
+
+`/list` makes one more WS call after the contents, `mod_assign_get_assignments` (same gated request, so the
+lock is held across both). Assignments are not in `core_course_get_contents` (their modules carry no
+`contents`), so this is the only place a course's assignment files live: each `assignments[]` entry has
+`introattachments[]` and `introfiles[]` (`{ filename, mimetype, fileurl }`), the same file often in both —
+deduped by `fileurl`, every mimetype kept. `cmid` joins a contents module's `id` for the row's `section`; no
+match (a hidden module) leaves it `''`. `MoodleFileExtractor` claims these (`modType:'assign'`), so they resolve
+through the `moodle-file` fetch as `media:'assignment'` with the target's `filename`. A site whose token
+service lacks the function answers `accessexception`; as the contents call just passed, that is read as the
+refusal — the listing carries no assignment rows, no error, one log line per process. Any other failure
+is handled as the contents call's. Folder modules are out of scope.
 
 ## The `Item` / `ref` contract
 
 The frontend never sees the mechanism. `/list` and `/list/expand` return
-`Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle, modifiedAt? }`:
+`Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle, origin?, assignment?, filename?, modifiedAt? }`:
 
-- `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture PDF), never how it is
-  fetched. `'unknown'` for every `google-drive` and `direct-url` row: the WS payload names no file
+- `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture material of any file type, `'assignment'` = an assignment's attached file), never how it is
+  fetched. `'unknown'` for every `google-drive` and `direct-url` row (which resolve to `'video'` or a 422, never `'material'`): the WS payload names no file
   and `/list` never probes (a round-trip per row). A `material` item is never `expandable`.
-- `resolvedMedia` — what a row was probed as this session (`'video'`, `'material'`, or
+- `resolvedMedia` — what a row was probed as this session (`'video'` or
   `'unsupported'`), read off the probe cache so it survives a re-list; absent when never probed. A
   resolved row keeps its original `media` rather than moving segments.
+- `origin`, `assignment`, `filename` — only on an assignment file (`media:'assignment'`, `origin:'assign'`): the
+  assignment's title verbatim and the file's original name; `title` is `"<assignment> — <filename>"` and `kind` is
+  not meaningful. See § Assignment files.
 - `ref` — the internal `Recording`, base64url JSON (`src/lib/ref.js`): stateless, round-tripped,
   never parsed by the frontend. `strategy`/`pageUrl`/`passcode` and the like must never appear in a
   response outside it. It is a pure function of the WS listing (fixed key order, no minted id, token
@@ -99,8 +115,8 @@ ones resolve exactly one target, so `only` doesn't apply; all but the pasted lin
 plain URL (for a Moodle file, a path on auto). A row none of these takes is refused `422`
 `recording_strategy_unsupported {strategy}`, never sent to a browser.
 
-Only `kind` (`lecture`/`recitation`) picks the folder; the database names the file, so a second PDF
-into one lecture appends (`material.2.pdf`).
+Only `kind` (`lecture`/`recitation`) picks the folder; the database names the file, so a second material
+into one lecture appends (`material.2.<ext>`).
 
 ## YouTube playlists — lazy expansion
 
@@ -115,9 +131,10 @@ distinct from a 500 "try again".
 A Drive item is one file, but nothing in the WS payload says _what_ (a Drive link in a recordings
 section is as easily `L1.zip`). `server/`'s job is fire-and-forget once started, so `/resolve` decides
 here: `probeDriveFile` reads the real filename and routes on its extension via `classifyFilename`
-(`lib/fileMedia.js`) — video → a `ytdlp` target on the Drive link itself, `.pdf` → a `fetch` target on the
-direct-download URL, anything else → `422` (`link_not_a_video {source:'drive', url, ext}`) naming the
-extension. The filename is a fact about the file, unlike yt-dlp's stderr wording.
+(`lib/fileMedia.js`) — video → a `ytdlp` target on the Drive link itself, anything else (a PDF included) → `422`
+(`link_not_a_video {source:'drive', url, ext}`) naming the extension. A probe can tell a video for
+sure but not whether another file is a material, an assignment or something else, so it never
+claims one; materials come only from Moodle `resource` rows. The filename is a fact about the file, unlike yt-dlp's stderr wording.
 
 The name comes from `Content-Disposition` on `uc?export=download&id=<ID>` (one request); a large
 file's confirm interstitial and `/file/d/<ID>/view`'s `<title>` are the fallbacks. A file not shared
@@ -134,10 +151,10 @@ strongest first:
 
 1. the `Content-Disposition` filename — the host naming the file. It beats the type: `L1.zip` under a
    sloppy `video/mp4` is still a definite no.
-2. `Content-Type` — `text/html` is a definite no (a login wall, a share page, a syllabus).
+2. `Content-Type` — `text/html` and `application/pdf` are a definite no (a login wall, a share page, a syllabus).
 3. the URL's own filename (the redirect target's first), as a **fallback only**: an SSO-walled
-   `…/syllabus.pdf` answers `200 text/html` with the login page, and `curl -L --fail` would save that
-   as the material. The type vetoes the guess, which is why the URL is never read first.
+   `…/lecture.mp4` answers `200 text/html` with the login page, and `curl -L --fail` would save that
+   as the video. The type vetoes the guess, which is why the URL is never read first.
 
 All of it routes through the one table in `lib/fileMedia.js`, so a Drive link and a plain URL can
 never disagree about what a `.mp4` is.
@@ -159,7 +176,7 @@ add to one plain file), sized from the probe's own answer ([GATE.md](GATE.md#fil
 
 Browserless: `/resolve` finds the university from the ref's `fileurl`, preflights it with the WS token,
 and returns a `fetch` target whose url is `/moodle/file/<id>` on auto, which streams the bytes under
-the Moodle lock ([GATE.md](GATE.md#files)) — a tracked job, so a PDF gets the same progress, retry
+the Moodle lock ([GATE.md](GATE.md#files)) — a tracked job, so a material gets the same progress, retry
 and `ref` grouping as a video. A missing token is `401`. A _dead_ one needs the one-byte preflight
 `assertPluginfileReadable`, because pluginfile answers it with HTTP 200 + a JSON exception body that
 `server/`'s job would save as the material ([MOODLE.md](MOODLE.md)). The target always says

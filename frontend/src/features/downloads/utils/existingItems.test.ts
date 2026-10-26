@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture, MaterialInfo } from '@/types'
 import type { Media, ResolvedMedia } from '../services/autoDownloader'
 import {
+  isAssignmentDone,
   existingNames,
   hasResource,
   holdsVideo,
@@ -36,10 +37,28 @@ function node(
     name,
     files,
     materials: (has.materials ?? []).map(material),
+    summaryMaterials: null,
     transcribePartial: null,
     removed: has.removedVideo ? ['video.mp4'] : [],
     done: false,
   }
+}
+
+// `name@source,…` per assignment: [name, [file specs]].
+function withAssignments(courses: Course[], specs: [string, string[]][]): Course[] {
+  return courses.map((c) => ({
+    ...c,
+    assignments: specs.map(([name, files]) => ({
+      name,
+      done: false,
+      files: files.map((f) => {
+        const [fname, source] = f.split('@')
+        return source
+          ? { name: fname, size: 1, mtime: 1, source }
+          : { name: fname, size: 1, mtime: 1 }
+      }),
+    })),
+  }))
 }
 
 function tree(lectures: Lecture[], recitations: Lecture[] = []): Course[] {
@@ -51,6 +70,7 @@ function tree(lectures: Lecture[], recitations: Lecture[] = []): Course[] {
       lectures_only: false,
       lectures,
       recitations,
+      assignments: [],
     },
   ]
 }
@@ -148,12 +168,6 @@ describe('hasResource', () => {
     expect(hasResource(row('unknown', 'video'), 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(
       true,
     )
-    expect(
-      hasResource(row('unknown', 'material'), 'Lecture 4', 'lecture', courses, 'Algebra'),
-    ).toBe(true)
-    expect(
-      hasResource(row('unknown', 'material'), 'Lecture 1', 'lecture', courses, 'Algebra'),
-    ).toBe(false)
   })
 
   it('is false for a row probed as unsupported — nothing of it can land on disk', () => {
@@ -188,7 +202,6 @@ describe('overwritesVideo', () => {
 
   it('is false for a material or unsupported row, which never replaces a video', () => {
     expect(overwrites(row('material'), 'Lecture 1')).toBe(false)
-    expect(overwrites(row('unknown', 'material'), 'Lecture 1')).toBe(false)
     expect(overwrites(row('unknown', 'unsupported'), 'Lecture 1')).toBe(false)
   })
 })
@@ -241,5 +254,58 @@ describe('holdsVideo', () => {
   it('is false for a lecture with no video and for a missing one', () => {
     expect(holdsVideo('Never had one', 'lecture', courses, 'Algebra')).toBe(false)
     expect(holdsVideo('Nowhere', 'lecture', courses, 'Algebra')).toBe(false)
+  })
+})
+
+describe('assignment rows', () => {
+  const courses = withAssignments(tree([node('Lecture 1', { video: true })]), [
+    ['תרגיל 1', ['a.pdf@refA', 'b.pdf']],
+    ['תרגילון 1', ['c.pdf@refC']],
+  ])
+  const row = (ref: string, name: string) =>
+    hasResource({ ref, media: 'assignment' }, name, 'lecture', courses, 'Algebra')
+
+  it('is on disk only when a file of the named assignment came from this ref', () => {
+    expect(row('refA', 'תרגיל 1')).toBe(true)
+    expect(row('refA', 'תרגילון 1')).toBe(false)
+    expect(row('refB', 'תרגיל 1')).toBe(false)
+    expect(row('refA', 'Lecture 1')).toBe(false)
+  })
+
+  it('never matches a ref-less caller or a source-less file', () => {
+    expect(hasResource({ media: 'assignment' }, 'תרגיל 1', 'lecture', courses, 'Algebra')).toBe(
+      false,
+    )
+  })
+
+  it('reads a target as landed by the same rule, never through split siblings', () => {
+    const target = (name: string) =>
+      targetLanded({ ref: 'refA', name, kind: 'lecture', media: 'assignment' }, courses, 'Algebra')
+    expect(target('תרגיל 1')).toBe(true)
+    expect(target('תרגיל')).toBe(false)
+  })
+
+  it('never counts as overwriting a stored video', () => {
+    expect(
+      overwritesVideo({ media: 'assignment' }, 'Lecture 1', 'lecture', courses, 'Algebra'),
+    ).toBe(false)
+  })
+})
+
+describe('isAssignmentDone', () => {
+  const base = withAssignments(tree([]), [
+    ['A', []],
+    ['B', []],
+  ])
+  const courses = base.map((c) => ({
+    ...c,
+    assignments: c.assignments.map((a) => ({ ...a, done: a.name === 'A' })),
+  }))
+
+  it('is true only for an existing assignment marked done', () => {
+    expect(isAssignmentDone('A', courses, 'Algebra')).toBe(true)
+    expect(isAssignmentDone('B', courses, 'Algebra')).toBe(false)
+    expect(isAssignmentDone('New', courses, 'Algebra')).toBe(false)
+    expect(isAssignmentDone('A', courses, 'Other')).toBe(false)
   })
 })

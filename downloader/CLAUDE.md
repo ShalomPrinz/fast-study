@@ -2,13 +2,13 @@
 
 ## What this is
 
-Three packages that capture lecture videos and PDFs and hand them to the database service, which writes `{DATA_ROOT}/{course}/{lecture}/video.mp4` (or a material PDF) for the backend's pipeline to pick up: a Chrome extension (Manifest V3, `extension/`), the express helper server (`server/`) and the Playwright auto-downloader (`auto/`). End-user install guide: [README.md](README.md).
+Three packages that capture lecture videos and materials and hand them to the database service, which writes `{DATA_ROOT}/{course}/{lecture}/video.mp4` (or a material file) for the backend's pipeline to pick up: a Chrome extension (Manifest V3, `extension/`), the express helper server (`server/`) and the Playwright auto-downloader (`auto/`). End-user install guide: [README.md](README.md).
 
 ## Source paths
 
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
-- **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links whose filename says they're video (`auto/`'s `google-drive` strategy, which probes the name first and sends a Drive PDF down the material path instead).
-- **PDF** — not token-gated, so no header replay: the extension popup fetches the tab's `.pdf` with the user's cookies and uploads it as one of the lecture's materials.
+- **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links whose filename says they're video (`auto/`'s `google-drive` strategy, which refuses any other file).
+- **PDF** — not token-gated, so no header replay: the extension popup fetches the tab's `.pdf` with the user's cookies and uploads it as one of the lecture's materials; the extension stays PDF-only. App downloads take any non-audio Moodle file, carrying its original `filename` to the database.
 
 The popup's "General video" mode sends any of the three to a computer folder instead of the database ([DOWNLOAD.md](server/docs/DOWNLOAD.md)).
 

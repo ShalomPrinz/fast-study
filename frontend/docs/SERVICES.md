@@ -38,11 +38,11 @@ Pipeline triggers, runner status, timing stats, the tool probe and the course-ov
 
 ## `database.ts` → database service (:8001)
 
-Everything filesystem-backed. `materialUrl`/`deleteMaterial` take a runtime name, since a material's name
+Everything filesystem-backed. `materialUrl`/`deleteMaterial`/`setMaterialAttach` take a runtime name, since a material's name
 comes from the tree rather than the fixed `FileName` set. `uploadVideo` announces the arrival to the
 backend (`reportVideoArrived`) itself, because auto-run is backend policy and a caller that only stored
 the bytes would lose it; a failed report is logged, never rethrown, since the bytes are stored.
-`setLectureDone` is one call for both directions: `PUT` marks a lecture studied, `DELETE` reverts it.
+`setLectureDone` is one call for both directions: `PUT` marks a lecture studied, `DELETE` reverts it. `setAssignmentDone` does the same for an assignment (`…/assignments/{a}/done`).
 
 ## `runtime.ts` — the Electron preload bridge
 
@@ -56,7 +56,7 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **Launch secret** — `secretHeaders()` for requests; `withSecretParam(url)` only for the
   `EventSource`s, which cannot set a header. The header keeps the secret out of access logs. Both add
   nothing in browser dev, where no service enforces a secret.
-- **`open`** — non-optional: the whole bridge's absence is the browser-dev test.
+- **`open`** — non-optional: the whole bridge's absence is the browser-dev test; its `fileWith` and `reveal`, and the top-level `platform`, are optional (older launcher).
 - **`canStoreApiKeys`**, `defaultDataRoot` and `pickFolder` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
   the OS `locale` ([I18N.md](I18N.md)).
 - **`extension`** — optional `{ path, reveal() }`, the Chrome extension's folder for the Downloads page's Extension tab ([EXTENSION.md](EXTENSION.md)).
@@ -68,10 +68,10 @@ is type-only, so the mutual import with `settings.ts` is erased.
 ## `open.ts` — opening a file or a link outside the app
 
 Packaged, a fresh navigation cannot carry `X-FastStudy-Secret`, so a service URL opened in a new window
-is a `401` and a blank page. `openLectureFile`, `openOverviewFile` and `openExternalUrl` hand
+is a `401` and a blank page. `openLectureFile`, `openLectureFileWith` (Windows packaged only, no browser fallback; gate on `canOpenWith()`), `openOverviewFile`, `openAssignmentFile`, `openAssignmentFileWith`, `revealAssignmentFile`, `canReveal` and `openExternalUrl` hand
 **identifiers** to `window.faststudy.open`, which resolves the path through `database/` and opens it in
 the user's own app — a path never reaches the renderer, so a compromised one gets no open-any-file
-primitive. A failure toasts its English prose inside a translated wrapper — the bridge is not a service and sends no code.
+primitive. A failure toasts its message inside a translated wrapper; a rejection with `code: 'file_not_found'` (no params) toasts its own translated sentence instead, since the shared catalog row needs a `{file}` the bridge does not send.
 
 A link keeps its `href` for hover and copy but calls `openExternalUrl` with `preventDefault()`: the shell
 denies every `window.open`, so `target="_blank"` does nothing, and a bare `href` would load the site in the

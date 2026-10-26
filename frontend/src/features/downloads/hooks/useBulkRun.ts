@@ -69,7 +69,13 @@ export function useBulkRun(runKey: string | null, course: string, label: string)
   // per ref, since every ping re-reads the same targets.
   useEffect(() => {
     for (const target of targets ?? []) {
-      if (target.media === 'unknown' || reported.current.has(target.ref)) continue
+      if (
+        target.media === 'unknown' ||
+        target.media === 'material' ||
+        target.media === 'assignment' ||
+        reported.current.has(target.ref)
+      )
+        continue
       if (target.disposition !== 'queued' && target.disposition !== 'unsupported') continue
       reported.current.add(target.ref)
       resolveMedia(target.ref, target.media)
@@ -161,8 +167,13 @@ function buildTargets(
     const { media } = target
     if (item.resolvedMedia === 'unsupported') return { ...target, disposition: 'unsupported' }
     // The lectures this target may write — a video's split siblings too, as the row's own lock.
+    // An assignment file lands in no lecture, so the pipeline never locks it.
     const lands =
-      media === 'material' ? [name] : [name, ...splitSiblings(name, kind, courses, course)]
+      media === 'assignment'
+        ? []
+        : media === 'material'
+          ? [name]
+          : [name, ...splitSiblings(name, kind, courses, course)]
     // A run never overwrites, so a target that would replace a stored video is skipped too — and so
     // is one whose lecture the pipeline is running or queued on, as a single row refuses it.
     if (

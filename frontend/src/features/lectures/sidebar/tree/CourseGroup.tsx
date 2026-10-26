@@ -12,6 +12,7 @@ import CourseOverviewRow from './CourseOverviewRow'
 import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
 import RecitationsGroup from './RecitationsGroup'
+import AssignmentsGroup from './AssignmentsGroup'
 import { saveExpansion, savedExpansion } from '@/features/lectures/utils/courseExpansion'
 import '@/styles/sidebar-tree.css'
 import './CourseGroup.css'
@@ -26,22 +27,26 @@ export default function CourseGroup({ course }: { course: Course }) {
   const saved = course.archived ? undefined : savedExpansion(course.name)
   const [expanded, setExpanded] = useState(saved?.expanded ?? false)
   const [recExpanded, setRecExpanded] = useState(saved?.recExpanded ?? false)
+  const [assignExpanded, setAssignExpanded] = useState(saved?.assignExpanded ?? false)
+  const assignmentMatch = useMatch(ROUTES.assignment)
+  const assignmentCourse = assignmentMatch ? routeParam(assignmentMatch.params.course) : undefined
   const didAutoExpandRef = useRef(false)
 
   useEffect(() => {
-    if (!course.archived) saveExpansion(course.name, { expanded, recExpanded })
-  }, [course.name, course.archived, expanded, recExpanded])
+    if (!course.archived) saveExpansion(course.name, { expanded, recExpanded, assignExpanded })
+  }, [course.name, course.archived, expanded, recExpanded, assignExpanded])
 
   // Expand once when this course's lecture or overview first becomes the open page (deep link).
   // Runs again on remount, deliberately overriding a remembered collapse so the open page's course shows.
   useEffect(() => {
     if (didAutoExpandRef.current) return
     const onLecture = selected?.course === course.name
-    if (!onLecture && overviewCourse !== course.name) return
+    if (!onLecture && overviewCourse !== course.name && assignmentCourse !== course.name) return
     didAutoExpandRef.current = true
     setExpanded(true)
+    if (assignmentCourse === course.name) setAssignExpanded(true)
     if (onLecture && selected.kind === 'recitation') setRecExpanded(true)
-  }, [selected, overviewCourse, course.name])
+  }, [selected, overviewCourse, assignmentCourse, course.name])
 
   function toggleCourse() {
     setExpanded((v) => !v)
@@ -73,6 +78,14 @@ export default function CourseGroup({ course }: { course: Course }) {
                 }}
               />
             )}
+
+            <AssignmentsGroup
+              expand={{
+                isOpen: assignExpanded,
+                toggle: () => setAssignExpanded((v) => !v),
+                open: () => setAssignExpanded(true),
+              }}
+            />
           </ul>
         )}
       </div>

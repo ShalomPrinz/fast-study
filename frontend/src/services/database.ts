@@ -7,7 +7,13 @@ import type {
   OverviewMetaRaw,
   OverviewMeta,
 } from '@/types'
-import { path, kindQuery, lectureBase, courseOverviewBase } from '@/shared/utils/url'
+import {
+  path,
+  kindQuery,
+  lectureBase,
+  assignmentBase,
+  courseOverviewBase,
+} from '@/shared/utils/url'
 import { createClient } from './http'
 import { reportVideoArrived } from './backend'
 import { DATABASE_URL } from './runtime'
@@ -33,6 +39,24 @@ export async function deleteMaterial(
   kind?: Kind,
 ): Promise<void> {
   await database.delete(lectureBase(course, lecture) + path`/files/${name}` + kindQuery(kind))
+}
+
+// Sets whether Summarize sends this material to Gemini; the tree's SSE refresh brings the new state.
+export async function setMaterialAttach(
+  course: string,
+  lecture: string,
+  name: string,
+  attach: boolean,
+  kind?: Kind,
+): Promise<void> {
+  await database.patch(lectureBase(course, lecture) + path`/materials/${name}` + kindQuery(kind), {
+    json: { attach },
+  })
+}
+
+// One file of a course assignment, for the browser-dev new tab; packaged opens go through the bridge.
+export function assignmentFileUrl(course: string, assignment: string, name: string): string {
+  return database.url(assignmentBase(course, assignment) + path`/files/${name}`)
 }
 
 export async function fetchTree(): Promise<Course[]> {
@@ -81,6 +105,16 @@ export async function setLectureDone(
   kind?: Kind,
 ): Promise<void> {
   const url = `${lectureBase(course, lecture)}/done${kindQuery(kind)}`
+  await (done ? database.put(url) : database.delete(url))
+}
+
+// Marks a course assignment studied, or back to not; idempotent either way.
+export async function setAssignmentDone(
+  course: string,
+  assignment: string,
+  done: boolean,
+): Promise<void> {
+  const url = `${assignmentBase(course, assignment)}/done`
   await (done ? database.put(url) : database.delete(url))
 }
 

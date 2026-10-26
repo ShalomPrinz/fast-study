@@ -19,7 +19,7 @@ Read the relevant doc before changing that area, and update it in the same pass 
 
 ## Layout
 
-Fonts in `assets/fonts/` are bundled — never assume a system install; the render copies them into its build dir rather than pointing at them ([docs/PDF.md](docs/PDF.md)). Hebrew prompts live in `assets/instructions/` (`summarize.md`, `summarize_materials.md` for a lecture with PDFs but no video, `overview/{slug}.md`); edit the file, no code change.
+Fonts in `assets/fonts/` are bundled — never assume a system install; the render copies them into its build dir rather than pointing at them ([docs/PDF.md](docs/PDF.md)). Hebrew prompts live in `assets/instructions/` (`summarize.md`, `summarize_materials.md` for a lecture with materials but no video, `overview/{slug}.md`); edit the file, no code change.
 
 ## Lecture files
 

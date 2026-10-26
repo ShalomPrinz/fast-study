@@ -314,7 +314,7 @@ site or real data cannot be drawn from here.
 | Groq, Gemini        | `fakes/providers.mjs` — both wire formats, real SDKs reach it         | `services.providers`' base URLs, rewritten     |
 | Google Drive        | an in-process fake service writing `drive/store.json` + `ops.jsonl`   | `googleapiclient.discovery.build`, replaced    |
 | Drive OAuth consent | a pending → connected flow with no browser and no account            | `services.google_auth`, four functions replaced |
-| The lecture site    | `fakes/site.mjs` — Moodle WS, pluginfile PDFs, media, over http + TLS | every non-loopback socket, redirected          |
+| The lecture site    | `fakes/site.mjs` — Moodle WS, pluginfile files, media, over http + TLS | every non-loopback socket, redirected          |
 | `curl`, `yt-dlp`    | `fakes/tool.mjs` — writes the fixture the URL names (PDF or video) in slices, asking the fake site only for its live settings; a file auto streams (`/moodle/file/<id>`) is fetched for real | first on `PATH`, where `toolPath()` looks      |
 | The Moodle login    | a pre-seeded WS token for the fake site, naming it as its `site`; Connect mints the same one from the fake `launch.php` | `state/auth/moodle-token.json`; auto/'s browsers, below |
 
@@ -438,7 +438,9 @@ The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`)
 (its own two-lecture course in `data-empty`, so its queue holds nothing else), a recitation from
 bare video to Drive, a video dropped on a tree row (new and replacing), a course created, filled
 and renamed from the tree, a summary edited, reloaded over another window's edit and restored, a
-materials-only lecture made from course PDFs attached in Downloads, the first-run wall then a
+materials-only lecture made from course PDFs attached in Downloads, lecture materials of any file
+type (chips by original name, the Gemini switch, a pptx sent as text, the 10 MB refusal), course
+assignments (listed by section in Downloads, downloaded into the tree's group, opened by name), the first-run wall then a
 data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
 out the site's captcha (and failing `site_captcha_timeout` unsolved), and study progress (done
 marks, the current arrow, the counts and the overview's current-item buttons) — and run with
@@ -536,6 +538,22 @@ the self-check proves all three are listed):
   `♻️` in `downloader-server.log`).
 - `/die/` — the site drops the download halfway the first time per path, until a reset; the
   downloader's own silent re-fetch (logged `♻️`) succeeds, so the row lands.
+
+### Materials, assignments and Gemini uploads
+
+Section `חומרי עזר` holds `resource` rows of every type, each served by `/pluginfile.php/.../<filename>`
+with its real mime type (`lib/course-files.mjs`; setup builds the bytes under `fixtures/`, none committed):
+`סיכום שיעור 1` and `דפי תרגול` (PDFs), `lecture3-slides.pptx` (a minimal valid pptx, via `lib/zip.mjs`),
+`diagram.png`, `code-samples.zip`, `big-appendix.pdf` (11 MB, over Gemini's 10 MB limit, generated at setup)
+and `lecture3-audio.mp3`, which auto does not list (audio is not a material).
+
+`mod_assign_get_assignments` lists `תרגיל בית 1` (a PDF and a `.py`) in section `חומרי עזר` and
+`תרגיל בית 2` (a PDF) in section `תרגולים`; each `cmid` is the id of a bare `assign` module in that
+section's contents, so auto's `/list` gives them `media: 'assignment'` with the matching `section`.
+
+The fake Gemini records each Files API upload as `{mimeType, size, lecture}`: the mime type the backend
+declared and the bytes it sent. `GET $(hb url providers)/uploads` returns `{uploads: [...]}` in order;
+specs call `geminiUploads()` from `e2e/fixtures.mjs`. `/control {"reset":true}` (so `reset()`) clears it.
 
 ## Inspecting a PDF
 

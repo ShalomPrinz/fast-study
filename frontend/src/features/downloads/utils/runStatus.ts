@@ -27,12 +27,13 @@ export function targetOf(item: Item, name: string, kind: Kind): Omit<RunTarget, 
 }
 
 // Names two or more about-to-download video targets share. They would race into one lecture, the
-// later PUT replacing the earlier, so a run holding any is refused. A material appends, so it never collides.
+// later PUT replacing the earlier, so a run holding any is refused. A material adds to its lecture
+// and an assignment file lands beside its siblings in the named folder, so neither collides.
 export function collidingNames(targets: readonly RunTarget[]): string[] {
   const seen = new Set<string>()
   const clashes = new Set<string>()
   for (const t of targets) {
-    if (t.disposition !== 'pending' || t.media === 'material') continue
+    if (t.disposition !== 'pending' || t.media === 'material' || t.media === 'assignment') continue
     const key = `${t.kind}\0${t.name}`
     if (seen.has(key)) clashes.add(t.name)
     else seen.add(key)

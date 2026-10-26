@@ -20,8 +20,9 @@ everything on quit.
 | `extension.js` | The Chrome extension's shipped copy, the bridge file, the native host's registration |
 | `bridge/host.js` | The native host Chrome runs — staged to `resources/bridge/`, not in the asar |
 | `windowState.js` | The window's size and maximized flag across launches — `window-state.json` under `userData` |
+| `dataFiles.js` | Resolving a data-file target to its path through `database/`, Windows' Open with, and reveal in the file manager |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
-| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, updates, open, folder picker, extension |
+| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, platform, updates, open, folder picker, extension |
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 

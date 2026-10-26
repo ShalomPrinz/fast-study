@@ -2,7 +2,7 @@
 // the cache is process-lifetime by design.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { probeUrl, probeKeyForUrl } from '../src/lib/probeUrl.js';
+import { probeUrl, probeKeyForUrl, classifyContentType } from '../src/lib/probeUrl.js';
 import { getProbedMedia } from '../src/core/probeCache.js';
 
 // Stand in for the host. `headers` is a plain object; `throws` makes every request fail, `status`
@@ -41,11 +41,11 @@ test("the URL's own filename decides when the headers say nothing", async (t) =>
     { media: video.media, filename: video.filename },
     { media: 'video', filename: 'lecture3.mp4' },
   );
-  const material = await probeUrl('https://files.test/t1/notes.pdf?v=2');
-  assert.equal(material.media, 'material');
+  const pdf = await probeUrl('https://files.test/t1/notes.pdf?v=2');
+  assert.deepEqual({ media: pdf.media, certain: pdf.certain }, { media: null, certain: true });
 });
 
-test('a login wall behind a .pdf URL is unsupported, not a material', async (t) => {
+test('a login wall behind a .pdf URL is unsupported', async (t) => {
   // The corruption this guards: curl --fail sees 200 and would save the login page as material.pdf.
   const calls = stubFetch({ 'content-type': 'text/html; charset=utf-8' });
   t.after(calls.restore);
@@ -67,7 +67,7 @@ test('Content-Disposition names the file behind an opaque path', async (t) => {
 test('Content-Type decides when no disposition names the file', async (t) => {
   const calls = stubFetch({ 'content-type': 'application/pdf; charset=binary' });
   t.after(calls.restore);
-  assert.equal((await probeUrl('https://cdn.test/t2b/asset')).media, 'material');
+  assert.equal((await probeUrl('https://cdn.test/t2b/asset')).media, null);
 });
 
 test('a share page (text/html) is an honest, remembered null', async (t) => {
@@ -179,10 +179,7 @@ test('a malformed RFC 5987 filename falls through instead of throwing', async (t
   const probe = await probeUrl('https://cdn.test/t9/asset');
   assert.deepEqual(
     { media: probe.media, filename: probe.filename },
-    {
-      media: 'material',
-      filename: 'L9.pdf',
-    },
+    { media: null, filename: 'L9.pdf' },
   );
 });
 
@@ -214,4 +211,11 @@ test('a verdict is memoized, and force re-probes it', async (t) => {
   t.after(second.restore);
   assert.equal((await probeUrl(url, { force: true })).media, 'video');
   assert.equal(getProbedMedia(probeKeyForUrl(url)), 'video');
+});
+
+test('content types: video is a yes, html and pdf a definite no, binary says nothing', () => {
+  assert.equal(classifyContentType('video/mp4'), 'video');
+  assert.equal(classifyContentType('application/pdf; charset=binary'), null);
+  assert.equal(classifyContentType('text/html'), null);
+  assert.equal(classifyContentType('application/octet-stream'), undefined);
 });

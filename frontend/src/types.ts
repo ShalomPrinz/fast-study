@@ -36,9 +36,16 @@ export type FileInfo = {
 }
 export type FileStatus = Record<FileName, FileInfo>
 
-// One of a lecture's `material.pdf`, `material.2.pdf`, …; names are never reused, so a URL held by name
-// outlives a sibling's delete. `source` is the discovery row's `ref`, absent for a manual or legacy PDF.
-export type MaterialInfo = { name: string; size: number; mtime: number; source?: string }
+// A lecture's `material.<ext>` / `material.2.<ext>` file of any type; names are never reused. `filename`
+// is the original name, `source` the discovery row's `ref`; `attach` is present only once set (absent = attached).
+export type MaterialInfo = {
+  name: string
+  size: number
+  mtime: number
+  source?: string
+  filename?: string
+  attach?: boolean
+}
 
 export type TranscribePartial = { completed: number; total: number }
 
@@ -58,11 +65,23 @@ export interface Lecture {
   files: FileStatus
   // Always present, [] when none, ordered by material index ascending.
   materials: MaterialInfo[]
+  // Disk names attached at the last Summarize (supported, attach not false), even if skipped as empty; null when none recorded.
+  summaryMaterials: string[] | null
   transcribePartial: TranscribePartial | null
   // The video/audio missing from disk while a later stage's file is there, whoever deleted it; [] otherwise.
   removed: RemovableFile[]
   // The user marked it studied; always present.
   done: boolean
+}
+
+// One file of a course assignment; `source` is the discovery row's `ref`, absent on a hand-placed file.
+export type AssignmentFile = { name: string; size: number; mtime: number; source?: string }
+
+export interface Assignment {
+  name: string
+  // Marked studied by the user; a downloaded file never changes it.
+  done: boolean
+  files: AssignmentFile[]
 }
 
 export interface Course {
@@ -73,6 +92,8 @@ export interface Course {
   lectures_only: boolean
   lectures: Lecture[]
   recitations: Lecture[]
+  // Always present, [] when none; never folded into lectures, whatever `lectures_only` says.
+  assignments: Assignment[]
 }
 
 export type Kind = 'lecture' | 'recitation'

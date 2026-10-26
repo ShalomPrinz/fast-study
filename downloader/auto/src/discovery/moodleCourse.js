@@ -3,8 +3,8 @@
  */
 
 // Hints (case-insensitive) marking an activity as a recitation, not a lecture.
-// (Hebrew: תרגול/תרגיל = recitation; תרגולים contains תרגול so it matches too.)
-const RECITATION_KEYWORDS = ['תרגולים', 'תרגול', 'תרגיל', 'recitation', 'tirgul'];
+// (Hebrew: תרגול = recitation; תרגולים contains תרגול so it matches too.)
+const RECITATION_KEYWORDS = ['תרגולים', 'תרגול', 'recitation', 'tirgul'];
 
 // Hints that a `url` module is a lecture recording rather than a stray course link (syllabus,
 // reading, drive folder) — a grouping hint only; see isRecording. (Hebrew: הקלטות/הקלטה = recordings; הרצאות/הרצאה = lectures.)

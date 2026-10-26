@@ -29,6 +29,7 @@ already had.
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
 | Run target      | `{…, disposition, code?}` per target on `GET /runs` and the runs SSE        | `downloader/server/src/runs.js`                              |
 | Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
+| Bridge rejection | an `Error` whose `message` is the failure text, plus `code?`                | `electron/dataFiles.js`, `electron/preload.js`               |
 | Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
 | Settings IPC    | `{code, params, message}` returned in place of the settings view            | `electron/store.js` via `faststudy:settings-write`           |
 
@@ -125,7 +126,8 @@ given, so a refusal the user can act on is caught by the route instead and re-em
 | --------------------------------------- | --------------------------- | ------------------------------- | ----- |
 | `pipeline/runner.py` step guards        | `missing_prerequisite`      | `file`, `step`                  | user  |
 | `pipeline/runner.py` `_require_nonempty`| `empty_file`                | `file`                          | user  |
-| `pipeline/runner.py` materials-only summarize | `materials_empty`     | —                               | user  |
+| `pipeline/runner.py` summarize materials | `materials_empty`          | —                               | user  |
+| `pipeline/runner.py` `_check_sizes`     | `material_too_large`        | `files`, `limit_mb`, `size_mb`  | user  |
 | `services/errors.py` `own_fields`       | `app_files_blocked`         | —                               | user  |
 | `pipeline/strip_audio.py`               | `audio_extraction_failed`   | `detail`                        | user  |
 | `pipeline/transcribe.py`                | `transcription_failed`      | `detail`                        | user  |
@@ -208,8 +210,8 @@ for the code whichever view chooses to show it.
 | `fs/crud.py`          | `name_taken`                    | `name`            | user      |
 | `fs/crud.py`          | `name_reserved`                 | `name`            | user      |
 | `fs/crud.py`          | `file_not_removable`            | `file`            | dev       |
-| `fs/crud.py`, `fs/summary.py` | `lecture_not_found`     | `course`, `lecture` | user    |
-| `fs/overview.py`, `fs/summaries.py`, `fs/crud.py` | `course_not_found` | `course`          | user      |
+| `fs/crud.py`, `fs/summary.py`, `fs/assignments.py` | `lecture_not_found`     | `course`, `lecture` | user    |
+| `fs/overview.py`, `fs/summaries.py`, `fs/crud.py`, `fs/materials.py`, `fs/assignments.py` | `course_not_found` | `course`          | user      |
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
 | `settings.py`, `database_main.py` | `setting_must_be_boolean` | `field`           | dev       |
 | `settings.py`         | `setting_must_be_integer`       | `field`           | dev       |
@@ -220,7 +222,7 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `data_root_not_absolute`        | `path`            | user      |
 | `settings.py`         | `data_root_not_a_directory`     | `path`            | user      |
 | `settings.py`         | `data_root_not_writable`        | `path`, `detail`  | user      |
-| `database_main.py`, `fs/crud.py` | `bad_request_body`  | `detail`          | dev       |
+| `database_main.py`, `fs/crud.py`, `fs/summary.py` | `bad_request_body` | `detail` | dev       |
 | `database_main.py`    | `create_dir_failed`             | `path`, `detail`  | user      |
 | `database_main.py`    | `rename_failed`                 | `from`, `to`, `detail` | user |
 | `database_main.py`    | `file_write_failed`             | `file`, `detail`  | user      |
@@ -330,6 +332,16 @@ services; `state` stays as the developer-facing reason.
 | `tools` probe   | `tool_timed_out` | `tool`, `seconds`   | user  |
 | `tools` probe   | `tool_exited`    | `tool`, `exit_code` | user  |
 | `tools` probe   | `tool_unusable`  | `tool`, `detail`    | user  |
+
+### `electron/` — bridge rejection
+
+`open.file`, `open.fileWith` and `open.reveal` reject with an `Error` whose `message` stays the exact
+failure text and whose `code`, when set, is the database's own code for a missing file. Every other
+failure (OS reason, `unsupported`, other statuses, a bad URL) carries no `code`. No `params`.
+
+| origin                      | code             | params | reach |
+| --------------------------- | ---------------- | ------ | ----- |
+| `open.*` on a database 404  | `file_not_found` | none   | user  |
 
 ### `downloader/auto/`
 

@@ -16,8 +16,9 @@ export default function MediaNote({ media }: { media: Media }) {
     'video-full': t`Recordings. Downloading one starts its full summary right away.`,
     'video-audio': t`Recordings. Downloading one extracts its audio right away; you start the summary.`,
     'video-off': t`Recordings. Downloading one starts nothing; you run the summary yourself.`,
-    material: t`PDFs you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary.`,
-    unknown: t`The site doesn't say what these files are. Each turns out to be a video or a material, known only after download.`,
+    material: t`Files you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary.`,
+    assignment: t`The course's assignments. Each assignment can take several files.`,
+    unknown: t`The site doesn't say what these files are. Only videos can be downloaded from here, known only after download.`,
   }
   return (
     <p className="media-note">

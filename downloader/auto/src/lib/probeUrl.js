@@ -40,16 +40,15 @@ function pathFilename(url) {
   }
 }
 
-// Content-Type → a verdict, or undefined for "says nothing": `text/html` is a definite no, while a
-// generic binary type is the CDN not knowing either and must not harden into "unsupported".
-function classifyContentType(header) {
+// Content-Type → a verdict, or undefined for "says nothing": `text/html` and `application/pdf` are a
+// definite no; a generic binary type is the CDN not knowing and must not harden into "unsupported".
+export function classifyContentType(header) {
   const mime = String(header ?? '')
     .split(';')[0]
     .trim()
     .toLowerCase();
-  if (mime === 'text/html') return null;
+  if (mime === 'text/html' || mime === 'application/pdf') return null;
   if (mime.startsWith('video/')) return 'video';
-  if (mime === 'application/pdf') return 'material';
   return undefined;
 }
 
@@ -106,7 +105,7 @@ function isNamedFile(name) {
  * Content-Type, then the URL's filename. Only `certain` verdicts are memoized. See docs/BROWSING.md.
  * @param {string} url
  * @param {{ force?: boolean }} [opts] force = ignore the cached verdict and probe fresh.
- * @returns {Promise<{ probeKey: string, media: 'video'|'material'|null, filename: string|null,
+ * @returns {Promise<{ probeKey: string, media: 'video'|null, filename: string|null,
  *                     certain: boolean, reason?: string, size?: number|null, finalUrl?: string }>}
  *   finalUrl is where the redirects ended. media null = this service can't use
  *   the link; reason names why when the link itself is the problem.

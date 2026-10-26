@@ -17,7 +17,15 @@ function node(name: string): Lecture {
     'summary.pdf': EMPTY,
     'drive_url.txt': EMPTY,
   } satisfies FileStatus
-  return { name, files, materials: [], transcribePartial: null, removed: [], done: false }
+  return {
+    name,
+    files,
+    materials: [],
+    summaryMaterials: null,
+    transcribePartial: null,
+    removed: [],
+    done: false,
+  }
 }
 
 const COURSES: Course[] = [
@@ -28,6 +36,7 @@ const COURSES: Course[] = [
     lectures_only: false,
     lectures: [node('Lecture 1'), node('Lecture 2')],
     recitations: [node('Recitation 4')],
+    assignments: [],
   },
 ]
 
@@ -94,6 +103,7 @@ describe('a download lock', () => {
       lectures_only: false,
       lectures: [],
       recitations: [],
+      assignments: [],
     },
   ]
   // The SSE refresh after the first download lands.
@@ -166,5 +176,26 @@ describe('resolveRow in a lectures-only course', () => {
   it('numbers a numberless row past lectures and recitations together', () => {
     const row = resolveRow(recitation('intro'), undefined, ONLY, 'Algebra')
     expect(row).toMatchObject({ kind: 'lecture', name: 'Lecture 5' })
+  })
+})
+
+describe('resolveRow for an assignment row', () => {
+  const file = (assignment: string): Item => ({
+    ...item('assignment', `${assignment} — a.pdf`),
+    assignment,
+    filename: 'a.pdf',
+  })
+
+  it('suggests the Moodle assignment title verbatim, so numbered titles never merge', () => {
+    expect(resolveRow(file('תרגיל 1'), undefined, COURSES, 'Algebra').suggestion).toBe('תרגיל 1')
+    expect(resolveRow(file('תרגילון 1'), undefined, COURSES, 'Algebra').suggestion).toBe(
+      'תרגילון 1',
+    )
+  })
+
+  it('follows an edit, falls back to the suggestion when blank, and ignores the kind toggle', () => {
+    const typed = resolveRow(file('HW'), { name: 'Set 2', kind: 'recitation' }, COURSES, 'Algebra')
+    expect(typed).toMatchObject({ name: 'Set 2', kind: 'lecture' })
+    expect(resolveRow(file('HW'), { name: '  ' }, COURSES, 'Algebra').name).toBe('HW')
   })
 })

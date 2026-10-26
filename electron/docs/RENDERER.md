@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, updates, power, open, pickFolder, extension, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, platform, updates, power, open, pickFolder, extension, boot }` through `contextBridge.executeInMainWorld`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -65,18 +65,35 @@ where every other process on the machine could read it.
 
 A service URL handed to a fresh browser navigation cannot carry the `X-FastStudy-Secret` header, so
 in the packaged app every such navigation is a `401` and a blank window. `open` is the way out, and
-it is two calls:
+it is four calls. A data-file target takes one of three shapes, each resolved by `dataFiles.js`
+through its `database/` `…/files/{name}/path` route: lecture `{ course, lecture, name, kind }`,
+assignment `{ course, assignment, name }`, and overview `{ course, name }` (a course-level `overview/` file).
 
-- **`open.file({ course, lecture, name, kind })`** resolves the file through `database/`'s
-  `/files/{name}/path` routes and hands the absolute path to `shell.openPath` — the user's own PDF
-  app, not a Chromium tab. `lecture` absent addresses a course-level `overview/` file instead.
+- **`open.file(target)`** hands the resolved path to `shell.openPath` — the user's own app, not a
+  Chromium tab.
+- **`open.fileWith(target)`** opens Windows' "Open with" chooser on it (`%SystemRoot%\System32\OpenWith.exe
+  <path>`, argv, no shell; `rundll32 shell32.dll,OpenAs_RunDLL` starts but shows no window on current
+  Windows 11). Off Windows it rejects with message `unsupported`
+  without asking the database; the frontend offers it only when `platform` is `win32`.
+- **`open.reveal(target)`** selects it in the OS file manager (`shell.showItemInFolder`), on every
+  platform. That call reports nothing, so a resolved path is success.
 - **`open.external(url)`** opens an http(s) link in the user's browser. Any other scheme is refused:
   `shell.openExternal` launches whatever handler a scheme is registered to, so an unchecked one is a
   way to start a program from a renderer.
 
 **The renderer sends identifiers, never a path.** `database/` stays the single owner of the
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
-bridge. Both answer `{ ok, error }` — main does not toast; the frontend does.
+bridge. Each resolves with nothing on success and rejects with an `Error` whose `message` is the exact
+OS, spawn or fetch text, `database answered <status>`, `the database service is not running`,
+`unsupported`, `not a URL: <url>` or `refused scheme: <proto>:`; main does not toast, the frontend does. Main's handler answers `undefined` or `{ error, code? }` and never throws — Electron prefixes a
+thrown message with "Error invoking remote method …". A database 404 on the path route is the one
+failure with a `code`, `file_not_found` (the database's own); every other failure is code-less.
+
+**The rejection is built in the page's world.** The context bridge copies only `message` and `stack`
+of an `Error` thrown across it, so a `code` set in the preload would vanish. The preload hands its
+API to `contextBridge.executeInMainWorld`, whose serialised function defines the frozen
+`window.faststudy` and wraps `open.*` and `updates.restart` to turn `{ error, code? }` into
+`Object.assign(new Error(error), { code })`. That function closes over nothing.
 
 **`pickFolder(defaultPath?)`** opens the OS folder dialog — for the data-folder field and for the general
 downloads folder the extension asks for — and resolves to the chosen absolute path, or `null` on cancel.

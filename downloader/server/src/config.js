@@ -20,6 +20,6 @@ export const AUTODL_URL = process.env.AUTODL_URL ?? 'http://localhost:3053';
 
 // Saved video name the backend's /run/audio expects.
 export const VIDEO_FILENAME = 'video.mp4';
-// Temp-dir name for a downloaded PDF only — the database allocates the on-disk
-// material name (material.pdf, material.2.pdf, …) when the bytes are uploaded.
-export const MATERIAL_TEMP_FILENAME = 'material.pdf';
+// Type-neutral temp-dir name for a downloaded material — the database allocates the on-disk
+// name (material.pdf, material.2.pptx, …) from the original filename when the bytes are uploaded.
+export const MATERIAL_TEMP_FILENAME = 'material.bin';

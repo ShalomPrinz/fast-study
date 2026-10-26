@@ -63,7 +63,7 @@ describe('groupSections', () => {
   it('keeps a resolved unknown row in the unknown segment', () => {
     const items = [
       item('a', 'Week 1', 'unknown', 'video'),
-      item('b', 'Week 1', 'unknown', 'material'),
+      item('b', 'Week 1', 'unknown', 'unsupported'),
     ]
     expect(refs(groupSections(items, 'unknown'))).toEqual([['Week 1', ['a', 'b']]])
     expect(groupSections(items, 'video')).toEqual([])
@@ -237,5 +237,30 @@ describe('showsMediaSegment', () => {
   it('always shows Videos and Materials', () => {
     expect(showsMediaSegment('video', 0)).toBe(true)
     expect(showsMediaSegment('material', 0)).toBe(true)
+  })
+})
+
+describe('groupSections with assignment items', () => {
+  it('groups assignment files by Moodle heading and sends a blank one to Other', () => {
+    const items = [
+      item('a', 'Week 1', 'assignment'),
+      item('b', '', 'assignment'),
+      item('c', 'Week 1', 'assignment'),
+      item('d', 'Week 1'),
+    ]
+    expect(refs(groupSections(items, 'assignment'))).toEqual([
+      ['Week 1', ['a', 'c']],
+      [OTHER_SECTION, ['b']],
+    ])
+    expect(refs(groupSections(items, 'video'))).toEqual([['Week 1', ['d']]])
+  })
+
+  it('keys a run per course and media, and parses it back', () => {
+    const id = sectionId('Algebra', 'assignment', 'Week 1')
+    expect(parseSectionId(id)).toEqual({ course: 'Algebra', media: 'assignment', title: 'Week 1' })
+  })
+
+  it('shows the Assignments segment even while empty', () => {
+    expect(showsMediaSegment('assignment', 0)).toBe(true)
   })
 })

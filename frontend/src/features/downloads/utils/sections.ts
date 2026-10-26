@@ -22,7 +22,7 @@ export function sectionTitle(title: string): string {
   return title === OTHER_SECTION ? t`Other` : title
 }
 
-const MEDIA: readonly string[] = ['video', 'material', 'unknown'] satisfies Media[]
+const MEDIA: readonly string[] = ['video', 'material', 'assignment', 'unknown'] satisfies Media[]
 
 // A section's run key. Course- and media-qualified: a bare title would hand a section another
 // course's run state, or the video side's to the materials side.

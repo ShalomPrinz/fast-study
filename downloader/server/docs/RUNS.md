@@ -65,7 +65,7 @@ Each target is `{ ref, name, kind, media, disposition, moodle?, code? }` — `mo
 
 `queued` is the only disposition whose outcome is still open, and the run never derives one: "did
 this land" is read from the database tree plus `/jobs` by whoever renders the run. For a `queued` row
-`media` is the POST's answer (where the file lands); otherwise the row's own. A `queued` row whose
+`media` is the POST's answer (where the file lands; `assignment` rows are fetched as materials into the assignment, `name` being the assignment); otherwise the row's own. A `queued` row whose
 zoom capture waited for the user to solve a captcha on screen also carries `captchaSolved: true`
 (relayed from auto's `/resolve`); every other row has no such field.
 

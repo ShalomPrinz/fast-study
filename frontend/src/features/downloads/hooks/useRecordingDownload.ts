@@ -114,7 +114,8 @@ export function useRecordingDownload({
     await runIntent(
       { ref: item.ref, course, name: effectiveName, kind },
       effectiveName,
-      [effectiveName, ...siblings],
+      // An assignment file lands in no lecture, so no pipeline lock applies.
+      item.media === 'assignment' ? [] : [effectiveName, ...siblings],
       download,
     )
     setPending(false)

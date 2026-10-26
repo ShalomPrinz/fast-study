@@ -2,10 +2,12 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from .assignments import list_assignments
 from .materials import list_materials
 from .mp4 import read_duration
 from .paths import (
     ARCHIVED_MARKER,
+    ASSIGNMENTS_DIR,
     DONE_MARKER,
     LECTURES_ONLY_MARKER,
     OVERVIEW_DIR,
@@ -15,6 +17,7 @@ from .paths import (
     SOURCE_URL_MARKER,
     data_root,
 )
+from .summary import read_summary_materials
 
 # The live course-structure mode, written only by set_course_structure(); see docs/SETTINGS.md.
 _course_structure = "split"
@@ -117,6 +120,7 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         "name": name,
         "files": files,
         "materials": list_materials(lecture_path),
+        "summaryMaterials": read_summary_materials(lecture_path),
         "transcribePartial": _read_transcribe_partial(lecture_path),
         "removed": _removed(files),
         "done": (lecture_path / DONE_MARKER).exists(),
@@ -124,14 +128,15 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
 
 
 def _read_lectures(course_path: Path) -> list[dict]:
-    """List lecture entries directly under a course dir, skipping the Recitations and overview folders."""
+    """List lecture entries directly under a course dir, skipping the Recitations, Assignments and overview folders."""
 
     if not course_path.exists():
         return []
     return [
         _read_lecture(course_path / entry.name, entry.name)
         for entry in course_path.iterdir()
-        if entry.is_dir() and entry.name not in (RECITATIONS_DIR, OVERVIEW_DIR)
+        if entry.is_dir()
+        and entry.name not in (RECITATIONS_DIR, OVERVIEW_DIR, ASSIGNMENTS_DIR)
     ]
 
 
@@ -170,6 +175,7 @@ def read_course(name: str) -> Optional[dict]:
         "source_url": _read_source_url(course_path),
         "lectures": _read_lectures(course_path),
         "recitations": _read_recitations(course_path),
+        "assignments": list_assignments(course_path),
     }
 
 

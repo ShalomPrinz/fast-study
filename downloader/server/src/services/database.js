@@ -108,21 +108,33 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
 
 // The appending /materials URL. `source` is the discovery row's ref, stored as the material's
 // identity so the frontend can match the row; a download from no row sends none.
-function materialsUrl(course, lecture, kind, source = null) {
-  const base = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
-  return source ? `${base}&source=${encodeURIComponent(source)}` : base;
+// `filename` is the original name (display, and the database's disk extension); none sends none.
+export function materialsUrl(course, lecture, kind, source = null, filename = null) {
+  let url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
+  if (source) url += `&source=${encodeURIComponent(source)}`;
+  if (filename) url += `&filename=${encodeURIComponent(filename)}`;
+  return url;
 }
 
-// Stream the temp PDF to the appending /materials, removing the temp dir either way. Never
-// throws: null on success, else the job's failure.
-export async function uploadMaterial(tempDir, course, lecture, kind, tool, source = null) {
+// The assignment-files URL; `source` is the row's ref, `filename` the original name.
+export function assignmentFilesUrl(course, assignment, source = null, filename = null) {
+  let url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/assignments/${encodeURIComponent(assignment)}/files`;
+  const query = [];
+  if (filename) query.push(`filename=${encodeURIComponent(filename)}`);
+  if (source) query.push(`source=${encodeURIComponent(source)}`);
+  if (query.length) url += `?${query.join('&')}`;
+  return url;
+}
+
+// Stream the temp file to `url`, removing the temp dir either way. Never throws: null on
+// success, else the job's failure. `where` names the destination in the log.
+async function postTempFile(url, tempDir, tool, where) {
   const file = path.join(tempDir, MATERIAL_TEMP_FILENAME);
   try {
-    const url = materialsUrl(course, lecture, kind, source);
     // duplex: 'half' is required when a fetch body is a stream (undici).
     const res = await fetch(url, {
       method: 'POST',
-      headers: peerHeaders({ 'Content-Type': 'application/pdf' }),
+      headers: peerHeaders({ 'Content-Type': 'application/octet-stream' }),
       body: Readable.toWeb(fs.createReadStream(file)),
       duplex: 'half',
     });
@@ -135,7 +147,7 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool, sourc
       emitError(`❌ ${tool} upload to database failed: ${failure.error}`);
       return failure;
     }
-    emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
+    emitLog(`✅ Uploaded ${body?.name} to database (${where})`);
     notifyFrontend();
     return null;
   } catch (err) {
@@ -148,6 +160,33 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool, sourc
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch {}
   }
+}
+
+// Stream the temp file to the appending /materials.
+export function uploadMaterial(
+  tempDir,
+  course,
+  lecture,
+  kind,
+  tool,
+  source = null,
+  filename = null,
+) {
+  const url = materialsUrl(course, lecture, kind, source, filename);
+  return postTempFile(url, tempDir, tool, `${course}/${lecture}, kind=${kind}`);
+}
+
+// Stream the temp file to the assignment-files route; `assignment` rides in the job's lecture slot.
+export function uploadAssignmentFile(
+  tempDir,
+  course,
+  assignment,
+  tool,
+  source = null,
+  filename = null,
+) {
+  const url = assignmentFilesUrl(course, assignment, source, filename);
+  return postTempFile(url, tempDir, tool, `${course}/Assignments/${assignment}`);
 }
 
 // Forward already-fetched PDF bytes to /materials. Throws on a network error (route → 500);

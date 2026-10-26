@@ -62,7 +62,7 @@ one-click NSIS progress window is the only thing on screen for the minute it spe
 quit-time install, `quitAndInstall` spawns NSIS synchronously and only then calls `app.quit()`, so
 `will-quit` would come too late. `restartToUpdate()` therefore awaits main's own `stopChildren()` —
 the same kill, not a copy — before installing; the later `will-quit` finds no children and is a
-no-op. It answers `{ ok: true }` (the app is quitting), or `{ ok: false, error }` when nothing is
+no-op. It resolves with nothing (the app is quitting), or rejects with the failure text when nothing is
 downloaded (nothing is killed), or when the kill throws or electron-updater reports a synchronous
 install error, which is logged. Either of those puts the window back on the launch screen and re-runs
 `runBoot()`; the page reloads, so the frontend may never see that answer. A failed installer launch
