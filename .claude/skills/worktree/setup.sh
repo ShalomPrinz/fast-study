@@ -5,7 +5,7 @@ set -euo pipefail
 
 slug="${1:-}"
 if [[ ! "$slug" =~ ^[a-z0-9]+(_[a-z0-9]+)*$ ]]; then
-    echo "usage: setup.sh <snake_case_slug>" >&2
+    echo "usage: setup.sh <snake_case_slug> [base_ref=main]" >&2
     exit 1
 fi
 
@@ -18,7 +18,7 @@ wt="$root-$slug"
 [[ -f "$root/.env" ]] || { echo "refusing: $root/.env is missing" >&2; exit 1; }
 
 echo "==> worktree $wt on branch $slug"
-git -C "$root" worktree add -b "$slug" "$wt" main
+git -C "$root" worktree add -b "$slug" "$wt" "${2:-main}"
 
 echo "==> git-ignored files"
 cp "$root/.env" "$wt/.env"

@@ -12,11 +12,11 @@ Pick a short `snake_case` topic slug naming the change (`support_i18n`, `unknown
 All work happens in a git worktree dedicated to this task. **Create it first, before reading further or touching any file:**
 
 ```
-bash <repo-root>/.claude/skills/worktree/setup.sh <slug>
+bash <repo-root>/.claude/skills/worktree/setup.sh <slug> [base_ref]
 ```
 
 That one command is the whole setup — there is nothing here for you to decide or check afterwards. It
-creates `<repo-root>-<slug>` on a new branch `<slug>` off `main`, restores the git-ignored files the
+creates `<repo-root>-<slug>` on a new branch `<slug>` off `base_ref` (default `main`; pass `origin/<branch>`, fetched first, to continue a remote branch), restores the git-ignored files the
 services need, adds the worktree to `permissions.additionalDirectories` in
 `<repo-root>/.claude/settings.local.json` so searching it does not prompt, and runs the four
 `npm install`s and both `uv sync --extra test`s.
@@ -45,7 +45,7 @@ remainder by concern and commit it before you report.
 
 ### When the last step is done
 
-Report the branch's commits (`git log --oneline main..<slug>`) and **stop**. Leave the branch sitting
+Report the branch's commits (`git log --oneline <base_ref>..<slug>`, `main` by default) and **stop**. Leave the branch sitting
 locally for the user to review and merge.
 
 ### Teardown
