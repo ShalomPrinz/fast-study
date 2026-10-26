@@ -426,7 +426,8 @@ The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`)
 (its own two-lecture course in `data-empty`, so its queue holds nothing else), a recitation from
 bare video to Drive, a video dropped on a tree row (new and replacing), a course created, filled
 and renamed from the tree, a summary edited, reloaded over another window's edit and restored, a
-materials-only lecture made from course PDFs attached in Downloads, the first-run wall then a
+materials-only lecture made from course PDFs attached in Downloads, lecture materials of any file
+type (chips by original name, the Gemini switch, a pptx sent as text, the 10 MB refusal), the first-run wall then a
 data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
 out the site's captcha (and failing `site_captcha_timeout` unsolved), and study progress (done
 marks, the current arrow, the counts and the overview's current-item buttons) — and run with
