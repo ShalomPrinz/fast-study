@@ -111,7 +111,7 @@ meta line of file and attached-lecture counts. Below it, top to bottom:
   entry whose `summary.md` exists (`summarizedLectures`); each toggle writes the whole selection with
   `setAssignmentLectures`. Neither the switch nor the box takes input while the assignment has a live run
   (`inputsLocked`), since the run reads them. No state is held locally: the tree refresh over SSE shows every write.
-- **Assignment Solution**: its own full-width row under the split (Materials and Course material beside the Study with AI card), the title with a muted " · N files · M summaries" count (`.assignment-sent-count`, always shown, from `docInputs`) over an `auto-fit minmax(min(100%, 280px), 1fr)` grid of the two doc cards, so they sit as equal halves and stack once narrow (no icon; an idle card says only "Not generated yet").
+- **Assignment Solution**: its own full-width row under the split (Materials and Course material beside the Study with AI card), the title, then a muted "N files · M summaries" count (`.assignment-sent-count`, always shown, from `docInputs`) over an `auto-fit minmax(min(100%, 280px), 1fr)` grid of the two doc cards, so they sit as equal halves and stack once narrow (no icon; every card shows its description in every state).
   - Intuition Guide and Full Solution: one `AssignmentDocCard` per doc. `docCardState` (pure) derives `none`
     (Create, with an ETA from `assignment_{doc}` over `docInputs` bytes, disabled with no input), `generating` (this
     doc's step or its `_pdf` is the assignment's `in_flight` entry: `ProgressBar`, every button off) or `ready`

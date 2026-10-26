@@ -1930,10 +1930,6 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:106
-msgid "Not generated yet"
-msgstr "Not generated yet"
-
 #: src/features/lectures/MainView.tsx:489
 msgid "not provided"
 msgstr "not provided"

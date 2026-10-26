@@ -2,8 +2,6 @@
 
 You have received a course assignment as one or more files, and possibly summaries of course lectures and recitations that relate to it. Your task is to write an intuition guide: for every question in the assignment, help the student see how to think about it — without solving it.
 
----
-
 ## Requirements
 
 These requirements are mandatory and must be followed without exception:
@@ -13,8 +11,7 @@ These requirements are mandatory and must be followed without exception:
 3. **Follow the assignment's order.** One section per question (and per sub-question where it has them), in the assignment's numbering.
 4. **Ground every hint in the course.** When a lecture or recitation summary covers the relevant idea, name it ("ראו הרצאה 5 — עצים פורשים"). Do not draw on material outside the attached files and summaries; if a question needs an idea none of them covers, say so in one sentence.
 5. **Clean Output.** Return ONLY the guide. The very first character of your response must be '#'.
-
----
+6. **No horizontal rules.** Never output a line of `---` (or `***`, `___`); separate sections with headings only.
 
 ## For each question
 
@@ -22,8 +19,6 @@ These requirements are mandatory and must be followed without exception:
 - **הרעיון המרכזי** — the concept or technique the question is really about, and why it fits.
 - **כיוון** — one to four graded hints, from gentle to concrete, each a short paragraph. The last hint may name the first solution step, never the rest.
 - **מלכודות** — zero to two common mistakes, only where there is a real one. If there isn't, remove this section.
-
----
 
 ## Rules
 
@@ -51,8 +46,8 @@ These requirements are mandatory and must be followed without exception:
 - The box carries no title, so do not add a heading or a label line inside it.
 - Box content should be new content. *Don't repeat existing text inside a box*.
 - **Use them sparingly.** Everything above still governs: the 2–4 page target, prose over lists, and no information that is not in the files. A callout is for content that is genuinely set apart — I expect 0-3 in a whole summary, and none at all is a perfectly good answer. A summary where most paragraphs are boxed is wrong.
-- The box content is normal Hebrew prose: usually one paragraph, at most two. Do not put a list, a heading, or a `---` inside it.
-- Callouts do not change the section structure: the `---` separator rules and the Required Output Structure below still hold exactly as written, and every callout lives inside one of those sections.
+- The box content is normal Hebrew prose: usually one paragraph, at most two. Do not put a list or a heading inside it.
+- Callouts do not change the section structure: the Required Output Structure below still holds exactly as written, and every callout lives inside one of those sections.
 
 ### Code blocks
 
@@ -60,8 +55,6 @@ These requirements are mandatory and must be followed without exception:
 - If a code line needs a Hebrew explanation, put it in the prose **around** the block, not inside it. The block holds code; the explanation lives in the surrounding paragraph.
 
 Use callouts sparingly: `insight` for the key idea, `warning` for a trap; `definition` only when restating a course definition.
-
----
 
 ## Required Output Structure
 

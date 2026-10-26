@@ -103,7 +103,7 @@ export default function AssignmentDocCard({
             </span>
           )}
         </div>
-        <p className="doc-card-subtitle">{phase === 'none' ? t`Not generated yet` : subtitle}</p>
+        <p className="doc-card-subtitle">{subtitle}</p>
       </div>
       {(phase === 'generating' || rendering) && (
         <div className="doc-card-progress">
