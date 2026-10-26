@@ -20,7 +20,9 @@ same way when `backend/` relays it through a pipeline error and the status is go
 
 **Connection errors are handled once, here.** Only a network failure rejects as a `TypeError` (aborts are
 `DOMException` and pass through), so that branch wraps it in `ConnectionError`, toasts it keyed by base
-URL — a downed service shows one toast, not a stack — and rethrows. Call sites add no connection handling
+URL — a downed service shows one toast, not a stack — and rethrows. The toast alone is skipped while the OS sleeps and for 5 s after it wakes
+(`connectionsQuiet()`, `runtime.ts`): Chromium fails in-flight requests on resume, so those are expected;
+the throw is unchanged. Call sites add no connection handling
 of their own; they ignore the throw or check `isConnectionError`. `shared/utils/failure.ts`'s
 `toastFailure` is that check plus the resolved sentence, and is the single funnel for a refused request's
 wording; `failureNode` is the same thing for a call site that shows it in place instead of toasting.
@@ -56,6 +58,8 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **`canStoreApiKeys`**, `defaultDataRoot` and `pickFolder` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
   the OS `locale` ([I18N.md](I18N.md)).
 - **`extension`** — optional `{ path, reveal() }`, the Chrome extension's folder for the Downloads page's Extension tab ([EXTENSION.md](EXTENSION.md)).
+- **`power`** — optional `subscribe(cb)` pushing `'suspend'`/`'resume'`; `runtime.ts` subscribes once at load and `isQuiet(last, now)`
+  (pure) decides the quiet window: suspend (capped at 60 s, so a missed resume cannot mute an outage) until 5 s after resume, a lone resume included. No bridge or no `power` means never quiet.
 - **`packaged`** and **`updates`** — `versionTag()` and the sidebar's update row ([LECTURES.md](LECTURES.md) §Sidebar);
   both optional, so an older launcher degrades to a `dev` tag and no row.
 

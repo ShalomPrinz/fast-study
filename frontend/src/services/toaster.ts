@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import './toaster.css'
 import type { RunInitResult } from '@/types'
 import type { ConnectionError } from '@/services/http'
+import { connectionsQuiet } from '@/services/runtime'
 
 export { ToastContainer }
 
@@ -19,6 +20,7 @@ export { appToast as toast }
 
 // toastId is keyed per service, so a downed service reuses one toast instead of stacking.
 export function toastConnectionError(err: ConnectionError): void {
+  if (connectionsQuiet()) return
   toast.error(err.message, { toastId: `conn:${err.baseUrl}` })
 }
 
