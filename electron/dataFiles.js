@@ -1,4 +1,5 @@
 const { spawn } = require('node:child_process');
+const { join } = require('node:path');
 
 /** The database route answering `{path}` for one data-file target: assignment `{course, assignment,
  *  name}`, lecture `{course, lecture, name, kind}`, or else overview `{course, name}`. */
@@ -34,8 +35,10 @@ async function openDataFileWith(target, database, platform = process.platform) {
   const { path, error } = await dataFilePath(target, database);
   if (error !== undefined) return { error };
   return new Promise((resolve) => {
-    // An argv array, never a shell: the path is passed to rundll32 verbatim.
-    const child = spawn('rundll32.exe', ['shell32.dll,OpenAs_RunDLL', path], {
+    // OpenWith.exe, not rundll32's OpenAs_RunDLL, which starts but shows no window on current Windows 11.
+    // An argv array, never a shell: the path is passed verbatim.
+    const openWith = join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'OpenWith.exe');
+    const child = spawn(openWith, [path], {
       detached: true,
       stdio: 'ignore',
     });

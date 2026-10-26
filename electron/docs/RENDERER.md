@@ -67,8 +67,9 @@ assignment `{ course, assignment, name }`, and overview `{ course, name }` (a co
 
 - **`open.file(target)`** hands the resolved path to `shell.openPath` — the user's own app, not a
   Chromium tab.
-- **`open.fileWith(target)`** opens Windows' "Open with" chooser on it (`rundll32.exe
-  shell32.dll,OpenAs_RunDLL <path>`, argv, no shell). Off Windows it rejects with message `unsupported`
+- **`open.fileWith(target)`** opens Windows' "Open with" chooser on it (`%SystemRoot%\System32\OpenWith.exe
+  <path>`, argv, no shell; `rundll32 shell32.dll,OpenAs_RunDLL` starts but shows no window on current
+  Windows 11). Off Windows it rejects with message `unsupported`
   without asking the database; the frontend offers it only when `platform` is `win32`.
 - **`open.reveal(target)`** selects it in the OS file manager (`shell.showItemInFolder`), on every
   platform. That call reports nothing, so a resolved path is success.
