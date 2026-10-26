@@ -119,8 +119,8 @@ describe('autoRemoveApply', () => {
 
   it('re-runs the sweep while the section matches a stored rule that is on', () => {
     expect(autoRemoveApply(rule('video', 'pdf'), stored('video', 'pdf'), true)).toBe('sweep')
-    expect(autoRemoveApply(OFF, stored('off', 'pdf'), true)).toBeNull()
-    expect(autoRemoveApply(rule('audio', null), stored('audio', null), true)).toBeNull()
+    expect(autoRemoveApply(OFF, stored('off', 'pdf'), true)).toBe('unchanged')
+    expect(autoRemoveApply(rule('audio', null), stored('audio', null), true)).toBe('unchanged')
   })
 
   it('leaves "after Drive" to the page Save while the Drive toggle is unsaved', () => {

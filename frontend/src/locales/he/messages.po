@@ -227,7 +227,7 @@ msgstr "לא ניתן להתחבר אל {host}. בדוק את החיבור לא�
 msgid "{input} was removed"
 msgstr "{input} הוסר"
 
-#: src/features/downloads/components/ManualDownload.tsx:183
+#: src/features/downloads/components/ManualDownload.tsx:192
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -243,7 +243,7 @@ msgstr "{locked, plural, one {דילגנו על הרצאה אחת: קובץ של
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
-#: src/features/lectures/MainView.tsx:525
+#: src/features/lectures/MainView.tsx:527
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} יימחק."
 
@@ -359,7 +359,7 @@ msgstr "+ הוספת קורס מ-Moodle"
 msgid "+ add source URL"
 msgstr "+ הוספת כתובת מקור"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:143
+#: src/features/settings/components/PrivacyPolicyModal.tsx:145
 msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 msgstr "<0>אתר האוניברסיטה</0> — גישה לתוכן הקורסים שנבחרו בלבד, והגישה מוגבלת לקריאת תוכן בלבד."
 
@@ -387,7 +387,7 @@ msgstr "חסר גופן שה-PDF זקוק לו."
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 
-#: src/features/settings/SettingsView.tsx:601
+#: src/features/settings/SettingsView.tsx:610
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -425,15 +425,15 @@ msgstr "הוספת הרצאה"
 msgid "Add recitation"
 msgstr "הוספת תרגול"
 
-#: src/features/settings/components/AutoRemoveField.tsx:32
+#: src/features/settings/components/AutoRemoveField.tsx:33
 msgid "After the PDF is created"
 msgstr "אחרי יצירת ה-PDF"
 
-#: src/features/settings/components/AutoRemoveField.tsx:33
+#: src/features/settings/components/AutoRemoveField.tsx:34
 msgid "After the PDF is uploaded to Drive"
 msgstr "אחרי העלאת ה-PDF ל-Drive"
 
-#: src/features/settings/SettingsView.tsx:524
+#: src/features/settings/SettingsView.tsx:533
 msgid "AI chat provider"
 msgstr "ספק צ'אט AI"
 
@@ -453,11 +453,11 @@ msgstr "הכול נוצר"
 msgid "All Lectures"
 msgstr "כל ההרצאות"
 
-#: src/features/course-overview/components/CurrentStudy.tsx:28
+#: src/features/course-overview/components/CurrentStudy.tsx:31
 msgid "All lectures done"
 msgstr "סיימת את כל ההרצאות"
 
-#: src/features/course-overview/components/CurrentStudy.tsx:33
+#: src/features/course-overview/components/CurrentStudy.tsx:37
 msgid "All recitations done"
 msgstr "סיימת את כל התרגולים"
 
@@ -481,15 +481,15 @@ msgstr "ניתוח הקטעים שנאספו נכשל."
 msgid "Another Download all is downloading these recordings"
 msgstr "תהליך הורדה אחר כבר מוריד את ההקלטות האלה"
 
-#: src/features/settings/SettingsView.tsx:349
+#: src/features/settings/SettingsView.tsx:358
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:456
+#: src/features/settings/SettingsView.tsx:465
 msgid "Appearance and behaviour"
 msgstr "מראה והעדפות"
 
-#: src/features/settings/components/AutoRemoveField.tsx:126
+#: src/features/settings/components/AutoRemoveField.tsx:137
 msgid "Apply"
 msgstr "החל"
 
@@ -502,7 +502,7 @@ msgstr "העברת קורס לארכיון"
 msgid "Archived ({archivedCount})"
 msgstr "ארכיון ({archivedCount})"
 
-#: src/features/course-overview/components/StepRow.tsx:76
+#: src/features/course-overview/components/StepRow.tsx:83
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שאתה רוצה ליצור מחדש?"
 
@@ -522,11 +522,11 @@ msgstr "שמע"
 msgid "Audio only"
 msgstr "שמע בלבד"
 
-#: src/features/settings/components/AutoRemoveField.tsx:49
+#: src/features/settings/components/AutoRemoveField.tsx:59
 msgid "Auto-remove files from computer"
 msgstr "הסרה אוטומטית של קבצים מהמחשב"
 
-#: src/features/settings/SettingsView.tsx:264
+#: src/features/settings/SettingsView.tsx:265
 msgid "Auto-remove saved"
 msgstr "ההסרה האוטומטית נשמרה"
 
@@ -542,7 +542,7 @@ msgstr "הרצה אוטומטית: כבויה"
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל השלבים"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:104
+#: src/features/lectures/components/StudyWithAiCard.tsx:105
 msgid "Available once the summary is generated."
 msgstr "זמין אחרי יצירת הסיכום."
 
@@ -591,7 +591,7 @@ msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הו�
 msgid "Can't replace the video while it's being processed or waiting in line"
 msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או המתנה בתור"
 
-#: src/features/downloads/components/AddCourseRow.tsx:136
+#: src/features/downloads/components/AddCourseRow.tsx:138
 #: src/features/downloads/components/CoursePicker.tsx:110
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
 #: src/features/downloads/components/FolderJobList.tsx:102
@@ -600,7 +600,7 @@ msgid "Cancel"
 msgstr "ביטול"
 
 #: src/features/downloads/components/FolderJobList.tsx:93
-#: src/features/downloads/components/ManualDownload.tsx:272
+#: src/features/downloads/components/ManualDownload.tsx:281
 #: src/features/downloads/components/RecordingJobList.tsx:49
 #: src/features/downloads/components/RecordingRow.tsx:273
 #: src/features/downloads/components/RecordingRow.tsx:305
@@ -623,7 +623,7 @@ msgstr "הסרטון מ-Zoom נתפס. ההורדה בתהליך."
 msgid "Change in Settings"
 msgstr "שינוי בהגדרות"
 
-#: src/features/settings/SettingsView.tsx:600
+#: src/features/settings/SettingsView.tsx:609
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -639,7 +639,7 @@ msgstr "בודק חשבון…"
 msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
-#: src/features/downloads/components/AddCourseRow.tsx:133
+#: src/features/downloads/components/AddCourseRow.tsx:134
 #: src/features/downloads/components/CourseUrlPaste.tsx:58
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
@@ -647,12 +647,16 @@ msgstr "בודק את Drive…"
 msgid "Checking…"
 msgstr "בודק…"
 
+#: src/features/downloads/components/ManualDownload.tsx:83
+msgid "Choose a course first"
+msgstr "בחר קורס קודם"
+
 #: src/shared/i18n/serviceErrors.ts:140
 msgid "Choose a data folder."
 msgstr "בחר תיקיית נתונים."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:117
-#: src/features/lectures/components/StudyWithAiCard.tsx:126
+#: src/features/lectures/components/StudyWithAiCard.tsx:120
+#: src/features/lectures/components/StudyWithAiCard.tsx:129
 msgid "Choose AI provider"
 msgstr "בחירת ספק AI"
 
@@ -661,9 +665,14 @@ msgstr "בחירת ספק AI"
 msgid "Choose folder"
 msgstr "בחירת תיקייה"
 
-#: src/features/settings/components/AutoRemoveField.tsx:106
+#: src/features/settings/components/AutoRemoveField.tsx:116
 msgid "Choose when the files are removed."
 msgstr "בחר מתי הקבצים יוסרו."
+
+#: src/features/settings/components/AutoRemoveField.tsx:41
+#: src/features/settings/SettingsView.tsx:325
+msgid "Choose when to remove the files first"
+msgstr "בחר קודם מתי להסיר את הקבצים"
 
 #: src/features/settings/components/MoodleAccountField.tsx:38
 msgid "Choose your university above to connect its account."
@@ -702,7 +711,7 @@ msgstr "לחץ על \"Create API Key\"."
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "לחץ על \"טעינת פריט Unpacked\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:102
+#: src/features/lectures/components/StudyWithAiCard.tsx:103
 msgid "Click \"Open chat\" to study this lecture with {provider}."
 msgstr "לחץ על \"פתיחת צ'אט\" בשביל ללמוד את ההרצאה הזו עם {provider}."
 
@@ -755,7 +764,7 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:217
+#: src/features/settings/components/PrivacyPolicyModal.tsx:220
 msgctxt "privacy policy"
 msgid "Confirm"
 msgstr "אישור"
@@ -791,7 +800,7 @@ msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפ
 msgid "connecting…"
 msgstr "מתחבר…"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:193
+#: src/features/settings/components/PrivacyPolicyModal.tsx:195
 msgid "Contact"
 msgstr "יצירת קשר"
 
@@ -866,11 +875,11 @@ msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר תשובה ברורה."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:71
+#: src/features/lectures/components/StudyWithAiCard.tsx:72
 msgid "Couldn't copy the summary. Try again."
 msgstr "לא הצלחנו להעתיק את הסיכום. נסה שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:304
+#: src/features/downloads/components/ManualDownload.tsx:313
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "לא ניתן להוריד את \"{lecture}\". נסה שוב."
 
@@ -892,11 +901,11 @@ msgstr "לא ניתן לטעון את ההקלטות של \"{name}\". נסה ש�
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/settings/SettingsView.tsx:174
+#: src/features/settings/SettingsView.tsx:175
 msgid "Couldn't load your settings. Part of FastStudy isn't responding."
 msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastStudy לא מגיב."
 
-#: src/features/settings/SettingsView.tsx:131
+#: src/features/settings/SettingsView.tsx:132
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
@@ -908,7 +917,7 @@ msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נס�
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "לא הצלחנו לזהות מאיפה להוריד את הקובץ. נסה שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:131
+#: src/features/downloads/components/ManualDownload.tsx:140
 #: src/features/search/SearchView.tsx:183
 msgid "Course"
 msgstr "קורס"
@@ -938,7 +947,7 @@ msgstr "מבנה הקורסים"
 msgid "Course URL"
 msgstr "כתובת הקורס"
 
-#: src/features/settings/SettingsView.tsx:445
+#: src/features/settings/SettingsView.tsx:454
 msgid "Courses"
 msgstr "קורסים"
 
@@ -950,9 +959,13 @@ msgstr "קורסים"
 msgid "Courses failed to load."
 msgstr "לא הצלחנו לטעון את הקורסים."
 
-#: src/features/downloads/components/AddCourseRow.tsx:133
+#: src/features/downloads/components/AddCourseRow.tsx:134
 msgid "Create"
 msgstr "יצירה"
+
+#: src/features/lectures/MainView.tsx:425
+msgid "Create {input} first"
+msgstr "צור קודם את {input}"
 
 #: src/features/course-overview/components/GenerateAllButton.tsx:42
 msgid "Creates comprehensive summaries for all lectures and recitations in the course"
@@ -962,7 +975,7 @@ msgstr "יוצר סיכומים מקיפים עבור כל ההרצאות והת
 msgid "Creating…"
 msgstr "יוצר…"
 
-#: src/features/course-overview/components/CurrentStudy.tsx:42
+#: src/features/course-overview/components/CurrentStudy.tsx:46
 msgid "Current lecture"
 msgstr "ההרצאה הנוכחית"
 
@@ -970,11 +983,11 @@ msgstr "ההרצאה הנוכחית"
 msgid "Current PDF"
 msgstr "ה-PDF הנוכחי"
 
-#: src/features/course-overview/components/CurrentStudy.tsx:49
+#: src/features/course-overview/components/CurrentStudy.tsx:54
 msgid "Current recitation"
 msgstr "התרגול הנוכחי"
 
-#: src/features/settings/SettingsView.tsx:498
+#: src/features/settings/SettingsView.tsx:507
 msgid "Daily run time"
 msgstr "שעת ההרצה היומית"
 
@@ -982,14 +995,14 @@ msgstr "שעת ההרצה היומית"
 msgid "Data folder"
 msgstr "תיקיית נתונים"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:220
+#: src/features/settings/components/PrivacyPolicyModal.tsx:224
 msgctxt "privacy policy"
 msgid "Decline"
 msgstr "סירוב"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:489
-#: src/features/lectures/MainView.tsx:492
+#: src/features/lectures/MainView.tsx:491
+#: src/features/lectures/MainView.tsx:494
 msgid "Delete {0}"
 msgstr "מחיקת {0}"
 
@@ -1012,11 +1025,11 @@ msgstr "לנתק את חשבון האוניברסיטה?"
 msgid "disconnecting…"
 msgstr "מתנתק…"
 
-#: src/features/settings/SettingsView.tsx:547
+#: src/features/settings/SettingsView.tsx:556
 msgid "Disk space"
 msgstr "מקום במחשב"
 
-#: src/features/settings/SettingsView.tsx:473
+#: src/features/settings/SettingsView.tsx:482
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
@@ -1024,12 +1037,12 @@ msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 msgid "Done"
 msgstr "סיימתי"
 
-#: src/features/settings/InitWall.tsx:60
+#: src/features/settings/InitWall.tsx:61
 msgctxt "section mark"
 msgid "Done"
 msgstr "הושלם"
 
-#: src/features/downloads/components/ManualDownload.tsx:177
+#: src/features/downloads/components/ManualDownload.tsx:186
 #: src/features/downloads/components/RecordingJobList.tsx:63
 #: src/features/downloads/components/RecordingRow.tsx:329
 msgid "Download"
@@ -1057,14 +1070,14 @@ msgid "Download any open video on the internet"
 msgstr "הורד כל וידאו שפתוח לצפייה באינטרנט"
 
 #: src/features/downloads/components/FolderJobList.tsx:88
-#: src/features/downloads/components/ManualDownload.tsx:267
+#: src/features/downloads/components/ManualDownload.tsx:276
 #: src/features/downloads/components/RecordingRow.tsx:274
 #: src/features/downloads/components/RecordingRow.tsx:327
 msgid "Downloaded ✓"
 msgstr "הורד ✓"
 
 #: src/features/downloads/components/FolderJobList.tsx:83
-#: src/features/downloads/components/ManualDownload.tsx:262
+#: src/features/downloads/components/ManualDownload.tsx:271
 #: src/features/downloads/components/RecordingRow.tsx:279
 msgid "Downloading"
 msgstr "מוריד"
@@ -1079,8 +1092,8 @@ msgstr "מוריד {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/settings/InitWall.tsx:314
-#: src/features/settings/SettingsView.tsx:428
+#: src/features/settings/InitWall.tsx:315
+#: src/features/settings/SettingsView.tsx:437
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
@@ -1114,15 +1127,15 @@ msgstr "Drive מחובר"
 msgid "Drive folder name"
 msgstr "שם התיקייה ב-Drive"
 
-#: src/features/settings/components/AutoRemoveField.tsx:116
+#: src/features/settings/components/AutoRemoveField.tsx:126
 msgid "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 msgstr "ההעלאה ל-Drive עוד לא נשמרה. כדי לשמור את שתיהן, לחץ על \"שמירה\" בראש העמוד."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:150
+#: src/features/settings/components/PrivacyPolicyModal.tsx:152
 msgid "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
 msgstr "כל שירות מטפל במידע לפי מדיניות הפרטיות שלו, ומפתחות ה-API שלך נשמרים מוצפנים במחשב הזה."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:189
+#: src/features/settings/components/PrivacyPolicyModal.tsx:191
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה חדשה."
 
@@ -1139,21 +1152,29 @@ msgstr "עריכת כתובת מקור"
 msgid "Edit summary"
 msgstr "עריכת סיכום"
 
+#: src/features/downloads/components/AddCourseRow.tsx:128
+msgid "Enter a course name first"
+msgstr "הזן קודם שם קורס"
+
+#: src/features/downloads/components/ManualDownload.tsx:85
+msgid "Enter a name first"
+msgstr "הזן קודם שם"
+
 #: src/features/downloads/components/PasscodePrompt.tsx:47
 msgid "Enter the zoom passcode for this recording"
 msgstr "הזן את קוד הגישה של Zoom להקלטה הזו"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:167
-#: src/features/settings/InitWall.tsx:291
-#: src/features/settings/SettingsView.tsx:565
+#: src/features/settings/components/PrivacyPolicyModal.tsx:169
+#: src/features/settings/InitWall.tsx:292
+#: src/features/settings/SettingsView.tsx:574
 msgid "Error reports"
 msgstr "דיווחי שגיאות"
 
-#: src/features/settings/SettingsView.tsx:584
+#: src/features/settings/SettingsView.tsx:593
 msgid "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 msgstr "דיווחי השגיאות כבויים עכשיו. חלקים מ-FastStudy יפסיקו לשלוח אותם רק אחרי שתפעיל מחדש את האפליקציה."
 
-#: src/features/settings/SettingsView.tsx:579
+#: src/features/settings/SettingsView.tsx:588
 msgid "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 msgstr "דיווחי השגיאות מופעלים עכשיו. חלקים מ-FastStudy יתחילו לשלוח אותם רק אחרי שתפעיל מחדש את האפליקציה."
 
@@ -1206,7 +1227,7 @@ msgstr "חילוץ"
 msgid "Extract Audio"
 msgstr "חילוץ שמע"
 
-#: src/features/settings/SettingsView.tsx:472
+#: src/features/settings/SettingsView.tsx:481
 msgid "Extract the audio only"
 msgstr "לחלץ רק את השמע"
 
@@ -1235,7 +1256,7 @@ msgstr "שחזור הסיכום המקורי נכשל"
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:127
+#: src/features/settings/components/PrivacyPolicyModal.tsx:129
 msgid "FastStudy asks only for the <0><1>{DRIVE_SCOPE}</1></0> permission, which gives it access only to the specific Google Drive files you use with this app — in practice, the summary PDFs it uploads."
 msgstr "FastStudy מבקשת רק את ההרשאה <0><1>{DRIVE_SCOPE}</1></0>, שנותנת לה גישה רק לקובצי Google Drive המסוימים שבהם אתה משתמש עם האפליקציה הזו — בפועל, קובצי ה-PDF של הסיכומים שהיא מעלה."
 
@@ -1251,15 +1272,15 @@ msgstr "FastStudy לא הצליחה לגשת לקבצים שלך. נסה שוב.
 msgid "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "FastStudy מוצאת את ההקלטות שלך באתר ה-Moodle של האוניברסיטה. אם היא לא ברשימה, בחר \"אחר…\" והדבק את כתובת ה-Moodle שלה."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:101
+#: src/features/settings/components/PrivacyPolicyModal.tsx:103
 msgid "FastStudy privacy policy"
 msgstr "מדיניות הפרטיות של FastStudy"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:104
+#: src/features/settings/components/PrivacyPolicyModal.tsx:106
 msgid "FastStudy runs on your computer. Your lectures, transcripts and summaries stay in the folder you chose. There are no accounts, ads or usage tracking, and nothing is sold."
 msgstr "FastStudy פועלת במחשב שלך. ההרצאות, התמלולים והסיכומים שלך נשארים בתיקייה שבחרת. אין חשבונות, פרסומות או מעקב אחר השימוש, ושום דבר לא נמכר."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:114
+#: src/features/settings/components/PrivacyPolicyModal.tsx:116
 msgid "FastStudy sends data only to services you set up yourself:"
 msgstr "FastStudy שולחת מידע רק לשירותים שהגדרת בעצמך:"
 
@@ -1271,11 +1292,11 @@ msgstr "FastStudy מתחברת ל-<0>{host}</0> עם החשבון הזה כדי 
 msgid "FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "FastStudy משתמשת ב-Google Chrome או ב-Microsoft Edge כדי להוריד הקלטות מאתר הקורס. הפיכת וידאו לסיכום לא דורשת דפדפן."
 
-#: src/features/settings/InitWall.tsx:220
+#: src/features/settings/InitWall.tsx:221
 msgid "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "FastStudy משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:156
+#: src/features/settings/components/PrivacyPolicyModal.tsx:158
 msgid "FastStudy's use and transfer of information received from Google APIs will adhere to the <0>Google API Services User Data Policy</0>, including the Limited Use requirements."
 msgstr "השימוש של FastStudy במידע שמתקבל מ-Google APIs והעברתו יעמדו ב<0>מדיניות נתוני המשתמש של Google API Services</0>, כולל דרישות השימוש המוגבל (⁨Limited Use⁩)."
 
@@ -1283,9 +1304,14 @@ msgstr "השימוש של FastStudy במידע שמתקבל מ-Google APIs וה�
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:326
+#: src/features/settings/InitWall.tsx:327
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
+
+#: src/features/settings/InitWall.tsx:330
+#: src/features/settings/SettingsView.tsx:323
+msgid "Fill in the required fields first"
+msgstr "מלא קודם את שדות החובה"
 
 #: src/features/downloads/components/AccountStatus.tsx:157
 msgid "finish login in the browser window"
@@ -1304,15 +1330,15 @@ msgstr "יש להשלים את ההתחברות ל-Google בלשונית שנפ�
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "נמצא ה-Moodle של האוניברסיטה: <0>{0}</0>"
 
-#: src/features/settings/components/AutoRemoveField.tsx:52
+#: src/features/settings/components/AutoRemoveField.tsx:62
 msgid "Frees up disk space once a lecture is finished. The transcript, the summary and the PDF are always kept."
 msgstr "מפנה מקום במחשב אחרי שהרצאה הושלמה. התמלול, הסיכום וה-PDF נשמרים תמיד."
 
-#: src/features/settings/SettingsView.tsx:622
+#: src/features/settings/SettingsView.tsx:631
 msgid "From now on, each lecture's files are removed the same way once it reaches that point."
 msgstr "מעכשיו, הקבצים של כל הרצאה יוסרו באותו אופן ברגע שהיא תגיע לשלב הזה."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:121
+#: src/features/settings/components/PrivacyPolicyModal.tsx:123
 msgid "Gemini gets the transcript and any PDFs you add, to write the summary."
 msgstr "Gemini מקבל את התמלול וכל PDF שהוספת, כדי לכתוב את הסיכום."
 
@@ -1328,11 +1354,19 @@ msgstr "יצירה"
 msgid "Generate Course Overviews"
 msgstr "יצירת סקירות הקורס"
 
+#: src/features/lectures/components/StudyWithAiCard.tsx:109
+msgid "Generate the summary first"
+msgstr "צור קודם את הסיכום"
+
+#: src/features/course-overview/components/StepRow.tsx:52
+msgid "Generate this step first"
+msgstr "צור קודם את השלב הזה"
+
 #: src/features/course-overview/CourseView.tsx:78
 msgid "Generating · {runningTitle}"
 msgstr "יוצר · {runningTitle}"
 
-#: src/features/course-overview/components/StepRow.tsx:75
+#: src/features/course-overview/components/StepRow.tsx:82
 msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "יצירה משלב {stepLabel} תבנה מחדש את:"
 
@@ -1349,8 +1383,8 @@ msgstr "תן לפרויקט שם כלשהו ולחץ על \"Create project\"."
 msgid "Google account"
 msgstr "חשבון Google"
 
-#: src/features/settings/InitWall.tsx:277
-#: src/features/settings/SettingsView.tsx:415
+#: src/features/settings/InitWall.tsx:278
+#: src/features/settings/SettingsView.tsx:424
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -1358,7 +1392,7 @@ msgstr "Google Drive"
 msgid "Google Drive can't be connected: a file FastStudy needs is missing from {path}."
 msgstr "לא ניתן לחבר את Google Drive: חסר קובץ ש-FastStudy זקוקה לו ב-{path}."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:124
+#: src/features/settings/components/PrivacyPolicyModal.tsx:126
 msgid "Google Drive gets the summary PDF, and only if you turned Drive upload on."
 msgstr "Google Drive מקבל את ה-PDF של הסיכום, ורק אם הפעלת העלאה ל-Drive."
 
@@ -1366,7 +1400,7 @@ msgstr "Google Drive מקבל את ה-PDF של הסיכום, ורק אם הפע�
 msgid "Google Drive is not connected. Connect it in Settings."
 msgstr "Google Drive לא מחובר. חבר אותו בהגדרות."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:118
+#: src/features/settings/components/PrivacyPolicyModal.tsx:120
 msgid "Groq gets a lecture's audio to transcribe it."
 msgstr "Groq מקבל את השמע של הרצאה כדי לתמלל אותו."
 
@@ -1403,7 +1437,7 @@ msgstr "אישרתי, לנסות שוב"
 msgid "I solved the captcha"
 msgstr "פתרתי את החידה"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:65
+#: src/features/lectures/components/StudyWithAiCard.tsx:66
 msgid "I want to study this lecture in depth, and soon I'll ask you specific questions about it. Its summary is below.\n"
 "\n"
 "To start, reply with a single sentence — \"What do you want to learn first?\" — followed by a numbered list of 4–6 topics from the lecture to choose from."
@@ -1444,7 +1478,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:451
+#: src/features/lectures/MainView.tsx:453
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -1456,7 +1490,7 @@ msgstr "עודכן לאחרונה ב-Moodle"
 msgid "lecture"
 msgstr "הרצאה"
 
-#: src/features/downloads/components/ManualDownload.tsx:152
+#: src/features/downloads/components/ManualDownload.tsx:161
 #: src/features/downloads/components/RecordingRow.tsx:229
 msgid "Lecture"
 msgstr "הרצאה"
@@ -1506,7 +1540,7 @@ msgstr "הרצאות בלבד, בקורסים שאבחר"
 msgid "Lectures you marked done"
 msgstr "הרצאות שסיימת"
 
-#: src/features/settings/InitWall.tsx:195
+#: src/features/settings/InitWall.tsx:196
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
@@ -1556,7 +1590,7 @@ msgid "Material"
 msgstr "חומר"
 
 #: src/features/downloads/DownloadsView.tsx:74
-#: src/features/lectures/MainView.tsx:473
+#: src/features/lectures/MainView.tsx:475
 msgid "Materials"
 msgstr "חומרים"
 
@@ -1569,7 +1603,7 @@ msgstr "Moodle דחה את הבקשה."
 msgid "More actions"
 msgstr "פעולות נוספות"
 
-#: src/features/downloads/components/ManualDownload.tsx:165
+#: src/features/downloads/components/ManualDownload.tsx:174
 msgid "Name in the course"
 msgstr "השם בקורס"
 
@@ -1588,6 +1622,10 @@ msgstr "לא"
 #: src/features/lectures/sidebar/tree/ArchivedSection.tsx:32
 msgid "No archived courses"
 msgstr "אין קורסים בארכיון"
+
+#: src/features/settings/components/AutoRemoveField.tsx:43
+msgid "No changes to apply"
+msgstr "אין שינויים לשמור"
 
 #: src/features/settings/components/BrowserPrereqField.tsx:37
 msgid "No Chrome or Edge found on this computer."
@@ -1625,7 +1663,7 @@ msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרו
 msgid "No Lectures"
 msgstr "אין הרצאות"
 
-#: src/features/course-overview/components/CurrentStudy.tsx:28
+#: src/features/course-overview/components/CurrentStudy.tsx:30
 msgid "No lectures yet"
 msgstr "אין עדיין הרצאות"
 
@@ -1665,7 +1703,7 @@ msgstr "אין עדיין PDF — השתמש ב\"שמירה ועדכון PDF\" �
 msgid "No Recitations"
 msgstr "אין תרגולים"
 
-#: src/features/course-overview/components/CurrentStudy.tsx:32
+#: src/features/course-overview/components/CurrentStudy.tsx:36
 msgid "No recitations yet"
 msgstr "אין עדיין תרגולים"
 
@@ -1703,7 +1741,7 @@ msgstr "לא מחובר"
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
-#: src/features/lectures/MainView.tsx:436
+#: src/features/lectures/MainView.tsx:438
 msgid "not provided"
 msgstr "חסר"
 
@@ -1755,7 +1793,7 @@ msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {h
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר האוניברסיטה) והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:113
+#: src/features/lectures/components/StudyWithAiCard.tsx:115
 msgid "Open chat"
 msgstr "פתיחת צ'אט"
 
@@ -1780,7 +1818,7 @@ msgstr "פתיחה ב-Drive"
 msgid "Open lecture"
 msgstr "פתיחת ההרצאה"
 
-#: src/features/lectures/MainView.tsx:480
+#: src/features/lectures/MainView.tsx:482
 msgid "Open material"
 msgstr "פתיחת החומר"
 
@@ -1801,11 +1839,11 @@ msgstr "פתיחת החידה מחדש"
 msgid "Open the FastStudy app to choose a folder."
 msgstr "כדי לבחור תיקייה, פתח את FastStudy."
 
-#: src/features/course-overview/components/CurrentStudy.tsx:43
+#: src/features/course-overview/components/CurrentStudy.tsx:47
 msgid "Open the first lecture you haven't finished yet"
 msgstr "פתיחת ההרצאה הראשונה שעוד לא סיימת"
 
-#: src/features/course-overview/components/CurrentStudy.tsx:50
+#: src/features/course-overview/components/CurrentStudy.tsx:55
 msgid "Open the first recitation you haven't finished yet"
 msgstr "פתיחת התרגול הראשון שעוד לא סיימת"
 
@@ -1821,7 +1859,7 @@ msgstr "פתח את אתר האוניברסיטה בדפדפן שלך ופתור
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
 msgstr "פתח בדפדפן את ה-Moodle של האוניברסיטה (האתר עם הקורסים והקלטות ההרצאות שלך), העתק את הכתובת מהשורה שבראש הדפדפן והדבק אותה כאן."
 
-#: src/features/settings/InitWall.tsx:65
+#: src/features/settings/InitWall.tsx:66
 msgctxt "section mark"
 msgid "Optional"
 msgstr "לא חובה"
@@ -1862,11 +1900,15 @@ msgstr "קוד גישה"
 msgid "Paste a URL instead"
 msgstr "הדבקת כתובת במקום"
 
+#: src/features/downloads/components/ManualDownload.tsx:81
+msgid "Paste a video link first"
+msgstr "הדבק קודם קישור לוידאו"
+
 #: src/features/downloads/components/CourseUrlPaste.tsx:53
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "הדבק את כתובת עמוד הקורס (…/course/view.php?id=…)"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:149
+#: src/features/lectures/components/StudyWithAiCard.tsx:152
 msgid "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgstr "הדבק את תוכן ההרצאה עם Ctrl+V בחלון שייפתח, העתקנו כבר מה שצריך בשבילך."
 
@@ -1907,12 +1949,12 @@ msgstr "טעויות נפוצות"
 msgid "Privacy policy"
 msgstr "מדיניות פרטיות"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:196
+#: src/features/settings/components/PrivacyPolicyModal.tsx:198
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-GitHub: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
 #: src/features/downloads/components/FolderJobList.tsx:78
-#: src/features/downloads/components/ManualDownload.tsx:257
+#: src/features/downloads/components/ManualDownload.tsx:266
 #: src/features/runner/RunnerView.tsx:331
 msgid "Queued"
 msgstr "בתור"
@@ -1926,7 +1968,7 @@ msgstr "הורדה מחדש ↻"
 msgid "Re-generate {title}"
 msgstr "יצירה מחדש של {title}"
 
-#: src/features/course-overview/components/StepRow.tsx:50
+#: src/features/course-overview/components/StepRow.tsx:53
 msgid "Re-generate from {stepLabel}"
 msgstr "יצירה מחדש משלב {stepLabel}"
 
@@ -1935,7 +1977,7 @@ msgstr "יצירה מחדש משלב {stepLabel}"
 msgid "recitation"
 msgstr "תרגול"
 
-#: src/features/downloads/components/ManualDownload.tsx:158
+#: src/features/downloads/components/ManualDownload.tsx:167
 #: src/features/downloads/components/RecordingRow.tsx:235
 msgid "Recitation"
 msgstr "תרגול"
@@ -1993,7 +2035,7 @@ msgstr "הקלטות. הורדת הקלטה לא מפעילה דבר, ואת ה�
 msgid "Reload"
 msgstr "רענון"
 
-#: src/features/settings/SettingsView.tsx:620
+#: src/features/settings/SettingsView.tsx:629
 msgid "Remove files from every existing lecture?"
 msgstr "להסיר קבצים מכל ההרצאות הקיימות?"
 
@@ -2022,7 +2064,7 @@ msgstr "להחליף את הווידאו הקיים ב\"{0}\"?"
 msgid "Required"
 msgstr "חובה"
 
-#: src/features/settings/InitWall.tsx:55
+#: src/features/settings/InitWall.tsx:56
 msgctxt "section mark"
 msgid "Required"
 msgstr "חובה"
@@ -2039,11 +2081,11 @@ msgstr "שחזור המקור"
 msgid "Results"
 msgstr "תוצאות"
 
-#: src/features/settings/SettingsView.tsx:177
+#: src/features/settings/SettingsView.tsx:178
 msgid "Retry"
 msgstr "ניסיון חוזר"
 
-#: src/features/downloads/components/ManualDownload.tsx:282
+#: src/features/downloads/components/ManualDownload.tsx:291
 #: src/features/downloads/components/RecordingJobList.tsx:61
 #: src/features/downloads/components/RecordingRow.tsx:325
 msgid "Retry ✗"
@@ -2058,7 +2100,7 @@ msgstr "יצירה מחדש של {file}"
 msgid "Run Remaining"
 msgstr "הרצת השלבים הנותרים"
 
-#: src/features/settings/SettingsView.tsx:471
+#: src/features/settings/SettingsView.tsx:480
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
@@ -2066,7 +2108,7 @@ msgstr "להריץ את כל השלבים"
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
-#: src/features/settings/SettingsView.tsx:492
+#: src/features/settings/SettingsView.tsx:501
 msgid "Run unfinished lectures daily"
 msgstr "להריץ מדי יום הרצאות שלא הסתיימו"
 
@@ -2082,7 +2124,7 @@ msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
 
 #: src/features/downloads/components/CourseUrlPaste.tsx:58
-#: src/features/settings/SettingsView.tsx:341
+#: src/features/settings/SettingsView.tsx:349
 msgid "Save"
 msgstr "שמירה"
 
@@ -2106,7 +2148,7 @@ msgstr "שמור כדי לבחור את הקורסים."
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:335
+#: src/features/settings/InitWall.tsx:337
 msgid "Saving…"
 msgstr "שומר…"
 
@@ -2118,7 +2160,11 @@ msgstr "צילום מסך של {name}, שלב {step}"
 msgid "Screenshot of step {step}"
 msgstr "צילום מסך של שלב {step}"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:208
+#: src/features/settings/components/PrivacyPolicyModal.tsx:213
+msgid "Scroll to the end of the policy first"
+msgstr "גלול קודם עד סוף המדיניות"
+
+#: src/features/settings/components/PrivacyPolicyModal.tsx:210
 msgid "Scroll to the end to confirm."
 msgstr "גלול עד הסוף כדי לאשר."
 
@@ -2155,13 +2201,13 @@ msgstr "שליחת דיווחי שגיאות"
 msgid "session expired"
 msgstr "תוקף החיבור פג"
 
-#: src/features/settings/SettingsView.tsx:168
-#: src/features/settings/SettingsView.tsx:328
+#: src/features/settings/SettingsView.tsx:169
+#: src/features/settings/SettingsView.tsx:335
 #: src/shared/sidebar/Sidebar.tsx:87
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:247
+#: src/features/settings/SettingsView.tsx:248
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -2205,7 +2251,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (לא חובה)…"
 
-#: src/features/settings/InitWall.tsx:335
+#: src/features/settings/InitWall.tsx:337
 msgid "Start using FastStudy"
 msgstr "להתחיל להשתמש ב-FastStudy"
 
@@ -2221,7 +2267,7 @@ msgstr "שלב {0} מתוך {1}"
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:405
+#: src/features/settings/SettingsView.tsx:414
 msgid "Storage"
 msgstr "אחסון"
 
@@ -2229,7 +2275,7 @@ msgstr "אחסון"
 msgid "Student QA"
 msgstr "שאלות סטודנטים"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:98
+#: src/features/lectures/components/StudyWithAiCard.tsx:99
 msgid "Study with AI"
 msgstr "ללמוד עם AI"
 
@@ -2261,7 +2307,7 @@ msgstr "סיכום התמלול נכשל."
 msgid "Summary"
 msgstr "סיכום"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:75
+#: src/features/lectures/components/StudyWithAiCard.tsx:76
 msgid "Summary copied — paste it in the chat with Ctrl+V."
 msgstr "הסיכום הועתק — הדבק אותו בצ'אט עם Ctrl+V."
 
@@ -2273,7 +2319,7 @@ msgstr "הסיכום לא השתמש ב-{name}"
 msgid "summary did not use any material"
 msgstr "הסיכום לא השתמש באף חומר"
 
-#: src/features/settings/SettingsView.tsx:383
+#: src/features/settings/SettingsView.tsx:392
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -2343,7 +2389,7 @@ msgstr "השלב הזה כבוי בהגדרות."
 msgid "That's probably because Windows quarantined the app — restart the app and follow the instructions."
 msgstr "כנראה ש-Windows העביר את האפליקציה להסגר — הפעל מחדש את האפליקציה ופעל לפי ההוראות."
 
-#: src/features/settings/SettingsView.tsx:356
+#: src/features/settings/SettingsView.tsx:365
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "מפתחות ה-API ומודל הסיכום לא זמינים כרגע. הם יחזרו לכאן מעצמם."
 
@@ -2359,7 +2405,7 @@ msgstr "החידה באתר האוניברסיטה לא נפתרה תוך 10 ד�
 msgid "The course \"{course}\" was not found."
 msgstr "הקורס \"{course}\" לא נמצא."
 
-#: src/features/settings/SettingsView.tsx:515
+#: src/features/settings/SettingsView.tsx:524
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "גם ההרצה היומית פועלת לפי ההגדרה שלמעלה: אם היא מוגדרת לא לעשות דבר, גם ההרצה היומית לא תעשה דבר."
 
@@ -2391,7 +2437,7 @@ msgstr "לא ניתן לשמור את הקובץ שהורד."
 msgid "The downloader can't fetch this file"
 msgstr "אי אפשר להוריד את הקובץ הזה"
 
-#: src/features/settings/SettingsView.tsx:217
+#: src/features/settings/SettingsView.tsx:218
 msgid "The files weren't removed. Press Apply under “Disk space” to try again."
 msgstr "הקבצים לא הוסרו. כדי לנסות שוב, לחץ על \"החל\" תחת \"מקום במחשב\"."
 
@@ -2403,7 +2449,7 @@ msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
-#: src/features/lectures/MainView.tsx:509
+#: src/features/lectures/MainView.tsx:511
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -2411,7 +2457,7 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייווצרו מחדש:"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:135
+#: src/features/settings/components/PrivacyPolicyModal.tsx:137
 msgid "The Google access token is stored only on your computer and is never sent to FastStudy's author, who receives no Google user data. You can disconnect Drive in Settings, which deletes the token, or revoke access in your <0>Google account permissions</0>."
 msgstr "אסימון הגישה של Google נשמר רק במחשב שלך ולעולם לא נשלח ליוצר FastStudy, שלא מקבל שום מידע של משתמשי Google. אפשר לנתק את Drive בהגדרות, וזה מוחק את האסימון, או לבטל את הגישה ב<0>הרשאות של חשבון Google</0>."
 
@@ -2432,7 +2478,7 @@ msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחב
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:526
+#: src/features/lectures/MainView.tsx:528
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -2513,11 +2559,11 @@ msgstr "אתר האוניברסיטה עסוק בבקשה אחרת. נסה שו�
 msgid "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 msgstr "אתר האוניברסיטה מבקש ממך לפתור חידה. פתור אותה בחלון שנפתח. אפשר לשמור את האתר בכל זאת."
 
-#: src/features/settings/SettingsView.tsx:93
+#: src/features/settings/SettingsView.tsx:94
 msgid "The video and audio of every lecture already uploaded to Drive will be deleted from this computer. They cannot be recovered."
 msgstr "הווידאו והשמע של כל הרצאה שכבר הועלתה ל-Drive יימחקו מהמחשב. אי אפשר יהיה לשחזר אותם."
 
-#: src/features/settings/SettingsView.tsx:92
+#: src/features/settings/SettingsView.tsx:93
 msgid "The video and audio of every lecture that already has a PDF will be deleted from this computer. They cannot be recovered."
 msgstr "הווידאו והשמע של כל הרצאה שכבר יש לה PDF יימחקו מהמחשב. אי אפשר יהיה לשחזר אותם."
 
@@ -2525,11 +2571,11 @@ msgstr "הווידאו והשמע של כל הרצאה שכבר יש לה PDF י
 msgid "The video downloaded, but it couldn't be saved into {folder}."
 msgstr "הווידאו הורד, אבל לא ניתן לשמור אותו בתיקייה {folder}."
 
-#: src/features/settings/SettingsView.tsx:89
+#: src/features/settings/SettingsView.tsx:90
 msgid "The video of every lecture already uploaded to Drive will be deleted from this computer. It cannot be recovered."
 msgstr "הווידאו של כל הרצאה שכבר הועלתה ל-Drive יימחק מהמחשב. אי אפשר יהיה לשחזר אותו."
 
-#: src/features/settings/SettingsView.tsx:88
+#: src/features/settings/SettingsView.tsx:89
 msgid "The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered."
 msgstr "הווידאו של כל הרצאה שכבר יש לה PDF יימחק מהמחשב. אי אפשר יהיה לשחזר אותו."
 
@@ -2550,7 +2596,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:510
+#: src/features/lectures/MainView.tsx:512
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
@@ -2562,11 +2608,11 @@ msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה ה
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:111
+#: src/features/settings/components/PrivacyPolicyModal.tsx:113
 msgid "Third-party services"
 msgstr "שירותי צד שלישי"
 
-#: src/features/settings/SettingsView.tsx:476
+#: src/features/settings/SettingsView.tsx:485
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
@@ -2608,7 +2654,7 @@ msgstr "הווידאו של ההרצאה הזו אינו קובץ MP4 שאפשר
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
-#: src/features/settings/InitWall.tsx:198
+#: src/features/settings/InitWall.tsx:199
 msgid "This only needs to be done once."
 msgstr "צריך לעשות את זה רק פעם אחת."
 
@@ -2656,11 +2702,11 @@ msgstr "לנסות שוב"
 msgid "Turn on Developer mode"
 msgstr "הפעלת מצב פיתוח"
 
-#: src/features/settings/components/AutoRemoveField.tsx:98
+#: src/features/settings/components/AutoRemoveField.tsx:108
 msgid "Turn on the Google Drive upload above to choose this."
 msgstr "כדי לבחור באפשרות הזו, הפעל למעלה את ההעלאה ל-Google Drive."
 
-#: src/features/downloads/components/ManualDownload.tsx:145
+#: src/features/downloads/components/ManualDownload.tsx:154
 msgid "Type"
 msgstr "סוג"
 
@@ -2686,7 +2732,7 @@ msgstr "חשבון האוניברסיטה"
 msgid "University account connected"
 msgstr "חשבון האוניברסיטה מחובר"
 
-#: src/features/settings/SettingsView.tsx:122
+#: src/features/settings/SettingsView.tsx:123
 msgid "University saved"
 msgstr "האוניברסיטה נשמרה"
 
@@ -2706,7 +2752,7 @@ msgstr "לא נתמך"
 msgid "Updated. Restart to update"
 msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את העדכון"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:186
+#: src/features/settings/components/PrivacyPolicyModal.tsx:188
 msgid "Updates"
 msgstr "עדכונים"
 
@@ -2738,21 +2784,25 @@ msgstr "ההעלאה ל-Google Drive נכשלה."
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
+#: src/features/settings/components/AutoRemoveField.tsx:39
+msgid "Use Save at the top of the page first"
+msgstr "לחץ קודם על שמירה בראש העמוד"
+
 #: src/features/downloads/components/AccountStatus.tsx:284
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ופתור שם את החידה. ואז לחץ על \"אישרתי, לנסות שוב\"."
 
 #: src/features/downloads/components/RecordingRow.tsx:54
 #: src/features/lectures/constants/pipeline.ts:18
-#: src/features/settings/components/AutoRemoveField.tsx:28
+#: src/features/settings/components/AutoRemoveField.tsx:29
 msgid "Video"
 msgstr "וידאו"
 
-#: src/features/settings/components/AutoRemoveField.tsx:29
+#: src/features/settings/components/AutoRemoveField.tsx:30
 msgid "Video and audio"
 msgstr "וידאו ושמע"
 
-#: src/features/downloads/components/ManualDownload.tsx:116
+#: src/features/downloads/components/ManualDownload.tsx:125
 msgid "Video link"
 msgstr "קישור לווידאו"
 
@@ -2776,27 +2826,27 @@ msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמו
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/components/AutoRemoveField.tsx:64
+#: src/features/settings/components/AutoRemoveField.tsx:74
 msgid "What to remove"
 msgstr "מה להסיר"
 
-#: src/features/settings/SettingsView.tsx:462
+#: src/features/settings/SettingsView.tsx:471
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:170
+#: src/features/settings/components/PrivacyPolicyModal.tsx:172
 msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 msgstr "כשמשהו נכשל, FastStudy שולחת דיווח ל-Sentry. הוא כולל את השגיאה, את המקום בקוד שבו היא קרתה, את גרסת האפליקציה, את מערכת ההפעלה שלך ואת סוף היומן של האפליקציה. <0>נתיבי תיקיות, טקסט בעברית, שמות המשתמש והמחשב ומפתחות API מוסרים לפני השליחה. מפתחות ה־API נשארים כל הזמן מוצפנים במחשב שלכם, נשלחים רק לשירות שהנפיק אותם, ולעולם לא נשלחים לאף שירות חיצוני אחר.</0> הדיווחים משמשים רק לתיקון באגים, ו-Sentry שומרת אותם לזמן מוגבל. אפשר לכבות אותם בכל עת בהגדרות, ומאותו רגע לא נשלח דבר נוסף."
 
-#: src/features/settings/components/AutoRemoveField.tsx:80
+#: src/features/settings/components/AutoRemoveField.tsx:90
 msgid "When to remove"
 msgstr "מתי להסיר"
 
-#: src/features/settings/SettingsView.tsx:540
+#: src/features/settings/SettingsView.tsx:549
 msgid "Where \"Study with AI\" opens a lecture's summary."
 msgstr "הצ'אט שאיתו תלמד את ההרצאה בלחיצה על \"ללמוד עם AI\"."
 
-#: src/features/settings/InitWall.tsx:244
+#: src/features/settings/InitWall.tsx:245
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -2828,7 +2878,7 @@ msgstr "כן"
 msgid "You can connect the account once your university is saved."
 msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
 
-#: src/features/settings/InitWall.tsx:301
+#: src/features/settings/InitWall.tsx:302
 msgid "You must read the privacy policy before you continue."
 msgstr "עליך לקרוא את מדיניות הפרטיות לפני שתמשיך."
 
@@ -2836,15 +2886,15 @@ msgstr "עליך לקרוא את מדיניות הפרטיות לפני שתמש
 msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
 msgstr "אתה מחובר לחשבון ב-{foreignName}. התחברות כאן תנתק אותך ממנו."
 
-#: src/features/settings/InitWall.tsx:226
+#: src/features/settings/InitWall.tsx:227
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-FastStudy אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
 
-#: src/features/settings/InitWall.tsx:217
+#: src/features/settings/InitWall.tsx:218
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלך"
 
-#: src/features/settings/InitWall.tsx:255
+#: src/features/settings/InitWall.tsx:256
 msgid "Your university"
 msgstr "האוניברסיטה שלך"
 

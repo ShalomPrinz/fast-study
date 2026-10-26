@@ -45,9 +45,16 @@ export default function StepRow({ step }: { step: OverviewStep }) {
 
   const modifier = exists ? ' overview-phase--done' : stepRunning ? ' overview-phase--running' : ''
 
+  // While the branch runs every phase is busy, not blocked, so none gets a hint.
+  const tip = bs.running
+    ? undefined
+    : !exists
+      ? t`Generate this step first`
+      : t`Re-generate from ${stepLabel}`
+
   return (
     <>
-      <Tooltip content={exists ? t`Re-generate from ${stepLabel}` : undefined}>
+      <Tooltip content={tip}>
         <button
           className={`overview-phase${modifier}`}
           onClick={() => setRegenerateOpen(true)}

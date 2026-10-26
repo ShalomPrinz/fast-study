@@ -57,6 +57,7 @@ import {
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
 import { privacyAnswer, restartNotice } from './utils/privacy'
+import Tooltip from '@/shared/components/Tooltip'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import '@/styles/modal.css'
@@ -317,6 +318,12 @@ export default function SettingsView() {
 
   const autoRemoveReady = autoRemoveComplete(form.autoRemove, form.driveEnabled)
   const autoRemoveChanged = autoRemoveDirty(form.autoRemove, stored)
+  const saveBlocker =
+    missing.length > 0
+      ? t`Fill in the required fields first`
+      : autoRemoveChanged && !autoRemoveReady
+        ? t`Choose when to remove the files first`
+        : undefined
 
   const provider = (id: string) => options?.providers.find((p) => p.id === id)
   const gemini = provider('gemini')
@@ -327,19 +334,21 @@ export default function SettingsView() {
       <PageHeader
         title={t`Settings`}
         actions={
-          <button
-            className="btn btn--primary"
-            // A half-chosen auto-remove holds Save the same way it holds Apply.
-            disabled={
-              saving ||
-              siteChecking ||
-              missing.length > 0 ||
-              (autoRemoveChanged && !autoRemoveReady)
-            }
-            onClick={save}
-          >
-            <Trans>Save</Trans>
-          </button>
+          <Tooltip content={saveBlocker}>
+            <button
+              className="btn btn--primary"
+              // A half-chosen auto-remove holds Save the same way it holds Apply.
+              disabled={
+                saving ||
+                siteChecking ||
+                missing.length > 0 ||
+                (autoRemoveChanged && !autoRemoveReady)
+              }
+              onClick={save}
+            >
+              <Trans>Save</Trans>
+            </button>
+          </Tooltip>
         }
       />
       <div className="page-body">

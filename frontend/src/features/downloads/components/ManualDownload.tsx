@@ -77,6 +77,15 @@ function ManualForm() {
   const kind = onlyLectures ? lecturesOnlyKind(courses, course, lecture.trim()) : picked
   const locked = lockedFor(url)
   const ready = !!url.trim() && !!course && !!lecture.trim() && !pending && !locked
+  const downloadBlocker = !url.trim()
+    ? t`Paste a video link first`
+    : !course
+      ? t`Choose a course first`
+      : !lecture.trim()
+        ? t`Enter a name first`
+        : locked
+          ? moodleBusyMessage()
+          : undefined
 
   async function submit() {
     const request = { url: url.trim(), course, lecture: lecture.trim(), kind }
@@ -172,7 +181,7 @@ function ManualForm() {
           dir="auto"
         />
       </div>
-      <Tooltip content={locked ? moodleBusyMessage() : undefined}>
+      <Tooltip content={downloadBlocker}>
         <button className="btn btn--primary" onClick={onDownload} disabled={!ready}>
           {pending ? <span className="recording-spinner" /> : t`Download`}
         </button>

@@ -72,8 +72,9 @@ export function autoRemoveWidens(form: AutoRemoveForm, stored: Settings): boolea
 }
 
 // What the section's Apply does now: save the edit, re-run the sweep for the stored rule (a retry after
-// a locked file or a failure, no confirm since the rule was confirmed), wait for the page's Save, or nothing.
-export type AutoRemoveApply = 'save' | 'sweep' | 'needs-page-save' | null
+// a locked file or a failure, no confirm since the rule was confirmed), wait for the page's Save, nothing
+// to apply (`unchanged`), or `null` for an incomplete edit (and, from the page, while it is busy).
+export type AutoRemoveApply = 'save' | 'sweep' | 'needs-page-save' | 'unchanged' | null
 
 /** Apply's action. "After Drive" with the Drive toggle unsaved needs the page's Save, which stores both:
  *  saving the rule alone would confirm deletions the backend skips while the stored Drive is off. */
@@ -84,7 +85,7 @@ export function autoRemoveApply(
 ): AutoRemoveApply {
   if (!autoRemoveDirty(form, stored)) {
     const saved = autoRemoveFromStore(stored)
-    return saved.on && saved.after !== null ? 'sweep' : null
+    return saved.on && saved.after !== null ? 'sweep' : 'unchanged'
   }
   if (!autoRemoveComplete(form, driveEnabled)) return null
   if (form.on && form.after === 'drive' && driveEnabled !== (stored.driveEnabled ?? false)) {

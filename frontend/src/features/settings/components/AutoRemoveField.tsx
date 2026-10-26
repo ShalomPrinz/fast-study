@@ -1,5 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import type { AutoRemoveAfter } from '@/services/settings'
+import Tooltip from '@/shared/components/Tooltip'
 import {
   AUTO_REMOVE_CHECKED,
   type AutoRemoveApply,
@@ -15,7 +16,7 @@ interface Props {
   onChange: (value: AutoRemoveForm) => void
   // The form's Drive toggle, not the stored one: "after Drive" follows what the page is about to save.
   driveEnabled: boolean
-  // What Apply would do (`autoRemoveApply`); `null` while busy or with nothing to do disables it.
+  // What Apply would do (`autoRemoveApply`); `null` (busy or incomplete) and `unchanged` disable it.
   apply: AutoRemoveApply
   onApply: () => void
 }
@@ -32,6 +33,15 @@ export default function AutoRemoveField({ value, onChange, driveEnabled, apply, 
     { id: 'pdf', label: t`After the PDF is created`, disabled: false },
     { id: 'drive', label: t`After the PDF is uploaded to Drive`, disabled: !driveEnabled },
   ]
+  // A busy page (null with a complete form) shows no hint, by design.
+  const applyBlocker =
+    apply === 'needs-page-save'
+      ? t`Use Save at the top of the page first`
+      : apply === null && value.on && value.after === null
+        ? t`Choose when to remove the files first`
+        : apply === 'unchanged'
+          ? t`No changes to apply`
+          : undefined
 
   return (
     <div className="settings-field auto-remove" id="auto-remove">
@@ -118,13 +128,15 @@ export default function AutoRemoveField({ value, onChange, driveEnabled, apply, 
             </Trans>
           </span>
         )}
-        <button
-          className="btn btn--ghost"
-          disabled={apply !== 'save' && apply !== 'sweep'}
-          onClick={onApply}
-        >
-          <Trans>Apply</Trans>
-        </button>
+        <Tooltip content={applyBlocker}>
+          <button
+            className="btn btn--ghost"
+            disabled={apply !== 'save' && apply !== 'sweep'}
+            onClick={onApply}
+          >
+            <Trans>Apply</Trans>
+          </button>
+        </Tooltip>
       </div>
     </div>
   )

@@ -20,8 +20,8 @@ import './Tooltip.css'
 
 const OPEN_DELAY_MS = 400
 
-// The app's hover hint, in place of a DOM `title`: opens on hover after a beat and on keyboard focus,
-// closes at once. The child must take a ref (a DOM element or a ref-forwarding component).
+// The app's hover hint, in place of `title`: opens on hover after a beat and on focus (hover only on a
+// disabled button, which takes no focus and gets no wrapper). The child must take a ref.
 export default function Tooltip({
   content,
   placement = 'top',
@@ -59,7 +59,7 @@ export default function Tooltip({
   const ref = useMergeRefs([refs.setReference, childRef])
 
   // A hint that empties while open must not reappear without a fresh hover; adjusting state during
-  // render, and always cloning the child, keeps the control mounted as the hint comes and goes.
+  // render, and cloning the child without a wrapper, keeps the control mounted as the hint toggles.
   if (!enabled && open) setOpen(false)
 
   return (
