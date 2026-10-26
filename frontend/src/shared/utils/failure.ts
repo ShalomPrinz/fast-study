@@ -10,13 +10,20 @@ export function failureOf(err: unknown): ServiceFailure {
   if (err instanceof RequestError) {
     return { message: err.message, code: err.code, params: err.params }
   }
-  if (carriesCode(err)) return { message: err.message, code: err.code, params: err.params ?? null }
+  if (carriesCode(err)) {
+    return { message: String(err.message ?? ''), code: err.code, params: err.params ?? null }
+  }
   return { message: err instanceof Error ? err.message : String(err) }
 }
 
-// Duck-typed so `shared/` needs no import from a feature's error classes.
-function carriesCode(err: unknown): err is Error & ServiceFailure & { code: string } {
-  return err instanceof Error && typeof (err as { code?: unknown }).code === 'string'
+// Duck-typed so `shared/` needs no import from a feature's error classes; a plain object counts
+// because the Electron bridge rejects with one (a context-bridged Error loses its properties).
+function carriesCode(
+  err: unknown,
+): err is { message?: unknown } & Omit<ServiceFailure, 'message'> & { code: string } {
+  return (
+    typeof err === 'object' && err !== null && typeof (err as { code?: unknown }).code === 'string'
+  )
 }
 
 // The one funnel for a refused request's wording. A ConnectionError is skipped — the client already
@@ -28,5 +35,5 @@ export function toastFailure(err: unknown): void {
 
 // The same failure as a node, for the call sites that show it in place instead of toasting.
 export function failureNode(err: unknown): ReactNode {
-  return serviceErrorNode(failureOf(err))
+  return serviceErrorNode(failureOf(err), undefined, undefined, !isConnectionError(err))
 }

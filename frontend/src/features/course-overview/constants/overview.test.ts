@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { CourseExtractorState, CourseFile, CoursePhase, CourseStatus } from '@/types'
-import { branchBadge, branchStatus, extractorTitle, isBranchStale } from './overview'
+import { branchBadge, branchStatus, extractorTitle, isBare, isBranchStale } from './overview'
 
 const PHASES: CoursePhase[] = ['extract', 'analyze', 'to_pdf']
 const SLUG = 'exams'
@@ -54,8 +54,8 @@ describe('branchStatus', () => {
     })
   })
 
-  it('keeps the error path untouched', () => {
-    expect(branchStatus(failed, [], SLUG, PHASES).error).toBe('to_pdf blew up')
+  it('keeps the prose of a codeless error beneath the generic headline', () => {
+    expect(branchStatus(failed, [], SLUG, PHASES).error).toMatch(/to_pdf blew up$/)
   })
 
   // Codes, never copy: a skip's sentence belongs to the catalogs.
@@ -78,9 +78,9 @@ describe('branchStatus', () => {
     expect(branchStatus(st, [], SLUG, PHASES).warning).toContain('exams.txt')
   })
 
-  it("falls back to the service's prose for a skip code it has never heard of", () => {
+  it("keeps the service's prose beneath the generic headline for a skip code it has never heard of", () => {
     const st = skipped({ message: 'nothing to do here', code: 'invented_by_a_future_service' })
-    expect(branchStatus(st, [], SLUG, PHASES).warning).toBe('nothing to do here')
+    expect(branchStatus(st, [], SLUG, PHASES).warning).toMatch(/nothing to do here$/)
   })
 
   it('says nothing about an already-generated branch, which reads as done', () => {
@@ -150,5 +150,19 @@ describe('branchBadge', () => {
     const files = [stale[0], file('exams.pdf', { mtime: 200, warning: WARNING })]
     const bs = branchStatus(null, files, SLUG, PHASES)
     expect(branchBadge(bs, files, SLUG, PHASES)).toEqual({ kind: 'warning', title: WARNING })
+  })
+})
+
+describe('isBare', () => {
+  it('is true only with neither a code nor prose', () => {
+    expect(isBare({ status: 'error' })).toBe(true)
+    expect(isBare({ status: 'error', message: '' })).toBe(true)
+    expect(isBare({ status: 'error', message: 'boom' })).toBe(false)
+    expect(isBare({ status: 'error', code: 'some_code' })).toBe(false)
+  })
+
+  it('leaves the branch error as just the translated word', () => {
+    const bare: CourseStatus = { running: false, extractors: { [SLUG]: { status: 'error' } } }
+    expect(branchStatus(bare, [], SLUG, PHASES).error).toBe('failed')
   })
 })

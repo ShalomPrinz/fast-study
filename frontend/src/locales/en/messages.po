@@ -37,6 +37,10 @@ msgstr "\"{name}\" has no characters that can be used in a folder name."
 msgid "\"{name}\" is reserved for the course's own folders. Choose another name."
 msgstr "\"{name}\" is reserved for the course's own folders. Choose another name."
 
+#: src/shared/i18n/serviceErrors.ts:307
+msgid "\"{value}\" is not an allowed value for the setting \"{field}\"."
+msgstr "\"{value}\" is not an allowed value for the setting \"{field}\"."
+
 #: src/shared/components/LectureLead.tsx:7
 msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
 msgstr "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
@@ -54,7 +58,7 @@ msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {# lecture running} other {# lectures running}}"
 
 #. placeholder {0}: lectures.length
-#: src/features/course-overview/CourseView.tsx:82
+#: src/features/course-overview/CourseView.tsx:93
 msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {# lecture} other {# lectures}}"
 
@@ -64,7 +68,7 @@ msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
 
 #. placeholder {0}: recitations.length
-#: src/features/course-overview/CourseView.tsx:86
+#: src/features/course-overview/CourseView.tsx:97
 msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
@@ -215,7 +219,7 @@ msgid "{file} was not found."
 msgstr "{file} was not found."
 
 #. placeholder {0}: extractors.length
-#: src/features/course-overview/CourseView.tsx:114
+#: src/features/course-overview/CourseView.tsx:125
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
@@ -275,7 +279,7 @@ msgstr "{path} exists but is not a folder."
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
-#: src/features/course-overview/CourseView.tsx:89
+#: src/features/course-overview/CourseView.tsx:100
 msgid "{processed} fully processed"
 msgstr "{processed} fully processed"
 
@@ -938,7 +942,7 @@ msgstr "Course \"{course}\" doesn't exist."
 msgid "Course name…"
 msgstr "Course name…"
 
-#: src/features/course-overview/CourseView.tsx:111
+#: src/features/course-overview/CourseView.tsx:122
 msgid "Course overview"
 msgstr "Course overview"
 
@@ -1242,8 +1246,8 @@ msgstr "Extract the audio only"
 msgid "Extracting audio"
 msgstr "Extracting audio"
 
-#: src/features/course-overview/constants/overview.ts:104
-#: src/features/course-overview/CourseView.tsx:47
+#: src/features/course-overview/constants/overview.ts:111
+#: src/features/course-overview/CourseView.tsx:59
 msgid "failed"
 msgstr "failed"
 
@@ -1369,7 +1373,7 @@ msgstr "Generate the summary first"
 msgid "Generate this step first"
 msgstr "Generate this step first"
 
-#: src/features/course-overview/CourseView.tsx:78
+#: src/features/course-overview/CourseView.tsx:89
 msgid "Generating · {runningTitle}"
 msgstr "Generating · {runningTitle}"
 
@@ -2234,7 +2238,7 @@ msgstr "Show more"
 msgid "Show screenshot"
 msgstr "Show screenshot"
 
-#: src/features/course-overview/constants/overview.ts:85
+#: src/features/course-overview/constants/overview.ts:90
 msgid "skipped"
 msgstr "skipped"
 
@@ -2247,6 +2251,7 @@ msgid "Something went wrong"
 msgstr "Something went wrong"
 
 #: src/shared/i18n/serviceErrors.ts:39
+#: src/shared/i18n/serviceErrors.ts:316
 msgid "Something went wrong."
 msgstr "Something went wrong."
 
@@ -2497,7 +2502,7 @@ msgstr "The part of FastStudy that downloads recordings isn't responding. Restar
 msgid "The PDF could not be created."
 msgstr "The PDF could not be created."
 
-#: src/features/course-overview/constants/overview.ts:113
+#: src/features/course-overview/constants/overview.ts:121
 msgid "The PDF is older than an earlier step's output. Re-generate it."
 msgstr "The PDF is older than an earlier step's output. Re-generate it."
 
@@ -2528,6 +2533,26 @@ msgstr "the run was cancelled. Run the section again to pick them up."
 #: src/features/runner/RunnerView.tsx:335
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
+
+#: src/shared/i18n/serviceErrors.ts:301
+msgid "The setting \"{field}\" isn't recognized, so it wasn't saved."
+msgstr "The setting \"{field}\" isn't recognized, so it wasn't saved."
+
+#: src/shared/i18n/serviceErrors.ts:306
+msgid "The setting \"{field}\" must be a whole number."
+msgstr "The setting \"{field}\" must be a whole number."
+
+#: src/shared/i18n/serviceErrors.ts:310
+msgid "The setting \"{field}\" must be between {min} and {max}."
+msgstr "The setting \"{field}\" must be between {min} and {max}."
+
+#: src/shared/i18n/serviceErrors.ts:305
+msgid "The setting \"{field}\" must be on or off."
+msgstr "The setting \"{field}\" must be on or off."
+
+#: src/shared/i18n/serviceErrors.ts:304
+msgid "The setting \"{field}\" must be text."
+msgstr "The setting \"{field}\" must be text."
 
 #: src/features/downloads/components/MediaNote.tsx:20
 msgid "The site doesn't say what these files are. Each turns out to be a video or a material, known only after download."

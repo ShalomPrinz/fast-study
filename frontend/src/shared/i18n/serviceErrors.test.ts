@@ -19,14 +19,39 @@ describe('serviceErrorRow', () => {
 })
 
 describe('resolveServiceError', () => {
-  it("falls back to the service's own prose when the code has no row", () => {
+  it('falls back to a generic headline over the prose when the code has no row', () => {
     const prose = 'data root is not writable: /x (Permission denied)'
+    const withCode = resolveServiceError({ message: prose, code: 'unknown_step' })
+    const noCode = resolveServiceError({ message: prose })
 
-    expect(resolveServiceError({ message: prose, code: 'unknown_step' })).toEqual({
-      headline: prose,
-      detail: null,
+    expect(withCode.detail).toBe(prose)
+    expect(withCode.headline).not.toBe(prose)
+    expect(withCode.headline.length).toBeGreaterThan(0)
+    expect(noCode).toEqual(withCode)
+  })
+
+  it('has no detail for a row-less failure with empty prose', () => {
+    expect(resolveServiceError({ message: '', code: 'unknown_step' }).detail).toBeNull()
+  })
+
+  it('has rows for the settings IPC codes', () => {
+    for (const code of [
+      'unknown_setting',
+      'setting_must_be_string',
+      'setting_must_be_boolean',
+      'setting_must_be_integer',
+      'setting_invalid_choice',
+      'setting_out_of_range',
+    ]) {
+      expect(serviceErrorRow(code), code).not.toBeNull()
+    }
+    const { headline, detail } = resolveServiceError({
+      message: 'unknown setting: nightly',
+      code: 'unknown_setting',
+      params: { field: 'nightly' },
     })
-    expect(resolveServiceError({ message: prose })).toEqual({ headline: prose, detail: null })
+    expect(headline).toContain('nightly')
+    expect(detail).toBeNull()
   })
 
   it('writes its own sentence for a known code, not the prose', () => {

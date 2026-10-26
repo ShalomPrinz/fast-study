@@ -75,19 +75,21 @@ more machinery, and a second thing to keep in step, than the repeated string cos
 ## Resolution and the unknown-code fallback
 
 `frontend/src/shared/i18n/serviceErrors.ts` maps a code to a Lingui message descriptor, resolved with
-its params at the render site. **An unknown code falls back to the service's own `error`/`message`
-prose** — so a failure added to a service before its catalog row exists shows something real rather
-than blank, and a service may add a code without waiting for the frontend.
+its params at the render site. **An unknown code — or no code at all — renders a translated generic
+headline, with the service's own `error`/`message` prose as the `detail` line beneath it** — so a
+failure added before its catalog row exists still shows something real, a service may add a code
+without waiting for the frontend, and a Hebrew reader never gets an English headline.
 
 A code with no catalog row is therefore a normal, supported state, not a bug. Every developer-facing
-code below is exactly that: it carries a code for a uniform wire shape, and renders its English.
+code below is exactly that: it carries a code for a uniform wire shape, and renders the generic
+headline over its English.
 
 ---
 
 ## Codes
 
 `user` means a realistic user action produces it and it has a catalog row. `developer` means only a
-bug in one of our own callers can, and it renders its English prose through the fallback.
+bug in one of our own callers can, and it renders through the generic fallback unless it has a row.
 `uncertain` means the call chain does not settle it; those carry a code and no catalog row.
 
 ### `backend/` — HTTP
