@@ -25,7 +25,9 @@ const CHOICES = {
   auto_remove_after: ['pdf', 'drive'],
   course_structure: ['split', 'lectures_all', 'lectures_some'],
 };
-const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED' };
+const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED', nightly_run: 'NIGHTLY_RUN' };
+// Integers with their inclusive range; the backend reads anything else as its default hour.
+const INT_FIELDS = { nightly_hour: { env: 'NIGHTLY_HOUR', min: 0, max: 23 } };
 // Booleans no service gets as a settings env var: `error_reports` main turns into each process's
 // Sentry flag itself; `privacy_confirmed` is the renderer's record that the privacy notice was answered.
 const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed'];
@@ -44,6 +46,8 @@ const FIELDS = {
   courseStructure: 'course_structure',
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
+  nightlyRun: 'nightly_run',
+  nightlyHour: 'nightly_hour',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
   aiProvider: 'ai_provider',
@@ -86,6 +90,21 @@ function bool(value) {
   return typeof value === 'boolean' ? value : null;
 }
 
+// An integer field inside its range, or null when unset or outside it.
+function int(field, value) {
+  const { min, max } = INT_FIELDS[field];
+  return Number.isInteger(value) && value >= min && value <= max ? value : null;
+}
+
+// A refused patch, carrying the error-code contract's `code` and flat `params` (docs/ERROR-CODES.md).
+class SettingRefused extends Error {
+  constructor(message, code, params) {
+    super(message);
+    this.code = code;
+    this.params = params;
+  }
+}
+
 function encrypt(value) {
   if (!safeStorage.isEncryptionAvailable()) {
     throw new Error(
@@ -113,6 +132,8 @@ function read() {
     groqApiKeySet: Boolean(text(stored.groq_api_key)),
     geminiModel: text(stored.gemini_model),
     driveEnabled: bool(stored.drive_enabled),
+    nightlyRun: bool(stored.nightly_run),
+    nightlyHour: int('nightly_hour', stored.nightly_hour),
     gdriveRootFolder: text(stored.gdrive_root_folder),
     autoRun: text(stored.auto_run),
     autoRemove: choice('auto_remove', stored.auto_remove),
@@ -126,26 +147,69 @@ function read() {
   };
 }
 
-/** Merge a partial settings object into the store and return the read view. A patch that cannot be
- *  applied in full is not applied at all: every field is converted before anything is stored, so a
- *  rejected key leaves the file untouched rather than half of the save landing. */
+/** Merge a partial settings object into the store and return the read view, or a refusal as
+ *  `{ code, params, message }` — a return value because IPC drops an Error's own properties. A patch
+ *  that cannot be applied in full is not applied at all: every field is converted before anything
+ *  is stored, so a rejected key leaves the file untouched rather than half of the save landing. */
 function write(patch) {
+  let updates;
+  try {
+    updates = convert(patch);
+  } catch (error) {
+    if (!(error instanceof SettingRefused)) throw error;
+    return { code: error.code, params: error.params, message: error.message };
+  }
+  save({ ...load(), ...updates });
+  return read();
+}
+
+// Each patch key validated into its stored field and value; throws SettingRefused on the first bad one.
+// Codes and params are spelled as database/settings.py spells them for the same refusals.
+function convert(patch) {
   const updates = {};
   for (const [key, value] of Object.entries(patch ?? {})) {
     const field = FIELDS[key];
-    if (!field) throw new Error(`unknown setting: ${key}`);
+    if (!field)
+      throw new SettingRefused(`unknown setting: ${key}`, 'unknown_setting', { field: key });
     // Null means "leave it alone", so echoing back a read (all-null when unset) blanks nothing.
     if (value === null || value === undefined) continue;
     if (field in BOOL_FIELDS || LAUNCHER_BOOL_FIELDS.includes(field)) {
       // A bare truth test would let the string "false" store `true`, silently flipping the setting on.
-      if (typeof value !== 'boolean') throw new Error(`${key} must be a boolean`);
+      if (typeof value !== 'boolean') {
+        throw new SettingRefused(`${key} must be a boolean`, 'setting_must_be_boolean', {
+          field: key,
+        });
+      }
+      updates[field] = value;
+    } else if (field in INT_FIELDS) {
+      if (!Number.isInteger(value)) {
+        throw new SettingRefused(`${key} must be an integer`, 'setting_must_be_integer', {
+          field: key,
+        });
+      }
+      const { min, max } = INT_FIELDS[field];
+      if (value < min || value > max) {
+        throw new SettingRefused(
+          `${key} must be between ${min} and ${max}`,
+          'setting_out_of_range',
+          { field: key, min, max },
+        );
+      }
       updates[field] = value;
     } else {
-      if (typeof value !== 'string') throw new Error(`${key} must be a string`);
+      if (typeof value !== 'string') {
+        throw new SettingRefused(`${key} must be a string`, 'setting_must_be_string', {
+          field: key,
+        });
+      }
       if (field in CHOICES) {
         const picked = value.trim().toLowerCase();
         if (!CHOICES[field].includes(picked)) {
-          throw new Error(`${key} must be one of ${CHOICES[field].join(', ')}`);
+          throw new SettingRefused(
+            `${key} must be one of ${CHOICES[field].join(', ')}`,
+            'setting_invalid_choice',
+            { field: key, value: value.trim() },
+          );
         }
         updates[field] = picked;
       } else {
@@ -153,8 +217,7 @@ function write(patch) {
       }
     }
   }
-  save({ ...load(), ...updates });
-  return read();
+  return updates;
 }
 
 /** The settings half of every child's environment: each stored value under the env var its owning
@@ -170,6 +233,10 @@ function serviceEnv() {
   }
   for (const [field, name] of Object.entries(BOOL_FIELDS)) {
     if (typeof stored[field] === 'boolean') env[name] = stored[field] ? 'true' : 'false';
+  }
+  for (const [field, { env: name }] of Object.entries(INT_FIELDS)) {
+    const value = int(field, stored[field]);
+    if (value !== null) env[name] = String(value);
   }
   for (const [field, name] of Object.entries(SECRET_FIELDS)) {
     const value = text(stored[field]) && decrypt(stored[field]);

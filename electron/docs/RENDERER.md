@@ -184,6 +184,14 @@ written from both processes would put two writers on one file.
   renderer adopts `write()`'s return value as its state and sends its `POST /config` calls only
   after it resolves, so a partial write would leave the file, the running services and the screen
   each holding a different answer. `database/settings.py` builds its updates the same way.
+- **A refused patch resolves, never throws, as `{ code, params, message }`** — no `ok` field, since
+  the view never has a `code` key. IPC strips an Error's own properties, and so does the context
+  bridge, so the preload rejects `settings.write` with that plain object rather than an `Error`.
+  Codes and params (`field` = the camelCase patch key) are `database/settings.py`'s for the same
+  refusals: `unknown_setting`, `setting_must_be_{string,boolean,integer}`, `setting_invalid_choice`
+  (+`value`), plus the launcher's `setting_out_of_range` (+`min`, `max`). The keystore refusal still throws.
+- **`nightly_run` (`nightlyRun`) and `nightly_hour` (`nightlyHour`, integer 0-23)** reach the backend
+  as `NIGHTLY_RUN` (`true`/`false`) and `NIGHTLY_HOUR`; an out-of-range stored hour reads `null`.
 - **`error_reports` and `privacy_confirmed` are the launcher's own fields**, in no service's settings
   env. Main turns `error_reports` into each process's Sentry flag itself; `privacy_confirmed`
   (`privacyConfirmed`, unset reads `false`) is the renderer's record that the privacy notice was

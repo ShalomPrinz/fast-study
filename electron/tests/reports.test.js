@@ -119,10 +119,17 @@ test('a patch without the switch touches no service and needs no restart', async
   assert.deepEqual(service.seen, []);
 });
 
-test('a refused patch rejects, and the next write still runs', async () => {
-  await assert.rejects(writeSettings({ errorReports: 'yes' }, deps({})), /must be a boolean/);
+test('a refused patch resolves its code without applying the switch, and the next write runs', async () => {
+  const calls = [];
+  assert.deepEqual(await writeSettings({ errorReports: 'yes' }, deps({}, calls)), {
+    code: 'setting_must_be_boolean',
+    params: { field: 'errorReports' },
+    message: 'errorReports must be a boolean',
+  });
+  assert.deepEqual(calls, []);
   const result = await writeSettings({ privacyConfirmed: true }, deps({}));
   assert.equal(result.privacyConfirmed, true);
+  assert.equal('code' in result, false);
 });
 
 test('concurrent writes reach the services in the order they were made', async () => {

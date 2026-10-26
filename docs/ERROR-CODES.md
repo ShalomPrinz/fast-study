@@ -30,6 +30,7 @@ already had.
 | Run target      | `{…, disposition, code?}` per target on `GET /runs` and the runs SSE        | `downloader/server/src/runs.js`                              |
 | Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
 | Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
+| Settings IPC    | `{code, params, message}` returned in place of the settings view            | `electron/store.js` via `faststudy:settings-write`           |
 
 Every field is additive. `error`/`message` keep today's text and today's meaning, so a consumer that
 never learned about `code` keeps working — which is what makes the fallback below honest rather than
@@ -247,6 +248,22 @@ hop. Its sentence names `file`, so the user knows which program to close.
 
 The four `Response("Not found", 404)` sites now answer a JSON `{error, code, params}` body like every
 other failure; they previously fell through to the bare status line.
+
+### `electron/` — settings IPC
+
+`faststudy:settings-write` returns a refused patch instead of throwing, because Electron's IPC and
+context bridge drop custom properties off an `Error`; the preload rejects with that plain object.
+The shared codes keep `database/`'s spellings and params, so one catalog row serves both. They
+carry rows despite being `dev`: a launcher/frontend key drift reaches real users.
+
+| origin     | code                      | params                 | reach |
+| ---------- | ------------------------- | ---------------------- | ----- |
+| `store.js` | `unknown_setting`         | `field`                | dev   |
+| `store.js` | `setting_must_be_string`  | `field`                | dev   |
+| `store.js` | `setting_must_be_boolean` | `field`                | dev   |
+| `store.js` | `setting_must_be_integer` | `field`                | dev   |
+| `store.js` | `setting_invalid_choice`  | `field`, `value`       | dev   |
+| `store.js` | `setting_out_of_range`    | `field`, `min`, `max`  | dev   |
 
 ### `downloader/server/`
 

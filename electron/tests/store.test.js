@@ -8,6 +8,12 @@ const store = require('../store');
 beforeEach(() => stub.useTempUserData());
 afterEach(() => stub.cleanup());
 
+/** A refusal is returned, never thrown, in the error-code contract's shape. */
+function assertRefused(result, message) {
+  assert.deepEqual(Object.keys(result).sort(), ['code', 'message', 'params']);
+  assert.match(result.message, message);
+}
+
 const full = {
   dataRoot: '/data/root',
   geminiModel: 'gemini-2.5-pro',
@@ -18,6 +24,8 @@ const full = {
   courseStructure: 'lectures_some',
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
+  nightlyRun: false,
+  nightlyHour: 22,
   errorReports: false,
   privacyConfirmed: true,
   aiProvider: 'gemini',
@@ -29,13 +37,62 @@ test('an unknown patch key is refused and nothing is written', () => {
   store.write({ dataRoot: '/data/root' });
   const before = fs.readFileSync(store.file());
 
-  assert.throws(() => store.write({ lectureRoot: '/elsewhere' }), /unknown setting: lectureRoot/);
+  assertRefused(store.write({ lectureRoot: '/elsewhere' }), /unknown setting: lectureRoot/);
   assert.deepEqual(fs.readFileSync(store.file()), before);
 });
 
+test('an unknown key and a bad value each return their code and params', () => {
+  assert.deepEqual(store.write({ nightly: true }), {
+    code: 'unknown_setting',
+    params: { field: 'nightly' },
+    message: 'unknown setting: nightly',
+  });
+  assert.deepEqual(store.write({ nightlyRun: 'yes' }), {
+    code: 'setting_must_be_boolean',
+    params: { field: 'nightlyRun' },
+    message: 'nightlyRun must be a boolean',
+  });
+  assert.deepEqual(store.write({ nightlyHour: 3.5 }), {
+    code: 'setting_must_be_integer',
+    params: { field: 'nightlyHour' },
+    message: 'nightlyHour must be an integer',
+  });
+  assert.deepEqual(store.write({ nightlyHour: 24 }), {
+    code: 'setting_out_of_range',
+    params: { field: 'nightlyHour', min: 0, max: 23 },
+    message: 'nightlyHour must be between 0 and 23',
+  });
+  assert.deepEqual(store.write({ dataRoot: 5 }), {
+    code: 'setting_must_be_string',
+    params: { field: 'dataRoot' },
+    message: 'dataRoot must be a string',
+  });
+  assert.deepEqual(store.write({ autoRun: ' Nightly ' }), {
+    code: 'setting_invalid_choice',
+    params: { field: 'autoRun', value: 'Nightly' },
+    message: 'autoRun must be one of off, audio, full',
+  });
+  assert.equal(fs.existsSync(store.file()), false);
+});
+
+test('nightlyRun and nightlyHour round-trip and reach the backend env', () => {
+  const view = store.write({ nightlyRun: true, nightlyHour: 0 });
+
+  assert.equal(view.nightlyRun, true);
+  assert.equal(view.nightlyHour, 0);
+  assert.deepEqual(store.serviceEnv(), { NIGHTLY_RUN: 'true', NIGHTLY_HOUR: '0' });
+  assert.equal(store.write({ nightlyHour: 23 }).nightlyHour, 23);
+});
+
+test('an out-of-range nightly_hour in the file reads as unset and stays out of the env', () => {
+  fs.writeFileSync(store.file(), JSON.stringify({ nightly_hour: 30 }));
+  assert.equal(store.read().nightlyHour, null);
+  assert.deepEqual(store.serviceEnv(), {});
+});
+
 test('a patch is all-or-nothing even when the valid field comes first', () => {
-  assert.throws(
-    () => store.write({ dataRoot: '/data/root', driveEnabled: 'false' }),
+  assertRefused(
+    store.write({ dataRoot: '/data/root', driveEnabled: 'false' }),
     /driveEnabled must be a boolean/,
   );
   assert.equal(fs.existsSync(store.file()), false);
@@ -46,8 +103,8 @@ test('an unknown autoRun mode is refused and nothing is written', () => {
   store.write({ autoRun: 'off' });
   const before = fs.readFileSync(store.file());
 
-  assert.throws(
-    () => store.write({ dataRoot: '/data/root', autoRun: 'nightly' }),
+  assertRefused(
+    store.write({ dataRoot: '/data/root', autoRun: 'nightly' }),
     /autoRun must be one of off, audio, full/,
   );
   assert.deepEqual(fs.readFileSync(store.file()), before);
@@ -62,15 +119,15 @@ test('an unknown autoRemove or autoRemoveAfter is refused and nothing is written
   store.write({ autoRemove: 'off' });
   const before = fs.readFileSync(store.file());
 
-  assert.throws(
-    () => store.write({ dataRoot: '/data/root', autoRemove: 'pdf' }),
+  assertRefused(
+    store.write({ dataRoot: '/data/root', autoRemove: 'pdf' }),
     /autoRemove must be one of off, video, audio/,
   );
-  assert.throws(
-    () => store.write({ dataRoot: '/data/root', autoRemoveAfter: 'never' }),
+  assertRefused(
+    store.write({ dataRoot: '/data/root', autoRemoveAfter: 'never' }),
     /autoRemoveAfter must be one of pdf, drive/,
   );
-  assert.throws(() => store.write({ autoRemove: true }), /autoRemove must be a string/);
+  assertRefused(store.write({ autoRemove: true }), /autoRemove must be a string/);
   assert.deepEqual(fs.readFileSync(store.file()), before);
 });
 
@@ -104,8 +161,8 @@ test('an unknown courseStructure is refused and nothing is written', () => {
   store.write({ courseStructure: 'split' });
   const before = fs.readFileSync(store.file());
 
-  assert.throws(
-    () => store.write({ dataRoot: '/data/root', courseStructure: 'flat' }),
+  assertRefused(
+    store.write({ dataRoot: '/data/root', courseStructure: 'flat' }),
     /courseStructure must be one of split, lectures_all, lectures_some/,
   );
   assert.deepEqual(fs.readFileSync(store.file()), before);
@@ -128,7 +185,7 @@ test('moodleSite round-trips trimmed and reaches the child env as MOODLE_SITE', 
 
 test('the string "false" cannot store true', () => {
   store.write({ driveEnabled: true });
-  assert.throws(() => store.write({ driveEnabled: 'false' }), /must be a boolean/);
+  assertRefused(store.write({ driveEnabled: 'false' }), /must be a boolean/);
   assert.equal(store.read().driveEnabled, true);
 });
 
@@ -148,6 +205,8 @@ test('echoing a read back blanks nothing', () => {
     dataRoot: written.dataRoot,
     geminiModel: written.geminiModel,
     driveEnabled: written.driveEnabled,
+    nightlyRun: written.nightlyRun,
+    nightlyHour: written.nightlyHour,
     gdriveRootFolder: written.gdriveRootFolder,
     autoRun: written.autoRun,
     autoRemove: written.autoRemove,
@@ -185,6 +244,8 @@ test('an unset store reads as all-null, bar privacyConfirmed, which reads false'
     groqApiKeySet: false,
     geminiModel: null,
     driveEnabled: null,
+    nightlyRun: null,
+    nightlyHour: null,
     gdriveRootFolder: null,
     autoRun: null,
     autoRemove: null,
@@ -209,10 +270,7 @@ test('privacyConfirmed round-trips as a boolean and never reaches a child env', 
   assert.equal(store.read().privacyConfirmed, true);
   assert.deepEqual(store.serviceEnv(), {});
   assert.equal(store.write({ privacyConfirmed: false }).privacyConfirmed, false);
-  assert.throws(
-    () => store.write({ privacyConfirmed: 'true' }),
-    /privacyConfirmed must be a boolean/,
-  );
+  assertRefused(store.write({ privacyConfirmed: 'true' }), /privacyConfirmed must be a boolean/);
   assert.equal(store.read().privacyConfirmed, false);
 });
 
@@ -220,11 +278,11 @@ test('aiProvider round-trips one of three providers and never reaches a child en
   assert.equal(store.write({ aiProvider: ' ChatGPT ' }).aiProvider, 'chatgpt');
   assert.equal(store.read().aiProvider, 'chatgpt');
   assert.deepEqual(store.serviceEnv(), {});
-  assert.throws(
-    () => store.write({ aiProvider: 'copilot' }),
+  assertRefused(
+    store.write({ aiProvider: 'copilot' }),
     /aiProvider must be one of claude, chatgpt, gemini/,
   );
-  assert.throws(() => store.write({ aiProvider: true }), /aiProvider must be a string/);
+  assertRefused(store.write({ aiProvider: true }), /aiProvider must be a string/);
   assert.equal(store.read().aiProvider, 'chatgpt');
 });
 
@@ -234,7 +292,7 @@ test('an unknown aiProvider in the file reads as unset', () => {
 });
 
 test('the string "false" cannot store errorReports', () => {
-  assert.throws(() => store.write({ errorReports: 'false' }), /errorReports must be a boolean/);
+  assertRefused(store.write({ errorReports: 'false' }), /errorReports must be a boolean/);
   assert.equal(fs.existsSync(store.file()), false);
 });
 
@@ -251,6 +309,8 @@ test('serviceEnv maps every field onto its service env var', () => {
     AUTO_REMOVE_AFTER: 'drive',
     COURSE_STRUCTURE: 'lectures_some',
     DRIVE_ENABLED: 'true',
+    NIGHTLY_RUN: 'false',
+    NIGHTLY_HOUR: '22',
     GEMINI_API_KEY: 'gemini-secret',
     GROQ_API_KEY: 'groq-secret',
   });

@@ -23,7 +23,13 @@ contextBridge.exposeInMainWorld('faststudy', {
   // `read()` reports the two keys as set/unset flags only.
   settings: {
     read: () => ipcRenderer.invoke('faststudy:settings-read'),
-    write: (patch) => ipcRenderer.invoke('faststudy:settings-write', patch),
+    // A refusal rejects with the plain `{ code, params, message }`, not an Error: the bridge strips an
+    // Error's own properties, so a `code` set on one would never reach the page.
+    write: async (patch) => {
+      const result = await ipcRenderer.invoke('faststudy:settings-write', patch);
+      if (typeof result?.code === 'string') throw result;
+      return result;
+    },
   },
   // Identifiers, never a path, for a file; http(s) only for a link.
   open: {
