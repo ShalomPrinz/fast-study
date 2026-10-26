@@ -68,7 +68,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:260
+#: src/features/lectures/MainView.tsx:261
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -143,7 +143,7 @@ msgid "{0} remaining"
 msgstr "נותרו {0}"
 
 #. placeholder {0}: formatDuration(videoDuration)
-#: src/features/lectures/MainView.tsx:257
+#: src/features/lectures/MainView.tsx:258
 msgid "{0} video"
 msgstr "וידאו באורך {0}"
 
@@ -175,11 +175,11 @@ msgstr "{count, plural, one {סיכום עם חומר אחד} two {סיכום ע
 msgid "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 msgstr "{deferred, plural, one {הרצאה אחת בעיבוד כרגע; הקבצים שלה יוסרו כשההרצה שלה תסתיים.} two {# הרצאות בעיבוד כרגע; הקבצים שלהן יוסרו כשההרצה שלהן תסתיים.} other {# הרצאות בעיבוד כרגע; הקבצים שלהן יוסרו כשההרצה שלהן תסתיים.}}"
 
-#: src/features/lectures/MainView.tsx:536
+#: src/features/lectures/MainView.tsx:542
 msgid "{deleteName} will be deleted."
 msgstr "{deleteName} יימחק."
 
-#: src/features/lectures/MainView.tsx:338
+#: src/features/lectures/MainView.tsx:339
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
@@ -240,7 +240,7 @@ msgstr "{generated} מתוך {0} נוצרו"
 msgid "{host} could not be reached. Check your internet connection and try again."
 msgstr "לא ניתן להתחבר אל {host}. בדוק את החיבור לאינטרנט ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:362
+#: src/features/lectures/MainView.tsx:363
 msgid "{input} was removed"
 msgstr "{input} הוסר"
 
@@ -324,7 +324,7 @@ msgstr "{removed, plural, =0 {לא היו קבצים להסיר באף הרצא�
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. היא מתאפסת בחצות לפי שעון החוף המערבי בארה״ב.} other {יותר מדי בקשות ל-Gemini. נסה שוב בעוד דקה.}}"
 
-#: src/features/lectures/MainView.tsx:237
+#: src/features/lectures/MainView.tsx:238
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stepCount}"
 
@@ -777,7 +777,7 @@ msgstr "איסוף"
 msgid "Compile"
 msgstr "הרכבה"
 
-#: src/features/lectures/MainView.tsx:251
+#: src/features/lectures/MainView.tsx:252
 msgid "Complete"
 msgstr "הושלם"
 
@@ -825,7 +825,7 @@ msgstr "יצירת קשר"
 msgid "Continue Generating"
 msgstr "המשך יצירה"
 
-#: src/features/lectures/MainView.tsx:367
+#: src/features/lectures/MainView.tsx:368
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
@@ -1160,7 +1160,7 @@ msgstr "עריכה"
 msgid "Edit source URL"
 msgstr "עריכת כתובת מקור"
 
-#: src/features/lectures/MainView.tsx:270
+#: src/features/lectures/MainView.tsx:271
 msgid "Edit summary"
 msgstr "עריכת סיכום"
 
@@ -1307,10 +1307,6 @@ msgstr "השימוש של FastStudy במידע שמתקבל מ-Google APIs וה�
 #: src/features/downloads/components/RecordingRow.tsx:209
 msgid "File type"
 msgstr "סוג קובץ"
-
-#: src/features/downloads/components/MediaNote.tsx:20
-msgid "Files of the course's assignments. Each lands in an assignment of its own, which you open from the course's Assignments group."
-msgstr "קבצים של מטלות הקורס. כל קובץ נשמר במטלה שלו, ואותה אפשר לפתוח מקבוצת המטלות של הקורס."
 
 #: src/features/downloads/components/MediaNote.tsx:19
 msgid "Files you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary."
@@ -1481,7 +1477,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:475
+#: src/features/lectures/MainView.tsx:481
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -1585,7 +1581,7 @@ msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
 #: src/features/downloads/DownloadsView.tsx:74
-#: src/features/lectures/MainView.tsx:497
+#: src/features/lectures/MainView.tsx:503
 msgid "Materials"
 msgstr "חומרים"
 
@@ -1604,7 +1600,7 @@ msgstr "פעולות נוספות"
 msgid "Name in the course"
 msgstr "השם בקורס"
 
-#: src/features/lectures/AssignmentView.tsx:75
+#: src/features/lectures/AssignmentView.tsx:77
 msgid "Needs the desktop app"
 msgstr "דורש את אפליקציית שולחן העבודה"
 
@@ -1746,7 +1742,7 @@ msgstr "לא מחובר"
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
-#: src/features/lectures/MainView.tsx:460
+#: src/features/lectures/MainView.tsx:466
 msgid "not provided"
 msgstr "חסר"
 
@@ -1822,7 +1818,7 @@ msgstr "פתיחת התיקייה"
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת הכתובת שבראש החלון והקש Enter:"
 
-#: src/features/lectures/MainView.tsx:281
+#: src/features/lectures/MainView.tsx:282
 msgid "Open in Drive"
 msgstr "פתיחה ב-Drive"
 
@@ -1839,7 +1835,7 @@ msgstr "פתיחת החומר"
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
-#: src/features/lectures/MainView.tsx:275
+#: src/features/lectures/MainView.tsx:276
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
 msgstr "פתיחת ה-PDF"
@@ -1946,11 +1942,11 @@ msgstr "ה-PDF נוצר עם אזהרות"
 msgid "Pin FastStudy to the toolbar"
 msgstr "הצמדת FastStudy לסרגל הכלים"
 
-#: src/features/lectures/MainView.tsx:336
+#: src/features/lectures/MainView.tsx:337
 msgid "Pipeline"
 msgstr "שלבים"
 
-#: src/features/lectures/MainView.tsx:191
+#: src/features/lectures/MainView.tsx:192
 #: src/features/runner/RunnerView.tsx:218
 msgid "Pipeline already running"
 msgstr "ההרצאה כבר בעיבוד"
@@ -2053,7 +2049,7 @@ msgstr "רענון"
 msgid "Remove files from every existing lecture?"
 msgstr "להסיר קבצים מכל ההרצאות הקיימות?"
 
-#: src/features/lectures/MainView.tsx:427
+#: src/features/lectures/MainView.tsx:433
 msgid "Removed"
 msgstr "הוסר"
 
@@ -2105,12 +2101,12 @@ msgstr "ניסיון חוזר"
 msgid "Retry ✗"
 msgstr "ניסיון חוזר ✗"
 
-#: src/features/lectures/MainView.tsx:431
-#: src/features/lectures/MainView.tsx:434
+#: src/features/lectures/MainView.tsx:437
+#: src/features/lectures/MainView.tsx:440
 msgid "Rotate {file}"
 msgstr "יצירה מחדש של {file}"
 
-#: src/features/lectures/MainView.tsx:309
+#: src/features/lectures/MainView.tsx:310
 msgid "Run Remaining"
 msgstr "הרצת השלבים הנותרים"
 
@@ -2237,7 +2233,7 @@ msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה �
 msgid "Show captcha window"
 msgstr "הצגת חלון החידה"
 
-#: src/features/lectures/AssignmentView.tsx:82
+#: src/features/lectures/AssignmentView.tsx:84
 msgid "Show in folder"
 msgstr "הצגה בתיקייה"
 
@@ -2253,7 +2249,7 @@ msgstr "הצג צילום מסך"
 msgid "skipped"
 msgstr "דולג"
 
-#: src/features/lectures/MainView.tsx:444
+#: src/features/lectures/MainView.tsx:450
 msgid "skipped (no video)"
 msgstr "דולג (אין וידאו)"
 
@@ -2285,7 +2281,7 @@ msgstr "שלב {0} מתוך {1}"
 
 #: src/features/lectures/EditSummaryView.tsx:207
 #: src/features/lectures/EditSummaryView.tsx:277
-#: src/features/lectures/MainView.tsx:167
+#: src/features/lectures/MainView.tsx:168
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
@@ -2313,7 +2309,7 @@ msgstr "הסיכומים מועלים ל-Drive של החשבון הזה. חיב�
 msgid "Summarize"
 msgstr "סיכום"
 
-#: src/features/lectures/MainView.tsx:409
+#: src/features/lectures/MainView.tsx:410
 msgid "summarized from materials only"
 msgstr "סוכם מהחומרים בלבד"
 
@@ -2427,6 +2423,10 @@ msgstr "החידה באתר האוניברסיטה לא נפתרה תוך 10 ד�
 msgid "The course \"{course}\" was not found."
 msgstr "הקורס \"{course}\" לא נמצא."
 
+#: src/features/downloads/components/MediaNote.tsx:20
+msgid "The course's assignments. Each assignment can take several files."
+msgstr "מטלות הקורס. ניתן להוריד מספר קבצים לכל מטלה"
+
 #: src/features/settings/SettingsView.tsx:515
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "גם ההרצה היומית פועלת לפי ההגדרה שלמעלה: אם היא מוגדרת לא לעשות דבר, גם ההרצה היומית לא תעשה דבר."
@@ -2471,7 +2471,7 @@ msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
-#: src/features/lectures/MainView.tsx:520
+#: src/features/lectures/MainView.tsx:526
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -2500,7 +2500,7 @@ msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחב
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:537
+#: src/features/lectures/MainView.tsx:543
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -2618,7 +2618,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:521
+#: src/features/lectures/MainView.tsx:527
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
