@@ -44,6 +44,15 @@ contextBridge.exposeInMainWorld('faststudy', {
     },
     restart: () => ipcRenderer.invoke('faststudy:update-restart'),
   },
+  // OS sleep and wake, pushed as `'suspend' | 'resume'`; no snapshot, since a page loaded after waking
+  // needs none. Returns the unsubscribe.
+  power: {
+    subscribe: (callback) => {
+      const listener = (_event, state) => callback(state);
+      ipcRenderer.on('faststudy:power', listener);
+      return () => ipcRenderer.removeListener('faststudy:power', listener);
+    },
+  },
   // The folder Chrome loads the extension unpacked from, and `reveal()` opening it in the file manager.
   extension: {
     path: config.extensionPath,

@@ -3,7 +3,16 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
 const { spawn } = require('node:child_process');
-const { app, BrowserWindow, Menu, dialog, ipcMain, screen, shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  Menu,
+  dialog,
+  ipcMain,
+  powerMonitor,
+  screen,
+  shell,
+} = require('electron');
 // An ES module, loaded by require(esm) — synchronous, which an init that must beat `ready` needs.
 const sentryPolicy = require('@faststudy/sentry');
 const { runStartupChecks } = require('./checks');
@@ -677,6 +686,10 @@ function createWindow(checks) {
       log,
     ),
   );
+  // Chromium fails in-flight requests across sleep; the frontend holds its connection toasts on these.
+  for (const event of ['suspend', 'resume']) {
+    powerMonitor.on(event, () => mainWindow?.webContents.send('faststudy:power', event));
+  }
   ipcMain.on('faststudy:boot-retry', () => runBoot());
   ipcMain.on('faststudy:boot-quit', () => app.quit());
   // Denied, or the child would inherit the preload and so the secret (docs/RENDERER.md). The log
