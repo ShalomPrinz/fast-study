@@ -11,7 +11,13 @@ async function openFile(call: Promise<void>): Promise<void> {
   try {
     await call
   } catch (e) {
-    toast('error', t`Could not open the file: ${(e as Error).message}`)
+    // The bridge carries a `code` but no params, so the shared `file_not_found` row (which names the
+    // file) cannot render; this sentence stands in for it.
+    if ((e as { code?: string }).code === 'file_not_found') {
+      toast('error', t`Could not open the file: it no longer exists.`)
+    } else {
+      toast('error', t`Could not open the file: ${(e as Error).message}`)
+    }
   }
 }
 

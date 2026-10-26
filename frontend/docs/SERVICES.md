@@ -65,7 +65,7 @@ Packaged, a fresh navigation cannot carry `X-FastStudy-Secret`, so a service URL
 is a `401` and a blank page. `openLectureFile`, `openLectureFileWith` (Windows packaged only, no browser fallback; gate on `canOpenWith()`), `openOverviewFile`, `openAssignmentFile`, `openAssignmentFileWith`, `revealAssignmentFile`, `canReveal` and `openExternalUrl` hand
 **identifiers** to `window.faststudy.open`, which resolves the path through `database/` and opens it in
 the user's own app — a path never reaches the renderer, so a compromised one gets no open-any-file
-primitive. A failure toasts its English prose inside a translated wrapper — the bridge is not a service and sends no code.
+primitive. A failure toasts its message inside a translated wrapper; a rejection with `code: 'file_not_found'` (no params) toasts its own translated sentence instead, since the shared catalog row needs a `{file}` the bridge does not send.
 
 A link keeps its `href` for hover and copy but calls `openExternalUrl` with `preventDefault()`: the shell
 denies every `window.open`, so `target="_blank"` does nothing, and a bare `href` would load the site in the

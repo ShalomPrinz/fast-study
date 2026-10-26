@@ -879,12 +879,16 @@ msgid "Could not list the playlist."
 msgstr "Could not list the playlist."
 
 #. placeholder {0}: (e as Error).message
-#: src/services/open.ts:14
+#: src/services/open.ts:19
 msgid "Could not open the file: {0}"
 msgstr "Could not open the file: {0}"
 
+#: src/services/open.ts:17
+msgid "Could not open the file: it no longer exists."
+msgstr "Could not open the file: it no longer exists."
+
 #. placeholder {0}: (e as Error).message
-#: src/services/open.ts:73
+#: src/services/open.ts:79
 msgid "Could not open the link: {0}"
 msgstr "Could not open the link: {0}"
 
