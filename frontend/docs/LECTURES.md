@@ -107,7 +107,8 @@ meta line of file and attached-lecture counts. Below it, top to bottom:
   `MaterialChip.css`), "Open with…" (`OpenWithMenu`, Windows packaged only) and "Show in folder" (`open.reveal`,
   disabled with a tooltip without `canReveal()`). The switch writes `setAssignmentFileAttach` and reads
   `materialAttached`/`materialSupported` over `SupportedMaterialsContext`; it is disabled for an unsupported type.
-  `CourseMaterialBox` holds the chosen lectures and recitations as removable chips and a checklist popover of every
+  `CourseMaterialBox` holds the chosen lectures and recitations as removable chips and a checklist popover (its
+  "Add" button sits in the title row at inline-end, the popover end-aligned to it) of every
   entry whose `summary.md` exists (`summarizedLectures`); each toggle writes the whole selection with
   `setAssignmentLectures`. Neither the switch nor the box takes input while the assignment has a live run
   (`inputsLocked`), since the run reads them. No state is held locally: the tree refresh over SSE shows every write.

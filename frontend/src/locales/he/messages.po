@@ -446,8 +446,8 @@ msgstr "הוסף קורס דרך \"הורדות\" או \"קורס חדש\" כד�
 msgid "Add a course to search its summaries."
 msgstr "הוסף קורס כדי לחפש בסיכומים שלו."
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:100
-#: src/features/lectures/components/CourseMaterialBox.tsx:107
+#: src/features/lectures/components/CourseMaterialBox.tsx:96
+#: src/features/lectures/components/CourseMaterialBox.tsx:103
 msgid "Add a lecture or recitation"
 msgstr "הוספת הרצאה או תרגול"
 
@@ -1671,7 +1671,7 @@ msgstr "הרצאה"
 msgid "Lecture {0}"
 msgstr "הרצאה {0}"
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:89
+#: src/features/lectures/components/CourseMaterialBox.tsx:130
 msgid "Lecture and recitation summaries to include with this assignment"
 msgstr "סיכומי הרצאות ותרגולים שיצורפו למטלה"
 
@@ -1836,7 +1836,7 @@ msgstr "לא נמצאו קבצים מסוג לא ידוע."
 msgid "No Google Drive folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרות."
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:111
+#: src/features/lectures/components/CourseMaterialBox.tsx:107
 msgid "No lecture in this course has a summary yet."
 msgstr "לאף הרצאה בקורס אין עדיין סיכום."
 

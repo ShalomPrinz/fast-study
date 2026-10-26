@@ -80,55 +80,55 @@ export default function CourseMaterialBox({ course, assignment, chosen, locked }
 
   return (
     <div className="course-material">
-      <div className="course-material-head">
-        <div className="course-material-text">
+      <div className="course-material-text">
+        <div className="course-material-head">
           <h3 className="course-material-title">
             <Trans>Course material</Trans>
           </h3>
-          <p className="course-material-sub">
-            <Trans>Lecture and recitation summaries to include with this assignment</Trans>
-          </p>
-        </div>
-        <div className="course-material-picker" ref={ref}>
-          <button
-            className="btn"
-            aria-haspopup="dialog"
-            aria-expanded={open}
-            disabled={locked}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <Trans>Add a lecture or recitation</Trans>
-            <Icon icon="chevron-down" />
-          </button>
-          {open && (
-            <div
-              className="course-material-popover"
-              role="dialog"
-              aria-label={t`Add a lecture or recitation`}
+          <div className="course-material-picker" ref={ref}>
+            <button
+              className="btn"
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              disabled={locked}
+              onClick={() => setOpen((v) => !v)}
             >
-              {options.length === 0 ? (
-                <p className="course-material-empty">
-                  <Trans>No lecture in this course has a summary yet.</Trans>
-                </p>
-              ) : (
-                options.map((o) => (
-                  <label key={`${o.kind}:${o.name}`} className="course-material-option">
-                    <input
-                      type="checkbox"
-                      checked={chosen.some((c) => same(c, o))}
-                      disabled={locked}
-                      onChange={() => toggle(o)}
-                    />
-                    <span className="course-material-option-name" dir="auto">
-                      {o.name}
-                    </span>
-                    <span className="course-material-option-kind">{kindLabel(o.kind)}</span>
-                  </label>
-                ))
-              )}
-            </div>
-          )}
+              <Trans>Add a lecture or recitation</Trans>
+              <Icon icon="chevron-down" />
+            </button>
+            {open && (
+              <div
+                className="course-material-popover"
+                role="dialog"
+                aria-label={t`Add a lecture or recitation`}
+              >
+                {options.length === 0 ? (
+                  <p className="course-material-empty">
+                    <Trans>No lecture in this course has a summary yet.</Trans>
+                  </p>
+                ) : (
+                  options.map((o) => (
+                    <label key={`${o.kind}:${o.name}`} className="course-material-option">
+                      <input
+                        type="checkbox"
+                        checked={chosen.some((c) => same(c, o))}
+                        disabled={locked}
+                        onChange={() => toggle(o)}
+                      />
+                      <span className="course-material-option-name" dir="auto">
+                        {o.name}
+                      </span>
+                      <span className="course-material-option-kind">{kindLabel(o.kind)}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
+        <p className="course-material-sub">
+          <Trans>Lecture and recitation summaries to include with this assignment</Trans>
+        </p>
       </div>
       {chosen.length === 0 ? (
         <p className="course-material-none">

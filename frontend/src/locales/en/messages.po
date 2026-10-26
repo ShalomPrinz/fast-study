@@ -446,8 +446,8 @@ msgstr "Add a course from Downloads or New course to get started"
 msgid "Add a course to search its summaries."
 msgstr "Add a course to search its summaries."
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:100
-#: src/features/lectures/components/CourseMaterialBox.tsx:107
+#: src/features/lectures/components/CourseMaterialBox.tsx:96
+#: src/features/lectures/components/CourseMaterialBox.tsx:103
 msgid "Add a lecture or recitation"
 msgstr "Add a lecture or recitation"
 
@@ -1671,7 +1671,7 @@ msgstr "Lecture"
 msgid "Lecture {0}"
 msgstr "Lecture {0}"
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:89
+#: src/features/lectures/components/CourseMaterialBox.tsx:130
 msgid "Lecture and recitation summaries to include with this assignment"
 msgstr "Lecture and recitation summaries to include with this assignment"
 
@@ -1836,7 +1836,7 @@ msgstr "No files of unknown type found."
 msgid "No Google Drive folder is set. Choose one in Settings."
 msgstr "No Google Drive folder is set. Choose one in Settings."
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:111
+#: src/features/lectures/components/CourseMaterialBox.tsx:107
 msgid "No lecture in this course has a summary yet."
 msgstr "No lecture in this course has a summary yet."
 
