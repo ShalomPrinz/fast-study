@@ -131,10 +131,9 @@ async function buildHarness() {
     path.join(HARNESS_ROOT, 'fixtures', 'transcript.txt'),
     path.join(paths.fixtures, 'transcript.txt'),
   );
-  fs.copyFileSync(
-    path.join(HARNESS_ROOT, 'fixtures', 'summary.md'),
-    path.join(paths.fixtures, 'summary.md'),
-  );
+  for (const name of ['summary.md', 'assignment-intuition.md', 'assignment-solution.md']) {
+    fs.copyFileSync(path.join(HARNESS_ROOT, 'fixtures', name), path.join(paths.fixtures, name));
+  }
   fs.writeFileSync(path.join(paths.fixtures, 'handout.pdf'), MINIMAL_PDF);
   fs.writeFileSync(
     path.join(paths.fixtures, 'big-appendix.pdf'),

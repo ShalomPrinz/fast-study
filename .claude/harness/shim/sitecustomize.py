@@ -295,6 +295,12 @@ if _HARNESS:
         for step, fn in module._EXECUTORS.items():
             module._EXECUTORS[step] = _targeting(fn, path_of)
 
+        # An assignment's calls name `course/Assignments/name`, so a rule can target them alone.
+        for step, fn in module._ASSIGNMENT_EXECUTORS.items():
+            module._ASSIGNMENT_EXECUTORS[step] = _targeting(
+                fn, lambda course, assignment, **_: f"{course}/Assignments/{assignment}"
+            )
+
     def _patch_transcribe(module):
         """8 s chunks overlapping by 2 s, so the 20 s fixture transcribes in several chunks the way a real
         lecture does in many; the fake Groq's segment sits inside every chunk's own share."""

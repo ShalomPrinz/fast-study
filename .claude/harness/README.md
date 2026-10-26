@@ -555,6 +555,8 @@ The fake Gemini records each Files API upload as `{mimeType, size, lecture}`: th
 declared and the bytes it sent. `GET $(hb url providers)/uploads` returns `{uploads: [...]}` in order;
 specs call `geminiUploads()` from `e2e/fixtures.mjs`. `/control {"reset":true}` (so `reset()`) clears it.
 
+An assignment doc's `generateContent` (its last text part starts with the first line of the backend's `assignment_intuition.md` / `assignment_solution.md`, read from `backend/assets/instructions`) answers `fixtures/assignment-intuition.md` / `assignment-solution.md` (short Hebrew, a formula and a callout) instead of the summary, and is recorded as `{doc, files, summaries}` — the attached files' mime types (an Office file's extracted text is uploaded as `text/plain`) and each `<lecture kind title>` summary part. `GET $(hb url providers)/assignment-calls` returns `{calls: [...]}` in order (answered calls only; `reset` clears it). The shim stamps an assignment's calls `course/Assignments/name`, so `{"gemini":{"mode":"500","match":"Assignments"}}` fails them alone and a lecture-targeted rule never reaches them. Matching and recording live in `fakes/assignment-calls.mjs`.
+
 ## Inspecting a PDF
 
 The box has no `pdftotext` or `pdftoppm`. PyMuPDF is a backend dependency, so read text and render
