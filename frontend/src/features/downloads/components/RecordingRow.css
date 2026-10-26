@@ -102,3 +102,10 @@
     transform: rotate(360deg);
   }
 }
+
+/* Soft heads-up under the destination name; the download is never blocked or confirmed. */
+.recording-done-note {
+  align-self: flex-start;
+  font-size: var(--fs-meta);
+  color: var(--warn);
+}

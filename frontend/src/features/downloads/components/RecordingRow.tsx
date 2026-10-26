@@ -24,6 +24,7 @@ import {
   existingAssignmentNames,
   existingNames,
   hasResource,
+  isAssignmentDone,
   materialsOf,
   overwritesVideo,
   splitSiblings,
@@ -117,6 +118,8 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
   // Every file of one assignment lands in the same node, so the target's file count is shown instead.
   const fileCount = assignment ? assignmentFilesOf(effectiveName, courses, course).length : 0
+  // A file into a done assignment keeps the mark, so say so rather than confirm.
+  const assignmentDone = assignment && isAssignmentDone(effectiveName, courses, course)
   // Live tree, so a completed download's SSE refresh flips the card green.
   const alreadyDownloaded = hasResource(
     { ref: item.ref, media: item.media, resolvedMedia: resolved },
@@ -338,6 +341,12 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
           </>
         )}
       </div>
+
+      {assignmentDone && (
+        <div className="recording-done-note">
+          <Trans>This assignment is marked done</Trans>
+        </div>
+      )}
 
       <RecordingJobList
         jobs={jobs}

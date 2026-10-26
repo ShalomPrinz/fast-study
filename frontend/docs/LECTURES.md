@@ -103,7 +103,7 @@ overview URL reaches it) lists the assignment's files with sizes. A name opens t
 `openAssignmentFile` (bridge `open.file`, else a new tab on the database route), via the same
 `MaterialNameButton` the material chips use. "Open with…" (`OpenWithMenu`) shows on Windows packaged only,
 and "Show in folder" calls `open.reveal` — disabled with a tooltip without `canReveal()` (browser dev, older
-launcher). A rejected bridge call toasts its message. No viewer, delete or rename.
+launcher). A rejected bridge call toasts its message. The header carries `StudyDoneButton` (`kind="assignment"`, `setAssignmentDone`), the same toggle as the lecture page. No viewer, delete or rename.
 
 ## Study with AI
 
@@ -210,12 +210,13 @@ when the latest load failed, since a stale or empty tree can't prove the target 
 
 `utils/lectureProgress.ts`'s `isLectureComplete` (the last pipeline output exists, mirroring the backend's
 `final_output()`, whatever earlier file is gone) reads `Complete` on the lecture page; the tree shows study
-progress instead. Lectures and recitations are two tracks, and `utils/studyProgress.ts`'s `trackProgress`
+progress instead. Lectures, recitations and assignments are three tracks, and `utils/studyProgress.ts`'s `trackProgress`
 reads one in the tree's order: the user's manual `done` marks count toward `done/total`, and its current item
 is the first not done, strictly — an earlier gap stays current. Each row's mark is a ✓ when done, an arrow
 on its track's current item and empty otherwise; a running or queued row shows a spinner in its place.
-Marks are display-only. The course header counts lectures, the Recitations header recitations; an archived
-course shows neither count.
+Marks are display-only. The course header counts lectures, the Recitations header recitations, the Assignments header assignments
+(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. An
+archived course shows no count.
 
 **A lectures-only course** (the tree's resolved `lectures_only`, never the setting — [SETTINGS.md](SETTINGS.md))
 has one track: `utils/courseTree.ts`'s `lectureTrack` merges its recitations into the lecture list with no
@@ -233,7 +234,7 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
   course. It auto-expands when one of its lectures, its overview or an assignment is the open route (deep links).
 - `AssignmentsGroup` lists the course's `assignments` after the recitations, styled like them, whatever
   `lectures_only` says and never folded into the lectures; nothing creates one by hand, so a course
-  without any shows no group.
+  without any shows no group. Rows carry ✓/arrow marks and a done/total count.
 - The pane unmounts on other routes; only each course's expansion (a module map in
   `utils/courseExpansion.ts`, moved to the new name on a course rename) and the nav's scroll position
   survive, the latter saved on each scroll because a detached nav reads 0. The auto-expand re-runs on

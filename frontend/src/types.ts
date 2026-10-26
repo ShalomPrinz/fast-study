@@ -79,6 +79,8 @@ export type AssignmentFile = { name: string; size: number; mtime: number; source
 
 export interface Assignment {
   name: string
+  // Marked studied by the user; a downloaded file never changes it.
+  done: boolean
   files: AssignmentFile[]
 }
 

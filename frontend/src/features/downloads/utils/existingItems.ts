@@ -39,6 +39,13 @@ export function assignmentFilesOf(
   )
 }
 
+// True when `name` is an existing assignment of the course that the user marked done.
+export function isAssignmentDone(name: string, courses: Course[], course: string): boolean {
+  return (
+    courses.find((c) => c.name === course)?.assignments?.find((a) => a.name === name)?.done ?? false
+  )
+}
+
 // The single "already on disk" rule for the green row, bulk skip and landed check; a material matches by
 // `source === ref`, so several share a node. An unprobed 'unknown' or 'unsupported' row is always false.
 export function hasResource(

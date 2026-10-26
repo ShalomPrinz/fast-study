@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture, MaterialInfo } from '@/types'
 import type { Media, ResolvedMedia } from '../services/autoDownloader'
 import {
+  isAssignmentDone,
   existingNames,
   hasResource,
   holdsVideo,
@@ -49,6 +50,7 @@ function withAssignments(courses: Course[], specs: [string, string[]][]): Course
     ...c,
     assignments: specs.map(([name, files]) => ({
       name,
+      done: false,
       files: files.map((f) => {
         const [fname, source] = f.split('@')
         return source
@@ -287,5 +289,23 @@ describe('assignment rows', () => {
     expect(
       overwritesVideo({ media: 'assignment' }, 'Lecture 1', 'lecture', courses, 'Algebra'),
     ).toBe(false)
+  })
+})
+
+describe('isAssignmentDone', () => {
+  const base = withAssignments(tree([]), [
+    ['A', []],
+    ['B', []],
+  ])
+  const courses = base.map((c) => ({
+    ...c,
+    assignments: c.assignments.map((a) => ({ ...a, done: a.name === 'A' })),
+  }))
+
+  it('is true only for an existing assignment marked done', () => {
+    expect(isAssignmentDone('A', courses, 'Algebra')).toBe(true)
+    expect(isAssignmentDone('B', courses, 'Algebra')).toBe(false)
+    expect(isAssignmentDone('New', courses, 'Algebra')).toBe(false)
+    expect(isAssignmentDone('A', courses, 'Other')).toBe(false)
   })
 })

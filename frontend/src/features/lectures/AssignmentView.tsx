@@ -15,6 +15,7 @@ import {
   openAssignmentFileWith,
   revealAssignmentFile,
 } from '@/services/open'
+import StudyDoneButton from './components/StudyDoneButton'
 import { MaterialNameButton } from './components/MaterialChip'
 import OpenWithMenu from './components/OpenWithMenu'
 import '@/styles/button.css'
@@ -23,7 +24,7 @@ import './components/MaterialChip.css'
 import './AssignmentView.css'
 
 // A course assignment's files: each opens in the OS default app, with "Open with…" on Windows
-// packaged and "Show in folder" wherever the desktop app is. Nothing here edits or deletes.
+// packaged and "Show in folder" wherever the desktop app is. Nothing here edits or deletes, bar the Done toggle.
 export default function AssignmentView() {
   const { t } = useLingui()
   const params = useParams<{ course: string; assignment: string }>()
@@ -33,10 +34,11 @@ export default function AssignmentView() {
 
   const miss = routeMiss(assignmentNotFound(courses, course, assignment), loadFailed)
   if (miss) return <NotFoundPanel {...miss} />
-  const files = courses
+  const node = courses
     .find((c) => c.name === course)
-    ?.assignments.find((a) => a.name === assignment)?.files
-  if (!files) return null
+    ?.assignments.find((a) => a.name === assignment)
+  if (!node) return null
+  const { files, done } = node
 
   const reveal = canReveal()
   return (
@@ -53,6 +55,9 @@ export default function AssignmentView() {
           <span>
             <Plural value={files.length} one="# file" other="# files" />
           </span>
+        }
+        actions={
+          <StudyDoneButton course={course} lecture={assignment} kind="assignment" done={done} />
         }
       />
       <div className="page-body">

@@ -108,6 +108,16 @@ export async function setLectureDone(
   await (done ? database.put(url) : database.delete(url))
 }
 
+// Marks a course assignment studied, or back to not; idempotent either way.
+export async function setAssignmentDone(
+  course: string,
+  assignment: string,
+  done: boolean,
+): Promise<void> {
+  const url = `${assignmentBase(course, assignment)}/done`
+  await (done ? database.put(url) : database.delete(url))
+}
+
 /** Answers the folder name the create made, which the database may have sanitized. */
 export async function createLecture(course: string, name: string, kind?: Kind): Promise<string> {
   const { name: created } = await database.post<{ name: string }>(

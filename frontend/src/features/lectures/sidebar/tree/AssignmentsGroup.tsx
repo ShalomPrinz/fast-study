@@ -1,4 +1,7 @@
-import { Trans } from '@lingui/react/macro'
+import Tooltip from '@/shared/components/Tooltip'
+import Icon from '@/shared/components/Icon'
+import { trackProgress } from '@/features/lectures/utils/studyProgress'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useMatch, useNavigate } from 'react-router-dom'
 import type { ExpandHandle } from '@/types'
 import Chevron from '@/shared/components/Chevron'
@@ -11,6 +14,7 @@ import './RecitationsGroup.css'
 // The course's assignments, listed apart from its lectures whatever `lectures_only` says; there is no
 // way to add one by hand, so a course without any shows no group. `expand` is owned by CourseGroup.
 export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
+  const { t } = useLingui()
   const { course } = useCourseGroup()
   const navigate = useNavigate()
   const match = useMatch(ROUTES.assignment)
@@ -20,6 +24,7 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
       : null
 
   if (!course.assignments.length) return null
+  const progress = trackProgress(course.assignments)
 
   return (
     <li className="recitations-group">
@@ -31,7 +36,13 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
           <span dir="auto">
             <Trans>Assignments</Trans>
           </span>
-          <span className="course-count">{course.assignments.length}</span>
+          {!course.archived && (
+            <Tooltip content={t`Assignments you marked done`} placement="inline-end">
+              <span className="course-count">
+                {progress.done}/{progress.total}
+              </span>
+            </Tooltip>
+          )}
         </button>
       </div>
       {expand.isOpen && (
@@ -45,7 +56,15 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
                 data-assignment={a.name}
                 onClick={() => navigate(assignmentRoute(course.name, a.name))}
               >
-                <span className="lecture-mark" />
+                <span
+                  className={`lecture-mark lecture-mark--${a.done ? 'done' : progress.current?.name === a.name ? 'current' : 'todo'}`}
+                >
+                  {a.done ? (
+                    <Icon icon="check" />
+                  ) : progress.current?.name === a.name ? (
+                    <Icon icon="arrow-end" />
+                  ) : null}
+                </span>
                 <span className="lecture-name" dir="auto">
                   {a.name}
                 </span>

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, Lecture } from '@/types'
 import { lectureTrack, lecturesOnly, recitationTrack } from './courseTree'
+import { trackProgress } from './studyProgress'
 import { sortLectures } from './lectureSort'
 
 const node = (lectures: string[], recitations: string[], lectures_only: boolean): Course => ({
@@ -63,5 +64,21 @@ describe('lecturesOnly', () => {
     expect(lecturesOnly(courses, 'Algebra', false)).toBe(true)
     expect(lecturesOnly(courses, 'Physics', false)).toBe(false)
     expect(lecturesOnly(courses, 'Physics', true)).toBe(true)
+  })
+})
+
+describe('assignments as a third track', () => {
+  const asg = (name: string, done: boolean) => ({ name, done, files: [] })
+
+  it('marks done rows, makes the first not-done current, counts done/total', () => {
+    const p = trackProgress([asg('A1', true), asg('A2', false), asg('A3', true)])
+    expect(p.current?.name).toBe('A2')
+    expect([p.done, p.total]).toEqual([2, 3])
+  })
+
+  it('never feeds the course header, which counts the lecture track only', () => {
+    const c = { ...node(['Lecture 1'], [], false), assignments: [asg('A1', true)] }
+    const p = trackProgress(lectureTrack(c))
+    expect([p.done, p.total]).toEqual([0, 1])
   })
 })

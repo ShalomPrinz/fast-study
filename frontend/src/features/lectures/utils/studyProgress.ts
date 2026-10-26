@@ -7,7 +7,7 @@ export interface TrackProgress<T> {
   total: number
 }
 
-// One track's study state (a course's lectures, or its recitations), read in the order shown in the
+// One track's study state (a course's lectures, recitations or assignments), read in the order shown in the
 // tree, so "current" is strict: an earlier item left undone stays current whatever comes after it.
 export function trackProgress<T extends Pick<Lecture, 'name' | 'done'>>(
   items: T[],

@@ -38,7 +38,7 @@ Everything filesystem-backed. `materialUrl`/`deleteMaterial`/`setMaterialAttach`
 comes from the tree rather than the fixed `FileName` set. `uploadVideo` announces the arrival to the
 backend (`reportVideoArrived`) itself, because auto-run is backend policy and a caller that only stored
 the bytes would lose it; a failed report is logged, never rethrown, since the bytes are stored.
-`setLectureDone` is one call for both directions: `PUT` marks a lecture studied, `DELETE` reverts it.
+`setLectureDone` is one call for both directions: `PUT` marks a lecture studied, `DELETE` reverts it. `setAssignmentDone` does the same for an assignment (`…/assignments/{a}/done`).
 
 ## `runtime.ts` — the Electron preload bridge
 
