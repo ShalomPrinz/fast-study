@@ -36,7 +36,9 @@ a number on the wire, never the `<select>`'s string, which the store rejects.
 **Auto-remove deletes a finished lecture's video (and audio) from disk**, and saves differently from
 the rest of the page. Its section (`AutoRemoveField`, rules in `utils/autoRemove.ts`) has its own Apply,
 enabled once it differs from the store and both values are chosen; checking the box always starts from
-video and no timing, and "after Drive" is disabled while the form's Drive toggle is off. The page's Save
+video and no timing, and "after Drive" is disabled while the form's Drive toggle is off. A stored "after
+Drive" rule may stay saved beside Drive turned off, by design: it removes nothing until the rule changes
+or Drive is back on. The page's Save
 treats the section exactly like Apply, and a half-chosen section holds both. A save that **widens** the
 rule (`autoRemoveWidens`: off to on, video to video + audio, Drive to PDF) first confirms that the files
 of every existing lecture go for good; Yes saves, pushes `/config`, then awaits the backend's `POST
