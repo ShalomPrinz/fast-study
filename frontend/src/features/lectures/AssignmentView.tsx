@@ -6,7 +6,7 @@ import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import PageHeader from '@/shared/components/PageHeader'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { assignmentNotFound, routeMiss } from '@/shared/utils/notFound'
-import { formatBytes } from '@/shared/utils/format'
+import { FileSize } from '@/shared/components/FileSize'
 import { routeParam } from '@/shared/utils/routes'
 import {
   canOpenWith,
@@ -66,7 +66,9 @@ export default function AssignmentView() {
                   hint={t`Open file`}
                   onOpen={() => openAssignmentFile(course, assignment, f.name)}
                 />
-                <span className="assignment-file-size">{formatBytes(f.size)}</span>
+                <span className="assignment-file-size">
+                  <FileSize bytes={f.size} />
+                </span>
                 {canOpenWith() && (
                   <OpenWithMenu
                     onOpenWith={() => openAssignmentFileWith(course, assignment, f.name)}

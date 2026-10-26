@@ -17,7 +17,8 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { visiblePipeline, stepPosition, STEP_FILE } from '@/features/lectures/constants/pipeline'
 import { kindQuery } from '@/shared/utils/url'
-import { formatBytes, formatDuration } from '@/shared/utils/format'
+import { FileSize } from '@/shared/components/FileSize'
+import { formatDuration } from '@/shared/utils/format'
 import { toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
@@ -368,8 +369,8 @@ export default function MainView() {
                   : actionLabel && t(actionLabel)
 
                 const size = files[file].size
-                const subtitle =
-                  !isRunning && exists && !isRemoved && size !== null ? formatBytes(size) : null
+                const subtitle: number | null =
+                  !isRunning && exists && !isRemoved && size !== null ? size : null
 
                 return (
                   <div
@@ -411,7 +412,12 @@ export default function MainView() {
                       )}
                       <p className="pipeline-file">
                         {file}
-                        {subtitle && ` · ${subtitle}`}
+                        {subtitle !== null && (
+                          <>
+                            {' · '}
+                            <FileSize bytes={subtitle} />
+                          </>
+                        )}
                       </p>
                       {isRunning && remote && (
                         <ProgressBar
