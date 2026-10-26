@@ -10,6 +10,11 @@ RECITATIONS_DIR = "Recitations"
 ASSIGNMENTS_DIR = "Assignments"
 # Assignment-dir dotfile: {filename: source} for files written with a source.
 ASSIGNMENT_FILES_MARKER = ".assignment_files.json"
+# Assignment-dir dotfile: {"attach": {file: false}, "lectures": [{name, kind}]}, the AI docs' inputs.
+ASSIGNMENT_META_MARKER = ".assignment_meta.json"
+# Assignment-dir subfolder holding the generated AI docs; the doc ids it holds are ASSIGNMENT_DOCS.
+GENERATED_DIR = ".generated"
+ASSIGNMENT_DOCS = ("intuition", "solution")
 
 # Windows rejects these in a path component
 ILLEGAL_NAME_CHARS = set('<>:"/\\|?*') | {chr(c) for c in range(32)}
@@ -122,6 +127,12 @@ class LectureNotFound(CodedError):
     """Raised when a neutral write targets a lecture dir that does not exist; only a video upload creates one."""
 
     code = "lecture_not_found"
+
+
+class AssignmentFileNotFound(CodedError, FileNotFoundError):
+    """Raised when a route names an assignment file or doc that is not there."""
+
+    code = "file_not_found"
 
 
 # ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION, as os.unlink/os.replace report them — see docs/API.md.

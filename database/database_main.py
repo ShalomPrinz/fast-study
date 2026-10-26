@@ -22,6 +22,7 @@ from fs.paths import (
     DONE_MARKER,
     LECTURES_ONLY_MARKER,
     SOURCE_URL_MARKER,
+    AssignmentFileNotFound,
     CodedError,
     CodedValueError,
     CourseNotFound,
@@ -126,7 +127,7 @@ def _failure(exc: Exception, status: int, code: str, params: dict | None = None)
         return _error(str(exc), 423, exc.code, exc.params)
     if isinstance(exc, (NameTaken, NameReserved)):
         return _error(str(exc), 409, exc.code, exc.params)
-    if isinstance(exc, (LectureNotFound, CourseNotFound)):
+    if isinstance(exc, (LectureNotFound, CourseNotFound, AssignmentFileNotFound)):
         return _error(str(exc), 404, exc.code, exc.params)
     if isinstance(exc, CodedError):
         return _error(str(exc), status, exc.code, exc.params)
@@ -578,6 +579,126 @@ def get_assignment_file(course: str, name: str, file: str):
     if not p.is_file():
         return _error("Not found", 404, "file_not_found", {"file": file})
     return FileResponse(str(p), media_type=mimetypes.guess_type(file)[0])
+
+
+@app.patch("/courses/{course}/assignments/{name}/files/{file}")
+async def patch_assignment_file(course: str, name: str, file: str, request: Request):
+    """Set whether an assignment file is sent to Gemini (body: {attach: bool})."""
+
+    try:
+        body = await request.json()
+        value = body.get("attach") if isinstance(body, dict) else None
+        assignments.set_file_attach(course, name, file, value)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": file})
+
+
+@app.put("/courses/{course}/assignments/{name}/lectures")
+async def put_assignment_lectures(course: str, name: str, request: Request):
+    """Replace an assignment's course-material selection (body: {lectures: [{name, kind}]})."""
+
+    try:
+        body = await request.json()
+        value = body.get("lectures") if isinstance(body, dict) else None
+        assignments.set_lectures(course, name, value)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": ".assignment_meta.json"})
+
+
+@app.get("/courses/{course}/assignments/{name}/docs/{doc}")
+def get_assignment_doc(course: str, name: str, doc: str):
+    """Return a generated doc's content plus whether an unedited original is preserved."""
+
+    try:
+        return assignments.read_doc(course, name, doc)
+    except Exception as e:
+        return _failure(e, 500, "summary_io_failed")
+
+
+@app.put("/courses/{course}/assignments/{name}/docs/{doc}")
+async def put_assignment_doc(
+    course: str,
+    name: str,
+    doc: str,
+    request: Request,
+    fresh: bool = Query(False),
+):
+    """Overwrite a generated doc from a raw utf-8 body, with the same snapshot rules as PUT …/summary."""
+
+    try:
+        content = (await request.body()).decode("utf-8")
+        assignments.write_doc(course, name, doc, content, fresh)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 500, "summary_io_failed")
+
+
+@app.delete("/courses/{course}/assignments/{name}/docs/{doc}")
+async def delete_assignment_doc(course: str, name: str, doc: str):
+    """Restore a generated doc from its preserved original."""
+
+    try:
+        assignments.revert_doc(course, name, doc)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 500, "summary_io_failed")
+
+
+@app.get("/courses/{course}/assignments/{name}/generated/{file}/path")
+def get_assignment_generated_path(course: str, name: str, file: str):
+    """Return a generated file's absolute on-disk path, for the launcher's open, open-with and reveal."""
+
+    try:
+        p = assignments.generated_path(course, name, file)
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed", {"file": file})
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": file})
+    return {"path": str(p)}
+
+
+@app.get("/courses/{course}/assignments/{name}/generated/{file}")
+def get_assignment_generated(course: str, name: str, file: str):
+    """Stream one whitelisted .generated/ file's bytes."""
+
+    try:
+        p = assignments.generated_path(course, name, file)
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed", {"file": file})
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": file})
+    return FileResponse(str(p), media_type=mimetypes.guess_type(file)[0])
+
+
+@app.put("/courses/{course}/assignments/{name}/generated/{file}")
+async def put_assignment_generated(course: str, name: str, file: str, request: Request):
+    """Write one whitelisted .generated/ file; neutral, never creates the assignment."""
+
+    try:
+        data = await request.body()
+        assignments.write_generated(course, name, file, data)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": file})
+
+
+@app.delete("/courses/{course}/assignments/{name}/generated/{file}")
+async def delete_assignment_generated(course: str, name: str, file: str):
+    """Delete one whitelisted .generated/ file; a pdf takes its warning with it."""
+
+    try:
+        assignments.delete_generated(course, name, file)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_delete_failed", {"file": file})
 
 
 @app.get("/courses/{course}/summaries")

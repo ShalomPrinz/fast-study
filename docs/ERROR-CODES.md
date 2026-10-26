@@ -222,13 +222,13 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `data_root_not_absolute`        | `path`            | user      |
 | `settings.py`         | `data_root_not_a_directory`     | `path`            | user      |
 | `settings.py`         | `data_root_not_writable`        | `path`, `detail`  | user      |
-| `database_main.py`, `fs/crud.py`, `fs/summary.py` | `bad_request_body` | `detail` | dev       |
+| `database_main.py`, `fs/crud.py`, `fs/summary.py`, `fs/assignments.py` | `bad_request_body` | `detail` | dev       |
 | `database_main.py`    | `create_dir_failed`             | `path`, `detail`  | user      |
 | `database_main.py`    | `rename_failed`                 | `from`, `to`, `detail` | user |
 | `database_main.py`    | `file_write_failed`             | `file`, `detail`  | user      |
 | `database_main.py`    | `file_read_failed`              | `file`, `detail`  | user      |
 | `database_main.py`, `fs/crud.py` | `file_delete_failed` | `file`, `detail`  | user      |
-| `database_main.py`    | `file_not_found`                | `file`            | user      |
+| `database_main.py`, `fs/paths.py` | `file_not_found` | `file`            | user      |
 | `database_main.py`    | `summary_io_failed`             | `detail`          | uncertain |
 | `database_main.py`    | `overview_read_failed`          | `detail`          | uncertain |
 | `database_main.py`    | `settings_store_io_failed`      | `detail`          | uncertain |
