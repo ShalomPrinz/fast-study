@@ -41,7 +41,7 @@ def test_tree_skips_assignments_as_lecture_and_lists_empty(client, data_root):
     (data_root / "Algo" / "Assignments" / "t").mkdir(parents=True)
     node = _node(client)
     assert node["lectures"] == []
-    assert node["assignments"] == [{"name": "t", "files": []}]
+    assert node["assignments"] == [{"name": "t", "done": False, "files": []}]
     (data_root / "Algo" / "Assignments" / "t").rmdir()
     assert _node(client)["assignments"] == []
 
@@ -138,3 +138,45 @@ def test_get_sidecar_refused(client):
     for suffix in ("", "/path"):
         r = client.get(base + suffix)
         assert (r.status_code, r.json()["code"]) == (400, "unsafe_path_segment")
+
+
+def test_done_toggle_is_idempotent_listed_in_tree_notifies_and_never_a_file(
+    client, data_root, monkeypatch
+):
+    import database_main
+
+    calls = []
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda: calls.append(1))
+    _post(client)
+    calls.clear()
+    url = "/courses/Algo/assignments/תרגיל 1/done"
+    (a,) = _node(client)["assignments"]
+    assert a["done"] is False
+
+    for _ in range(2):
+        assert client.put(url).status_code == 204
+    assert (data_root / "Algo" / "Assignments" / "תרגיל 1" / ".done").exists()
+    (a,) = _node(client)["assignments"]
+    assert a["done"] is True
+    assert [f["name"] for f in a["files"]] == ["ex1.pdf"]
+    assert len(calls) == 2
+
+    for _ in range(2):
+        assert client.delete(url).status_code == 204
+    assert _node(client)["assignments"][0]["done"] is False
+    assert len(calls) == 4
+
+
+def test_done_missing_assignment_is_404_both_verbs(client):
+    for verb in (client.put, client.delete):
+        r = verb("/courses/Algo/assignments/nope/done")
+        assert (r.status_code, r.json()["code"]) == (404, "lecture_not_found")
+
+
+def test_upload_into_done_assignment_keeps_the_mark(client):
+    _post(client)
+    client.put("/courses/Algo/assignments/תרגיל 1/done")
+    _post(client, filename="ex2.pdf")
+    (a,) = _node(client)["assignments"]
+    assert a["done"] is True
+    assert [f["name"] for f in a["files"]] == ["ex1.pdf", "ex2.pdf"]

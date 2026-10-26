@@ -530,6 +530,30 @@ async def post_assignment_file(
         return _failure(e, 400, "file_write_failed", {"file": filename})
 
 
+@app.put("/courses/{course}/assignments/{name}/done")
+async def put_assignment_done(course: str, name: str):
+    """Mark an assignment studied (creates its .done marker; idempotent)."""
+
+    try:
+        assignments.set_assignment_done(course, name, True)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": DONE_MARKER})
+
+
+@app.delete("/courses/{course}/assignments/{name}/done")
+async def delete_assignment_done(course: str, name: str):
+    """Clear an assignment's studied mark (removes its .done marker; idempotent)."""
+
+    try:
+        assignments.set_assignment_done(course, name, False)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_delete_failed", {"file": DONE_MARKER})
+
+
 @app.get("/courses/{course}/assignments/{name}/files/{file}/path")
 def get_assignment_file_path(course: str, name: str, file: str):
     """Return an assignment file's absolute on-disk path, for the launcher's open, open-with and reveal."""

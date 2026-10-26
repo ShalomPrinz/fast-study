@@ -5,9 +5,11 @@ from .material_meta import read_json_dict, write_json_dict
 from .paths import (
     ASSIGNMENT_FILES_MARKER,
     ASSIGNMENTS_DIR,
+    DONE_MARKER,
     ILLEGAL_NAME_CHARS,
     CodedValueError,
     CourseNotFound,
+    LectureNotFound,
     assignment_dir,
     check_safe_segment,
     course_dir,
@@ -80,7 +82,7 @@ def write_assignment_file(
 
 
 def list_assignments(course_path: Path) -> list[dict]:
-    """Build the tree's assignments list: {name, files: [{name, size, mtime[, source]}]}, both sorted by name."""
+    """Build the tree's assignments list: {name, done, files: [{name, size, mtime[, source]}]}, both sorted by name."""
 
     root = course_path / ASSIGNMENTS_DIR
     if not root.is_dir():
@@ -101,8 +103,23 @@ def list_assignments(course_path: Path) -> list[dict]:
             if f.name in sources:
                 entry["source"] = sources[f.name]
             files.append(entry)
-        out.append({"name": a.name, "files": files})
+        out.append({"name": a.name, "done": (a / DONE_MARKER).exists(), "files": files})
     return out
+
+
+def set_assignment_done(course: str, name: str, done: bool) -> None:
+    """Create or remove the .done marker in an assignment dir (idempotent); LectureNotFound if the dir is gone."""
+
+    d = assignment_dir(course, name)
+    if not d.is_dir():
+        raise LectureNotFound(
+            f"{course}/{name} does not exist", course=course, lecture=name
+        )
+    marker = d / DONE_MARKER
+    if done:
+        marker.touch(exist_ok=True)
+    else:
+        marker.unlink(missing_ok=True)
 
 
 def assignment_file_path(course: str, name: str, file: str) -> Path:

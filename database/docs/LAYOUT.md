@@ -131,7 +131,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.archived`              | course dir  | empty marker; course is archived                          |
 | `.lectures_only`         | course dir  | empty marker; picked as lectures-only, counted only under `lectures_some` ([SETTINGS.md](SETTINGS.md)) |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
-| `.done`                  | lecture dir | empty marker; the user studied it — a fresh video upload keeps it |
+| `.done`                  | lecture or assignment dir | empty marker; the user studied it — a fresh video upload or an assignment file upload keeps it |
 | `.materials.json`        | lecture dir | `{material name: {source?, filename?, attach?}}` per-material meta |
 | `.assignment_files.json` | assignment dir | `{filename: source}` (opaque string) for files written with a source |
 | `.summary_materials.json` | lecture dir | `{"materials": [...]}` — the materials attached at the last Summarize (the run that wrote the current `summary.md`), including attached files it skipped; `[]` = nothing attached |
@@ -161,7 +161,7 @@ A materials-only lecture has neither, so it reports nothing removed.
 `read_tree` returns one node per course: `name`, `archived`, `lectures_only`, `source_url`,
 `lectures`, `recitations`, `assignments`. `lectures_only` is resolved, never raw: `course_structure == lectures_all`,
 or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations`, `Assignments` and `overview` are skipped as lectures.
-`assignments` is always present (`[]` when none): `[{name, files: [{name, size, mtime[, source]}]}]`, both levels sorted by name, `source` omitted when absent, dotfiles never rows.
+`assignments` is always present (`[]` when none): `[{name, done, files: [{name, size, mtime[, source]}]}]` (`done`: the `.done` marker exists), both levels sorted by name, `source` omitted when absent, dotfiles never rows.
 
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
 `materials` (index-ordered `{name, size, mtime}` plus `source`, `filename` and `attach` when set, always present and `[]` when none — presence
