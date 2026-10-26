@@ -1,0 +1,119 @@
+.course-material {
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.course-material-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.course-material-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.course-material-title {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.course-material-sub,
+.course-material-none,
+.course-material-empty {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.course-material-picker {
+  position: relative;
+}
+
+.course-material-popover {
+  position: absolute;
+  z-index: 10;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline-end: 0;
+  min-width: 260px;
+  max-width: 340px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.course-material-empty {
+  padding: var(--space-3) var(--space-4);
+}
+
+.course-material-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.course-material-option:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.course-material-option-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.course-material-option-kind {
+  flex-shrink: 0;
+  font-size: var(--fs-fine);
+  color: var(--text-4);
+}
+
+.course-material-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip.course-material-chip {
+  gap: var(--space-2);
+  font-size: var(--fs-meta);
+}
+
+.course-material-remove {
+  border: none;
+  background: none;
+  padding: 0 var(--space-1);
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-row);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.course-material-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

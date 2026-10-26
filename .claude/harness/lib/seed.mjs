@@ -83,6 +83,16 @@ export const FLOWS = {
       ['שיעור 4', ['video.mp4']],
     ],
   },
+  'hb-assign': {
+    // Two summarised lectures and an assignment of two Gemini-readable files (a PDF and a text file).
+    lectures: [
+      ['שיעור 1', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
+      ['שיעור 2', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
+    ],
+    assignments: [
+      ['תרגיל בית 1', { 'ex1-instructions.pdf': 'handout.pdf', 'ex1-data.txt': 'transcript.txt' }],
+    ],
+  },
   [SELFCHECK.course]: { lectures: [[SELFCHECK.lecture, ['video.mp4']]] },
 };
 
@@ -107,7 +117,7 @@ export async function seed(paths) {
     material: fixture('handout.pdf'),
   };
   let lectures = 0;
-  for (const [course, { sourceUrl, lectures: rows }] of Object.entries(FLOWS)) {
+  for (const [course, { sourceUrl, lectures: rows, assignments = [] }] of Object.entries(FLOWS)) {
     await json(
       `${DATABASE}/courses`,
       'POST',
@@ -129,6 +139,17 @@ export async function seed(paths) {
         await bytes(url, method, content[file], TYPES[file] ?? 'application/pdf');
       }
       lectures += 1;
+    }
+    // Each assignment's files are posted as the downloader does: fixture bytes under the wanted name.
+    for (const [assignment, files] of assignments) {
+      for (const [name, from] of Object.entries(files)) {
+        await bytes(
+          `${DATABASE}/courses/${encode(course)}/assignments/${encode(assignment)}/files?filename=${encode(name)}`,
+          'POST',
+          fixture(from),
+          TYPES[from] ?? 'application/pdf',
+        );
+      }
     }
   }
   return { courses: Object.keys(FLOWS).length, lectures };

@@ -436,3 +436,54 @@ class TestAutoRemoveApply:
             response = client.post("/auto-remove/apply")
         assert response.status_code == 409
         assert response.json()["code"] == "data_root_not_configured"
+
+
+class TestRunAssignmentStep:
+    def test_unknown_step_is_a_404(self):
+        response = client.post("/courses/C/assignments/A/run/nope")
+        assert response.status_code == 404
+        assert response.json()["code"] == "unknown_step"
+
+    def test_pdf_without_its_markdown_is_a_409(self):
+        with (
+            patch.object(
+                backend_main.db_client,
+                "get_assignment",
+                return_value={"name": "A", "docs": {"intuition": None}},
+            ),
+            patch.object(backend_main.runner, "try_run_assignment_step") as run,
+        ):
+            response = client.post("/courses/C/assignments/A/run/intuition_pdf")
+        assert response.status_code == 409
+        assert response.json()["code"] == "missing_prerequisite"
+        assert response.json()["params"] == {
+            "file": "intuition.md",
+            "step": "intuition",
+        }
+        run.assert_not_called()
+
+    def test_a_missing_assignment_is_a_404(self):
+        err = DbClientError("gone", "lecture_not_found", course="C", lecture="A")
+        with patch.object(backend_main.db_client, "get_assignment", side_effect=err):
+            response = client.post("/courses/C/assignments/A/run/solution_pdf")
+        assert response.status_code == 404
+        assert response.json()["code"] == "lecture_not_found"
+
+    def test_fresh_applies_to_pdf_steps_only(self):
+        doc = {"md_mtime": 1, "pdf_mtime": None, "pdf_warning": None}
+        with (
+            patch.object(
+                backend_main.db_client,
+                "get_assignment",
+                return_value={"docs": {"solution": doc}},
+            ),
+            patch.object(
+                backend_main.runner, "try_run_assignment_step", return_value="started"
+            ) as run,
+        ):
+            assert client.post(
+                "/courses/C/assignments/A/run/solution_pdf?fresh=true"
+            ).json() == {"status": "started"}
+            client.post("/courses/C/assignments/A/run/solution?fresh=true")
+        assert run.call_args_list[0].kwargs == {"fresh": True}
+        assert run.call_args_list[1].kwargs == {"fresh": False}

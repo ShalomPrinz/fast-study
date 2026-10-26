@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AI_PROVIDERS, clipboardText, toAiProvider } from './aiChat'
+import { AI_PROVIDERS, assignmentClipboardText, clipboardText, toAiProvider } from './aiChat'
 
 describe('clipboardText', () => {
   it('puts the prompt, a blank line, then the summary inside a lecture tag', () => {
@@ -35,5 +35,35 @@ describe('AI_PROVIDERS', () => {
     expect(AI_PROVIDERS.claude.url).toBe('https://claude.ai/new')
     expect(AI_PROVIDERS.chatgpt.url).toBe('https://chatgpt.com/')
     expect(AI_PROVIDERS.gemini.url).toBe('https://gemini.google.com/app')
+  })
+})
+
+describe('assignmentClipboardText', () => {
+  const base = {
+    prompt: 'P',
+    course: 'C',
+    assignment: 'HW "1"',
+    lectures: [],
+    intuition: null,
+    solution: null,
+  }
+
+  it('wraps each summary, then the guides that exist, in an assignment tag', () => {
+    expect(
+      assignmentClipboardText({
+        ...base,
+        lectures: [{ kind: 'recitation', title: 'R 4', summary: 'sum' }],
+        intuition: 'hints',
+        solution: 'answers',
+      }),
+    ).toBe(
+      'P\n\n<assignment course="C" title="HW \'1\'">\n<lecture kind="recitation" title="R 4">\nsum\n</lecture>\n<intuition_guide>\nhints\n</intuition_guide>\n<solution>\nanswers\n</solution>\n</assignment>',
+    )
+  })
+
+  it('leaves out a guide that does not exist', () => {
+    const out = assignmentClipboardText({ ...base, solution: 'answers' })
+    expect(out).not.toContain('<intuition_guide>')
+    expect(out).toContain('<solution>')
   })
 })

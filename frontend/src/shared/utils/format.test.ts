@@ -4,6 +4,7 @@ import {
   formatBytes,
   formatClockTime,
   formatDateTime,
+  formatRelativeTime,
   formatDuration,
   formatFullTimestamp,
   formatMonthDate,
@@ -102,5 +103,17 @@ describe('formatDateTime', () => {
     expect(out).toContain('2026')
     expect(out).toContain('14:30')
     expect(out).not.toContain('Oct')
+  })
+})
+
+describe('formatRelativeTime', () => {
+  const now = 1_000_000_000_000
+
+  it('picks the coarsest unit that fits', () => {
+    activate('en')
+    expect(formatRelativeTime(now / 1000 - 30, now)).toBe('now')
+    expect(formatRelativeTime(now / 1000 - 300, now)).toBe('5 minutes ago')
+    expect(formatRelativeTime(now / 1000 - 7200, now)).toBe('2 hours ago')
+    expect(formatRelativeTime(now / 1000 - 3 * 86400, now)).toBe('3 days ago')
   })
 })

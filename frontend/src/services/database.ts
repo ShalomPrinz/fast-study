@@ -4,6 +4,8 @@ import type {
   Kind,
   CourseFile,
   CourseSummary,
+  AssignmentDocName,
+  AssignmentLecture,
   OverviewMetaRaw,
   OverviewMeta,
 } from '@/types'
@@ -57,6 +59,62 @@ export async function setMaterialAttach(
 // One file of a course assignment, for the browser-dev new tab; packaged opens go through the bridge.
 export function assignmentFileUrl(course: string, assignment: string, name: string): string {
   return database.url(assignmentBase(course, assignment) + path`/files/${name}`)
+}
+
+// One `.generated/` file of an assignment (`{doc}.pdf`), for the browser-dev new tab.
+export function assignmentGeneratedUrl(course: string, assignment: string, name: string): string {
+  return database.url(assignmentBase(course, assignment) + path`/generated/${name}`)
+}
+
+// Sets whether one assignment file goes to Gemini; the tree's SSE refresh brings the new state.
+export async function setAssignmentFileAttach(
+  course: string,
+  assignment: string,
+  name: string,
+  attach: boolean,
+): Promise<void> {
+  await database.patch(assignmentBase(course, assignment) + path`/files/${name}`, {
+    json: { attach },
+  })
+}
+
+// Replaces the assignment's course-material selection; the tree's SSE refresh brings the new state.
+export async function setAssignmentLectures(
+  course: string,
+  assignment: string,
+  lectures: AssignmentLecture[],
+): Promise<void> {
+  await database.put(`${assignmentBase(course, assignment)}/lectures`, { json: { lectures } })
+}
+
+export async function fetchAssignmentDoc(
+  course: string,
+  assignment: string,
+  doc: AssignmentDocName,
+): Promise<{ content: string; hasOriginal: boolean }> {
+  return database.get<{ content: string; hasOriginal: boolean }>(
+    assignmentBase(course, assignment) + path`/docs/${doc}`,
+  )
+}
+
+export async function saveAssignmentDoc(
+  course: string,
+  assignment: string,
+  doc: AssignmentDocName,
+  content: string,
+): Promise<void> {
+  await database.put(assignmentBase(course, assignment) + path`/docs/${doc}`, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    body: content,
+  })
+}
+
+export async function revertAssignmentDoc(
+  course: string,
+  assignment: string,
+  doc: AssignmentDocName,
+): Promise<void> {
+  await database.delete(assignmentBase(course, assignment) + path`/docs/${doc}`)
 }
 
 export async function fetchTree(): Promise<Course[]> {

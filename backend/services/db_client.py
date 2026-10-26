@@ -255,6 +255,84 @@ def put_summary(
     _raise_for_status(r)
 
 
+def _assignment_url(course: str, name: str) -> str:
+    return f"{DATABASE_URL}/courses/{_q(course)}/assignments/{_q(name)}"
+
+
+def get_assignment(course: str, name: str) -> dict:
+    """One assignment's tree entry ({name, files, lectures, docs, ...}). Raises `lecture_not_found`
+    when the course or assignment is gone — the tree is the only place its inputs are listed."""
+
+    for node in get_tree():
+        if node.get("name") == course:
+            for entry in node.get("assignments") or []:
+                if entry.get("name") == name:
+                    return entry
+            break
+    raise DbClientError(
+        f"assignment {course}/{name} not found",
+        "lecture_not_found",
+        course=course,
+        lecture=name,
+    )
+
+
+def get_assignment_file_bytes(course: str, name: str, filename: str) -> bytes:
+    """Fetch one assignment file as raw bytes. Raises if missing."""
+
+    r = _request("GET", f"{_assignment_url(course, name)}/files/{_q(filename)}")
+    _raise_for_status(r)
+    return r.content
+
+
+def get_assignment_doc(course: str, name: str, doc: str) -> str:
+    """Fetch `{doc}.md`, unwrapping the {content, hasOriginal} envelope."""
+
+    r = _request("GET", f"{_assignment_url(course, name)}/docs/{_q(doc)}")
+    _raise_for_status(r)
+    return r.json()["content"]
+
+
+def put_assignment_doc(
+    course: str, name: str, doc: str, content: str, *, fresh: bool = False
+) -> None:
+    """Write `{doc}.md`; `fresh` marks new AI output, as for `put_summary`."""
+
+    r = _request(
+        "PUT",
+        f"{_assignment_url(course, name)}/docs/{_q(doc)}",
+        params={"fresh": "true"} if fresh else None,
+        data=content.encode("utf-8"),
+    )
+    _raise_for_status(r)
+
+
+def _generated_url(course: str, name: str, filename: str) -> str:
+    return f"{_assignment_url(course, name)}/generated/{_q(filename)}"
+
+
+def get_generated(course: str, name: str, filename: str) -> bytes:
+    """Fetch one `.generated/` file (a doc's pdf, warning or build tex). Raises if missing."""
+
+    r = _request("GET", _generated_url(course, name, filename))
+    _raise_for_status(r)
+    return r.content
+
+
+def put_generated(course: str, name: str, filename: str, data: bytes) -> None:
+    """Write one `.generated/` file."""
+
+    r = _request("PUT", _generated_url(course, name, filename), data=data)
+    _raise_for_status(r)
+
+
+def delete_generated(course: str, name: str, filename: str) -> None:
+    """Delete one `.generated/` file (no-op server-side if missing); a pdf takes its warning along."""
+
+    r = _request("DELETE", _generated_url(course, name, filename))
+    _raise_for_status(r)
+
+
 def notify() -> None:
     """Fire-and-forget broadcast on the database SSE notify channel. Failure is swallowed —
     the channel is for liveness pings, not for correctness."""

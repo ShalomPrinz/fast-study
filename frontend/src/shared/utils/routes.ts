@@ -2,6 +2,7 @@
 export const ROUTES = {
   overview: '/course/:course/overview',
   assignment: '/course/:course/assignment/:assignment',
+  assignmentEditor: '/course/:course/assignment/:assignment/edit/:doc',
   lecture: '/:course/:lecture',
   editor: '/:course/:lecture/edit',
   downloads: '/downloads',

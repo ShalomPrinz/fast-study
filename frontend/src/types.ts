@@ -75,13 +75,33 @@ export interface Lecture {
 }
 
 // One file of a course assignment; `source` is the discovery row's `ref`, absent on a hand-placed file.
-export type AssignmentFile = { name: string; size: number; mtime: number; source?: string }
+export type AssignmentFile = {
+  name: string
+  size: number
+  mtime: number
+  source?: string
+  // Whether the file goes to Gemini when a doc is generated; true unless the user switched it off.
+  attach: boolean
+}
+
+export type AssignmentDocName = 'intuition' | 'solution'
+// One generated doc's files; the tree holds null for a doc with no md yet.
+export type AssignmentDocInfo = {
+  md_mtime: number
+  pdf_mtime: number | null
+  pdf_warning: string | null
+}
+// A chosen course-material entry, by the name and kind that locate its summary.
+export type AssignmentLecture = { name: string; kind: Kind }
 
 export interface Assignment {
   name: string
   // Marked studied by the user; a downloaded file never changes it.
   done: boolean
   files: AssignmentFile[]
+  // The chosen course material, existing entries only, in selection order.
+  lectures: AssignmentLecture[]
+  docs: Record<AssignmentDocName, AssignmentDocInfo | null>
 }
 
 export interface Course {
@@ -100,6 +120,10 @@ export type Kind = 'lecture' | 'recitation'
 
 export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'drive'
 
+// The runner also runs assignments, keyed by name in the lecture slot; they are never queued.
+export type RunKind = Kind | 'assignment'
+export type AssignmentStep = 'intuition' | 'solution' | 'intuition_pdf' | 'solution_pdf'
+
 export interface CourseSummary {
   name: string
   kind: Kind
@@ -107,7 +131,8 @@ export interface CourseSummary {
 }
 
 export type DownloadOperation = 'download:curl' | 'download:ytdlp'
-export type TimingOperation = Step | 'summarize_materials' | DownloadOperation
+export type TimingOperation =
+  Step | 'summarize_materials' | 'assignment_intuition' | 'assignment_solution' | DownloadOperation
 
 export interface RateLimitInfo {
   limit: number | null
@@ -134,8 +159,9 @@ export interface Selected {
 
 export interface InFlightEntry {
   course: string
+  // The assignment's name when `kind` is `assignment`.
   lecture: string
-  kind: Kind
+  kind: RunKind
   step: string
   startedAt: string
 }

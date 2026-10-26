@@ -6,6 +6,7 @@ import InitGate from '@/app/InitGate'
 import { SettingsProvider } from '@/shared/contexts/SettingsContext'
 import AssignmentView from '@/features/lectures/AssignmentView'
 import MainView from '@/features/lectures/MainView'
+import EditAssignmentDocView from '@/features/lectures/EditAssignmentDocView'
 import LecturesLayout from '@/features/lectures/LecturesLayout'
 import EditSummaryView from '@/features/lectures/EditSummaryView'
 import CourseView from '@/features/course-overview/CourseView'
@@ -71,6 +72,7 @@ export default function App() {
             <Route path={ROUTES.running} element={<RunnerView />} />
             <Route path={ROUTES.settings} element={<SettingsView />} />
             <Route path={ROUTES.editor} element={<EditSummaryView />} />
+            <Route path={ROUTES.assignmentEditor} element={<EditAssignmentDocView />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Step, FileName, MaterialInfo } from '@/types'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import ServiceError from '@/shared/components/ServiceError'
-import { deleteFile, deleteMaterial } from '@/services/database'
+import { deleteFile, deleteMaterial, fetchSummaryContent } from '@/services/database'
 import { openLectureFile, openExternalUrl } from '@/services/open'
 import { runStep, runPipeline } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
@@ -27,6 +27,7 @@ import { stageControl, stepState } from '@/features/lectures/utils/stepState'
 import { useSupportedMaterials } from '@/shared/contexts/SupportedMaterialsContext'
 import { attachedMaterials, displayName } from '@/features/lectures/utils/materials'
 import MaterialChip from '@/features/lectures/components/MaterialChip'
+import { clipboardText } from '@/features/lectures/utils/aiChat'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import {
   canRunRemaining,
@@ -40,7 +41,9 @@ import { lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import StudyDoneButton from '@/features/lectures/components/StudyDoneButton'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import StudyWithAiCard from '@/features/lectures/components/StudyWithAiCard'
+import StudyWithAiCard, {
+  type StudyWithAiCopy,
+} from '@/features/lectures/components/StudyWithAiCard'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode from '@/shared/components/StatusNode'
@@ -54,6 +57,7 @@ import '@/styles/modal.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
 import '@/styles/pipeline-card.css'
+import '@/styles/ai-split.css'
 import './MainView.css'
 
 interface RotateTarget {
@@ -223,6 +227,23 @@ export default function MainView() {
     refreshCourses()
   }
 
+  const aiCopy: StudyWithAiCopy = {
+    subtitle: (provider) => t`Click "Open chat" to study this lecture with ${provider}.`,
+    emptySubtitle: t`Available once the summary is generated.`,
+    hint: t`Generate the summary first`,
+    info: t`Paste the lecture content with Ctrl+V, we already copied it for you.`,
+    copied: t`Summary copied — paste it in the chat with Ctrl+V.`,
+    copyFailed: t`Couldn't copy the summary. Try again.`,
+  }
+
+  async function collectAiText(): Promise<string> {
+    const { content } = await fetchSummaryContent(course, lecture, kind)
+    const prompt = t`I want to study this lecture in depth, and soon I'll ask you specific questions about it. Its summary is below.
+
+To start, reply with a single sentence — "What do you want to learn first?" — followed by a numbered list of 4–6 topics from the lecture to choose from.`
+    return clipboardText(prompt, course, lecture, content)
+  }
+
   function confirmRotate() {
     if (!rotateTarget) return
     const { step, toDelete } = rotateTarget
@@ -329,9 +350,9 @@ export default function MainView() {
         }
       />
 
-      <div className="page-body lecture-page-body">
-        <div className="page-column lecture-page">
-          <div className="lecture-split">
+      <div className="page-body ai-split-body">
+        <div className="page-column lecture-page ai-split-page">
+          <div className="lecture-split ai-split">
             <div className="section-head lecture-split-head">
               <h2 className="section-title">
                 <Trans>Pipeline</Trans>
@@ -488,13 +509,8 @@ export default function MainView() {
               </div>
             )}
 
-            <div className="lecture-split-ai">
-              <StudyWithAiCard
-                course={course}
-                lecture={lecture}
-                kind={kind}
-                summaryExists={summaryExists}
-              />
+            <div className="lecture-split-ai ai-split-card">
+              <StudyWithAiCard ready={summaryExists} copy={aiCopy} collect={collectAiText} />
             </div>
           </div>
 

@@ -29,3 +29,23 @@ export function clipboardText(
 ): string {
   return `${prompt}\n\n<lecture course="${attr(course)}" title="${attr(lecture)}">\n${summary}\n</lecture>`
 }
+
+export interface AssignmentClipboardInput {
+  prompt: string
+  course: string
+  assignment: string
+  lectures: { kind: string; title: string; summary: string }[]
+  intuition: string | null
+  solution: string | null
+}
+
+/** The prompt, a blank line, then an `<assignment>` tag holding each chosen summary and the guides that exist. */
+export function assignmentClipboardText(input: AssignmentClipboardInput): string {
+  const parts = input.lectures.map(
+    (l) => `<lecture kind="${attr(l.kind)}" title="${attr(l.title)}">\n${l.summary}\n</lecture>`,
+  )
+  if (input.intuition !== null)
+    parts.push(`<intuition_guide>\n${input.intuition}\n</intuition_guide>`)
+  if (input.solution !== null) parts.push(`<solution>\n${input.solution}\n</solution>`)
+  return `${input.prompt}\n\n<assignment course="${attr(input.course)}" title="${attr(input.assignment)}">\n${parts.join('\n')}\n</assignment>`
+}

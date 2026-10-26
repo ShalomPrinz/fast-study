@@ -123,9 +123,19 @@ Resume validates the meta against `audio.mp3`'s size AND mtime. Re-downloading a
 
 Manual `/run/summarize` and `/pipeline` triggers ignore both blocks, and `POST /run-all` clears them before it enqueues (a live run included) — the user may have swapped keys. An automatic arrival never clears them.
 
+## Assignments
+
+An assignment's Intuition Guide and Full Solution are runner steps under `kind="assignment"` (the assignment name in the `lecture` slot, skey `{course}||{assignment}||assignment`), served by `POST /courses/{c}/assignments/{a}/run/{step}` ([API.md](API.md)). They reuse the per-key lock, `_in_flight`, `_errors` and `/status`, with these differences:
+
+- Steps: `intuition` / `solution` = inputs → Gemini → `{doc}.md` (written `fresh`, dropping edits and the restore snapshot) → the PDF render in the same run; `intuition_pdf` / `solution_pdf` only re-render (`fresh` drops the old PDF first). The PDF, warning and build-tex markers go through the database's `.generated/` routes with the lecture `pdf` step's keep/drop rules. The two docs are independent: neither is an input to the other.
+- Inputs, in this order: the assignment's files whose switch is on and whose type `gemini_mime` supports (the 10 MB cap, `material_too_large`; Office files go as extracted text), then the `summary.md` of each selected lecture/recitation as one inline `<lecture kind title>` text part (a vanished or summary-less one is skipped with a log line), then the prompt (`assets/instructions/assignment_{doc}.md`). None left is `assignment_inputs_empty`; a Gemini failure is `assignment_generation_failed {detail}`.
+- Manual only: `try_run_assignment_step` never touches `_queue`, and run-all, the nightly pass and `AUTO_RUN` never start one. `auto_remove` is skipped.
+- A daily quota records `gemini_quota_exhausted` like any step but never sets `_summarize_block` and never sweeps other records: no run-all depends on it.
+- `prune_stale_errors` keeps an assignment's error while the assignment is in the tree.
+
 ## Timing
 
-`timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. A list of paths as the first argument records their summed size; the materials-only summarize records under its own `summarize_materials` bucket so materials-only runs never skew the transcript `summarize` ETA. See [timing/README.md](../timing/README.md) for queries and the outlier-cleaning scripts.
+`timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. A list of paths as the first argument records their summed size, an int as is (an assignment doc's summed input bytes, in `assignment_intuition` / `assignment_solution`; its PDF render uses `pdf`); the materials-only summarize records under its own `summarize_materials` bucket so materials-only runs never skew the transcript `summarize` ETA. See [timing/README.md](../timing/README.md) for queries and the outlier-cleaning scripts.
 
 The db sits at `runtime.state_path("timing.db")`, outside the `backend/` tree `--reload` watches, so the runner's constant writes never restart the dev server. `timing/__init__.py` owns that path and `init_db()` creates the directory — `state_path` itself only joins.
 

@@ -5,6 +5,8 @@
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { assignmentDoc, describeCall, partsOf, promptHeads } from './assignment-calls.mjs';
 import { createRules } from './provider-rules.mjs';
 
 // The harness's own copy, not the repo's: everything a run reads or writes lives under one root.
@@ -17,6 +19,17 @@ const TRANSCRIPT = fs
   .split(/\n\s*\n/)
   .filter(Boolean);
 const SUMMARY = fs.readFileSync(path.join(FIXTURES, 'summary.md'), 'utf8');
+
+const INSTRUCTIONS = fileURLToPath(
+  new URL('../../../backend/assets/instructions', import.meta.url),
+);
+const HEADS = promptHeads(INSTRUCTIONS, (file) => fs.readFileSync(file, 'utf8'));
+const ASSIGNMENT_DOCS = {
+  intuition: fs.readFileSync(path.join(FIXTURES, 'assignment-intuition.md'), 'utf8'),
+  solution: fs.readFileSync(path.join(FIXTURES, 'assignment-solution.md'), 'utf8'),
+};
+// Each assignment-doc request as `{doc, files, summaries}`, in order.
+let assignmentCalls = [];
 
 const rules = createRules();
 const { mode } = rules;
@@ -159,6 +172,7 @@ async function handle(req, res) {
     if (body.reset) {
       chunk = 0; // the transcript restarts at its first paragraph
       uploaded = [];
+      assignmentCalls = [];
     }
     // A new rule for a provider ends its held calls, so a test lifts a hold the moment it is done.
     for (const provider of ['groq', 'gemini']) {
@@ -169,6 +183,7 @@ async function handle(req, res) {
   }
   if (route === '/health') return json(res, 200, { status: 'ok', mode });
   if (route === '/uploads') return json(res, 200, { uploads: uploaded });
+  if (route === '/assignment-calls') return json(res, 200, { calls: assignmentCalls });
 
   // A key containing `bad` is rejected the way each real provider rejects one — Groq 401, Gemini
   // 400 API_KEY_INVALID — so the settings screen's rejected-key path is drivable by typing one.
@@ -261,16 +276,19 @@ async function handle(req, res) {
     });
   }
   if (route.includes('/v1beta/models/') && route.endsWith(':generateContent')) {
-    await readBody(req);
+    const body = JSON.parse((await readBody(req)).toString('utf8') || '{}');
+    const parts = partsOf(body);
+    const doc = assignmentDoc(parts, HEADS);
     const fail = await failure('gemini', req, ['429', '429min', '500', 'empty', 'slow']);
     if (fail === '429') return geminiRateLimit(res);
     if (fail === '429min') return geminiRateLimit(res, true);
     if (fail === '500')
       return json(res, 500, { error: { code: 500, message: 'fake gemini is down' } });
-    const body = fail === 'empty' ? '' : SUMMARY;
+    if (doc) assignmentCalls.push(describeCall(doc, parts));
+    const answer = fail === 'empty' ? '' : doc ? ASSIGNMENT_DOCS[doc] : SUMMARY;
     return json(res, 200, {
       candidates: [
-        { content: { role: 'model', parts: [{ text: body }] }, finishReason: 'STOP', index: 0 },
+        { content: { role: 'model', parts: [{ text: answer }] }, finishReason: 'STOP', index: 0 },
       ],
       usageMetadata: { promptTokenCount: 1200, candidatesTokenCount: 800, totalTokenCount: 2000 },
       modelVersion: 'harness-fake',

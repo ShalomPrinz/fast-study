@@ -74,3 +74,13 @@ export function formatDateTime(ms: number): string {
     hour12: false,
   })
 }
+
+// Coarse "an hour ago" from unix seconds, in the UI language; under a minute reads as "now".
+export function formatRelativeTime(mtimeSeconds: number, nowMs: number = Date.now()): string {
+  const rtf = new Intl.RelativeTimeFormat(i18n.locale, { numeric: 'auto' })
+  const seconds = Math.max(0, Math.round(nowMs / 1000 - mtimeSeconds))
+  if (seconds < 60) return rtf.format(0, 'second')
+  if (seconds < 3600) return rtf.format(-Math.floor(seconds / 60), 'minute')
+  if (seconds < 86400) return rtf.format(-Math.floor(seconds / 3600), 'hour')
+  return rtf.format(-Math.floor(seconds / 86400), 'day')
+}

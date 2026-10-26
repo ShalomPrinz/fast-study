@@ -87,6 +87,7 @@ named for `/hunt-bugs`' flows, and any task can use them as ready-made fixtures:
 | `hb-nav`       | search, materials, links      | `שיעור 1` finished (fixture `summary.pdf`, `drive_url.txt`, a material), `שיעור 2` summarised with a material, one empty |
 | `hb-pipeline`  | pipeline and course overview  | one lecture per stage, two video-only for queue + lock, a recitation          |
 | `hb-fail`      | failure surfacing             | video-only, transcribed and summarised lectures to fail at each step          |
+| `hb-assign`    | assignment AI docs            | two summarised lectures and `תרגיל בית 1` (a PDF and a text file)             |
 | `hb-selfcheck` | the self-check's pipeline run | not a flow's — leave it alone                                                 |
 
 The seeded `drive_url.txt` points at the fake providers' `/drive/view/…`, a page the fake providers serve,
@@ -433,7 +434,8 @@ the isolate-or-fall-back decision and the relays' byte-for-byte piping, SSE and 
 
 They run in CI's `internal-tests` job beside the lib tests.
 
-The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`), failure surfacing
+The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`), assignment AI docs (`hb-assign`: a file switched off, a lecture chosen, guide
+generated, edited, regenerated, copied for Study with AI, a failed solution), failure surfacing
 (`hb-fail`), download (`hb-dl`), a locked `summary.pdf`, "Run these now" joining a live run
 (its own two-lecture course in `data-empty`, so its queue holds nothing else), a recitation from
 bare video to Drive, a video dropped on a tree row (new and replacing), a course created, filled
@@ -554,6 +556,8 @@ section's contents, so auto's `/list` gives them `media: 'assignment'` with the 
 The fake Gemini records each Files API upload as `{mimeType, size, lecture}`: the mime type the backend
 declared and the bytes it sent. `GET $(hb url providers)/uploads` returns `{uploads: [...]}` in order;
 specs call `geminiUploads()` from `e2e/fixtures.mjs`. `/control {"reset":true}` (so `reset()`) clears it.
+
+An assignment doc's `generateContent` (its last text part starts with the first line of the backend's `assignment_intuition.md` / `assignment_solution.md`, read from `backend/assets/instructions`) answers `fixtures/assignment-intuition.md` / `assignment-solution.md` (short Hebrew, a formula and a callout) instead of the summary, and is recorded as `{doc, files, summaries}` — the attached files' mime types (an Office file's extracted text is uploaded as `text/plain`) and each `<lecture kind title>` summary part. `GET $(hb url providers)/assignment-calls` returns `{calls: [...]}` in order (answered calls only; `reset` clears it). The shim stamps an assignment's calls `course/Assignments/name`, so `{"gemini":{"mode":"500","match":"Assignments"}}` fails them alone and a lecture-targeted rule never reaches them. Matching and recording live in `fakes/assignment-calls.mjs`.
 
 ## Inspecting a PDF
 

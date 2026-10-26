@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, Lecture } from '@/types'
-import { courseNotFound, lectureNotFound, routeMiss } from '@/shared/utils/notFound'
+import {
+  assignmentDocNotFound,
+  courseNotFound,
+  lectureNotFound,
+  routeMiss,
+} from '@/shared/utils/notFound'
 
 const lecture = (name: string) => ({ name }) as Lecture
 
@@ -66,5 +71,38 @@ describe('routeMiss', () => {
 
   it('blames the failed load, not the target, when the newest load failed', () => {
     expect(routeMiss('gone', true)).toEqual({ message: 'Courses failed to load.', failed: true })
+  })
+})
+
+describe('assignmentDocNotFound', () => {
+  const info = { md_mtime: 1, pdf_mtime: null, pdf_warning: null }
+  const withDocs = (docs: Course['assignments'][number]['docs']): Course[] => [
+    {
+      ...courses[0],
+      assignments: [{ name: 'HW1', docs } as Course['assignments'][number]],
+    },
+  ]
+  const tree = withDocs({ intuition: info, solution: null })
+
+  it('returns null for a doc the assignment holds', () => {
+    expect(assignmentDocNotFound(tree, 'Operating Systems', 'HW1', 'intuition')).toBeNull()
+  })
+
+  it('names the missing doc file when it is not generated', () => {
+    expect(assignmentDocNotFound(tree, 'Operating Systems', 'HW1', 'solution')).toBe(
+      'solution.md was not found.',
+    )
+  })
+
+  it('rejects a doc that is not one of the two names', () => {
+    expect(assignmentDocNotFound(tree, 'Operating Systems', 'HW1', 'summary')).toBe(
+      'summary.md was not found.',
+    )
+  })
+
+  it('blames the assignment when it is missing', () => {
+    expect(assignmentDocNotFound(tree, 'Operating Systems', 'HW9', 'intuition')).toBe(
+      `"Operating Systems" has no assignment named "HW9".`,
+    )
   })
 })

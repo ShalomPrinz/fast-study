@@ -10,7 +10,7 @@ The event carries **no payload** — the body of `/notify` is drained and discar
 keeps the channel a single event type. Producers are the backend (each meaningful pipeline and
 course-overview state change, via `services/db_client.notify`), the downloader server (after a
 successful upload), and this service itself after a successful course create, rename, archive or lectures-only pick,
-lecture create, rename or done toggle, an assignment done toggle, a summary write or restore (so an editor open in another window sees it), and a `POST /config` that applies a new `data_root` or `course_structure` — so every open tree
+lecture create, rename or done toggle, an assignment done toggle, attach, selection, doc or generated-file write, a summary write or restore (so an editor open in another window sees it), and a `POST /config` that applies a new `data_root` or `course_structure` — so every open tree
 refetches, not just the window that acted.
 
 A route that calls `broadcast_notify()` is `async def`: the queues are plain `asyncio.Queue`s, not thread-safe, so a push from a threadpool worker can be lost or wake no one.

@@ -1,5 +1,5 @@
 import type { FileInfo, FileStatus, InFlightEntry } from '@/types'
-import { pdfNeedsUpdate } from './pdfBadge'
+import { pdfNeedsUpdate, statePdfNeedsUpdate, type PdfState } from './pdfBadge'
 
 export type DiskChange = 'none' | 'reload' | 'conflict'
 
@@ -16,6 +16,12 @@ export function diskChange(content: string, saved: string, disk: string): DiskCh
 export function canUpdatePdf(content: string, dirty: boolean, files: FileStatus | null): boolean {
   if (!content.trim()) return false
   return dirty || pdfNeedsUpdate(files)
+}
+
+// The same rule over a document's PDF state, for the sources that have no lecture file row.
+export function canUpdateDocPdf(content: string, dirty: boolean, pdf: PdfState | null): boolean {
+  if (!content.trim()) return false
+  return dirty || statePdfNeedsUpdate(pdf)
 }
 
 // The editor is generating while its own save cycle runs or the runner reports this lecture's `pdf` step,
@@ -54,6 +60,9 @@ export function updatePdfReason(s: {
 
 // Whether the render this view started has written its PDF. The backend deletes the old one only once
 // the run holds the lecture, so a refresh can still show it; a changed mtime is the new file.
-export function freshPdfLanded(pdf: FileInfo, firedMtime: number | null): boolean {
+export function freshPdfLanded(
+  pdf: Pick<FileInfo, 'exists' | 'mtime'>,
+  firedMtime: number | null,
+): boolean {
   return pdf.exists && pdf.mtime !== firedMtime
 }

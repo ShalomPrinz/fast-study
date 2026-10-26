@@ -134,6 +134,8 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.done`                  | lecture or assignment dir | empty marker; the user studied it — a fresh video upload or an assignment file upload keeps it |
 | `.materials.json`        | lecture dir | `{material name: {source?, filename?, attach?}}` per-material meta |
 | `.assignment_files.json` | assignment dir | `{filename: source}` (opaque string) for files written with a source |
+| `.assignment_meta.json` | assignment dir | `{"attach": {file: false}, "lectures": [{name, kind}]}`: the AI docs' inputs. Only `false` is stored (a missing key means attached; a key for a vanished file is ignored); `lectures` is the course-material selection, kept in order and filtered on read against the course's real lectures and recitations |
+| `.generated/` | assignment dir | hidden folder made on the first doc write, never the assignment itself: `{doc}.md`, `original_{doc}.md` (editor snapshot, same rules as `original_summary.md`), `{doc}.pdf`, `{doc}.pdf_warning`, `{doc}.pdf_build.tex`, with `doc` in `intuition`, `solution` |
 | `.summary_materials.json` | lecture dir | `{"materials": [...]}` — the materials attached at the last Summarize (the run that wrote the current `summary.md`), including attached files it skipped; `[]` = nothing attached |
 | `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
@@ -161,7 +163,7 @@ A materials-only lecture has neither, so it reports nothing removed.
 `read_tree` returns one node per course: `name`, `archived`, `lectures_only`, `source_url`,
 `lectures`, `recitations`, `assignments`. `lectures_only` is resolved, never raw: `course_structure == lectures_all`,
 or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations`, `Assignments` and `overview` are skipped as lectures.
-`assignments` is always present (`[]` when none): `[{name, done, files: [{name, size, mtime[, source]}]}]` (`done`: the `.done` marker exists), both levels sorted by name, `source` omitted when absent, dotfiles never rows.
+`assignments` is always present (`[]` when none): `[{name, done, files: [{name, size, mtime, attach[, source]}], lectures: [{name, kind}], docs: {intuition, solution}}]` (`done`: the `.done` marker exists; `attach` defaults `true`; `lectures` only existing ones; each doc is `null` without its `.md`, else `{md_mtime, pdf_mtime|null, pdf_warning|null}`), both levels sorted by name, `source` omitted when absent, dotfiles (so `.generated/`) never rows.
 
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
 `materials` (index-ordered `{name, size, mtime}` plus `source`, `filename` and `attach` when set, always present and `[]` when none — presence
@@ -195,3 +197,5 @@ folder name goes through `safe_name()`; a file name goes through `check_safe_seg
 refused on POST and GET (dotfiles are sidecars). A taken name allocates `stem (2).ext`, `stem (3).ext`, … in `fs/assignments.py`, scan and write
 with no `await`, like materials; `POST` answers the effective assignment and file names. `.assignment_files.json` shares the
 `.materials.json` atomic read/write primitives: unreadable reads as `{}`, a failed write is logged and the upload still succeeds.
+
+The AI docs' sidecars never create the assignment: a write to a missing one is `404` `lecture_not_found`. `{doc}.md` writes share the summary snapshot helpers in `fs/summary.py`; deleting `{doc}.pdf` drops its `.pdf_warning`.

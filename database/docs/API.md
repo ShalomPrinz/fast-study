@@ -64,6 +64,13 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `DELETE /courses/{course}/assignments/{name}/done`         | clear studied (removes `.done`); idempotent `204`, then notifies; `404` `lecture_not_found` if the assignment is missing |
 | `GET    /courses/{course}/assignments/{name}/files/{file}/path` | `{path}`, the absolute path; `404` `file_not_found`; `400` `unsafe_path_segment` for a dotfile |
 | `GET    /courses/{course}/assignments/{name}/files/{file}` | the bytes, media type from `mimetypes.guess_type`; `404` `file_not_found` |
+| `PATCH  /courses/{course}/assignments/{name}/files/{file}` | body `{attach: bool}` (the send-to-Gemini switch); `204`, then notifies; `404` `file_not_found` for an absent file; `400` `bad_request_body` for another body |
+| `PUT    /courses/{course}/assignments/{name}/lectures`     | body `{lectures: [{name, kind}]}` replaces the course-material selection; `204`, then notifies; `400` `bad_request_body` |
+| `GET    /courses/{course}/assignments/{name}/docs/{doc}`   | `{content, hasOriginal}` for `doc` in `intuition`, `solution`; `404` `file_not_found` without the `.md` or for another doc |
+| `PUT    /courses/{course}/assignments/{name}/docs/{doc}`   | write `{doc}.md` (raw utf-8) with the `PUT …/summary` snapshot rules, `?fresh=true` drops the snapshot; `204`, then notifies; `404` `lecture_not_found` if the assignment is missing |
+| `DELETE /courses/{course}/assignments/{name}/docs/{doc}`   | restore from `original_{doc}.md`; `204`, then notifies |
+| `GET\|PUT\|DELETE /courses/{course}/assignments/{name}/generated/{file}` | bytes of one `.generated/` file, `file` in `{doc}.pdf`, `{doc}.pdf_warning`, `{doc}.pdf_build.tex`, else `400` `unsafe_path_segment`; `404` `file_not_found` on GET; writes notify and `423` `file_locked`; deleting `{doc}.pdf` also drops `{doc}.pdf_warning` |
+| `GET    /courses/{course}/assignments/{name}/generated/{file}/path` | `{path}`, absolute, for the launcher's open and reveal; `404` `file_not_found` |
 | `POST   /courses/{course}/lectures/{lecture}/removed`      | delete intermediates (`{files}`, each `video.mp4` or `audio.mp3`); see Write semantics |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `404` if the lecture is missing; `423` if it is open in another program |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |

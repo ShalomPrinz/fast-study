@@ -8,6 +8,7 @@ import os
 import tempfile
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import NamedTuple, Optional
 
@@ -26,10 +27,15 @@ from pipeline.extract_text import extract_text
 from pipeline.material_types import (
     MAX_GEMINI_FILE_BYTES,
     attached_materials,
+    gemini_mime,
     needs_extraction,
 )
 from pipeline.strip_audio import strip_audio
-from pipeline.summarize import summarize, summarize_materials
+from pipeline.summarize import (
+    generate_assignment_doc,
+    summarize,
+    summarize_materials,
+)
 from pipeline.to_pdf import PdfRenderError, convert_to_pdf
 from pipeline.transcribe import (
     PARTIAL_META,
@@ -192,6 +198,10 @@ async def prune_stale_errors() -> None:
         for c in tree
         for kind, key in (("lecture", "lectures"), ("recitation", "recitations"))
         for lec in c.get(key) or []
+    } | {
+        _skey(c["name"], a["name"], "assignment")
+        for c in tree
+        for a in c.get("assignments") or []
     }
     for skey, record in before.items():
         if skey not in live and skey not in _in_flight and _errors.get(skey) is record:
@@ -207,6 +217,8 @@ EMPTY_FILE_ISSUES: dict[str, str] = {
     "audio.mp3": "ffmpeg produced no audio — the video may have no audio track or be corrupt",
     "transcript.txt": "Whisper returned no text — the audio may be silent or corrupt",
     "summary.md": "Gemini returned no text",
+    "intuition.md": "Gemini returned no text",
+    "solution.md": "Gemini returned no text",
     "summary.pdf": "pandoc produced an empty PDF — summary.md may be empty or malformed",
     "drive_url.txt": "the Drive upload returned no share URL",
 }
@@ -358,6 +370,29 @@ def _check_sizes(entries: list[dict]) -> None:
         )
 
 
+def _prepare_material(dest: Path, name: str, data: bytes, label: str) -> Path | None:
+    """Write one material into `dest` as the file to send: an Office file as its extracted text.
+    None, with a log line naming `label`, for an empty or unreadable one."""
+
+    if not data:
+        log.warning("%s: skipping empty material %s", label, name)
+        return None
+    path = dest / name
+    path.write_bytes(data)
+    if needs_extraction(name):
+        try:
+            text = extract_text(path, name.rsplit(".", 1)[-1].lower())
+        except Exception as e:
+            log.warning("%s: skipping unreadable material %s: %s", label, name, e)
+            return None
+        if not text.strip():
+            log.warning("%s: skipping material %s with no text", label, name)
+            return None
+        path = dest / f"{name}.txt"
+        path.write_text(text, encoding="utf-8")
+    return path
+
+
 def _download_materials(
     course: str, lecture: str, kind: str, dest: Path, entries: list[dict] | None = None
 ) -> list[tuple[str, Path]]:
@@ -370,38 +405,9 @@ def _download_materials(
     for entry in entries:
         name = entry["name"]
         data = db_client.get_file_bytes(course, lecture, kind, name)
-        if not data:
-            log.warning(
-                "%s/%s (%s): skipping empty material %s", course, lecture, kind, name
-            )
-            continue
-        path = dest / name
-        path.write_bytes(data)
-        if needs_extraction(name):
-            try:
-                text = extract_text(path, name.rsplit(".", 1)[-1].lower())
-            except Exception as e:
-                log.warning(
-                    "%s/%s (%s): skipping unreadable material %s: %s",
-                    course,
-                    lecture,
-                    kind,
-                    name,
-                    e,
-                )
-                continue
-            if not text.strip():
-                log.warning(
-                    "%s/%s (%s): skipping material %s with no text",
-                    course,
-                    lecture,
-                    kind,
-                    name,
-                )
-                continue
-            path = dest / f"{name}.txt"
-            path.write_text(text, encoding="utf-8")
-        sent.append((name, path))
+        path = _prepare_material(dest, name, data, f"{course}/{lecture} ({kind})")
+        if path is not None:
+            sent.append((name, path))
     return sent
 
 
@@ -603,6 +609,146 @@ def _exec_drive(course: str, lecture: str, kind: str) -> dict:
         return {"status": "done", "url": url}
     except Exception as e:
         return _failed(e)
+
+
+# ---- Assignment docs ----
+
+ASSIGNMENT_KIND = "assignment"
+_NOT_THERE = ("file_not_found", "lecture_not_found")
+
+
+def _assignment_inputs(
+    course: str, entry: dict, dest: Path
+) -> tuple[list[tuple[Path, str]], list[tuple[str, str, str]]]:
+    """What Gemini gets for one assignment: supported attached files as (path, mime) and each chosen
+    lecture's summary as (kind, name, text); gone or summary-less lectures are skipped, none left is `assignment_inputs_empty`."""
+
+    name = entry["name"]
+    chosen = [
+        f
+        for f in entry.get("files") or []
+        if f.get("attach", True) and gemini_mime(f["name"])
+    ]
+    _check_sizes(chosen)
+    files: list[tuple[Path, str]] = []
+    for f in chosen:
+        data = db_client.get_assignment_file_bytes(course, name, f["name"])
+        path = _prepare_material(dest, f["name"], data, f"{course}/{name} (assignment)")
+        if path is not None:
+            files.append((path, gemini_mime(path.name)))
+    summaries: list[tuple[str, str, str]] = []
+    for lec in entry.get("lectures") or []:
+        try:
+            text = db_client.get_summary(course, lec["name"], lec["kind"])
+        except db_client.DbClientError as e:
+            if e.code not in _NOT_THERE:
+                raise
+            text = ""
+        if not text.strip():
+            log.info(
+                "%s/%s (assignment): skipping %s %s, it has no summary",
+                course,
+                name,
+                lec["kind"],
+                lec["name"],
+            )
+            continue
+        summaries.append((lec["kind"], lec["name"], text))
+    if not files and not summaries:
+        raise CodedError(
+            "no attached file and no lecture summary to send", "assignment_inputs_empty"
+        )
+    return files, summaries
+
+
+def _exec_assignment_doc(course: str, assignment: str, *, doc: str, **_opts) -> dict:
+    """Generate `{doc}.md` from the assignment's inputs with Gemini, then render its PDF. `fresh`
+    (in `_opts`) is ignored: the markdown is always new AI output. A quota hit is a plain error, never a block."""
+
+    try:
+        entry = db_client.get_assignment(course, assignment)
+        with tempfile.TemporaryDirectory() as tmp:
+            files, summaries = _assignment_inputs(course, entry, Path(tmp))
+            text = generate_assignment_doc(doc, files, summaries)
+        # Gemini can return HTTP 200 with no text.
+        _require_nonempty(f"{doc}.md", text.encode("utf-8"))
+        db_client.put_assignment_doc(course, assignment, doc, text, fresh=True)
+    except Exception as e:
+        return _failed(e)
+    return _exec_assignment_pdf(course, assignment, doc=doc)
+
+
+def _drop_generated(course: str, assignment: str, name: str) -> None:
+    """`_drop_marker` for a `.generated/` file."""
+
+    try:
+        db_client.delete_generated(course, assignment, name)
+    except Exception:
+        log.exception("failed to delete %s", name)
+
+
+def _exec_assignment_pdf(
+    course: str, assignment: str, *, doc: str, fresh: bool = False
+) -> dict:
+    """Render `{doc}.md` → `{doc}.pdf` like `_exec_pdf`, keeping its warning and build-tex markers
+    in `.generated/`."""
+
+    pdf, warning_name, tex_name = (
+        f"{doc}.pdf",
+        f"{doc}.pdf_warning",
+        f"{doc}.pdf_build.tex",
+    )
+    try:
+        try:
+            md = db_client.get_assignment_doc(course, assignment, doc)
+        except db_client.DbClientError as e:
+            if e.code != "file_not_found":
+                raise
+            return _missing_prerequisite(
+                f"{doc}.md is required — generate it first", f"{doc}.md", doc
+            )
+        _require_nonempty(f"{doc}.md", md.encode("utf-8"))
+        if fresh:
+            db_client.delete_generated(course, assignment, pdf)
+        with tempfile.TemporaryDirectory() as tmp:
+            md_path = Path(tmp) / f"{doc}.md"
+            md_path.write_text(md, encoding="utf-8")
+            pdf_path, warning = convert_to_pdf(str(md_path))
+            data = Path(pdf_path).read_bytes()
+        _require_nonempty(pdf, data)
+        db_client.put_generated(course, assignment, pdf, data)
+        if warning:
+            db_client.put_generated(
+                course, assignment, warning_name, warning.encode("utf-8")
+            )
+        else:
+            _drop_generated(course, assignment, warning_name)
+        _drop_generated(course, assignment, tex_name)
+        db_client.notify()
+        return {"status": "done"}
+    except PdfRenderError as e:
+        stored_tex = False
+        if e.tex_source:
+            try:
+                db_client.put_generated(
+                    course, assignment, tex_name, e.tex_source.encode("utf-8")
+                )
+                stored_tex = True
+            except Exception:
+                log.exception("failed to store %s", tex_name)
+        if stored_tex:
+            _drop_generated(course, assignment, warning_name)
+        return _failed(e)
+    except Exception as e:
+        return _failed(e)
+
+
+_ASSIGNMENT_EXECUTORS = {
+    "intuition": partial(_exec_assignment_doc, doc="intuition"),
+    "solution": partial(_exec_assignment_doc, doc="solution"),
+    "intuition_pdf": partial(_exec_assignment_pdf, doc="intuition"),
+    "solution_pdf": partial(_exec_assignment_pdf, doc="solution"),
+}
 
 
 _EXECUTORS = {
@@ -851,6 +997,10 @@ async def _call_step(
     """Run one executor in a worker thread so the event loop stays free during blocking I/O."""
 
     opts = {"fresh": True} if fresh else {}
+    if kind == ASSIGNMENT_KIND:
+        return await asyncio.to_thread(
+            _ASSIGNMENT_EXECUTORS[step], course, lecture, **opts
+        )
     return await asyncio.to_thread(_EXECUTORS[step], course, lecture, kind, **opts)
 
 
@@ -900,7 +1050,8 @@ async def _run_step_unlocked(
     else:  # error
         msg = result.get("message") or result.get("status") or "unknown error"
         params = result.get("params") or {}
-        if result.get("daily_quota"):
+        # Belt and braces: an assignment run is manual, so no run-all waits on its quota.
+        if result.get("daily_quota") and kind != ASSIGNMENT_KIND:
             _summarize_block = {"message": msg, "params": params}
         if result.get("groq_limit"):
             _transcribe_block = {"message": msg, "params": params}
@@ -996,7 +1147,8 @@ async def run_step(
 
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
         await _run_step_unlocked(course, lecture, kind, step, fresh=fresh)
-        await asyncio.to_thread(auto_remove, course, lecture, kind)
+        if kind != ASSIGNMENT_KIND:
+            await asyncio.to_thread(auto_remove, course, lecture, kind)
 
 
 async def run_pipeline_for(
@@ -1028,6 +1180,21 @@ def try_run_step(
         return "busy"
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
     asyncio.create_task(run_step(course, lecture, kind, step, fresh=fresh))
+    return "started"
+
+
+def try_run_assignment_step(
+    course: str, assignment: str, step: str, *, fresh: bool = False
+) -> str:
+    """Fire-and-forget one assignment step if its lock is free. Returns 'busy' or 'started'; it
+    never joins the runner queue, and no run-all, nightly or AUTO_RUN pass starts one."""
+
+    key = _lkey(course, assignment, ASSIGNMENT_KIND)
+    if not _claim(key):
+        return "busy"
+    asyncio.create_task(
+        run_step(course, assignment, ASSIGNMENT_KIND, step, fresh=fresh)
+    )
     return "started"
 
 

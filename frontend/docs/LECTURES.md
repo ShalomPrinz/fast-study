@@ -99,15 +99,40 @@ a step whose input was removed (rotate, or run) is disabled with a tooltip sayin
 ## Assignment view
 
 `/course/:course/assignment/:assignment` (`AssignmentView`, `assignmentRoute`; four segments, so no lecture or
-overview URL reaches it) lists the assignment's files with sizes. A name opens through
-`openAssignmentFile` (bridge `open.file`, else a new tab on the database route), via the same
-`MaterialNameButton` the material chips use. "Open with…" (`OpenWithMenu`) shows on Windows packaged only,
-and "Show in folder" calls `open.reveal` — disabled with a tooltip without `canReveal()` (browser dev, older
-launcher). A rejected bridge call toasts its message. The header carries `StudyDoneButton` (`kind="assignment"`, `setAssignmentDone`), the same toggle as the lecture page. No viewer, delete or rename.
+overview URL reaches it). The header carries `StudyDoneButton` (`kind="assignment"`, `setAssignmentDone`) and a
+meta line of file and attached-lecture counts. Below it, top to bottom:
+
+- **Materials.** Each file row: a name opening through `openAssignmentFile` (bridge `open.file`, else a new tab on
+  the database route, via `MaterialNameButton`), its size, the over-10 MB icon, the `material-switch` (reused from
+  `MaterialChip.css`), "Open with…" (`OpenWithMenu`, Windows packaged only) and "Show in folder" (`open.reveal`,
+  disabled with a tooltip without `canReveal()`). The switch writes `setAssignmentFileAttach` and reads
+  `materialAttached`/`materialSupported` over `SupportedMaterialsContext`; it is disabled for an unsupported type.
+  `CourseMaterialBox` holds the chosen lectures and recitations as removable chips and a checklist popover (its
+  "Add" button sits in the title row at inline-end, the popover end-aligned to it) of every
+  entry whose `summary.md` exists (`summarizedLectures`); each toggle writes the whole selection with
+  `setAssignmentLectures`. Neither the switch nor the box takes input while the assignment has a live run
+  (`inputsLocked`), since the run reads them. No state is held locally: the tree refresh over SSE shows every write.
+- **Assignment Solution**: its own full-width row under the split (Materials and Course material beside the Study with AI card), the title, then a muted "N files · M summaries" count (`.assignment-sent-count`, always shown, from `docInputs`) over an `auto-fit minmax(min(100%, 280px), 1fr)` grid of the two doc cards, so they sit as equal halves and stack once narrow (no icon; every card shows its description in every state).
+  - Intuition Guide and Full Solution: one `AssignmentDocCard` per doc. `docCardState` (pure) derives `none`
+    (Create, with an ETA from `assignment_{doc}` over `docInputs` bytes, disabled with no input), `generating` (this
+    doc's step or its `_pdf` is the assignment's `in_flight` entry: `ProgressBar`, every button off) or `ready`
+    (Ready chip beside the title, Open PDF, Edit to `…/edit/{doc}`, icon Regenerate behind a `ConfirmModal`, the render-warning
+    chip). A ready md with no pdf offers Create PDF, which runs `{doc}_pdf`. Any run disables both cards, because the
+    runner holds one per assignment. The step error of this doc or its `_pdf` renders with `ServiceError` under the actions.
+    Open PDF is `openAssignmentGenerated` (bridge `{course, assignment, generated}`, else a new tab on `/generated/{name}`).
+    A `busy` start answer toasts through `toastInitResult`.
+- **Study with AI**, outside the sections in the page's side column (see below): the lecture page's `StudyWithAiCard`, taking `ready`, its `copy` texts and a `collect` that builds
+  the clipboard text. Here `collect` fetches each chosen summary (`fetchSummaryContent`) and each existing doc
+  (`fetchAssignmentDoc`) into `assignmentClipboardText`: the prompt, then `<assignment course title>` holding one
+  `<lecture kind title>` per summary, `<intuition_guide>` and `<solution>` where they exist. Enabled when any of the three exists.
+
+`docInputs` sizes the ETA from the tree alone: the switched-on supported files' on-disk bytes plus the chosen
+`summary.md` sizes. An Office file is sent as extracted text, so this only approximates the bytes Gemini receives.
+The `_pdf` render's ETA uses the `pdf` bucket with no size.
 
 ## Study with AI
 
-`components/StudyWithAiCard` sits in a column on the inline-end side of the pipeline list, top-aligned
+`components/StudyWithAiCard` (shared with the assignment page, which differs only in its copy source and texts; that page shares the split layout via `styles/ai-split.css`, and there `.ai-split` holds only Materials and Course material beside the card, and the solution section sits below it) sits in a column on the inline-end side of the pipeline list, top-aligned
 with it, once the page body (a container) is 640px wide — 334px of steps + 26px gap + a 280px card, so a
 1280px window with the sidebar and tree pane open (664px) splits even with a 17px scrollbar. The card grows
 to 340px as the steps reach 380px (where the English Summary row's material chip stops wrapping, at 746px);
@@ -115,7 +140,7 @@ the page column widens to the routed pages' 880px and the steps take what the ca
 centred. The card lays out tile, title and split button side by side, the subtitle under the title; below
 420px of its own width (the side column included) the subtitle drops to a full-width row under them at
 `--fs-body` with `text-wrap: pretty`, so no lone word ends it, and below 330px the split button takes its own row too. Its split button's main half reads `summary.md`
-(`fetchSummaryContent`), copies it under a fixed study prompt in the UI language, then opens the chosen
+(`fetchSummaryContent`, via the card's `collect`), copies it under a fixed study prompt in the UI language, then opens the chosen
 chat's fresh-chat page through `openExternalUrl`; nothing is prefilled or sent, the user pastes. A failed
 read toasts its failure and a refused clipboard its own error, and neither opens the chat. The clipboard
 text (`utils/aiChat.ts`'s `clipboardText`, with `"` in either name turned to `'`):
@@ -144,6 +169,10 @@ every notify together with the tree, never polled. `inFlight` covers active step
 `course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror `_skey` in
 `backend/pipeline/runner.py`**. `/running` is the whole surface for the queue, the in-flight entries and
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
+An assignment run (`kind: "assignment"`, the name in the `lecture` slot, keyed `course||name||assignment`) is
+never queued: `/running` lists it as a link row after the lecture rows, never as the focus card, with the step
+label from `assignmentStepLabel`; its toast is led by `AssignmentLead`. `getAssignmentRun` / `getAssignmentError`
+read it.
 On `/running` an in-flight row is one link to its lecture. A waiting row's text acts instead, and only its
 trailing icon opens the lecture. A not-queued row shows `failed` or `quota` from `errors` (pending otherwise) and runs its pipeline beside the runner, and a queued one
 moves to the front (the head row's text is inert). Either way the reorder arrives over SSE.

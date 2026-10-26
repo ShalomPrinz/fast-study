@@ -5,35 +5,14 @@
   font-size: var(--fs-fine);
 }
 
-/* Pipeline and the Study with AI card. Stacked by default, as the narrow pane needs; the container query
-   below sets them side by side, the card on the inline-end side, from 334px of steps + 26px gap + a 280px card. */
-.lecture-page-body {
-  container-type: inline-size;
-}
-
-.lecture-split-ai {
-  max-inline-size: 560px;
-  margin-block-start: var(--space-6);
-  margin-inline: auto;
-}
-
+/* The pipeline and the Study with AI card share `ai-split.css`; the wide layout names the lecture's areas. */
 @container (width >= 640px) {
-  /* Widens the lectures tree's 660px measure back to the routed pages' 880px; the steps get what the card leaves. */
-  .lectures-layout .page-column.lecture-page {
-    max-width: 880px;
-  }
-
   .lecture-split {
-    display: grid;
-    /* The card grows from 280px to 340px as the steps reach 380px, where the English Summary row stops wrapping. */
-    grid-template-columns: minmax(0, 1fr) clamp(280px, calc(100% - 406px), 340px);
     grid-template-areas:
       'head .'
       'steps ai'
       'error ai';
     grid-template-rows: auto auto 1fr;
-    column-gap: var(--space-7);
-    align-items: start;
   }
 
   .lecture-split-head {
@@ -50,8 +29,6 @@
 
   .lecture-split-ai {
     grid-area: ai;
-    max-inline-size: none;
-    margin: 0;
   }
 }
 

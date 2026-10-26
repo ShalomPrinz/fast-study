@@ -15,6 +15,8 @@ log = logging.getLogger("timing")
 # Mirrors the downloader server's tool→operation map
 DOWNLOAD_OPERATIONS = frozenset({"download:curl", "download:ytdlp"})
 
+ASSIGNMENT_OPERATIONS = frozenset({"assignment_intuition", "assignment_solution"})
+
 
 def _allowed_operations() -> frozenset:
     """Valid buckets: the pipeline's own steps plus the downloader's operations."""
@@ -22,7 +24,7 @@ def _allowed_operations() -> frozenset:
     # Importing here to avoid import cycle
     from pipeline.runner import STEP_ORDER
 
-    return frozenset(STEP_ORDER) | DOWNLOAD_OPERATIONS
+    return frozenset(STEP_ORDER) | ASSIGNMENT_OPERATIONS | DOWNLOAD_OPERATIONS
 
 
 def init_db():
@@ -159,9 +161,11 @@ def get_stats(operation: str, file_size_bytes: int) -> dict:
 
 
 def _input_size(value) -> int:
-    """Byte size of a timed call's first argument: a path's file size (or its text's length
+    """Byte size of a timed call's first argument: an int as is, a path's file size (or its text's length
     when no such file exists), the summed sizes for a list or tuple of paths, else 0."""
 
+    if isinstance(value, int):
+        return value
     if isinstance(value, (list, tuple)):
         return sum(Path(p).stat().st_size for p in value if Path(p).exists())
     if value and isinstance(value, (str, Path)):

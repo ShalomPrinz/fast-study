@@ -46,3 +46,22 @@ export function assignmentNotFound(
   if (found.assignments.some((a) => a.name === assignment)) return null
   return t`"${course}" has no assignment named "${assignment}".`
 }
+
+// An assignment doc's editor target: the assignment must exist and hold a generated md for `doc`,
+// which must itself be one of the two names.
+export function assignmentDocNotFound(
+  courses: Course[],
+  course: string,
+  assignment: string,
+  doc: string,
+): string | null {
+  const missing = assignmentNotFound(courses, course, assignment)
+  if (missing) return missing
+  const node = courses
+    .find((c) => c.name === course)
+    ?.assignments.find((a) => a.name === assignment)
+  const info = doc === 'intuition' || doc === 'solution' ? node?.docs[doc] : null
+  if (info) return null
+  const file = `${doc}.md`
+  return t`${file} was not found.`
+}

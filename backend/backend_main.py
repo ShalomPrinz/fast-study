@@ -223,6 +223,48 @@ async def run_step(
     }
 
 
+# Per assignment step: the doc it writes, and whether it only re-renders that doc's PDF.
+_ASSIGNMENT_STEPS: dict[str, tuple[str, bool]] = {
+    "intuition": ("intuition", False),
+    "solution": ("solution", False),
+    "intuition_pdf": ("intuition", True),
+    "solution_pdf": ("solution", True),
+}
+
+
+@app.post("/courses/{course}/assignments/{assignment}/run/{step}")
+async def run_assignment_step(
+    course: str, assignment: str, step: str, fresh: bool = Query(False)
+):
+    if step not in _ASSIGNMENT_STEPS:
+        return _error(failure(f"Unknown step: {step}", "unknown_step", step=step), 404)
+    doc, pdf_only = _ASSIGNMENT_STEPS[step]
+    if pdf_only:
+        try:
+            entry = await asyncio.to_thread(
+                db_client.get_assignment, course, assignment
+            )
+        except db_client.DbClientError as e:
+            if e.code != "lecture_not_found":
+                raise
+            return _error(failure(str(e), e.code, **e.params), 404)
+        if not (entry.get("docs") or {}).get(doc):
+            return _error(
+                failure(
+                    f"{doc}.md is required — generate it first",
+                    "missing_prerequisite",
+                    file=f"{doc}.md",
+                    step=doc,
+                ),
+                409,
+            )
+    return {
+        "status": runner.try_run_assignment_step(
+            course, assignment, step, fresh=fresh and pdf_only
+        )
+    }
+
+
 @app.post("/courses/{course}/lectures/{lecture}/pipeline")
 async def run_pipeline(course: str, lecture: str, kind: Kind = Query("lecture")):
     return {"status": runner.try_run_pipeline(course, lecture, kind)}

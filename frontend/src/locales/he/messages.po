@@ -33,15 +33,15 @@ msgstr "ל\"{course}\" אין תרגול בשם \"{lecture}\"."
 msgid "\"{lecture}\" no longer exists in \"{course}\". It may have been renamed or deleted."
 msgstr "\"{lecture}\" כבר לא קיים ב\"{course}\". ייתכן ששמו שונה או שהוא נמחק."
 
-#: src/shared/i18n/serviceErrors.ts:133
+#: src/shared/i18n/serviceErrors.ts:138
 msgid "\"{name}\" has no characters that can be used in a folder name."
 msgstr "ב\"{name}\" אין תווים שאפשר להשתמש בהם בשם תיקייה."
 
-#: src/shared/i18n/serviceErrors.ts:137
+#: src/shared/i18n/serviceErrors.ts:142
 msgid "\"{name}\" is reserved for the course's own folders. Choose another name."
 msgstr "השם \"{name}\" שמור לתיקיות של הקורס עצמו. בחר שם אחר."
 
-#: src/shared/i18n/serviceErrors.ts:311
+#: src/shared/i18n/serviceErrors.ts:316
 msgid "\"{value}\" is not an allowed value for the setting \"{field}\"."
 msgstr "\"{value}\" אינו ערך מותר להגדרה \"{field}\"."
 
@@ -49,20 +49,21 @@ msgstr "\"{value}\" אינו ערך מותר להגדרה \"{field}\"."
 msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
 msgstr "\"<0>{lecture}</0>\" ב\"<1>{course}</1>\""
 
-#. placeholder {0}: files.length
-#: src/features/lectures/AssignmentView.tsx:56
-msgid "{0, plural, one {# file} other {# files}}"
-msgstr "{0, plural, one {קובץ אחד} two {# קבצים} other {# קבצים}}"
+#. placeholder {0}: inputs.files
+#. placeholder {1}: inputs.summaries
+#: src/features/lectures/AssignmentView.tsx:232
+msgid "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} other {# summaries}}"
+msgstr "{0, plural, one {קובץ אחד} two {# קבצים} other {# קבצים}} · {1, plural, one {סיכום אחד} two {# סיכומים} other {# סיכומים}}"
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:385
+#: src/features/runner/RunnerView.tsx:426
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {הרצאה אחת לא הושלמה} two {# הרצאות לא הושלמו} other {# הרצאות לא הושלמו}}"
 
 #. placeholder {0}: header.count
-#. placeholder {0}: inFlight.length
-#: src/features/runner/RunnerView.tsx:248
-#: src/features/runner/RunnerView.tsx:288
+#. placeholder {0}: lectureRuns.length
+#: src/features/runner/RunnerView.tsx:279
+#: src/features/runner/RunnerView.tsx:321
 msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {הרצאה אחת בעיבוד} two {# הרצאות בעיבוד} other {# הרצאות בעיבוד}}"
 
@@ -72,7 +73,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:261
+#: src/features/lectures/MainView.tsx:282
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -147,7 +148,7 @@ msgid "{0} remaining"
 msgstr "נותרו {0}"
 
 #. placeholder {0}: formatDuration(videoDuration)
-#: src/features/lectures/MainView.tsx:258
+#: src/features/lectures/MainView.tsx:279
 msgid "{0} video"
 msgstr "וידאו באורך {0}"
 
@@ -155,7 +156,7 @@ msgstr "וידאו באורך {0}"
 msgid "{captchaTimedOut, plural, one {# recording wasn't downloaded: {unsolvedBecause}} other {# recordings weren't downloaded: {unsolvedBecause}}}"
 msgstr "{captchaTimedOut, plural, one {הקלטה אחת לא הורדה: {unsolvedBecause}} two {# הקלטות לא הורדו: {unsolvedBecause}} other {# הקלטות לא הורדו: {unsolvedBecause}}}"
 
-#: src/shared/i18n/serviceErrors.ts:220
+#: src/shared/i18n/serviceErrors.ts:225
 msgid "{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
 msgstr "{challengeWindow, select, captcha {אתר האוניברסיטה מבקש ממך לפתור חידה. פתור אותה בחלון שנפתח, ואז נסה שוב.} ready {אתר האוניברסיטה בדק את החיבור, והבדיקה עברה. נסה שוב.} false {אתר האוניברסיטה חוסם בקשות אוטומטיות, ולא ניתן היה לפתוח חלון דפדפן כדי לעבור את החסימה. המתן כמה דקות ונסה שוב.} other {אתר האוניברסיטה חוסם כרגע בקשות אוטומטיות. המתן כמה דקות ונסה שוב.}}"
 
@@ -175,15 +176,19 @@ msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר
 msgid "{count, plural, other {summary with # materials}}"
 msgstr "{count, plural, one {סיכום עם חומר אחד} two {סיכום עם # חומרים} other {סיכום עם # חומרים}}"
 
+#: src/shared/components/LectureLead.tsx:16
+msgid "{course} · assignment {assignment}"
+msgstr "{course} · מטלה {assignment}"
+
 #: src/features/settings/components/AutoRemoveSummary.tsx:29
 msgid "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 msgstr "{deferred, plural, one {הרצאה אחת בעיבוד כרגע; הקבצים שלה יוסרו כשההרצה שלה תסתיים.} two {# הרצאות בעיבוד כרגע; הקבצים שלהן יוסרו כשההרצה שלהן תסתיים.} other {# הרצאות בעיבוד כרגע; הקבצים שלהן יוסרו כשההרצה שלהן תסתיים.}}"
 
-#: src/features/lectures/MainView.tsx:544
+#: src/features/lectures/MainView.tsx:560
 msgid "{deleteName} will be deleted."
 msgstr "{deleteName} יימחק."
 
-#: src/features/lectures/MainView.tsx:339
+#: src/features/lectures/MainView.tsx:360
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
@@ -195,7 +200,7 @@ msgstr "{effectiveName} כבר קיים ב{course}. להוריד שוב ולדר
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {existing} הקיימים ב{course}. להוריד בכל זאת?"
 
-#: src/shared/i18n/serviceErrors.ts:260
+#: src/shared/i18n/serviceErrors.ts:265
 msgid "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 msgstr "{ext, select, undefined {{url} הוא דף אינטרנט, לא קובץ. פתח אותו בדפדפן והורד ידנית.} other {{url} הוא קובץ {ext}, לא וידאו. פתח אותו בדפדפן והורד ידנית.}}"
 
@@ -203,19 +208,19 @@ msgstr "{ext, select, undefined {{url} הוא דף אינטרנט, לא קובץ
 msgid "{failed, plural, one {Couldn't remove the files of # lecture.} other {Couldn't remove the files of # lectures.}}"
 msgstr "{failed, plural, one {לא הצלחנו להסיר את הקבצים של הרצאה אחת.} two {לא הצלחנו להסיר את הקבצים של # הרצאות.} other {לא הצלחנו להסיר את הקבצים של # הרצאות.}}"
 
-#: src/shared/i18n/serviceErrors.ts:161
+#: src/shared/i18n/serviceErrors.ts:166
 msgid "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} lecture {That lecture name can't be used as a folder name.} url {That link isn't valid. Paste a full address starting with http:// or https://.} courseUrl {That course link isn't a full address. Paste one starting with http:// or https://.} other {Something went wrong.}}"
 msgstr "{field, select, name {אי אפשר להשתמש בשם הזה כשם תיקייה. השתמש באותיות או בספרות, בלי / או \\.} course {אי אפשר להשתמש בשם הקורס הזה כשם תיקייה.} lecture {אי אפשר להשתמש בשם ההרצאה הזה כשם תיקייה.} url {הקישור הזה לא תקין. הדבק כתובת מלאה שמתחילה ב-http:// או ב-https://.} courseUrl {הקישור לקורס אינו כתובת מלאה. הדבק כתובת שמתחילה ב-http:// או ב-https://.} other {משהו השתבש.}}"
 
-#: src/shared/i18n/serviceErrors.ts:153
+#: src/shared/i18n/serviceErrors.ts:158
 msgid "{file, select, undefined {Could not read the file.} other {Could not read {file}.}}"
 msgstr "{file, select, undefined {לא ניתן לקרוא את הקובץ.} other {לא ניתן לקרוא את {file}.}}"
 
-#: src/shared/i18n/serviceErrors.ts:150
+#: src/shared/i18n/serviceErrors.ts:155
 msgid "{file, select, undefined {Could not save the file.} other {Could not save {file}.}}"
 msgstr "{file, select, undefined {לא ניתן לשמור את הקובץ.} other {לא ניתן לשמור את {file}.}}"
 
-#: src/shared/i18n/serviceErrors.ts:126
+#: src/shared/i18n/serviceErrors.ts:131
 msgid "{file, select, undefined {The file is open in another program. Close it and try again.} other {\"{file}\" is open in another program. Close it and try again.}}"
 msgstr "{file, select, undefined {הקובץ פתוח בתוכנה אחרת. סגור אותו ונסה שוב.} other {הקובץ \"{file}\" פתוח בתוכנה אחרת. סגור אותו ונסה שוב.}}"
 
@@ -223,11 +228,12 @@ msgstr "{file, select, undefined {הקובץ פתוח בתוכנה אחרת. ס�
 msgid "{file} came out empty. Run the step that creates it again."
 msgstr "{file} נוצר ריק. הרץ שוב את השלב שיוצר אותו."
 
-#: src/shared/i18n/serviceErrors.ts:113
+#: src/shared/i18n/serviceErrors.ts:118
 msgid "{file} was not found in the course's overview."
 msgstr "{file} לא נמצא בסקירת הקורס."
 
 #: src/shared/i18n/serviceErrors.ts:38
+#: src/shared/utils/notFound.ts:66
 msgid "{file} was not found."
 msgstr "{file} לא נמצא."
 
@@ -235,16 +241,20 @@ msgstr "{file} לא נמצא."
 msgid "{fileCount, plural, one {# file} other {# files}}"
 msgstr "{fileCount, plural, one {קובץ אחד} two {# קבצים} other {# קבצים}}"
 
+#: src/features/lectures/AssignmentView.tsx:127
+msgid "{files, plural, one {# file} other {# files}} · {lectures, plural, =0 {no course material} one {# lecture attached} other {# lectures attached}}"
+msgstr "{files, plural, one {קובץ אחד} other {# קבצים}} · {lectures, plural, =0 {בלי חומר מהקורס} one {הרצאה אחת מצורפת} other {# הרצאות מצורפות}}"
+
 #. placeholder {0}: extractors.length
 #: src/features/course-overview/CourseView.tsx:125
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
-#: src/shared/i18n/serviceErrors.ts:228
+#: src/shared/i18n/serviceErrors.ts:233
 msgid "{host} could not be reached. Check your internet connection and try again."
 msgstr "לא ניתן להתחבר אל {host}. בדוק את החיבור לאינטרנט ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:363
+#: src/features/lectures/MainView.tsx:384
 msgid "{input} was removed"
 msgstr "{input} הוסר"
 
@@ -280,11 +290,11 @@ msgstr "סוכם עם {name}"
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {ההורדה של הקלטה אחת לא התחילה — {stoppedBecause}} two {ההורדה של # הקלטות לא התחילה — {stoppedBecause}} other {ההורדה של # הקלטות לא התחילה — {stoppedBecause}}}"
 
-#: src/shared/i18n/serviceErrors.ts:147
+#: src/shared/i18n/serviceErrors.ts:152
 msgid "{path} cannot be written to."
 msgstr "לא ניתן לכתוב אל {path}."
 
-#: src/shared/i18n/serviceErrors.ts:146
+#: src/shared/i18n/serviceErrors.ts:151
 msgid "{path} exists but is not a folder."
 msgstr "{path} קיים אבל אינו תיקייה."
 
@@ -296,7 +306,7 @@ msgstr "{phaseLabel}…"
 msgid "{processed} fully processed"
 msgstr "{processed} עובדו במלואן"
 
-#: src/shared/i18n/serviceErrors.ts:119
+#: src/shared/i18n/serviceErrors.ts:124
 msgid "{provider, select, gemini {Gemini returned nothing. Try again.} other {The model returned nothing. Try again.}}"
 msgstr "{provider, select, gemini {Gemini לא החזיר תוכן. נסה שוב.} other {המודל לא החזיר תוכן. נסה שוב.}}"
 
@@ -308,11 +318,11 @@ msgstr "{provider, select, gemini {מפתח ה-API של Gemini לא מוגדר. 
 msgid "{provider, select, gemini {The Gemini API key was rejected. Check it in Settings.} groq {The Groq API key was rejected. Check it in Settings.} other {The {provider} API key was rejected. Check it in Settings.}}"
 msgstr "{provider, select, gemini {מפתח ה-API של Gemini נדחה. בדוק אותו בהגדרות.} groq {מפתח ה-API של Groq נדחה. בדוק אותו בהגדרות.} other {מפתח ה-API של {provider} נדחה. בדוק אותו בהגדרות.}}"
 
-#: src/shared/i18n/serviceErrors.ts:234
+#: src/shared/i18n/serviceErrors.ts:239
 msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 msgstr "{reason, select, incorrect {קוד הגישה של Zoom שגוי. הזן אותו שוב.} other {ההקלטה הזו ב-Zoom דורשת קוד גישה.}}"
 
-#: src/shared/i18n/serviceErrors.ts:247
+#: src/shared/i18n/serviceErrors.ts:252
 msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} videostream_unavailable {This university's Moodle doesn't let the Moodle app open its lecture videos. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
 msgstr "{reason, select, not_moodle {הכתובת הזו אינה אתר Moodle. בדוק אותה ונסה שוב.} mobile_service_off {ה-Moodle של האוניברסיטה הזו לא מאפשר התחברות מאפליקציית Moodle, ו-FastStudy נשענת עליה.} maintenance {ה-Moodle של האוניברסיטה הזו בתחזוקה כרגע. נסה שוב מאוחר יותר.} missing_function {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle לקרוא את תוכן הקורסים ({function}), ולכן FastStudy לא יכולה לעבוד איתו.} downloads_disabled {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle להוריד קבצים, ולכן FastStudy לא יכולה לעבוד איתו.} videostream_unavailable {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle לפתוח את סרטוני ההרצאות. שאר ההקלטות וקובצי הקורס עדיין עובדים.} other {אי אפשר להשתמש ב-Moodle של האוניברסיטה הזו עם FastStudy.}}"
 
@@ -328,7 +338,7 @@ msgstr "{removed, plural, =0 {לא היו קבצים להסיר באף הרצא�
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. היא מתאפסת בחצות לפי שעון החוף המערבי בארה״ב.} other {יותר מדי בקשות ל-Gemini. נסה שוב בעוד דקה.}}"
 
-#: src/features/lectures/MainView.tsx:238
+#: src/features/lectures/MainView.tsx:259
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stepCount}"
 
@@ -340,23 +350,23 @@ msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — יי
 msgid "{step, select, download {This step needs {file}, which is not there yet. Download the lecture video first.} other {This step needs {file}, which is not there yet. Run the step before it first.}}"
 msgstr "{step, select, download {השלב הזה זקוק ל-{file}, שעדיין לא קיים. הורד קודם את הווידאו של ההרצאה.} other {השלב הזה זקוק ל-{file}, שעדיין לא קיים. הרץ קודם את השלב שלפניו.}}"
 
-#: src/shared/i18n/serviceErrors.ts:211
+#: src/shared/i18n/serviceErrors.ts:216
 msgid "{tool} can't be started, so the parts of FastStudy that need it will fail."
 msgstr "לא ניתן להפעיל את הכלי {tool}, ולכן חלקים ב-FastStudy שזקוקים לו לא יעבדו."
 
-#: src/shared/i18n/serviceErrors.ts:203
+#: src/shared/i18n/serviceErrors.ts:208
 msgid "{tool} didn't respond within {seconds} seconds, so the parts of FastStudy that need it may fail."
 msgstr "הכלי {tool} לא הגיב תוך {seconds} שניות, ולכן ייתכן שחלקים ב-FastStudy שזקוקים לו לא יעבדו."
 
-#: src/shared/i18n/serviceErrors.ts:207
+#: src/shared/i18n/serviceErrors.ts:212
 msgid "{tool} doesn't run correctly, so the parts of FastStudy that need it will fail. Reinstall FastStudy to fix this."
 msgstr "הכלי {tool} לא פועל כראוי, ולכן חלקים ב-FastStudy שזקוקים לו לא יעבדו. התקן מחדש את FastStudy כדי לתקן זאת."
 
-#: src/shared/i18n/serviceErrors.ts:199
+#: src/shared/i18n/serviceErrors.ts:204
 msgid "{tool} is missing, so the parts of FastStudy that need it will fail. Reinstall FastStudy to fix this."
 msgstr "הכלי {tool} חסר, ולכן חלקים ב-FastStudy שזקוקים לו לא יעבדו. התקן מחדש את FastStudy כדי לתקן זאת."
 
-#: src/shared/i18n/serviceErrors.ts:264
+#: src/shared/i18n/serviceErrors.ts:269
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
@@ -380,11 +390,15 @@ msgstr "+ הוספת כתובת מקור"
 msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 msgstr "<0>אתר האוניברסיטה</0> — גישה לתוכן הקורסים שנבחרו בלבד, והגישה מוגבלת לקריאת תוכן בלבד."
 
-#: src/shared/i18n/serviceErrors.ts:136
+#: src/features/lectures/components/AssignmentDocCard.tsx:58
+msgid "A complete, step-by-step solution to every question"
+msgstr "פתרון מלא, צעד אחר צעד, לכל שאלה"
+
+#: src/shared/i18n/serviceErrors.ts:141
 msgid "A course or lecture named \"{name}\" already exists."
 msgstr "כבר קיים קורס או הרצאה בשם \"{name}\"."
 
-#: src/shared/i18n/serviceErrors.ts:130
+#: src/shared/i18n/serviceErrors.ts:135
 msgid "A file inside \"{name}\" is open in another program. Close it and try again."
 msgstr "קובץ בתוך \"{name}\" פתוח בתוכנה אחרת. סגור אותו ונסה שוב."
 
@@ -424,13 +438,18 @@ msgstr "יחידה ממתינה לקוד גישה"
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "נפתח חלון באתר האוניברסיטה. פתור שם את החידה, והחיבור יושלם מעצמו."
 
-#: src/App.tsx:36
+#: src/App.tsx:37
 msgid "Add a course from Downloads or New course to get started"
 msgstr "הוסף קורס דרך \"הורדות\" או \"קורס חדש\" כדי להתחיל"
 
 #: src/features/search/SearchView.tsx:231
 msgid "Add a course to search its summaries."
 msgstr "הוסף קורס כדי לחפש בסיכומים שלו."
+
+#: src/features/lectures/components/CourseMaterialBox.tsx:96
+#: src/features/lectures/components/CourseMaterialBox.tsx:103
+msgid "Add a lecture or recitation"
+msgstr "הוספת הרצאה או תרגול"
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:172
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:173
@@ -454,11 +473,11 @@ msgstr "אחרי העלאת ה-PDF ל-Drive"
 msgid "AI chat provider"
 msgstr "ספק צ'אט AI"
 
-#: src/features/runner/RunnerView.tsx:276
+#: src/features/runner/RunnerView.tsx:309
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
-#: src/features/lectures/EditSummaryView.tsx:363
+#: src/features/lectures/DocEditor.tsx:337
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-AI ישוחזר."
 
@@ -478,11 +497,11 @@ msgstr "סיימת את כל ההרצאות"
 msgid "All recitations done"
 msgstr "סיימת את כל התרגולים"
 
-#: src/shared/i18n/serviceErrors.ts:116
+#: src/shared/i18n/serviceErrors.ts:121
 msgid "Already generated."
 msgstr "כבר נוצר."
 
-#: src/features/lectures/EditSummaryView.tsx:281
+#: src/features/lectures/DocEditor.tsx:255
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
@@ -490,7 +509,7 @@ msgstr "כבר מעודכן"
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/shared/i18n/serviceErrors.ts:118
+#: src/shared/i18n/serviceErrors.ts:123
 msgid "Analyzing the collected passages failed."
 msgstr "ניתוח הקטעים שנאספו נכשל."
 
@@ -527,6 +546,18 @@ msgstr "בטוח שאתה רוצה ליצור מחדש?"
 msgid "Assignment"
 msgstr "מטלה"
 
+#: src/features/runner/RunnerView.tsx:105
+msgid "Assignment · {assignment}"
+msgstr "מטלה · {assignment}"
+
+#: src/features/lectures/AssignmentView.tsx:87
+msgid "Assignment material copied — paste it in the chat with Ctrl+V."
+msgstr "חומר המטלה הועתק — הדבק אותו בצ'אט עם Ctrl+V."
+
+#: src/features/lectures/AssignmentView.tsx:229
+msgid "Assignment Solution"
+msgstr "פתרון המטלה"
+
 #: src/features/downloads/DownloadsView.tsx:76
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:37
 msgid "Assignments"
@@ -552,7 +583,7 @@ msgstr "הקבצים המצורפים השתנו מאז הסיכום"
 msgid "Audio"
 msgstr "שמע"
 
-#: src/features/runner/RunnerView.tsx:363
+#: src/features/runner/RunnerView.tsx:404
 msgid "Audio only"
 msgstr "שמע בלבד"
 
@@ -564,23 +595,28 @@ msgstr "הסרה אוטומטית של קבצים מהמחשב"
 msgid "Auto-remove saved"
 msgstr "ההסרה האוטומטית נשמרה"
 
-#: src/features/runner/RunnerView.tsx:237
+#: src/features/runner/RunnerView.tsx:268
 msgid "Auto-run: audio only"
 msgstr "הרצה אוטומטית: שמע בלבד"
 
-#: src/features/runner/RunnerView.tsx:238
+#: src/features/runner/RunnerView.tsx:269
 msgid "Auto-run: off"
 msgstr "הרצה אוטומטית: כבויה"
 
-#: src/features/runner/RunnerView.tsx:236
+#: src/features/runner/RunnerView.tsx:267
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל השלבים"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:105
+#: src/features/lectures/MainView.tsx:232
 msgid "Available once the summary is generated."
 msgstr "זמין אחרי יצירת הסיכום."
 
-#: src/features/lectures/EditSummaryView.tsx:247
+#: src/features/lectures/AssignmentView.tsx:84
+#: src/features/lectures/AssignmentView.tsx:85
+msgid "Available once you choose course material or generate a guide."
+msgstr "זמין אחרי שתבחר חומר מהקורס או תיצור מדריך."
+
+#: src/features/lectures/DocEditor.tsx:221
 msgid "Back"
 msgstr "חזרה"
 
@@ -630,6 +666,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
+#: src/features/lectures/components/AssignmentDocCard.tsx:201
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -685,12 +722,12 @@ msgstr "בודק…"
 msgid "Choose a course first"
 msgstr "בחר קורס קודם"
 
-#: src/shared/i18n/serviceErrors.ts:144
+#: src/shared/i18n/serviceErrors.ts:149
 msgid "Choose a data folder."
 msgstr "בחר תיקיית נתונים."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:120
-#: src/features/lectures/components/StudyWithAiCard.tsx:129
+#: src/features/lectures/components/StudyWithAiCard.tsx:116
+#: src/features/lectures/components/StudyWithAiCard.tsx:125
 msgid "Choose AI provider"
 msgstr "בחירת ספק AI"
 
@@ -752,7 +789,7 @@ msgstr "לחץ על \"Create API Key\"."
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "לחץ על \"טעינת פריט Unpacked\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:103
+#: src/features/lectures/MainView.tsx:231
 msgid "Click \"Open chat\" to study this lecture with {provider}."
 msgstr "לחץ על \"פתיחת צ'אט\" בשביל ללמוד את ההרצאה הזו עם {provider}."
 
@@ -805,7 +842,7 @@ msgstr "איסוף"
 msgid "Compile"
 msgstr "הרכבה"
 
-#: src/features/lectures/MainView.tsx:252
+#: src/features/lectures/MainView.tsx:273
 msgid "Complete"
 msgstr "הושלם"
 
@@ -853,7 +890,7 @@ msgstr "יצירת קשר"
 msgid "Continue Generating"
 msgstr "המשך יצירה"
 
-#: src/features/lectures/MainView.tsx:368
+#: src/features/lectures/MainView.tsx:389
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
@@ -861,6 +898,10 @@ msgstr "המשך תמלול"
 #: src/features/extension/ExtensionGuide.tsx:40
 msgid "Copied!"
 msgstr "הועתק!"
+
+#: src/features/lectures/AssignmentView.tsx:83
+msgid "Copies the chosen summaries and the generated guides, then opens {provider}."
+msgstr "מעתיק את הסיכומים שנבחרו ואת המדריכים שנוצרו, ופותח את {provider}."
 
 #: src/features/extension/ExtensionGuide.tsx:94
 msgid "Copy address"
@@ -882,11 +923,11 @@ msgstr "לא ניתן להמיר את הסיכום להדפסה."
 msgid "Could not copy. Select the text and copy it by hand."
 msgstr "לא הצלחנו להעתיק. סמן את הטקסט והעתק אותו ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:148
+#: src/shared/i18n/serviceErrors.ts:153
 msgid "Could not create \"{path}\"."
 msgstr "לא ניתן ליצור את \"{path}\"."
 
-#: src/shared/i18n/serviceErrors.ts:156
+#: src/shared/i18n/serviceErrors.ts:161
 msgid "Could not delete {file}."
 msgstr "לא ניתן למחוק את {file}."
 
@@ -894,7 +935,7 @@ msgstr "לא ניתן למחוק את {file}."
 msgid "Could not extract the audio from the video."
 msgstr "לא ניתן לחלץ את השמע מהווידאו."
 
-#: src/shared/i18n/serviceErrors.ts:278
+#: src/shared/i18n/serviceErrors.ts:283
 msgid "Could not list the playlist."
 msgstr "לא ניתן לטעון את הפלייליסט."
 
@@ -908,7 +949,7 @@ msgid "Could not open the file: it no longer exists."
 msgstr "לא ניתן לפתוח את הקובץ: הוא כבר לא קיים."
 
 #. placeholder {0}: (e as Error).message
-#: src/services/open.ts:79
+#: src/services/open.ts:93
 msgid "Could not open the link: {0}"
 msgstr "לא ניתן לפתוח את הקישור: {0}"
 
@@ -916,15 +957,19 @@ msgstr "לא ניתן לפתוח את הקישור: {0}"
 msgid "Could not read the audio in {file}."
 msgstr "לא ניתן לקרוא את השמע ב-{file}."
 
-#: src/shared/i18n/serviceErrors.ts:149
+#: src/shared/i18n/serviceErrors.ts:154
 msgid "Could not rename \"{from}\" to \"{to}\"."
 msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 
-#: src/shared/i18n/serviceErrors.ts:267
+#: src/shared/i18n/serviceErrors.ts:272
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר תשובה ברורה."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:72
+#: src/features/lectures/AssignmentView.tsx:88
+msgid "Couldn't copy the assignment material. Try again."
+msgstr "לא הצלחנו להעתיק את חומר המטלה. נסה שוב."
+
+#: src/features/lectures/MainView.tsx:236
 msgid "Couldn't copy the summary. Try again."
 msgstr "לא הצלחנו להעתיק את הסיכום. נסה שוב."
 
@@ -958,11 +1003,11 @@ msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastS
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:295
+#: src/shared/i18n/serviceErrors.ts:300
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:181
+#: src/shared/i18n/serviceErrors.ts:186
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "לא הצלחנו לזהות מאיפה להוריד את הקובץ. נסה שוב."
 
@@ -974,6 +1019,10 @@ msgstr "קורס"
 #: src/shared/utils/notFound.ts:8
 msgid "Course \"{course}\" doesn't exist."
 msgstr "הקורס \"{course}\" לא קיים."
+
+#: src/features/lectures/components/CourseMaterialBox.tsx:86
+msgid "Course material"
+msgstr "חומר מהקורס"
 
 #: src/features/downloads/components/AddCourseRow.tsx:106
 #: src/features/lectures/sidebar/NewCourseRow.tsx:44
@@ -1000,7 +1049,7 @@ msgstr "כתובת הקורס"
 msgid "Courses"
 msgstr "קורסים"
 
-#: src/App.tsx:38
+#: src/App.tsx:39
 #: src/features/downloads/DownloadsView.tsx:167
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:238
@@ -1012,9 +1061,21 @@ msgstr "לא הצלחנו לטעון את הקורסים."
 msgid "Create"
 msgstr "יצירה"
 
-#: src/features/lectures/MainView.tsx:455
+#: src/features/lectures/MainView.tsx:476
 msgid "Create {input} first"
 msgstr "צור קודם את {input}"
+
+#: src/features/lectures/components/AssignmentDocCard.tsx:61
+msgid "Create guide"
+msgstr "יצירת מדריך"
+
+#: src/features/lectures/components/AssignmentDocCard.tsx:157
+msgid "Create PDF"
+msgstr "יצירת PDF"
+
+#: src/features/lectures/components/AssignmentDocCard.tsx:61
+msgid "Create solution"
+msgstr "יצירת פתרון"
 
 #: src/features/course-overview/components/GenerateAllButton.tsx:42
 msgid "Creates comprehensive summaries for all lectures and recitations in the course"
@@ -1054,7 +1115,7 @@ msgstr "סירוב"
 msgid "Delete {name}"
 msgstr "מחיקת {name}"
 
-#: src/features/lectures/EditSummaryView.tsx:264
+#: src/features/lectures/DocEditor.tsx:238
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
@@ -1188,6 +1249,7 @@ msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה חדשה."
 
 #: src/features/downloads/components/CourseCheckFailure.tsx:23
+#: src/features/lectures/components/AssignmentDocCard.tsx:173
 msgid "Edit"
 msgstr "עריכה"
 
@@ -1196,7 +1258,7 @@ msgstr "עריכה"
 msgid "Edit source URL"
 msgstr "עריכת כתובת מקור"
 
-#: src/features/lectures/MainView.tsx:271
+#: src/features/lectures/MainView.tsx:292
 msgid "Edit summary"
 msgstr "עריכת סיכום"
 
@@ -1292,15 +1354,15 @@ msgstr "נכשל"
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
-#: src/features/lectures/EditSummaryView.tsx:212
+#: src/features/lectures/DocEditor.tsx:197
 msgid "Failed to generate PDF"
 msgstr "יצירת ה-PDF נכשלה"
 
-#: src/features/lectures/EditSummaryView.tsx:186
+#: src/features/lectures/DocEditor.tsx:171
 msgid "Failed to restore the original summary"
 msgstr "שחזור הסיכום המקורי נכשל"
 
-#: src/features/lectures/EditSummaryView.tsx:169
+#: src/features/lectures/DocEditor.tsx:154
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
@@ -1308,7 +1370,7 @@ msgstr "שמירת הסיכום נכשלה"
 msgid "FastStudy asks only for the <0><1>{DRIVE_SCOPE}</1></0> permission, which gives it access only to the specific Google Drive files you use with this app — in practice, the summary PDFs it uploads."
 msgstr "FastStudy מבקשת רק את ההרשאה <0><1>{DRIVE_SCOPE}</1></0>, שנותנת לה גישה רק לקובצי Google Drive המסוימים שבהם אתה משתמש עם האפליקציה הזו — בפועל, קובצי ה-PDF של הסיכומים שהיא מעלה."
 
-#: src/shared/i18n/serviceErrors.ts:191
+#: src/shared/i18n/serviceErrors.ts:196
 msgid "FastStudy can't save into {folder}. Choose another folder."
 msgstr "FastStudy לא יכולה לשמור בתיקייה {folder}. בחר תיקייה אחרת."
 
@@ -1352,6 +1414,10 @@ msgstr "השימוש של FastStudy במידע שמתקבל מ-Google APIs וה�
 msgid "File type"
 msgstr "סוג קובץ"
 
+#: src/features/lectures/AssignmentView.tsx:144
+msgid "Files that are switched on are sent to Gemini."
+msgstr "קבצים שמסומנים נשלחים ל-Gemini."
+
 #: src/features/downloads/components/MediaNote.tsx:19
 msgid "Files you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary."
 msgstr "קבצים שאפשר לצרף לכל הרצאה או תרגול. הם ממתינים עד שההקלטה שלה תורד או עד שתריץ את הסיכום."
@@ -1390,13 +1456,35 @@ msgstr "מפנה מקום במחשב אחרי שהרצאה הושלמה. התמ�
 msgid "From now on, each lecture's files are removed the same way once it reaches that point."
 msgstr "מעכשיו, הקבצים של כל הרצאה יוסרו באותו אופן ברגע שהיא תגיע לשלב הזה."
 
+#: src/features/lectures/components/AssignmentDocCard.tsx:54
+#: src/features/runner/utils/assignmentSteps.ts:7
+msgid "Full Solution"
+msgstr "פתרון מלא"
+
+#: src/features/lectures/hooks/useAssignmentDocSource.ts:35
+msgid "Full Solution — {assignment}"
+msgstr "פתרון מלא — {assignment}"
+
+#: src/features/lectures/AssignmentView.tsx:154
 #: src/features/lectures/components/MaterialChip.tsx:75
 msgid "Gemini can't read this file type"
 msgstr "Gemini לא יכול לקרוא סוג קובץ כזה"
 
+#: src/shared/i18n/serviceErrors.ts:106
+msgid "Gemini couldn't write this document."
+msgstr "‏Gemini לא הצליח לכתוב את המסמך."
+
 #: src/features/settings/components/PrivacyPolicyModal.tsx:123
 msgid "Gemini gets the transcript and any materials you add, to write the summary."
 msgstr "Gemini מקבל את התמלול ואת כל החומרים שתוסיף, כדי לכתוב את הסיכום."
+
+#: src/features/lectures/components/AssignmentDocCard.tsx:112
+msgid "Gemini is writing…"
+msgstr "‏Gemini כותב…"
+
+#: src/features/lectures/components/AssignmentDocCard.tsx:199
+msgid "Gemini will write it again."
+msgstr "‏Gemini יכתוב אותו מחדש."
 
 #: src/shared/i18n/serviceErrors.ts:76
 msgid "Gemini's daily quota is used up. It resets at midnight Pacific time."
@@ -1410,7 +1498,7 @@ msgstr "יצירה"
 msgid "Generate Course Overviews"
 msgstr "יצירת סקירות הקורס"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:109
+#: src/features/lectures/MainView.tsx:233
 msgid "Generate the summary first"
 msgstr "צור קודם את הסיכום"
 
@@ -1452,7 +1540,7 @@ msgstr "לא ניתן לחבר את Google Drive: חסר קובץ ש-FastStudy �
 msgid "Google Drive gets the summary PDF, and only if you turned Drive upload on."
 msgstr "Google Drive מקבל את ה-PDF של הסיכום, ורק אם הפעלת העלאה ל-Drive."
 
-#: src/shared/i18n/serviceErrors.ts:103
+#: src/shared/i18n/serviceErrors.ts:108
 msgid "Google Drive is not connected. Connect it in Settings."
 msgstr "Google Drive לא מחובר. חבר אותו בהגדרות."
 
@@ -1476,6 +1564,10 @@ msgstr "האוניברסיטה העברית"
 msgid "Hide past courses"
 msgstr "הסתרת קורסים קודמים"
 
+#: src/features/lectures/components/AssignmentDocCard.tsx:57
+msgid "Hints and a direction of thought for each question, without solving it"
+msgstr "רמזים וכיוון חשיבה לכל שאלה, בלי לפתור"
+
 #: src/app/ErrorBoundary.tsx:108
 #: src/shared/components/NotFoundPanel.tsx:31
 msgid "Home"
@@ -1493,13 +1585,21 @@ msgstr "אישרתי, לנסות שוב"
 msgid "I solved the captcha"
 msgstr "פתרתי את החידה"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:66
+#: src/features/lectures/MainView.tsx:241
 msgid "I want to study this lecture in depth, and soon I'll ask you specific questions about it. Its summary is below.\n"
 "\n"
 "To start, reply with a single sentence — \"What do you want to learn first?\" — followed by a numbered list of 4–6 topics from the lecture to choose from."
 msgstr "אני רוצה ללמוד את ההרצאה הזו לעומק, ובקרוב אשאל אותך שאלות ספציפיות עליה. הסיכום שלה מצורף למטה.\n"
 "\n"
 "כדי להתחיל, ענה במשפט אחד בלבד — \"מה תרצה ללמוד קודם?\" — ואחריו רשימה ממוספרת של 4–6 נושאים מתוך ההרצאה לבחירה."
+
+#: src/features/lectures/AssignmentView.tsx:98
+msgid "I'm working on this assignment and want to understand it in depth, not just get answers. Below are the course material I chose and any guides I already have.\n"
+"\n"
+"To start, reply with a single sentence — \"Which question do you want to work on first?\" — followed by a numbered list of the assignment's questions, each with a one-line description."
+msgstr "אני עובד על המטלה הזו ורוצה להבין אותה לעומק, לא רק לקבל תשובות. למטה החומר מהקורס שבחרתי והמדריכים שכבר יש לי.\n"
+"\n"
+"כדי להתחיל, ענה במשפט אחד — \"על איזו שאלה תרצה לעבוד קודם?\" — ואחריו רשימה ממוספרת של שאלות המטלה, לכל אחת תיאור בשורה אחת."
 
 #: src/features/extension/ExtensionGuide.tsx:247
 msgid "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
@@ -1517,11 +1617,20 @@ msgstr "ברשימת הפרויקטים, בחר \"Create project\"."
 msgid "Install Chrome"
 msgstr "התקנת Chrome"
 
+#: src/features/lectures/components/AssignmentDocCard.tsx:54
+#: src/features/runner/utils/assignmentSteps.ts:6
+msgid "Intuition Guide"
+msgstr "מדריך לאינטואיציה"
+
+#: src/features/lectures/hooks/useAssignmentDocSource.ts:35
+msgid "Intuition Guide — {assignment}"
+msgstr "מדריך לאינטואיציה — {assignment}"
+
 #: src/features/downloads/components/PasscodePrompt.tsx:75
 msgid "just this lecture"
 msgstr "רק להרצאה הזו"
 
-#: src/features/lectures/EditSummaryView.tsx:320
+#: src/features/lectures/DocEditor.tsx:294
 msgid "Keep my edits"
 msgstr "שמירה על השינויים שלי"
 
@@ -1534,7 +1643,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:483
+#: src/features/lectures/MainView.tsx:504
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -1548,6 +1657,7 @@ msgstr "הרצאה"
 
 #: src/features/downloads/components/ManualDownload.tsx:161
 #: src/features/downloads/components/RecordingRow.tsx:236
+#: src/features/lectures/components/CourseMaterialBox.tsx:79
 msgid "Lecture"
 msgstr "הרצאה"
 
@@ -1560,6 +1670,10 @@ msgstr "הרצאה"
 #: src/features/course-overview/utils/overview.ts:8
 msgid "Lecture {0}"
 msgstr "הרצאה {0}"
+
+#: src/features/lectures/components/CourseMaterialBox.tsx:130
+msgid "Lecture and recitation summaries to include with this assignment"
+msgstr "סיכומי הרצאות ותרגולים שיצורפו למטלה"
 
 #: src/features/downloads/components/RecordingRow.tsx:256
 msgid "Lecture name"
@@ -1600,7 +1714,7 @@ msgstr "הרצאות שסיימת"
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
-#: src/features/lectures/EditSummaryView.tsx:317
+#: src/features/lectures/DocEditor.tsx:291
 msgid "Load new version"
 msgstr "טעינת הגרסה החדשה"
 
@@ -1642,11 +1756,12 @@ msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
 #: src/features/downloads/DownloadsView.tsx:74
-#: src/features/lectures/MainView.tsx:505
+#: src/features/lectures/AssignmentView.tsx:141
+#: src/features/lectures/MainView.tsx:521
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:301
+#: src/shared/i18n/serviceErrors.ts:306
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1661,7 +1776,7 @@ msgstr "פעולות נוספות"
 msgid "Name in the course"
 msgstr "השם בקורס"
 
-#: src/features/lectures/AssignmentView.tsx:82
+#: src/features/lectures/AssignmentView.tsx:200
 msgid "Needs the desktop app"
 msgstr "דורש את אפליקציית שולחן העבודה"
 
@@ -1669,11 +1784,11 @@ msgstr "דורש את אפליקציית שולחן העבודה"
 msgid "New course"
 msgstr "קורס חדש"
 
-#: src/features/runner/RunnerView.tsx:359
+#: src/features/runner/RunnerView.tsx:400
 msgid "Next"
 msgstr "הבאה"
 
-#: src/shared/components/ConfirmModal.tsx:51
+#: src/shared/components/ConfirmModal.tsx:56
 msgid "No"
 msgstr "לא"
 
@@ -1693,11 +1808,11 @@ msgstr "אין שינויים לשמור"
 msgid "No Chrome or Edge found on this computer."
 msgstr "לא נמצא Chrome או Edge במחשב הזה."
 
-#: src/shared/i18n/serviceErrors.ts:238
+#: src/shared/i18n/serviceErrors.ts:243
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "לא נמצא Chrome או Edge במחשב הזה. התקן את Chrome ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:302
+#: src/shared/i18n/serviceErrors.ts:307
 msgid "No Chrome window is waiting on a captcha anymore."
 msgstr "כבר אין חלון Chrome שמחכה לפתרון חידה."
 
@@ -1709,7 +1824,7 @@ msgstr "עדיין אין קורסים."
 msgid "No current courses."
 msgstr "אין קורסים נוכחיים."
 
-#: src/shared/i18n/serviceErrors.ts:143
+#: src/shared/i18n/serviceErrors.ts:148
 msgid "No data folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקיית נתונים. בחר אחת בהגדרות."
 
@@ -1717,9 +1832,13 @@ msgstr "לא נבחרה תיקיית נתונים. בחר אחת בהגדרות.
 msgid "No files of unknown type found."
 msgstr "לא נמצאו קבצים מסוג לא ידוע."
 
-#: src/shared/i18n/serviceErrors.ts:104
+#: src/shared/i18n/serviceErrors.ts:109
 msgid "No Google Drive folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרות."
+
+#: src/features/lectures/components/CourseMaterialBox.tsx:107
+msgid "No lecture in this course has a summary yet."
+msgstr "לאף הרצאה בקורס אין עדיין סיכום."
 
 #: src/features/course-overview/utils/overview.ts:7
 msgid "No Lectures"
@@ -1733,7 +1852,7 @@ msgstr "אין עדיין הרצאות"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:300
+#: src/shared/i18n/serviceErrors.ts:305
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
@@ -1749,7 +1868,7 @@ msgstr "אף חומר לא יישלח"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/EditSummaryView.tsx:264
+#: src/features/lectures/DocEditor.tsx:238
 msgid "No original saved"
 msgstr "אין גרסה מקורית שמורה"
 
@@ -1781,17 +1900,21 @@ msgstr "לא נמצאו הקלטות."
 msgid "no university chosen"
 msgstr "לא נבחרה אוניברסיטה"
 
-#: src/shared/i18n/serviceErrors.ts:244
+#: src/shared/i18n/serviceErrors.ts:249
 msgid "No university is chosen yet. Choose yours in Settings."
 msgstr "עדיין לא נבחרה אוניברסיטה. בחר אותה בהגדרות."
 
-#: src/shared/i18n/serviceErrors.ts:281
+#: src/shared/i18n/serviceErrors.ts:286
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
-#: src/features/runner/RunnerView.tsx:212
+#: src/features/runner/RunnerView.tsx:243
 msgid "None"
 msgstr "אין"
+
+#: src/features/lectures/components/CourseMaterialBox.tsx:135
+msgid "None chosen — only the assignment files will be used."
+msgstr "לא נבחר חומר — נשתמש רק בקבצי המטלה."
 
 #: src/features/settings/components/ErrorReportsField.tsx:57
 msgctxt "privacy policy"
@@ -1807,14 +1930,15 @@ msgstr "לא מחובר"
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
-#: src/features/lectures/MainView.tsx:468
+#: src/features/lectures/MainView.tsx:489
 msgid "not provided"
 msgstr "חסר"
 
-#: src/features/runner/RunnerView.tsx:380
+#: src/features/runner/RunnerView.tsx:421
 msgid "Not queued"
 msgstr "לא בתור"
 
+#: src/features/lectures/AssignmentView.tsx:157
 #: src/features/lectures/components/MaterialChip.tsx:78
 msgid "Not sent to Gemini"
 msgstr "לא נשלח ל-Gemini"
@@ -1827,23 +1951,28 @@ msgstr "שים לב: הפעולה הזו תמחק את השמע, התמלול, �
 msgid "Nothing matched this search"
 msgstr "לא נמצאו תוצאות לחיפוש הזה"
 
-#: src/features/runner/RunnerView.tsx:253
+#: src/features/runner/RunnerView.tsx:286
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
-#: src/shared/contexts/SnapshotProvider.tsx:144
+#: src/shared/contexts/SnapshotProvider.tsx:149
 msgid "Nothing to run - All pipelines complete"
 msgstr "אין מה להריץ - כל ההרצאות הושלמו"
 
-#: src/shared/contexts/SnapshotProvider.tsx:148
+#: src/shared/contexts/SnapshotProvider.tsx:153
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בעיבוד"
 
-#: src/shared/i18n/serviceErrors.ts:117
+#: src/shared/i18n/serviceErrors.ts:102
+msgid "Nothing to send to Gemini — switch on a file or choose course material."
+msgstr "אין מה לשלוח ל-Gemini — סמן קובץ או בחר חומר מהקורס."
+
+#: src/shared/i18n/serviceErrors.ts:122
 msgid "Nothing was found to analyze in this course."
 msgstr "לא נמצא חומר לניתוח בקורס הזה."
 
-#: src/features/runner/RunnerView.tsx:284
+#: src/features/runner/RunnerView.tsx:281
+#: src/features/runner/RunnerView.tsx:317
 msgid "Now running"
 msgstr "בעיבוד עכשיו"
 
@@ -1855,7 +1984,7 @@ msgstr "מותרים קבצי .mp4 בלבד"
 msgid "Only technical error details are sent, never your files or keys. It's anonymous, and it helps us improve FastStudy."
 msgstr "נשלחים רק פרטים טכניים על שגיאות, אף פעם לא הקבצים או המפתחות שלך. זה אנונימי, ועוזר לנו לשפר את FastStudy."
 
-#: src/shared/i18n/serviceErrors.ts:275
+#: src/shared/i18n/serviceErrors.ts:280
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {host}."
 
@@ -1863,7 +1992,7 @@ msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {h
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר האוניברסיטה) והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:115
+#: src/features/lectures/components/StudyWithAiCard.tsx:111
 msgid "Open chat"
 msgstr "פתיחת צ'אט"
 
@@ -1871,7 +2000,7 @@ msgstr "פתיחת צ'אט"
 msgid "Open Chrome's extensions page"
 msgstr "פתיחת דף התוספים של Chrome"
 
-#: src/features/lectures/AssignmentView.tsx:71
+#: src/features/lectures/AssignmentView.tsx:163
 msgid "Open file"
 msgstr "פתיחת הקובץ"
 
@@ -1883,12 +2012,12 @@ msgstr "פתיחת התיקייה"
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת הכתובת שבראש החלון והקש Enter:"
 
-#: src/features/lectures/MainView.tsx:282
+#: src/features/lectures/MainView.tsx:303
 msgid "Open in Drive"
 msgstr "פתיחה ב-Drive"
 
-#: src/features/runner/RunnerView.tsx:104
-#: src/features/runner/RunnerView.tsx:108
+#: src/features/runner/RunnerView.tsx:132
+#: src/features/runner/RunnerView.tsx:136
 msgid "Open lecture"
 msgstr "פתיחת ההרצאה"
 
@@ -1898,9 +2027,10 @@ msgstr "פתיחת החומר"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
+#: src/features/lectures/components/AssignmentDocCard.tsx:165
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
-#: src/features/lectures/MainView.tsx:276
+#: src/features/lectures/MainView.tsx:297
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
 msgstr "פתיחת ה-PDF"
@@ -1909,7 +2039,7 @@ msgstr "פתיחת ה-PDF"
 msgid "Open the captcha again"
 msgstr "פתיחת החידה מחדש"
 
-#: src/shared/i18n/serviceErrors.ts:185
+#: src/shared/i18n/serviceErrors.ts:190
 msgid "Open the FastStudy app to choose a folder."
 msgstr "כדי לבחור תיקייה, פתח את FastStudy."
 
@@ -1954,6 +2084,11 @@ msgstr "קישורים אחרים"
 msgid "Other…"
 msgstr "אחר…"
 
+#: src/features/lectures/AssignmentView.tsx:171
+#: src/features/lectures/AssignmentView.tsx:176
+msgid "Over 10 MB — generating might fail while this is attached"
+msgstr "מעל 10 MB — היצירה עלולה להיכשל כל עוד הקובץ מצורף"
+
 #: src/features/lectures/components/MaterialChip.tsx:91
 #: src/features/lectures/components/MaterialChip.tsx:95
 msgid "Over 10 MB — Summarize will fail while this is attached"
@@ -1987,23 +2122,29 @@ msgstr "הדבקת כתובת במקום"
 msgid "Paste a video link first"
 msgstr "הדבק קודם קישור לוידאו"
 
+#: src/features/lectures/AssignmentView.tsx:86
+msgid "Paste the assignment material with Ctrl+V, we already copied it for you."
+msgstr "הדבק את חומר המטלה עם Ctrl+V בחלון שייפתח, העתקנו כבר מה שצריך בשבילך."
+
 #: src/features/downloads/components/CourseUrlPaste.tsx:53
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "הדבק את כתובת עמוד הקורס (…/course/view.php?id=…)"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:152
+#: src/features/lectures/MainView.tsx:234
 msgid "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgstr "הדבק את תוכן ההרצאה עם Ctrl+V בחלון שייפתח, העתקנו כבר מה שצריך בשבילך."
 
 #: src/features/lectures/constants/pipeline.ts:45
+#: src/features/runner/utils/assignmentSteps.ts:8
+#: src/features/runner/utils/assignmentSteps.ts:9
 msgid "PDF"
 msgstr "PDF"
 
-#: src/features/lectures/EditSummaryView.tsx:258
+#: src/features/lectures/DocEditor.tsx:232
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/EditSummaryView.tsx:259
+#: src/features/lectures/DocEditor.tsx:233
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -2011,12 +2152,12 @@ msgstr "ה-PDF נוצר עם אזהרות"
 msgid "Pin FastStudy to the toolbar"
 msgstr "הצמדת FastStudy לסרגל הכלים"
 
-#: src/features/lectures/MainView.tsx:337
+#: src/features/lectures/MainView.tsx:358
 msgid "Pipeline"
 msgstr "שלבים"
 
-#: src/features/lectures/MainView.tsx:192
-#: src/features/runner/RunnerView.tsx:218
+#: src/features/lectures/MainView.tsx:196
+#: src/features/runner/RunnerView.tsx:249
 msgid "Pipeline already running"
 msgstr "ההרצאה כבר בעיבוד"
 
@@ -2034,7 +2175,7 @@ msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-G
 
 #: src/features/downloads/components/FolderJobList.tsx:78
 #: src/features/downloads/components/ManualDownload.tsx:266
-#: src/features/runner/RunnerView.tsx:333
+#: src/features/runner/RunnerView.tsx:374
 msgid "Queued"
 msgstr "בתור"
 
@@ -2051,13 +2192,18 @@ msgstr "יצירה מחדש של {title}"
 msgid "Re-generate from {stepLabel}"
 msgstr "יצירה מחדש משלב {stepLabel}"
 
-#: src/features/runner/RunnerView.tsx:66
+#: src/features/lectures/components/AssignmentDocCard.tsx:102
+msgid "Ready"
+msgstr "מוכן"
+
+#: src/features/runner/RunnerView.tsx:73
 #: src/features/search/components/SearchResult.tsx:47
 msgid "recitation"
 msgstr "תרגול"
 
 #: src/features/downloads/components/ManualDownload.tsx:167
 #: src/features/downloads/components/RecordingRow.tsx:242
+#: src/features/lectures/components/CourseMaterialBox.tsx:79
 msgid "Recitation"
 msgstr "תרגול"
 
@@ -2110,15 +2256,29 @@ msgstr "הקלטות. הורדת הקלטה מתחילה מיד את יצירת 
 msgid "Recordings. Downloading one starts nothing; you run the summary yourself."
 msgstr "הקלטות. הורדת הקלטה לא מפעילה דבר, ואת הסיכום תריץ בעצמך."
 
+#: src/features/lectures/components/AssignmentDocCard.tsx:175
+#: src/features/lectures/components/AssignmentDocCard.tsx:178
+#: src/features/lectures/components/AssignmentDocCard.tsx:200
+msgid "Regenerate"
+msgstr "יצירה מחדש"
+
+#: src/features/lectures/components/AssignmentDocCard.tsx:60
+msgid "Regenerate {doc}?"
+msgstr "ליצור מחדש את {doc}?"
+
 #: src/app/ErrorBoundary.tsx:112
 msgid "Reload"
 msgstr "רענון"
+
+#: src/features/lectures/components/CourseMaterialBox.tsx:146
+msgid "Remove {name}"
+msgstr "הסרת {name}"
 
 #: src/features/settings/SettingsView.tsx:631
 msgid "Remove files from every existing lecture?"
 msgstr "להסיר קבצים מכל ההרצאות הקיימות?"
 
-#: src/features/lectures/MainView.tsx:433
+#: src/features/lectures/MainView.tsx:454
 msgid "Removed"
 msgstr "הוסר"
 
@@ -2152,7 +2312,7 @@ msgstr "חובה"
 msgid "Restart now"
 msgstr "הפעלה מחדש"
 
-#: src/features/lectures/EditSummaryView.tsx:270
+#: src/features/lectures/DocEditor.tsx:244
 msgid "Restore original"
 msgstr "שחזור המקור"
 
@@ -2170,12 +2330,12 @@ msgstr "ניסיון חוזר"
 msgid "Retry ✗"
 msgstr "ניסיון חוזר ✗"
 
-#: src/features/lectures/MainView.tsx:437
-#: src/features/lectures/MainView.tsx:440
+#: src/features/lectures/MainView.tsx:458
+#: src/features/lectures/MainView.tsx:461
 msgid "Rotate {file}"
 msgstr "יצירה מחדש של {file}"
 
-#: src/features/lectures/MainView.tsx:310
+#: src/features/lectures/MainView.tsx:331
 msgid "Run Remaining"
 msgstr "הרצת השלבים הנותרים"
 
@@ -2183,7 +2343,7 @@ msgstr "הרצת השלבים הנותרים"
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
-#: src/features/runner/RunnerView.tsx:392
+#: src/features/runner/RunnerView.tsx:433
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
@@ -2193,11 +2353,11 @@ msgstr "להריץ מדי יום הרצאות שלא הסתיימו"
 
 #. placeholder {0}: header.current
 #. placeholder {1}: header.total
-#: src/features/runner/RunnerView.tsx:246
+#: src/features/runner/RunnerView.tsx:277
 msgid "Running · lecture {0} of {1}"
 msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 
-#: src/features/runner/RunnerView.tsx:262
+#: src/features/runner/RunnerView.tsx:295
 #: src/shared/sidebar/Sidebar.tsx:78
 msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
@@ -2207,7 +2367,7 @@ msgstr "עיבוד הרצאות"
 msgid "Save"
 msgstr "שמירה"
 
-#: src/features/lectures/EditSummaryView.tsx:296
+#: src/features/lectures/DocEditor.tsx:270
 msgid "Save & update PDF"
 msgstr "שמירה ועדכון PDF"
 
@@ -2268,9 +2428,13 @@ msgstr "מחפש בסיכומים של הקורס שנבחר בשדה"
 msgid "Section {0} is waiting for a passcode"
 msgstr "היחידה {0} ממתינה לקוד גישה"
 
-#: src/App.tsx:40
+#: src/App.tsx:41
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
+
+#: src/features/lectures/AssignmentView.tsx:189
+msgid "Send {name} to Gemini"
+msgstr "לשלוח את {name} ל-Gemini"
 
 #: src/features/lectures/components/MaterialChip.tsx:108
 msgid "Send {name} to Gemini with the summary"
@@ -2279,6 +2443,10 @@ msgstr "שליחת {name} ל-Gemini עם הסיכום"
 #: src/features/settings/components/ErrorReportsField.tsx:33
 msgid "Send error reports"
 msgstr "שליחת דיווחי שגיאות"
+
+#: src/features/lectures/AssignmentView.tsx:156
+msgid "Sent to Gemini"
+msgstr "נשלח ל-Gemini"
 
 #: src/features/lectures/components/MaterialChip.tsx:77
 msgid "Sent to Gemini with the summary"
@@ -2306,7 +2474,7 @@ msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה �
 msgid "Show captcha window"
 msgstr "הצגת חלון החידה"
 
-#: src/features/lectures/AssignmentView.tsx:89
+#: src/features/lectures/AssignmentView.tsx:207
 msgid "Show in folder"
 msgstr "הצגה בתיקייה"
 
@@ -2322,7 +2490,7 @@ msgstr "הצג צילום מסך"
 msgid "skipped"
 msgstr "דולג"
 
-#: src/features/lectures/MainView.tsx:450
+#: src/features/lectures/MainView.tsx:471
 msgid "skipped (no video)"
 msgstr "דולג (אין וידאו)"
 
@@ -2331,7 +2499,7 @@ msgid "Something went wrong"
 msgstr "משהו השתבש"
 
 #: src/shared/i18n/serviceErrors.ts:39
-#: src/shared/i18n/serviceErrors.ts:320
+#: src/shared/i18n/serviceErrors.ts:325
 msgid "Something went wrong."
 msgstr "משהו השתבש."
 
@@ -2349,13 +2517,14 @@ msgstr "להתחיל להשתמש ב-FastStudy"
 
 #. placeholder {0}: position.number
 #. placeholder {1}: position.count
-#: src/features/runner/RunnerView.tsx:158
+#: src/features/runner/RunnerView.tsx:186
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:207
-#: src/features/lectures/EditSummaryView.tsx:277
-#: src/features/lectures/MainView.tsx:168
+#: src/features/lectures/components/AssignmentDocCard.tsx:82
+#: src/features/lectures/DocEditor.tsx:192
+#: src/features/lectures/DocEditor.tsx:251
+#: src/features/lectures/MainView.tsx:172
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
@@ -2367,7 +2536,7 @@ msgstr "אחסון"
 msgid "Student QA"
 msgstr "שאלות סטודנטים"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:99
+#: src/features/lectures/components/StudyWithAiCard.tsx:101
 msgid "Study with AI"
 msgstr "ללמוד עם AI"
 
@@ -2383,7 +2552,7 @@ msgstr "הסיכומים מועלים ל-Drive של החשבון הזה. חיב�
 msgid "Summarize"
 msgstr "סיכום"
 
-#: src/features/lectures/MainView.tsx:410
+#: src/features/lectures/MainView.tsx:431
 msgid "summarized from materials only"
 msgstr "סוכם מהחומרים בלבד"
 
@@ -2399,7 +2568,7 @@ msgstr "סיכום התמלול נכשל."
 msgid "Summary"
 msgstr "סיכום"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:76
+#: src/features/lectures/MainView.tsx:235
 msgid "Summary copied — paste it in the chat with Ctrl+V."
 msgstr "הסיכום הועתק — הדבק אותו בצ'אט עם Ctrl+V."
 
@@ -2419,6 +2588,10 @@ msgstr "מודל הסיכום"
 msgid "summary with {name}"
 msgstr "סיכום עם {name}"
 
+#: src/features/lectures/components/AssignmentDocCard.tsx:132
+msgid "Switch on a file or choose course material first"
+msgstr "קודם סמן קובץ או בחר חומר מהקורס"
+
 #. placeholder {0}: formatDuration(elapsed)
 #. placeholder {1}: formatDuration(longest)
 #: src/shared/components/ProgressBar.tsx:62
@@ -2429,35 +2602,35 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הזמן הארוך בי
 msgid "Technion"
 msgstr "הטכניון"
 
-#: src/shared/i18n/serviceErrors.ts:259
+#: src/shared/i18n/serviceErrors.ts:264
 msgid "That course link doesn't point to a specific course: {url}."
 msgstr "קישור הקורס לא מוביל לקורס מסוים: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:241
+#: src/shared/i18n/serviceErrors.ts:246
 msgid "That course link is not from your university's site ({site}): {url}."
 msgstr "קישור הקורס אינו מאתר האוניברסיטה שלך ({site}): {url}."
 
-#: src/shared/i18n/serviceErrors.ts:184
+#: src/shared/i18n/serviceErrors.ts:189
 msgid "That download has already finished."
 msgstr "ההורדה הזו כבר הסתיימה."
 
-#: src/shared/i18n/serviceErrors.ts:170
+#: src/shared/i18n/serviceErrors.ts:175
 msgid "That download run is not paused."
 msgstr "תהליך ההורדה הזה אינו מושהה."
 
-#: src/shared/i18n/serviceErrors.ts:169
+#: src/shared/i18n/serviceErrors.ts:174
 msgid "That download run no longer exists."
 msgstr "תהליך ההורדה הזה כבר לא קיים."
 
-#: src/shared/i18n/serviceErrors.ts:274
+#: src/shared/i18n/serviceErrors.ts:279
 msgid "That is not a Google Drive file link: {url}."
 msgstr "זה אינו קישור לקובץ ב-Google Drive: {url}."
 
-#: src/features/runner/RunnerView.tsx:229
+#: src/features/runner/RunnerView.tsx:260
 msgid "That lecture is no longer queued"
 msgstr "ההרצאה הזו כבר לא בתור"
 
-#: src/shared/i18n/serviceErrors.ts:251
+#: src/shared/i18n/serviceErrors.ts:256
 msgid "That link isn't a course's main page. Copy the address that ends in course/view.php?id= and a number: {url}."
 msgstr "הקישור הזה אינו העמוד הראשי של קורס. העתק את הכתובת שמסתיימת ב-⁦course/view.php?id=⁩ ובמספר: ⁦{url}⁩."
 
@@ -2465,11 +2638,11 @@ msgstr "הקישור הזה אינו העמוד הראשי של קורס. העת
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/shared/i18n/serviceErrors.ts:279
+#: src/shared/i18n/serviceErrors.ts:284
 msgid "That playlist has no entries."
 msgstr "אין פריטים בפלייליסט הזה."
 
-#: src/shared/i18n/serviceErrors.ts:140
+#: src/shared/i18n/serviceErrors.ts:145
 msgid "That setting may not contain quotes or line breaks."
 msgstr "ההגדרה הזו לא יכולה להכיל גרשיים או מעברי שורה."
 
@@ -2477,7 +2650,7 @@ msgstr "ההגדרה הזו לא יכולה להכיל גרשיים או מעב�
 msgid "That step is turned off in settings."
 msgstr "השלב הזה כבוי בהגדרות."
 
-#: src/shared/i18n/serviceErrors.ts:108
+#: src/shared/i18n/serviceErrors.ts:113
 msgid "That's probably because Windows quarantined the app — restart the app and follow the instructions."
 msgstr "כנראה ש-Windows העביר את האפליקציה להסגר — הפעל מחדש את האפליקציה ופעל לפי ההוראות."
 
@@ -2489,7 +2662,7 @@ msgstr "מפתחות ה-API ומודל הסיכום לא זמינים כרגע. 
 msgid "The captcha is solved. Finishing the connection…"
 msgstr "החידה נפתרה. משלימים את החיבור…"
 
-#: src/shared/i18n/serviceErrors.ts:224
+#: src/shared/i18n/serviceErrors.ts:229
 msgid "The captcha on the university site wasn't solved within 10 minutes. Solve it when its window opens, then try again."
 msgstr "החידה באתר האוניברסיטה לא נפתרה תוך 10 דקות. פתור אותה כשהחלון שלה נפתח, ואז נסה שוב."
 
@@ -2505,27 +2678,27 @@ msgstr "מטלות הקורס. ניתן להוריד מספר קבצים לכל 
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "גם ההרצה היומית פועלת לפי ההגדרה שלמעלה: אם היא מוגדרת לא לעשות דבר, גם ההרצה היומית לא תעשה דבר."
 
-#: src/shared/i18n/serviceErrors.ts:145
+#: src/shared/i18n/serviceErrors.ts:150
 msgid "The data folder must be a full path: {path}."
 msgstr "תיקיית הנתונים חייבת להיות נתיב מלא: {path}."
 
-#: src/shared/i18n/serviceErrors.ts:171
+#: src/shared/i18n/serviceErrors.ts:176
 msgid "The download couldn't start."
 msgstr "לא ניתן להתחיל את ההורדה."
 
-#: src/shared/i18n/serviceErrors.ts:172
+#: src/shared/i18n/serviceErrors.ts:177
 msgid "The download failed."
 msgstr "ההורדה נכשלה."
 
-#: src/shared/i18n/serviceErrors.ts:188
+#: src/shared/i18n/serviceErrors.ts:193
 msgid "The download folder {folder} no longer exists. Choose another folder."
 msgstr "תיקיית ההורדות {folder} כבר לא קיימת. בחר תיקייה אחרת."
 
-#: src/shared/i18n/serviceErrors.ts:173
+#: src/shared/i18n/serviceErrors.ts:178
 msgid "The download was refused — the session has expired. Reconnect the account."
 msgstr "ההורדה נדחתה — תוקף החיבור פג. חבר מחדש את החשבון."
 
-#: src/shared/i18n/serviceErrors.ts:168
+#: src/shared/i18n/serviceErrors.ts:173
 msgid "The downloaded file could not be stored."
 msgstr "לא ניתן לשמור את הקובץ שהורד."
 
@@ -2545,7 +2718,7 @@ msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
-#: src/features/lectures/MainView.tsx:528
+#: src/features/lectures/MainView.tsx:544
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -2561,24 +2734,24 @@ msgstr "אסימון הגישה של Google נשמר רק במחשב שלך ול
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:297
+#: src/shared/i18n/serviceErrors.ts:302
 msgid "The login window was closed before login finished. Connect again."
 msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:296
+#: src/shared/i18n/serviceErrors.ts:301
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:176
-#: src/shared/i18n/serviceErrors.ts:216
+#: src/shared/i18n/serviceErrors.ts:181
+#: src/shared/i18n/serviceErrors.ts:221
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:545
+#: src/features/lectures/MainView.tsx:561
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
-#: src/shared/i18n/serviceErrors.ts:165
+#: src/shared/i18n/serviceErrors.ts:170
 msgid "The part of FastStudy that downloads recordings isn't responding. Restart the app."
 msgstr "החלק של FastStudy שמוריד הקלטות לא מגיב. הפעל מחדש את האפליקציה."
 
@@ -2586,11 +2759,15 @@ msgstr "החלק של FastStudy שמוריד הקלטות לא מגיב. הפע�
 msgid "The PDF could not be created."
 msgstr "לא ניתן ליצור את ה-PDF."
 
+#: src/features/lectures/components/AssignmentDocCard.tsx:123
+msgid "The PDF is missing."
+msgstr "ה-PDF חסר."
+
 #: src/features/course-overview/constants/overview.ts:121
 msgid "The PDF is older than an earlier step's output. Re-generate it."
 msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור אותו מחדש."
 
-#: src/features/lectures/utils/pdfBadge.ts:5
+#: src/features/lectures/utils/pdfBadge.ts:24
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
 
@@ -2602,7 +2779,7 @@ msgstr "תהליך ההורדה נעצר מוקדם. הרץ את הפליילי�
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה שוב כדי להשלים אותן."
 
-#: src/shared/i18n/serviceErrors.ts:112
+#: src/shared/i18n/serviceErrors.ts:117
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{lecture}\"."
 
@@ -2614,27 +2791,27 @@ msgstr "תהליך ההורדה בוטל. הרץ את הפלייליסט שוב 
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
-#: src/features/runner/RunnerView.tsx:337
+#: src/features/runner/RunnerView.tsx:378
 msgid "the runner takes these in order"
 msgstr "ההרצות מתבצעות לפי הסדר"
 
-#: src/shared/i18n/serviceErrors.ts:305
+#: src/shared/i18n/serviceErrors.ts:310
 msgid "The setting \"{field}\" isn't recognized, so it wasn't saved."
 msgstr "ההגדרה \"{field}\" אינה מוכרת, ולכן לא נשמרה."
 
-#: src/shared/i18n/serviceErrors.ts:310
+#: src/shared/i18n/serviceErrors.ts:315
 msgid "The setting \"{field}\" must be a whole number."
 msgstr "ההגדרה \"{field}\" חייבת להיות מספר שלם."
 
-#: src/shared/i18n/serviceErrors.ts:314
+#: src/shared/i18n/serviceErrors.ts:319
 msgid "The setting \"{field}\" must be between {min} and {max}."
 msgstr "ההגדרה \"{field}\" חייבת להיות בין {min} ל-{max}."
 
-#: src/shared/i18n/serviceErrors.ts:309
+#: src/shared/i18n/serviceErrors.ts:314
 msgid "The setting \"{field}\" must be on or off."
 msgstr "ההגדרה \"{field}\" חייבת להיות פועלת או כבויה."
 
-#: src/shared/i18n/serviceErrors.ts:308
+#: src/shared/i18n/serviceErrors.ts:313
 msgid "The setting \"{field}\" must be text."
 msgstr "ההגדרה \"{field}\" חייבת להיות טקסט."
 
@@ -2646,7 +2823,7 @@ msgstr "האתר לא מציין מה הקבצים האלה. מכאן אפשר �
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."
 msgstr "האתר סירב להורדה. הקישור הזה דורש התחברות, ולכן אי אפשר להוריד אותו כאן."
 
-#: src/features/lectures/EditSummaryView.tsx:279
+#: src/features/lectures/DocEditor.tsx:253
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
@@ -2667,7 +2844,7 @@ msgid "The university site is asking for a captcha in a Chrome window. Solve it 
 msgstr "אתר האוניברסיטה מבקש לפתור חידה בחלון Chrome. פתור אותה שם כדי להמשיך."
 
 #: src/features/downloads/utils/downloadErrors.ts:43
-#: src/shared/i18n/serviceErrors.ts:231
+#: src/shared/i18n/serviceErrors.ts:236
 msgid "The university site is busy with another request. Try again in a moment."
 msgstr "אתר האוניברסיטה עסוק בבקשה אחרת. נסה שוב בעוד רגע."
 
@@ -2683,7 +2860,7 @@ msgstr "הווידאו והשמע של כל הרצאה שכבר הועלתה ל-
 msgid "The video and audio of every lecture that already has a PDF will be deleted from this computer. They cannot be recovered."
 msgstr "הווידאו והשמע של כל הרצאה שכבר יש לה PDF יימחקו מהמחשב. אי אפשר יהיה לשחזר אותם."
 
-#: src/shared/i18n/serviceErrors.ts:194
+#: src/shared/i18n/serviceErrors.ts:199
 msgid "The video downloaded, but it couldn't be saved into {folder}."
 msgstr "הווידאו הורד, אבל לא ניתן לשמור אותו בתיקייה {folder}."
 
@@ -2703,16 +2880,16 @@ msgstr "החלון באתר האוניברסיטה עבר את הבדיקה, ו�
 msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 msgstr "החלון נסגר לפני שהחידה נפתרה. לחץ על \"פתיחת החידה מחדש\" כדי להחזיר אותה."
 
-#: src/shared/i18n/serviceErrors.ts:291
+#: src/shared/i18n/serviceErrors.ts:296
 msgid "The Zoom captcha wasn't solved within 10 minutes. Try the download again."
 msgstr "החידה של Zoom לא נפתרה תוך 10 דקות. נסה להוריד שוב."
 
-#: src/shared/i18n/serviceErrors.ts:285
+#: src/shared/i18n/serviceErrors.ts:290
 msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:529
+#: src/features/lectures/MainView.tsx:545
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
@@ -2720,11 +2897,11 @@ msgstr "לאחר מכן {0} ייווצר מחדש."
 msgid "These materials are over {limit_mb} MB: {files}. Turn them off for the summary, then try again."
 msgstr "החומרים האלה גדולים מ-{limit_mb} MB: {files}. כבה אותם בסיכום ונסה שוב."
 
-#: src/features/runner/RunnerView.tsx:415
+#: src/features/runner/RunnerView.tsx:456
 msgid "These won't start until you run them, or until the daily run does."
 msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה היומית."
 
-#: src/features/runner/RunnerView.tsx:419
+#: src/features/runner/RunnerView.tsx:460
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
 
@@ -2736,7 +2913,7 @@ msgstr "שירותי צד שלישי"
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
-#: src/features/lectures/EditSummaryView.tsx:364
+#: src/features/lectures/DocEditor.tsx:338
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
 
@@ -2744,7 +2921,7 @@ msgstr "לא ניתן לבטל את הפעולה."
 msgid "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, ולכן אי אפשר לשמור אותם כאן. כל שאר ההגדרות במסך הזה פועלות כרגיל."
 
-#: src/shared/i18n/serviceErrors.ts:123
+#: src/shared/i18n/serviceErrors.ts:128
 msgid "This course has no summaries yet."
 msgstr "אין עדיין סיכומים בקורס הזה."
 
@@ -2762,11 +2939,11 @@ msgstr "לא ניתן היה לדווח על השגיאה הזו אוטומטי�
 msgid "This error was reported automatically. Reference: <0>{eventId}</0>"
 msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 
-#: src/shared/i18n/serviceErrors.ts:270
+#: src/shared/i18n/serviceErrors.ts:275
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:280
+#: src/shared/i18n/serviceErrors.ts:285
 msgid "This lecture's video isn't a downloadable MP4 file."
 msgstr "הווידאו של ההרצאה הזו אינו קובץ MP4 שאפשר להוריד."
 
@@ -2778,19 +2955,19 @@ msgstr "השינוי קובע רק איפה האפליקציה מחפשת את �
 msgid "This only needs to be done once."
 msgstr "צריך לעשות את זה רק פעם אחת."
 
-#: src/shared/i18n/serviceErrors.ts:179
+#: src/shared/i18n/serviceErrors.ts:184
 msgid "This recording needs a passcode."
 msgstr "ההקלטה הזו דורשת קוד גישה."
 
-#: src/shared/i18n/serviceErrors.ts:294
+#: src/shared/i18n/serviceErrors.ts:299
 msgid "This recording type can't be downloaded."
 msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 
-#: src/shared/i18n/serviceErrors.ts:180
+#: src/shared/i18n/serviceErrors.ts:185
 msgid "This source can't be downloaded automatically."
 msgstr "לא ניתן להוריד את המקור הזה אוטומטית."
 
-#: src/features/lectures/EditSummaryView.tsx:305
+#: src/features/lectures/DocEditor.tsx:279
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש. טען את הגרסה החדשה, או השאר את השינויים שלך ושמור אותם במקומה."
 
@@ -2860,7 +3037,7 @@ msgstr "האוניברסיטה נשמרה"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/EditSummaryView.tsx:347
+#: src/features/lectures/DocEditor.tsx:321
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
@@ -2880,7 +3057,7 @@ msgstr "עדכונים"
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 
-#: src/features/lectures/EditSummaryView.tsx:296
+#: src/features/lectures/DocEditor.tsx:270
 msgid "Updating PDF…"
 msgstr "מעדכן PDF…"
 
@@ -2896,7 +3073,7 @@ msgstr "העלאה ל-Drive"
 msgid "Uploading to Drive"
 msgstr "מעלה ל-Drive"
 
-#: src/shared/i18n/serviceErrors.ts:102
+#: src/shared/i18n/serviceErrors.ts:107
 msgid "Uploading to Google Drive failed."
 msgstr "ההעלאה ל-Google Drive נכשלה."
 
@@ -2990,7 +3167,7 @@ msgstr "עבודה שבתהליך תיעצר. להפעיל מחדש בכל זא�
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "עובד רק עבור קישורי וידאו, ורק אם הם נגישים ללא פרטי התחברות."
 
-#: src/shared/components/ConfirmModal.tsx:47
+#: src/shared/components/ConfirmModal.tsx:52
 msgid "Yes"
 msgstr "כן"
 
@@ -3022,7 +3199,7 @@ msgstr "שני מפתחות ה-API שלך"
 msgid "Your university"
 msgstr "האוניברסיטה שלך"
 
-#: src/shared/i18n/serviceErrors.ts:255
+#: src/shared/i18n/serviceErrors.ts:260
 msgid "Your university account can't open that course. It may not exist, or you may not be enrolled in it: {url}."
 msgstr "חשבון האוניברסיטה שלך לא יכול לפתוח את הקורס הזה. ייתכן שהוא לא קיים, או שאינך רשום אליו: ⁦{url}⁩."
 
@@ -3034,7 +3211,7 @@ msgstr "תוקף החיבור לאוניברסיטה פג. חבר מחדש את 
 msgid "Your university's Moodle address"
 msgstr "כתובת ה-Moodle של האוניברסיטה"
 
-#: src/shared/i18n/serviceErrors.ts:288
+#: src/shared/i18n/serviceErrors.ts:293
 msgid "Zoom asked for a captcha, and solving it is only supported on Windows."
 msgstr "Zoom ביקש לפתור חידה, ופתרון החידה נתמך רק ב-Windows."
 

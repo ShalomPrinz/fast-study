@@ -64,6 +64,7 @@ every answer is overtaken before it arrives and latest-only never settles.
 | `/settings`                | `SettingsView`    |
 | `/:course/:lecture`        | `MainView`        |
 | `/:course/:lecture/edit`   | `EditSummaryView` |
+| `/course/:course/assignment/:assignment/edit/:doc` | `EditAssignmentDocView` |
 | `*`                        | redirect to `/`   |
 
 `BrowserRouter` runs with `useTransitions={false}`, so a navigation is an ordinary update that commits in
@@ -84,7 +85,7 @@ plus the extension's folder-picker listener ([EXTENSION.md](EXTENSION.md)).
 Every name param is read through `routeParam`: React Router turns a literal `%2F` inside a decoded segment
 into `/`, and a name never holds `/` (the database strips it), so mapping `/` back is exact.
 
-Route params are user-editable, so `MainView`, `EditSummaryView` and `CourseView` resolve them against
+Route params are user-editable, so `MainView`, `EditSummaryView`, `EditAssignmentDocView` and `CourseView` resolve them against
 `CourseTreeContext` first: spinner until `loaded`, then `NotFoundPanel` (`shared/utils/notFound.ts`).
 `loaded` exists because an unresolved param and an unfetched tree both look empty, so a typo would spin
 forever; it flips only when a tree actually lands or the fetch fails, never on a superseded response.
