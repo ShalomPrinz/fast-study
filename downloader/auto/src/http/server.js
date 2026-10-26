@@ -111,6 +111,7 @@ function toItem(recording) {
           filename: recording.filename,
         }
       : {}),
+    ...(recording.modifiedAt ? { modifiedAt: recording.modifiedAt } : {}),
   };
 }
 

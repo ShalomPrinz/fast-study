@@ -20,12 +20,16 @@ same way when `backend/` relays it through a pipeline error and the status is go
 
 **Connection errors are handled once, here.** Only a network failure rejects as a `TypeError` (aborts are
 `DOMException` and pass through), so that branch wraps it in `ConnectionError`, toasts it keyed by base
-URL — a downed service shows one toast, not a stack — and rethrows. Call sites add no connection handling
+URL — a downed service shows one toast, not a stack — and rethrows. The toast alone is skipped while the OS sleeps and for 5 s after it wakes
+(`connectionsQuiet()`, `runtime.ts`): Chromium fails in-flight requests on resume, so those are expected;
+the throw is unchanged. Call sites add no connection handling
 of their own; they ignore the throw or check `isConnectionError`. `shared/utils/failure.ts`'s
 `toastFailure` is that check plus the resolved sentence, and is the single funnel for a refused request's
 wording; `failureNode` is the same thing for a call site that shows it in place instead of toasting.
 Both read code and params through `failureOf`, which takes them off a `RequestError` or any error with a
-string `code` (a feature's typed refusal, e.g. `UnsupportedError`), so no caller special-cases one.
+string `code` (a feature's typed refusal, e.g. `UnsupportedError`), or any plain object with one — the shape
+`settings.write` rejects with over the Electron bridge — so no caller special-cases one. `shared/i18n/settingsKeysDrift.test.ts`
+holds `WIRE`'s keys within `electron/store.js`'s `FIELDS`.
 
 ## `backend.ts` → FastAPI (:8000)
 
@@ -56,6 +60,8 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **`canStoreApiKeys`**, `defaultDataRoot` and `pickFolder` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
   the OS `locale` ([I18N.md](I18N.md)).
 - **`extension`** — optional `{ path, reveal() }`, the Chrome extension's folder for the Downloads page's Extension tab ([EXTENSION.md](EXTENSION.md)).
+- **`power`** — optional `subscribe(cb)` pushing `'suspend'`/`'resume'`; `runtime.ts` subscribes once at load and `isQuiet(last, now)`
+  (pure) decides the quiet window: suspend (capped at 60 s, so a missed resume cannot mute an outage) until 5 s after resume, a lone resume included. No bridge or no `power` means never quiet.
 - **`packaged`** and **`updates`** — `versionTag()` and the sidebar's update row ([LECTURES.md](LECTURES.md) §Sidebar);
   both optional, so an older launcher degrades to a `dev` tag and no row.
 
@@ -88,6 +94,11 @@ included, which the renderer does not know — and attaches the launch log
 (`electron/docs/RENDERER.md` §Error reporting). Options come from `lib/sentry`'s `options('frontend')`,
 release `faststudy@<bridge version>`; the SDK drops `initialScope`, so the `service` tag is set after
 init. No tracing, no replay, and no attachments — main forwards a renderer's attachments unscrubbed.
+
+`captureUnmappedFailure` reports a failure shown with no catalog row (no code, or an unknown one) once per
+distinct failure. `serviceErrorNode` calls it, so every toast built from a failure reaches it; `failureNode`
+passes `report=false` for a `ConnectionError` (the overview toast passes it too and reports from its `useReportOnce` send, after the repeat-removal), and the toast sites filter those before building a node. Coded
+failures with a row are never sent. `lib/sentry` drops the event when the user has not opted in.
 
 `captureRenderError` is the error boundary's one call ([ARCHITECTURE.md](ARCHITECTURE.md) §Error
 boundary). It answers `null` when nothing is sent (`isReporting()`: initialized and switched on), because the SDK

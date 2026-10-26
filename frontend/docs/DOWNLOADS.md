@@ -227,6 +227,9 @@ Google Drive row — no filename, so only a download-time probe can tell). The d
 server-side from the opaque `ref`; the frontend branches its own affordances on `media` and never sends
 it.
 
+Each row shows auto's optional `modifiedAt` (unix ms, omitted when Moodle has no time) as muted date + time via
+`formatDateTime`; display only, row order is unchanged.
+
 A `ModeToggle` (`mode-toggle--cards`) splits the segments Videos · Materials · Assignments · Unknown, each an icon card with its count — Unknown
 only while it holds a row (`showsMediaSegment`). `MediaNote` captions the chosen card: `mediaNote(media,
 autoRun)` picks the hint, and only the video side's follows AUTO_RUN and links to Settings, since only a

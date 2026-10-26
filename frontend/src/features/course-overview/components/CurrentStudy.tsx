@@ -24,14 +24,18 @@ export default function CurrentStudy({
   const lecture = trackProgress(lectures)
   const recitation = recitations && trackProgress(recitations)
 
-  const notes = [
-    lecture.current ? null : lecture.total === 0 ? t`No lectures yet` : t`All lectures done`,
+  const lectureNote = lecture.current
+    ? null
+    : lecture.total === 0
+      ? t`No lectures yet`
+      : t`All lectures done`
+  const recitationNote =
     !recitation || recitation.current
       ? null
       : recitation.total === 0
         ? t`No recitations yet`
-        : t`All recitations done`,
-  ].filter((note) => note !== null)
+        : t`All recitations done`
+  const notes = [lectureNote, recitationNote].filter((note) => note !== null)
 
   return (
     <div className="current-study">
@@ -41,6 +45,7 @@ export default function CurrentStudy({
           current={lecture.current}
           label={t`Current lecture`}
           hint={t`Open the first lecture you haven't finished yet`}
+          emptyHint={lectureNote}
         />
         {recitation && (
           <StudyTile
@@ -48,6 +53,7 @@ export default function CurrentStudy({
             current={recitation.current}
             label={t`Current recitation`}
             hint={t`Open the first recitation you haven't finished yet`}
+            emptyHint={recitationNote}
           />
         )}
       </div>
@@ -72,15 +78,17 @@ function StudyTile({
   current,
   label,
   hint,
+  emptyHint,
 }: {
   course: string
   current: { name: string; kind: Kind } | null
   label: string
   hint: string
+  emptyHint: string | null
 }) {
   const navigate = useNavigate()
   return (
-    <Tooltip content={current ? hint : undefined}>
+    <Tooltip content={current ? hint : (emptyHint ?? undefined)}>
       <button
         className="study-tile"
         disabled={!current}

@@ -95,6 +95,15 @@ to the English prose — but is not finished. `frontend/src/shared/i18n/errorCod
 the three in step: it greps the services for emitted codes and fails when one is undocumented, or
 when the doc calls a code user-reachable and no catalog row says it.
 
+## Git hooks
+
+`.githooks/pre-commit` bumps the patch `version` in `downloader/extension/manifest.json` whenever a
+commit stages a shipped extension file (anything there but `CLAUDE.md`, `README.md`, `docs/`), unless
+the commit already changes that version: the app recopies the extension into Chrome's folder only on a
+version change ([`electron/docs/EXTENSION.md`](electron/docs/EXTENSION.md)). It refuses
+`git commit <paths>`, whose temporary index would lose the bump. Each clone enables it once with
+`git config core.hooksPath .githooks`.
+
 ## Migrations
 
 Code that only patches data an older version wrote is temporary: list it in
@@ -174,4 +183,4 @@ Both catch bugs, never style — undefined names, unused symbols and arguments (
 
 Style is separate and automatic: `ruff format` + import sort for Python, prettier for JS/TS/CSS (`.prettierrc` keeps `frontend/` semicolon-free and `downloader/` semicolon'd, matching what each already was). Never hand-format — `.claude/hooks/format.sh` rewrites changed files at the end of every turn.
 
-`.claude/hooks/lint.sh` runs both linters on changed files at the end of every turn and every subagent, and `.claude/hooks/typecheck.sh` typechecks `frontend/` the same way. A green hook means the code parses and typechecks — never that it works. How the three hooks work is in [`.claude/hooks/README.md`](.claude/hooks/README.md).
+`.claude/hooks/lint.sh` runs both linters on changed files at the end of every turn and every subagent, and `.claude/hooks/typecheck.sh` typechecks `frontend/` the same way. A green hook means the code parses and typechecks — never that it works. `.claude/hooks/extract.sh` re-extracts the Lingui catalogs when `frontend-dev` finishes and blocks on a missing Hebrew translation. How the hooks work is in [`.claude/hooks/README.md`](.claude/hooks/README.md).

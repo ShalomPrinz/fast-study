@@ -19,6 +19,9 @@ import { stripTags } from '../lib/html.js';
 import { proxyCap } from '../moodle/files.js';
 import { onMoodleHost } from '../moodle/site.js';
 
+// Moodle unix seconds → ms, or undefined when Moodle gave no (or a zero) time.
+const toMs = (sec) => (Number(sec) > 0 ? Number(sec) * 1000 : undefined);
+
 // Flatten the WS section tree into activities: one per module, except a `resource`, which yields
 // one per file. Names arrive as HTML and are flattened first. See docs/BROWSING.md.
 function mapModules(sections, courseId) {
@@ -27,6 +30,7 @@ function mapModules(sections, courseId) {
     const sectionName = stripTags(section.name || '');
     for (const module of section.modules ?? []) {
       const title = stripTags(module.name || '');
+      const fallbackMs = toMs(module.contentsinfo?.lastmodified);
       const base = { modType: module.modname, viewUrl: module.url, sectionName, courseId };
       if (module.modname === 'resource') {
         const files = (module.contents ?? []).filter((c) => c.type === 'file');
@@ -41,6 +45,7 @@ function mapModules(sections, courseId) {
             filename: file.filename,
             mimetype: file.mimetype,
             kind: classifyKind(sectionName, fileTitle),
+            modifiedAt: toMs(file.timemodified) ?? fallbackMs,
           });
         }
         continue;
@@ -50,6 +55,7 @@ function mapModules(sections, courseId) {
         title,
         externalUrl: module.contents?.[0]?.fileurl,
         kind: classifyKind(sectionName, title),
+        modifiedAt: toMs(module.contents?.[0]?.timemodified) ?? fallbackMs,
       });
     }
   }
@@ -110,7 +116,13 @@ export function listRecordings(sections, courseId, assignmentsAnswer) {
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
     if (!extractor) continue; // video, audio or HTML resource / non-http url target / unknown modType → skip
-    for (const recording of extractor.toRecordings(activity)) recordings.push(recording);
+    for (const recording of extractor.toRecordings(activity)) {
+      // Non-enumerable so it stays out of the ref (JSON.stringify), which must be stable across lists.
+      if (activity.modifiedAt) {
+        Object.defineProperty(recording, 'modifiedAt', { value: activity.modifiedAt });
+      }
+      recordings.push(recording);
+    }
   }
   return recordings;
 }

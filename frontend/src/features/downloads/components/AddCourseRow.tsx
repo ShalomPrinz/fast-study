@@ -125,13 +125,15 @@ export default function AddCourseRow() {
             dir="auto"
           />
         </Tooltip>
-        <button
-          className="btn btn--primary"
-          onClick={() => void create(false)}
-          disabled={saving || checking || !name.trim()}
-        >
-          {checking ? t`Checking…` : t`Create`}
-        </button>
+        <Tooltip content={name.trim() ? undefined : t`Enter a course name first`}>
+          <button
+            className="btn btn--primary"
+            onClick={() => void create(false)}
+            disabled={saving || checking || !name.trim()}
+          >
+            {checking ? t`Checking…` : t`Create`}
+          </button>
+        </Tooltip>
         <button className="btn btn--ghost" onClick={reset}>
           <Trans>Cancel</Trans>
         </button>

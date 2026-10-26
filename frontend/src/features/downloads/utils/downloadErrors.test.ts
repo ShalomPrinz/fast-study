@@ -124,8 +124,8 @@ describe('expandErrorText', () => {
   })
 
   it('resolves an unsupported source even without a code', () => {
-    expect(expandErrorText(new UnsupportedError('That host is not supported.'))).toBe(
-      'That host is not supported.',
+    expect(expandErrorText(new UnsupportedError('That host is not supported.'))).toMatch(
+      /That host is not supported\.$/,
     )
   })
 

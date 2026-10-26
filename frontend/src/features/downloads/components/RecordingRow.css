@@ -28,6 +28,13 @@
   color: var(--text);
 }
 
+.recording-modified {
+  flex-shrink: 0;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
 .recording-save-label {
   flex-shrink: 0;
   font-size: var(--fs-meta);

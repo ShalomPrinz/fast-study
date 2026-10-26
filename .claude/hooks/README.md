@@ -1,8 +1,9 @@
 # Hooks
 
 Three scripts wired to `Stop` and `SubagentStop` in [`../settings.json`](../settings.json), so they
-run at the end of every turn and every subagent. They exist to keep the repo's stated invariants —
-"new code lands lint-clean", "never hand-format" — true without anyone remembering them. A fourth,
+run at the end of every turn and every subagent, plus `extract.sh` on `SubagentStop` for `frontend-dev` only. They exist
+to keep the repo's stated invariants — "new code lands lint-clean", "never hand-format", "zero missing
+translations" — true without anyone remembering them. A fifth,
 `checkpoint.py`, is wired to `PostToolUse` — see [the context checkpoint](#the-context-checkpoint).
 
 | Script | Does | Blocks the turn |
@@ -10,11 +11,14 @@ run at the end of every turn and every subagent. They exist to keep the repo's s
 | `format.sh` | `ruff format` + import sort on Python, prettier on every other file it parses, in place | never |
 | `lint.sh` | `ruff check` + `eslint` at bug-catching level (no style), plus the frontend CSS layout rules | yes |
 | `typecheck.sh` | `tsc --noEmit` over `frontend/` | yes |
+| `extract.sh` | `npm run extract` in `frontend/`, then lists `he/messages.po` entries with an empty `msgstr` | yes |
 
-All three act only on **changed files** — tracked modifications against `HEAD` plus untracked files,
+All four act only on **changed files** — tracked modifications against `HEAD` plus untracked files,
 read NUL-delimited so Hebrew and spaced filenames survive. `typecheck.sh` is the exception in scope:
 it *triggers* on a changed `.ts`/`.tsx` but then checks the whole project, because `tsc` has no
-meaningful per-file mode.
+meaningful per-file mode. `extract.sh` likewise triggers on a changed `frontend/src` `.ts`/`.tsx`
+and re-extracts the whole catalog. It runs for `frontend-dev` alone, read from the input's
+`agent_type`: that agent owns the catalogs, and any other would be blocked on files it must not touch.
 
 ## Why they look the way they do
 
@@ -27,8 +31,8 @@ in `lint -` is how you know the hook ran and found nothing to do, rather than si
 feedback and keeps the turn alive so it can fix the problem.
 
 **Blocking twice on the same failure would loop forever.** A pre-existing or unfixable breakage
-would otherwise re-block every time the agent tried to finish. `lint.sh` and `typecheck.sh` each
-hash the failure text into `$TMPDIR/claude-{lint,typecheck}-$session`; an identical hash on the next
+would otherwise re-block every time the agent tried to finish. `lint.sh`, `typecheck.sh` and `extract.sh`
+each hash the failure text into `$TMPDIR/claude-{lint,typecheck,extract}-$session`; an identical hash on the next
 run downgrades to a visible warning and lets the turn end. The state file is per-session and cleared
 on success.
 

@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro'
 import {
   AUTO_REMOVE_AFTER,
   type AutoRemoveAfter,
@@ -72,8 +73,9 @@ export function autoRemoveWidens(form: AutoRemoveForm, stored: Settings): boolea
 }
 
 // What the section's Apply does now: save the edit, re-run the sweep for the stored rule (a retry after
-// a locked file or a failure, no confirm since the rule was confirmed), wait for the page's Save, or nothing.
-export type AutoRemoveApply = 'save' | 'sweep' | 'needs-page-save' | null
+// a locked file or a failure, no confirm since the rule was confirmed), wait for the page's Save, nothing
+// to apply (`unchanged`), or `null` for an incomplete edit (and, from the page, while it is busy).
+export type AutoRemoveApply = 'save' | 'sweep' | 'needs-page-save' | 'unchanged' | null
 
 /** Apply's action. "After Drive" with the Drive toggle unsaved needs the page's Save, which stores both:
  *  saving the rule alone would confirm deletions the backend skips while the stored Drive is off. */
@@ -84,11 +86,31 @@ export function autoRemoveApply(
 ): AutoRemoveApply {
   if (!autoRemoveDirty(form, stored)) {
     const saved = autoRemoveFromStore(stored)
-    return saved.on && saved.after !== null ? 'sweep' : null
+    return saved.on && saved.after !== null ? 'sweep' : 'unchanged'
   }
   if (!autoRemoveComplete(form, driveEnabled)) return null
   if (form.on && form.after === 'drive' && driveEnabled !== (stored.driveEnabled ?? false)) {
     return 'needs-page-save'
   }
   return 'save'
+}
+
+// Why an incomplete section cannot be saved: no timing yet, or "after Drive" with Drive off (per mode).
+export type AutoRemoveBlock = 'choose-when' | 'drive-off-video' | 'drive-off-audio'
+
+/** The reason an on section is incomplete, `null` when it is complete or unchecked. */
+export function autoRemoveBlock(
+  form: AutoRemoveForm,
+  driveEnabled: boolean,
+): AutoRemoveBlock | null {
+  if (!form.on || autoRemoveComplete(form, driveEnabled)) return null
+  if (form.after === null) return 'choose-when'
+  return form.what === 'video' ? 'drive-off-video' : 'drive-off-audio'
+}
+
+/** The tooltip for a blocked Apply or Save; whole messages, since Hebrew needs each full sentence. */
+export function autoRemoveBlockText(block: AutoRemoveBlock): string {
+  if (block === 'drive-off-video') return t`Choose when to remove the video`
+  if (block === 'drive-off-audio') return t`Choose when to remove the video and audio`
+  return t`Choose when to remove the files first`
 }

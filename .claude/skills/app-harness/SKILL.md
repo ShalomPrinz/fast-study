@@ -50,6 +50,8 @@ curl -s $B/dom/flicker -d '{"selector":".focus-card"}'      # content gone and b
 Screenshots are always the full app window (1400×900), never cropped to an element; for a
 before/after or per-language shot use `hb shot`.
 
+The browser runs in its own network namespace; a `# harness: browser not network-isolated (<reason>)` line means it fell back to the host, where a host network change can fail a load with `net::ERR_NETWORK_CHANGED` — rerun the load.
+
 Drive the UI only through a browser session, never your own Playwright script. Every answer ends
 with the console errors and failed requests the command caused. Service logs are in
 `$HARNESS_DIR/logs/`.

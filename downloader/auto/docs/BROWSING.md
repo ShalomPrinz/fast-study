@@ -66,7 +66,7 @@ is handled as the contents call's. Folder modules are out of scope.
 ## The `Item` / `ref` contract
 
 The frontend never sees the mechanism. `/list` and `/list/expand` return
-`Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle, origin?, assignment?, filename? }`:
+`Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle, origin?, assignment?, filename?, modifiedAt? }`:
 
 - `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture material of any file type, `'assignment'` = an assignment's attached file), never how it is
   fetched. `'unknown'` for every `google-drive` and `direct-url` row (which resolve to `'video'` or a 422, never `'material'`): the WS payload names no file
@@ -84,6 +84,10 @@ The frontend never sees the mechanism. `/list` and `/list/expand` return
   material's `source`, which the frontend matches by string equality. Adding a field to a material's
   Recording, or a volatile one to any, unmatches every material already downloaded.
 - `section` — the Moodle section heading, `''` when unnamed; display metadata the frontend groups by.
+- `modifiedAt` — Moodle's last-modified time of the file/link, unix ms: a file's own `timemodified`
+  (per file for a multi-file `resource`), else the module's `contents[0].timemodified`, else
+  `contentsinfo.lastmodified`. Absent for zoom-summary rows and `/list/expand` children, never
+  inherited. Kept off the ref (non-enumerable on the Recording): a changing time must not unmatch it.
 - `likelyRecording` — the keyword hint; `false` only for a `url` module that reads like a stray link.
   Every other strategy is unambiguously a recording.
 - `moodle` — whether acting on the row (expanding, resolving, downloading) reaches the Moodle site,

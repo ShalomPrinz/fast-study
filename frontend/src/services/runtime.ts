@@ -10,6 +10,22 @@ export type OpenTarget =
 /** The launcher's update phase; only these two cross the bridge, everything else is `null`. */
 export type UpdateState = 'downloading' | 'downloaded' | null
 
+export type PowerState = 'suspend' | 'resume'
+
+/** How long after a resume connection toasts stay hidden, while sockets Chromium killed recover. */
+export const RESUME_QUIET_MS = 5000
+
+/** Longest a suspend hides toasts on its own: JS does not run asleep, so a missed resume must not mute a real outage. */
+export const SUSPEND_QUIET_MS = 60_000
+
+/** Whether connection toasts are hidden at `now`: from a suspend (capped at `SUSPEND_QUIET_MS`) until
+ *  `RESUME_QUIET_MS` after the resume. `last` is the latest power event, `null` when none ever arrived. */
+export function isQuiet(last: { state: PowerState; at: number } | null, now: number): boolean {
+  if (!last) return false
+  const limit = last.state === 'suspend' ? SUSPEND_QUIET_MS : RESUME_QUIET_MS
+  return now - last.at < limit
+}
+
 // The one place `window.faststudy` is declared: two `declare global` blocks for the same property
 // do not compile, so every consumer of the Electron preload bridge reads it from here.
 declare global {
@@ -42,6 +58,8 @@ declare global {
       errorReports?: boolean
       // The native folder dialog, opened at `defaultPath`; `null` on cancel. Absent on older launchers.
       pickFolder?: (defaultPath?: string) => Promise<string | null>
+      // OS sleep/wake pushed by the launcher; push-only, no snapshot. Absent on older launchers.
+      power?: { subscribe: (callback: (state: PowerState) => void) => () => void }
       // The folder Chrome loads the extension unpacked from; `reveal()` opens it and always resolves.
       extension?: { path: string; reveal: () => Promise<void> }
       // Not optional: the bridge's absence is the browser-dev test. Identifiers only — `database/`
@@ -110,4 +128,14 @@ export function secretHeaders(): Record<string, string> {
  *  secret as a query parameter, which also survives EventSource's own reconnects. */
 export function withSecretParam(url: string): string {
   return SECRET ? `${url}${url.includes('?') ? '&' : '?'}secret=${encodeURIComponent(SECRET)}` : url
+}
+
+let lastPower: { state: PowerState; at: number } | null = null
+runtimeBridge()?.power?.subscribe((state) => {
+  lastPower = { state, at: Date.now() }
+})
+
+/** True while a suspend/resume makes a failed request expected rather than worth a toast. */
+export function connectionsQuiet(): boolean {
+  return isQuiet(lastPower, Date.now())
 }

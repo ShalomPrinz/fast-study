@@ -26,6 +26,7 @@ const SERVICE_ROOTS = [
   'database',
   'downloader/server/src',
   'downloader/auto/src',
+  'electron',
   'lib/tools',
 ]
 
@@ -91,6 +92,7 @@ const CALLS: Array<{ pattern: RegExp; arg: number }> = [
   { pattern: /\bfinishJob\s*\(/g, arg: 3 }, // js: a download job's terminal record
   { pattern: /\bnew\s+(?!PasscodeError\b)\w*Error\s*\(/g, arg: 0 }, // js: new CodedError(code, …)
   { pattern: /\bsuper\s*\(/g, arg: 0 }, // js: a subclass naming its one code
+  { pattern: /\bnew\s+SettingRefused\s*\(/g, arg: 1 }, // js: electron's store, new SettingRefused(message, code, …)
 ]
 
 // The tool probe spells the code first in both halves — js `failure(code, …)`, python
@@ -183,6 +185,20 @@ describe('error-code drift', () => {
   it('reads the tool probe in lib/tools', () => {
     for (const code of ['tool_missing', 'tool_timed_out', 'tool_exited', 'tool_unusable']) {
       expect(emitted, code).toContain(code)
+    }
+  })
+
+  it('reads the settings codes electron emits', () => {
+    const fromStore = emittedIn(readFileSync(join(REPO, 'electron/store.js'), 'utf8'))
+    for (const code of [
+      'unknown_setting',
+      'setting_must_be_string',
+      'setting_must_be_boolean',
+      'setting_must_be_integer',
+      'setting_invalid_choice',
+      'setting_out_of_range',
+    ]) {
+      expect(fromStore, code).toContain(code)
     }
   })
 

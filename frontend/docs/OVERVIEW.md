@@ -57,7 +57,9 @@ toast; `already_generated` is suppressed, since the row already reads as done an
 pass re-stamps it. With no warning, `branchBadge` shows the ≠ stale badge when an earlier output is newer than
 `{slug}.pdf` — a failed analyze/to_pdf over an already-moved meta range, which survives a backend restart.
 Errors toast once per `(course, slug, failure)` through `useReportOnce`, pruned only
-within the current course so switching back does not re-toast.
+within the current course so switching back does not re-toast. The toast's send also reports a row-less failure
+to Sentry, so only a failure that actually toasts is reported; a failure with no code and no prose (`isBare`) shows
+just the translated `failed` and is not reported.
 
 `overview/meta` gives per-slug lecture/recitation ranges and `generatedAt`, rendered by `formatRange`
 ("Lectures 2-9, Recitations 1-4"; a lectures-only course shows one "Lectures 1-9" span over both

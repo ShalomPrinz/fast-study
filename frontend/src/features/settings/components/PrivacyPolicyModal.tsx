@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import ReactDOM from 'react-dom'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
+import Tooltip from '@/shared/components/Tooltip'
 import { openExternalUrl } from '@/services/open'
 import { readToEnd } from '../utils/privacy'
 import '@/styles/modal.css'
@@ -39,6 +40,7 @@ interface Props {
 
 // The privacy policy, which must be scrolled to its end before Confirm unlocks. See docs/SETTINGS.md.
 export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
+  const { t } = useLingui()
   const dialog = useRef<HTMLDivElement>(null)
   const body = useRef<HTMLDivElement>(null)
   const [read, setRead] = useState(false)
@@ -210,14 +212,16 @@ export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
               <Trans>Scroll to the end to confirm.</Trans>
             </span>
           )}
-          <button
-            className="btn btn--primary"
-            data-privacy="confirm"
-            disabled={!read}
-            onClick={() => onAnswer(true)}
-          >
-            <Trans context="privacy policy">Confirm</Trans>
-          </button>
+          <Tooltip content={read ? undefined : t`Scroll to the end of the policy first`}>
+            <button
+              className="btn btn--primary"
+              data-privacy="confirm"
+              disabled={!read}
+              onClick={() => onAnswer(true)}
+            >
+              <Trans context="privacy policy">Confirm</Trans>
+            </button>
+          </Tooltip>
           <button className="btn btn--ghost" data-privacy="decline" onClick={() => onAnswer(false)}>
             <Trans context="privacy policy">Decline</Trans>
           </button>

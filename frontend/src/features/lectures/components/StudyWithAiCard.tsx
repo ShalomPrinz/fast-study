@@ -8,6 +8,7 @@ import { toast } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { useAiProvider, useSettingsContext } from '@/shared/contexts/SettingsContext'
 import Icon from '@/shared/components/Icon'
+import Tooltip from '@/shared/components/Tooltip'
 import {
   AI_PROVIDER_IDS,
   AI_PROVIDERS,
@@ -105,13 +106,15 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
           )}
         </p>
         <div className="study-ai-split" ref={menuRef}>
-          <button
-            className="btn study-ai-open"
-            disabled={!summaryExists || busy}
-            onClick={() => void openChat()}
-          >
-            <Trans>Open chat</Trans>
-          </button>
+          <Tooltip content={summaryExists ? undefined : t`Generate the summary first`}>
+            <button
+              className="btn study-ai-open"
+              disabled={!summaryExists || busy}
+              onClick={() => void openChat()}
+            >
+              <Trans>Open chat</Trans>
+            </button>
+          </Tooltip>
           <button
             className="btn study-ai-provider"
             aria-label={t`Choose AI provider`}

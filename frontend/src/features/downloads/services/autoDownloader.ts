@@ -73,6 +73,8 @@ export interface Item {
   expandable: boolean
   section: string
   likelyRecording?: boolean
+  // Moodle's last-modified time in unix ms; omitted when Moodle has none (zoom links, playlist children).
+  modifiedAt?: number
   // Auto's verdict that downloading this row reaches the Moodle host, so it waits out the Moodle lock.
   // Advisory: the gate still enforces, and a wrong `false` is only the quiet 429.
   moodle: boolean

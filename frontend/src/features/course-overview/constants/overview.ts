@@ -77,12 +77,18 @@ export interface BranchStatus {
 // it, so announcing it would badge every finished branch on the healthy path.
 const SILENT_SKIP_CODES = new Set(['already_generated'])
 
+// A state with neither a code nor prose: the translated status word is all there is to say.
+export function isBare(st: CourseExtractorState): boolean {
+  return !st.code && !st.message
+}
+
 // Why a phase chain stopped short of producing anything. A skip is not a failure, so its reason
 // rides the neutral `warning` channel rather than `error`.
 function skipReason(st: CourseExtractorState | undefined): string | null {
   if (st?.status !== 'skipped') return null
   if (st.code && SILENT_SKIP_CODES.has(st.code)) return null
-  return serviceErrorText({ message: st.message ?? t`skipped`, code: st.code, params: st.params })
+  if (isBare(st)) return t`skipped`
+  return serviceErrorText({ message: st.message ?? '', code: st.code, params: st.params })
 }
 
 // One extractor's derived state; `done` means its last phase output exists.
@@ -101,7 +107,9 @@ export function branchStatus(
     done: last !== undefined,
     error:
       st?.status === 'error'
-        ? serviceErrorText({ message: st.message ?? t`failed`, code: st.code, params: st.params })
+        ? isBare(st)
+          ? t`failed`
+          : serviceErrorText({ message: st.message ?? '', code: st.code, params: st.params })
         : null,
     // The skip is about this run; a render warning may be left over from an older one.
     warning: skipReason(st) ?? last?.warning ?? null,

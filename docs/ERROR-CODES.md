@@ -31,6 +31,7 @@ already had.
 | Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
 | Bridge rejection | an `Error` whose `message` is the failure text, plus `code?`                | `electron/dataFiles.js`, `electron/preload.js`               |
 | Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
+| Settings IPC    | `{code, params, message}` returned in place of the settings view            | `electron/store.js` via `faststudy:settings-write`           |
 
 Every field is additive. `error`/`message` keep today's text and today's meaning, so a consumer that
 never learned about `code` keeps working — which is what makes the fallback below honest rather than
@@ -75,19 +76,21 @@ more machinery, and a second thing to keep in step, than the repeated string cos
 ## Resolution and the unknown-code fallback
 
 `frontend/src/shared/i18n/serviceErrors.ts` maps a code to a Lingui message descriptor, resolved with
-its params at the render site. **An unknown code falls back to the service's own `error`/`message`
-prose** — so a failure added to a service before its catalog row exists shows something real rather
-than blank, and a service may add a code without waiting for the frontend.
+its params at the render site. **An unknown code — or no code at all — renders a translated generic
+headline, with the service's own `error`/`message` prose as the `detail` line beneath it** — so a
+failure added before its catalog row exists still shows something real, a service may add a code
+without waiting for the frontend, and a Hebrew reader never gets an English headline.
 
 A code with no catalog row is therefore a normal, supported state, not a bug. Every developer-facing
-code below is exactly that: it carries a code for a uniform wire shape, and renders its English.
+code below is exactly that: it carries a code for a uniform wire shape, and renders the generic
+headline over its English.
 
 ---
 
 ## Codes
 
 `user` means a realistic user action produces it and it has a catalog row. `developer` means only a
-bug in one of our own callers can, and it renders its English prose through the fallback.
+bug in one of our own callers can, and it renders through the generic fallback unless it has a row.
 `uncertain` means the call chain does not settle it; those carry a code and no catalog row.
 
 ### `backend/` — HTTP
@@ -249,6 +252,22 @@ hop. Its sentence names `file`, so the user knows which program to close.
 
 The four `Response("Not found", 404)` sites now answer a JSON `{error, code, params}` body like every
 other failure; they previously fell through to the bare status line.
+
+### `electron/` — settings IPC
+
+`faststudy:settings-write` returns a refused patch instead of throwing, because Electron's IPC and
+context bridge drop custom properties off an `Error`; the preload rejects with that plain object.
+The shared codes keep `database/`'s spellings and params, so one catalog row serves both. They
+carry rows despite being `dev`: a launcher/frontend key drift reaches real users.
+
+| origin     | code                      | params                 | reach |
+| ---------- | ------------------------- | ---------------------- | ----- |
+| `store.js` | `unknown_setting`         | `field`                | dev   |
+| `store.js` | `setting_must_be_string`  | `field`                | dev   |
+| `store.js` | `setting_must_be_boolean` | `field`                | dev   |
+| `store.js` | `setting_must_be_integer` | `field`                | dev   |
+| `store.js` | `setting_invalid_choice`  | `field`, `value`       | dev   |
+| `store.js` | `setting_out_of_range`    | `field`, `min`, `max`  | dev   |
 
 ### `downloader/server/`
 

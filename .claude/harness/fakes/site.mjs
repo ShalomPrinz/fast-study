@@ -35,6 +35,7 @@ const COURSE_ID = Number(new URL(FAKE_COURSE_URL).searchParams.get('id'));
 // PDF resource, a plain web page (unsupported), a dead link, a 403 and a mid-download drop — plus
 // Hebrew names, one multi-file resource and a passcode-gated zoom share in a section summary.
 function courseContents() {
+  uploads = 0;
   return [
     {
       id: 1,
@@ -133,13 +134,21 @@ function assignments() {
 
 const mimeOf = (filename) => COURSE_FILES[filename]?.mime ?? 'application/pdf';
 
+// Moodle's unix-seconds `timemodified`: ascending in listing order, so rows read as an upload order.
+const FIRST_UPLOAD = Date.UTC(2026, 1, 22, 9, 15) / 1000;
+let uploads = 0;
+function nextUpload() {
+  return FIRST_UPLOAD + uploads++ * (3 * 86400 + 5400);
+}
+
 function mod(modname, name, fileurl) {
+  const timemodified = nextUpload();
   return {
     id: Math.abs(hash(name)),
     modname,
     name,
     url: `${SITE}/mod/${modname}/view.php?id=${Math.abs(hash(name))}`,
-    contents: [{ type: 'url', fileurl }],
+    contents: [{ type: 'url', fileurl, timemodified }],
   };
 }
 
@@ -149,7 +158,14 @@ const VIDEOSTREAM_CMID = Math.abs(hash(VIDEOSTREAM_NAME));
 
 function videostream(name) {
   const id = Math.abs(hash(name));
-  return { id, modname: 'videostream', name, url: `${SITE}/mod/videostream/view.php?id=${id}` };
+  const lastmodified = nextUpload();
+  return {
+    id,
+    modname: 'videostream',
+    name,
+    url: `${SITE}/mod/videostream/view.php?id=${id}`,
+    contentsinfo: { lastmodified },
+  };
 }
 
 // BIU's videostream .mp4s live on Oracle object storage, off the Moodle host: no token, no cookie,
@@ -237,13 +253,16 @@ function serveZoom(req, res, route) {
 }
 
 function resource(name, files) {
+  const first = nextUpload();
   return {
     id: Math.abs(hash(name)),
     modname: 'resource',
     name,
     url: `${SITE}/mod/resource/view.php?id=${Math.abs(hash(name))}`,
-    contents: files.map(([filename, id]) => ({
+    contentsinfo: { lastmodified: first + (files.length - 1) * 60 },
+    contents: files.map(([filename, id], i) => ({
       type: 'file',
+      timemodified: first + i * 60,
       filename,
       mimetype: mimeOf(filename),
       fileurl: `${SITE}/pluginfile.php/${id}/mod_resource/content/1/${filename}`,

@@ -21,6 +21,7 @@ import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import ErrorReportsField from './components/ErrorReportsField'
 import PrivacyPolicyModal from './components/PrivacyPolicyModal'
+import Tooltip from '@/shared/components/Tooltip'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
@@ -326,14 +327,16 @@ export default function InitWall({ stored: initial, onDone }: Props) {
               <Trans>Fill in the fields above to continue.</Trans>
             </p>
           )}
-          <button
-            className="btn btn--primary"
-            data-testid="init-wall-submit"
-            disabled={saving || siteChecking || !options || missing.length > 0}
-            onClick={start}
-          >
-            {saving ? t`Saving…` : t`Start using FastStudy`}
-          </button>
+          <Tooltip content={missing.length > 0 ? t`Fill in the required fields first` : undefined}>
+            <button
+              className="btn btn--primary"
+              data-testid="init-wall-submit"
+              disabled={saving || siteChecking || !options || missing.length > 0}
+              onClick={start}
+            >
+              {saving ? t`Saving…` : t`Start using FastStudy`}
+            </button>
+          </Tooltip>
           {askingPrivacy && (
             <PrivacyPolicyModal
               onAnswer={(confirmed) => {

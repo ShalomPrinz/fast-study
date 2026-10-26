@@ -38,6 +38,29 @@ describe('failureOf', () => {
     expect(failureOf(new UnsupportedError('not Moodle'))).toEqual({ message: 'not Moodle' })
   })
 
+  it('reads a plain object with a string code, as the Electron bridge rejects', () => {
+    expect(
+      failureOf({
+        code: 'setting_out_of_range',
+        params: { field: 'nightlyHour', min: 0, max: 23 },
+        message: 'm',
+      }),
+    ).toEqual({
+      message: 'm',
+      code: 'setting_out_of_range',
+      params: { field: 'nightlyHour', min: 0, max: 23 },
+    })
+    expect(failureOf({ code: 'unknown_setting' })).toEqual({
+      message: '',
+      code: 'unknown_setting',
+      params: null,
+    })
+  })
+
+  it('leaves an object without a string code as prose', () => {
+    expect(failureOf({ code: 5, message: 'm' }).code).toBeUndefined()
+  })
+
   it('leaves a plain error with prose only, so it falls back to it', () => {
     expect(failureOf(new Error('boom'))).toEqual({ message: 'boom' })
   })

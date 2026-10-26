@@ -21,7 +21,7 @@ export interface ResolvedFailure {
 }
 
 // Every code with a sentence of its own, keyed exactly as the services spell it. A code absent
-// here renders the service's English prose instead — the `dev` and `uncertain` rows of
+// here renders the generic headline over the service's English prose instead — the `dev` and `uncertain` rows of
 // docs/ERROR-CODES.md are deliberately absent, and so is anything a service adds before its row.
 // The messages are written as raw ICU so the params bind at resolve time, not at module load.
 const MESSAGES: Record<string, MessageDescriptor> = {
@@ -300,9 +300,31 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   moodle_login_not_pending: msg({ message: 'No login is in progress. Connect again.' }),
   moodle_ws_error: msg({ message: 'Moodle refused the request.' }),
   no_window_waiting: msg({ message: 'No Chrome window is waiting on a captcha anymore.' }),
+
+  // electron/ settings IPC (the first five share spellings and params with database/)
+  unknown_setting: msg({
+    message: 'The setting "{field}" isn\'t recognized, so it wasn\'t saved.',
+  }),
+  setting_must_be_string: msg({ message: 'The setting "{field}" must be text.' }),
+  setting_must_be_boolean: msg({ message: 'The setting "{field}" must be on or off.' }),
+  setting_must_be_integer: msg({ message: 'The setting "{field}" must be a whole number.' }),
+  setting_invalid_choice: msg({
+    message: '"{value}" is not an allowed value for the setting "{field}".',
+  }),
+  setting_out_of_range: msg({
+    message: 'The setting "{field}" must be between {min} and {max}.',
+  }),
 }
 
-// The catalog row for a code, or null when it has none — the caller then falls back to prose.
+// The headline for a failure with no catalog row; its English prose rides beneath as the detail.
+const FALLBACK = msg({ message: 'Something went wrong.' })
+
+// Whether a failure's code has no row, so it renders the generic headline.
+export function isUnmapped(failure: ServiceFailure): boolean {
+  return serviceErrorRow(failure.code) === null
+}
+
+// The catalog row for a code, or null when it has none — the caller then renders the generic headline.
 export function serviceErrorRow(code: string | null | undefined): MessageDescriptor | null {
   return (code && MESSAGES[code]) || null
 }
@@ -324,12 +346,14 @@ function present(params: ErrorParams): ErrorParams {
   return Object.fromEntries(Object.entries(params).filter(([, v]) => v != null))
 }
 
-// The sentence a failure reads as. An unknown code — or none at all — falls back to the service's
-// own English prose, so a failure always says something real.
+// The sentence a failure reads as. An unknown code — or none at all — gets the translated generic
+// headline with the service's English prose beneath as the detail, so a failure always says something real.
 export function resolveServiceError(failure: ServiceFailure): ResolvedFailure {
   const params = failure.params ?? {}
   const row = serviceErrorRow(failure.code)
-  if (!row) return { headline: failure.message, detail: null }
+  if (!row) {
+    return { headline: i18n._(FALLBACK), detail: failure.message.trim() ? failure.message : null }
+  }
   // The id/values form, not `_(descriptor)`: the descriptor carries no values of its own, and the
   // ones it does carry would win over the failure's (`@lingui/core`'s `_`).
   return {

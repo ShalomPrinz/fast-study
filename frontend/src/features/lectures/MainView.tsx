@@ -451,7 +451,9 @@ export default function MainView() {
                       </span>
                     )}
                     {control === 'run' && step && (
-                      <Tooltip content={inputRemoved}>
+                      <Tooltip
+                        content={inputRemoved ?? (prereqMet ? undefined : t`Create ${input} first`)}
+                      >
                         <button
                           className="btn btn--ghost"
                           onClick={() => handleStep(step)}

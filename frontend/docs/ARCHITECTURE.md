@@ -146,7 +146,8 @@ optional second action row, and `.pipeline-card` holds its rows on the lecture a
 `shared/components/Tooltip` is the one hover hint: `<Tooltip content={…} placement="top">` wraps a
 child that takes a ref, opens after 400 ms on hover or on keyboard focus, and renders nothing for an
 empty `content`. `placement` is `top`/`bottom`/`inline-start`/`inline-end`, the logical sides resolved
-against the document's `dir`. A disabled `<button>` needs no wrapper: Chromium fires mouse events on it.
+against the document's `dir`. A disabled button gets its hint on hover only, with no wrapper: it takes no keyboard focus, and Chromium still fires hover on it.
+A button disabled for a lasting reason (missing input or prerequisite, lock, unaccepted policy) passes that reason, with the fix, as its `content` while disabled; busy states (saving, checking) get none.
 It is `position: fixed`, so it never grows the window's scroll height, and closes on any ancestor scroll.
 An icon-only control keeps its accessible name as `aria-label`, since the tooltip only describes it.
 

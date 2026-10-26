@@ -42,12 +42,13 @@ async function pushReports(urls, secret, on, timeoutMs = CONFIG_TIMEOUT_MS) {
 // Every write runs after the one before it, so two quick toggles reach the services in order.
 let chain = Promise.resolve();
 
-/** `faststudy:settings-write`: the store write, then — when the patch carries the switch — main's
- *  own flag and every service's. A service that misses it never fails the save; the result's
- *  `errorReportsRestartNeeded` tells the renderer the switch is whole only after a restart. */
+/** Writes the store, then pushes the error-reports switch to main and services; a refused patch resolves
+ *  `{ code, params, message }`. A failed push keeps the save; `errorReportsRestartNeeded` flags it. */
 function writeSettings(patch, { urls, secret, setReporting, log }) {
   const run = chain.then(async () => {
     const view = store.write(patch);
+    // A refusal (`{ code, params, message }`) changed nothing, so there is no switch to apply.
+    if ('code' in view) return view;
     if (typeof patch?.errorReports !== 'boolean') {
       return { ...view, errorReportsRestartNeeded: false };
     }
