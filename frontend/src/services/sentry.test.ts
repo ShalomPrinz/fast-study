@@ -5,12 +5,19 @@ const sdk = vi.hoisted(() => ({
   setTags: vi.fn(),
   isInitialized: vi.fn(() => false),
   captureException: vi.fn((..._args: unknown[]): string => 'evt-1'),
+  captureMessage: vi.fn(),
   makeRendererTransport: vi.fn(),
 }))
 vi.mock('@sentry/electron/renderer', () => sdk)
 
 import { reporting, setReporting } from '@faststudy/sentry'
-import { applyErrorReports, captureRenderError, initSentry, isReporting } from './sentry'
+import {
+  applyErrorReports,
+  captureRenderError,
+  captureUnmappedFailure,
+  initSentry,
+  isReporting,
+} from './sentry'
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -113,5 +120,34 @@ describe('captureRenderError', () => {
       throw new Error('ipc gone')
     })
     expect(captureRenderError(error, context)).toBeNull()
+  })
+})
+
+describe('captureUnmappedFailure', () => {
+  beforeEach(() => {
+    sdk.isInitialized.mockReturnValue(true)
+    setReporting(true)
+  })
+
+  it('reports a failure with no code', () => {
+    captureUnmappedFailure({ message: 'no code here' })
+    expect(sdk.captureMessage).toHaveBeenCalledTimes(1)
+  })
+
+  it('reports an unknown code, once per distinct failure', () => {
+    captureUnmappedFailure({ message: 'x', code: 'invented_by_a_future_service' })
+    captureUnmappedFailure({ message: 'x', code: 'invented_by_a_future_service' })
+    expect(sdk.captureMessage).toHaveBeenCalledTimes(1)
+  })
+
+  it('skips a code that has a catalog row', () => {
+    captureUnmappedFailure({ message: 'x', code: 'file_locked', params: { file: 'a' } })
+    expect(sdk.captureMessage).not.toHaveBeenCalled()
+  })
+
+  it('sends nothing when reporting is off', () => {
+    setReporting(false)
+    captureUnmappedFailure({ message: 'switched off, no code' })
+    expect(sdk.captureMessage).not.toHaveBeenCalled()
   })
 })

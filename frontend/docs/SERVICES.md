@@ -27,7 +27,9 @@ of their own; they ignore the throw or check `isConnectionError`. `shared/utils/
 `toastFailure` is that check plus the resolved sentence, and is the single funnel for a refused request's
 wording; `failureNode` is the same thing for a call site that shows it in place instead of toasting.
 Both read code and params through `failureOf`, which takes them off a `RequestError` or any error with a
-string `code` (a feature's typed refusal, e.g. `UnsupportedError`), so no caller special-cases one.
+string `code` (a feature's typed refusal, e.g. `UnsupportedError`), or any plain object with one — the shape
+`settings.write` rejects with over the Electron bridge — so no caller special-cases one. `shared/i18n/settingsKeysDrift.test.ts`
+holds `WIRE`'s keys within `electron/store.js`'s `FIELDS`.
 
 ## `backend.ts` → FastAPI (:8000)
 
@@ -92,6 +94,11 @@ included, which the renderer does not know — and attaches the launch log
 (`electron/docs/RENDERER.md` §Error reporting). Options come from `lib/sentry`'s `options('frontend')`,
 release `faststudy@<bridge version>`; the SDK drops `initialScope`, so the `service` tag is set after
 init. No tracing, no replay, and no attachments — main forwards a renderer's attachments unscrubbed.
+
+`captureUnmappedFailure` reports a failure shown with no catalog row (no code, or an unknown one) once per
+distinct failure. `serviceErrorNode` calls it, so every toast built from a failure reaches it; `failureNode`
+passes `report=false` for a `ConnectionError` (the overview toast passes it too and reports from its `useReportOnce` send, after the repeat-removal), and the toast sites filter those before building a node. Coded
+failures with a row are never sent. `lib/sentry` drops the event when the user has not opted in.
 
 `captureRenderError` is the error boundary's one call ([ARCHITECTURE.md](ARCHITECTURE.md) §Error
 boundary). It answers `null` when nothing is sent (`isReporting()`: initialized and switched on), because the SDK

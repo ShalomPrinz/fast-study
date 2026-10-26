@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/electron/renderer'
 import { enabled, gate, options, reporting, setReporting } from '@faststudy/sentry'
+import { failureId, isUnmapped, type ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { runtimeBridge } from './runtime'
 
 // The renderer SDK sends over IPC to Electron main, which scrubs and ships every event — see
@@ -43,4 +44,25 @@ export function captureRenderError(
 /** Whether a caught error is reported at all; false means the fallback says nothing about it. */
 export function isReporting(): boolean {
   return Sentry.isInitialized() && reporting()
+}
+
+const reported = new Set<string>()
+
+/** Report a failure shown with no catalog row (no code, or an unknown one), once per distinct failure.
+ *  Callers exclude connection failures. Nothing is sent when not reporting. */
+export function captureUnmappedFailure(failure: ServiceFailure): void {
+  if (!isUnmapped(failure) || !isReporting()) return
+  const id = failureId(failure)
+  if (reported.has(id)) return
+  reported.add(id)
+  try {
+    Sentry.captureMessage(`Unmapped service error: ${failure.code ?? 'no code'}`, {
+      level: 'error',
+      fingerprint: ['unmapped-service-error', failure.code ?? failure.message],
+      tags: { error_code: failure.code ?? 'none' },
+      extra: { message: failure.message, params: failure.params ?? null },
+    })
+  } catch {
+    // reporting must never break rendering a failure
+  }
 }

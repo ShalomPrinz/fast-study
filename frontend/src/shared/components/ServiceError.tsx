@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useLingui } from '@lingui/react'
 import { resolveServiceError, type ServiceFailure } from '@/shared/i18n/serviceErrors'
+import { captureUnmappedFailure } from '@/services/sentry'
 import './ServiceError.css'
 
 // A service failure in the user's language: the translated sentence, and any third-party text
@@ -35,7 +36,14 @@ export default function ServiceError({
   )
 }
 
-// The node form, for the call sites that hand a toast its content instead of rendering it.
-export function serviceErrorNode(failure: ServiceFailure, lead?: ReactNode, headline?: string) {
+// Node form for toasts. Building one is the moment a failure is shown, so a row-less failure is
+// reported here; `report` is false for connection failures, which say nothing about our vocabulary.
+export function serviceErrorNode(
+  failure: ServiceFailure,
+  lead?: ReactNode,
+  headline?: string,
+  report = true,
+) {
+  if (report) captureUnmappedFailure(failure)
   return <ServiceError failure={failure} lead={lead} headline={headline} />
 }
