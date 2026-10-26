@@ -12,14 +12,17 @@ function dataFileRoute({ course, lecture, assignment, name, kind }) {
   return `/courses/${q(course)}/overview/files/${q(name)}/path`;
 }
 
-/** Resolve a target to its absolute path through `database/` — `{path}` or `{error}`.
- *  Identifiers in: the renderer never hands main a path (docs/RENDERER.md). */
+/** Resolve a target to its path through `database/` — `{path}` or `{error, code?}`, a 404 being the one
+ *  coded failure (`file_not_found`). Identifiers in: the renderer never hands main a path (docs/RENDERER.md). */
 async function dataFilePath(target, { url, secret }) {
   if (!url) return { error: 'the database service is not running' };
   try {
     const response = await fetch(`${url}${dataFileRoute(target ?? {})}`, {
       headers: { 'X-FastStudy-Secret': secret },
     });
+    if (response.status === 404) {
+      return { error: 'database answered 404', code: 'file_not_found' };
+    }
     if (!response.ok) return { error: `database answered ${response.status}` };
     const { path } = await response.json();
     return { path };
@@ -32,8 +35,8 @@ async function dataFilePath(target, { url, secret }) {
  *  without asking the database. Settles on the child's `spawn` or `error` event, never on the call. */
 async function openDataFileWith(target, database, platform = process.platform) {
   if (platform !== 'win32') return { error: 'unsupported' };
-  const { path, error } = await dataFilePath(target, database);
-  if (error !== undefined) return { error };
+  const { path, ...failure } = await dataFilePath(target, database);
+  if (failure.error !== undefined) return failure;
   return new Promise((resolve) => {
     // OpenWith.exe, not rundll32's OpenAs_RunDLL, which starts but shows no window on current Windows 11.
     // An argv array, never a shell: the path is passed verbatim.
@@ -53,8 +56,8 @@ async function openDataFileWith(target, database, platform = process.platform) {
 /** Select one data file in the OS file manager: `undefined` or `{error}`. `show` is injected so the
  *  tests run without Electron; `showItemInFolder` reports nothing, so a resolved path is success. */
 async function revealDataFile(target, database, show) {
-  const { path, error } = await dataFilePath(target, database);
-  if (error !== undefined) return { error };
+  const { path, ...failure } = await dataFilePath(target, database);
+  if (failure.error !== undefined) return failure;
   show(path);
 }
 

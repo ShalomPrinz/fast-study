@@ -29,6 +29,7 @@ already had.
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
 | Run target      | `{…, disposition, code?}` per target on `GET /runs` and the runs SSE        | `downloader/server/src/runs.js`                              |
 | Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
+| Bridge rejection | an `Error` whose `message` is the failure text, plus `code?`                | `electron/dataFiles.js`, `electron/preload.js`               |
 | Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
 
 Every field is additive. `error`/`message` keep today's text and today's meaning, so a consumer that
@@ -312,6 +313,16 @@ services; `state` stays as the developer-facing reason.
 | `tools` probe   | `tool_timed_out` | `tool`, `seconds`   | user  |
 | `tools` probe   | `tool_exited`    | `tool`, `exit_code` | user  |
 | `tools` probe   | `tool_unusable`  | `tool`, `detail`    | user  |
+
+### `electron/` — bridge rejection
+
+`open.file`, `open.fileWith` and `open.reveal` reject with an `Error` whose `message` stays the exact
+failure text and whose `code`, when set, is the database's own code for a missing file. Every other
+failure (OS reason, `unsupported`, other statuses, a bad URL) carries no `code`. No `params`.
+
+| origin                      | code             | params | reach |
+| --------------------------- | ---------------- | ------ | ----- |
+| `open.*` on a database 404  | `file_not_found` | none   | user  |
 
 ### `downloader/auto/`
 

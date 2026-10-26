@@ -4,14 +4,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 // keeps the secret off the command line — see docs/RENDERER.md.
 const config = ipcRenderer.sendSync('faststudy:config');
 
-// An action call: main answers `undefined` or `{error}` and never throws, since Electron would prefix
-// the message. Only `message` crosses the context bridge, so `'unsupported'` is matched by text.
-const action = (channel) => async (arg) => {
-  const failure = await ipcRenderer.invoke(channel, arg);
-  if (failure) throw new Error(failure.error);
-};
+// An action call: main answers `undefined` or `{error, code?}` and never throws, since Electron would
+// prefix the message. It stays a plain reply here; `rejectOnFailure` below turns it into the rejection.
+const action = (channel) => (arg) => ipcRenderer.invoke(channel, arg);
 
-contextBridge.exposeInMainWorld('faststudy', {
+const api = {
   urls: config.urls,
   secret: config.secret,
   // Machine facts probed once at boot; the settings screens degrade on them.
@@ -67,4 +64,30 @@ contextBridge.exposeInMainWorld('faststudy', {
     retry: () => ipcRenderer.send('faststudy:boot-retry'),
     quit: () => ipcRenderer.send('faststudy:boot-quit'),
   },
+};
+
+// The context bridge copies only `message` and `stack` of a thrown Error, so the rejection is built in
+// the page's own world, where `code` survives. The function is serialised: it closes over nothing.
+contextBridge.executeInMainWorld({
+  func: (bridged) => {
+    const rejectOnFailure = (call) => async (arg) => {
+      const failure = await call(arg);
+      if (!failure) return;
+      const error = new Error(failure.error);
+      if (failure.code) error.code = failure.code;
+      throw error;
+    };
+    const open = {};
+    for (const name of Object.keys(bridged.open)) open[name] = rejectOnFailure(bridged.open[name]);
+    const updates = { ...bridged.updates, restart: rejectOnFailure(bridged.updates.restart) };
+    Object.defineProperty(globalThis, 'faststudy', {
+      value: Object.freeze({
+        ...bridged,
+        open: Object.freeze(open),
+        updates: Object.freeze(updates),
+      }),
+      enumerable: true,
+    });
+  },
+  args: [api],
 });

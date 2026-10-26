@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, platform, updates, open, pickFolder, extension, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, platform, updates, open, pickFolder, extension, boot }` through `contextBridge.executeInMainWorld`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -81,9 +81,15 @@ assignment `{ course, assignment, name }`, and overview `{ course, name }` (a co
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
 bridge. Each resolves with nothing on success and rejects with an `Error` whose `message` is the exact
 OS, spawn or fetch text, `database answered <status>`, `the database service is not running`,
-`unsupported`, `not a URL: <url>` or `refused scheme: <proto>:`; main does not toast, the frontend does. Main's handler answers `undefined` or `{ error }` and never throws — Electron prefixes a
-thrown message with "Error invoking remote method …" — and the preload turns `{ error }` into the
-rejection. The `Error` carries no `code`, since the context bridge strips custom properties.
+`unsupported`, `not a URL: <url>` or `refused scheme: <proto>:`; main does not toast, the frontend does. Main's handler answers `undefined` or `{ error, code? }` and never throws — Electron prefixes a
+thrown message with "Error invoking remote method …". A database 404 on the path route is the one
+failure with a `code`, `file_not_found` (the database's own); every other failure is code-less.
+
+**The rejection is built in the page's world.** The context bridge copies only `message` and `stack`
+of an `Error` thrown across it, so a `code` set in the preload would vanish. The preload hands its
+API to `contextBridge.executeInMainWorld`, whose serialised function defines the frozen
+`window.faststudy` and wraps `open.*` and `updates.restart` to turn `{ error, code? }` into
+`Object.assign(new Error(error), { code })`. That function closes over nothing.
 
 **`pickFolder(defaultPath?)`** opens the OS folder dialog — for the data-folder field and for the general
 downloads folder the extension asks for — and resolves to the chosen absolute path, or `null` on cancel.

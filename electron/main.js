@@ -516,14 +516,14 @@ function stopChildren() {
   return Promise.all(reaping);
 }
 
-/** Open one DATA_ROOT file in the user's own app: `undefined` or `{error}`; `database/` resolves the
+/** Open one DATA_ROOT file in the user's own app: `undefined` or `{error, code?}`; `database/` resolves the
  *  path (docs/RENDERER.md). */
 async function openDataFile(target) {
-  const { path: file, error } = await dataFilePath(target, {
+  const { path: file, ...lookup } = await dataFilePath(target, {
     url: serviceUrls.database,
     secret: SECRET,
   });
-  if (error !== undefined) return { error };
+  if (lookup.error !== undefined) return lookup;
   // openPath answers the empty string on success and the OS's reason otherwise — it never throws.
   const failure = await shell.openPath(file);
   if (failure) return { error: failure };

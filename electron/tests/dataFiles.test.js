@@ -51,9 +51,17 @@ test('a failed lookup is a failure the caller passes through', async () => {
   stubFetch(404);
   assert.deepEqual(await dataFilePath({ course: 'A', name: 'x' }, DATABASE), {
     error: 'database answered 404',
+    code: 'file_not_found',
   });
   assert.deepEqual(await dataFilePath({ course: 'A', name: 'x' }, { url: '', secret: '' }), {
     error: 'the database service is not running',
+  });
+});
+
+test('a non-404 failure carries no code', async () => {
+  stubFetch(500);
+  assert.deepEqual(await dataFilePath({ course: 'A', name: 'x' }, DATABASE), {
+    error: 'database answered 500',
   });
 });
 
@@ -82,7 +90,7 @@ test('reveal passes a database failure through and shows nothing', async () => {
   const shown = [];
   assert.deepEqual(
     await revealDataFile({ course: 'A', name: 'x' }, DATABASE, (path) => shown.push(path)),
-    { error: 'database answered 404' },
+    { error: 'database answered 404', code: 'file_not_found' },
   );
   assert.deepEqual(shown, []);
 });
