@@ -3,6 +3,7 @@ import type { Settings } from '@/services/settings'
 import {
   AUTO_REMOVE_CHECKED,
   autoRemoveApply,
+  autoRemoveBlock,
   autoRemoveComplete,
   autoRemoveDirty,
   autoRemoveFromStore,
@@ -129,5 +130,23 @@ describe('autoRemoveApply', () => {
     )
     expect(autoRemoveApply(rule('video', 'drive'), stored(null, null), true)).toBe('save')
     expect(autoRemoveApply(rule('video', 'pdf'), driveOff(stored(null, null)), true)).toBe('save')
+  })
+})
+
+describe('autoRemoveBlock', () => {
+  it('names no timing chosen, whatever the mode', () => {
+    expect(autoRemoveBlock(AUTO_REMOVE_CHECKED, true)).toBe('choose-when')
+    expect(autoRemoveBlock(rule('audio', null), false)).toBe('choose-when')
+  })
+
+  it('names "after Drive" with Drive off per mode', () => {
+    expect(autoRemoveBlock(rule('video', 'drive'), false)).toBe('drive-off-video')
+    expect(autoRemoveBlock(rule('audio', 'drive'), false)).toBe('drive-off-audio')
+  })
+
+  it('is null when complete or unchecked', () => {
+    expect(autoRemoveBlock(rule('audio', 'drive'), true)).toBeNull()
+    expect(autoRemoveBlock(rule('video', 'pdf'), false)).toBeNull()
+    expect(autoRemoveBlock(OFF, false)).toBeNull()
   })
 })

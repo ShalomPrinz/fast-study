@@ -3,6 +3,8 @@ import type { AutoRemoveAfter } from '@/services/settings'
 import Tooltip from '@/shared/components/Tooltip'
 import {
   AUTO_REMOVE_CHECKED,
+  autoRemoveBlock,
+  autoRemoveBlockText,
   type AutoRemoveApply,
   type AutoRemoveForm,
   type RemoveWhat,
@@ -33,12 +35,13 @@ export default function AutoRemoveField({ value, onChange, driveEnabled, apply, 
     { id: 'pdf', label: t`After the PDF is created`, disabled: false },
     { id: 'drive', label: t`After the PDF is uploaded to Drive`, disabled: !driveEnabled },
   ]
+  const block = autoRemoveBlock(value, driveEnabled)
   // A busy page (null with a complete form) shows no hint, by design.
   const applyBlocker =
     apply === 'needs-page-save'
       ? t`Use Save at the top of the page first`
-      : apply === null && value.on && value.after === null
-        ? t`Choose when to remove the files first`
+      : apply === null && block
+        ? autoRemoveBlockText(block)
         : apply === 'unchanged'
           ? t`No changes to apply`
           : undefined

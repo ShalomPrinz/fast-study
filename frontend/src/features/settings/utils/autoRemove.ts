@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro'
 import {
   AUTO_REMOVE_AFTER,
   type AutoRemoveAfter,
@@ -92,4 +93,24 @@ export function autoRemoveApply(
     return 'needs-page-save'
   }
   return 'save'
+}
+
+// Why an incomplete section cannot be saved: no timing yet, or "after Drive" with Drive off (per mode).
+export type AutoRemoveBlock = 'choose-when' | 'drive-off-video' | 'drive-off-audio'
+
+/** The reason an on section is incomplete, `null` when it is complete or unchecked. */
+export function autoRemoveBlock(
+  form: AutoRemoveForm,
+  driveEnabled: boolean,
+): AutoRemoveBlock | null {
+  if (!form.on || autoRemoveComplete(form, driveEnabled)) return null
+  if (form.after === null) return 'choose-when'
+  return form.what === 'video' ? 'drive-off-video' : 'drive-off-audio'
+}
+
+/** The tooltip for a blocked Apply or Save; whole messages, since Hebrew needs each full sentence. */
+export function autoRemoveBlockText(block: AutoRemoveBlock): string {
+  if (block === 'drive-off-video') return t`Choose when to remove the video`
+  if (block === 'drive-off-audio') return t`Choose when to remove the video and audio`
+  return t`Choose when to remove the files first`
 }

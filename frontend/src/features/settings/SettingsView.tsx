@@ -48,6 +48,8 @@ import {
 } from './utils/patch'
 import {
   autoRemoveApply,
+  autoRemoveBlock,
+  autoRemoveBlockText,
   autoRemoveComplete,
   autoRemoveDirty,
   autoRemovePatch,
@@ -321,8 +323,8 @@ export default function SettingsView() {
   const saveBlocker =
     missing.length > 0
       ? t`Fill in the required fields first`
-      : autoRemoveChanged && !autoRemoveReady
-        ? t`Choose when to remove the files first`
+      : autoRemoveChanged && autoRemoveBlock(form.autoRemove, form.driveEnabled)
+        ? autoRemoveBlockText(autoRemoveBlock(form.autoRemove, form.driveEnabled)!)
         : undefined
 
   const provider = (id: string) => options?.providers.find((p) => p.id === id)

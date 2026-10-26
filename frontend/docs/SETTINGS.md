@@ -44,7 +44,7 @@ of every existing lecture go for good; Yes saves, pushes `/config`, then awaits 
 included. Narrowing or unchecking (stored `off`) saves with no confirm and no sweep. Apply's action is
 `autoRemoveApply`: with the section matching a stored rule that is on, it re-runs the sweep with no
 confirm, the retry the locked and failed toasts point to; "after Drive" while the form's Drive toggle
-differs from the store disables it with a hint, since only the page's Save stores both before sweeping; nothing to apply (`unchanged`) also shows a hint, a busy page (`null`) none. How removed files
+differs from the store disables it with a hint, since only the page's Save stores both before sweeping; an incomplete edit shows a hint from `autoRemoveBlock` (no timing yet, or "after Drive" with Drive off, the latter worded per "What to remove"), and the page's Save shows the same one; nothing to apply (`unchanged`) also shows a hint, a busy page with a complete edit (`null`) none. How removed files
 read on a lecture is in [LECTURES.md](LECTURES.md).
 
 **Error reports apply live, and unset means off** — nothing is sent before an explicit yes. The launcher

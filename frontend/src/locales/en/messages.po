@@ -387,7 +387,7 @@ msgstr "A font the PDF needs is missing."
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:610
+#: src/features/settings/SettingsView.tsx:612
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "A lecture running now would save some files in the old folder and the rest in the new one."
 
@@ -425,15 +425,15 @@ msgstr "Add lecture"
 msgid "Add recitation"
 msgstr "Add recitation"
 
-#: src/features/settings/components/AutoRemoveField.tsx:33
+#: src/features/settings/components/AutoRemoveField.tsx:35
 msgid "After the PDF is created"
 msgstr "After the PDF is created"
 
-#: src/features/settings/components/AutoRemoveField.tsx:34
+#: src/features/settings/components/AutoRemoveField.tsx:36
 msgid "After the PDF is uploaded to Drive"
 msgstr "After the PDF is uploaded to Drive"
 
-#: src/features/settings/SettingsView.tsx:533
+#: src/features/settings/SettingsView.tsx:535
 msgid "AI chat provider"
 msgstr "AI chat provider"
 
@@ -481,15 +481,15 @@ msgstr "Analyzing the collected passages failed."
 msgid "Another Download all is downloading these recordings"
 msgstr "Another Download all is downloading these recordings"
 
-#: src/features/settings/SettingsView.tsx:358
+#: src/features/settings/SettingsView.tsx:360
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:465
+#: src/features/settings/SettingsView.tsx:467
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
-#: src/features/settings/components/AutoRemoveField.tsx:137
+#: src/features/settings/components/AutoRemoveField.tsx:140
 msgid "Apply"
 msgstr "Apply"
 
@@ -522,11 +522,11 @@ msgstr "Audio"
 msgid "Audio only"
 msgstr "Audio only"
 
-#: src/features/settings/components/AutoRemoveField.tsx:59
+#: src/features/settings/components/AutoRemoveField.tsx:62
 msgid "Auto-remove files from computer"
 msgstr "Auto-remove files from computer"
 
-#: src/features/settings/SettingsView.tsx:265
+#: src/features/settings/SettingsView.tsx:267
 msgid "Auto-remove saved"
 msgstr "Auto-remove saved"
 
@@ -623,7 +623,7 @@ msgstr "Caught the Zoom video. The download is in progress."
 msgid "Change in Settings"
 msgstr "Change in Settings"
 
-#: src/features/settings/SettingsView.tsx:609
+#: src/features/settings/SettingsView.tsx:611
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -665,14 +665,21 @@ msgstr "Choose AI provider"
 msgid "Choose folder"
 msgstr "Choose folder"
 
-#: src/features/settings/components/AutoRemoveField.tsx:116
+#: src/features/settings/components/AutoRemoveField.tsx:119
 msgid "Choose when the files are removed."
 msgstr "Choose when the files are removed."
 
-#: src/features/settings/components/AutoRemoveField.tsx:41
-#: src/features/settings/SettingsView.tsx:325
+#: src/features/settings/utils/autoRemove.ts:115
 msgid "Choose when to remove the files first"
 msgstr "Choose when to remove the files first"
+
+#: src/features/settings/utils/autoRemove.ts:113
+msgid "Choose when to remove the video"
+msgstr "Choose when to remove the video"
+
+#: src/features/settings/utils/autoRemove.ts:114
+msgid "Choose when to remove the video and audio"
+msgstr "Choose when to remove the video and audio"
 
 #: src/features/settings/components/MoodleAccountField.tsx:38
 msgid "Choose your university above to connect its account."
@@ -901,11 +908,11 @@ msgstr "Couldn't load recordings for \"{name}\". Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/settings/SettingsView.tsx:175
+#: src/features/settings/SettingsView.tsx:177
 msgid "Couldn't load your settings. Part of FastStudy isn't responding."
 msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 
-#: src/features/settings/SettingsView.tsx:132
+#: src/features/settings/SettingsView.tsx:134
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."
 
@@ -947,7 +954,7 @@ msgstr "Course structure"
 msgid "Course URL"
 msgstr "Course URL"
 
-#: src/features/settings/SettingsView.tsx:454
+#: src/features/settings/SettingsView.tsx:456
 msgid "Courses"
 msgstr "Courses"
 
@@ -987,7 +994,7 @@ msgstr "Current PDF"
 msgid "Current recitation"
 msgstr "Current recitation"
 
-#: src/features/settings/SettingsView.tsx:507
+#: src/features/settings/SettingsView.tsx:509
 msgid "Daily run time"
 msgstr "Daily run time"
 
@@ -1025,11 +1032,11 @@ msgstr "Disconnect the university account?"
 msgid "disconnecting…"
 msgstr "disconnecting…"
 
-#: src/features/settings/SettingsView.tsx:556
+#: src/features/settings/SettingsView.tsx:558
 msgid "Disk space"
 msgstr "Disk space"
 
-#: src/features/settings/SettingsView.tsx:482
+#: src/features/settings/SettingsView.tsx:484
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
@@ -1093,7 +1100,7 @@ msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
 #: src/features/settings/InitWall.tsx:315
-#: src/features/settings/SettingsView.tsx:437
+#: src/features/settings/SettingsView.tsx:439
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
@@ -1127,7 +1134,7 @@ msgstr "Drive connected"
 msgid "Drive folder name"
 msgstr "Drive folder name"
 
-#: src/features/settings/components/AutoRemoveField.tsx:126
+#: src/features/settings/components/AutoRemoveField.tsx:129
 msgid "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 msgstr "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 
@@ -1166,15 +1173,15 @@ msgstr "Enter the zoom passcode for this recording"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:169
 #: src/features/settings/InitWall.tsx:292
-#: src/features/settings/SettingsView.tsx:574
+#: src/features/settings/SettingsView.tsx:576
 msgid "Error reports"
 msgstr "Error reports"
 
-#: src/features/settings/SettingsView.tsx:593
+#: src/features/settings/SettingsView.tsx:595
 msgid "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 msgstr "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 
-#: src/features/settings/SettingsView.tsx:588
+#: src/features/settings/SettingsView.tsx:590
 msgid "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 msgstr "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 
@@ -1227,7 +1234,7 @@ msgstr "Extract"
 msgid "Extract Audio"
 msgstr "Extract Audio"
 
-#: src/features/settings/SettingsView.tsx:481
+#: src/features/settings/SettingsView.tsx:483
 msgid "Extract the audio only"
 msgstr "Extract the audio only"
 
@@ -1309,7 +1316,7 @@ msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
 #: src/features/settings/InitWall.tsx:330
-#: src/features/settings/SettingsView.tsx:323
+#: src/features/settings/SettingsView.tsx:325
 msgid "Fill in the required fields first"
 msgstr "Fill in the required fields first"
 
@@ -1330,11 +1337,11 @@ msgstr "Finish signing in to Google in the browser tab that opened."
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "Found your university's Moodle: <0>{0}</0>"
 
-#: src/features/settings/components/AutoRemoveField.tsx:62
+#: src/features/settings/components/AutoRemoveField.tsx:65
 msgid "Frees up disk space once a lecture is finished. The transcript, the summary and the PDF are always kept."
 msgstr "Frees up disk space once a lecture is finished. The transcript, the summary and the PDF are always kept."
 
-#: src/features/settings/SettingsView.tsx:631
+#: src/features/settings/SettingsView.tsx:633
 msgid "From now on, each lecture's files are removed the same way once it reaches that point."
 msgstr "From now on, each lecture's files are removed the same way once it reaches that point."
 
@@ -1384,7 +1391,7 @@ msgid "Google account"
 msgstr "Google account"
 
 #: src/features/settings/InitWall.tsx:278
-#: src/features/settings/SettingsView.tsx:424
+#: src/features/settings/SettingsView.tsx:426
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -1623,7 +1630,7 @@ msgstr "No"
 msgid "No archived courses"
 msgstr "No archived courses"
 
-#: src/features/settings/components/AutoRemoveField.tsx:43
+#: src/features/settings/components/AutoRemoveField.tsx:46
 msgid "No changes to apply"
 msgstr "No changes to apply"
 
@@ -2035,7 +2042,7 @@ msgstr "Recordings. Downloading one starts nothing; you run the summary yourself
 msgid "Reload"
 msgstr "Reload"
 
-#: src/features/settings/SettingsView.tsx:629
+#: src/features/settings/SettingsView.tsx:631
 msgid "Remove files from every existing lecture?"
 msgstr "Remove files from every existing lecture?"
 
@@ -2081,7 +2088,7 @@ msgstr "Restore original"
 msgid "Results"
 msgstr "Results"
 
-#: src/features/settings/SettingsView.tsx:178
+#: src/features/settings/SettingsView.tsx:180
 msgid "Retry"
 msgstr "Retry"
 
@@ -2100,7 +2107,7 @@ msgstr "Rotate {file}"
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
-#: src/features/settings/SettingsView.tsx:480
+#: src/features/settings/SettingsView.tsx:482
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
@@ -2108,7 +2115,7 @@ msgstr "Run the whole pipeline"
 msgid "Run these now"
 msgstr "Run these now"
 
-#: src/features/settings/SettingsView.tsx:501
+#: src/features/settings/SettingsView.tsx:503
 msgid "Run unfinished lectures daily"
 msgstr "Run unfinished lectures daily"
 
@@ -2124,7 +2131,7 @@ msgid "Running pipelines"
 msgstr "Running pipelines"
 
 #: src/features/downloads/components/CourseUrlPaste.tsx:58
-#: src/features/settings/SettingsView.tsx:349
+#: src/features/settings/SettingsView.tsx:351
 msgid "Save"
 msgstr "Save"
 
@@ -2201,13 +2208,13 @@ msgstr "Send error reports"
 msgid "session expired"
 msgstr "session expired"
 
-#: src/features/settings/SettingsView.tsx:169
-#: src/features/settings/SettingsView.tsx:335
+#: src/features/settings/SettingsView.tsx:171
+#: src/features/settings/SettingsView.tsx:337
 #: src/shared/sidebar/Sidebar.tsx:87
 msgid "Settings"
 msgstr "Settings"
 
-#: src/features/settings/SettingsView.tsx:248
+#: src/features/settings/SettingsView.tsx:250
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -2267,7 +2274,7 @@ msgstr "Step {0} of {1}"
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:414
+#: src/features/settings/SettingsView.tsx:416
 msgid "Storage"
 msgstr "Storage"
 
@@ -2319,7 +2326,7 @@ msgstr "summary did not use {name}"
 msgid "summary did not use any material"
 msgstr "summary did not use any material"
 
-#: src/features/settings/SettingsView.tsx:392
+#: src/features/settings/SettingsView.tsx:394
 msgid "Summary model"
 msgstr "Summary model"
 
@@ -2389,7 +2396,7 @@ msgstr "That step is turned off in settings."
 msgid "That's probably because Windows quarantined the app — restart the app and follow the instructions."
 msgstr "That's probably because Windows quarantined the app — restart the app and follow the instructions."
 
-#: src/features/settings/SettingsView.tsx:365
+#: src/features/settings/SettingsView.tsx:367
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "The API keys and the summary model aren't available right now. They'll come back here on their own."
 
@@ -2405,7 +2412,7 @@ msgstr "The captcha on the university site wasn't solved within 10 minutes. Solv
 msgid "The course \"{course}\" was not found."
 msgstr "The course \"{course}\" was not found."
 
-#: src/features/settings/SettingsView.tsx:524
+#: src/features/settings/SettingsView.tsx:526
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 
@@ -2437,7 +2444,7 @@ msgstr "The downloaded file could not be stored."
 msgid "The downloader can't fetch this file"
 msgstr "The downloader can't fetch this file"
 
-#: src/features/settings/SettingsView.tsx:218
+#: src/features/settings/SettingsView.tsx:220
 msgid "The files weren't removed. Press Apply under “Disk space” to try again."
 msgstr "The files weren't removed. Press Apply under “Disk space” to try again."
 
@@ -2559,11 +2566,11 @@ msgstr "The university site is busy with another request. Try again in a moment.
 msgid "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 msgstr "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 
-#: src/features/settings/SettingsView.tsx:94
+#: src/features/settings/SettingsView.tsx:96
 msgid "The video and audio of every lecture already uploaded to Drive will be deleted from this computer. They cannot be recovered."
 msgstr "The video and audio of every lecture already uploaded to Drive will be deleted from this computer. They cannot be recovered."
 
-#: src/features/settings/SettingsView.tsx:93
+#: src/features/settings/SettingsView.tsx:95
 msgid "The video and audio of every lecture that already has a PDF will be deleted from this computer. They cannot be recovered."
 msgstr "The video and audio of every lecture that already has a PDF will be deleted from this computer. They cannot be recovered."
 
@@ -2571,11 +2578,11 @@ msgstr "The video and audio of every lecture that already has a PDF will be dele
 msgid "The video downloaded, but it couldn't be saved into {folder}."
 msgstr "The video downloaded, but it couldn't be saved into {folder}."
 
-#: src/features/settings/SettingsView.tsx:90
+#: src/features/settings/SettingsView.tsx:92
 msgid "The video of every lecture already uploaded to Drive will be deleted from this computer. It cannot be recovered."
 msgstr "The video of every lecture already uploaded to Drive will be deleted from this computer. It cannot be recovered."
 
-#: src/features/settings/SettingsView.tsx:89
+#: src/features/settings/SettingsView.tsx:91
 msgid "The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered."
 msgstr "The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered."
 
@@ -2612,7 +2619,7 @@ msgstr "These won't start until you run them."
 msgid "Third-party services"
 msgstr "Third-party services"
 
-#: src/features/settings/SettingsView.tsx:485
+#: src/features/settings/SettingsView.tsx:487
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 
@@ -2702,7 +2709,7 @@ msgstr "Try again"
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
 
-#: src/features/settings/components/AutoRemoveField.tsx:108
+#: src/features/settings/components/AutoRemoveField.tsx:111
 msgid "Turn on the Google Drive upload above to choose this."
 msgstr "Turn on the Google Drive upload above to choose this."
 
@@ -2732,7 +2739,7 @@ msgstr "University account"
 msgid "University account connected"
 msgstr "University account connected"
 
-#: src/features/settings/SettingsView.tsx:123
+#: src/features/settings/SettingsView.tsx:125
 msgid "University saved"
 msgstr "University saved"
 
@@ -2784,7 +2791,7 @@ msgstr "Uploading to Google Drive failed."
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/settings/components/AutoRemoveField.tsx:39
+#: src/features/settings/components/AutoRemoveField.tsx:42
 msgid "Use Save at the top of the page first"
 msgstr "Use Save at the top of the page first"
 
@@ -2794,11 +2801,11 @@ msgstr "Use the window that opened on the university site, or open the site in y
 
 #: src/features/downloads/components/RecordingRow.tsx:54
 #: src/features/lectures/constants/pipeline.ts:18
-#: src/features/settings/components/AutoRemoveField.tsx:29
+#: src/features/settings/components/AutoRemoveField.tsx:31
 msgid "Video"
 msgstr "Video"
 
-#: src/features/settings/components/AutoRemoveField.tsx:30
+#: src/features/settings/components/AutoRemoveField.tsx:32
 msgid "Video and audio"
 msgstr "Video and audio"
 
@@ -2826,11 +2833,11 @@ msgstr "We couldn't check this key right now. You can still save it."
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "We couldn't check this site right now. You can still save it."
 
-#: src/features/settings/components/AutoRemoveField.tsx:74
+#: src/features/settings/components/AutoRemoveField.tsx:77
 msgid "What to remove"
 msgstr "What to remove"
 
-#: src/features/settings/SettingsView.tsx:471
+#: src/features/settings/SettingsView.tsx:473
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
@@ -2838,11 +2845,11 @@ msgstr "When a new video arrives"
 msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 msgstr "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 
-#: src/features/settings/components/AutoRemoveField.tsx:90
+#: src/features/settings/components/AutoRemoveField.tsx:93
 msgid "When to remove"
 msgstr "When to remove"
 
-#: src/features/settings/SettingsView.tsx:549
+#: src/features/settings/SettingsView.tsx:551
 msgid "Where \"Study with AI\" opens a lecture's summary."
 msgstr "Where \"Study with AI\" opens a lecture's summary."
 
