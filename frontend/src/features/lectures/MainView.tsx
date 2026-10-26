@@ -57,6 +57,7 @@ import '@/styles/modal.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
 import '@/styles/pipeline-card.css'
+import '@/styles/ai-split.css'
 import './MainView.css'
 
 interface RotateTarget {
@@ -349,9 +350,9 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
         }
       />
 
-      <div className="page-body lecture-page-body">
-        <div className="page-column lecture-page">
-          <div className="lecture-split">
+      <div className="page-body ai-split-body">
+        <div className="page-column lecture-page ai-split-page">
+          <div className="lecture-split ai-split">
             <div className="section-head lecture-split-head">
               <h2 className="section-title">
                 <Trans>Pipeline</Trans>
@@ -508,7 +509,7 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
               </div>
             )}
 
-            <div className="lecture-split-ai">
+            <div className="lecture-split-ai ai-split-card">
               <StudyWithAiCard ready={summaryExists} copy={aiCopy} collect={collectAiText} />
             </div>
           </div>

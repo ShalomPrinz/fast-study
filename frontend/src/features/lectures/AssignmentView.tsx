@@ -40,6 +40,7 @@ import CourseMaterialBox from './components/CourseMaterialBox'
 import '@/styles/button.css'
 import '@/styles/panel.css'
 import './components/MaterialChip.css'
+import '@/styles/ai-split.css'
 import './AssignmentView.css'
 
 // A course assignment: its files (each opens in the OS default app, with a "send to Gemini" switch), the
@@ -130,114 +131,120 @@ To start, reply with a single sentence — "Which question do you want to work o
           <StudyDoneButton course={course} lecture={assignment} kind="assignment" done={done} />
         }
       />
-      <div className="page-body">
-        <div className="page-column assignment-page">
-          <section className="assignment-section">
-            <div className="assignment-section-head">
-              <h2 className="assignment-section-title">
-                <Trans>Materials</Trans>
-              </h2>
-              <span className="assignment-section-hint">
-                <Trans>Files that are switched on are sent to Gemini.</Trans>
-              </span>
-            </div>
-            <ul className="assignment-files">
-              {fileRows.map((f) => {
-                const name = f.name
-                const canSupport = supported !== null && materialSupported(f, supported)
-                const attached = materialAttached(f, supported)
-                const switchHint =
-                  !canSupport && supported !== null
-                    ? t`Gemini can't read this file type`
-                    : attached
-                      ? t`Sent to Gemini`
-                      : t`Not sent to Gemini`
-                return (
-                  <li key={f.name} className="assignment-file" data-testid="assignment-file">
-                    <Icon icon="file" />
-                    <MaterialNameButton
-                      label={f.name}
-                      hint={t`Open file`}
-                      onOpen={() => openAssignmentFile(course, assignment, f.name)}
-                    />
-                    <span className="assignment-file-size">
-                      <FileSize bytes={f.size} />
-                    </span>
-                    {materialTooLarge(f, supported) && (
-                      <Tooltip
-                        content={t`Over 10 MB — generating might fail while this is attached`}
-                      >
-                        <span
-                          className="material-chip-large"
-                          role="img"
-                          aria-label={t`Over 10 MB — generating might fail while this is attached`}
-                        >
-                          <Icon icon="warning" />
-                        </span>
-                      </Tooltip>
-                    )}
-                    <Tooltip content={switchHint}>
-                      <label className="material-switch">
-                        <input
-                          type="checkbox"
-                          role="switch"
-                          checked={attached}
-                          disabled={!canSupport || locked}
-                          aria-label={t`Send ${name} to Gemini`}
-                          onChange={(e) => void toggleAttach(f.name, e.target.checked)}
+      <div className="page-body ai-split-body">
+        <div className="page-column ai-split-page">
+          <div className="ai-split">
+            <div className="assignment-main">
+              <section className="assignment-section">
+                <div className="assignment-section-head">
+                  <h2 className="assignment-section-title">
+                    <Trans>Materials</Trans>
+                  </h2>
+                  <span className="assignment-section-hint">
+                    <Trans>Files that are switched on are sent to Gemini.</Trans>
+                  </span>
+                </div>
+                <ul className="assignment-files">
+                  {fileRows.map((f) => {
+                    const name = f.name
+                    const canSupport = supported !== null && materialSupported(f, supported)
+                    const attached = materialAttached(f, supported)
+                    const switchHint =
+                      !canSupport && supported !== null
+                        ? t`Gemini can't read this file type`
+                        : attached
+                          ? t`Sent to Gemini`
+                          : t`Not sent to Gemini`
+                    return (
+                      <li key={f.name} className="assignment-file" data-testid="assignment-file">
+                        <Icon icon="file" />
+                        <MaterialNameButton
+                          label={f.name}
+                          hint={t`Open file`}
+                          onOpen={() => openAssignmentFile(course, assignment, f.name)}
                         />
-                        <span className="material-switch-track" />
-                      </label>
-                    </Tooltip>
-                    {canOpenWith() && (
-                      <OpenWithMenu
-                        onOpenWith={() => openAssignmentFileWith(course, assignment, f.name)}
-                      />
-                    )}
-                    <Tooltip content={reveal ? undefined : t`Needs the desktop app`}>
-                      <button
-                        className="btn btn--ghost assignment-file-reveal"
-                        disabled={!reveal}
-                        onClick={() => revealAssignmentFile(course, assignment, f.name)}
-                      >
-                        <Icon icon="folder" />
-                        <Trans>Show in folder</Trans>
-                      </button>
-                    </Tooltip>
-                  </li>
-                )
-              })}
-            </ul>
-            <CourseMaterialBox
-              course={courseNode}
-              assignment={assignment}
-              chosen={chosen}
-              locked={locked}
-            />
-          </section>
-
-          <section className="assignment-section">
-            <div className="assignment-section-head">
-              <h2 className="assignment-section-title">
-                <Trans>Study from the assignment</Trans>
-              </h2>
-            </div>
-            <div className="assignment-cards">
-              <StudyWithAiCard ready={aiReady} copy={aiCopy} collect={collectAiText} />
-              {(['intuition', 'solution'] as const).map((doc) => (
-                <AssignmentDocCard
-                  key={doc}
-                  course={course}
+                        <span className="assignment-file-size">
+                          <FileSize bytes={f.size} />
+                        </span>
+                        {materialTooLarge(f, supported) && (
+                          <Tooltip
+                            content={t`Over 10 MB — generating might fail while this is attached`}
+                          >
+                            <span
+                              className="material-chip-large"
+                              role="img"
+                              aria-label={t`Over 10 MB — generating might fail while this is attached`}
+                            >
+                              <Icon icon="warning" />
+                            </span>
+                          </Tooltip>
+                        )}
+                        <Tooltip content={switchHint}>
+                          <label className="material-switch">
+                            <input
+                              type="checkbox"
+                              role="switch"
+                              checked={attached}
+                              disabled={!canSupport || locked}
+                              aria-label={t`Send ${name} to Gemini`}
+                              onChange={(e) => void toggleAttach(f.name, e.target.checked)}
+                            />
+                            <span className="material-switch-track" />
+                          </label>
+                        </Tooltip>
+                        {canOpenWith() && (
+                          <OpenWithMenu
+                            onOpenWith={() => openAssignmentFileWith(course, assignment, f.name)}
+                          />
+                        )}
+                        <Tooltip content={reveal ? undefined : t`Needs the desktop app`}>
+                          <button
+                            className="btn btn--ghost assignment-file-reveal"
+                            disabled={!reveal}
+                            onClick={() => revealAssignmentFile(course, assignment, f.name)}
+                          >
+                            <Icon icon="folder" />
+                            <Trans>Show in folder</Trans>
+                          </button>
+                        </Tooltip>
+                      </li>
+                    )
+                  })}
+                </ul>
+                <CourseMaterialBox
+                  course={courseNode}
                   assignment={assignment}
-                  doc={doc}
-                  info={docs[doc]}
-                  run={run}
-                  error={error}
-                  inputs={inputs}
+                  chosen={chosen}
+                  locked={locked}
                 />
-              ))}
+              </section>
+
+              <section className="assignment-section">
+                <div className="assignment-section-head">
+                  <h2 className="assignment-section-title">
+                    <Trans>Study from the assignment</Trans>
+                  </h2>
+                </div>
+                <div className="assignment-cards">
+                  {(['intuition', 'solution'] as const).map((doc) => (
+                    <AssignmentDocCard
+                      key={doc}
+                      course={course}
+                      assignment={assignment}
+                      doc={doc}
+                      info={docs[doc]}
+                      run={run}
+                      error={error}
+                      inputs={inputs}
+                    />
+                  ))}
+                </div>
+              </section>
             </div>
-          </section>
+            <div className="ai-split-card">
+              <StudyWithAiCard ready={aiReady} copy={aiCopy} collect={collectAiText} />
+            </div>
+          </div>
         </div>
       </div>
     </main>

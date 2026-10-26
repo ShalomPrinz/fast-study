@@ -111,19 +111,19 @@ meta line of file and attached-lecture counts. Below it, top to bottom:
   entry whose `summary.md` exists (`summarizedLectures`); each toggle writes the whole selection with
   `setAssignmentLectures`. Neither the switch nor the box takes input while the assignment has a live run
   (`inputsLocked`), since the run reads them. No state is held locally: the tree refresh over SSE shows every write.
-- **Study from the assignment**, an `auto-fit minmax(280px, 1fr)` grid of three cards.
-  - Study with AI: the lecture page's `StudyWithAiCard`, taking `ready`, its `copy` texts and a `collect` that builds
-    the clipboard text. Here `collect` fetches each chosen summary (`fetchSummaryContent`) and each existing doc
-    (`fetchAssignmentDoc`) into `assignmentClipboardText`: the prompt, then `<assignment course title>` holding one
-    `<lecture kind title>` per summary, `<intuition_guide>` and `<solution>` where they exist. Enabled when any of the three exists.
-  - Intuition Guide and Full Solution: one `AssignmentDocCard` per doc. `docCardState` (pure) derives `none`
-    (Create, with an ETA from `assignment_{doc}` over `docInputs` bytes, disabled with no input), `generating` (this
-    doc's step or its `_pdf` is the assignment's `in_flight` entry: `ProgressBar`, every button off) or `ready`
-    (relative-time badge, Open PDF, Edit to `…/edit/{doc}`, icon Regenerate behind a `ConfirmModal`, the render-warning
-    chip). A ready md with no pdf offers Create PDF, which runs `{doc}_pdf`. Any run disables both cards, because the
-    runner holds one per assignment. The step error of this doc or its `_pdf` renders with `ServiceError` under the actions.
-    Open PDF is `openAssignmentGenerated` (bridge `{course, assignment, generated}`, else a new tab on `/generated/{name}`).
-    A `busy` start answer toasts through `toastInitResult`.
+- **Study from the assignment**, an `auto-fit minmax(280px, 1fr)` grid of the two doc cards.
+- **Study with AI**, outside the sections in the page's side column (see below): the lecture page's `StudyWithAiCard`, taking `ready`, its `copy` texts and a `collect` that builds
+  the clipboard text. Here `collect` fetches each chosen summary (`fetchSummaryContent`) and each existing doc
+  (`fetchAssignmentDoc`) into `assignmentClipboardText`: the prompt, then `<assignment course title>` holding one
+  `<lecture kind title>` per summary, `<intuition_guide>` and `<solution>` where they exist. Enabled when any of the three exists.
+- Intuition Guide and Full Solution, in the Study section: one `AssignmentDocCard` per doc. `docCardState` (pure) derives `none`
+  (Create, with an ETA from `assignment_{doc}` over `docInputs` bytes, disabled with no input), `generating` (this
+  doc's step or its `_pdf` is the assignment's `in_flight` entry: `ProgressBar`, every button off) or `ready`
+  (relative-time badge, Open PDF, Edit to `…/edit/{doc}`, icon Regenerate behind a `ConfirmModal`, the render-warning
+  chip). A ready md with no pdf offers Create PDF, which runs `{doc}_pdf`. Any run disables both cards, because the
+  runner holds one per assignment. The step error of this doc or its `_pdf` renders with `ServiceError` under the actions.
+  Open PDF is `openAssignmentGenerated` (bridge `{course, assignment, generated}`, else a new tab on `/generated/{name}`).
+  A `busy` start answer toasts through `toastInitResult`.
 
 `docInputs` sizes the ETA from the tree alone: the switched-on supported files' on-disk bytes plus the chosen
 `summary.md` sizes. An Office file is sent as extracted text, so this only approximates the bytes Gemini receives.
@@ -131,7 +131,7 @@ The `_pdf` render's ETA uses the `pdf` bucket with no size.
 
 ## Study with AI
 
-`components/StudyWithAiCard` (shared with the assignment page, which differs only in its copy source and texts) sits in a column on the inline-end side of the pipeline list, top-aligned
+`components/StudyWithAiCard` (shared with the assignment page, which differs only in its copy source and texts, and shares the split layout via `styles/ai-split.css`; there the sections stack in the main column and the card follows them when narrow) sits in a column on the inline-end side of the pipeline list, top-aligned
 with it, once the page body (a container) is 640px wide — 334px of steps + 26px gap + a 280px card, so a
 1280px window with the sidebar and tree pane open (664px) splits even with a 17px scrollbar. The card grows
 to 340px as the steps reach 380px (where the English Summary row's material chip stops wrapping, at 746px);
