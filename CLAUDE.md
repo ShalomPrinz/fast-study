@@ -95,6 +95,15 @@ to the English prose — but is not finished. `frontend/src/shared/i18n/errorCod
 the three in step: it greps the services for emitted codes and fails when one is undocumented, or
 when the doc calls a code user-reachable and no catalog row says it.
 
+## Git hooks
+
+`.githooks/pre-commit` bumps the patch `version` in `downloader/extension/manifest.json` whenever a
+commit stages a shipped extension file (anything there but `CLAUDE.md`, `README.md`, `docs/`), unless
+the commit already changes that version: the app recopies the extension into Chrome's folder only on a
+version change ([`electron/docs/EXTENSION.md`](electron/docs/EXTENSION.md)). It refuses
+`git commit <paths>`, whose temporary index would lose the bump. Each clone enables it once with
+`git config core.hooksPath .githooks`.
+
 ## Migrations
 
 Code that only patches data an older version wrote is temporary: list it in

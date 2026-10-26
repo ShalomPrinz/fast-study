@@ -1,0 +1,41 @@
+#!/bin/sh
+# Bumps the extension's patch version when a commit touches its shipped files: the app recopies the
+# extension into Chrome's load folder only when manifest.json's version changes (electron/docs/EXTENSION.md).
+manifest=downloader/extension/manifest.json
+
+shipped=$(git diff --cached --name-only -- downloader/extension/ \
+  | grep -v -e '^downloader/extension/CLAUDE\.md$' -e '^downloader/extension/README\.md$' -e '^downloader/extension/docs/')
+[ -z "$shipped" ] && exit 0
+
+# A version already changed in this commit is a deliberate bump.
+git diff --cached -- "$manifest" | grep -q '^+  "version"' && exit 0
+
+# `git commit <paths>` commits a temporary index, so a bump staged there never reaches the real one;
+# `-a` and `-i` stage into index.lock, which becomes the real index.
+main_index=$(cd "$(dirname "$(git rev-parse --git-path index)")" && pwd)/index
+hook_index=$(cd "$(dirname "${GIT_INDEX_FILE:-$main_index}")" && pwd)/$(basename "${GIT_INDEX_FILE:-index}")
+if [ "$hook_index" != "$main_index" ] && [ "$hook_index" != "$main_index.lock" ]; then
+  echo "pre-commit: commit with paths can't carry the extension version bump; stage them with git add and commit without paths." >&2
+  exit 1
+fi
+
+if ! git diff --quiet -- "$manifest"; then
+  echo "pre-commit: $manifest has unstaged changes; stage or drop them so the version bump doesn't sweep them in." >&2
+  exit 1
+fi
+
+node -e '
+const fs = require("fs");
+const file = process.argv[1];
+const text = fs.readFileSync(file, "utf8");
+let next;
+const out = text.replace(/("version":\s*")(\d+)\.(\d+)\.(\d+)(")/, (_m, a, x, y, z, b) => {
+  next = `${x}.${y}.${Number(z) + 1}`;
+  return a + next + b;
+});
+if (!next) { console.error(`pre-commit: no x.y.z "version" in ${file}`); process.exit(1); }
+fs.writeFileSync(file, out);
+console.error(`pre-commit: extension version bumped to ${next}`);
+' "$manifest" || exit 1
+
+git add -- "$manifest"
