@@ -1,0 +1,89 @@
+/* A generated doc's card: tile and ready chip over the title, the actions pinned to the bottom. */
+.doc-card {
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.doc-card[data-state='none'] {
+  background: var(--surface-sunken);
+}
+
+.doc-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.doc-card-tile {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r);
+  background: var(--ok-surface);
+  color: var(--ok);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-card[data-state='none'] .doc-card-tile {
+  background: var(--surface);
+  color: var(--text-4);
+}
+
+.doc-card[data-state='generating'] .doc-card-tile {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.doc-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.doc-card-title {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.doc-card-subtitle {
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+}
+
+.doc-card-writing {
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  color: var(--accent-ink);
+}
+
+.doc-card-note {
+  font-size: var(--fs-meta);
+  color: var(--warn);
+}
+
+.doc-card-actions {
+  margin-block-start: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.doc-card-eta {
+  font-size: var(--fs-fine);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.doc-card-error {
+  font-size: var(--fs-meta);
+  color: var(--danger);
+}

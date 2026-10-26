@@ -68,7 +68,7 @@ is type-only, so the mutual import with `settings.ts` is erased.
 ## `open.ts` — opening a file or a link outside the app
 
 Packaged, a fresh navigation cannot carry `X-FastStudy-Secret`, so a service URL opened in a new window
-is a `401` and a blank page. `openLectureFile`, `openLectureFileWith` (Windows packaged only, no browser fallback; gate on `canOpenWith()`), `openOverviewFile`, `openAssignmentFile`, `openAssignmentFileWith`, `revealAssignmentFile`, `canReveal` and `openExternalUrl` hand
+is a `401` and a blank page. `openLectureFile`, `openLectureFileWith` (Windows packaged only, no browser fallback; gate on `canOpenWith()`), `openOverviewFile`, `openAssignmentFile`, `openAssignmentFileWith`, `openAssignmentGenerated`, `revealAssignmentFile`, `canReveal` and `openExternalUrl` hand
 **identifiers** to `window.faststudy.open`, which resolves the path through `database/` and opens it in
 the user's own app — a path never reaches the renderer, so a compromised one gets no open-any-file
 primitive. A failure toasts its message inside a translated wrapper; a rejection with `code: 'file_not_found'` (no params) toasts its own translated sentence instead, since the shared catalog row needs a `{file}` the bridge does not send.

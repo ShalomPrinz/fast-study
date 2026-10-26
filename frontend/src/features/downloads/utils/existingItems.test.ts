@@ -51,11 +51,13 @@ function withAssignments(courses: Course[], specs: [string, string[]][]): Course
     assignments: specs.map(([name, files]) => ({
       name,
       done: false,
+      lectures: [],
+      docs: { intuition: null, solution: null },
       files: files.map((f) => {
         const [fname, source] = f.split('@')
         return source
-          ? { name: fname, size: 1, mtime: 1, source }
-          : { name: fname, size: 1, mtime: 1 }
+          ? { name: fname, size: 1, mtime: 1, source, attach: true }
+          : { name: fname, size: 1, mtime: 1, attach: true }
       }),
     })),
   }))

@@ -1,6 +1,6 @@
 import { t } from '@lingui/core/macro'
 import type { Kind } from '@/types'
-import { assignmentFileUrl, materialUrl, overviewFileUrl } from './database'
+import { assignmentFileUrl, assignmentGeneratedUrl, materialUrl, overviewFileUrl } from './database'
 import { runtimeBridge } from './runtime'
 import { toast } from './toaster'
 
@@ -41,6 +41,20 @@ export async function openLectureFile(
 export function canOpenWith(): boolean {
   const bridge = runtimeBridge()
   return !!bridge?.open.fileWith && bridge.platform === 'win32'
+}
+
+/** One generated file of an assignment (`intuition.pdf`): the OS default app packaged, a new tab in browser dev. */
+export async function openAssignmentGenerated(
+  course: string,
+  assignment: string,
+  name: string,
+): Promise<void> {
+  const bridge = runtimeBridge()
+  if (!bridge) {
+    window.open(assignmentGeneratedUrl(course, assignment, name), '_blank')
+    return
+  }
+  await openFile(bridge.open.file({ course, assignment, generated: name }))
 }
 
 /** The OS's "Open with…" picker for a lecture file; no browser fallback, so callers gate on `canOpenWith`. */

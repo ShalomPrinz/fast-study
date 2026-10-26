@@ -15,6 +15,9 @@ interface Props {
   onCancel: () => void
   // Set, Yes is disabled with this as its hint — the action it would replay is refused right now.
   confirmLocked?: string
+  // Replace the default Yes / No where the action has a name of its own.
+  confirmLabel?: string
+  cancelLabel?: string
 }
 
 export default function ConfirmModal({
@@ -25,6 +28,8 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
   confirmLocked,
+  confirmLabel,
+  cancelLabel,
 }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -44,11 +49,11 @@ export default function ConfirmModal({
         <div className="modal-actions">
           <Tooltip content={confirmLocked}>
             <button className="btn btn--primary" onClick={onConfirm} disabled={!!confirmLocked}>
-              <Trans>Yes</Trans>
+              {confirmLabel ?? <Trans>Yes</Trans>}
             </button>
           </Tooltip>
           <button className="btn btn--ghost" autoFocus onClick={onCancel}>
-            <Trans>No</Trans>
+            {cancelLabel ?? <Trans>No</Trans>}
           </button>
         </div>
       </div>

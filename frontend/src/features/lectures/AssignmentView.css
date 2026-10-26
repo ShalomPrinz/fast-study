@@ -1,3 +1,40 @@
+.assignment-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+.assignment-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.assignment-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.assignment-section-title {
+  font-size: var(--fs-section);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.assignment-section-hint {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.assignment-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-5);
+}
+
 .assignment-files {
   display: flex;
   flex-direction: column;

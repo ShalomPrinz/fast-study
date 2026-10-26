@@ -75,13 +75,33 @@ export interface Lecture {
 }
 
 // One file of a course assignment; `source` is the discovery row's `ref`, absent on a hand-placed file.
-export type AssignmentFile = { name: string; size: number; mtime: number; source?: string }
+export type AssignmentFile = {
+  name: string
+  size: number
+  mtime: number
+  source?: string
+  // Whether the file goes to Gemini when a doc is generated; true unless the user switched it off.
+  attach: boolean
+}
+
+export type AssignmentDocName = 'intuition' | 'solution'
+// One generated doc's files; the tree holds null for a doc with no md yet.
+export type AssignmentDocInfo = {
+  md_mtime: number
+  pdf_mtime: number | null
+  pdf_warning: string | null
+}
+// A chosen course-material entry, by the name and kind that locate its summary.
+export type AssignmentLecture = { name: string; kind: Kind }
 
 export interface Assignment {
   name: string
   // Marked studied by the user; a downloaded file never changes it.
   done: boolean
   files: AssignmentFile[]
+  // The chosen course material, existing entries only, in selection order.
+  lectures: AssignmentLecture[]
+  docs: Record<AssignmentDocName, AssignmentDocInfo | null>
 }
 
 export interface Course {

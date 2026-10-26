@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import type { Kind } from '@/types'
-import { fetchSummaryContent } from '@/services/database'
 import { openExternalUrl } from '@/services/open'
 import { saveSettings } from '@/services/settings'
 import { toast } from '@/services/toaster'
@@ -9,25 +7,32 @@ import { toastFailure } from '@/shared/utils/failure'
 import { useAiProvider, useSettingsContext } from '@/shared/contexts/SettingsContext'
 import Icon from '@/shared/components/Icon'
 import Tooltip from '@/shared/components/Tooltip'
-import {
-  AI_PROVIDER_IDS,
-  AI_PROVIDERS,
-  clipboardText,
-  type AiProvider,
-} from '@/features/lectures/utils/aiChat'
+import { AI_PROVIDER_IDS, AI_PROVIDERS, type AiProvider } from '@/features/lectures/utils/aiChat'
 import '@/styles/button.css'
 import './StudyWithAiCard.css'
 
-interface Props {
-  course: string
-  lecture: string
-  kind?: Kind
-  summaryExists: boolean
+// What differs between the lecture page's card and the assignment page's: only its words.
+export interface StudyWithAiCopy {
+  subtitle: (provider: string) => string
+  emptySubtitle: string
+  // The disabled button's hint.
+  hint: string
+  info: string
+  copied: string
+  copyFailed: string
 }
 
-// Copies a fixed study prompt plus the lecture's summary, then opens the chosen AI chat for the user
-// to paste into; the provider half picks that chat and saves it as the setting. See docs/LECTURES.md.
-export default function StudyWithAiCard({ course, lecture, kind, summaryExists }: Props) {
+interface Props {
+  // Whether there is anything to copy; the button waits otherwise.
+  ready: boolean
+  copy: StudyWithAiCopy
+  // Builds the clipboard text; a rejection toasts as a service failure.
+  collect: () => Promise<string>
+}
+
+// Copies the text `collect` builds, then opens the chosen AI chat for the user to paste into; the
+// provider half picks that chat and saves it as the setting. See docs/LECTURES.md.
+export default function StudyWithAiCard({ ready, copy, collect }: Props) {
   const { t } = useLingui()
   const current = useAiProvider()
   const { setSettings } = useSettingsContext()
@@ -56,24 +61,21 @@ export default function StudyWithAiCard({ course, lecture, kind, summaryExists }
   async function openChat() {
     setBusy(true)
     try {
-      let summary: string
+      let text: string
       try {
-        summary = (await fetchSummaryContent(course, lecture, kind)).content
+        text = await collect()
       } catch (err) {
         toastFailure(err)
         return
       }
-      const prompt = t`I want to study this lecture in depth, and soon I'll ask you specific questions about it. Its summary is below.
-
-To start, reply with a single sentence — "What do you want to learn first?" — followed by a numbered list of 4–6 topics from the lecture to choose from.`
       try {
-        await navigator.clipboard.writeText(clipboardText(prompt, course, lecture, summary))
+        await navigator.clipboard.writeText(text)
       } catch {
-        toast('error', t`Couldn't copy the summary. Try again.`)
+        toast('error', copy.copyFailed)
         return
       }
       void openExternalUrl(AI_PROVIDERS[current].url)
-      toast('success', t`Summary copied — paste it in the chat with Ctrl+V.`)
+      toast('success', copy.copied)
     } finally {
       setBusy(false)
     }
@@ -91,25 +93,19 @@ To start, reply with a single sentence — "What do you want to learn first?" �
 
   return (
     <div className="study-ai-block">
-      <section className="study-ai" data-state={summaryExists ? 'ready' : 'no-summary'}>
+      <section className="study-ai" data-state={ready ? 'ready' : 'no-summary'}>
         <div className="study-ai-tile">
           <Icon icon="sparkle" />
         </div>
         <h2 className="study-ai-title">
           <Trans>Study with AI</Trans>
         </h2>
-        <p className="study-ai-subtitle">
-          {summaryExists ? (
-            <Trans>Click "Open chat" to study this lecture with {provider}.</Trans>
-          ) : (
-            <Trans>Available once the summary is generated.</Trans>
-          )}
-        </p>
+        <p className="study-ai-subtitle">{ready ? copy.subtitle(provider) : copy.emptySubtitle}</p>
         <div className="study-ai-split" ref={menuRef}>
-          <Tooltip content={summaryExists ? undefined : t`Generate the summary first`}>
+          <Tooltip content={ready ? undefined : copy.hint}>
             <button
               className="btn study-ai-open"
-              disabled={!summaryExists || busy}
+              disabled={!ready || busy}
               onClick={() => void openChat()}
             >
               <Trans>Open chat</Trans>
@@ -145,12 +141,10 @@ To start, reply with a single sentence — "What do you want to learn first?" �
           )}
         </div>
       </section>
-      {summaryExists && (
+      {ready && (
         <p className="study-ai-info">
           <Icon icon="info" />
-          <span>
-            <Trans>Paste the lecture content with Ctrl+V, we already copied it for you.</Trans>
-          </span>
+          <span>{copy.info}</span>
         </p>
       )}
     </div>

@@ -6,6 +6,7 @@ import type {
   TimingOperation,
   Kind,
   RunKind,
+  AssignmentStep,
   RunnerStatus,
   RunError,
   QueueEntry,
@@ -19,6 +20,7 @@ import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import {
   kindQuery,
   lectureBase,
+  assignmentBase,
   runStepQuery,
   courseOverviewBase,
   overviewGenerateQuery,
@@ -37,6 +39,18 @@ export async function runStep(
 ): Promise<RunInitResult> {
   return backend.post<RunInitResult>(
     `${lectureBase(course, lecture)}/run/${step}${runStepQuery(kind, fresh)}`,
+  )
+}
+
+// Starts an assignment's doc generation or PDF re-render; `fresh` applies to `*_pdf` only.
+export async function runAssignmentStep(
+  course: string,
+  assignment: string,
+  step: AssignmentStep,
+  fresh?: boolean,
+): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(
+    `${assignmentBase(course, assignment)}/run/${step}${fresh ? '?fresh=true' : ''}`,
   )
 }
 
