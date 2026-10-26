@@ -65,9 +65,11 @@ where every other process on the machine could read it.
 
 A service URL handed to a fresh browser navigation cannot carry the `X-FastStudy-Secret` header, so
 in the packaged app every such navigation is a `401` and a blank window. `open` is the way out, and
-it is four calls. A data-file target takes one of three shapes, each resolved by `dataFiles.js`
-through its `database/` `…/files/{name}/path` route: lecture `{ course, lecture, name, kind }`,
-assignment `{ course, assignment, name }`, and overview `{ course, name }` (a course-level `overview/` file).
+it is four calls. A data-file target takes one of four shapes, each resolved by `dataFiles.js`
+through its `database/` `…/path` route: lecture `{ course, lecture, name, kind }`, assignment
+`{ course, assignment, name }`, assignment-generated `{ course, assignment, generated }` (an AI-generated
+file, `…/generated/{name}/path`), and overview `{ course, name }` (a course-level `overview/` file).
+A `generated` target that also names `name`, or names no `assignment`, is refused before any lookup.
 
 - **`open.file(target)`** hands the resolved path to `shell.openPath` — the user's own app, not a
   Chromium tab.
@@ -85,7 +87,7 @@ assignment `{ course, assignment, name }`, and overview `{ course, name }` (a co
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
 bridge. Each resolves with nothing on success and rejects with an `Error` whose `message` is the exact
 OS, spawn or fetch text, `database answered <status>`, `the database service is not running`,
-`unsupported`, `not a URL: <url>` or `refused scheme: <proto>:`; main does not toast, the frontend does. Main's handler answers `undefined` or `{ error, code? }` and never throws — Electron prefixes a
+`unsupported`, `invalid target`, `not a URL: <url>` or `refused scheme: <proto>:`; main does not toast, the frontend does. Main's handler answers `undefined` or `{ error, code? }` and never throws — Electron prefixes a
 thrown message with "Error invoking remote method …". A database 404 on the path route is the one
 failure with a `code`, `file_not_found` (the database's own); every other failure is code-less.
 

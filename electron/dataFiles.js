@@ -1,10 +1,14 @@
 const { spawn } = require('node:child_process');
 const { join } = require('node:path');
 
-/** The database route answering `{path}` for one data-file target: assignment `{course, assignment,
- *  name}`, lecture `{course, lecture, name, kind}`, or else overview `{course, name}`. */
-function dataFileRoute({ course, lecture, assignment, name, kind }) {
+/** The database `{path}` route for a target (assignment-generated, assignment, lecture, overview);
+ *  `null` for a refused shape: `generated` alongside `name`, or without `assignment`. */
+function dataFileRoute({ course, lecture, assignment, name, generated, kind }) {
   const q = encodeURIComponent;
+  if (generated !== undefined) {
+    if (name !== undefined || !assignment) return null;
+    return `/courses/${q(course)}/assignments/${q(assignment)}/generated/${q(generated)}/path`;
+  }
   if (assignment) return `/courses/${q(course)}/assignments/${q(assignment)}/files/${q(name)}/path`;
   if (lecture) {
     return `/courses/${q(course)}/lectures/${q(lecture)}/files/${q(name)}/path?kind=${q(kind ?? 'lecture')}`;
@@ -16,8 +20,10 @@ function dataFileRoute({ course, lecture, assignment, name, kind }) {
  *  coded failure (`file_not_found`). Identifiers in: the renderer never hands main a path (docs/RENDERER.md). */
 async function dataFilePath(target, { url, secret }) {
   if (!url) return { error: 'the database service is not running' };
+  const route = dataFileRoute(target ?? {});
+  if (route === null) return { error: 'invalid target' };
   try {
-    const response = await fetch(`${url}${dataFileRoute(target ?? {})}`, {
+    const response = await fetch(`${url}${route}`, {
       headers: { 'X-FastStudy-Secret': secret },
     });
     if (response.status === 404) {

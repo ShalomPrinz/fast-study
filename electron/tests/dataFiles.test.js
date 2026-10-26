@@ -35,6 +35,10 @@ test('each target shape resolves through its own database route', async () => {
       { course: 'A', assignment: 'HW 1', name: 'q.docx' },
       '/courses/A/assignments/HW%201/files/q.docx/path',
     ],
+    [
+      { course: 'A', assignment: 'HW 1', generated: 'plan.md' },
+      '/courses/A/assignments/HW%201/generated/plan.md/path',
+    ],
     [{ course: 'A', name: 'syllabus.pdf' }, '/courses/A/overview/files/syllabus.pdf/path'],
   ];
   for (const [target] of cases) {
@@ -45,6 +49,17 @@ test('each target shape resolves through its own database route', async () => {
     cases.map(([, route]) => DATABASE.url + route),
   );
   assert.equal(requests[0].init.headers['X-FastStudy-Secret'], 's3cret');
+});
+
+test('a generated target that also names a file, or no assignment, is refused unasked', async () => {
+  stubFetch();
+  for (const target of [
+    { course: 'A', assignment: 'HW', name: 'q.pdf', generated: 'plan.md' },
+    { course: 'A', generated: 'plan.md' },
+  ]) {
+    assert.deepEqual(await dataFilePath(target, DATABASE), { error: 'invalid target' });
+  }
+  assert.equal(requests.length, 0);
 });
 
 test('a failed lookup is a failure the caller passes through', async () => {
