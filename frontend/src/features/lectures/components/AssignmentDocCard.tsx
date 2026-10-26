@@ -1,18 +1,17 @@
 import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { plural } from '@lingui/core/macro'
 import { useNavigate } from 'react-router-dom'
 import type { AssignmentDocInfo, AssignmentDocName, InFlightEntry, RunError } from '@/types'
 import { runAssignmentStep } from '@/services/backend'
 import { openAssignmentGenerated } from '@/services/open'
 import { toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
-import { formatDuration, formatRelativeTime } from '@/shared/utils/format'
+import { formatDuration } from '@/shared/utils/format'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { docCardState } from '@/features/lectures/utils/assignmentDocs'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import Icon, { type IconName } from '@/shared/components/Icon'
+import Icon from '@/shared/components/Icon'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import ProgressBar from '@/shared/components/ProgressBar'
 import ServiceError from '@/shared/components/ServiceError'
@@ -57,13 +56,9 @@ export default function AssignmentDocCard({
     doc === 'intuition'
       ? t`Hints and a direction of thought for each question, without solving it`
       : t`A complete, step-by-step solution to every question`
-  const { files, summaries } = inputs
-  const inputsText = t`Not generated yet · ${plural(files, { one: '# file', other: '# files' })} and ${plural(summaries, { one: '# summary', other: '# summaries' })} will be sent to Gemini`
-  const when = info ? formatRelativeTime(info.md_mtime) : ''
   // The catalog row names the placeholder `doc`, which this component's prop would shadow.
   const regenTitle = ((doc: string) => t`Regenerate ${doc}?`)(title)
   const generateLabel = doc === 'intuition' ? t`Create guide` : t`Create solution`
-  const icon: IconName = doc === 'intuition' ? 'question' : 'document'
 
   // The ETA of a running render uses the pdf bucket; an idle card's is its doc's own, over the inputs.
   const operation =
@@ -99,17 +94,16 @@ export default function AssignmentDocCard({
 
   return (
     <section className="doc-card" data-state={phase} data-doc={doc}>
-      <div className="doc-card-top">
-        <div className="doc-card-tile">
-          <Icon icon={icon} />
-        </div>
-        {phase === 'ready' && info && (
-          <span className="chip chip--ok doc-card-ready">{t`Ready · ${when}`}</span>
-        )}
-      </div>
       <div className="doc-card-text">
-        <h2 className="doc-card-title">{title}</h2>
-        <p className="doc-card-subtitle">{phase === 'none' ? inputsText : subtitle}</p>
+        <div className="doc-card-top">
+          <h2 className="doc-card-title">{title}</h2>
+          {phase === 'ready' && info && (
+            <span className="chip chip--ok doc-card-ready">
+              <Trans>Ready</Trans>
+            </span>
+          )}
+        </div>
+        <p className="doc-card-subtitle">{phase === 'none' ? t`Not generated yet` : subtitle}</p>
       </div>
       {(phase === 'generating' || rendering) && (
         <div className="doc-card-progress">

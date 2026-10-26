@@ -49,6 +49,12 @@ msgstr "\"{value}\" is not an allowed value for the setting \"{field}\"."
 msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
 msgstr "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
 
+#. placeholder {0}: inputs.files
+#. placeholder {1}: inputs.summaries
+#: src/features/lectures/AssignmentView.tsx:232
+msgid "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} other {# summaries}}"
+msgstr "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} other {# summaries}}"
+
 #. placeholder {0}: pending.length
 #: src/features/runner/RunnerView.tsx:426
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
@@ -384,7 +390,7 @@ msgstr "+ add source URL"
 msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 msgstr "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:59
+#: src/features/lectures/components/AssignmentDocCard.tsx:58
 msgid "A complete, step-by-step solution to every question"
 msgstr "A complete, step-by-step solution to every question"
 
@@ -548,6 +554,10 @@ msgstr "Assignment · {assignment}"
 msgid "Assignment material copied — paste it in the chat with Ctrl+V."
 msgstr "Assignment material copied — paste it in the chat with Ctrl+V."
 
+#: src/features/lectures/AssignmentView.tsx:229
+msgid "Assignment Solution"
+msgstr "Assignment Solution"
+
 #: src/features/downloads/DownloadsView.tsx:76
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:37
 msgid "Assignments"
@@ -656,7 +666,7 @@ msgstr "Can't replace the video while it's being processed or waiting in line"
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
-#: src/features/lectures/components/AssignmentDocCard.tsx:207
+#: src/features/lectures/components/AssignmentDocCard.tsx:201
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -1055,15 +1065,15 @@ msgstr "Create"
 msgid "Create {input} first"
 msgstr "Create {input} first"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:65
+#: src/features/lectures/components/AssignmentDocCard.tsx:61
 msgid "Create guide"
 msgstr "Create guide"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:163
+#: src/features/lectures/components/AssignmentDocCard.tsx:157
 msgid "Create PDF"
 msgstr "Create PDF"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:65
+#: src/features/lectures/components/AssignmentDocCard.tsx:61
 msgid "Create solution"
 msgstr "Create solution"
 
@@ -1239,7 +1249,7 @@ msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "Each time it starts, FastStudy checks GitHub for a new version."
 
 #: src/features/downloads/components/CourseCheckFailure.tsx:23
-#: src/features/lectures/components/AssignmentDocCard.tsx:179
+#: src/features/lectures/components/AssignmentDocCard.tsx:173
 msgid "Edit"
 msgstr "Edit"
 
@@ -1446,7 +1456,7 @@ msgstr "Frees up disk space once a lecture is finished. The transcript, the summ
 msgid "From now on, each lecture's files are removed the same way once it reaches that point."
 msgstr "From now on, each lecture's files are removed the same way once it reaches that point."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:55
+#: src/features/lectures/components/AssignmentDocCard.tsx:54
 #: src/features/runner/utils/assignmentSteps.ts:7
 msgid "Full Solution"
 msgstr "Full Solution"
@@ -1468,11 +1478,11 @@ msgstr "Gemini couldn't write this document."
 msgid "Gemini gets the transcript and any materials you add, to write the summary."
 msgstr "Gemini gets the transcript and any materials you add, to write the summary."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:118
+#: src/features/lectures/components/AssignmentDocCard.tsx:112
 msgid "Gemini is writing…"
 msgstr "Gemini is writing…"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:205
+#: src/features/lectures/components/AssignmentDocCard.tsx:199
 msgid "Gemini will write it again."
 msgstr "Gemini will write it again."
 
@@ -1554,7 +1564,7 @@ msgstr "Hebrew University"
 msgid "Hide past courses"
 msgstr "Hide past courses"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:58
+#: src/features/lectures/components/AssignmentDocCard.tsx:57
 msgid "Hints and a direction of thought for each question, without solving it"
 msgstr "Hints and a direction of thought for each question, without solving it"
 
@@ -1607,7 +1617,7 @@ msgstr "In the project list, choose \"Create project\"."
 msgid "Install Chrome"
 msgstr "Install Chrome"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:55
+#: src/features/lectures/components/AssignmentDocCard.tsx:54
 #: src/features/runner/utils/assignmentSteps.ts:6
 msgid "Intuition Guide"
 msgstr "Intuition Guide"
@@ -1920,9 +1930,9 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:61
-msgid "Not generated yet · {files, plural, one {# file} other {# files}} and {summaries, plural, one {# summary} other {# summaries}} will be sent to Gemini"
-msgstr "Not generated yet · {files, plural, one {# file} other {# files}} and {summaries, plural, one {# summary} other {# summaries}} will be sent to Gemini"
+#: src/features/lectures/components/AssignmentDocCard.tsx:106
+msgid "Not generated yet"
+msgstr "Not generated yet"
 
 #: src/features/lectures/MainView.tsx:489
 msgid "not provided"
@@ -2021,7 +2031,7 @@ msgstr "Open material"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
-#: src/features/lectures/components/AssignmentDocCard.tsx:171
+#: src/features/lectures/components/AssignmentDocCard.tsx:165
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
 #: src/features/lectures/MainView.tsx:297
@@ -2186,9 +2196,9 @@ msgstr "Re-generate {title}"
 msgid "Re-generate from {stepLabel}"
 msgstr "Re-generate from {stepLabel}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:107
-msgid "Ready · {when}"
-msgstr "Ready · {when}"
+#: src/features/lectures/components/AssignmentDocCard.tsx:102
+msgid "Ready"
+msgstr "Ready"
 
 #: src/features/runner/RunnerView.tsx:73
 #: src/features/search/components/SearchResult.tsx:47
@@ -2250,13 +2260,13 @@ msgstr "Recordings. Downloading one starts its full summary right away."
 msgid "Recordings. Downloading one starts nothing; you run the summary yourself."
 msgstr "Recordings. Downloading one starts nothing; you run the summary yourself."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:181
-#: src/features/lectures/components/AssignmentDocCard.tsx:184
-#: src/features/lectures/components/AssignmentDocCard.tsx:206
+#: src/features/lectures/components/AssignmentDocCard.tsx:175
+#: src/features/lectures/components/AssignmentDocCard.tsx:178
+#: src/features/lectures/components/AssignmentDocCard.tsx:200
 msgid "Regenerate"
 msgstr "Regenerate"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:64
+#: src/features/lectures/components/AssignmentDocCard.tsx:60
 msgid "Regenerate {doc}?"
 msgstr "Regenerate {doc}?"
 
@@ -2515,7 +2525,7 @@ msgstr "Start using FastStudy"
 msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:87
+#: src/features/lectures/components/AssignmentDocCard.tsx:82
 #: src/features/lectures/DocEditor.tsx:192
 #: src/features/lectures/DocEditor.tsx:251
 #: src/features/lectures/MainView.tsx:172
@@ -2529,10 +2539,6 @@ msgstr "Storage"
 #: src/features/course-overview/constants/overview.ts:25
 msgid "Student QA"
 msgstr "Student QA"
-
-#: src/features/lectures/AssignmentView.tsx:225
-msgid "Study from the assignment"
-msgstr "Study from the assignment"
 
 #: src/features/lectures/components/StudyWithAiCard.tsx:101
 msgid "Study with AI"
@@ -2586,7 +2592,7 @@ msgstr "Summary model"
 msgid "summary with {name}"
 msgstr "summary with {name}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:138
+#: src/features/lectures/components/AssignmentDocCard.tsx:132
 msgid "Switch on a file or choose course material first"
 msgstr "Switch on a file or choose course material first"
 
@@ -2757,7 +2763,7 @@ msgstr "The part of FastStudy that downloads recordings isn't responding. Restar
 msgid "The PDF could not be created."
 msgstr "The PDF could not be created."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:129
+#: src/features/lectures/components/AssignmentDocCard.tsx:123
 msgid "The PDF is missing."
 msgstr "The PDF is missing."
 

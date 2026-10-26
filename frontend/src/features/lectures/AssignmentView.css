@@ -24,14 +24,32 @@
   color: var(--text);
 }
 
-.assignment-section-hint {
+.assignment-section-hint,
+.assignment-sent-count {
   font-size: var(--fs-meta);
   color: var(--text-3);
 }
 
+/* The solution section is its own row under the split, so it spans the full page width. */
+.ai-split + .assignment-section {
+  margin-block-start: var(--space-7);
+}
+
+.assignment-section-head--inline {
+  justify-content: flex-start;
+  column-gap: 0;
+}
+
+.assignment-section-head--inline .assignment-section-title::after {
+  content: '·';
+  margin-inline: var(--space-3);
+  color: var(--text-3);
+  font-weight: 400;
+}
+
 .assignment-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: var(--space-5);
 }
 

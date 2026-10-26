@@ -218,33 +218,35 @@ To start, reply with a single sentence — "Which question do you want to work o
                   locked={locked}
                 />
               </section>
-
-              <section className="assignment-section">
-                <div className="assignment-section-head">
-                  <h2 className="assignment-section-title">
-                    <Trans>Study from the assignment</Trans>
-                  </h2>
-                </div>
-                <div className="assignment-cards">
-                  {(['intuition', 'solution'] as const).map((doc) => (
-                    <AssignmentDocCard
-                      key={doc}
-                      course={course}
-                      assignment={assignment}
-                      doc={doc}
-                      info={docs[doc]}
-                      run={run}
-                      error={error}
-                      inputs={inputs}
-                    />
-                  ))}
-                </div>
-              </section>
             </div>
             <div className="ai-split-card">
               <StudyWithAiCard ready={aiReady} copy={aiCopy} collect={collectAiText} />
             </div>
           </div>
+          <section className="assignment-section">
+            <div className="assignment-section-head assignment-section-head--inline">
+              <h2 className="assignment-section-title">
+                <Trans>Assignment Solution</Trans>
+              </h2>
+              <span className="assignment-sent-count">
+                {t`${plural(inputs.files, { one: '# file', other: '# files' })} · ${plural(inputs.summaries, { one: '# summary', other: '# summaries' })}`}
+              </span>
+            </div>
+            <div className="assignment-cards">
+              {(['intuition', 'solution'] as const).map((doc) => (
+                <AssignmentDocCard
+                  key={doc}
+                  course={course}
+                  assignment={assignment}
+                  doc={doc}
+                  info={docs[doc]}
+                  run={run}
+                  error={error}
+                  inputs={inputs}
+                />
+              ))}
+            </div>
+          </section>
         </div>
       </div>
     </main>

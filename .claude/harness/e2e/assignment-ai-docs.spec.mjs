@@ -50,6 +50,8 @@ test('an assignment generates, edits, regenerates, copies and fails per doc', as
   await expect(view).toHaveAttribute('data-assignment', ASSIGNMENT);
   const intuition = view.locator('.doc-card[data-doc="intuition"]');
   const solution = view.locator('.doc-card[data-doc="solution"]');
+  // The section head states what Gemini will get, for both cards.
+  const sent = view.locator('.assignment-sent-count');
 
   // 1. Toggle one file off.
   const onSwitch = view.getByRole('switch', { name: `Send ${ON} to Gemini` });
@@ -59,7 +61,7 @@ test('an assignment generates, edits, regenerates, copies and fails per doc', as
   await offSwitch.locator('xpath=ancestor::label').click();
   await expect(offSwitch).not.toBeChecked();
   await expect(onSwitch).toBeChecked();
-  await expect(intuition).toContainText('1 file and 0 summaries will be sent to Gemini');
+  await expect(sent).toContainText('1 file · 0 summaries');
 
   // 2. Pick one lecture.
   await view.getByRole('button', { name: 'Add a lecture or recitation' }).click();
@@ -71,7 +73,7 @@ test('an assignment generates, edits, regenerates, copies and fails per doc', as
   await page.keyboard.press('Escape');
   await expect(view.locator('.course-material-chips')).toContainText(LECTURE);
   await expect(view).toContainText('2 files · 1 lecture attached');
-  await expect(intuition).toContainText('1 file and 1 summary will be sent to Gemini');
+  await expect(sent).toContainText('1 file · 1 summary');
   await shot(page, '1-inputs');
 
   // 3. Generate the Intuition Guide: Gemini got the switched-on file and the summary, not the other file.
