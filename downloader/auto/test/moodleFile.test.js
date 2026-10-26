@@ -21,6 +21,7 @@ import { gated } from './gated.js';
 import { probeUrl } from '../src/lib/probeUrl.js';
 import { resolveDirectUrl } from '../src/core/core.js';
 
+const realFetch = globalThis.fetch;
 const SITE = 'https://moodle.test';
 const FILEURL = `${SITE}/webservice/pluginfile.php/9/mod_resource/content/1/notes.pdf`;
 const PDF = Buffer.from('%PDF-1.4 hello');
@@ -264,4 +265,38 @@ test('MoodleFileExtractor claims every resource but video, audio and HTML', asyn
   assert.equal(x.canHandle(a('video/mp4')), false);
   assert.equal(x.canHandle(a('text/html')), false);
   assert.equal(x.canHandle(a('application/pdf', 'a.pdf', 'url')), false);
+});
+
+test('two materials with different fileurls in one lecture each stream their own bytes', async (t) => {
+  const base = await serve(t);
+  const local = realFetch;
+  const bodies = { a: Buffer.from('AAAA'), b: Buffer.from('BBBBBBBB') };
+  t.mock.method(globalThis, 'fetch', async (url, init) => {
+    if (String(url).startsWith(base)) return local(url, init);
+    const body = String(url).includes('/a.pptx') ? bodies.a : bodies.b;
+    return new Response(body, {
+      status: 200,
+      headers: {
+        'content-type': 'application/octet-stream',
+        'content-length': String(body.length),
+      },
+    });
+  });
+  const got = [];
+  for (const file of ['a.pptx', 'b.zip']) {
+    const ref = encodeRef({
+      strategy: 'moodle-file',
+      fileurl: `${SITE}/webservice/pluginfile.php/9/mod_resource/content/1/${file}`,
+      kind: 'lecture',
+    });
+    const res = await local(`${base}/resolve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref, course: 'CM', name: 'LM', kind: 'lecture' }),
+    });
+    const { targets } = await res.json();
+    const bytes = Buffer.from(await (await local(`${base}${targets[0].url}`)).arrayBuffer());
+    got.push(bytes.toString());
+  }
+  assert.deepEqual(got, ['AAAA', 'BBBBBBBB']);
 });

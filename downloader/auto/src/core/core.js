@@ -197,8 +197,8 @@ export async function resolveMoodleFile({
   ref,
   forceCapture = false,
 }) {
-  // An assignment's files share its name, so the fileurl tells them apart in the cache.
-  const key = recording.assignment ? `${name}\u001f${recording.fileurl}` : name;
+  // Several files share one lecture/assignment name, so the fileurl tells them apart in the cache.
+  const key = `${name}\u001f${recording.fileurl}`;
   const media = recording.assignment ? 'assignment' : 'material';
   let cap = forceCapture ? null : getCap(course, key, kind, media)?.cap;
   const fromCache = Boolean(cap);
