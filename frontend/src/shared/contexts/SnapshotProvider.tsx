@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { t } from '@lingui/core/macro'
-import type { Course, RunnerStatus, InFlightEntry, Kind, RunError } from '@/types'
+import type { Course, RunnerStatus, InFlightEntry, Kind, RunError, RunKind } from '@/types'
 import { runAll, fetchRunnerStatus } from '@/services/backend'
 import { fetchTree } from '@/services/database'
 import { isConnectionError } from '@/services/http'
@@ -162,7 +162,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
 
   // A previous attempt's error would otherwise read as this run's outcome until a refresh shows it gone,
   // and a start-to-failure too quick for any refresh to see would leave an identical new error unannounced.
-  function markStarted(course: string, lecture: string, kind: Kind) {
+  function markStarted(course: string, lecture: string, kind: RunKind) {
     const key = inFlightKey(course, lecture, kind)
     startedAt.current.set(key, issued.current)
     pruneErrors(new Set(), (k) => k === key)

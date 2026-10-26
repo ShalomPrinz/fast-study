@@ -17,7 +17,7 @@ import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import ProgressBar from '@/shared/components/ProgressBar'
 import ServiceError from '@/shared/components/ServiceError'
 import Tooltip from '@/shared/components/Tooltip'
-import { assignmentRoute } from '@/shared/utils/url'
+import { assignmentEditorRoute } from '@/shared/utils/url'
 import '@/styles/button.css'
 import '@/styles/chip.css'
 import '@/styles/modal.css'
@@ -174,7 +174,7 @@ export default function AssignmentDocCard({
             <button
               className="btn btn--ghost"
               disabled={busy}
-              onClick={() => navigate(`${assignmentRoute(course, assignment)}/edit/${doc}`)}
+              onClick={() => navigate(assignmentEditorRoute(course, assignment, doc))}
             >
               <Trans>Edit</Trans>
             </button>

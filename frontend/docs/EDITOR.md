@@ -1,6 +1,20 @@
-# Summary editor
+# Document editor
 
-`/:course/:lecture/edit` — `EditSummaryView`, outside `LecturesLayout` so it gets the full width.
+One editor, `DocEditor`, over a `DocSource` (`utils/docSource.ts`): the document's text, its PDF's URL
+and state, the render run, the run and error lookup, the back route, the title and the pop-out. Both
+routes sit outside `LecturesLayout` so they get the full width; each wrapper resolves the route miss
+(`NotFoundPanel`) before mounting the editor.
+
+| Route | Wrapper | Source |
+| --- | --- | --- |
+| `/:course/:lecture/edit` | `EditSummaryView` | `useLectureDocSource`: `summary.md`/`summary.pdf`, run step `pdf`, title = the lecture name, back to the lecture |
+| `/course/:course/assignment/:assignment/edit/:doc` | `EditAssignmentDocView` | `useAssignmentDocSource`: `{doc}.md`/`{doc}.pdf` from the tree's `docs.{doc}`, run step `{doc}_pdf`, title `Intuition Guide — {assignment}` / `Full Solution — {assignment}`, back to the assignment |
+
+`doc` is `intuition` or `solution`; any other value, a missing assignment or an ungenerated doc is a
+miss (`assignmentDocNotFound`). The assignment source's run is the assignment's one run (any step holds
+it, so `busy`), and only this doc's `{doc}_pdf` failure is the editor's error; a generation failure
+stays on the card. The sections below say "summary" and "lecture" for the first source; the second
+behaves the same with its doc and assignment.
 
 ## Layout
 

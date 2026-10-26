@@ -1,4 +1,4 @@
-import type { Kind, CoursePhase } from '@/types'
+import type { AssignmentDocName, Kind, CoursePhase } from '@/types'
 
 // Percent-encodes every interpolated value, literals untouched (Hebrew names stay URL-safe).
 // Invariant: never re-feed its output (or `lectureBase`) into another `path` — that double-encodes.
@@ -34,6 +34,15 @@ export function lectureBase(course: string, lecture: string): string {
 // Browser route for an assignment; four segments, so no lecture or overview URL can reach it.
 export function assignmentRoute(course: string, assignment: string): string {
   return path`/course/${course}/assignment/${assignment}`
+}
+
+// Browser route for the editor of an assignment's generated doc.
+export function assignmentEditorRoute(
+  course: string,
+  assignment: string,
+  doc: AssignmentDocName,
+): string {
+  return `${assignmentRoute(course, assignment)}/edit/${doc}`
 }
 
 // API path for an assignment: `/courses/{c}/assignments/{a}`. Already encoded — don't re-`path` it.

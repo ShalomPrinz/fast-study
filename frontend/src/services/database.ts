@@ -97,6 +97,26 @@ export async function fetchAssignmentDoc(
   )
 }
 
+export async function saveAssignmentDoc(
+  course: string,
+  assignment: string,
+  doc: AssignmentDocName,
+  content: string,
+): Promise<void> {
+  await database.put(assignmentBase(course, assignment) + path`/docs/${doc}`, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    body: content,
+  })
+}
+
+export async function revertAssignmentDoc(
+  course: string,
+  assignment: string,
+  doc: AssignmentDocName,
+): Promise<void> {
+  await database.delete(assignmentBase(course, assignment) + path`/docs/${doc}`)
+}
+
 export async function fetchTree(): Promise<Course[]> {
   return database.get<Course[]>('/tree')
 }
