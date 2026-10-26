@@ -9,7 +9,7 @@ import { inFlightKey, parseInFlightKey } from '@/shared/utils/inFlightKey'
 import { isQuotaError } from '@/shared/utils/runError'
 import { failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
-import LectureLead from '@/shared/components/LectureLead'
+import LectureLead, { AssignmentLead } from '@/shared/components/LectureLead'
 import { failureNode } from '@/shared/utils/failure'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useNotify } from '@/shared/hooks/useNotify'
@@ -70,7 +70,12 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     // A toast shows on any page, so it names the lecture its key holds; the runner crash names its own.
     const lectureLead = (key: string) => {
       const parsed = parseInFlightKey(key)
-      return parsed ? <LectureLead course={parsed.course} lecture={parsed.lecture} /> : undefined
+      if (!parsed) return undefined
+      return parsed.kind === 'assignment' ? (
+        <AssignmentLead course={parsed.course} assignment={parsed.lecture} />
+      ) : (
+        <LectureLead course={parsed.course} lecture={parsed.lecture} />
+      )
     }
     const announce = (key: string, failure: ServiceFailure) =>
       statusPrimed.current
@@ -179,6 +184,15 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     return status?.errors[inFlightKey(course, lecture, kind)] ?? null
   }
 
+  function getAssignmentRun(course: string, assignment: string): InFlightEntry | null {
+    const key = inFlightKey(course, assignment, 'assignment')
+    return status?.inFlight.find((e) => inFlightKey(e.course, e.lecture, e.kind) === key) ?? null
+  }
+
+  function getAssignmentError(course: string, assignment: string): RunError | null {
+    return status?.errors[inFlightKey(course, assignment, 'assignment')] ?? null
+  }
+
   // The database lists courses in raw directory order, so every consumer gets them by name here.
   const sortedCourses = useMemo(
     () =>
@@ -197,7 +211,16 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
       value={{ courses: sortedCourses, loaded, loadFailed, refreshCourses: refresh, refreshUntil }}
     >
       <RunnerStatusContext.Provider
-        value={{ status, trigger, isInFlight, getInFlight, getError, markStarted }}
+        value={{
+          status,
+          trigger,
+          isInFlight,
+          getInFlight,
+          getError,
+          getAssignmentRun,
+          getAssignmentError,
+          markStarted,
+        }}
       >
         {children}
       </RunnerStatusContext.Provider>

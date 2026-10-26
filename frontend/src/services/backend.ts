@@ -5,6 +5,7 @@ import type {
   TimingStats,
   TimingOperation,
   Kind,
+  RunKind,
   RunnerStatus,
   RunError,
   QueueEntry,
@@ -87,7 +88,7 @@ export async function fetchTimingStats(
 interface RawInFlightEntry {
   course: string
   lecture: string
-  kind: Kind
+  kind: RunKind
   step: string
   started_at: string
 }

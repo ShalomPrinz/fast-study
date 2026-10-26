@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { createElement, type ReactNode } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, render as renderNode, act } from '@testing-library/react'
+import { I18nProvider } from '@lingui/react'
+import { i18n } from '@lingui/core'
 import type { Course, RunnerStatus } from '@/types'
 import { SnapshotProvider } from './SnapshotProvider'
 import { useCourseTreeContext } from './CourseTreeContext'
@@ -278,5 +280,48 @@ describe('markStarted', () => {
     await act(async () => afterStart.resolve(failed()))
     expect(result.current.getError('C', 'L', 'lecture')).toEqual(LOCKED)
     expect(errorToasts()).toBe(1)
+  })
+})
+
+describe('an assignment run', () => {
+  const error = {
+    step: 'solution',
+    message: 'x',
+    code: 'assignment_generation_failed',
+    params: { detail: 'boom' },
+    provider: null,
+    blocked: false,
+  }
+  const assignmentStatus = (withError: boolean) =>
+    ({
+      runner: { running: false, lastError: null },
+      inFlight: [
+        { course: 'C', lecture: 'A', kind: 'assignment', step: 'solution', startedAt: '' },
+      ],
+      errors: withError ? { 'C||A||assignment': error } : {},
+    }) as unknown as RunnerStatus
+
+  it('is found by its own key, and its error toasts led by the assignment', async () => {
+    const sendUpdate = vi.fn()
+    fetchTree.mockResolvedValue(tree(1))
+    fetchRunnerStatus.mockResolvedValueOnce(assignmentStatus(false))
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(SnapshotProvider, { sendUpdate, children })
+    const { result } = renderHook(() => useRunnerStatus(), { wrapper })
+    await act(async () => {})
+    expect(result.current.getAssignmentRun('C', 'A')?.step).toBe('solution')
+    expect(result.current.getInFlight('C', 'A', 'lecture')).toBeNull()
+
+    fetchRunnerStatus.mockResolvedValueOnce(assignmentStatus(true))
+    act(() => {
+      notify.cb()
+    })
+    await act(async () => {})
+    expect(result.current.getAssignmentError('C', 'A')).toEqual(error)
+
+    const node = sendUpdate.mock.calls.find(([kind]) => kind === 'error')?.[1] as ReactNode
+    const { container } = renderNode(createElement(I18nProvider, { i18n }, node))
+    expect(container.querySelector('.service-error-lead')?.textContent).toBe('C · assignment A')
+    expect(container.querySelector('.service-error-detail')?.textContent).toBe('boom')
   })
 })

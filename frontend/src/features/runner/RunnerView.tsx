@@ -18,9 +18,16 @@ import Icon from '@/shared/components/Icon'
 import { moveToFront, runPipeline } from '@/services/backend'
 import { toast, toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
-import { lectureRoute } from '@/shared/utils/url'
+import { assignmentRoute, lectureRoute } from '@/shared/utils/url'
+import { assignmentStepLabel } from './utils/assignmentSteps'
 import { notQueued, notQueuedState, notQueuedTitle } from './utils/notQueued'
-import { canMoveToFront, headerState, nightlyPicksUp } from './utils/runnerState'
+import {
+  canMoveToFront,
+  headerState,
+  isLectureRun,
+  nightlyPicksUp,
+  type LectureRun,
+} from './utils/runnerState'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -85,6 +92,27 @@ function LectureRow(props: RowProps) {
   )
 }
 
+/** An in-flight assignment run: no queue behind it, so no run-now or front action, only the link. */
+function AssignmentRow({ entry }: { entry: InFlightEntry }) {
+  const { t } = useLingui()
+  const label = assignmentStepLabel(entry.step)
+  const assignment = entry.lecture
+  return (
+    <Link className="pipeline-row runner-row" to={assignmentRoute(entry.course, entry.lecture)}>
+      <StatusNode state="running" />
+      <div className="pipeline-row-body">
+        <div className="row-title" dir="auto">
+          {t`Assignment · ${assignment}`}
+        </div>
+        <div className="row-course" dir="auto">
+          {entry.course}
+        </div>
+      </div>
+      <span className="chip chip--accent">{label ? t(label) : entry.step}</span>
+    </Link>
+  )
+}
+
 /** A waiting lecture: its text runs `onActivate` (inert when absent), and only the trailing icon
  *  opens the lecture, so acting on a row never navigates by accident. */
 function ActionRow({ onActivate, ...props }: RowProps & { onActivate?: () => void }) {
@@ -116,7 +144,7 @@ function ActionRow({ onActivate, ...props }: RowProps & { onActivate?: () => voi
 
 /** The lecture the runner is actually on: its stage rail and its ETA, the one place on this page
  *  that shows more than a line. */
-function FocusCard({ entry }: { entry: InFlightEntry }) {
+function FocusCard({ entry }: { entry: LectureRun }) {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
@@ -206,7 +234,10 @@ export default function RunnerView() {
   const queue = status?.queue ?? []
   const pending = notQueued(courses, queue, inFlight, driveEnabled)
 
-  const [focus, ...alsoRunning] = inFlight
+  // Assignments never take the focus card: it reads a lecture's files and timing.
+  const lectureRuns = inFlight.filter(isLectureRun)
+  const [focus, ...alsoRunning] = lectureRuns
+  const assignmentRuns = inFlight.filter((e) => e.kind === 'assignment')
   // One line for a page with nothing in any section; a lone empty section keeps only its title.
   const allEmpty = inFlight.length === 0 && queue.length === 0 && pending.length === 0
   const none = t`None`
@@ -244,8 +275,10 @@ export default function RunnerView() {
         <span className="page-header-state-dot" />
         {header.kind === 'sweep' ? (
           t`Running · lecture ${header.current} of ${header.total}`
-        ) : (
+        ) : header.count > 0 ? (
           <Plural value={header.count} one="# lecture running" other="# lectures running" />
+        ) : (
+          <Trans>Now running</Trans>
         )}
       </span>
     ) : (
@@ -283,10 +316,10 @@ export default function RunnerView() {
                     <h2 className="section-title">
                       <Trans>Now running</Trans>
                     </h2>
-                    {inFlight.length > 0 && (
+                    {lectureRuns.length > 0 && (
                       <span className="section-count">
                         <Plural
-                          value={inFlight.length}
+                          value={lectureRuns.length}
                           one="# lecture running"
                           other="# lectures running"
                         />
@@ -294,13 +327,15 @@ export default function RunnerView() {
                     )}
                   </div>
 
-                  {focus ? (
+                  {focus || assignmentRuns.length > 0 ? (
                     <>
-                      <FocusCard
-                        key={`${focus.course}||${focus.lecture}||${focus.kind}`}
-                        entry={focus}
-                      />
-                      {alsoRunning.length > 0 && (
+                      {focus && (
+                        <FocusCard
+                          key={`${focus.course}||${focus.lecture}||${focus.kind}`}
+                          entry={focus}
+                        />
+                      )}
+                      {(alsoRunning.length > 0 || assignmentRuns.length > 0) && (
                         <div className="pipeline-card runner-also">
                           {alsoRunning.map((entry) => {
                             const stage = PIPELINE.find((p) => p.step === entry.step)
@@ -319,6 +354,12 @@ export default function RunnerView() {
                               />
                             )
                           })}
+                          {assignmentRuns.map((entry) => (
+                            <AssignmentRow
+                              key={`${entry.course}||${entry.lecture}||${entry.kind}`}
+                              entry={entry}
+                            />
+                          ))}
                         </div>
                       )}
                     </>

@@ -127,6 +127,7 @@ given, so a refusal the user can act on is caught by the route instead and re-em
 | `pipeline/runner.py` step guards        | `missing_prerequisite`      | `file`, `step`                  | user  |
 | `pipeline/runner.py` `_require_nonempty`| `empty_file`                | `file`                          | user  |
 | `pipeline/runner.py` summarize materials | `materials_empty`          | —                               | user  |
+| `pipeline/runner.py` assignment step   | `assignment_inputs_empty`   | —                               | user  |
 | `pipeline/runner.py` `_check_sizes`     | `material_too_large`        | `files`, `limit_mb`, `size_mb`  | user  |
 | `services/errors.py` `own_fields`       | `app_files_blocked`         | —                               | user  |
 | `pipeline/strip_audio.py`               | `audio_extraction_failed`   | `detail`                        | user  |
@@ -140,6 +141,7 @@ given, so a refusal the user can act on is caught by the route instead and re-em
 | `pipeline/transcribe.py`                | `groq_rate_limited`         | `limit`, `used`, `requested`, `retry_after_seconds` | user |
 | `pipeline/runner.py` blocked record     | `groq_rate_limit_blocked`   | same as `groq_rate_limited`     | user  |
 | `pipeline/summarize.py`                 | `summarization_failed`      | `detail`                        | user  |
+| `pipeline/summarize.py` `generate_assignment_doc` | `assignment_generation_failed` | `detail`     | user  |
 | `pipeline/to_pdf.py`                    | `pdf_tool_timeout`          | `tool`, `seconds`               | user  |
 | `pipeline/to_pdf.py`                    | `pdf_pandoc_failed`         | `detail`                        | user  |
 | `pipeline/to_pdf.py`                    | `pdf_engine_no_output`      | `detail`                        | user  |

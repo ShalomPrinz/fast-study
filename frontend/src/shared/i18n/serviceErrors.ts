@@ -99,6 +99,11 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       '{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}',
   }),
+  assignment_inputs_empty: msg({
+    message: 'Nothing to send to Gemini — switch on a file or choose course material.',
+  }),
+  // Gemini's own error text rides in `detail`.
+  assignment_generation_failed: msg({ message: "Gemini couldn't write this document." }),
   drive_upload_failed: msg({ message: 'Uploading to Google Drive failed.' }),
   drive_not_connected: msg({ message: 'Google Drive is not connected. Connect it in Settings.' }),
   drive_folder_not_configured: msg({

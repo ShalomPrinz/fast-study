@@ -100,6 +100,10 @@ export type Kind = 'lecture' | 'recitation'
 
 export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'drive'
 
+// The runner also runs assignments, keyed by name in the lecture slot; they are never queued.
+export type RunKind = Kind | 'assignment'
+export type AssignmentStep = 'intuition' | 'solution' | 'intuition_pdf' | 'solution_pdf'
+
 export interface CourseSummary {
   name: string
   kind: Kind
@@ -107,7 +111,8 @@ export interface CourseSummary {
 }
 
 export type DownloadOperation = 'download:curl' | 'download:ytdlp'
-export type TimingOperation = Step | 'summarize_materials' | DownloadOperation
+export type TimingOperation =
+  Step | 'summarize_materials' | 'assignment_intuition' | 'assignment_solution' | DownloadOperation
 
 export interface RateLimitInfo {
   limit: number | null
@@ -134,8 +139,9 @@ export interface Selected {
 
 export interface InFlightEntry {
   course: string
+  // The assignment's name when `kind` is `assignment`.
   lecture: string
-  kind: Kind
+  kind: RunKind
   step: string
   startedAt: string
 }

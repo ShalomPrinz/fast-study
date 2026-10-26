@@ -144,6 +144,10 @@ every notify together with the tree, never polled. `inFlight` covers active step
 `course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror `_skey` in
 `backend/pipeline/runner.py`**. `/running` is the whole surface for the queue, the in-flight entries and
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
+An assignment run (`kind: "assignment"`, the name in the `lecture` slot, keyed `course||name||assignment`) is
+never queued: `/running` lists it as a link row after the lecture rows, never as the focus card, with the step
+label from `assignmentStepLabel`; its toast is led by `AssignmentLead`. `getAssignmentRun` / `getAssignmentError`
+read it.
 On `/running` an in-flight row is one link to its lecture. A waiting row's text acts instead, and only its
 trailing icon opens the lecture. A not-queued row shows `failed` or `quota` from `errors` (pending otherwise) and runs its pipeline beside the runner, and a queued one
 moves to the front (the head row's text is inert). Either way the reorder arrives over SSE.

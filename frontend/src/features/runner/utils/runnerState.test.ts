@@ -30,6 +30,12 @@ describe('headerState', () => {
     expect(headerState(status(false, [entry, entry]))).toEqual({ kind: 'manual', count: 2 })
   })
 
+  it('counts lecture runs only, so an assignment run is running but not a lecture', () => {
+    const assignment: InFlightEntry = { ...entry, kind: 'assignment' }
+    expect(headerState(status(false, [assignment]))).toEqual({ kind: 'manual', count: 0 })
+    expect(headerState(status(false, [entry, assignment]))).toEqual({ kind: 'manual', count: 1 })
+  })
+
   it('reports the sweep position, capped at total', () => {
     expect(headerState(status(true, [entry], 1, 3))).toEqual({
       kind: 'sweep',
