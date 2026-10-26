@@ -2650,10 +2650,6 @@ msgstr "Third-party services"
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 
-#: src/features/downloads/components/RecordingRow.tsx:347
-msgid "This assignment is marked done"
-msgstr "This assignment is marked done"
-
 #: src/features/lectures/EditSummaryView.tsx:364
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
@@ -2919,6 +2915,10 @@ msgstr "You must read the privacy policy before you continue."
 #: src/features/downloads/components/AccountStatus.tsx:233
 msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
 msgstr "You're logged in to {foreignName}. Connecting here logs you out of it."
+
+#: src/features/downloads/components/RecordingRow.tsx:348
+msgid "You've finished this assignment."
+msgstr "You've finished this assignment."
 
 #: src/features/settings/InitWall.tsx:226
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."

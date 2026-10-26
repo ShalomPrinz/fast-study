@@ -344,7 +344,8 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
 
       {assignmentDone && (
         <div className="recording-done-note">
-          <Trans>This assignment is marked done</Trans>
+          <Icon icon="warning" />
+          <Trans>You've finished this assignment.</Trans>
         </div>
       )}
 

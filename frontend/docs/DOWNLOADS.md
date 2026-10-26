@@ -319,7 +319,7 @@ assignment branch) — no number extraction, so `תרגיל 1` and `תרגילו
 assignment lands in one node. The segment groups rows by Moodle heading, a blank one under "Other". The
 download carries the assignment name where a lecture's goes and `kind: 'lecture'`, which is moot. A name that is an
 existing assignment marked done (`isAssignmentDone`, live as the name is edited) shows a soft `--warn` note
-"This assignment is marked done" under the row; the download keeps the mark and is never blocked or confirmed.
+"You've finished this assignment." (with a warning icon) under the row; the download keeps the mark and is never blocked or confirmed.
 
 ## Material rows and name suggestion
 

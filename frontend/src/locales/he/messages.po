@@ -2650,10 +2650,6 @@ msgstr "שירותי צד שלישי"
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
-#: src/features/downloads/components/RecordingRow.tsx:347
-msgid "This assignment is marked done"
-msgstr "המטלה הזו מסומנת כבוצעה"
-
 #: src/features/lectures/EditSummaryView.tsx:364
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
@@ -2919,6 +2915,10 @@ msgstr "עליך לקרוא את מדיניות הפרטיות לפני שתמש
 #: src/features/downloads/components/AccountStatus.tsx:233
 msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
 msgstr "אתה מחובר לחשבון ב-{foreignName}. התחברות כאן תנתק אותך ממנו."
+
+#: src/features/downloads/components/RecordingRow.tsx:348
+msgid "You've finished this assignment."
+msgstr "סיימת את המטלה הזו"
 
 #: src/features/settings/InitWall.tsx:226
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
