@@ -33,6 +33,11 @@
   flex-direction: column;
 }
 
+.open-with-menu-list.open-up {
+  inset-block-start: auto;
+  inset-block-end: calc(100% + var(--space-2));
+}
+
 .open-with-menu-item {
   padding: var(--space-3) var(--space-4);
   border: none;
