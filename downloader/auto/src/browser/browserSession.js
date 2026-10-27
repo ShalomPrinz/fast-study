@@ -115,9 +115,17 @@ export class BrowserSession {
   }
 }
 
+// Playwright rejects a call on a closed window with a plain Error carrying this text, not TargetClosedError;
+// re-check the wording on every Playwright upgrade (docs/MOODLE.md#constraints).
+const CLOSED_MESSAGE = /Target page, context or browser has been closed/;
+
 /** The browser or its page went away under a call: the user closed the window. */
 export function browserClosed(err, page) {
-  return err?.name === 'TargetClosedError' || page?.isClosed?.() === true;
+  return (
+    err?.name === 'TargetClosedError' ||
+    CLOSED_MESSAGE.test(err?.message ?? '') ||
+    page?.isClosed?.() === true
+  );
 }
 
 // Per-extractor browser choice. 'zoom' = headed chrome+stealth, hidden per platform (docs/ZOOM.md).

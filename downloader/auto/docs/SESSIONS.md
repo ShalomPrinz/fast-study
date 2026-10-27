@@ -14,7 +14,7 @@ request. Model in `src/browser/browserSession.js`.
   relaunched; `open()` takes no lock itself, and concurrent callers share one launch.
 - **A user-closed window.** The browser's `disconnected` (or its page's `close`) drops the session, so
   the next `open()` launches a fresh browser. A capture cut off mid-way — Playwright's
-  `TargetClosedError`, or any failure once the page is closed — answers `503 zoom_browser_closed
+  `TargetClosedError`, its plain-Error `Target page, context or browser has been closed` (wording in `browserSession.js`), or any failure once the page is closed — answers `503 zoom_browser_closed
   {detail}` with no `status`, a handled refusal that never reaches the backstop or Sentry.
 - **Idle timeout** (~45 min) is a leak-safety valve only; a session re-opens lazily. It is paused while a `withLock` op runs and re-armed when it ends, so it never closes a browser mid-capture. Switching course
   is just `goto()`. `closeAllSessions()` (on `/close` and `SIGINT`/`SIGTERM`) closes every session and

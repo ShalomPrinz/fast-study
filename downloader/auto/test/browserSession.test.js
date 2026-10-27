@@ -107,6 +107,9 @@ test('browserClosed knows Playwright closed-target errors and a closed page', ()
   assert.equal(browserClosed(targetClosed('page.goto')), true);
   assert.equal(browserClosed(new Error('boom'), { isClosed: () => true }), true);
   assert.equal(browserClosed(new Error('boom'), { isClosed: () => false }), false);
+  const plain = new Error('page.goto: Target page, context or browser has been closed');
+  assert.equal(browserClosed(plain, null), true);
+  assert.equal(browserClosed(plain, { isClosed: () => false }), true);
 });
 
 test('a zoom capture whose window is closed mid-way answers 503 zoom_browser_closed, then relaunches', async (t) => {
