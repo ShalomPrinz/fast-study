@@ -141,6 +141,18 @@
     "message": "Couldn't save the PDF.",
     "description": "Headline when the server refused the PDF; its own text shows beneath."
   },
+  "errHlsExpired": {
+    "message": "This page's video session has expired. Reload the page, play the video for a few seconds, then open this again.",
+    "description": "Headline when every captured stream playlist was refused, so the page's session is over; the server's text shows beneath."
+  },
+  "errHlsStreams": {
+    "message": "Couldn't check the streams on this page.",
+    "description": "Headline when the server failed to classify the captured stream playlists; its own text shows beneath."
+  },
+  "labelNoAudio": {
+    "message": "no audio",
+    "description": "Marker on a stream that carries no audio track."
+  },
   "sizeMb": {
     "message": "$SIZE$ MB",
     "description": "A video size in megabytes.",

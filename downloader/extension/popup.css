@@ -331,3 +331,8 @@ input[dir='auto']:placeholder-shown {
   color: var(--text-4);
   cursor: not-allowed;
 }
+
+.status--detail {
+  margin-block-start: -8px;
+  overflow-wrap: anywhere;
+}

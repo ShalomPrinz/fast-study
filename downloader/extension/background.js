@@ -9,7 +9,16 @@ const BADGE_COLOR = '#4f5bd5';
 
 function isVideoUrl(url) {
   try {
-    return new URL(url).pathname.toLowerCase().endsWith('.mp4');
+    const path = new URL(url).pathname.toLowerCase();
+    return path.endsWith('.mp4') || path.endsWith('.m3u8');
+  } catch {
+    return false;
+  }
+}
+
+function isHlsUrl(url) {
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith('.m3u8');
   } catch {
     return false;
   }
@@ -44,7 +53,10 @@ async function record(details) {
   const next = [entry, ...videoRequests.filter((e) => e.url !== entry.url)].slice(0, MAX_ENTRIES);
   await chrome.storage.local.set({ videoRequests: next });
 
-  const onPage = next.filter((e) => e.pageUrl === pageUrl).length;
+  // An HLS page loads one playlist per variant, so every .m3u8 on the page counts as one video.
+  const mine = next.filter((e) => e.pageUrl === pageUrl);
+  const hls = mine.filter((e) => isHlsUrl(e.url)).length;
+  const onPage = mine.length - hls + (hls ? 1 : 0);
   // The tab may have closed meanwhile; a per-tab badge on a gone tab rejects.
   await chrome.action
     .setBadgeBackgroundColor({ tabId: details.tabId, color: BADGE_COLOR })

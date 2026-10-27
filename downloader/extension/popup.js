@@ -9,6 +9,8 @@ function api(path, init = {}) {
   return fetch(`${server.base}${path}`, { ...init, headers });
 }
 
+// The server accepts at most 30 captures per classification.
+const MAX_HLS_CAPTURES = 30;
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
 
 const msg = (key, ...subs) => chrome.i18n.getMessage(key, subs.map(String));
@@ -289,6 +291,53 @@ async function probeSize(url, headers) {
   }
 }
 
+function isHlsUrl(url) {
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith('.m3u8');
+  } catch {
+    return false;
+  }
+}
+
+// The server fetches each captured playlist with its headers and answers the streams worth offering,
+// best first, plus the captures it could not read.
+async function classifyStreams(captures) {
+  const res = await api('/hls-streams', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ captures: captures.map(({ url, headers }) => ({ url, headers })) }),
+  });
+  if (!res.ok) throw new Error(await serverError(res));
+  return res.json();
+}
+
+function formatDuration(seconds) {
+  const s = Math.round(seconds);
+  const h = Math.floor(s / 3600);
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(h ? 2 : 1, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+// Two masters can share a file name, so the last two path segments tell them apart.
+function streamLabel(stream) {
+  const parts = [formatSize(stream.estimatedBytes)];
+  if (stream.durationSeconds != null) parts.push(formatDuration(stream.durationSeconds));
+  if (stream.hasAudio === false) parts.push(msg('labelNoAudio'));
+  let name = stream.url.slice(0, 80);
+  try {
+    name = new URL(stream.url).pathname.split('/').filter(Boolean).slice(-2).join('/');
+  } catch {}
+  return `[${parts.join(' · ')}] ${name}`;
+}
+
+// A failure the status line carries: the translated headline, the server's prose beneath.
+function statusError({ headline, detail }) {
+  $('statusDetail').textContent = detail ?? '';
+  $('statusDetail').hidden = !detail;
+  return headline;
+}
+
 // Reads the active tab and this page's captures; shows exactly one source. A video wins over a PDF —
 // a captured .mp4 is the rarer, harder thing to get.
 async function loadSource() {
@@ -308,23 +357,53 @@ async function loadSource() {
   const { videoRequests = [] } = await chrome.storage.local.get('videoRequests');
   // Exact-URL match, so captures from another page or tab never leak in.
   const onPage = videoRequests.filter((r) => r.pageUrl === pageUrl);
-  if (onPage.length) {
+  const mp4s = onPage.filter((r) => !isHlsUrl(r.url));
+  const playlists = onPage.filter((r) => isHlsUrl(r.url)).slice(0, MAX_HLS_CAPTURES);
+  let hls = { streams: [], failed: [] };
+  let hlsError = null;
+  if (playlists.length) {
+    try {
+      hls = await classifyStreams(playlists);
+    } catch (e) {
+      hlsError = { headline: msg('errHlsStreams'), detail: e.message };
+    }
+  }
+
+  // Each option is {capture, label}; an .mp4's label gains its size when the probe answers.
+  const options = [
+    ...hls.streams.map((s) => ({
+      capture: playlists.find((r) => r.url === s.url),
+      label: streamLabel(s),
+    })),
+    ...mp4s.map((capture) => ({ capture, label: `[…] ${shortenUrl(capture.url)}`, probe: true })),
+  ].filter((o) => o.capture);
+
+  if (options.length) {
     const select = $('videoSelect');
-    const opts = onPage.map((req, i) => {
+    const opts = options.map((o, i) => {
       const opt = document.createElement('option');
       opt.value = String(i);
-      opt.textContent = `[…] ${shortenUrl(req.url)}`;
+      opt.textContent = o.label;
       return opt;
     });
     select.replaceChildren(...opts);
-    select.addEventListener('change', () => (capture = onPage[+select.value]));
-    capture = onPage[0];
+    select.addEventListener('change', () => (capture = options[+select.value].capture));
+    capture = options[0].capture;
     $('videoField').hidden = false;
-    onPage.forEach(async (req, i) => {
-      const bytes = await probeSize(req.url, req.headers);
-      opts[i].textContent = `[${formatSize(bytes)}] ${shortenUrl(req.url)}`;
+    options.forEach(async (o, i) => {
+      if (!o.probe) return;
+      const bytes = await probeSize(o.capture.url, o.capture.headers);
+      opts[i].textContent = `[${formatSize(bytes)}] ${shortenUrl(o.capture.url)}`;
     });
-    return onPage.length === 1 ? msg('statusOneVideo') : msg('statusManyVideos', onPage.length);
+    return options.length === 1 ? msg('statusOneVideo') : msg('statusManyVideos', options.length);
+  }
+
+  if (hlsError) return statusError(hlsError);
+  // Only a 401/403 on every playlist means the page's cookies are gone; any other failure is shown as-is.
+  if (hls.failed.length) {
+    const refused = hls.failed.every((f) => /^HTTP 40[13]$/.test(f.detail));
+    const headline = msg(refused ? 'errHlsExpired' : 'errHlsStreams');
+    return statusError({ headline, detail: hls.failed[0].detail });
   }
 
   if (isPdfUrl(pageUrl)) {
@@ -479,7 +558,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   ]);
   const hasSource = !!(youtubeUrl || capture || pdfUrl);
   if (!online) setStatus(msg('statusOffline'), true);
-  else setStatus(status);
+  else setStatus(status, !$('statusDetail').hidden);
   $('form').hidden = !hasSource;
   $('fileName').value = suggestFileName(tabTitle);
   for (const el of document.querySelectorAll('input[name="mode"]')) {

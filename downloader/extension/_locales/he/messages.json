@@ -141,6 +141,18 @@
     "message": "לא ניתן לשמור את ה-PDF.",
     "description": "Headline when the server refused the PDF; its own text shows beneath."
   },
+  "errHlsExpired": {
+    "message": "תוקף הסשן של הסרטון בדף הזה פג. רענן את הדף, הפעל את הסרטון למספר שניות ואז פתח שוב.",
+    "description": "Headline when every captured stream playlist was refused, so the page's session is over; the server's text shows beneath."
+  },
+  "errHlsStreams": {
+    "message": "לא ניתן לבדוק את הזרמים בדף הזה.",
+    "description": "Headline when the server failed to classify the captured stream playlists; its own text shows beneath."
+  },
+  "labelNoAudio": {
+    "message": "ללא שמע",
+    "description": "Marker on a stream that carries no audio track."
+  },
   "sizeMb": {
     "message": "$SIZE$ MB",
     "description": "A video size in megabytes.",
