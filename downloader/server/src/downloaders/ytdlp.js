@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { uploadVideo } from '../services/database.js';
 import { statePath } from '@faststudy/runtime';
 import { NO_WINDOW, toolPath } from '@faststudy/tools';
+import { SKIP_HEADERS } from '../services/probe.js';
 
 // Hosts /download-youtube accepts: YouTube plus Google Drive single-file links, both of
 // which yt-dlp resolves without a login. /download-url takes any http(s) URL, via auto.
@@ -81,6 +82,46 @@ function buildYtdlpArgs(url) {
     'video.%(ext)s',
     url,
   ];
+}
+
+// Not replayed as headers: --add-header is global in yt-dlp, so these would reach every host a
+// playlist names. Credentials ride a host-scoped cookie jar instead (docs/DOWNLOAD.md, "HLS").
+const HLS_SKIP_HEADERS = new Set([...SKIP_HEADERS, 'accept-encoding', 'authorization', 'cookie']);
+const HEADER_NAME_RE = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
+const hasControl = (t) => [...t].some((c) => c.charCodeAt(0) < 0x20 || c.charCodeAt(0) === 0x7f);
+const COOKIE_NAME_RE = /^[^\s=;]+$/;
+
+// Netscape jar text with the captured `Cookie` header's pairs scoped to `url`'s host only
+// (host-only, not subdomains); null when there is none.
+export function buildCookieJar(url, headers) {
+  const { hostname, protocol } = new URL(url);
+  const secure = protocol === 'https:' ? 'TRUE' : 'FALSE';
+  const expiry = Math.floor(Date.now() / 1000) + 86400;
+  const lines = [];
+  for (const h of headers ?? []) {
+    if (h?.name?.toLowerCase() !== 'cookie' || typeof h.value !== 'string') continue;
+    for (const pair of h.value.split(';')) {
+      const eq = pair.indexOf('=');
+      const name = pair.slice(0, eq).trim();
+      const value = pair.slice(eq + 1).trim();
+      if (eq < 1 || !COOKIE_NAME_RE.test(name) || hasControl(name + value)) continue;
+      lines.push([hostname, 'FALSE', '/', secure, expiry, name, value].join('\t'));
+    }
+  }
+  return lines.length ? `# Netscape HTTP Cookie File\n${lines.join('\n')}\n` : null;
+}
+
+// buildYtdlpArgs plus one --add-header per replayed non-credential header (a name/value that could
+// not be one header line skipped) and `--cookies cookieFile` when given. 720p -f carries over.
+export function buildHlsArgs(url, headers, cookieFile = null) {
+  const replay = [];
+  for (const h of headers ?? []) {
+    if (!HEADER_NAME_RE.test(h?.name ?? '') || HLS_SKIP_HEADERS.has(h.name.toLowerCase())) continue;
+    if (typeof h.value !== 'string' || /[\r\n]/.test(h.value)) continue;
+    replay.push('--add-header', `${h.name}: ${h.value}`);
+  }
+  if (cookieFile) replay.push('--cookies', cookieFile);
+  return [...replay, ...buildYtdlpArgs(url)];
 }
 
 // input: { url }.

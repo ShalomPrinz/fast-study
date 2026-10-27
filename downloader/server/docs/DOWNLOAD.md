@@ -62,6 +62,50 @@ curl dumps auto's headers to `response-headers.txt` and keeps its JSON body in t
 the runner ends the job with auto's own `code`/`params` (`readAutodlRefusal`). A fetch from auto cut
 short with no refusal (curl exit 18, 52 or 56) is re-run once in a fresh temp dir (`recovery`).
 
+## HLS (`.m3u8` captures)
+
+Panopto and other HLS players never load a whole `.mp4`, so the extension also captures requests
+whose path ends in `.m3u8`. The server decides which captures are worth showing; MV3 cannot read
+response bodies, so it fetches each playlist itself with the replayed headers.
+
+- **`POST /hls-streams`** `{captures:[{url, headers}]}` (at most 30) → `{streams, failed}`. `streams` is
+  `[{url, kind:'master'|'media', hasAudio, hasVideo, durationSeconds, estimatedBytes}]`, best first:
+  `hasAudio:true`, then unknown (`null`), then audio-less. Masters are offered; a variant or audio
+  playlist a captured master references (`#EXT-X-STREAM-INF`/`#EXT-X-MEDIA`, compared ignoring the
+  query) is hidden, and a media playlist no master references is offered once. `url` is the capture's
+  own, so the caller maps back to its headers. `failed` is `[{url, detail}]` for a capture that could
+  not be read (`HTTP 403`, a network error); a non-playlist body is dropped silently. Pure logic is
+  `src/hlsPlaylist.js`, the fetching `services/hls.js`.
+- **Audio** is read from the master in-process, with no binary probe: an `#EXT-X-MEDIA:TYPE=AUDIO`
+  group or an audio codec (`mp4a`, `ac-3`, `ec-3`, `opus`…) in any variant's `CODECS` is `true`;
+  `CODECS` on every variant and none audio is `false`; no information is `null`. Segments are never
+  fetched, so a master that omits `CODECS` stays `null`, and a media playlist is `null` unless its
+  segments are `.aac`/`.m4a`/`.mp3`.
+- **Estimate**: one extra fetch of the variant the 720p cap would pick; `durationSeconds` sums its
+  `#EXTINF`, `estimatedBytes` is that × the variant's bandwidth ÷ 8. Either is `null` when unreadable.
+  `POST /probe-size` answers the same estimate for an `.m3u8` url, and it is the job's expected size.
+- **Credentials** (`Cookie`, `Authorization`) go only to the capture's own origin: the classify
+  fetches drop them on any other origin, and a download never passes them to yt-dlp as headers,
+  because `--add-header` is global (every playlist, segment, key and redirect host). `Cookie` becomes
+  a Netscape `--cookies` jar (`cookies.txt` in the job's temp dir, mode 0600, removed with it, never
+  logged) holding host-only cookies for the capture's host, which yt-dlp's cookie jar sends nowhere
+  else; `Authorization` is not forwarded, so an HLS capture gated by it alone fails with
+  `download_auth_failed`. Checked on yt-dlp 2026.08.19: with a cookie-gated playlist host and
+  segments on a second host, the segment host received no `Cookie`. `accept-encoding` and
+  `SKIP_HEADERS` are not replayed.
+- **Shapes** (parse and select, `src/hlsPlaylist.js`): a master parses to variants
+  `{url, bandwidth, height, codecs, audioGroup}`, `audioGroups` and every URI it references; a media
+  playlist to `{durationSeconds, audioOnly}`. A capture is offered as a master, or as a media
+  playlist no captured master references; identical URLs collapse to the last capture. Playlist
+  bodies are read through a 2 MiB cap, so a larger or endless one lands in `failed` as
+  `playlist too large`.
+- **`POST /download`** with an `.m3u8` url (path, not query) picks the `hls` descriptor instead of
+  `curl`; body, `dest:'folder'`, jobs and the answer are unchanged. It is the yt-dlp command below plus
+  one `--add-header 'Name: value'` per replayed non-credential header (names that are not an HTTP token, values with
+  CR/LF, `SKIP_HEADERS` and `accept-encoding` skipped) plus the `--cookies` jar above. Same `yt-dlp` tool, `download:ytdlp` timing bucket and 720p cap, so the output is
+  `video.mp4`. A 401/403 on an expired playlist or segment lands as `download_auth_failed`, other
+  exits as `download_tool_failed`, the yt-dlp stderr tail as `detail`.
+
 ## yt-dlp (YouTube, Drive and direct video links)
 
 YouTube serves DASH-segmented streams — separate audio and video behind signed URLs — so the

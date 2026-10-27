@@ -64,8 +64,9 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `POST /config`                            | `{error_reports?}` → `{status:'ok', applied}`; 400 `invalid_request` on a non-boolean — the launcher's live switch |
 | `GET  /courses`                           | database `/tree` reshaped to name arrays + `lectures_only`, archived dropped                                                        |
 | `GET  /course-structure`                  | `{course_structure}` proxied from the database — the global mode a new course gets |
-| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged GET)                                                                  |
-| `POST /download`                          | curl header-replay capture; creates a missing course first; 200 with a `jobId`, runs in the background; `dest:'folder'` + `fileName` saves into the general folder instead ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
+| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged GET; an `.m3u8` url gets the HLS estimate)                                              |
+| `POST /hls-streams`                       | `{captures:[{url, headers}]}` → `{streams, failed}`: the `.m3u8` captures worth offering, audio first ([DOWNLOAD.md](docs/DOWNLOAD.md#hls-m3u8-captures)) |
+| `POST /download`                          | curl header-replay capture (an `.m3u8` url runs the `hls` descriptor: yt-dlp with the headers replayed); creates a missing course first; 200 with a `jobId`, runs in the background; `dest:'folder'` + `fileName` saves into the general folder instead ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); creates a missing course first; 200 with a `jobId`; takes `dest:'folder'` like `/download` |
 | `POST /download-url`                      | any http(s) URL (the Downloads page's manual entry) → auto/ `/resolve`, then one job: plain yt-dlp off the Moodle site, curl on auto's proxy on it; auto's refusals forwarded verbatim; 200 with a `jobId` ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames, captchaSolved?}` — `captchaSolved:true` relayed from auto when the zoom capture waited for the user to solve a captcha on screen (auto's 4xx forwarded verbatim, `429 moodle_busy` included) |
@@ -85,7 +86,7 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 
 ## Module layout
 
-`downloaders/` holds one descriptor per source — `curl` (header replay), `ytdlp`, `fetch` (plain
+`downloaders/` holds one descriptor per source — `curl` (header replay), `ytdlp`, `hls` (yt-dlp with replayed headers), `fetch` (plain
 URL) — run by the source-agnostic `runner.js`. `jobs.js` is the job registry, `runs.js` the
 section-run registry + queue driver (it calls `downloadItem` directly, not over HTTP), and
 `events.js` the SSE fan-out for both. `generalFolder.js` is general mode's folder, naming and move.

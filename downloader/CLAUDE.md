@@ -7,6 +7,7 @@ Three packages that capture lecture videos and materials and hand them to the da
 ## Source paths
 
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
+- **HLS (`.m3u8`)** — Panopto and other HLS players: the extension also captures `.m3u8` requests; the server classifies them (`POST /hls-streams`: masters only, audio first) and downloads one with `yt-dlp` replaying the captured headers on every segment ([DOWNLOAD.md](server/docs/DOWNLOAD.md#hls-m3u8-captures)).
 - **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links whose filename says they're video (`auto/`'s `google-drive` strategy, which refuses any other file).
 - **PDF** — not token-gated, so no header replay: the extension popup fetches the tab's `.pdf` with the user's cookies and uploads it as one of the lecture's materials; the extension stays PDF-only. App downloads take any non-audio Moodle file, carrying its original `filename` to the database.
 

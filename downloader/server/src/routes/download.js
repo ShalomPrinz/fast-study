@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { downloaders, runDownloadJob } from '../downloaders/index.js';
+import { isHlsUrl } from '../hlsPlaylist.js';
 import { YTDLP_HOST_RE } from '../downloaders/ytdlp.js';
 import { invalidRequest, storedName, validateKind } from '../validate.js';
 import { createJob } from '../jobs.js';
@@ -94,7 +95,9 @@ router.post('/download', async (req, res) => {
   }
   const destErr = destError(dest);
   if (destErr) return res.status(400).json(destErr);
-  if (dest === 'folder') return startFolderJob(res, downloaders.curl, { url, headers }, fileName);
+  // An .m3u8 capture is segmented: yt-dlp replays the headers per segment (docs/DOWNLOAD.md, "HLS").
+  const downloader = isHlsUrl(url) ? downloaders.hls : downloaders.curl;
+  if (dest === 'folder') return startFolderJob(res, downloader, { url, headers }, fileName);
   const names = storedNames(course, lecture);
   if (!names) {
     return res.status(400).json(namesError(course, lecture));
@@ -102,7 +105,7 @@ router.post('/download', async (req, res) => {
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  await ensureThenStart(res, downloaders.curl, { url, headers }, { ...names, kind });
+  await ensureThenStart(res, downloader, { url, headers }, { ...names, kind });
 });
 
 router.post('/download-youtube', async (req, res) => {
