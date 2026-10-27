@@ -223,3 +223,23 @@ def test_check_sizes_reports_largest():
             ]
         )
     assert ei.value.params == {"files": "a.pdf, b.pdf", "limit_mb": 10, "size_mb": 12.0}
+
+
+def test_office_file_over_cap_is_not_refused_by_source_size():
+    runner._check_sizes([{"name": "deck.pptx", "size": BIG}])
+
+
+def test_large_pptx_with_small_text_is_sent_as_text(tmp_path):
+    with patch.object(runner, "extract_text", return_value="slide text"):
+        path = runner._prepare_material(tmp_path, "deck.pptx", b"x" * 5, "L")
+    assert path == tmp_path / "deck.pptx.txt"
+    assert path.read_text(encoding="utf-8") == "slide text"
+
+
+def test_oversized_extracted_text_is_material_too_large(tmp_path):
+    huge = "a" * BIG
+    with patch.object(runner, "extract_text", return_value=huge):
+        with pytest.raises(CodedError) as ei:
+            runner._prepare_material(tmp_path, "m.docx", b"x", "L", "Big.docx")
+    assert ei.value.code == "material_too_large"
+    assert ei.value.params == {"files": "Big.docx", "limit_mb": 10, "size_mb": 10.0}

@@ -8,7 +8,7 @@ import sys
 log = logging.getLogger("errors")
 
 # Codes naming a condition, not a bug of ours — a provider's availability (Groq/Gemini) or the
-# user's own setup (Drive not connected): they stay out of Sentry. Uncoded failures keep reporting.
+# user's own setup (Drive not connected, a material over the size cap): they stay out of Sentry. Uncoded failures keep reporting.
 CONDITION_CODES = frozenset(
     {
         "drive_not_connected",
@@ -17,6 +17,7 @@ CONDITION_CODES = frozenset(
         "gemini_quota_blocked",
         "groq_rate_limited",
         "groq_rate_limit_blocked",
+        "material_too_large",
     }
 )
 

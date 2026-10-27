@@ -353,26 +353,37 @@ def _display_name(entry: dict) -> str:
     return entry.get("filename") or entry["name"]
 
 
-def _check_sizes(entries: list[dict]) -> None:
-    """Refuse a selection holding a file over Gemini's cap, before anything is downloaded."""
+def _too_large(files: str, size: int) -> CodedError:
+    limit_mb = MAX_GEMINI_FILE_BYTES // (1024 * 1024)
+    return CodedError(
+        f"attached materials over {limit_mb} MB: {files} — turn them off",
+        "material_too_large",
+        files=files,
+        limit_mb=limit_mb,
+        size_mb=round(size / (1024 * 1024), 1),
+    )
 
-    big = [e for e in entries if e.get("size", 0) > MAX_GEMINI_FILE_BYTES]
+
+def _check_sizes(entries: list[dict]) -> None:
+    """Refuse a selection holding a file over Gemini's cap, before anything is downloaded.
+    Office files are exempt: only their extracted text is sent, and `_prepare_material` caps that."""
+
+    big = [
+        e
+        for e in entries
+        if e.get("size", 0) > MAX_GEMINI_FILE_BYTES and not needs_extraction(e["name"])
+    ]
     if big:
-        largest = max(e["size"] for e in big)
-        files = ", ".join(_display_name(e) for e in big)
-        limit_mb = MAX_GEMINI_FILE_BYTES // (1024 * 1024)
-        raise CodedError(
-            f"attached materials over {limit_mb} MB: {files} — turn them off",
-            "material_too_large",
-            files=files,
-            limit_mb=limit_mb,
-            size_mb=round(largest / (1024 * 1024), 1),
+        raise _too_large(
+            ", ".join(_display_name(e) for e in big), max(e["size"] for e in big)
         )
 
 
-def _prepare_material(dest: Path, name: str, data: bytes, label: str) -> Path | None:
-    """Write one material into `dest` as the file to send: an Office file as its extracted text.
-    None, with a log line naming `label`, for an empty or unreadable one."""
+def _prepare_material(
+    dest: Path, name: str, data: bytes, label: str, display: str | None = None
+) -> Path | None:
+    """Write one material into `dest` as the file to send: an Office file as its extracted text,
+    refused `material_too_large` past the cap. None, with a log line naming `label`, for an empty or unreadable one."""
 
     if not data:
         log.warning("%s: skipping empty material %s", label, name)
@@ -388,8 +399,11 @@ def _prepare_material(dest: Path, name: str, data: bytes, label: str) -> Path | 
         if not text.strip():
             log.warning("%s: skipping material %s with no text", label, name)
             return None
+        encoded = text.encode("utf-8")
+        if len(encoded) > MAX_GEMINI_FILE_BYTES:
+            raise _too_large(display or name, len(encoded))
         path = dest / f"{name}.txt"
-        path.write_text(text, encoding="utf-8")
+        path.write_bytes(encoded)
     return path
 
 
@@ -405,7 +419,9 @@ def _download_materials(
     for entry in entries:
         name = entry["name"]
         data = db_client.get_file_bytes(course, lecture, kind, name)
-        path = _prepare_material(dest, name, data, f"{course}/{lecture} ({kind})")
+        path = _prepare_material(
+            dest, name, data, f"{course}/{lecture} ({kind})", _display_name(entry)
+        )
         if path is not None:
             sent.append((name, path))
     return sent
@@ -633,7 +649,9 @@ def _assignment_inputs(
     files: list[tuple[Path, str]] = []
     for f in chosen:
         data = db_client.get_assignment_file_bytes(course, name, f["name"])
-        path = _prepare_material(dest, f["name"], data, f"{course}/{name} (assignment)")
+        path = _prepare_material(
+            dest, f["name"], data, f"{course}/{name} (assignment)", _display_name(f)
+        )
         if path is not None:
             files.append((path, gemini_mime(path.name)))
     summaries: list[tuple[str, str, str]] = []
