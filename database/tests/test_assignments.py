@@ -97,6 +97,37 @@ def test_dotfiles_hidden(client, data_root):
     assert names == ["ex1.pdf"]
 
 
+@pytest.mark.parametrize(
+    "junk",
+    [
+        "~$ex.docx",
+        "~WRL0001.tmp",
+        "scratch.tmp",
+        "SCRATCH.TMP",
+        "Thumbs.db",
+        "THUMBS.DB",
+        "desktop.ini",
+        "Desktop.INI",
+        ".DS_Store",
+        ".~lock.ex.docx#",
+    ],
+)
+def test_junk_files_hidden(client, data_root, junk):
+    _post(client, source="r")
+    (data_root / "Algo/Assignments/תרגיל 1" / junk).write_bytes(b"1")
+    names = [f["name"] for f in _node(client)["assignments"][0]["files"]]
+    assert names == ["ex1.pdf"]
+
+
+def test_normal_names_with_tilde_still_listed(client, data_root):
+    _post(client, source="r")
+    d = data_root / "Algo/Assignments/תרגיל 1"
+    for n in ("report.docx", "notes~.txt"):
+        (d / n).write_bytes(b"1")
+    names = [f["name"] for f in _node(client)["assignments"][0]["files"]]
+    assert names == sorted(["ex1.pdf", "report.docx", "notes~.txt"])
+
+
 def test_unreadable_sidecar_reads_empty(client, data_root):
     _post(client, source="r")
     (data_root / "Algo/Assignments/תרגיל 1/.assignment_files.json").write_text("{bad")

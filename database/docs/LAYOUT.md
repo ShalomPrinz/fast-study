@@ -163,7 +163,7 @@ A materials-only lecture has neither, so it reports nothing removed.
 `read_tree` returns one node per course: `name`, `archived`, `lectures_only`, `source_url`,
 `lectures`, `recitations`, `assignments`. `lectures_only` is resolved, never raw: `course_structure == lectures_all`,
 or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations`, `Assignments` and `overview` are skipped as lectures.
-`assignments` is always present (`[]` when none): `[{name, done, files: [{name, size, mtime, attach[, source]}], lectures: [{name, kind}], docs: {intuition, solution}}]` (`done`: the `.done` marker exists; `attach` defaults `true`; `lectures` only existing ones; each doc is `null` without its `.md`, else `{md_mtime, pdf_mtime|null, pdf_warning|null}`), both levels sorted by name, `source` omitted when absent, dotfiles (so `.generated/`) never rows.
+`assignments` is always present (`[]` when none): `[{name, done, files: [{name, size, mtime, attach[, source]}], lectures: [{name, kind}], docs: {intuition, solution}}]` (`done`: the `.done` marker exists; `attach` defaults `true`; `lectures` only existing ones; each doc is `null` without its `.md`, else `{md_mtime, pdf_mtime|null, pdf_warning|null}`), both levels sorted by name, `source` omitted when absent, dotfiles (so `.generated/`), Office `~$` owner files, `*.tmp`, `Thumbs.db` and `desktop.ini` never rows.
 
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
 `materials` (index-ordered `{name, size, mtime}` plus `source`, `filename` and `attach` when set, always present and `[]` when none — presence

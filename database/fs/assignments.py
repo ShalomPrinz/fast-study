@@ -148,6 +148,16 @@ def _read_doc(g: Path, doc: str) -> dict | None:
     return {"md_mtime": md, "pdf_mtime": pdf, "pdf_warning": warning or None}
 
 
+def _is_junk_name(name: str) -> bool:
+    """True for names the file list hides: dotfiles, Office `~$` owner files, `*.tmp`, Thumbs.db, desktop.ini."""
+
+    return (
+        name.startswith((".", "~$"))
+        or name.lower().endswith(".tmp")
+        or name.lower() in ("thumbs.db", "desktop.ini")
+    )
+
+
 def list_assignments(course_path: Path) -> list[dict]:
     """Build the tree's assignments list: {name, done, files, lectures, docs}, both levels sorted by name."""
 
@@ -160,7 +170,7 @@ def list_assignments(course_path: Path) -> list[dict]:
         detached = _read_attach(a)
         files = []
         for f in sorted(a.iterdir()):
-            if f.name.startswith(".") or not f.is_file():
+            if _is_junk_name(f.name) or not f.is_file():
                 continue
             try:
                 st = f.stat()
