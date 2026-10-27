@@ -521,7 +521,7 @@ async def post_assignment_file(
 
     try:
         data = await request.body()
-        # No await between here and the write: allocation is lock-free only that way.
+        # Allocation, write and manifest record run under fs/assignments._manifest_lock.
         assignment, effective = assignments.write_assignment_file(
             course, name, filename, data, source
         )

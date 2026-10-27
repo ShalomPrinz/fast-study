@@ -194,8 +194,8 @@ Writing `.materials.json` degrades the same way: a failed write is logged and th
 
 A named folder of files under `Assignments/`, created on demand (the course dir must exist, else `404` `course_not_found`). The
 folder name goes through `safe_name()`; a file name goes through `check_safe_segment()` then the same NTFS cleanup (illegal chars dropped, trailing dots/spaces stripped, `CON.pdf` → `CON_.pdf`, extension kept); a leading dot is
-refused on POST and GET (dotfiles are sidecars). A taken name allocates `stem (2).ext`, `stem (3).ext`, … in `fs/assignments.py`, scan and write
-with no `await`, like materials; `POST` answers the effective assignment and file names. `.assignment_files.json` shares the
+refused on POST and GET (dotfiles are sidecars). A taken name allocates `stem (2).ext`, `stem (3).ext`, … in `fs/assignments.py`, scan, write
+and manifest record under `_manifest_lock`; `POST` answers the effective assignment and file names. `.assignment_files.json` shares the
 `.materials.json` atomic read/write primitives: a failed sidecar write is logged and the upload still succeeds, except the assignment manifest, which is written strictly. A manifest write that still fails after a few short retries (Windows `os.replace` while a reader holds it) deletes the just-saved file and fails the upload (`file_locked` 423 on a sharing violation, else `file_write_failed` 400), since an unlisted file would be invisible. A folder is seeded once with every regular file in it (keeping sources, skipping dotfiles, `~$*`, `*.tmp`, `Thumbs.db` and `desktop.ini`) only when its manifest is absent, unparseable, or parses without `v` 2; the seed always persists, even `{"v": 2, "files": {}}`. An existing manifest that cannot be read is never reseeded: the listing shows that assignment empty for that read and an upload fails (`file_write_failed`). One process-wide lock covers each load-seed-write and each upload's load-record-write.
 
 The AI docs' sidecars never create the assignment: a write to a missing one is `404` `lecture_not_found`. `{doc}.md` writes share the summary snapshot helpers in `fs/summary.py`; deleting `{doc}.pdf` drops its `.pdf_warning`.
