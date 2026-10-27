@@ -108,7 +108,8 @@ node .claude/harness/hb.mjs reseed            # the baseline and the flow course
 node .claude/harness/hb.mjs state             # save <harness>/state.json, print what moved since the seed
 node .claude/harness/hb.mjs wall              # blank DATA_ROOT, both keys and MOODLE_SITE: reload shows the first-run screen
 node .claude/harness/hb.mjs unwall            # put them back to the baseline
-node .claude/harness/hb.mjs add-material hb-nav 'שיעור 3' [file.pdf]  # attach a material, notify
+node .claude/harness/hb.mjs add-material hb-nav 'שיעור 3' [file] [--filename n]  # attach a material, notify
+node .claude/harness/hb.mjs add-assignment-file hb-assign 'תרגיל בית 1' file.pdf  # add an assignment file
 node .claude/harness/hb.mjs rm-lecture hb-pipeline 'שיעור 4'          # delete its folder, notify
 node .claude/harness/hb.mjs lock 'hb-nav/שיעור 1/summary.pdf'        # held open, Windows-style
 node .claude/harness/hb.mjs unlock            # every lock off (or name the globs to drop)
@@ -122,9 +123,10 @@ node .claude/harness/hb.mjs kill database     # take one service down; setup.mjs
 
 A lecture argument is its folder name, or `Recitations/<name>` for a recitation.
 
-`add-material` posts the PDF (the handout fixture by default) to the database's materials route and
+`add-material` posts a file (the handout PDF by default) to the database's materials route, named by its basename or `--filename` (the database takes the extension from it), and
 then `POST /notify`, as the downloader does — the database announces none of its own writes, so a
 caller that skips the notify leaves an open page stale. The app has no UI for attaching one.
+`add-assignment-file` posts a file to an assignment under the same naming rule, prints the effective name the route returns, and sends no notify (the route broadcasts itself).
 
 `rm-lecture` deletes the folder under the database's current root directly, since no route deletes
 a lecture, and only when that root carries the scratch marker; then it notifies. Use it mid-run to

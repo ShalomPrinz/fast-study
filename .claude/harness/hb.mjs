@@ -24,6 +24,19 @@ function lectureArg(text) {
   };
 }
 
+// Splits `--filename name` out of the arguments; the rest are positional.
+function fileArgs(args) {
+  const positional = [];
+  let filename;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--filename') {
+      if (i + 1 >= args.length) throw new Error('--filename needs a value');
+      filename = args[++i];
+    } else positional.push(args[i]);
+  }
+  return { positional, filename };
+}
+
 // `--before` takes an optional ref, so a bare one before another flag or the end means HEAD.
 function shotArgs(args) {
   const out = { langs: ['en', 'he'], setup: '', before: null, tag: 'main' };
@@ -156,17 +169,43 @@ const COMMANDS = {
     },
   },
   'add-material': {
-    usage: 'add-material <course> <lecture> [file]',
-    summary: 'attach a PDF material as the downloader does (default: the handout fixture)',
-    async run(paths, [course, arg, file]) {
-      if (!course || !arg) throw new Error('usage: add-material <course> <lecture> [file]');
+    usage: 'add-material <course> <lecture> [file] [--filename name]',
+    summary:
+      'attach a material as the downloader does (default: the handout PDF; a file keeps its basename)',
+    async run(paths, args) {
+      const { positional, filename } = fileArgs(args);
+      const [course, arg, file] = positional;
+      if (!course || !arg || positional.length > 3) throw new Error(`usage: ${this.usage}`);
       const { lecture, kind } = lectureArg(arg);
       const data = fs.readFileSync(file ?? path.join(paths.fixtures, 'handout.pdf'));
+      const name = filename ?? (file && path.basename(file));
       const at = `${DATABASE}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}`;
-      const { body } = await bytes(`${at}/materials?kind=${kind}`, 'POST', data, 'application/pdf');
+      const query = `kind=${kind}${name ? `&filename=${encodeURIComponent(name)}` : ''}`;
+      const { body } = await bytes(
+        `${at}/materials?${query}`,
+        'POST',
+        data,
+        'application/octet-stream',
+      );
       // The database does not announce its own writes; the downloader notifies after each upload.
       await call(`${DATABASE}/notify`, { method: 'POST' });
       console.log(`added ${course}/${arg}/${body.name} (${data.length} bytes), notified`);
+    },
+  },
+  'add-assignment-file': {
+    usage: 'add-assignment-file <course> <assignment> <file> [--filename name]',
+    summary: "add a file to an assignment (named by the file's basename unless --filename)",
+    async run(_paths, args) {
+      const { positional, filename } = fileArgs(args);
+      const [course, assignment, file] = positional;
+      if (!course || !assignment || !file || positional.length > 3)
+        throw new Error(`usage: ${this.usage}`);
+      const data = fs.readFileSync(file);
+      const name = filename ?? path.basename(file);
+      const url = `${DATABASE}/courses/${encodeURIComponent(course)}/assignments/${encodeURIComponent(assignment)}/files?filename=${encodeURIComponent(name)}`;
+      // The route broadcasts its own write, so no /notify here.
+      const { body } = await bytes(url, 'POST', data, 'application/octet-stream');
+      console.log(`added ${body.assignment}/${body.name} (${data.length} bytes)`);
     },
   },
   'rm-lecture': {
