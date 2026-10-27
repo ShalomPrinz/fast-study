@@ -59,6 +59,14 @@ describe('materialAttached', () => {
 })
 
 describe('materialTooLarge', () => {
+  it('exempts Office files, which are capped by extracted text', () => {
+    const all = new Set(['pdf', 'docx', 'pptx', 'xlsx'])
+    const size = MAX_GEMINI_FILE_BYTES + 1
+    for (const n of ['material.docx', 'material.PPTX', 'material.xlsx'])
+      expect(materialTooLarge(m(n, { size }), all)).toBe(false)
+    expect(materialTooLarge(m('material.pdf', { size }), all)).toBe(true)
+  })
+
   it('flags only an attached material over the limit', () => {
     const big = { size: MAX_GEMINI_FILE_BYTES + 1 }
     expect(materialTooLarge(m('material.pdf', big), SUPPORTED)).toBe(true)

@@ -59,8 +59,9 @@ reusable piece), the **attach switch**, "Open with…" in an `OpenWithMenu` over
 **Attach.** The switch decides whether Summarize sends the material to Gemini (`setMaterialAttach`; the tree's
 SSE refresh brings the new state). It is disabled while a run is on the lecture, until the support set
 loads, and for a type Gemini can't read. "Open with…" shows only where `canOpenWith()` (bridge has
-`open.fileWith` and `platform === 'win32'`). A material that is not sent reads muted; an attached one over
-10 MB (`MAX_GEMINI_FILE_BYTES`, mirroring the backend's) shows a warning, since Summarize would fail.
+`open.fileWith` and `platform === 'win32'`). A material that is not sent reads muted; an attached material over
+10 MB (`MAX_GEMINI_FILE_BYTES`, mirroring the backend's) shows a warning, since Summarize would fail, unless it is
+.docx/.pptx/.xlsx: the backend caps their extracted text, unknowable here, and fails with `material_too_large`.
 
 **Support set.** `GET /materials/supported` is read once after load (`app/supportedMaterials.ts`, beside the
 tool probe) into `SupportedMaterialsContext`. Before it answers every material counts as supported; if the

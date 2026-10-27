@@ -6,8 +6,11 @@ export type SupportedExtensions = ReadonlySet<string> | null
 // What a failed read falls back to: PDF is the one type that always worked.
 export const FALLBACK_SUPPORTED: ReadonlySet<string> = new Set(['pdf'])
 
-// Mirrors the backend's MAX_GEMINI_FILE_BYTES (backend/ `MAX_GEMINI_FILE_BYTES`), on-disk size.
+// Mirrors the backend's MAX_GEMINI_FILE_BYTES (backend/ `MAX_GEMINI_FILE_BYTES`), on-disk size for sent-as-is types.
 export const MAX_GEMINI_FILE_BYTES = 10 * 1024 * 1024
+
+// Mirrors the backend's `_EXTRACTED`: Office files are capped by their extracted text, which the UI can't know.
+const EXTRACTED_EXTENSIONS: ReadonlySet<string> = new Set(['docx', 'pptx', 'xlsx'])
 
 // The disk name's lower-cased extension, no dot.
 export function extensionOf(name: string): string {
@@ -37,9 +40,13 @@ export function attachedMaterials(
   return materials.filter((m) => materialAttached(m, supported))
 }
 
-// An attached material over Gemini's size limit, which fails the whole Summarize.
+// An attached, sent-as-is material (not Office) over Gemini's size limit, which fails the whole Summarize.
 export function materialTooLarge(m: MaterialInfo, supported: SupportedExtensions): boolean {
-  return materialAttached(m, supported) && m.size > MAX_GEMINI_FILE_BYTES
+  return (
+    materialAttached(m, supported) &&
+    !EXTRACTED_EXTENSIONS.has(extensionOf(m.name)) &&
+    m.size > MAX_GEMINI_FILE_BYTES
+  )
 }
 
 // Whether the attached set now differs from the last summary's (toggle, download, delete); never
