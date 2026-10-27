@@ -1,9 +1,20 @@
 import { headersToObject } from './probe.js';
-import { parsePlaylist, selectStreams, pickVariant, isHlsUrl } from '../hlsPlaylist.js';
+import {
+  parsePlaylist,
+  selectStreams,
+  pickVariant,
+  isHlsUrl,
+  segmentCaptures,
+} from '../hlsPlaylist.js';
 
 const TIMEOUT_MS = 10_000;
 const MAX_PLAYLIST_BYTES = 2 * 1024 * 1024;
 export const MAX_CAPTURES = 30;
+// `.mp4` captures are never fetched, so they are capped apart from the playlists.
+export const MAX_MP4_CAPTURES = 100;
+// Media playlists fetched in one request to look up segment captures, and how many go at once.
+export const MAX_MEDIA_LOOKUPS = 20;
+const LOOKUP_CONCURRENCY = 4;
 
 // Credentials belong to the lecture site: a playlist on another origin gets the rest of the headers.
 const CREDENTIAL_HEADERS = new Set(['cookie', 'authorization']);
@@ -59,10 +70,12 @@ async function fetchPlaylist(url, headers, origin) {
 }
 
 // Duration and size of the 720p-capped variant yt-dlp would pick; null parts when unreadable.
-async function estimateMaster(master, url, headers) {
+async function estimateMaster(master, url, headers, known = new Map()) {
   const variant = pickVariant(master);
   if (!variant) return { durationSeconds: null, estimatedBytes: null };
-  const { parsed } = await fetchPlaylist(variant.url, headers, new URL(url).origin);
+  const parsed =
+    known.get(variant.url) ??
+    (await fetchPlaylist(variant.url, headers, new URL(url).origin)).parsed;
   const durationSeconds = parsed?.kind === 'media' ? parsed.durationSeconds : null;
   const estimatedBytes =
     durationSeconds && variant.bandwidth
@@ -71,24 +84,64 @@ async function estimateMaster(master, url, headers) {
   return { durationSeconds, estimatedBytes };
 }
 
-// Fetch each capture `{url, headers}` and offer the streams worth showing -> `{ streams, failed }`.
-// Shapes: docs/DOWNLOAD.md ("HLS").
+// Offer the streams worth showing from the `.m3u8` captures `{url, headers}`; other captures only
+// match playlist segments -> `{ streams, failed, segments }`. Shapes: docs/DOWNLOAD.md ("HLS").
 export async function classifyCaptures(captures) {
-  const headersOf = new Map(captures.map((c) => [c.url, c.headers]));
+  const playlists = captures.filter((c) => isHlsUrl(c.url) || !URL.canParse(c.url));
+  const mp4Urls = [...new Set(captures.filter((c) => !playlists.includes(c)).map((c) => c.url))];
+  const headersOf = new Map(playlists.map((c) => [c.url, c.headers]));
   const fetched = await Promise.all(
-    captures.map(async (c) => ({ url: c.url, ...(await fetchPlaylist(c.url, c.headers)) })),
+    playlists.map(async (c) => ({ url: c.url, ...(await fetchPlaylist(c.url, c.headers)) })),
   );
   const failed = fetched.filter((f) => f.error).map((f) => ({ url: f.url, detail: f.error }));
   const entries = fetched.filter((f) => f.parsed).map((f) => ({ url: f.url, parsed: f.parsed }));
   const parsedOf = new Map(entries.map((e) => [e.url, e.parsed]));
+
+  // Segments no captured media playlist lists: look in the captured masters' own media playlists.
+  let segments = segmentCaptures(
+    mp4Urls,
+    entries.map((e) => e.parsed),
+  );
+  const lookedUp = new Map();
+  if (segments.length < mp4Urls.length) {
+    // Round-robin over masters, each variant URL once, so one master can't use the whole cap.
+    const queues = entries
+      .filter((e) => e.parsed.kind === 'master')
+      .map((e) => ({
+        e,
+        urls: e.parsed.mediaUrls.filter((u) => !parsedOf.has(u)),
+      }));
+    const queued = new Set();
+    const todo = [];
+    for (let i = 0; queues.some((q) => i < q.urls.length); i++) {
+      for (const q of queues) {
+        const u = q.urls[i];
+        if (u && !queued.has(u)) {
+          queued.add(u);
+          todo.push({ u, e: q.e });
+        }
+      }
+    }
+    todo.length = Math.min(todo.length, MAX_MEDIA_LOOKUPS);
+    for (let i = 0; i < todo.length && segments.length < mp4Urls.length; i += LOOKUP_CONCURRENCY) {
+      await Promise.all(
+        todo.slice(i, i + LOOKUP_CONCURRENCY).map(async ({ u, e }) => {
+          const { parsed } = await fetchPlaylist(u, headersOf.get(e.url), new URL(e.url).origin);
+          if (parsed) lookedUp.set(u, parsed);
+        }),
+      );
+      segments = segmentCaptures(mp4Urls, [...entries.map((x) => x.parsed), ...lookedUp.values()]);
+    }
+  }
+
   const streams = await Promise.all(
     selectStreams(entries).map(async (s) => {
       if (s.kind === 'media') return { ...s, estimatedBytes: null };
-      const est = await estimateMaster(parsedOf.get(s.url), s.url, headersOf.get(s.url));
+      const est = await estimateMaster(parsedOf.get(s.url), s.url, headersOf.get(s.url), lookedUp);
       return { ...s, ...est };
     }),
   );
-  return { streams, failed };
+  return { streams, failed, segments };
 }
 
 // The `/probe-size` answer for an HLS capture: the master's estimate, or null for anything else.

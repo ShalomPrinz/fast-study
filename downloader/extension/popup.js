@@ -9,8 +9,9 @@ function api(path, init = {}) {
   return fetch(`${server.base}${path}`, { ...init, headers });
 }
 
-// The server accepts at most 30 captures per classification.
+// The server accepts at most 30 playlists and 100 other captures per classification.
 const MAX_HLS_CAPTURES = 30;
+const MAX_OTHER_CAPTURES = 100;
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
 
 const msg = (key, ...subs) => chrome.i18n.getMessage(key, subs.map(String));
@@ -300,7 +301,7 @@ function isHlsUrl(url) {
 }
 
 // The server fetches each captured playlist with its headers and answers the streams worth offering,
-// best first, plus the captures it could not read.
+// best first, the captures it could not read, and which sent .mp4s are HLS segments (absent on an old server).
 async function classifyStreams(captures) {
   const res = await api('/hls-streams', {
     method: 'POST',
@@ -308,7 +309,8 @@ async function classifyStreams(captures) {
     body: JSON.stringify({ captures: captures.map(({ url, headers }) => ({ url, headers })) }),
   });
   if (!res.ok) throw new Error(await serverError(res));
-  return res.json();
+  const body = await res.json();
+  return { ...body, segments: body.segments ?? [] };
 }
 
 function formatDuration(seconds) {
@@ -357,13 +359,16 @@ async function loadSource() {
   const { videoRequests = [] } = await chrome.storage.local.get('videoRequests');
   // Exact-URL match, so captures from another page or tab never leak in.
   const onPage = videoRequests.filter((r) => r.pageUrl === pageUrl);
-  const mp4s = onPage.filter((r) => !isHlsUrl(r.url));
+  let mp4s = onPage.filter((r) => !isHlsUrl(r.url));
   const playlists = onPage.filter((r) => isHlsUrl(r.url)).slice(0, MAX_HLS_CAPTURES);
-  let hls = { streams: [], failed: [] };
+  let hls = { streams: [], failed: [], segments: [] };
   let hlsError = null;
   if (playlists.length) {
     try {
-      hls = await classifyStreams(playlists);
+      // Captures are newest first; an fMP4 stream's segment requests ride along so the server can name them.
+      hls = await classifyStreams([...playlists, ...mp4s.slice(0, MAX_OTHER_CAPTURES)]);
+      const segments = new Set(hls.segments);
+      mp4s = mp4s.filter((r) => !segments.has(r.url));
     } catch (e) {
       hlsError = { headline: msg('errHlsStreams'), detail: e.message };
     }

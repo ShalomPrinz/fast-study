@@ -53,10 +53,10 @@ async function record(details) {
   const next = [entry, ...videoRequests.filter((e) => e.url !== entry.url)].slice(0, MAX_ENTRIES);
   await chrome.storage.local.set({ videoRequests: next });
 
-  // An HLS page loads one playlist per variant, so every .m3u8 on the page counts as one video.
+  // The worker can't tell an fMP4 stream's segment .mp4s from real videos, so a page with any .m3u8
+  // shows 1 (one playlist per variant is still one video); the popup counts exactly.
   const mine = next.filter((e) => e.pageUrl === pageUrl);
-  const hls = mine.filter((e) => isHlsUrl(e.url)).length;
-  const onPage = mine.length - hls + (hls ? 1 : 0);
+  const onPage = mine.some((e) => isHlsUrl(e.url)) ? 1 : mine.length;
   // The tab may have closed meanwhile; a per-tab badge on a gone tab rejects.
   await chrome.action
     .setBadgeBackgroundColor({ tabId: details.tabId, color: BADGE_COLOR })

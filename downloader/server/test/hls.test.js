@@ -8,7 +8,7 @@ import {
   selectStreams,
 } from '../src/hlsPlaylist.js';
 import http from 'node:http';
-import { classifyCaptures } from '../src/services/hls.js';
+import { classifyCaptures, MAX_MEDIA_LOOKUPS } from '../src/services/hls.js';
 import { buildHlsArgs, buildCookieJar } from '../src/downloaders/ytdlp.js';
 
 const BASE = 'https://host.example/p/a/master.m3u8?t=1';
@@ -215,6 +215,108 @@ test('classifyCaptures: a chunked body past the size cap is cut off, not buffere
     assert.ok(sent < 16 * 1024 * 1024, `server wrote ${sent}`);
   } finally {
     srv.closeAllConnections();
+    srv.close();
+  }
+});
+
+const FMP4_MASTER = `#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=1280x720,CODECS="avc1.4d401f,mp4a.40.2"
+v/index.m3u8?t=2
+#EXT-X-STREAM-INF:BANDWIDTH=300000,CODECS="mp4a.40.2"
+a/index.m3u8
+`;
+const FMP4_MEDIA = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-MAP:URI="fragmented.mp4?sig=a",BYTERANGE="800@0"
+#EXTINF:6.0,
+#EXT-X-BYTERANGE:5000@800
+fragmented.mp4?sig=a
+#EXTINF:4.0,
+#EXT-X-BYTERANGE:4000@5800
+fragmented.mp4?sig=a
+#EXT-X-ENDLIST
+`;
+
+test('parse: fMP4 media lists its EXT-X-MAP and segment URIs, query dropped', () => {
+  const p = parsePlaylist(FMP4_MEDIA, 'https://h.example/p/v/index.m3u8');
+  assert.equal(p.durationSeconds, 10);
+  assert.deepEqual(p.resourceUrls, ['https://h.example/p/v/fragmented.mp4']);
+  const m = parsePlaylist(FMP4_MASTER, BASE);
+  assert.equal(masterHasAudio(m), true);
+  assert.equal(pickVariant(m).height, 720);
+});
+
+test('classifyCaptures: .mp4 captures that are fMP4 segments are reported, via the captured media playlist', async () => {
+  const { srv, base } = await serve((req, res) => {
+    const path = req.url.split('?')[0];
+    res.end(path.endsWith('/master.m3u8') ? FMP4_MASTER : FMP4_MEDIA);
+  });
+  try {
+    const out = await classifyCaptures([
+      { url: `${base}/p/master.m3u8`, headers: [] },
+      { url: `${base}/p/v/index.m3u8`, headers: [] },
+      { url: `${base}/p/v/fragmented.mp4?sig=zzz`, headers: [] },
+      { url: `${base}/p/other/lecture.mp4`, headers: [] },
+    ]);
+    assert.deepEqual(out.segments, [`${base}/p/v/fragmented.mp4?sig=zzz`]);
+    assert.equal(out.streams.length, 1);
+    assert.equal(out.streams[0].hasAudio, true);
+    assert.equal(out.streams[0].durationSeconds, 10);
+    assert.equal(out.streams[0].estimatedBytes, 2_500_000);
+  } finally {
+    srv.close();
+  }
+});
+
+test('classifyCaptures: a master alone is enough to place its fMP4 segment captures', async () => {
+  const { srv, base } = await serve((req, res) => {
+    const path = req.url.split('?')[0];
+    res.end(path.endsWith('/master.m3u8') ? FMP4_MASTER : FMP4_MEDIA);
+  });
+  try {
+    const out = await classifyCaptures([
+      { url: `${base}/p/master.m3u8`, headers: [] },
+      { url: `${base}/p/a/fragmented.mp4`, headers: [] },
+    ]);
+    assert.deepEqual(out.segments, [`${base}/p/a/fragmented.mp4`]);
+  } finally {
+    srv.close();
+  }
+});
+
+test('classifyCaptures: segment lookups are deduped, capped for the whole request, and stop once matched', async () => {
+  const variants = (n) =>
+    '#EXTM3U\n' +
+    Array.from(
+      { length: n },
+      (_, i) => `#EXT-X-STREAM-INF:BANDWIDTH=${1000 + i}\nv${i}/index.m3u8\n`,
+    ).join('');
+  const hits = [];
+  const { srv, base } = await serve((req, res) => {
+    const path = req.url.split('?')[0];
+    if (path.endsWith('/master.m3u8')) return res.end(variants(30));
+    hits.push(path);
+    res.end(path.includes('/v1/') ? FMP4_MEDIA : MEDIA);
+  });
+  try {
+    const masters = Array.from({ length: 10 }, (_, i) => ({
+      url: `${base}/m${i}/master.m3u8`,
+      headers: [],
+    }));
+    // unmatched: every lookup runs, but only up to the cap (the estimates add one fetch per master)
+    await classifyCaptures([...masters, { url: `${base}/nowhere/x.mp4`, headers: [] }]);
+    assert.ok(hits.length <= MAX_MEDIA_LOOKUPS + masters.length, `${hits.length} fetches`);
+    assert.equal(new Set(hits.slice(0, MAX_MEDIA_LOOKUPS)).size, MAX_MEDIA_LOOKUPS);
+
+    // matched in the first batch: no further batches
+    hits.length = 0;
+    const out = await classifyCaptures([
+      { url: `${base}/m0/master.m3u8`, headers: [] },
+      { url: `${base}/m0/v1/fragmented.mp4`, headers: [] },
+    ]);
+    assert.deepEqual(out.segments, [`${base}/m0/v1/fragmented.mp4`]);
+    assert.ok(hits.length <= 5, `${hits.length} fetches`);
+  } finally {
     srv.close();
   }
 });

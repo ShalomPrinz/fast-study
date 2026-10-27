@@ -68,7 +68,7 @@ Panopto and other HLS players never load a whole `.mp4`, so the extension also c
 whose path ends in `.m3u8`. The server decides which captures are worth showing; MV3 cannot read
 response bodies, so it fetches each playlist itself with the replayed headers.
 
-- **`POST /hls-streams`** `{captures:[{url, headers}]}` (at most 30) → `{streams, failed}`. `streams` is
+- **`POST /hls-streams`** `{captures:[{url, headers}]}` (at most 30 `.m3u8` plus 100 others) → `{streams, failed, segments}`. `streams` is
   `[{url, kind:'master'|'media', hasAudio, hasVideo, durationSeconds, estimatedBytes}]`, best first:
   `hasAudio:true`, then unknown (`null`), then audio-less. Masters are offered; a variant or audio
   playlist a captured master references (`#EXT-X-STREAM-INF`/`#EXT-X-MEDIA`, compared ignoring the
@@ -76,6 +76,15 @@ response bodies, so it fetches each playlist itself with the replayed headers.
   own, so the caller maps back to its headers. `failed` is `[{url, detail}]` for a capture that could
   not be read (`HTTP 403`, a network error); a non-playlist body is dropped silently. Pure logic is
   `src/hlsPlaylist.js`, the fetching `services/hls.js`.
+- **`segments`** answers which non-`.m3u8` captures (the extension's `.mp4` ones, sent in the same
+  `captures`, never fetched, capped apart from the playlists) are really HLS pieces: an fMP4 stream's
+  `#EXT-X-MAP` init section or segment URI (`fragmented.mp4`, with `#EXT-X-BYTERANGE`) ends in `.mp4`.
+  It is the subset of those capture URLs, as sent, whose URL resolved against the playlist and
+  compared ignoring the query matches a media playlist's map or segment. The playlists searched are
+  the captured media playlists, plus (only while some `.mp4` is still unmatched) up to 20 media
+  playlists in total per request (each URL once, round-robin over the masters, 4 at a time, stopping
+  once every `.mp4` matches), fetched with their master's headers, so a player that captured only
+  the master still resolves. The estimate reuses a looked-up variant instead of refetching it.
 - **Audio** is read from the master in-process, with no binary probe: an `#EXT-X-MEDIA:TYPE=AUDIO`
   group or an audio codec (`mp4a`, `ac-3`, `ec-3`, `opus`…) in any variant's `CODECS` is `true`;
   `CODECS` on every variant and none audio is `false`; no information is `null`. Segments are never
@@ -95,7 +104,7 @@ response bodies, so it fetches each playlist itself with the replayed headers.
   `SKIP_HEADERS` are not replayed.
 - **Shapes** (parse and select, `src/hlsPlaylist.js`): a master parses to variants
   `{url, bandwidth, height, codecs, audioGroup}`, `audioGroups` and every URI it references; a media
-  playlist to `{durationSeconds, audioOnly}`. A capture is offered as a master, or as a media
+  playlist to `{durationSeconds, audioOnly, resourceUrls}` (map and segment URLs, query dropped). A capture is offered as a master, or as a media
   playlist no captured master references; identical URLs collapse to the last capture. Playlist
   bodies are read through a 2 MiB cap, so a larger or endless one lands in `failed` as
   `playlist too large`.

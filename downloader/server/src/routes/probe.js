@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { probeContentLength } from '../services/probe.js';
-import { probeHlsBytes, classifyCaptures, MAX_CAPTURES } from '../services/hls.js';
+import {
+  probeHlsBytes,
+  classifyCaptures,
+  MAX_CAPTURES,
+  MAX_MP4_CAPTURES,
+} from '../services/hls.js';
 import { invalidRequest } from '../validate.js';
 import { isHlsUrl } from '../hlsPlaylist.js';
 
@@ -19,10 +24,19 @@ router.post('/probe-size', async (req, res) => {
 // The popup's captured .m3u8 requests in, the streams worth offering out (docs/DOWNLOAD.md, "HLS").
 router.post('/hls-streams', async (req, res) => {
   const { captures } = req.body ?? {};
-  if (!Array.isArray(captures) || captures.length > MAX_CAPTURES) {
+  const tooMany =
+    Array.isArray(captures) &&
+    (captures.filter((c) => isHlsUrl(c?.url)).length > MAX_CAPTURES ||
+      captures.filter((c) => !isHlsUrl(c?.url)).length > MAX_MP4_CAPTURES);
+  if (!Array.isArray(captures) || tooMany) {
     return res
       .status(400)
-      .json(invalidRequest('captures', `captures must be an array of at most ${MAX_CAPTURES}`));
+      .json(
+        invalidRequest(
+          'captures',
+          `captures must be an array of at most ${MAX_CAPTURES} .m3u8 and ${MAX_MP4_CAPTURES} other`,
+        ),
+      );
   }
   const valid = captures.filter(
     (c) =>

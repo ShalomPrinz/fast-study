@@ -25,6 +25,9 @@ function parseAttributes(text) {
   return out;
 }
 
+// Same resource ignoring the query: a CDN token that rotates between fetches must still dedupe.
+const bare = (url) => url.split(/[?#]/)[0];
+
 function resolve(uri, base) {
   try {
     return new URL(uri, base).href;
@@ -80,16 +83,30 @@ export function parsePlaylist(text, baseUrl) {
   if (lines.some((l) => l.startsWith('#EXTINF:'))) {
     let durationSeconds = 0;
     const segments = [];
+    const resources = new Set();
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].startsWith('#EXTINF:')) {
         durationSeconds += parseFloat(lines[i].slice(8)) || 0;
         const uri = lines.slice(i + 1).find((l) => l && !l.startsWith('#'));
-        if (uri) segments.push(uri.split(/[?#]/)[0].toLowerCase());
+        if (uri) {
+          segments.push(uri.split(/[?#]/)[0].toLowerCase());
+          const url = resolve(uri, baseUrl);
+          if (url) resources.add(bare(url));
+        }
+      } else if (lines[i].startsWith('#EXT-X-MAP:')) {
+        const map = parseAttributes(lines[i].slice('#EXT-X-MAP:'.length)).URI;
+        const url = map ? resolve(map, baseUrl) : null;
+        if (url) resources.add(bare(url));
       }
     }
     const audioOnly =
       segments.length > 0 && segments.every((s) => /\.(aac|m4a|mp3|ac3|ec3)$/.test(s));
-    return { kind: 'media', durationSeconds: durationSeconds || null, audioOnly };
+    return {
+      kind: 'media',
+      durationSeconds: durationSeconds || null,
+      audioOnly,
+      resourceUrls: [...resources],
+    };
   }
   return { kind: 'unknown' };
 }
@@ -120,9 +137,6 @@ export function pickVariant(master) {
     master.variants[0],
   );
 }
-
-// Same resource ignoring the query: a CDN token that rotates between fetches must still dedupe.
-const bare = (url) => url.split(/[?#]/)[0];
 
 // Which captured playlists `[{url, parsed}]` to offer, audio first (docs/DOWNLOAD.md, "HLS").
 export function selectStreams(entries) {
@@ -161,4 +175,11 @@ export function selectStreams(entries) {
     .map((s, i) => [s, i])
     .sort((a, b) => tier(a[0]) - tier(b[0]) || a[1] - b[1])
     .map(([s]) => s);
+}
+
+// The captured `.mp4` URLs that are an init section or segment of any parsed media playlist (query ignored).
+export function segmentCaptures(mp4Urls, parsedList) {
+  const known = new Set();
+  for (const p of parsedList) if (p.kind === 'media') for (const u of p.resourceUrls) known.add(u);
+  return mp4Urls.filter((u) => known.has(bare(u)));
 }
