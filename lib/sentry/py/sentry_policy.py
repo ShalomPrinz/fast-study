@@ -53,6 +53,11 @@ _reporting = os.environ.get("FASTSTUDY_ERROR_REPORTS") == "1"
 _on_since = 0.0
 # Release health: the SDK aggregates request counts into these across the off period.
 _SESSION_ITEMS = frozenset({"session", "sessions"})
+# A peer hanging up, as asyncio's own logger reports it (Windows Proactor's _call_connection_lost):
+# benign and unactionable. The same types raised anywhere else may be real, so they stay.
+_PEER_GONE = frozenset(
+    {"ConnectionResetError", "ConnectionAbortedError", "BrokenPipeError"}
+)
 
 
 def set_reporting(on):
@@ -159,13 +164,24 @@ def _walk(value, frames=False):
     return value
 
 
+def _peer_disconnect(event):
+    """Whether this is asyncio logging a peer disconnect rather than an app failure."""
+
+    if event.get("logger") != "asyncio":
+        return False
+    values = (event.get("exception") or {}).get("values") or []
+    return bool(values) and values[-1].get("type") in _PEER_GONE
+
+
 def scrub(event, _hint=None):
-    """`before_send`: None while off or for an event captured while off; else redacted, host and user dropped."""
+    """`before_send`: None while off, for an event captured while off or asyncio's peer-disconnect noise; else redacted."""
 
     if not _reporting or _captured_while_off(event):
         return None
     # Drop on failure: an unscrubbed event is the leak this exists to prevent, a lost one is not.
     try:
+        if _peer_disconnect(event):
+            return None
         event = _walk(event)
         event.pop("server_name", None)
         event.pop("user", None)

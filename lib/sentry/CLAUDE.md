@@ -24,6 +24,9 @@ and guards every `process` read.
   → `<user>` (prefix kept — the renderer knows no home); `GROQ_API_KEY`, `GEMINI_API_KEY` and
   `FASTSTUDY_SECRET` values, `gsk_…`/`AIza…` shapes and `secret=` query values → `<key>`.
   `server_name` (the hostname) and `user` are deleted.
+  Python's also drops an event from the `asyncio` logger whose exception is `ConnectionResetError`,
+  `ConnectionAbortedError` or `BrokenPipeError` — a peer hanging up (Windows Proactor), not a fault;
+  those types from any other logger stay. JS has no counterpart: Node logs no such event.
 - `scrub_breadcrumb` / `scrubBreadcrumb` — `before_breadcrumb`, the same walk on one crumb.
 - `reporting()` / `set_reporting(on)` / `setReporting(on)` — the user's error-reports switch, one flag
   per process: `FASTSTUDY_ERROR_REPORTS=1` at start means on, anything else or unset means off; each

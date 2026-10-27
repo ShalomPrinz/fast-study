@@ -356,6 +356,36 @@ def test_failure_drops_the_event(monkeypatch):
     assert scrub_breadcrumb({"message": "x"}, None) is None
 
 
+def logged(logger, exc_type):
+    """An event as the SDK's logging integration builds it from `log.error(..., exc_info=True)`."""
+
+    return {
+        "logger": logger,
+        "level": "error",
+        "message": "Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)",
+        "exception": {
+            "values": [{"type": exc_type, "value": "[WinError 10054] reset"}]
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "exc_type", ["ConnectionResetError", "ConnectionAbortedError", "BrokenPipeError"]
+)
+def test_asyncio_peer_disconnect_is_dropped(exc_type):
+    assert scrub(logged("asyncio", exc_type)) is None
+
+
+@pytest.mark.parametrize("logger", ["database", "uvicorn.error", None])
+def test_peer_disconnect_from_other_loggers_is_kept(logger):
+    assert scrub(logged(logger, "ConnectionResetError")) is not None
+
+
+def test_other_asyncio_errors_are_kept():
+    assert scrub(logged("asyncio", "RuntimeError")) is not None
+    assert scrub({"logger": "asyncio", "message": "Task was destroyed"}) is not None
+
+
 def test_tags_known_services():
     for service in ("backend", "database", "server", "auto", "electron", "frontend"):
         t = tags(service)
