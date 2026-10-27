@@ -41,3 +41,17 @@ one-line comment pointing at this file.
 - **What it does:** reads it and, when a key is set, rewrites it encrypted.
 - **Remove when:** every install has launched once under a release that sets the key. After
   removal, a still-plaintext file reads as absent, so the user reconnects once.
+
+## Assignment file manifest seed
+
+- **Code:** `database/fs/assignments.py`, the seed branch of `_load_manifest` (after the `v` 2 check)
+  and `_is_junk_name`.
+- **Old state:** an assignment folder written by app 0.2.15 or earlier has no `.assignment_files.json`
+  or a flat `{filename: source}` one that lists only downloaded files, while the file list now shows
+  only manifest entries.
+- **What it does:** on the folder's first read or upload, records every regular file in it (keeping
+  known sources, dropping junk names: dotfiles, `~$*`, `*.tmp`, `Thumbs.db`, `desktop.ini`) and
+  writes the manifest as `{"v": 2, "files": {…}}`.
+- **Remove when:** no install can still hold an unseeded folder, i.e. upgrading straight from 0.2.15
+  or earlier is no longer supported. After removal, an unseeded folder lists no files until
+  something is uploaded to it, and even then only that upload.

@@ -1,4 +1,7 @@
+import json
 import os
+import threading
+import time
 from pathlib import Path
 
 from .material_meta import read_json_dict, write_json_dict
@@ -30,14 +33,75 @@ from .summary import restore_snapshot, write_snapshotted
 _KINDS = ("lecture", "recitation")
 
 
-def _read_sources(d: Path) -> dict[str, str]:
-    """Read an assignment's {filename: source} map, keeping only non-empty string pairs."""
+_MANIFEST_VERSION = 2
 
-    return {
-        k: v
-        for k, v in read_json_dict(d, ASSIGNMENT_FILES_MARKER).items()
-        if isinstance(v, str) and v
-    }
+
+def _is_junk_name(name: str) -> bool:
+    """True for names the legacy seed skips: dotfiles, Office `~$` owner files, `*.tmp`, Thumbs.db, desktop.ini."""
+
+    return (
+        name.startswith((".", "~$"))
+        or name.lower().endswith(".tmp")
+        or name.lower() in ("thumbs.db", "desktop.ini")
+    )
+
+
+# Held across every load-seed-write and load-record-write of a manifest: listing seeds from the threadpool while uploads run on the loop.
+_manifest_lock = threading.Lock()
+
+
+def _load_manifest(d: Path) -> dict[str, str]:
+    """Read an assignment's {filename: source} manifest ("" = no source), seeding it from the folder once if it predates the format; caller holds _manifest_lock, OSError on an unreadable existing manifest."""
+
+    try:
+        text = (d / ASSIGNMENT_FILES_MARKER).read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raw: dict = {}
+    # Any other OSError propagates: an unreadable manifest is not an absent one, and reseeding would clobber it.
+    else:
+        try:
+            parsed = json.loads(text)
+        except ValueError:
+            parsed = {}
+        raw = parsed if isinstance(parsed, dict) else {}
+    files = raw.get("files")
+    if raw.get("v") == _MANIFEST_VERSION and isinstance(files, dict):
+        return {k: v if isinstance(v, str) else "" for k, v in files.items()}
+    # Temporary migration, see docs/MIGRATIONS.md: apps <= 0.2.15 wrote a flat {filename: source} map.
+    entries = {k: v for k, v in raw.items() if isinstance(v, str) and v}
+    try:
+        names = [f.name for f in d.iterdir() if f.is_file()]
+    except OSError:
+        return {}
+    seeded = {n: entries.get(n, "") for n in sorted(names) if not _is_junk_name(n)}
+    # Persisted even when empty, so an empty folder is not reseeded on every read.
+    write_json_dict(
+        d, ASSIGNMENT_FILES_MARKER, {"v": _MANIFEST_VERSION, "files": seeded}
+    )
+    return seeded
+
+
+def _write_manifest_strict(d: Path, files: dict[str, str]) -> None:
+    """Persist the manifest, retrying briefly: Windows os.replace fails while a reader holds the file open; raises when it never lands."""
+
+    last: OSError | None = None
+    for attempt in range(4):
+        if attempt:
+            time.sleep(0.05)
+        try:
+            write_json_dict(
+                d,
+                ASSIGNMENT_FILES_MARKER,
+                {"v": _MANIFEST_VERSION, "files": files},
+                strict=True,
+            )
+            return
+        except OSError as e:
+            last = e
+    assert last is not None
+    if isinstance(last, PermissionError):
+        reject_if_locked(last, ASSIGNMENT_FILES_MARKER)
+    raise last
 
 
 def _free_name(d: Path, filename: str) -> str:
@@ -73,7 +137,7 @@ def _legal_filename(filename: str) -> str:
 def write_assignment_file(
     course: str, name: str, filename: str, data: bytes, source: str | None = None
 ) -> tuple[str, str]:
-    """Save a file in an assignment under a collision-free name, record its source, return (assignment, file) as written."""
+    """Save a file in an assignment under a collision-free name, record it in the manifest, return (assignment, file) as written."""
 
     filename = _legal_filename(filename)
     # The course is never created here: an upload finishing after a rename would recreate a ghost course.
@@ -81,16 +145,25 @@ def write_assignment_file(
         raise CourseNotFound(f"course not found: {course}", course=course)
     d = assignment_dir(course, name)
     d.mkdir(parents=True, exist_ok=True)
-    # No await between scan and write is what makes allocation lock-free — see docs/LAYOUT.md.
-    effective = _free_name(d, filename)
-    (d / effective).write_bytes(data)
-    sources = _read_sources(d)
-    # A stale entry left by a file removed outside the API must not mislabel the new one.
-    stale = sources.pop(effective, None)
-    if source:
-        sources[effective] = source
-    if source or stale is not None:
-        write_json_dict(d, ASSIGNMENT_FILES_MARKER, sources)
+    # No await inside: with the lock held across load, write and record, allocation and the manifest stay consistent — see docs/LAYOUT.md.
+    with _manifest_lock:
+        try:
+            # Loaded before the write so a legacy folder is seeded without the new file.
+            files = _load_manifest(d)
+        except PermissionError as e:
+            reject_if_locked(e, ASSIGNMENT_FILES_MARKER)
+            raise
+        effective = _free_name(d, filename)
+        target = d / effective
+        target.write_bytes(data)
+        # Overwriting also replaces a stale entry left by a file removed outside the API.
+        files[effective] = source or ""
+        try:
+            _write_manifest_strict(d, files)
+        except OSError:
+            # An unlisted file is invisible and a retry would allocate `x (2)`; undo so the caller retries cleanly.
+            target.unlink(missing_ok=True)
+            raise
     return d.name, effective
 
 
@@ -148,16 +221,6 @@ def _read_doc(g: Path, doc: str) -> dict | None:
     return {"md_mtime": md, "pdf_mtime": pdf, "pdf_warning": warning or None}
 
 
-def _is_junk_name(name: str) -> bool:
-    """True for names the file list hides: dotfiles, Office `~$` owner files, `*.tmp`, Thumbs.db, desktop.ini."""
-
-    return (
-        name.startswith((".", "~$"))
-        or name.lower().endswith(".tmp")
-        or name.lower() in ("thumbs.db", "desktop.ini")
-    )
-
-
 def list_assignments(course_path: Path) -> list[dict]:
     """Build the tree's assignments list: {name, done, files, lectures, docs}, both levels sorted by name."""
 
@@ -166,21 +229,27 @@ def list_assignments(course_path: Path) -> list[dict]:
         return []
     out = []
     for a in sorted(p for p in root.iterdir() if p.is_dir()):
-        sources = _read_sources(a)
+        try:
+            with _manifest_lock:
+                sources = _load_manifest(a)  # the manifest alone decides the rows
+        except OSError:
+            # Unreadable now: list nothing for this assignment rather than reseed over it.
+            sources = {}
         detached = _read_attach(a)
         files = []
-        for f in sorted(a.iterdir()):
-            if _is_junk_name(f.name) or not f.is_file():
-                continue
+        for name in sorted(sources):
+            f = a / name
             try:
+                if not f.is_file():
+                    continue
                 st = f.stat()
             except OSError:
                 # Deleted between listing and stat — treat as absent rather than failing the tree.
                 continue
-            entry = {"name": f.name, "size": st.st_size, "mtime": st.st_mtime}
-            if f.name in sources:
-                entry["source"] = sources[f.name]
-            entry["attach"] = f.name not in detached
+            entry = {"name": name, "size": st.st_size, "mtime": st.st_mtime}
+            if sources[name]:
+                entry["source"] = sources[name]
+            entry["attach"] = name not in detached
             files.append(entry)
         out.append(
             {

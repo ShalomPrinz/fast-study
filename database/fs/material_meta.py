@@ -22,7 +22,7 @@ def read_json_dict(d: Path, marker: str) -> dict:
 
 
 def write_json_dict(d: Path, marker: str, data: dict, strict: bool = False) -> None:
-    """Persist a sidecar atomically (temp file + os.replace), removing it once empty; best-effort unless strict (raises OSError), event loop only."""
+    """Persist a sidecar atomically (temp file + os.replace), removing it once empty; best-effort unless strict (raises OSError); event loop only, except the assignment manifest, which fs.assignments serialises with its lock."""
 
     # A failure only loses a tag (the file itself is saved), so it never fails the request;
     # on Windows os.replace can hit a sharing violation while a threadpool reader has the file open.
@@ -63,7 +63,7 @@ def read_meta(d: Path) -> dict[str, dict]:
 
 
 def write_meta(d: Path, meta: dict[str, dict], strict: bool = False) -> None:
-    """Persist the map atomically, removing it once empty; best-effort unless strict (raises OSError), event loop only."""
+    """Persist the map atomically, removing it once empty; best-effort unless strict (raises OSError); event loop only, except the assignment manifest, which fs.assignments serialises with its lock."""
 
     write_json_dict(
         d, MATERIAL_META_MARKER, {n: e for n, e in meta.items() if e}, strict

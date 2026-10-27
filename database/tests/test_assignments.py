@@ -1,6 +1,7 @@
 """Assignments: reserved name, tree shape, collision allocation, sidecar source, and the path and bytes routes."""
 
 import json
+import shutil
 
 import pytest
 from fastapi.testclient import TestClient
@@ -50,7 +51,7 @@ def test_tree_skips_assignments_as_lecture_and_lists_empty(client, data_root):
             "docs": {"intuition": None, "solution": None},
         }
     ]
-    (data_root / "Algo" / "Assignments" / "t").rmdir()
+    shutil.rmtree(data_root / "Algo" / "Assignments" / "t")
     assert _node(client)["assignments"] == []
 
 
@@ -97,35 +98,50 @@ def test_dotfiles_hidden(client, data_root):
     assert names == ["ex1.pdf"]
 
 
-@pytest.mark.parametrize(
-    "junk",
-    [
-        "~$ex.docx",
-        "~WRL0001.tmp",
-        "scratch.tmp",
-        "SCRATCH.TMP",
-        "Thumbs.db",
-        "THUMBS.DB",
-        "desktop.ini",
-        "Desktop.INI",
-        ".DS_Store",
-        ".~lock.ex.docx#",
-    ],
-)
-def test_junk_files_hidden(client, data_root, junk):
-    _post(client, source="r")
-    (data_root / "Algo/Assignments/תרגיל 1" / junk).write_bytes(b"1")
-    names = [f["name"] for f in _node(client)["assignments"][0]["files"]]
-    assert names == ["ex1.pdf"]
+def _names(client):
+    return [f["name"] for f in _node(client)["assignments"][0]["files"]]
 
 
-def test_normal_names_with_tilde_still_listed(client, data_root):
-    _post(client, source="r")
+def test_upload_without_source_listed(client):
+    _post(client)
+    assert _names(client) == ["ex1.pdf"]
+
+
+@pytest.mark.parametrize("junk", ["x.tmp", "~$a.docx", "Thumbs.db"])
+def test_junk_named_upload_listed(client, junk):
+    _post(client, filename=junk, source="r")
+    _post(client, filename="b.pdf")
+    assert junk in _names(client)
+
+
+def test_file_dropped_in_folder_not_listed(client, data_root):
+    _post(client)
+    (data_root / "Algo/Assignments/תרגיל 1/extra.pdf").write_bytes(b"1")
+    assert _names(client) == ["ex1.pdf"]
+
+
+def test_manifest_entry_without_file_not_listed(client, data_root):
+    _post(client, filename="a.pdf")
+    _post(client, filename="b.pdf")
+    (data_root / "Algo/Assignments/תרגיל 1/a.pdf").unlink()
+    assert _names(client) == ["b.pdf"]
+
+
+@pytest.mark.parametrize("flat", [True, False])
+def test_legacy_folder_seeded_once(client, data_root, flat):
     d = data_root / "Algo/Assignments/תרגיל 1"
-    for n in ("report.docx", "notes~.txt"):
+    d.mkdir(parents=True)
+    for n in ("a.pdf", "b.pdf", "x.tmp", "~$a.docx", "Thumbs.db", ".hid"):
         (d / n).write_bytes(b"1")
-    names = [f["name"] for f in _node(client)["assignments"][0]["files"]]
-    assert names == sorted(["ex1.pdf", "report.docx", "notes~.txt"])
+    if flat:
+        (d / ".assignment_files.json").write_text(json.dumps({"a.pdf": "ref"}))
+    files = _node(client)["assignments"][0]["files"]
+    assert [f["name"] for f in files] == ["a.pdf", "b.pdf"]
+    assert files[0].get("source") == ("ref" if flat else None)
+    assert "source" not in files[1]
+    assert json.loads((d / ".assignment_files.json").read_text())["v"] == 2
+    (d / "later.pdf").write_bytes(b"1")
+    assert _names(client) == ["a.pdf", "b.pdf"]
 
 
 def test_unreadable_sidecar_reads_empty(client, data_root):
@@ -162,7 +178,10 @@ def test_ntfs_names_sanitized(client, data_root, given, stored):
     assert [f["name"] for f in _node(client)["assignments"][0]["files"]] == [stored]
     d = data_root / "Algo/Assignments/תרגיל 1"
     assert (d / stored).exists()
-    assert json.loads((d / ".assignment_files.json").read_text()) == {stored: "s"}
+    assert json.loads((d / ".assignment_files.json").read_text()) == {
+        "v": 2,
+        "files": {stored: "s"},
+    }
 
 
 @pytest.mark.parametrize("given", ["?", "...", ":.x", ".hid"])
@@ -431,3 +450,74 @@ def test_fresh_drop_unlink_lock_is_file_locked(tmp_path, monkeypatch):
         summary.write_snapshotted(
             tmp_path / "a.md", tmp_path / "o.md", "x", True, (rec,)
         )
+
+
+def test_manifest_write_failure_removes_upload_and_fails(
+    client, data_root, monkeypatch
+):
+    import fs.assignments as fa
+
+    real = fa.write_json_dict
+    calls = []
+
+    def boom(d, marker, data, strict=False):
+        calls.append(1)
+        if strict:
+            raise OSError("replace failed")
+        return real(d, marker, data, strict)
+
+    monkeypatch.setattr(fa, "write_json_dict", boom)
+    monkeypatch.setattr(fa.time, "sleep", lambda _s: None)
+    client = TestClient(client.app, raise_server_exceptions=False)
+    assert _post(client).status_code == 400
+    assert len(calls) >= 4
+    d = data_root / "Algo/Assignments/תרגיל 1"
+    assert not (d / "ex1.pdf").exists()
+    assert _names(client) == []
+
+
+def test_manifest_write_sharing_violation_is_file_locked(client, monkeypatch):
+    import fs.assignments as fa
+
+    def boom(*_a, **_k):
+        e = PermissionError(13, "denied")
+        e.winerror = 32
+        raise e
+
+    monkeypatch.setattr(fa, "write_json_dict", boom)
+    monkeypatch.setattr(fa.time, "sleep", lambda _s: None)
+    r = _post(client)
+    assert r.status_code == 423 and r.json()["code"] == "file_locked"
+
+
+def test_unreadable_manifest_never_reseeds_or_writes(client, data_root, monkeypatch):
+    _post(client, filename="a.pdf")
+    d = data_root / "Algo/Assignments/תרגיל 1"
+    manifest = d / ".assignment_files.json"
+    before = manifest.read_text()
+    (d / "b.pdf").write_bytes(b"1")
+    real = type(manifest).read_text
+
+    def flaky(self, *a, **k):
+        if self.name == ".assignment_files.json":
+            raise OSError("transient")
+        return real(self, *a, **k)
+
+    with monkeypatch.context() as m:
+        m.setattr(type(manifest), "read_text", flaky)
+        assert _node(client)["assignments"][0]["files"] == []
+        quiet = TestClient(client.app, raise_server_exceptions=False)
+        assert _post(quiet, filename="c.pdf").status_code == 400
+    assert manifest.read_text() == before
+    assert not (d / "c.pdf").exists()
+    assert _names(client) == ["a.pdf"]
+
+
+def test_empty_folder_seed_persists_v2(client, data_root):
+    d = data_root / "Algo/Assignments/תרגיל 1"
+    d.mkdir(parents=True)
+    assert _node(client)["assignments"][0]["files"] == []
+    manifest = d / ".assignment_files.json"
+    assert json.loads(manifest.read_text()) == {"v": 2, "files": {}}
+    (d / "later.pdf").write_bytes(b"1")
+    assert _names(client) == []
