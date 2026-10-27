@@ -139,28 +139,35 @@ export function pickVariant(master) {
 }
 
 // Which captured playlists `[{url, parsed}]` to offer, audio first (docs/DOWNLOAD.md, "HLS").
+// `entries` are newest first (the extension's store order): of captures with the same content the first wins.
 export function selectStreams(entries) {
-  const byUrl = new Map();
-  for (const e of entries) byUrl.set(e.url, e);
-  const unique = [...byUrl.values()];
-
   const referenced = new Set();
-  for (const e of unique) {
+  for (const e of entries) {
     if (e.parsed.kind === 'master') for (const u of e.parsed.mediaUrls) referenced.add(bare(u));
   }
 
+  // Same segments ignoring the query = same stream, however often the player re-minted its token.
+  // A master keeps its variants' queries: a CDN may pick the stream by them (`?id=<video>`).
+  const contentKey = (url, urls, strip = bare) =>
+    urls.length ? [...new Set(urls.map(strip))].sort().join('\n') : bare(url);
+
   const out = [];
-  const seenMedia = new Set();
-  for (const { url, parsed } of unique) {
+  const seen = new Set();
+  for (const { url, parsed } of entries) {
     if (parsed.kind === 'master') {
+      const key = `M${contentKey(url, parsed.mediaUrls, (u) => u)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
       out.push({
         url,
         kind: 'master',
         hasAudio: masterHasAudio(parsed),
         hasVideo: masterHasVideo(parsed),
       });
-    } else if (parsed.kind === 'media' && !referenced.has(bare(url)) && !seenMedia.has(bare(url))) {
-      seenMedia.add(bare(url));
+    } else if (parsed.kind === 'media' && !referenced.has(bare(url))) {
+      const key = `P${contentKey(url, parsed.resourceUrls)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
       out.push({
         url,
         kind: 'media',

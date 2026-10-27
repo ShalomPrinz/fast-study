@@ -133,6 +133,43 @@ test('selectStreams keeps one unreferenced media playlist; audio-only media is a
   assert.equal(out[1].durationSeconds, 10.5);
 });
 
+test('selectStreams collapses masters with the same variants and different tokens to the newest', () => {
+  const master = (inv) =>
+    `https://cdn.example/s/1.hls/master.m3u8?InvocationID=${inv}&StreamID=d49c`;
+  const body = () =>
+    `#EXTM3U
+#EXT-X-STREAM-INF:BANDWIDTH=300000,RESOLUTION=640x360,CODECS="avc1.4d401e,mp4a.40.2"
+298280/index.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=900000,RESOLUTION=1280x720,CODECS="avc1.4d401f,mp4a.40.2"
+409707/index.m3u8
+`;
+  const entry = (inv) => ({ url: master(inv), parsed: parsePlaylist(body(), master(inv)) });
+  const out = selectStreams([entry('new'), entry('old')]);
+  assert.deepEqual(
+    out.map((s) => s.url),
+    [master('new')],
+  );
+});
+
+test('selectStreams keeps masters that share a path but list different variants', () => {
+  const url = (q) => `https://cdn.example/s/1.hls/master.m3u8?StreamID=${q}`;
+  const mk = (q, v) => ({
+    url: url(q),
+    parsed: parsePlaylist(`#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\n${v}/index.m3u8\n`, url(q)),
+  });
+  const out = selectStreams([mk('a', '111'), mk('b', '222')]);
+  assert.equal(out.length, 2);
+});
+
+test('selectStreams keeps masters whose variants share a path but differ in query', () => {
+  const mk = (id) => {
+    const url = `https://cdn.example/hls/master.m3u8?t=${id}`;
+    const body = `#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nindex.m3u8?id=${id}&q=720\n`;
+    return { url, parsed: parsePlaylist(body, url) };
+  };
+  assert.equal(selectStreams([mk('a'), mk('b')]).length, 2);
+});
+
 test('buildHlsArgs replays plain headers, never credentials, and names the cookie jar', () => {
   const args = buildHlsArgs(
     'https://h.example/m.m3u8',

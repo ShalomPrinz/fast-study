@@ -105,7 +105,11 @@ response bodies, so it fetches each playlist itself with the replayed headers.
 - **Shapes** (parse and select, `src/hlsPlaylist.js`): a master parses to variants
   `{url, bandwidth, height, codecs, audioGroup}`, `audioGroups` and every URI it references; a media
   playlist to `{durationSeconds, audioOnly, resourceUrls}` (map and segment URLs, query dropped). A capture is offered as a master, or as a media
-  playlist no captured master references; identical URLs collapse to the last capture. Playlist
+  playlist no captured master references. Captures of the same content collapse to the first sent
+  (newest, so the freshest token): masters with the same resolved variant/rendition URIs (query kept,
+  as a CDN may pick the stream by it; a master with no URIs falls back to its query-stripped URL), or
+  media playlists with the same segment URIs, query-stripped, both compared as sets. A path alone is not enough, a
+  different variant list is a different stream. Playlist
   bodies are read through a 2 MiB cap, so a larger or endless one lands in `failed` as
   `playlist too large`.
 - **`POST /download`** with an `.m3u8` url (path, not query) picks the `hls` descriptor instead of
