@@ -336,6 +336,32 @@ test('the user closing the window mid-call ends block mode with an unrouted site
   assert.deepEqual(shown(), { open: false, captcha: false });
 });
 
+test('a plain Playwright closed-target Error before the close event is an unrouted site_blocked', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  ctx.page.isClosed = () => false;
+  ctx.page.evaluate = async () => {
+    throw new Error('page.evaluate: Target page, context or browser has been closed');
+  };
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.ok(err instanceof WsBlockedError);
+  assert.equal(err.routed, false);
+});
+
+test('a page reporting isClosed with an unrelated error is an unrouted site_blocked', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  ctx.page.isClosed = () => true;
+  ctx.page.evaluate = async () => {
+    throw new Error('page.evaluate: something else');
+  };
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.ok(err instanceof WsBlockedError);
+  assert.equal(err.routed, false);
+});
+
 // The page's fetch rejecting in the network: Chrome tells only requestfailed why, and `others`
 // fail around it (another call's request), whose reasons must not leak into this one.
 function failInNetwork(ctx, errorText, others = []) {

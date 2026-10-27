@@ -142,6 +142,10 @@ function abortable(promise, signal) {
   ]);
 }
 
+// Playwright rejects a call on a closed window with a plain Error carrying this text, not TargetClosedError;
+// re-check the wording on every Playwright upgrade (docs/MOODLE.md#constraints).
+const CLOSED_MESSAGE = /Target page, context or browser has been closed/;
+
 class ChallengeWindow {
   constructor(site, context, page) {
     this.site = site;
@@ -177,7 +181,13 @@ class ChallengeWindow {
 
   /** The window went away under a call: the user closed it, which ends block mode. */
   gone(err) {
-    return this.ended || win !== this || err?.name === 'TargetClosedError';
+    return (
+      this.ended ||
+      win !== this ||
+      err?.name === 'TargetClosedError' ||
+      this.page.isClosed?.() === true ||
+      CLOSED_MESSAGE.test(err?.message ?? '')
+    );
   }
 
   /** The page is on the site, so the clearance holds; anywhere else it is on the captcha. */

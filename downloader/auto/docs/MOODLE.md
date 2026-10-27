@@ -424,6 +424,9 @@ An uncommitted attempt that routed every WS call through a Chrome page parked on
 
 ## Constraints
 
+- **Playwright upgrades** — a closed challenge window is recognised by `page.isClosed()` and by the
+  message `Target page, context or browser has been closed` (`CLOSED_MESSAGE` in `challenge.js`); Playwright
+  throws it as a plain `Error`, so re-check the wording before bumping Playwright.
 - **Token lifetime** — 12 weeks by default, admin-configurable, and revoked on password change. An
   `invalidToken` shows Reconnect (one MFA); expected, not an error.
 - **Recordings in summaries** — unconfirmed against a course that actually posts `rec/share` links:
