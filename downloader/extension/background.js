@@ -7,10 +7,13 @@ const MAX_ENTRIES = 50;
 // The app's --accent, so the badge reads as FastStudy's.
 const BADGE_COLOR = '#4f5bd5';
 
+// Panopto serves plain HLS playlists as .panobf2 (its fMP4 segments are .panobf1, never captured).
+const HLS_SUFFIXES = ['.m3u8', '.panobf2'];
+
 function isVideoUrl(url) {
   try {
     const path = new URL(url).pathname.toLowerCase();
-    return path.endsWith('.mp4') || path.endsWith('.m3u8');
+    return path.endsWith('.mp4') || HLS_SUFFIXES.some((s) => path.endsWith(s));
   } catch {
     return false;
   }
@@ -18,7 +21,8 @@ function isVideoUrl(url) {
 
 function isHlsUrl(url) {
   try {
-    return new URL(url).pathname.toLowerCase().endsWith('.m3u8');
+    const path = new URL(url).pathname.toLowerCase();
+    return HLS_SUFFIXES.some((s) => path.endsWith(s));
   } catch {
     return false;
   }
@@ -53,7 +57,7 @@ async function record(details) {
   const next = [entry, ...videoRequests.filter((e) => e.url !== entry.url)].slice(0, MAX_ENTRIES);
   await chrome.storage.local.set({ videoRequests: next });
 
-  // The worker can't tell an fMP4 stream's segment .mp4s from real videos, so a page with any .m3u8
+  // The worker can't tell an fMP4 stream's segment .mp4s from real videos, so a page with any playlist
   // shows 1 (one playlist per variant is still one video); the popup counts exactly.
   const mine = next.filter((e) => e.pageUrl === pageUrl);
   const onPage = mine.some((e) => isHlsUrl(e.url)) ? 1 : mine.length;

@@ -292,9 +292,13 @@ async function probeSize(url, headers) {
   }
 }
 
+// Same rule as background.js.
+const HLS_SUFFIXES = ['.m3u8', '.panobf2'];
+
 function isHlsUrl(url) {
   try {
-    return new URL(url).pathname.toLowerCase().endsWith('.m3u8');
+    const path = new URL(url).pathname.toLowerCase();
+    return HLS_SUFFIXES.some((s) => path.endsWith(s));
   } catch {
     return false;
   }
