@@ -39,8 +39,8 @@ const held = { groq: new Set(), gemini: new Set() };
 
 // The failure this request gets among the modes its route honours, or 'ok'. The shim stamps the
 // lecture a pipeline step or an overview works on; a 'slow' hit is waited out here and answers 'ok'.
-async function failure(provider, req, honoured) {
-  const { hit, ms } = rules.take(provider, req.headers['x-harness-lecture'], honoured);
+async function failure(provider, req, honoured, model = null) {
+  const { hit, ms } = rules.take(provider, req.headers['x-harness-lecture'], honoured, model);
   if (hit === 'slow') {
     await new Promise((resolve) => {
       const release = () => {
@@ -109,6 +109,17 @@ function groqRateLimit(res) {
 
 // Gemini's 429: the SDK error carries this body through, and llm_client digs the QuotaFailure and
 // RetryInfo details out of it to build the message the lecture view shows.
+// The 503 the google-genai SDK raises as ServerError when a model is overloaded.
+function geminiOverloaded(res) {
+  json(res, 503, {
+    error: {
+      code: 503,
+      status: 'UNAVAILABLE',
+      message: 'The model is overloaded. Please try again later.',
+    },
+  });
+}
+
 function geminiRateLimit(res, perMinute = false) {
   json(res, 429, {
     error: {
@@ -279,7 +290,14 @@ async function handle(req, res) {
     const body = JSON.parse((await readBody(req)).toString('utf8') || '{}');
     const parts = partsOf(body);
     const doc = assignmentDoc(parts, HEADS);
-    const fail = await failure('gemini', req, ['429', '429min', '500', 'empty', 'slow']);
+    const model = /\/models\/([^/:]+):generateContent$/.exec(route)?.[1] ?? null;
+    const fail = await failure(
+      'gemini',
+      req,
+      ['429', '429min', '503', '500', 'empty', 'slow'],
+      model,
+    );
+    if (fail === '503') return geminiOverloaded(res);
     if (fail === '429') return geminiRateLimit(res);
     if (fail === '429min') return geminiRateLimit(res, true);
     if (fail === '500')

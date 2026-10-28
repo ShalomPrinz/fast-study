@@ -4,23 +4,31 @@
 // Each provider's rule: `mode` is what a matching request gets, `match` limits it to the lectures
 // whose `x-harness-lecture` path holds it as whole segments, and `times` drains one per hit, back
 // to 'ok' at zero. 'empty' is the "model returned nothing" branch each step has its own message for;
-// '429min' is Gemini's per-minute quota rather than the per-day one; 'slow' holds the call `ms` and then answers as 'ok', so a step stays in flight on demand.
+// '429min' is Gemini's per-minute quota rather than the per-day one; '503' is Gemini's overloaded
+// UNAVAILABLE, which a rule's `model` narrows to one named model (so a fallback to another succeeds); 'slow' holds the call `ms` and then answers as 'ok', so a step stays in flight on demand.
 export const MODES = {
   groq: ['ok', '429', '500', 'empty', 'slow'],
-  gemini: ['ok', '429', '429min', '500', 'empty', 'invalidkey', 'slow'],
+  gemini: ['ok', '429', '429min', '503', '500', 'empty', 'invalidkey', 'slow'],
 };
-export const OK = { mode: 'ok', match: null, times: null, ms: null };
+export const OK = { mode: 'ok', match: null, times: null, ms: null, model: null };
 
 // A bare string is the untargeted rule, so `{"gemini":"429"}` still fails every call.
 export function parseRule(provider, value) {
   const rule = { ...OK, ...(typeof value === 'string' ? { mode: value } : value) };
   const unknown = Object.keys(rule).filter((key) => !(key in OK));
-  if (unknown.length) throw new Error(`${provider} takes mode, match, times, ms — not ${unknown}`);
+  if (unknown.length)
+    throw new Error(`${provider} takes mode, match, times, ms, model — not ${unknown}`);
   if (rule.match !== null && (typeof rule.match !== 'string' || !rule.match)) {
     throw new Error(`${provider} match must be a non-empty path like "hb-fail/שיעור 4"`);
   }
   if (!MODES[provider].includes(rule.mode)) {
     throw new Error(`${provider} mode must be one of ${MODES[provider].join(' | ')}`);
+  }
+  if (
+    rule.model !== null &&
+    (rule.mode !== '503' || typeof rule.model !== 'string' || !rule.model)
+  ) {
+    throw new Error(`${provider} model is a non-empty model name, given only with mode 503`);
   }
   if (rule.times !== null && !(Number.isInteger(rule.times) && rule.times > 0)) {
     throw new Error(`${provider} times must be a whole number ≥ 1`);
@@ -46,11 +54,12 @@ export function createRules() {
       Object.assign(mode, next);
     },
     // The mode this request hits among those its route honours, or 'ok', plus a slow hit's `ms`.
-    // `lecture` is the raw `x-harness-lecture` header; a probe carries none, so only an untargeted
+    // `lecture` is the raw `x-harness-lecture` header, `model` the one in the route; a probe carries none, so only an untargeted
     // rule reaches it.
-    take(provider, lecture, honoured) {
+    take(provider, lecture, honoured, model = null) {
       const rule = mode[provider];
       if (!honoured.includes(rule.mode)) return { hit: 'ok', ms: null };
+      if (rule.model !== null && rule.model !== model) return { hit: 'ok', ms: null };
       if (rule.match !== null) {
         const target = decodeURIComponent(lecture ?? '');
         if (!`/${target}/`.includes(`/${rule.match}/`)) return { hit: 'ok', ms: null };

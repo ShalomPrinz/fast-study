@@ -4,7 +4,7 @@ import { OK, createRules, parseRule } from '../fakes/provider-rules.mjs';
 
 // The header as the shim stamps it: percent-encoded, slashes kept.
 const header = (lecture) => lecture.split('/').map(encodeURIComponent).join('/');
-const ALL = ['429', '429min', '500', 'empty', 'slow', 'invalidkey'];
+const ALL = ['429', '429min', '503', '500', 'empty', 'slow', 'invalidkey'];
 
 describe('parseRule', () => {
   test('429min is Gemini only', () => {
@@ -16,7 +16,7 @@ describe('parseRule', () => {
   });
 
   test('an object keeps its fields', () => {
-    const rule = { mode: 'slow', match: 'c/l', times: 2, ms: 50 };
+    const rule = { mode: 'slow', match: 'c/l', times: 2, ms: 50, model: null };
     assert.deepEqual(parseRule('groq', rule), rule);
   });
 
@@ -25,7 +25,7 @@ describe('parseRule', () => {
       'an unknown field',
       'groq',
       { mode: '429', lecture: 'x' },
-      /takes mode, match, times, ms — not lecture/,
+      /takes mode, match, times, ms, model — not lecture/,
     ],
     ['an empty match', 'groq', { mode: '429', match: '' }, /match must be a non-empty path/],
     ['a non-string match', 'groq', { mode: '429', match: 4 }, /match must be a non-empty path/],
@@ -36,6 +36,9 @@ describe('parseRule', () => {
     ['string times', 'gemini', { mode: '500', times: '2' }, /times must be a whole number/],
     ['slow without ms', 'gemini', 'slow', /ms is a whole number ≥ 1, given with mode slow/],
     ['slow with ms 0', 'gemini', { mode: 'slow', ms: 0 }, /ms is a whole number/],
+    ['model without 503', 'gemini', { mode: '429', model: 'm' }, /model is a non-empty model name/],
+    ['an empty model', 'gemini', { mode: '503', model: '' }, /model is a non-empty model name/],
+    ['503 on groq', 'groq', '503', /groq mode must be one of/],
     ['ms without slow', 'gemini', { mode: '429', ms: 100 }, /only with it/],
   ];
   for (const [name, provider, value, message] of rejections) {
@@ -137,5 +140,26 @@ describe('control', () => {
     assert.throws(() => rules.control({ groq: '500', gemini: 'teapot' }));
     assert.equal(rules.mode.groq.mode, '429');
     assert.deepEqual(rules.mode.gemini, OK);
+  });
+});
+
+describe('take — 503 per model', () => {
+  const rulesFor = (value) => {
+    const rules = createRules();
+    rules.control({ gemini: value });
+    return rules;
+  };
+
+  test('a bare 503 hits every model', () => {
+    const rules = rulesFor('503');
+    assert.equal(rules.take('gemini', undefined, ALL, 'gemini-3.8-flash').hit, '503');
+    assert.equal(rules.take('gemini', undefined, ALL, 'gemini-3.6-flash').hit, '503');
+  });
+
+  test('a model rule hits only that model and spares times for others', () => {
+    const rules = rulesFor({ mode: '503', model: 'gemini-3.8-flash', times: 1 });
+    assert.equal(rules.take('gemini', undefined, ALL, 'gemini-3.6-flash').hit, 'ok');
+    assert.equal(rules.take('gemini', undefined, ALL, 'gemini-3.8-flash').hit, '503');
+    assert.equal(rules.take('gemini', undefined, ALL, 'gemini-3.8-flash').hit, 'ok');
   });
 });

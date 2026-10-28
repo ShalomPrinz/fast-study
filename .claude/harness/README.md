@@ -479,6 +479,8 @@ The fakes take a mode, so the quota and outage flows need no real quota:
 P=$(node .claude/harness/hb.mjs url providers); S=$(node .claude/harness/hb.mjs url site)
 curl -s $P/control -d '{"gemini":"429"}'   # every call; `429min` is Gemini's per-minute quota; groq: ok | 429 | 500 | empty
 curl -s $P/control -d '{"gemini":"invalidkey"}'  # gemini also: invalidkey
+curl -s $P/control -d '{"gemini":"503"}'  # overloaded UNAVAILABLE on every model
+curl -s $P/control -d '{"gemini":{"mode":"503","model":"gemini-3.8-flash"}}'  # only that model; a fallback to another succeeds
 curl -s $P/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
 curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/שיעור 4"}}'  # held, then ok
 curl -s $P/control -d '{"reset":true}'     # every provider back to ok
@@ -498,14 +500,14 @@ the post-login check reads — Settings → University account → Connect shows
 drops `core_enrol_get_users_courses`: the site still connects, and the next Connect saves the course
 picker as unavailable, so Downloads offers only the paste input. An unknown mode is answered 400.
 
-A provider's rule is `{mode, match, times}`; a bare string is `{mode}`, every call. Nothing the
+A provider's rule is `{mode, match, times, model}` (`model` only with Gemini `503`); a bare string is `{mode}`, every call. Nothing the
 SDKs send names the lecture, so the shim stamps each call a pipeline step or an overview makes with
 an `x-harness-lecture` header — its path, `course/lecture` or `course/Recitations/name`, or the
 course alone for an overview — and `match` hits when its whole segments appear there: `hb-fail`
 is that course, `שיעור 4` that name in any course, never `שיעור 40`. A key probe carries no path,
 so only an untargeted rule reaches it. `times` counts the calls the rule failed (one per Groq
 chunk, one per Gemini request) and puts the provider back to `ok` at zero. A mode applies where it
-means something: `429` and `empty` to transcription and generation, `429min` to generation alone,
+means something: `429` and `empty` to transcription and generation, `429min` and `503` to generation alone (the real 503 `UNAVAILABLE` body),
 `500` to both and to the key probe, `invalidkey` to every Gemini route — the real 400 `API_KEY_INVALID` body, so the first
 upload of a run is what fails. `slow`, on transcription and generation, holds each matched call
 `ms` and then answers as `ok` — sooner if a `/control` sets that provider's rule or resets — a step that stays in flight long enough to cancel, rename, reload or
