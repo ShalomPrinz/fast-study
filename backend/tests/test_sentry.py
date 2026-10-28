@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import json
+import sys
 from concurrent.futures import wait
 from unittest.mock import patch
 
@@ -255,3 +256,23 @@ def test_drive_not_connected_is_not_reported(
     assert error["step"] == "drive"
     assert (error["code"] == "drive_not_connected") is not reported
     assert len(reload_main.transport.events()) == int(reported)
+
+
+def test_route_error_naming_blocked_executable_answers_app_files_blocked(
+    reload_main, monkeypatch
+):
+    """A frozen OSError naming sys.executable escaping a route answers app_files_blocked."""
+
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+
+    @backend_main.app.get("/blocked")
+    def blocked():
+        """Fail as a quarantined services.exe does."""
+
+        raise OSError(22, "Invalid argument", sys.executable)
+
+    client = TestClient(backend_main.app, raise_server_exceptions=False)
+    response = client.get("/blocked")
+    assert response.status_code == 500
+    assert response.json()["code"] == "app_files_blocked"
+    assert response.json()["params"] == {}

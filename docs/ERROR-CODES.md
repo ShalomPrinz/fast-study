@@ -110,13 +110,16 @@ bug in one of our own callers can, and it renders through the generic fallback u
 | `backend_main.py` probe-key       | `unknown_provider`         | `provider`         | dev   |
 | `services/google_auth.py`         | `google_credentials_missing`| `path`            | user  |
 | app-level handler                 | `storage_unavailable`      | `detail`           | user  |
+| app-level handler                 | `app_files_blocked`        | —                  | user  |
 | app-level handler                 | `internal_error`           | `detail`           | user  |
 
-The last two come from a middleware because FastAPI's own 500 is plain text, which `failureError`
+The last three come from a middleware because FastAPI's own 500 is plain text, which `failureError`
 cannot parse — without it a user with `database/` down would read `500 Internal Server Error`.
 `storage_unavailable` is `DbClientError` reaching the top of a route — a storage call that failed
-and no route handled; `internal_error` is everything else. The middleware names only failures it was
-given, so a refusal the user can act on is caught by the route instead and re-emitted under
+and no route handled. Any other escaped exception answers the code `services/errors.py`
+`own_fields` names — `app_files_blocked` when the frozen executable was quarantined mid-run, else a
+`CodedError`'s own code — and `internal_error` when it names none. The middleware names only
+failures it was given, so a refusal the user can act on is caught by the route instead and re-emitted under
 `database/`'s own code (`_USER_ACTIONABLE_STORAGE_CODES` in `backend_main.py`, today just
 `data_root_not_configured`), which is why that code appears in both tables.
 

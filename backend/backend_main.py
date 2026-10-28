@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from sentry_sdk.integrations.google_genai import GoogleGenAIIntegration
 from sentry_sdk.transport import HttpTransport
 from services import db_client, google_auth, providers, settings
-from services.errors import CodedError, failure
+from services.errors import CodedError, error_fields, failure
 from timing import get_stats, init_db, record
 from tools import check_tools
 
@@ -111,7 +111,8 @@ async def answer_failures_as_json(request, call_next):
         return _error(failure(str(e), "storage_unavailable", detail=str(e)), 500)
     except Exception as e:
         log.exception("unhandled error on %s", request.url.path)
-        return _error(failure(str(e), "internal_error", detail=str(e)), 500)
+        code, params = error_fields(e, "internal_error")
+        return _error(failure(str(e), code, **params), 500)
 
 
 # CORS stays the LAST add_middleware call: Starlette makes the last-added middleware the outermost,
