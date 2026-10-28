@@ -95,7 +95,7 @@ router.post('/download', async (req, res) => {
   }
   const destErr = destError(dest);
   if (destErr) return res.status(400).json(destErr);
-  // An .m3u8 capture is segmented: yt-dlp replays the headers per segment (docs/DOWNLOAD.md, "HLS").
+  // An HLS playlist capture (.m3u8, .panobf2) is segmented: yt-dlp replays the headers per segment (docs/DOWNLOAD.md, "HLS").
   const downloader = isHlsUrl(url) ? downloaders.hls : downloaders.curl;
   if (dest === 'folder') return startFolderJob(res, downloader, { url, headers }, fileName);
   const names = storedNames(course, lecture);

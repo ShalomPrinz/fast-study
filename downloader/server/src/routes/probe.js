@@ -12,7 +12,7 @@ import { isHlsUrl } from '../hlsPlaylist.js';
 const router = Router();
 
 // The popup calls this because fetch strips the captured Cookie header the probe needs.
-// An .m3u8 url answers the master's estimated bytes (null for anything else).
+// An HLS playlist url answers the master's estimated bytes (null for anything else).
 router.post('/probe-size', async (req, res) => {
   const { url, headers } = req.body ?? {};
   const bytes = isHlsUrl(url)
@@ -21,7 +21,7 @@ router.post('/probe-size', async (req, res) => {
   res.json({ bytes });
 });
 
-// The popup's captured .m3u8 requests in, the streams worth offering out (docs/DOWNLOAD.md, "HLS").
+// The popup's captured HLS playlist requests in, the streams worth offering out (docs/DOWNLOAD.md, "HLS").
 router.post('/hls-streams', async (req, res) => {
   const { captures } = req.body ?? {};
   const tooMany =
@@ -34,7 +34,7 @@ router.post('/hls-streams', async (req, res) => {
       .json(
         invalidRequest(
           'captures',
-          `captures must be an array of at most ${MAX_CAPTURES} .m3u8 and ${MAX_MP4_CAPTURES} other`,
+          `captures must be an array of at most ${MAX_CAPTURES} HLS playlist and ${MAX_MP4_CAPTURES} other`,
         ),
       );
   }

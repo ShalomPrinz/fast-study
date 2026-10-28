@@ -5,7 +5,7 @@ import { probeHlsBytes } from '../services/hls.js';
 import { ytdlp, buildHlsArgs, buildCookieJar } from './ytdlp.js';
 import { toolPath } from '@faststudy/tools';
 
-// An `.m3u8` capture: yt-dlp with the captured headers replayed on the playlists and every
+// An HLS playlist capture: yt-dlp with the captured headers replayed on the playlists and every
 // segment (docs/DOWNLOAD.md, "HLS"). input: { url, headers }. Same `yt-dlp` tool and timing bucket.
 export const hls = {
   ...ytdlp,

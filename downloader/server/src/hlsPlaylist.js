@@ -7,10 +7,10 @@ export const HLS_MAX_HEIGHT = 720;
 const AUDIO_CODEC_RE = /^(mp4a|ac-3|ec-3|opus|flac|mp3|alac)/i;
 const VIDEO_CODEC_RE = /^(avc1|avc3|hvc1|hev1|vp0?[89]|av01|dvh1)/i;
 
-// True for a URL whose path (not query) ends in `.m3u8`.
+// True for a URL whose path (not query) ends in `.m3u8`, or `.panobf2` (Panopto's renamed playlists).
 export function isHlsUrl(url) {
   try {
-    return new URL(url).pathname.toLowerCase().endsWith('.m3u8');
+    return /\.(m3u8|panobf2)$/.test(new URL(url).pathname.toLowerCase());
   } catch {
     return false;
   }

@@ -84,7 +84,7 @@ async function estimateMaster(master, url, headers, known = new Map()) {
   return { durationSeconds, estimatedBytes };
 }
 
-// Offer the streams worth showing from the `.m3u8` captures `{url, headers}`; other captures only
+// Offer the streams worth showing from the HLS playlist captures `{url, headers}`; other captures only
 // match playlist segments -> `{ streams, failed, segments }`. Shapes: docs/DOWNLOAD.md ("HLS").
 export async function classifyCaptures(captures) {
   const playlists = captures.filter((c) => isHlsUrl(c.url) || !URL.canParse(c.url));

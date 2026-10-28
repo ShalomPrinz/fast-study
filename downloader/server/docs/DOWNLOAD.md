@@ -62,13 +62,13 @@ curl dumps auto's headers to `response-headers.txt` and keeps its JSON body in t
 the runner ends the job with auto's own `code`/`params` (`readAutodlRefusal`). A fetch from auto cut
 short with no refusal (curl exit 18, 52 or 56) is re-run once in a fresh temp dir (`recovery`).
 
-## HLS (`.m3u8` captures)
+## HLS (`.m3u8` and `.panobf2` captures)
 
 Panopto and other HLS players never load a whole `.mp4`, so the extension also captures requests
-whose path ends in `.m3u8`. The server decides which captures are worth showing; MV3 cannot read
+whose path ends in `.m3u8`, or `.panobf2` (Panopto's renamed playlists: standard HLS, `application/octet-stream`, so only the suffix identifies them; its `.panobf1` segments are never captured). The server decides which captures are worth showing; MV3 cannot read
 response bodies, so it fetches each playlist itself with the replayed headers.
 
-- **`POST /hls-streams`** `{captures:[{url, headers}]}` (at most 30 `.m3u8` plus 100 others) → `{streams, failed, segments}`. `streams` is
+- **`POST /hls-streams`** `{captures:[{url, headers}]}` (at most 30 playlist plus 100 others) → `{streams, failed, segments}`. `streams` is
   `[{url, kind:'master'|'media', hasAudio, hasVideo, durationSeconds, estimatedBytes}]`, best first:
   `hasAudio:true`, then unknown (`null`), then audio-less. Masters are offered; a variant or audio
   playlist a captured master references (`#EXT-X-STREAM-INF`/`#EXT-X-MEDIA`, compared ignoring the
@@ -76,7 +76,7 @@ response bodies, so it fetches each playlist itself with the replayed headers.
   own, so the caller maps back to its headers. `failed` is `[{url, detail}]` for a capture that could
   not be read (`HTTP 403`, a network error); a non-playlist body is dropped silently. Pure logic is
   `src/hlsPlaylist.js`, the fetching `services/hls.js`.
-- **`segments`** answers which non-`.m3u8` captures (the extension's `.mp4` ones, sent in the same
+- **`segments`** answers which non-playlist captures (the extension's `.mp4` ones, sent in the same
   `captures`, never fetched, capped apart from the playlists) are really HLS pieces: an fMP4 stream's
   `#EXT-X-MAP` init section or segment URI (`fragmented.mp4`, with `#EXT-X-BYTERANGE`) ends in `.mp4`.
   It is the subset of those capture URLs, as sent, whose URL resolved against the playlist and
@@ -92,7 +92,7 @@ response bodies, so it fetches each playlist itself with the replayed headers.
   segments are `.aac`/`.m4a`/`.mp3`.
 - **Estimate**: one extra fetch of the variant the 720p cap would pick; `durationSeconds` sums its
   `#EXTINF`, `estimatedBytes` is that × the variant's bandwidth ÷ 8. Either is `null` when unreadable.
-  `POST /probe-size` answers the same estimate for an `.m3u8` url, and it is the job's expected size.
+  `POST /probe-size` answers the same estimate for a playlist (`.m3u8`/`.panobf2`) url, and it is the job's expected size.
 - **Credentials** (`Cookie`, `Authorization`) go only to the capture's own origin: the classify
   fetches drop them on any other origin, and a download never passes them to yt-dlp as headers,
   because `--add-header` is global (every playlist, segment, key and redirect host). `Cookie` becomes
@@ -112,7 +112,7 @@ response bodies, so it fetches each playlist itself with the replayed headers.
   different variant list is a different stream. Playlist
   bodies are read through a 2 MiB cap, so a larger or endless one lands in `failed` as
   `playlist too large`.
-- **`POST /download`** with an `.m3u8` url (path, not query) picks the `hls` descriptor instead of
+- **`POST /download`** with a playlist url (path, not query) picks the `hls` descriptor instead of
   `curl`; body, `dest:'folder'`, jobs and the answer are unchanged. It is the yt-dlp command below plus
   one `--add-header 'Name: value'` per replayed non-credential header (names that are not an HTTP token, values with
   CR/LF, `SKIP_HEADERS` and `accept-encoding` skipped) plus the `--cookies` jar above. Same `yt-dlp` tool, `download:ytdlp` timing bucket and 720p cap, so the output is

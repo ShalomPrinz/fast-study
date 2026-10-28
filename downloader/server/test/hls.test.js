@@ -357,3 +357,58 @@ test('classifyCaptures: segment lookups are deduped, capped for the whole reques
     srv.close();
   }
 });
+
+const PANO = 'https://cdn.example/sessions/s/d-s2.hls';
+const PANO_MASTER = `#EXTM3U
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=3375603,CODECS="avc1.4d002a,mp4a.40.2",RESOLUTION=1920x1080,AVERAGE-BANDWIDTH=2110835,CLOSED-CAPTIONS=NONE
+2106800/index.panobf2
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1773288,CODECS="avc1.4d002a,mp4a.40.2",RESOLUTION=1360x764,AVERAGE-BANDWIDTH=1137358,CLOSED-CAPTIONS=NONE
+1133323/index.panobf2
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=986266,CODECS="avc1.4d002a,mp4a.40.2",RESOLUTION=960x540,AVERAGE-BANDWIDTH=650603,CLOSED-CAPTIONS=NONE
+646568/index.panobf2
+`;
+const PANO_MEDIA = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:9
+#EXT-X-PLAYLIST-TYPE:VOD
+#EXT-X-INDEPENDENT-SEGMENTS
+#EXT-X-MAP:URI="fragmented.panobf1",BYTERANGE="1422@0"
+${'#EXTINF:9.000000,\n#EXT-X-BYTERANGE:2419955@1422\nfragmented.panobf1\n'.repeat(551)}#EXT-X-ENDLIST
+`;
+
+test('isHlsUrl accepts Panopto .panobf2 with or without query, not .panobf1', () => {
+  assert.equal(isHlsUrl(`${PANO}/master.panobf2?InvocationID=1&tid=2`), true);
+  assert.equal(isHlsUrl(`${PANO}/2106800/index.panobf2`), true);
+  assert.equal(isHlsUrl(`${PANO}/2106800/INDEX.PANOBF2`), true);
+  assert.equal(isHlsUrl(`${PANO}/2106800/fragmented.panobf1`), false);
+  assert.equal(isHlsUrl(`${PANO}/x.mp4?f=index.panobf2`), false);
+});
+
+test('classifyCaptures: Panopto master + media captured together is one stream per master, sane size', async () => {
+  const { srv, base } = await serve((req, res) => {
+    const path = req.url.split('?')[0];
+    res.end(path.endsWith('/master.panobf2') ? PANO_MASTER : PANO_MEDIA);
+  });
+  try {
+    const out = await classifyCaptures([
+      { url: `${base}/s.hls/master.panobf2?tid=1`, headers: [] },
+      { url: `${base}/s.hls/2106800/index.panobf2`, headers: [] },
+    ]);
+    assert.equal(out.failed.length, 0);
+    assert.equal(out.streams.length, 1);
+    const [s] = out.streams;
+    assert.equal(s.kind, 'master');
+    assert.equal(s.hasAudio, true);
+    assert.equal(s.durationSeconds, 4959);
+    // 720p cap picks the 960x540 variant (650603 b/s), not the file length per segment.
+    assert.equal(s.estimatedBytes, Math.round((4959 * 650603) / 8));
+  } finally {
+    srv.close();
+  }
+});
+
+test('parse: byte-ranged fMP4 media lists the one shared file once', () => {
+  const p = parsePlaylist(PANO_MEDIA, `${PANO}/2106800/index.panobf2`);
+  assert.deepEqual(p.resourceUrls, [`${PANO}/2106800/fragmented.panobf1`]);
+  assert.equal(p.durationSeconds, 4959);
+});
