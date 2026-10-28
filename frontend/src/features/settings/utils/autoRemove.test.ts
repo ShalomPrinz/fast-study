@@ -21,6 +21,7 @@ const BASE: Settings = {
   gdriveRootFolder: null,
   autoRun: null,
   nightlyRun: null,
+  geminiAutoFallback: null,
   nightlyHour: null,
   autoRemove: null,
   autoRemoveAfter: null,

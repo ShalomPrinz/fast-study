@@ -13,13 +13,19 @@ const file = (name: string, over: Partial<CourseFile> = {}): CourseFile => ({
   ...over,
 })
 
-const running: CourseStatus = { running: true, extractors: { [SLUG]: { status: 'running' } } }
+const running: CourseStatus = {
+  running: true,
+  notices: [],
+  extractors: { [SLUG]: { status: 'running' } },
+}
 const failed: CourseStatus = {
   running: false,
+  notices: [],
   extractors: { [SLUG]: { status: 'error', message: 'to_pdf blew up' } },
 }
 const skipped = (over: Partial<CourseExtractorState>): CourseStatus => ({
   running: false,
+  notices: [],
   extractors: { [SLUG]: { status: 'skipped', ...over } },
 })
 
@@ -162,7 +168,11 @@ describe('isBare', () => {
   })
 
   it('leaves the branch error as just the translated word', () => {
-    const bare: CourseStatus = { running: false, extractors: { [SLUG]: { status: 'error' } } }
+    const bare: CourseStatus = {
+      running: false,
+      notices: [],
+      extractors: { [SLUG]: { status: 'error' } },
+    }
     expect(branchStatus(bare, [], SLUG, PHASES).error).toBe('failed')
   })
 })

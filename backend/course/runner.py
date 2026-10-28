@@ -5,7 +5,7 @@ import asyncio
 from datetime import datetime, timezone
 
 import sentry_sdk
-from services import db_client
+from services import db_client, notices
 from services.errors import (
     CONDITION_CODES,
     CodedError,
@@ -35,6 +35,7 @@ def get_status(course: str) -> dict:
     return {
         "running": any(e.get("status") == "running" for e in entries.values()),
         "extractors": entries,
+        "notices": notices.recent(f"course:{course}"),
     }
 
 
@@ -231,7 +232,8 @@ class OverviewRun:
         }
         entries[slug] = {"status": "running", **carried}
         try:
-            entries[slug] = {**self._phase_worker(slug, phase), **carried}
+            with notices.record_fallbacks(f"course:{self.course}"):
+                entries[slug] = {**self._phase_worker(slug, phase), **carried}
             stop = entries[slug]["status"] == "skipped"
         except Exception as e:
             code, params = error_fields(e, "internal_error")

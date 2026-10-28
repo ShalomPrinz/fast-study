@@ -18,6 +18,7 @@ export interface SettingsForm {
   driveEnabled: boolean
   gdriveRootFolder: string
   geminiModel: string
+  geminiAutoFallback: boolean
   autoRun: AutoRun
   nightlyRun: boolean
   nightlyHour: number
@@ -51,6 +52,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: formModel(stored, options),
+    geminiAutoFallback: stored.geminiAutoFallback ?? false,
     autoRun: toAutoRun(stored.autoRun),
     // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
     nightlyRun: stored.nightlyRun ?? true,
@@ -88,6 +90,8 @@ export function buildPatch(
   if (form.groqApiKey.trim()) patch.groqApiKey = form.groqApiKey.trim()
   if (form.dataRoot.trim() !== (stored.dataRoot ?? '')) patch.dataRoot = form.dataRoot.trim()
   if (form.geminiModel !== (stored.geminiModel ?? '')) patch.geminiModel = form.geminiModel
+  if (form.geminiAutoFallback !== (stored.geminiAutoFallback ?? false))
+    patch.geminiAutoFallback = form.geminiAutoFallback
   if (form.driveEnabled !== (stored.driveEnabled ?? false)) patch.driveEnabled = form.driveEnabled
   // Only while Drive is on, where the field shows: the wall's untouched default is no choice to store.
   if (form.driveEnabled && form.gdriveRootFolder.trim() !== (stored.gdriveRootFolder ?? '')) {

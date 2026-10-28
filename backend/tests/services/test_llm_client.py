@@ -319,3 +319,99 @@ def test_a_503_raises_gemini_overloaded(monkeypatch, error, call):
     assert exc.value.code == "gemini_overloaded"
     assert exc.value.params == {"model": "gemini-x"}
     assert "{" not in str(exc.value)  # readable prose, not the JSON blob
+
+
+def _overloaded():
+    return _SdkError(
+        {"error": {"code": 503, "status": "UNAVAILABLE", "message": "busy"}},
+        text="503 UNAVAILABLE.",
+        code=503,
+    )
+
+
+def _fallback_client(monkeypatch, effects, model):
+    sdk = MagicMock()
+    sdk.models.generate_content.side_effect = effects
+    _patched_client(sdk, monkeypatch)
+    return sdk, LLMClient(api_key="k", model=model)
+
+
+def _models_called(sdk):
+    return [c.kwargs["model"] for c in sdk.models.generate_content.call_args_list]
+
+
+def test_503_without_auto_fallback_does_not_retry(monkeypatch):
+    monkeypatch.delenv("GEMINI_AUTO_FALLBACK", raising=False)
+    sdk, client = _fallback_client(monkeypatch, [_overloaded()], "gemini-3.8-flash")
+    with pytest.raises(CodedError) as exc:
+        client.generate(["x"])
+    assert exc.value.code == "gemini_overloaded"
+    assert _models_called(sdk) == ["gemini-3.8-flash"]
+
+
+def test_503_with_auto_fallback_retries_on_next_model_once(monkeypatch):
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+    seen = []
+    token = llm_mod.fallback_hook.set(lambda a, b: seen.append((a, b)))
+    try:
+        sdk, client = _fallback_client(
+            monkeypatch,
+            [_overloaded(), SimpleNamespace(text=" ok ")],
+            "gemini-3.8-flash",
+        )
+        assert client.generate(["x"]) == "ok"
+        assert _models_called(sdk) == ["gemini-3.8-flash", "gemini-3.6-flash"]
+        assert seen == [("gemini-3.8-flash", "gemini-3.6-flash")]
+        assert client.model == "gemini-3.8-flash"  # per call only
+    finally:
+        llm_mod.fallback_hook.reset(token)
+
+
+def test_fallback_wraps_round_to_the_first_model(monkeypatch):
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+    sdk, client = _fallback_client(
+        monkeypatch, [_overloaded(), SimpleNamespace(text="ok")], "gemini-3.6-flash"
+    )
+    client.generate(["x"])
+    assert _models_called(sdk) == ["gemini-3.6-flash", "gemini-3.8-flash"]
+
+
+def test_both_models_503_raises_the_original_overloaded(monkeypatch):
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+    sdk, client = _fallback_client(
+        monkeypatch, [_overloaded(), _overloaded(), _overloaded()], "gemini-3.8-flash"
+    )
+    with pytest.raises(CodedError) as exc:
+        client.generate(["x"])
+    assert exc.value.code == "gemini_overloaded"
+    assert exc.value.params == {"model": "gemini-3.8-flash"}
+    assert len(_models_called(sdk)) == 2
+
+
+def test_fallback_429_raises_the_original_overloaded(monkeypatch):
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+    sdk, client = _fallback_client(
+        monkeypatch,
+        [
+            _overloaded(),
+            _SdkError(_quota_body("GenerateRequestsPerDayPerProjectPerModel")),
+        ],
+        "gemini-3.8-flash",
+    )
+    with pytest.raises(CodedError) as exc:
+        client.generate(["x"])
+    assert exc.value.code == "gemini_overloaded"
+    assert exc.value.params == {"model": "gemini-3.8-flash"}
+    assert isinstance(exc.value.__cause__, GeminiRateLimitError)
+
+
+def test_429_never_falls_back(monkeypatch):
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+    sdk, client = _fallback_client(
+        monkeypatch,
+        [_SdkError(_quota_body("GenerateRequestsPerDayPerProjectPerModel"))],
+        "gemini-3.8-flash",
+    )
+    with pytest.raises(GeminiRateLimitError):
+        client.generate(["x"])
+    assert len(_models_called(sdk)) == 1

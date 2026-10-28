@@ -21,6 +21,7 @@ STRING_FIELDS = {
 BOOL_FIELDS = {
     "drive_enabled": "DRIVE_ENABLED",
     "nightly_run": "NIGHTLY_RUN",
+    "gemini_auto_fallback": "GEMINI_AUTO_FALLBACK",
 }
 INT_FIELDS = {
     "nightly_hour": "NIGHTLY_HOUR",

@@ -10,6 +10,7 @@ import { isQuotaError } from '@/shared/utils/runError'
 import { failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import LectureLead, { AssignmentLead } from '@/shared/components/LectureLead'
+import { announceNotices } from '@/shared/utils/notices'
 import { failureNode } from '@/shared/utils/failure'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useNotify } from '@/shared/hooks/useNotify'
@@ -90,6 +91,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
       if (isQuotaError(error.code) && error.blocked) continue
       announce(key, error)
     }
+    announceNotices('runner', s.notices)
     statusPrimed.current = true
   }
 

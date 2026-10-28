@@ -89,6 +89,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     // The brand, not copy: the folder lands in the user's Drive under the same name in every locale.
     gdriveRootFolder: stored.gdriveRootFolder ?? 'FastStudy',
     geminiModel: stored.geminiModel ?? '',
+    geminiAutoFallback: stored.geminiAutoFallback ?? false,
     // Not asked about here — carried through so the wall's save leaves the defaults alone. A first
     // install has nothing to catch up on, so the cron's switch and hour belong on `/settings` only.
     autoRun: toAutoRun(stored.autoRun),

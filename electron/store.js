@@ -25,7 +25,11 @@ const CHOICES = {
   auto_remove_after: ['pdf', 'drive'],
   course_structure: ['split', 'lectures_all', 'lectures_some'],
 };
-const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED', nightly_run: 'NIGHTLY_RUN' };
+const BOOL_FIELDS = {
+  drive_enabled: 'DRIVE_ENABLED',
+  nightly_run: 'NIGHTLY_RUN',
+  gemini_auto_fallback: 'GEMINI_AUTO_FALLBACK',
+};
 // Integers with their inclusive range; the backend reads anything else as its default hour.
 const INT_FIELDS = { nightly_hour: { env: 'NIGHTLY_HOUR', min: 0, max: 23 } };
 // Booleans no service gets as a settings env var: `error_reports` main turns into each process's
@@ -47,6 +51,7 @@ const FIELDS = {
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
   nightlyRun: 'nightly_run',
+  geminiAutoFallback: 'gemini_auto_fallback',
   nightlyHour: 'nightly_hour',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
@@ -133,6 +138,7 @@ function read() {
     geminiModel: text(stored.gemini_model),
     driveEnabled: bool(stored.drive_enabled),
     nightlyRun: bool(stored.nightly_run),
+    geminiAutoFallback: bool(stored.gemini_auto_fallback),
     nightlyHour: int('nightly_hour', stored.nightly_hour),
     gdriveRootFolder: text(stored.gdrive_root_folder),
     autoRun: text(stored.auto_run),

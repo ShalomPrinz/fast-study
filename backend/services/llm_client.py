@@ -3,13 +3,21 @@ RuntimeError (429 GeminiRateLimitError, 503 gemini_overloaded) for a {"status": 
 
 import os
 import re
+from collections.abc import Callable
+from contextvars import ContextVar
 
 from google import genai
 from google.genai import types
 
 from services import providers
 from services.errors import CodedError
-from services.settings import gemini_model
+from services.settings import GEMINI_MODELS, gemini_auto_fallback, gemini_model
+
+# Called with (from_model, to_model) when a call retries on the next model; the runner that
+# owns the work sets it around the worker thread, so this module knows nothing of runs.
+fallback_hook: ContextVar[Callable[[str, str], None] | None] = ContextVar(
+    "fallback_hook", default=None
+)
 
 
 def quota_params(info: dict) -> dict:
@@ -175,13 +183,43 @@ class LLMClient:
             http_options=types.HttpOptions(base_url=providers.base_url("gemini")),
         )
 
+    def _fallback_model(self) -> str:
+        """The entry after the selected model in GEMINI_MODELS, wrapping round."""
+
+        if self.model not in GEMINI_MODELS:
+            return GEMINI_MODELS[0]
+        return GEMINI_MODELS[(GEMINI_MODELS.index(self.model) + 1) % len(GEMINI_MODELS)]
+
     def generate(self, contents: list) -> str:
-        """Send contents to the model and return its stripped text."""
+        """Send contents to the model and return its stripped text. With auto-fallback on, a 503
+        retries once on the next model for this call only; if that fails too, the original error stands."""
+
+        try:
+            return self._generate(contents, self.model)
+        except CodedError as first:
+            e = first
+            fallback = self._fallback_model()
+            if (
+                e.code != "gemini_overloaded"
+                or not gemini_auto_fallback()
+                or fallback == self.model
+            ):
+                raise
+        hook = fallback_hook.get()
+        if hook:
+            hook(self.model, fallback)
+        try:
+            return self._generate(contents, fallback)
+        except Exception as second:
+            raise e from second
+
+    def _generate(self, contents: list, model: str) -> str:
+        """One generate_content call on `model`, SDK failures mapped to coded errors."""
 
         try:
             # We pass no tools, but AFC defaults on and the SDK warns about it on generate_content.
             response = self.client.models.generate_content(
-                model=self.model,
+                model=model,
                 contents=contents,
                 config=types.GenerateContentConfig(
                     automatic_function_calling=types.AutomaticFunctionCallingConfig(
@@ -194,11 +232,11 @@ class LLMClient:
             if _is_rate_limit(e, body):
                 info = parse_gemini_rate_limit(body, str(e))
                 # Resolved here so the message and the params name the same model.
-                info["model"] = info.get("model") or self.model
-                info["message"] = _quota_message(info, self.model)
+                info["model"] = info.get("model") or model
+                info["message"] = _quota_message(info, model)
                 raise GeminiRateLimitError(info) from e
             raise (
-                _overloaded_error(e, body, self.model)
+                _overloaded_error(e, body, model)
                 or _key_rejected_error(e, body)
                 or RuntimeError(str(e))
             ) from e

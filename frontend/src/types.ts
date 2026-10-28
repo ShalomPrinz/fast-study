@@ -176,6 +176,14 @@ export interface QueueEntry {
   depth: RunDepth
 }
 
+// A heads-up from the backend that is not a failure (docs/ERROR-CODES.md `model_fallback`). `id`
+// is unique across both status endpoints and increases.
+export interface Notice {
+  id: number
+  code: string
+  params: ErrorParams
+}
+
 export interface RunnerStatus {
   // lastError: an unexpected exception that aborted a sweep, not a step-level failure.
   runner: { running: boolean; total: number; done: number; lastError: ServiceFailure | null }
@@ -187,6 +195,7 @@ export interface RunnerStatus {
   overviewRunning: string[]
   // Expected step-level failures per lecture, from any trigger; persists after the run ends.
   errors: Record<string, RunError>
+  notices: Notice[]
 }
 
 // A lecture's last step failure; `step` is the backend's step name, `code`/`params` the protocol's
@@ -222,6 +231,7 @@ export interface CourseExtractorState {
 export interface CourseStatus {
   running: boolean
   extractors: Record<string, CourseExtractorState>
+  notices: Notice[]
 }
 
 export interface CourseFile {

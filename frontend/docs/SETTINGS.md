@@ -15,6 +15,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Drive upload      | off                                       | on                    | `backend/`        |
 | Drive root folder | `FastStudy`, sent only once Drive is on  | any folder name       | `backend/`        |
 | Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
+| Auto change model when busy | off (a checkbox beside the model) | on        | `backend/`        |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Daily run         | on                                        | off                   | `backend/`        |
 | Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`        |
@@ -266,3 +267,7 @@ Holds the store's answer for other screens. It fetches nothing: `InitGate` pushe
 and `/settings` push each save, so a change reaches every screen without a reload. `useDriveEnabled`
 (unset means off, matching the backend) drives the Drive stage and what counts as a complete lecture
 ([LECTURES.md](LECTURES.md)); `useAutoRun` is the other consumer.
+
+**Model fallback notices.** With auto change on, a retried Gemini 503 raises a `model_fallback` notice in the
+`notices` of `GET /status` and the overview status. `shared/utils/notices.ts` info-toasts each id once (ids are unique across both
+endpoints) and records, without toasting, whatever a source already holds on its first load after page load. The sentence lives in `serviceErrors.ts`.

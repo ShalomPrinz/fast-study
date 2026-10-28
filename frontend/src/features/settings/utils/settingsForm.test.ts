@@ -65,6 +65,7 @@ const STORE: Settings = {
   gdriveRootFolder: null,
   autoRun: null,
   nightlyRun: null,
+  geminiAutoFallback: null,
   nightlyHour: null,
   autoRemove: null,
   autoRemoveAfter: null,
@@ -116,6 +117,7 @@ function status(running: boolean, lectures: string[]): RunnerStatus {
     runner: { running, total: lectures.length, done: 0, lastError: null },
     queue: [],
     overviewRunning: [],
+    notices: [],
     inFlight: lectures.map((lecture) => ({
       course: 'Algebra',
       lecture,

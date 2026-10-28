@@ -86,6 +86,8 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       '{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The Gemini model {model} is under high demand right now. This is usually temporary, so try again later.}}',
   }),
+  // A notice, not a failure: toasted as info when the backend retries a busy model on the next one.
+  model_fallback: msg({ message: 'Auto changing to another model: {from} to {to}.' }),
   summarization_failed: msg({ message: 'Summarizing the transcript failed.' }),
   pdf_tool_timeout: msg({
     message: 'Building the PDF took too long and was stopped after {seconds} seconds.',

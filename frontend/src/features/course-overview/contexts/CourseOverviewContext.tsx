@@ -8,6 +8,7 @@ import type {
   OverviewMeta,
   RunInitResult,
 } from '@/types'
+import { announceNotices } from '@/shared/utils/notices'
 import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
 import { fetchCourseFiles, fetchCourseMeta } from '@/services/database'
 import { useNotify } from '@/shared/hooks/useNotify'
@@ -72,7 +73,10 @@ export function CourseOverviewProvider({
     const [f, m, s] = triple
     if (f.status === 'fulfilled') setFiles(f.value)
     if (m.status === 'fulfilled') setMeta(m.value)
-    if (s.status === 'fulfilled') setStatus(s.value)
+    if (s.status === 'fulfilled') {
+      setStatus(s.value)
+      announceNotices(`overview:${course}`, s.value.notices)
+    }
   }
 
   useEffect(() => {

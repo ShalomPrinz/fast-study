@@ -32,6 +32,8 @@ A lecture may hold any number of materials of any file type. `database/` owns th
 
 Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode. The model is `settings.gemini_model()` — `LLMClient`'s default, so summarize and the course overview cannot drift apart.
 
+**Model fallback.** With `GEMINI_AUTO_FALLBACK` on (`settings.gemini_auto_fallback()`, off by default), `LLMClient.generate` answers a 503 (`gemini_overloaded`) by retrying once on the next entry of `GEMINI_MODELS`, wrapping round; the fallback serves that one call only, and a 429 or any other failure never falls back. If the fallback fails too (503, 429 or anything else), the original `gemini_overloaded` naming the first model is re-raised, chained from the second failure, so the user sees the regular busy error and a fallback-model quota hit never blocks the run. `upload_file` never falls back (uploads are model-independent). The client calls `llm_client.fallback_hook` (a `ContextVar`) with `(from, to)`; the runners set it around the worker thread via `services/notices.py`, which stores a `model_fallback` notice (per-lecture on `GET /status`, per-course on the overview status) and pings SSE.
+
 No environment variable redirects a provider call: both SDK clients get `providers.base_url()` explicitly and Gemini gets `vertexai=False`, because the launcher passes its whole environment to every child, so a stray `GROQ_BASE_URL` / `GOOGLE_GEMINI_BASE_URL` / `GOOGLE_GENAI_USE_VERTEXAI` on a user's machine would otherwise reroute calls the key probe never checked. Proxy and CA variables stay honored.
 
 ## The database round-trip

@@ -211,6 +211,8 @@ written from both processes would put two writers on one file.
   (+`value`), plus the launcher's `setting_out_of_range` (+`min`, `max`). The keystore refusal still throws.
 - **`nightly_run` (`nightlyRun`) and `nightly_hour` (`nightlyHour`, integer 0-23)** reach the backend
   as `NIGHTLY_RUN` (`true`/`false`) and `NIGHTLY_HOUR`; an out-of-range stored hour reads `null`.
+- **`gemini_auto_fallback` (`geminiAutoFallback`)** reaches the backend as `GEMINI_AUTO_FALLBACK`
+  (`true`/`false`); unset reads `null`, which the backend treats as off.
 - **`error_reports` and `privacy_confirmed` are the launcher's own fields**, in no service's settings
   env. Main turns `error_reports` into each process's Sentry flag itself; `privacy_confirmed`
   (`privacyConfirmed`, unset reads `false`) is the renderer's record that the privacy notice was

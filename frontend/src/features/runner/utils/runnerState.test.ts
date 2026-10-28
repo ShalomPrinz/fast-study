@@ -16,6 +16,7 @@ function status(running: boolean, inFlight: InFlightEntry[], done = 0, total = 0
     inFlight,
     queue: [],
     overviewRunning: [],
+    notices: [],
     errors: {},
   }
 }

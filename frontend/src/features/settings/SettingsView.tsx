@@ -407,6 +407,25 @@ export default function SettingsView() {
                     ))}
                   </select>
                 </div>
+                <div className="settings-field">
+                  <label className="settings-check">
+                    <input
+                      type="checkbox"
+                      checked={form.geminiAutoFallback}
+                      onChange={(e) => setForm({ ...form, geminiAutoFallback: e.target.checked })}
+                    />
+                    <span className="settings-check-text">
+                      <span>
+                        <Trans>Auto change model when busy</Trans>
+                      </span>
+                    </span>
+                  </label>
+                  <span className="settings-hint">
+                    <Trans>
+                      When the summary model is under high demand, retry once on the next model.
+                    </Trans>
+                  </span>
+                </div>
               </>
             )}
           </section>

@@ -23,6 +23,7 @@ _ENV_KEYS = {
     "gemini_api_key": "GEMINI_API_KEY",
     "groq_api_key": "GROQ_API_KEY",
     "gemini_model": "GEMINI_MODEL",
+    "gemini_auto_fallback": "GEMINI_AUTO_FALLBACK",
     "drive_enabled": "DRIVE_ENABLED",
     "gdrive_root_folder": "GDRIVE_ROOT_FOLDER",
     "auto_run": "AUTO_RUN",
@@ -42,6 +43,12 @@ def gemini_model() -> str:
 
     model = os.environ.get("GEMINI_MODEL", "").strip()
     return model if model in GEMINI_MODELS else GEMINI_MODELS[0]
+
+
+def gemini_auto_fallback() -> bool:
+    """Whether a 503 from Gemini retries the call once on the next model. Opt-in: unset is off."""
+
+    return os.environ.get("GEMINI_AUTO_FALLBACK", "").strip().lower() in _TRUTHY
 
 
 def auto_run() -> str:

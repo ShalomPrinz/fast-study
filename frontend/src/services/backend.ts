@@ -15,8 +15,9 @@ import type {
   CourseExtractorState,
   CourseStatus,
   ToolReport,
+  Notice,
 } from '@/types'
-import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
+import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 import {
   kindQuery,
   lectureBase,
@@ -99,6 +100,16 @@ export async function fetchTimingStats(
   return backend.get<TimingStats>(`/timing/${operation}?file_size_bytes=${fileSizeBytes}`)
 }
 
+interface RawNotice {
+  id: number
+  code: string
+  params?: ErrorParams | null
+}
+
+function normalizeNotices(raw: RawNotice[] | undefined): Notice[] {
+  return (raw ?? []).map((n) => ({ id: n.id, code: n.code, params: n.params ?? {} }))
+}
+
 interface RawInFlightEntry {
   course: string
   lecture: string
@@ -113,6 +124,7 @@ interface RawRunnerStatus {
   queue?: QueueEntry[]
   overview_running?: string[]
   errors?: Record<string, Pick<RunError, 'step' | 'message'> & Partial<RunError>>
+  notices?: RawNotice[]
 }
 
 function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
@@ -131,6 +143,7 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
       startedAt: e.started_at,
     })),
     queue: raw.queue ?? [],
+    notices: normalizeNotices(raw.notices),
     overviewRunning: raw.overview_running ?? [],
     errors: Object.fromEntries(
       Object.entries(raw.errors ?? {}).map(([key, e]) => [
@@ -204,12 +217,14 @@ type RawCourseExtractorState = Omit<CourseExtractorState, 'startedAt'> & {
 interface RawCourseStatus {
   running: boolean
   extractors?: Record<string, RawCourseExtractorState>
+  notices?: RawNotice[]
 }
 
 export async function fetchCourseStatus(course: string): Promise<CourseStatus> {
   const raw = await backend.get<RawCourseStatus>(courseOverviewBase(course) + '/status')
   return {
     running: raw.running,
+    notices: normalizeNotices(raw.notices),
     extractors: Object.fromEntries(
       Object.entries(raw.extractors ?? {}).map(([slug, { started_at, ...rest }]) => [
         slug,

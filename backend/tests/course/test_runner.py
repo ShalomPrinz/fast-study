@@ -1304,6 +1304,7 @@ class TestStatusAndListing:
         assert course_runner.get_status("קורס-חדש") == {
             "running": False,
             "extractors": {},
+            "notices": [],
         }
 
     def test_active_courses_counts_pending_running_and_held_lock(self):
@@ -1517,3 +1518,29 @@ class TestPhaseWorkerSeam:
         monkeypatch.setattr(course_to_pdf, "convert_to_pdf", fake_convert)
         assert course_to_pdf.run_to_pdf(COURSE, "exam-hints") == {"status": "done"}
         assert puts["exam-hints.pdf"] == b"%PDF-1.4 stub"
+
+
+class TestModelFallbackNotice:
+    def test_a_fallback_during_analyze_is_noticed_on_the_course_status(
+        self, db, monkeypatch
+    ):
+        import services.llm_client as llm_mod
+
+        def analyze_with_fallback(ext, report, course):
+            llm_mod.fallback_hook.get()("m1", "m2")
+            return "x"
+
+        monkeypatch.setattr(course_analyze, "analyze", analyze_with_fallback)
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["notices"], "no notice recorded"
+        notice = status["notices"][0]
+        assert (notice["code"], notice["params"]) == (
+            "model_fallback",
+            {"from": "m1", "to": "m2"},
+        )
+        assert course_runner.get_status("other-course")["notices"] == []

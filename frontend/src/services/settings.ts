@@ -53,6 +53,8 @@ export interface Settings {
   geminiApiKeySet: boolean
   groqApiKeySet: boolean
   geminiModel: string | null
+  // Unset means off: a busy model fails the call instead of retrying on the next one.
+  geminiAutoFallback: boolean | null
   driveEnabled: boolean | null
   gdriveRootFolder: string | null
   autoRun: string | null
@@ -84,6 +86,7 @@ export interface SettingsPatch {
   geminiApiKey?: string
   groqApiKey?: string
   geminiModel?: string
+  geminiAutoFallback?: boolean
   driveEnabled?: boolean
   gdriveRootFolder?: string
   autoRun?: AutoRun
@@ -106,6 +109,7 @@ const WIRE: Record<SettingsField, string> = {
   geminiApiKey: 'gemini_api_key',
   groqApiKey: 'groq_api_key',
   geminiModel: 'gemini_model',
+  geminiAutoFallback: 'gemini_auto_fallback',
   driveEnabled: 'drive_enabled',
   gdriveRootFolder: 'gdrive_root_folder',
   autoRun: 'auto_run',
@@ -128,6 +132,7 @@ const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
   'geminiModel',
+  'geminiAutoFallback',
   'driveEnabled',
   'gdriveRootFolder',
   'autoRun',
@@ -144,6 +149,7 @@ interface RawSettings {
   gemini_api_key_set: boolean | null
   groq_api_key_set: boolean | null
   gemini_model: string | null
+  gemini_auto_fallback?: boolean | null
   drive_enabled: boolean | null
   gdrive_root_folder: string | null
   auto_run: string | null
@@ -162,6 +168,7 @@ function normalize(raw: RawSettings): Settings {
     geminiApiKeySet: raw.gemini_api_key_set ?? false,
     groqApiKeySet: raw.groq_api_key_set ?? false,
     geminiModel: raw.gemini_model,
+    geminiAutoFallback: raw.gemini_auto_fallback ?? null,
     driveEnabled: raw.drive_enabled,
     gdriveRootFolder: raw.gdrive_root_folder,
     autoRun: raw.auto_run,

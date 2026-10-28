@@ -31,6 +31,7 @@ describe('RunnerView', () => {
       ],
       queue: [],
       overviewRunning: [],
+      notices: [],
       errors: {},
     } satisfies RunnerStatus
     const { container } = render(

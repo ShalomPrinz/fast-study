@@ -14,7 +14,7 @@ from typing import NamedTuple, Optional
 
 import sentry_sdk
 from course import runner as course_runner
-from services import db_client, google_auth, settings
+from services import db_client, google_auth, notices, settings
 from services.errors import (
     CONDITION_CODES,
     CodedError,
@@ -73,6 +73,8 @@ _handover: str | None = None
 _errors: dict[
     str, dict
 ] = {}  # skey → last error record (see _error_record); survives after _in_flight clears
+# The `scope` of notices.recent() that GET /status returns.
+NOTICE_SCOPE = "pipeline"
 _runner_status: dict = {"running": False, "total": 0, "done": 0, "last_error": None}
 # Run-scoped; the {message, params} of Gemini's DAILY quota error that blocked summarize, reset
 # by run_all. Every lecture it then stops carries the same facts as the one that hit the limit.
@@ -178,6 +180,7 @@ def get_status() -> dict:
         "errors": dict(_errors),
         "queue": [entry._asdict() for entry in _queue],
         "overview_running": course_runner.active_courses(),
+        "notices": notices.recent(NOTICE_SCOPE),
     }
 
 
@@ -1009,6 +1012,15 @@ def _drop_handover() -> bool:
     return key is not None and _in_flight.pop(key, None) is not None
 
 
+def _with_notices(fn, course: str, lecture: str, kind: str, *args, **opts) -> dict:
+    """Run an executor in a worker thread with Gemini model fallbacks noticed for this lecture."""
+
+    with notices.record_fallbacks(
+        NOTICE_SCOPE, course=course, lecture=lecture, kind=kind
+    ):
+        return fn(course, lecture, *args, **opts)
+
+
 async def _call_step(
     course: str, lecture: str, kind: str, step: str, *, fresh: bool = False
 ) -> dict:
@@ -1017,9 +1029,16 @@ async def _call_step(
     opts = {"fresh": True} if fresh else {}
     if kind == ASSIGNMENT_KIND:
         return await asyncio.to_thread(
-            _ASSIGNMENT_EXECUTORS[step], course, lecture, **opts
+            _with_notices,
+            _ASSIGNMENT_EXECUTORS[step],
+            course,
+            lecture,
+            kind,
+            **opts,
         )
-    return await asyncio.to_thread(_EXECUTORS[step], course, lecture, kind, **opts)
+    return await asyncio.to_thread(
+        _with_notices, _EXECUTORS[step], course, lecture, kind, kind, **opts
+    )
 
 
 async def _run_step_unlocked(

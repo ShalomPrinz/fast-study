@@ -19,6 +19,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `data_root`                                        | `DATA_ROOT`                                       |
 | `gemini_api_key_set` / `groq_api_key_set` (bool)   | `GEMINI_API_KEY` / `GROQ_API_KEY`                 |
 | `gemini_model`                                     | `GEMINI_MODEL`                                    |
+| `gemini_auto_fallback` (bool)                      | `GEMINI_AUTO_FALLBACK`                            |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
 | `auto_run`                                         | `AUTO_RUN`                                        |
 | `moodle_site` (the auto-downloader's)              | `MOODLE_SITE`                                     |

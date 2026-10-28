@@ -7,6 +7,7 @@ const STORED: Settings = {
   geminiApiKeySet: true,
   groqApiKeySet: true,
   geminiModel: 'gemini-3.5-flash',
+  geminiAutoFallback: null,
   driveEnabled: false,
   gdriveRootFolder: null,
   autoRun: null,
@@ -28,6 +29,7 @@ const UNCHANGED: SettingsForm = {
   driveEnabled: false,
   gdriveRootFolder: '',
   geminiModel: 'gemini-3.5-flash',
+  geminiAutoFallback: false,
   autoRun: 'full',
   nightlyRun: true,
   nightlyHour: 3,
@@ -40,6 +42,13 @@ const UNCHANGED: SettingsForm = {
 }
 
 describe('buildPatch', () => {
+  it('sends the auto-fallback switch only when it differs from the stored one', () => {
+    expect(buildPatch({ ...UNCHANGED, geminiAutoFallback: true }, STORED, true)).toEqual({
+      geminiAutoFallback: true,
+    })
+    expect(storeBody({ geminiAutoFallback: true })).toEqual({ gemini_auto_fallback: true })
+  })
+
   it('sends nothing when nothing changed', () => {
     expect(buildPatch(UNCHANGED, STORED, true)).toEqual({})
   })

@@ -25,6 +25,7 @@ const full = {
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
   nightlyRun: false,
+  geminiAutoFallback: true,
   nightlyHour: 22,
   errorReports: false,
   privacyConfirmed: true,
@@ -82,6 +83,17 @@ test('nightlyRun and nightlyHour round-trip and reach the backend env', () => {
   assert.equal(view.nightlyHour, 0);
   assert.deepEqual(store.serviceEnv(), { NIGHTLY_RUN: 'true', NIGHTLY_HOUR: '0' });
   assert.equal(store.write({ nightlyHour: 23 }).nightlyHour, 23);
+});
+
+test('geminiAutoFallback round-trips and reaches the backend env', () => {
+  assert.equal(store.write({ geminiAutoFallback: true }).geminiAutoFallback, true);
+  assert.deepEqual(store.serviceEnv(), { GEMINI_AUTO_FALLBACK: 'true' });
+  assert.equal(store.write({ geminiAutoFallback: false }).geminiAutoFallback, false);
+  assert.deepEqual(store.serviceEnv(), { GEMINI_AUTO_FALLBACK: 'false' });
+  assertRefused(
+    store.write({ geminiAutoFallback: 'true' }),
+    /geminiAutoFallback must be a boolean/,
+  );
 });
 
 test('an out-of-range nightly_hour in the file reads as unset and stays out of the env', () => {
@@ -206,6 +218,7 @@ test('echoing a read back blanks nothing', () => {
     geminiModel: written.geminiModel,
     driveEnabled: written.driveEnabled,
     nightlyRun: written.nightlyRun,
+    geminiAutoFallback: written.geminiAutoFallback,
     nightlyHour: written.nightlyHour,
     gdriveRootFolder: written.gdriveRootFolder,
     autoRun: written.autoRun,
@@ -245,6 +258,7 @@ test('an unset store reads as all-null, bar privacyConfirmed, which reads false'
     geminiModel: null,
     driveEnabled: null,
     nightlyRun: null,
+    geminiAutoFallback: null,
     nightlyHour: null,
     gdriveRootFolder: null,
     autoRun: null,
@@ -310,6 +324,7 @@ test('serviceEnv maps every field onto its service env var', () => {
     COURSE_STRUCTURE: 'lectures_some',
     DRIVE_ENABLED: 'true',
     NIGHTLY_RUN: 'false',
+    GEMINI_AUTO_FALLBACK: 'true',
     NIGHTLY_HOUR: '22',
     GEMINI_API_KEY: 'gemini-secret',
     GROQ_API_KEY: 'groq-secret',

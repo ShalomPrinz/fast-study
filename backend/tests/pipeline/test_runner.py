@@ -2545,3 +2545,24 @@ def test_an_audio_entry_whose_audio_was_deleted_after_transcribe_has_nothing_lef
     ):
         assert asyncio.run(runner._run_entry(_entry("L1", "audio"))) is False
     step.assert_not_called()
+
+
+def test_a_model_fallback_in_a_step_is_noticed_on_the_pipeline_status(monkeypatch):
+    import services.llm_client as llm_mod
+    from services import notices
+
+    monkeypatch.setattr(notices.db_client, "notify", lambda: None)
+
+    def step(course, lecture, kind, **_opts):
+        llm_mod.fallback_hook.get()("m1", "m2")
+        return {"status": "done"}
+
+    monkeypatch.setitem(runner._EXECUTORS, "summarize", step)
+
+    asyncio.run(runner._call_step("c-notice", "l1", "lecture", "summarize"))
+
+    mine = [n for n in runner.get_status()["notices"] if n["course"] == "c-notice"]
+    assert len(mine) == 1
+    assert mine[0]["code"] == "model_fallback"
+    assert mine[0]["params"] == {"from": "m1", "to": "m2"}
+    assert (mine[0]["lecture"], mine[0]["kind"]) == ("l1", "lecture")

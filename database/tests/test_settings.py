@@ -102,6 +102,7 @@ def test_absent_keys_read_as_null(env_file):
     assert stored["gdrive_root_folder"] is None
     assert stored["drive_enabled"] is None
     assert stored["nightly_run"] is None
+    assert stored["gemini_auto_fallback"] is None
 
 
 def test_booleans_round_trip(env_file):
@@ -110,6 +111,20 @@ def test_booleans_round_trip(env_file):
 
     assert settings.write_settings({"drive_enabled": False})["drive_enabled"] is False
     assert "DRIVE_ENABLED='false'" in env_file.read_text(encoding="utf-8")
+
+
+def test_gemini_auto_fallback_round_trips(env_file):
+    assert (
+        settings.write_settings({"gemini_auto_fallback": True})["gemini_auto_fallback"]
+        is True
+    )
+    assert "GEMINI_AUTO_FALLBACK='true'" in env_file.read_text(encoding="utf-8")
+
+    assert (
+        settings.write_settings({"gemini_auto_fallback": False})["gemini_auto_fallback"]
+        is False
+    )
+    assert "GEMINI_AUTO_FALLBACK='false'" in env_file.read_text(encoding="utf-8")
 
 
 def test_an_unset_int_reads_as_null(env_file):
@@ -600,3 +615,12 @@ def test_course_structure_reads_null_unless_a_known_mode(env_file, stored, expec
     if stored is not None:
         env_file.write_text(f"COURSE_STRUCTURE={stored}\n", encoding="utf-8")
     assert settings.read_settings()["course_structure"] == expected
+
+
+def test_a_string_is_rejected_for_gemini_auto_fallback(env_file):
+    assert _rejected({"gemini_auto_fallback": "true"}) == (
+        "setting_must_be_boolean",
+        {"field": "gemini_auto_fallback"},
+    )
+
+    assert "GEMINI_AUTO_FALLBACK" not in env_file.read_text(encoding="utf-8")

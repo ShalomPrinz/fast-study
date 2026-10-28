@@ -30,6 +30,7 @@ const status = (v: number) =>
     runner: { running: true, lastError: null },
     inFlight: [],
     errors: {},
+    notices: [],
     v,
   }) as unknown as RunnerStatus
 const tree = (v: number) =>
@@ -298,6 +299,7 @@ describe('an assignment run', () => {
       inFlight: [
         { course: 'C', lecture: 'A', kind: 'assignment', step: 'solution', startedAt: '' },
       ],
+      notices: [],
       errors: withError ? { 'C||A||assignment': error } : {},
     }) as unknown as RunnerStatus
 
