@@ -42,11 +42,15 @@ export function parseRule(provider, value) {
 /** Both providers' live rules, with the `/control` update and the per-request decision over them. */
 export function createRules() {
   const mode = { groq: { ...OK }, gemini: { ...OK } };
+  // Calls each provider's rule was asked about, whatever it answered; a reset zeroes them.
+  const hits = { groq: 0, gemini: 0 };
   return {
     mode,
+    hits,
     // `reset` is what a reseed sends; a provider's field sets only that provider. All or nothing:
     // a rule that fails to parse throws before any provider changes.
     control(body) {
+      if (body.reset) hits.groq = hits.gemini = 0;
       const next = body.reset ? { groq: { ...OK }, gemini: { ...OK } } : { ...mode };
       for (const provider of ['groq', 'gemini']) {
         if (body[provider] !== undefined) next[provider] = parseRule(provider, body[provider]);
@@ -57,6 +61,7 @@ export function createRules() {
     // `lecture` is the raw `x-harness-lecture` header, `model` the one in the route; a probe carries none, so only an untargeted
     // rule reaches it.
     take(provider, lecture, honoured, model = null) {
+      hits[provider]++;
       const rule = mode[provider];
       if (!honoured.includes(rule.mode)) return { hit: 'ok', ms: null };
       if (rule.model !== null && rule.model !== model) return { hit: 'ok', ms: null };

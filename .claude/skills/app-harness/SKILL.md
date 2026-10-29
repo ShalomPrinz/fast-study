@@ -63,7 +63,7 @@ rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture
 `radware` mode walls Moodle until a captcha is solved with `{"solve":true}`; `{"revoke":true}` makes
 the next call meet a fresh captcha, with no reseed. Restart one service after a code change with
 `node .claude/harness/setup.mjs --harness $HARNESS_DIR --restart <service>`. Put the baseline back
-with `hb reseed`.
+with `hb reseed`. A Gemini auto retry only waits and shows its countdown; `hb retry fire [key]` runs it now.
 
 A helper for a fake's setting earns a new `hb` subcommand only when the job takes more than one
 `/control` call or a wait between steps, as `hb moodle-busy` does; a single setting stays a `curl`.

@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ACTIONS, actionRequest } from './lib/act.mjs';
-import { DATABASE, bindPorts, bytes, call, saveSettings } from './lib/api.mjs';
+import { DATABASE, bindPorts, bytes, call, fireRetries, saveSettings } from './lib/api.mjs';
 import { markSeeded, removeLecture, reseed, settingsPatch, unwall, wall } from './lib/baseline.mjs';
 import { serveBefore } from './lib/before.mjs';
 import { HARNESS_ROOT, SELFCHECK_TAG, harnessPaths, readPorts } from './lib/env.mjs';
@@ -215,6 +215,16 @@ const COMMANDS = {
       if (!course || !arg) throw new Error('usage: rm-lecture <course> <lecture>');
       const { lecture, kind } = lectureArg(arg);
       console.log(`removed ${await removeLecture(course, lecture, kind)}, notified`);
+    },
+  },
+  retry: {
+    usage: 'retry fire [key]',
+    summary:
+      'fire the held Gemini auto retries now (key: course/lecture[/kind] or course/slug); prints the keys fired',
+    async run(_paths, [verb, key]) {
+      if (verb !== 'fire') throw new Error('usage: retry fire [key]');
+      const fired = await fireRetries(key);
+      console.log(fired.length ? fired.join('\n') : 'nothing held');
     },
   },
   lock: {

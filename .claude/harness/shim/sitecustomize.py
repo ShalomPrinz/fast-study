@@ -84,6 +84,22 @@ if _HARNESS:
         module.PROVIDERS["groq"]["base_url"] = f"{PROVIDERS}/groq"
         module.PROVIDERS["gemini"]["base_url"] = f"{PROVIDERS}/gemini/"
 
+    def _mount_fire_route(module):
+        """The backend serves through `runtime.serve(app)`, so the harness-only fire route is added there."""
+
+        import held_retries
+
+        serve = module.serve
+
+        def serve_with_route(app, *args, **kwargs):
+            async def fire(key: str | None = None):
+                return {"fired": held_retries.fire(key)}
+
+            app.add_api_route("/__harness/retries/fire", fire, methods=["POST"])
+            return serve(app, *args, **kwargs)
+
+        module.serve = serve_with_route
+
     def _patch_runtime(module):
         """`runtime` calls load_dotenv() at import, so this is the first moment the race with the
         repo-root .env is decided. A real key winning it would make the whole run unsafe."""
@@ -104,6 +120,8 @@ if _HARNESS:
             for problem in problems:
                 print(f"harness shim: {problem}", file=sys.stderr, flush=True)
             os._exit(3)
+        if os.environ.get("HARNESS_SERVICE") == "backend":
+            _mount_fire_route(module)
         print(
             f"harness shim: live (keys {os.environ['GROQ_API_KEY'][:12]}…/"
             f"{os.environ['GEMINI_API_KEY'][:12]}…, data {data_root})",
@@ -285,6 +303,8 @@ if _HARNESS:
     def _patch_pipeline_runner(module):
         """Each step runs in its own worker thread, so the thread names the lecture its calls are for."""
 
+        _patch_retry_timers(module)
+
         def path_of(course, lecture, kind):
             return (
                 f"{course}/Recitations/{lecture}"
@@ -308,24 +328,13 @@ if _HARNESS:
         module.CHUNK_SECONDS = 8
         module.OVERLAP_SECONDS = 2
 
-    def _patch_auto_retry(module):
-        """The wait between Gemini auto retries is half a second whatever the setting says, so a
-        spec sees the countdown and the re-run in seconds; the timer and its `at` stay real."""
+    def _patch_retry_timers(module):
+        """Gemini auto-retry timers are held, never fired by the clock; `/__harness/retries/fire`
+        fires them. The entry keeps its real `at`, so /status shows a true countdown."""
 
-        from datetime import datetime, timedelta, timezone
+        import held_retries
 
-        delay = 0.5
-        real = module.next_retry
-
-        def next_retry(done):
-            due = real(done)
-            if due is None:
-                return None
-            field, _ = due
-            at = datetime.now(timezone.utc) + timedelta(seconds=delay)
-            return {**field, "at": at.isoformat()}, delay
-
-        module.next_retry = next_retry
+        held_retries.hold_timers(module)
 
     def _patch_course_analyze(module):
         module.run_analyze = _targeting(module.run_analyze, lambda course, *_: course)
@@ -443,7 +452,7 @@ if _HARNESS:
         "pipeline.runner": _patch_pipeline_runner,
         "pipeline.transcribe": _patch_transcribe,
         "course.analyze": _patch_course_analyze,
-        "services.auto_retry": _patch_auto_retry,
+        "course.runner": _patch_retry_timers,
         "httpx": _patch_httpx,
     }
 

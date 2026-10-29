@@ -343,7 +343,7 @@ host lands on the TLS port and fails `ERR_EMPTY_RESPONSE` — every fixture URL 
 cannot write `network.log`, so each context it opens logs an http(s) request that failed
 `ERR_NAME_NOT_RESOLVED` as `downloader-auto REFUSED host:port (browser)`.
 
-The shim holds the backend's Gemini auto-retry wait (`services.auto_retry.next_retry`) at half a second, the `at` of the `retry` field included, whatever minutes Settings says, so a retry fires in the spec's time while its countdown and timer stay real.
+The shim holds every Gemini auto-retry timer (lecture steps and course overviews) instead of arming it: the retry's `at` is the real setting (default 10 min), so `/status` and the UI show a true countdown, `.cancel()` works as in the product, and nothing fires on its own. `POST <backend>/__harness/retries/fire[?key=…]` runs the held retries' own `_fire_retry` on the backend's loop and answers `{"fired": [keys]}` (`course/lecture/kind` for a lecture step, `course/slug` for an overview; `key` fires only those under it, `course/lecture` included; a cancelled retry is never fired). `hb retry fire [key]` wraps it, and specs call `fireRetries(key)` from `lib/api.mjs`. A spec pins the page countdown with Playwright `page.clock`, and `GET <providers>/hits` (`providerHits()`) counts the calls each fake's rule saw, to prove nothing re-ran.
 
 The shim also cuts auto/'s Moodle-lock cooldown from 3 s to 200 ms. The harness shortens the app's
 delays rather than removing them, so the lock still reads busy for a moment after each request and a

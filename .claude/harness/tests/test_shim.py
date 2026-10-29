@@ -190,17 +190,87 @@ def test_transcribe_chunks_shrink_to_split_the_fixture(child, tmp_path):
     assert child(code) == [8, 2]
 
 
-def test_auto_retry_waits_half_a_second(child, tmp_path):
-    services = tmp_path / "stubs" / "services"
-    services.mkdir()
-    (services / "__init__.py").write_text("")
-    (services / "auto_retry.py").write_text(
-        "def next_retry(done):\n"
-        "    return None if done >= 3 else ({'attempt': done + 1, 'of': 3, 'at': 'x'}, 600.0)\n"
-    )
-    code = (
-        "import services.auto_retry as a\n"
-        "field, delay = a.next_retry(0)\n"
-        "print(json.dumps([field['attempt'], field['of'], field['at'] != 'x', delay, a.next_retry(3)]))"
-    )
-    assert child(code) == [1, 3, True, 0.5, None]
+def held():
+    import sys
+
+    sys.path.insert(0, str(SHIM))
+    import held_retries
+
+    return held_retries
+
+
+class _Real:
+    def __init__(self):
+        self.timers = []
+
+    def get_running_loop(self):
+        return self
+
+    def call_later(self, delay, callback, *args):
+        self.timers.append(delay)
+
+
+def arm(module, callback, *args):
+    return module.asyncio.get_running_loop().call_later(600, callback, *args)
+
+
+def make(bag):
+    module = type("M", (), {})()
+    real = _Real()
+    module.asyncio = real
+    mod = held()
+    mod.hold_timers(module, bag)
+    return module, real
+
+
+def _fire_retry(*args):
+    _fire_retry.calls.append(args)
+
+
+_fire_retry.calls = []
+
+
+def test_held_retry_never_fires_on_its_own():
+    bag = []
+    module, real = make(bag)
+    _fire_retry.calls.clear()
+    handle = arm(module, _fire_retry, "c||l||lecture")
+    assert (bag, real.timers, _fire_retry.calls) == ([handle], [], [])
+
+
+def test_fire_runs_the_callback_and_returns_the_keys():
+    bag = []
+    module, _ = make(bag)
+    _fire_retry.calls.clear()
+    arm(module, _fire_retry, "c||l||lecture")
+    arm(module, _fire_retry, "c", "slug")
+    assert held().fire(None, bag) == ["c/l/lecture", "c/slug"]
+    assert _fire_retry.calls == [("c||l||lecture",), ("c", "slug")]
+    assert held().fire(None, bag) == []
+
+
+def test_fire_filter_matches_a_lecture_with_or_without_kind_and_an_overview():
+    bag = []
+    module, _ = make(bag)
+    for args in (("c||l||lecture",), ("c||l2||lecture",), ("c", "slug")):
+        arm(module, _fire_retry, *args)
+    assert held().fire("c/l/lecture", bag) == ["c/l/lecture"]
+    assert held().fire("c/slug", bag) == ["c/slug"]
+    assert held().fire("c/l", bag) == []
+    assert held().fire("c/l2", bag) == ["c/l2/lecture"]
+
+
+def test_a_cancelled_retry_is_not_fired():
+    bag = []
+    module, _ = make(bag)
+    _fire_retry.calls.clear()
+    arm(module, _fire_retry, "c||l||lecture").cancel()
+    assert held().fire(None, bag) == []
+    assert _fire_retry.calls == []
+
+
+def test_other_timers_keep_their_real_delay():
+    bag = []
+    module, real = make(bag)
+    module.asyncio.get_running_loop().call_later(5, print)
+    assert (bag, real.timers) == ([], [5])

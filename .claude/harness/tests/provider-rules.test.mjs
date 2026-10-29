@@ -187,4 +187,13 @@ describe('take — a transient failure for the first N calls', () => {
     assert.equal(rules.take('gemini', undefined, ['500']).hit, 'ok');
     assert.equal(rules.mode.gemini.times, 1);
   });
+  test('hits count every call a provider is asked, and a reset zeroes them', () => {
+    const rules = createRules();
+    rules.take('gemini', undefined, ALL);
+    rules.take('gemini', undefined, ['500']);
+    rules.take('groq', undefined, ALL);
+    assert.deepEqual({ ...rules.hits }, { groq: 1, gemini: 2 });
+    rules.control({ reset: true });
+    assert.deepEqual({ ...rules.hits }, { groq: 0, gemini: 0 });
+  });
 });

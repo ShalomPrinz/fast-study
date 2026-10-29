@@ -32,7 +32,7 @@ const ASSIGNMENT_DOCS = {
 let assignmentCalls = [];
 
 const rules = createRules();
-const { mode } = rules;
+const { mode, hits } = rules;
 
 // Each provider's calls a 'slow' hit is holding, as the callbacks that answer them early.
 const held = { groq: new Set(), gemini: new Set() };
@@ -200,6 +200,7 @@ async function handle(req, res) {
     return json(res, 200, { mode });
   }
   if (route === '/health') return json(res, 200, { status: 'ok', mode });
+  if (route === '/hits') return json(res, 200, { ...hits });
   if (route === '/uploads') return json(res, 200, { uploads: uploaded });
   if (route === '/assignment-calls') return json(res, 200, { calls: assignmentCalls });
 

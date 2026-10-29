@@ -89,3 +89,10 @@ export async function saveSettings(patch) {
   if (moodleSite !== undefined) await json(`${AUTO}/config`, 'POST', { moodle_site: moodleSite });
   return body;
 }
+
+/** Fire the backend's held Gemini auto retries (all, or those under `key`); resolves to the keys fired. */
+export async function fireRetries(key) {
+  const query = key ? `?key=${encodeURIComponent(key)}` : '';
+  const { body } = await call(`${BACKEND}/__harness/retries/fire${query}`, { method: 'POST' });
+  return body.fired;
+}
