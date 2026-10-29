@@ -382,7 +382,7 @@ msgstr "הכלי {tool} לא פועל כראוי, ולכן חלקים ב-FastStu
 msgid "{tool} is missing, so the parts of FastStudy that need it will fail. Reinstall FastStudy to fix this."
 msgstr "הכלי {tool} חסר, ולכן חלקים ב-FastStudy שזקוקים לו לא יעבדו. התקן מחדש את FastStudy כדי לתקן זאת."
 
-#: src/features/downloads/components/NewView.tsx:149
+#: src/features/downloads/components/NewView.tsx:147
 msgid "{total, plural, one {This course has # item you haven't marked. Skip all old content?} other {This course has # items you haven't marked. Skip all old content?}}"
 msgstr "{total, plural, one {בקורס הזה יש פריט # שלא סימנת. לדלג על כל התוכן הישן?} other {בקורס הזה יש # פריטים שלא סימנת. לדלג על כל התוכן הישן?}}"
 
@@ -590,7 +590,7 @@ msgstr "חומר המטלה הועתק — הדבק אותו בצ'אט עם Ctrl
 msgid "Assignment Solution"
 msgstr "פתרון המטלה"
 
-#: src/features/downloads/components/NewView.tsx:137
+#: src/features/downloads/components/NewView.tsx:135
 #: src/features/downloads/DownloadsView.tsx:95
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:37
 msgid "Assignments"
@@ -1247,7 +1247,7 @@ msgid "Download any open video on the internet"
 msgstr "הורד כל וידאו שפתוח לצפייה באינטרנט"
 
 #. placeholder {0}: queue.length
-#: src/features/downloads/components/NewView.tsx:258
+#: src/features/downloads/components/NewView.tsx:253
 msgid "Download selected ({0})"
 msgstr "הורדת הנבחרים ({0})"
 
@@ -1265,14 +1265,14 @@ msgid "Downloading"
 msgstr "מוריד"
 
 #. placeholder {0}: state.active
-#: src/features/downloads/components/NewView.tsx:242
+#: src/features/downloads/components/NewView.tsx:237
 msgid "Downloading {0} more…"
 msgstr "עוד {0} בהורדה…"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
 #: src/features/downloads/components/BulkRunControls.tsx:44
-#: src/features/downloads/components/NewView.tsx:238
+#: src/features/downloads/components/NewView.tsx:233
 msgid "Downloading {0}/{1}…"
 msgstr "מוריד {0}/{1}…"
 
@@ -1850,7 +1850,7 @@ msgstr "טוען…"
 msgid "Manual"
 msgstr "ידני"
 
-#: src/features/downloads/components/NewView.tsx:250
+#: src/features/downloads/components/NewView.tsx:245
 msgid "Mark selected as irrelevant"
 msgstr "סימון הנבחרים כלא רלוונטיים"
 
@@ -1858,7 +1858,7 @@ msgstr "סימון הנבחרים כלא רלוונטיים"
 msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
-#: src/features/downloads/components/NewView.tsx:136
+#: src/features/downloads/components/NewView.tsx:134
 #: src/features/downloads/DownloadsView.tsx:93
 #: src/features/lectures/AssignmentView.tsx:141
 #: src/features/lectures/MainView.tsx:584
@@ -2064,7 +2064,7 @@ msgstr "שים לב: הפעולה הזו תמחק את השמע, התמלול, �
 msgid "Nothing matched this search"
 msgstr "לא נמצאו תוצאות לחיפוש הזה"
 
-#: src/features/downloads/components/NewView.tsx:172
+#: src/features/downloads/components/NewView.tsx:167
 msgid "Nothing new in this course."
 msgstr "אין חדש בקורס הזה."
 
@@ -2202,7 +2202,7 @@ msgstr "לא חובה"
 msgid "Other"
 msgstr "אחר"
 
-#: src/features/downloads/components/NewView.tsx:207
+#: src/features/downloads/components/NewView.tsx:202
 #: src/features/downloads/components/SectionGroup.tsx:49
 msgid "Other links"
 msgstr "קישורים אחרים"
@@ -2481,10 +2481,6 @@ msgstr "נסה שוב אוטומטית כש-Gemini עמוס או לא זמין"
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "ניסיון חוזר בעוד {time} (ניסיון {attempt}/{of})"
 
-#: src/features/downloads/components/NewView.tsx:163
-msgid "Review"
-msgstr "בדיקה"
-
 #: src/features/lectures/MainView.tsx:348
 #: src/features/lectures/MainView.tsx:351
 msgid "Rotate {file}"
@@ -2584,7 +2580,7 @@ msgid "Section {0} is waiting for a passcode"
 msgstr "היחידה {0} ממתינה לקוד גישה"
 
 #. placeholder {0}: item.title
-#: src/features/downloads/components/NewView.tsx:305
+#: src/features/downloads/components/NewView.tsx:300
 msgid "Select {0}"
 msgstr "בחירת {0}"
 
@@ -2592,7 +2588,7 @@ msgstr "בחירת {0}"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/features/downloads/components/NewView.tsx:203
+#: src/features/downloads/components/NewView.tsx:198
 msgid "Select all in this section"
 msgstr "בחירת כל היחידה"
 
@@ -2659,7 +2655,7 @@ msgstr "הצגת השלבים"
 msgid "Skip"
 msgstr "דילוג"
 
-#: src/features/downloads/components/NewView.tsx:160
+#: src/features/downloads/components/NewView.tsx:158
 msgid "Skip all"
 msgstr "דילוג על הכול"
 
@@ -3242,7 +3238,7 @@ msgstr "חשבון האוניברסיטה מחובר"
 msgid "University saved"
 msgstr "האוניברסיטה נשמרה"
 
-#: src/features/downloads/components/NewView.tsx:138
+#: src/features/downloads/components/NewView.tsx:136
 #: src/features/downloads/DownloadsView.tsx:99
 msgid "Unknown"
 msgstr "לא ידוע"
@@ -3313,7 +3309,7 @@ msgstr "וידאו ושמע"
 msgid "Video link"
 msgstr "קישור לווידאו"
 
-#: src/features/downloads/components/NewView.tsx:135
+#: src/features/downloads/components/NewView.tsx:133
 #: src/features/downloads/DownloadsView.tsx:92
 msgid "Videos"
 msgstr "וידאו"

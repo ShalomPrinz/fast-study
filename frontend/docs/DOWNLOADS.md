@@ -266,7 +266,7 @@ row's button is **Load course** — on demand, never on launch.
 
 ## New view
 
-`NewView` (mounted per load, `key={loadKey}` from the session, so checks and the banner's dismissal reset on every
+`NewView` (mounted per load, `key={loadKey}` from the session, so checks reset on every
 reload) lists the rows that are neither downloaded nor skipped, grouped by media (Videos, Materials, Assignments, Unknown) and then Moodle
 section, each section header with a select-all checkbox; `buildNewView` in `utils/newView.ts` holds the rules. Every row keeps its
 editable name, kind and target and starts checked; a sticky bar acts on exactly the checked rows:
@@ -276,8 +276,8 @@ editable name, kind and target and starts checked; a sticky bar acts on exactly 
 - A row is done when its ref is held (`recognisedByRef`: video source, material source, assignment-file source) or `hasResource` holds for its
   **suggested** name — never the typed one, so a row does not vanish while the user retypes onto an existing lecture.
 - An **engaged** row — a run walking it, or a download running on it — stays listed, unchecked and disabled, until it lands.
-- The first-load banner ("This course has N items you haven't marked. Skip all old content?", **Skip all** / **Review**) shows when the
-  course has no skips, no listed item is recognised by ref, and something is new; Review dismisses it for this load.
+- The first-load banner ("This course has N items you haven't marked. Skip all old content?", **Skip all**) shows when the
+  course has no skips, no listed item is recognised by ref, and something is new, and goes away once anything is skipped or a downloaded file is recognised by its source.
 - A playlist renders as `PlaylistGroup expandOnly`: only the expand toggle, no checkbox and no run controls. Its expanded children join the
   list as ordinary rows, minus the done and skipped ones, in the playlist's section.
 - `PausedRunsBanner` (media `null`) shows the course run's passcode entry; paused section runs of the All view send the user there via `onShowAll`.

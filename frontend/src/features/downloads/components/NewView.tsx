@@ -50,7 +50,7 @@ interface Props {
 
 // The "approve what's new" list: not-downloaded, not-skipped rows grouped by media then Moodle section,
 // each with a checkbox, under a sticky bar that downloads or skips the checked ones. Mounted per load,
-// so its checks and the banner's dismissal reset on a reload. See docs/DOWNLOADS.md.
+// so its checks reset on a reload. See docs/DOWNLOADS.md.
 export default function NewView({ course, items, onReconnect, onShowAll }: Props) {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
@@ -62,7 +62,6 @@ export default function NewView({ course, items, onReconnect, onShowAll }: Props
   const lock = useMoodleLockState()
   const bulk = useBulkRun(courseRunId(course), course, course, 'course')
   const [unchecked, setUnchecked] = useState<ReadonlySet<string>>(new Set())
-  const [dismissed, setDismissed] = useState(false)
   const [marking, setMarking] = useState(false)
 
   const skipped = courses.find((c) => c.name === course)?.skipped ?? []
@@ -117,7 +116,6 @@ export default function NewView({ course, items, onReconnect, onShowAll }: Props
     skipped,
     recognised: anyRecognised(items, courses, course),
     newCount: total,
-    dismissed,
   })
 
   async function mark(toSkip: string[]) {
@@ -158,9 +156,6 @@ export default function NewView({ course, items, onReconnect, onShowAll }: Props
             onClick={() => void mark(skippableRefs(groups, engaged))}
           >
             <Trans>Skip all</Trans>
-          </button>
-          <button className="btn btn--ghost new-banner-review" onClick={() => setDismissed(true)}>
-            <Trans>Review</Trans>
           </button>
         </div>
       )}

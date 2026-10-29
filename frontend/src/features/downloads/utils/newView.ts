@@ -32,15 +32,13 @@ export function anyRecognised(items: Item[], courses: Course[], course: string):
   return items.some((i) => recognisedByRef(i, courses, course))
 }
 
-// The prompt shows for a fresh course only: no skips, nothing recognised, something to skip, and not
-// dismissed for this load.
+// The prompt shows for a fresh course only: no skips, nothing recognised, and something to skip.
 export function showsSkipBanner(args: {
   skipped: readonly string[]
   recognised: boolean
   newCount: number
-  dismissed: boolean
 }): boolean {
-  return !args.dismissed && args.skipped.length === 0 && !args.recognised && args.newCount > 0
+  return args.skipped.length === 0 && !args.recognised && args.newCount > 0
 }
 
 // One line of the New list: a selectable row, or a playlist's expand-only header.

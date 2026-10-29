@@ -159,13 +159,12 @@ describe('recognisedByRef and the first-load banner', () => {
     expect(anyRecognised([item('v', 'W')], courses, 'Algebra')).toBe(true)
   })
 
-  it('shows only for a fresh course with something to skip, until dismissed', () => {
-    const fresh = { skipped: [], recognised: false, newCount: 3, dismissed: false }
+  it('shows only for a fresh course with something to skip', () => {
+    const fresh = { skipped: [], recognised: false, newCount: 3 }
     expect(showsSkipBanner(fresh)).toBe(true)
     expect(showsSkipBanner({ ...fresh, skipped: ['x'] })).toBe(false)
     expect(showsSkipBanner({ ...fresh, recognised: true })).toBe(false)
     expect(showsSkipBanner({ ...fresh, newCount: 0 })).toBe(false)
-    expect(showsSkipBanner({ ...fresh, dismissed: true })).toBe(false)
   })
 
   it('Skip all covers every entry, playlists included, minus engaged rows', () => {
