@@ -37,7 +37,7 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_R
 
 ## Environment
 
-Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GDRIVE_ROOT_FOLDER` once Drive is on. Optional: `DATABASE_URL` (default `http://localhost:8001`), plus `GEMINI_MODEL`, `GEMINI_AUTO_FALLBACK`, `DRIVE_ENABLED`, `AUTO_RUN`, `AUTO_REMOVE` and `AUTO_REMOVE_AFTER` (defaults in `services/settings.py`).
+Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GDRIVE_ROOT_FOLDER` once Drive is on. Optional: `DATABASE_URL` (default `http://localhost:8001`), plus `GEMINI_MODEL`, `GEMINI_AUTO_FALLBACK`, `DRIVE_ENABLED`, `AUTO_RUN`, `AUTO_REMOVE`, `AUTO_REMOVE_AFTER`, `AUTO_RETRY`, `AUTO_RETRY_COUNT` and `AUTO_RETRY_MINUTES` (defaults in `services/settings.py`).
 
 **Never read a setting at import.** `POST /config` rewrites `os.environ` on the running process, so every consumer reads its variable at call time — `services/settings.py` for the model and the Drive toggle, `llm_client`/`transcribe`/`upload_to_drive` for the keys and the Drive folder.
 

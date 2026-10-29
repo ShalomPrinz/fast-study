@@ -291,6 +291,15 @@ class TestGenerateAssignmentDoc:
         assert exc.value.code == "assignment_generation_failed"
         assert exc.value.params == {"detail": "boom"}
 
+        coded = summarize_mod.CodedError("down", "gemini_unreachable", model="m")
+        fake.generate.side_effect = coded
+        with patch.object(summarize_mod, "LLMClient", return_value=fake):
+            with pytest.raises(summarize_mod.CodedError) as exc:
+                summarize_mod.generate_assignment_doc(
+                    "intuition", [], [("lecture", "L", "t")]
+                )
+        assert exc.value is coded
+
     def test_records_the_summed_input_bytes(self, tmp_path):
         import timing
 

@@ -5,7 +5,7 @@ import asyncio
 from datetime import datetime, timezone
 
 import sentry_sdk
-from services import db_client, notices
+from services import auto_retry, db_client, notices
 from services.errors import (
     CONDITION_CODES,
     CodedError,
@@ -22,6 +22,68 @@ _locks: dict[tuple[str, str], asyncio.Lock] = {}
 # "started_at"?}. The lock-holder
 # is the only writer of a given slug's entry; survives after the run finishes so `get_status` can read it.
 _status: dict[str, dict[str, dict]] = {}
+# (course, slug) → the waiting analyze retry {attempt, handle}; its {attempt, of, at} also rides
+# the slug's errored entry as `retry`. _attempts counts the retries already fired for a failure.
+_retries: dict[tuple[str, str], dict] = {}
+_attempts: dict[tuple[str, str], int] = {}
+
+
+def _drop_retry(course: str, slug: str) -> bool:
+    """Forget a slug's waiting retry and attempt count, leaving its error; True iff one waited."""
+
+    _attempts.pop((course, slug), None)
+    entry = _retries.pop((course, slug), None)
+    if entry is None:
+        return False
+    entry["handle"].cancel()
+    _status.get(course, {}).get(slug, {}).pop("retry", None)
+    return True
+
+
+def cancel_retry(course: str, slug: str) -> bool:
+    """Cancel an extractor's waiting analyze retry; its error stays. False when none waits."""
+
+    dropped = _drop_retry(course, slug)
+    if dropped:
+        db_client.notify()
+    return dropped
+
+
+def cancel_all_retries() -> None:
+    """Drop every waiting retry, e.g. when the auto-retry switch goes off."""
+
+    if any([_drop_retry(c, slug) for c, slug in list(_retries)]):
+        db_client.notify()
+
+
+def _fire_retry(course: str, slug: str) -> None:
+    """Timer callback: replay the analyze phase for that extractor through the normal entry point."""
+
+    entry = _retries.pop((course, slug), None)
+    if entry is None:
+        return
+    _status.get(course, {}).get(slug, {}).pop("retry", None)
+    _attempts[(course, slug)] = entry["attempt"]
+    asyncio.create_task(_replay(course, slug))
+
+
+async def _replay(course: str, slug: str) -> None:
+    """Re-run `slug` from the analyze phase; a vanished course or a busy slug keeps the plain error."""
+
+    key = (course, slug)
+    try:
+        tree = await asyncio.to_thread(db_client.get_tree)
+        node = next((c for c in tree if c.get("name") == course), None)
+        started = (
+            node is not None
+            and try_run_generate(course, node, [slug], Phase.ANALYZE, retry=True)
+            == "started"
+        )
+    except Exception:
+        started = False
+    if not started:
+        _attempts.pop(key, None)
+        db_client.notify()
 
 
 def _now_iso() -> str:
@@ -91,9 +153,12 @@ def try_run_generate(
     slugs: list[str],
     from_phase: "Phase | None" = None,
     skip_existing: bool = False,
+    *,
+    retry: bool = False,
 ) -> str:
     """Schedule an overview run over `slugs`, seeding pending status synchronously so the first
-    poll sees it. Returns "busy" iff every requested slug's lock is already held."""
+    poll sees it. Returns "busy" iff every requested slug's lock is already held. Anything but a
+    slug's own auto retry supersedes that slug's waiting retry."""
 
     entries = _status.setdefault(course, {})
     seeded_any = False
@@ -101,6 +166,8 @@ def try_run_generate(
         lock = _locks.get((course, slug))
         if lock is not None and lock.locked():
             continue  # another run is actively driving this slug — leave its entry alone
+        if not retry:
+            _drop_retry(course, slug)
         entries[slug] = {"status": "pending"}
         seeded_any = True
     if not seeded_any:
@@ -174,8 +241,36 @@ class OverviewRun:
                         db_client.notify()
                         continue
 
-                    if await asyncio.to_thread(self._run_slug_phase, slug, phase):
+                    stopped = await asyncio.to_thread(self._run_slug_phase, slug, phase)
+                    if phase is Phase.ANALYZE:
+                        self._schedule_retry(slug)
+                    if stopped:
                         break  # dead end: stop this slug's chain, the other slugs go on
+
+    def _schedule_retry(self, slug: str) -> None:
+        """After the analyze phase: arm the next retry if it failed transiently on Gemini and the
+        count is not spent, else forget the attempts."""
+
+        key = (self.course, slug)
+        entry = self._entry(slug)
+        nxt = (
+            auto_retry.next_retry(_attempts.get(key, 0))
+            if entry.get("status") == "error"
+            and auto_retry.is_transient(entry.get("code"), entry.get("params") or {})
+            else None
+        )
+        if nxt is None:
+            _attempts.pop(key, None)
+            return
+        field, delay = nxt
+        _retries[key] = {
+            "attempt": field["attempt"],
+            "handle": asyncio.get_running_loop().call_later(
+                delay, _fire_retry, self.course, slug
+            ),
+        }
+        entry["retry"] = field
+        db_client.notify()  # the phase's own ping predates the field
 
     def _fail_pending(self, e: Exception) -> None:
         """Mark this run's still-pending slugs as errored, as a phase failure would."""

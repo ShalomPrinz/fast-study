@@ -478,3 +478,31 @@ def test_a_timeout_never_falls_back(monkeypatch):
     with pytest.raises(CodedError):
         LLMClient(api_key="k").generate(["x"])
     assert sdk.models.generate_content.call_count == 1
+
+
+@pytest.mark.parametrize("call", ["generate", "upload"])
+@pytest.mark.parametrize(
+    "error", [httpx.ConnectError("refused"), ConnectionResetError("reset")]
+)
+def test_a_network_failure_raises_gemini_unreachable(monkeypatch, call, error):
+    sdk = MagicMock()
+    sdk.models.generate_content.side_effect = error
+    sdk.files.upload.side_effect = error
+    _patched_client(sdk, monkeypatch)
+    client = LLMClient(api_key="k", model="m")
+    with pytest.raises(CodedError) as exc:
+        if call == "generate":
+            client.generate(["x"])
+        else:
+            client.upload_file("/tmp/t.txt", "text/plain")
+    assert exc.value.code == "gemini_unreachable"
+    assert exc.value.params == {"model": "m", "detail": str(error)}
+
+
+def test_a_timeout_is_not_unreachable(monkeypatch):
+    sdk = MagicMock()
+    sdk.models.generate_content.side_effect = httpx.ConnectTimeout("slow")
+    _patched_client(sdk, monkeypatch)
+    with pytest.raises(CodedError) as exc:
+        LLMClient(api_key="k").generate(["x"])
+    assert exc.value.code == "gemini_timeout"

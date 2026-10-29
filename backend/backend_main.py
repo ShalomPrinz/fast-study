@@ -333,6 +333,13 @@ async def overview_status(course: str):
     return course_runner.get_status(course)
 
 
+@app.delete("/courses/{course}/overview/retry")
+async def overview_cancel_retry(course: str, extractor: str = Query(...)):
+    """Cancel an extractor's waiting auto retry; its error stays. `cancelled` is false when none waited."""
+
+    return {"cancelled": course_runner.cancel_retry(course, extractor)}
+
+
 @app.get("/overview/extractors")
 def overview_extractors():
     """Static extractor listing. `slug` is the stable id, `title` is the label."""
@@ -382,6 +389,18 @@ async def auto_remove_apply():
         return _error(failure(str(e), e.code, **e.params), 409)
 
 
+@app.delete("/retry")
+async def cancel_retry(
+    course: str,
+    lecture: str,
+    kind: Literal["lecture", "recitation", "assignment"] = Query("lecture"),
+):
+    """Cancel a step's waiting auto retry (`lecture` carries the assignment name for kind=assignment);
+    its error stays. `cancelled` is false when none waited."""
+
+    return {"cancelled": runner.cancel_retry(course, lecture, kind)}
+
+
 @app.get("/status")
 async def runner_status_endpoint():
     """Live status snapshot for the runner. Cheap; refetched by the UI on each SSE notify."""
@@ -427,6 +446,9 @@ class ConfigUpdate(BaseModel):
     auto_run: str | None = None
     auto_remove: str | None = None
     auto_remove_after: str | None = None
+    auto_retry: bool | None = None
+    auto_retry_count: int | None = None
+    auto_retry_minutes: int | None = None
     error_reports: bool | None = None
 
 
@@ -436,7 +458,7 @@ class KeyProbe(BaseModel):
 
 
 @app.post("/config")
-def config_update(update: ConfigUpdate):
+async def config_update(update: ConfigUpdate):
     """Apply a partial settings body to the running process; omitted fields are left alone.
     The response names the applied fields only — a key value is never logged or echoed."""
 
@@ -448,6 +470,9 @@ def config_update(update: ConfigUpdate):
     else:
         applied = []
     applied += settings.apply_config(values)
+    if values.get("auto_retry") is False:
+        runner.cancel_all_retries()
+        course_runner.cancel_all_retries()
     return {"status": "ok", "applied": applied}
 
 

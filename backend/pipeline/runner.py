@@ -14,7 +14,7 @@ from typing import NamedTuple, Optional
 
 import sentry_sdk
 from course import runner as course_runner
-from services import db_client, google_auth, notices, settings
+from services import auto_retry, db_client, google_auth, notices, settings
 from services.errors import (
     CONDITION_CODES,
     CodedError,
@@ -86,6 +86,16 @@ _transcribe_block: dict | None = None
 # then stopped. Membership — not equality with one string — is what lifts the block on a retry.
 _GEMINI_QUOTA_CODES = frozenset({"gemini_quota_exhausted", "gemini_quota_blocked"})
 _GROQ_LIMIT_CODES = frozenset({"groq_rate_limited", "groq_rate_limit_blocked"})
+
+
+# The steps that call Gemini, the only ones auto retry re-runs.
+_GEMINI_STEPS = frozenset({"summarize", "intuition", "solution"})
+# skey → the waiting retry: the lecture, the failed step, the `origin` to replay ("step" for a lone
+# step, "pipeline" for a pipeline/queue run), its `attempt` number and the timer handle.
+_retries: dict[str, dict] = {}
+# skey → retries already fired for the failure being retried; kept while one runs, so the next
+# failure knows which attempt it is. Cleared by success, a non-transient failure or a manual run.
+_attempts: dict[str, int] = {}
 
 
 class QueueEntry(NamedTuple):
@@ -208,7 +218,107 @@ async def prune_stale_errors() -> None:
     }
     for skey, record in before.items():
         if skey not in live and skey not in _in_flight and _errors.get(skey) is record:
+            _drop_retry(skey)
             del _errors[skey]
+
+
+# ---- Gemini auto retry (docs/PIPELINE.md#auto-retry) ----
+
+
+def _drop_retry(skey: str) -> bool:
+    """Forget a lecture's waiting retry and its attempt count, leaving its error; True iff one
+    was waiting. Pings nothing: callers either notify or are about to."""
+
+    _attempts.pop(skey, None)
+    entry = _retries.pop(skey, None)
+    if entry is None:
+        return False
+    entry["handle"].cancel()
+    record = _errors.get(skey)
+    if record is not None:
+        record.pop("retry", None)
+    return True
+
+
+def cancel_retry(course: str, lecture: str, kind: str) -> bool:
+    """Cancel the waiting retry of one lecture/assignment step; its error stays. False when none waits."""
+
+    dropped = _drop_retry(_skey(course, lecture, kind))
+    if dropped:
+        db_client.notify()
+    return dropped
+
+
+def cancel_all_retries() -> None:
+    """Drop every waiting retry, e.g. when the auto-retry switch goes off."""
+
+    dropped = [_drop_retry(skey) for skey in list(_retries)]
+    if any(dropped):
+        db_client.notify()
+
+
+def _schedule_retry(
+    course: str, lecture: str, kind: str, step: str, origin: str
+) -> None:
+    """After a Gemini failure just recorded in _errors: arm the next retry if the failure is
+    transient and the count is not spent, else forget the attempts."""
+
+    skey = _skey(course, lecture, kind)
+    record = _errors[skey]
+    nxt = (
+        auto_retry.next_retry(_attempts.get(skey, 0))
+        if step in _GEMINI_STEPS
+        and auto_retry.is_transient(record["code"], record["params"])
+        else None
+    )
+    if nxt is None:
+        _attempts.pop(skey, None)
+        return
+    field, delay = nxt
+    _retries[skey] = {
+        "course": course,
+        "lecture": lecture,
+        "kind": kind,
+        "step": step,
+        "origin": origin,
+        "attempt": field["attempt"],
+        "handle": asyncio.get_running_loop().call_later(delay, _fire_retry, skey),
+    }
+    record["retry"] = field
+
+
+def _fire_retry(skey: str) -> None:
+    """Timer callback: replay the original request through the normal entry point. A lecture
+    that cannot start (busy, vanished from the queue's view) keeps its plain error."""
+
+    entry = _retries.pop(skey, None)
+    if entry is None:
+        return
+    course, lecture, kind = entry["course"], entry["lecture"], entry["kind"]
+    record = _errors.get(skey)
+    if record is None:  # the error was dropped (rename/delete): nothing to retry
+        _attempts.pop(skey, None)
+        db_client.notify()
+        return
+    _attempts[skey] = entry["attempt"]
+    record.pop("retry", None)
+    if entry["origin"] == "pipeline":
+        started = enqueue(QueueEntry(course, lecture, kind, "full"), retry=True)
+    elif kind == ASSIGNMENT_KIND:
+        started = (
+            try_run_assignment_step(course, lecture, entry["step"], retry=True)
+            == "started"
+        )
+    else:
+        started = (
+            try_run_step(course, lecture, kind, entry["step"], retry=True) == "started"
+        )
+    if not started:
+        _attempts.pop(skey, None)
+        log.info(
+            "%s/%s (%s): retry skipped, the lecture is busy", course, lecture, kind
+        )
+    db_client.notify()
 
 
 # ---- empty-file guard ----
@@ -896,9 +1006,10 @@ def _claim(key: tuple[str, str, str]) -> bool:
     return True
 
 
-def enqueue(entry: QueueEntry) -> bool:
+def enqueue(entry: QueueEntry, *, retry: bool = False) -> bool:
     """Add one lecture to the runner queue, starting the run when it is idle. False when the
-    lecture is already queued, in flight, or owned by a concurrent trigger — nothing to add."""
+    lecture is already queued, in flight, or owned by a concurrent trigger — nothing to add.
+    Anything but the lecture's own auto retry supersedes a retry waiting for it."""
 
     if any(q[:3] == entry[:3] for q in _queue):
         return False
@@ -906,6 +1017,8 @@ def enqueue(entry: QueueEntry) -> bool:
         return False
     if _busy(_lkey(entry.course, entry.lecture, entry.kind)):
         return False
+    if not retry:
+        _drop_retry(_skey(entry.course, entry.lecture, entry.kind))
     _queue.append(entry)
     if not _runner_status["running"]:
         # Flipped here rather than in run_all: the task only starts at the next await, so a burst
@@ -1049,9 +1162,11 @@ async def _run_step_unlocked(
     *,
     keep_in_flight: bool = False,
     fresh: bool = False,
+    origin: str = "step",
 ) -> None:
     """Run one step once, to done or a recorded error. Unsafe: the caller must hold this
-    lecture's lock; keep_in_flight leaves the end-of-step clear to it."""
+    lecture's lock; keep_in_flight leaves the end-of-step clear to it. `origin` is the request a
+    transient Gemini failure's auto retry replays: a lone "step" or the whole "pipeline"."""
 
     global _summarize_block, _transcribe_block
     skey = _skey(course, lecture, kind)
@@ -1066,8 +1181,13 @@ async def _run_step_unlocked(
     _errors.pop(skey, None)  # clear any stale error from a previous attempt
     if step == "summarize":
         # Any summarize attempt re-tests Gemini's quota: drop every quota record and lift the
-        # run's stop, so lectures still queued retry; a fresh hit re-sets both below.
-        for key in [k for k, e in _errors.items() if e["code"] in _GEMINI_QUOTA_CODES]:
+        # run's stop, so lectures still queued retry; a fresh hit re-sets both below. A record
+        # with a waiting retry stays, so its countdown and cancel remain visible.
+        for key in [
+            k
+            for k, e in _errors.items()
+            if e["code"] in _GEMINI_QUOTA_CODES and "retry" not in e
+        ]:
             del _errors[key]
         _summarize_block = None
     elif step == "transcribe":
@@ -1080,6 +1200,7 @@ async def _run_step_unlocked(
     result = await _call_step(course, lecture, kind, step, fresh=fresh)
 
     if result["status"] == "done":
+        _attempts.pop(skey, None)
         if not keep_in_flight:
             _in_flight.pop(skey, None)
             db_client.notify()
@@ -1103,6 +1224,7 @@ async def _run_step_unlocked(
             log.log(
                 level, "%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg
             )
+        _schedule_retry(course, lecture, kind, step, origin)
         if not keep_in_flight:
             _in_flight.pop(skey, None)
             db_client.notify()
@@ -1167,7 +1289,9 @@ async def _run_pipeline_unlocked(
                     "Gemini daily quota" if step == "summarize" else "Groq rate limit",
                 )
                 return True
-            await _run_step_unlocked(course, lecture, kind, step, keep_in_flight=True)
+            await _run_step_unlocked(
+                course, lecture, kind, step, keep_in_flight=True, origin="pipeline"
+            )
             if skey in _errors:
                 return False  # a step error halts the whole pipeline for this lecture
     finally:
@@ -1208,20 +1332,34 @@ async def run_pipeline_for(
 
 
 def try_run_step(
-    course: str, lecture: str, kind: str, step: str, *, fresh: bool = False
+    course: str,
+    lecture: str,
+    kind: str,
+    step: str,
+    *,
+    fresh: bool = False,
+    retry: bool = False,
 ) -> str:
     """Fire-and-forget run_step if the lecture isn't already locked, pulling it out of the
-    runner queue. Returns 'busy' or 'started'; 'busy' touches no file."""
+    runner queue. Returns 'busy' or 'started'; 'busy' touches no file. A manual run supersedes
+    the lecture's waiting auto retry."""
 
     if not _claim(_lkey(course, lecture, kind)):
         return "busy"
+    if not retry:
+        _drop_retry(_skey(course, lecture, kind))
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
     asyncio.create_task(run_step(course, lecture, kind, step, fresh=fresh))
     return "started"
 
 
 def try_run_assignment_step(
-    course: str, assignment: str, step: str, *, fresh: bool = False
+    course: str,
+    assignment: str,
+    step: str,
+    *,
+    fresh: bool = False,
+    retry: bool = False,
 ) -> str:
     """Fire-and-forget one assignment step if its lock is free. Returns 'busy' or 'started'; it
     never joins the runner queue, and no run-all or AUTO_RUN pass starts one."""
@@ -1229,6 +1367,8 @@ def try_run_assignment_step(
     key = _lkey(course, assignment, ASSIGNMENT_KIND)
     if not _claim(key):
         return "busy"
+    if not retry:
+        _drop_retry(_skey(course, assignment, ASSIGNMENT_KIND))
     asyncio.create_task(
         run_step(course, assignment, ASSIGNMENT_KIND, step, fresh=fresh)
     )
@@ -1237,10 +1377,11 @@ def try_run_assignment_step(
 
 def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
     """Fire-and-forget run_pipeline_for if the lecture isn't already locked, pulling it out of
-    the runner queue. Returns 'busy' or 'started'."""
+    the runner queue. Returns 'busy' or 'started'. Supersedes the lecture's waiting auto retry."""
 
     if not _claim(_lkey(course, lecture, kind)):
         return "busy"
+    _drop_retry(_skey(course, lecture, kind))
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
     asyncio.create_task(run_pipeline_for(course, lecture, kind))
     return "started"

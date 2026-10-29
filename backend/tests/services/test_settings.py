@@ -101,3 +101,36 @@ def test_gemini_auto_fallback_defaults_off_and_reads_at_call_time(monkeypatch):
     assert settings.gemini_auto_fallback() is False
     monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
     assert settings.gemini_auto_fallback() is True
+
+
+class TestAutoRetry:
+    @pytest.fixture(autouse=True)
+    def _unset(self, monkeypatch):
+        for var in ("AUTO_RETRY", "AUTO_RETRY_COUNT", "AUTO_RETRY_MINUTES"):
+            monkeypatch.delenv(var, raising=False)
+
+    def test_defaults_are_on_3_and_10(self):
+        assert settings.auto_retry() is True
+        assert (settings.auto_retry_count(), settings.auto_retry_minutes()) == (3, 10)
+
+    @pytest.mark.parametrize("value", ["false", "0", "off", "no"])
+    def test_off_values(self, monkeypatch, value):
+        monkeypatch.setenv("AUTO_RETRY", value)
+        assert settings.auto_retry() is False
+
+    @pytest.mark.parametrize(
+        "raw,count,minutes",
+        [
+            ("0", 1, 1),
+            ("-4", 1, 1),
+            ("999", 10, 120),
+            ("7", 7, 7),
+            ("x", 3, 10),
+            ("", 3, 10),
+        ],
+    )
+    def test_ints_clamp(self, monkeypatch, raw, count, minutes):
+        monkeypatch.setenv("AUTO_RETRY_COUNT", raw)
+        monkeypatch.setenv("AUTO_RETRY_MINUTES", raw)
+        assert settings.auto_retry_count() == count
+        assert settings.auto_retry_minutes() == minutes

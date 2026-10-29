@@ -142,6 +142,7 @@ failures it was given, so a refusal the user can act on is caught by the route i
 | `pipeline/runner.py` blocked record     | `gemini_quota_blocked`      | `scope`, `model`, `limit`, `tier`| user |
 | `services/llm_client.py`                | `gemini_overloaded`         | `model`                         | user  |
 | `services/llm_client.py`                | `gemini_timeout`            | `model`, `seconds`              | user  |
+| `services/llm_client.py`                | `gemini_unreachable`        | `model`, `detail`               | user  |
 | `services/notices.py`                   | `model_fallback`            | `from`, `to`                    | user  |
 | `pipeline/transcribe.py`                | `groq_rate_limited`         | `limit`, `used`, `requested`, `retry_after_seconds` | user |
 | `pipeline/runner.py` blocked record     | `groq_rate_limit_blocked`   | same as `groq_rate_limited`     | user  |
@@ -176,11 +177,17 @@ with one string, and `provider` and `blocked` stay on the record — the fronten
 `groq_rate_limited` and `groq_rate_limit_blocked` mirror that pair for Groq (`provider: "groq"`);
 `retry_after_seconds` is `null` when Groq's message states no delay.
 `gemini_overloaded` is Gemini's 503 `UNAVAILABLE` ("high demand"); it carries no `detail`, since
-the raw text says only that and the step fails at once with no run-scoped block. It can also end a
+the raw text says only that and the step fails with no run-scoped block. It can also end a
 course-overview `analyze` phase, which passes `llm_client`'s codes through.
 `gemini_timeout` is a Gemini call (generate or file upload) that got no response within the
 client's request timeout, or that Gemini itself cut off with a 504 `DEADLINE_EXCEEDED`; the step
-fails at once with no retry and no run-scoped block. It can also end a course-overview `analyze` phase.
+fails with no run-scoped block. It can also end a course-overview `analyze` phase.
+`gemini_unreachable` is a Gemini call that never got an HTTP answer (DNS, refused or reset
+connection); `detail` is the transport's own text. It can also end an assignment step or an overview
+`analyze` phase, which both pass `llm_client`'s codes through.
+`gemini_overloaded`, `gemini_timeout`, `gemini_unreachable` and a `per_minute`
+`gemini_quota_exhausted` are the transient set the backend auto-retries
+([`backend/docs/PIPELINE.md`](../backend/docs/PIPELINE.md#auto-retry)); the record keeps its code while the retry waits.
 `model_fallback` is not a failure but a notice: with `GEMINI_AUTO_FALLBACK` on, a 503 retried on the
 next model raises it in the `notices` list of `GET /status` and of the overview status, `from`/`to`
 naming the models. It toasts once per `id` and never lands in `errors`.

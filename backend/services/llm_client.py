@@ -1,5 +1,5 @@
 """Shared Gemini client for summarize and the course overview: SDK failures surface as
-RuntimeError (429 GeminiRateLimitError, 503 gemini_overloaded) for a {"status": "error"}."""
+RuntimeError (429 GeminiRateLimitError, 503 gemini_overloaded, network gemini_unreachable)."""
 
 import os
 import re
@@ -112,6 +112,26 @@ def _timeout_error(err: Exception, body: dict, model: str) -> CodedError | None:
             "gemini_timeout",
             model=model,
             seconds=GEMINI_TIMEOUT_SECONDS,
+        )
+    return None
+
+
+def _unreachable_error(err: Exception, model: str) -> CodedError | None:
+    """A gemini_unreachable CodedError for a transport failure (DNS, refused, reset) that never
+    got an HTTP answer, else None. A timeout is matched before this."""
+
+    # Matched by class name like the timeout: httpx and its httpx2 fork share no base. An SDK
+    # APIError carries an HTTP `code`; a transport failure never does.
+    if isinstance(getattr(err, "code", None), int):
+        return None
+    if isinstance(err, OSError) or any(
+        c.__name__ in ("TransportError", "NetworkError") for c in type(err).__mro__
+    ):
+        return CodedError(
+            f"Could not reach Gemini model {model}: {err}",
+            "gemini_unreachable",
+            model=model,
+            detail=str(err),
         )
     return None
 
@@ -269,6 +289,7 @@ class LLMClient:
                 _timeout_error(e, body, model)
                 or _overloaded_error(e, body, model)
                 or _key_rejected_error(e, body)
+                or _unreachable_error(e, model)
                 or RuntimeError(str(e))
             ) from e
         return (response.text or "").strip()
@@ -286,6 +307,7 @@ class LLMClient:
                 _timeout_error(e, body, self.model)
                 or _overloaded_error(e, body, self.model)
                 or _key_rejected_error(e, body)
+                or _unreachable_error(e, self.model)
                 or RuntimeError(str(e))
             ) from e
 

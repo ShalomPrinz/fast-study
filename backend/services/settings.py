@@ -17,6 +17,7 @@ AUTO_REMOVE_MODES = ["off", "video", "audio"]
 AUTO_REMOVE_AFTER = ["pdf", "drive"]
 
 _TRUTHY = {"1", "true", "yes", "on"}
+_FALSY = {"0", "false", "no", "off"}
 
 # Settings field name → the environment variable its consumer reads.
 _ENV_KEYS = {
@@ -29,7 +30,14 @@ _ENV_KEYS = {
     "auto_run": "AUTO_RUN",
     "auto_remove": "AUTO_REMOVE",
     "auto_remove_after": "AUTO_REMOVE_AFTER",
+    "auto_retry": "AUTO_RETRY",
+    "auto_retry_count": "AUTO_RETRY_COUNT",
+    "auto_retry_minutes": "AUTO_RETRY_MINUTES",
 }
+
+# Auto-retry defaults and clamp ranges.
+AUTO_RETRY_COUNT = (3, 1, 10)
+AUTO_RETRY_MINUTES = (10, 1, 120)
 
 
 def gemini_model() -> str:
@@ -75,6 +83,33 @@ def drive_enabled() -> bool:
     never configured Drive completes each lecture at its PDF."""
 
     return os.environ.get("DRIVE_ENABLED", "").strip().lower() in _TRUTHY
+
+
+def auto_retry() -> bool:
+    """Whether a step that failed transiently on Gemini re-runs itself. On unless set false."""
+
+    return os.environ.get("AUTO_RETRY", "").strip().lower() not in _FALSY
+
+
+def _clamped_int(key: str, spec: tuple[int, int, int]) -> int:
+    default, low, high = spec
+    try:
+        value = int(os.environ.get(key, "").strip())
+    except ValueError:
+        return default
+    return max(low, min(high, value))
+
+
+def auto_retry_count() -> int:
+    """How many re-runs follow the original failure: AUTO_RETRY_COUNT clamped to 1-10, default 3."""
+
+    return _clamped_int("AUTO_RETRY_COUNT", AUTO_RETRY_COUNT)
+
+
+def auto_retry_minutes() -> int:
+    """Minutes between re-runs: AUTO_RETRY_MINUTES clamped to 1-120, default 10."""
+
+    return _clamped_int("AUTO_RETRY_MINUTES", AUTO_RETRY_MINUTES)
 
 
 def apply_config(values: dict) -> list[str]:

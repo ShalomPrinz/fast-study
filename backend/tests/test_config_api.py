@@ -191,3 +191,57 @@ class TestDriveRoutes:
         assert result["status"] == "error"
         assert result["message"] == google_auth.NOT_CONNECTED_MESSAGE
         assert client.get("/config/drive/status").json()["consent_needed"] is True
+
+
+class TestAutoRetryConfig:
+    def test_the_three_fields_apply_and_switch_off_drops_pending_retries(
+        self, monkeypatch
+    ):
+        for var in ("AUTO_RETRY", "AUTO_RETRY_COUNT", "AUTO_RETRY_MINUTES"):
+            monkeypatch.setenv(var, "x")
+        body = client.post(
+            "/config",
+            json={"auto_retry": True, "auto_retry_count": 5, "auto_retry_minutes": 2},
+        ).json()
+        assert body["applied"] == [
+            "auto_retry",
+            "auto_retry_count",
+            "auto_retry_minutes",
+        ]
+        assert (settings.auto_retry_count(), settings.auto_retry_minutes()) == (5, 2)
+        with (
+            patch.object(backend_main.runner, "cancel_all_retries") as lecture,
+            patch.object(backend_main.course_runner, "cancel_all_retries") as overview,
+        ):
+            client.post("/config", json={"auto_retry": True})
+            lecture.assert_not_called()
+            client.post("/config", json={"auto_retry": False})
+        lecture.assert_called_once()
+        overview.assert_called_once()
+        assert settings.auto_retry() is False
+
+
+class TestCancelRetryRoutes:
+    def test_lecture_route(self):
+        with patch.object(backend_main.runner, "cancel_retry", return_value=True) as f:
+            r = client.delete("/retry", params={"course": "C", "lecture": "L"})
+        assert r.json() == {"cancelled": True}
+        f.assert_called_once_with("C", "L", "lecture")
+
+    def test_assignment_kind_and_nothing_waiting(self):
+        with patch.object(backend_main.runner, "cancel_retry", return_value=False) as f:
+            r = client.delete(
+                "/retry", params={"course": "C", "lecture": "A", "kind": "assignment"}
+            )
+        assert r.json() == {"cancelled": False}
+        f.assert_called_once_with("C", "A", "assignment")
+
+    def test_overview_route(self):
+        with patch.object(
+            backend_main.course_runner, "cancel_retry", return_value=True
+        ) as f:
+            r = client.delete(
+                "/courses/C/overview/retry", params={"extractor": "pitfalls"}
+            )
+        assert r.json() == {"cancelled": True}
+        f.assert_called_once_with("C", "pitfalls")
