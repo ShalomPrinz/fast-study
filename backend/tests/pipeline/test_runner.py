@@ -766,6 +766,8 @@ def test_run_step_logs_error(caplog):
     "code, level",
     [
         ("gemini_overloaded", "WARNING"),
+        ("gemini_timeout", "WARNING"),
+        ("gemini_unreachable", "WARNING"),
         ("groq_rate_limited", "WARNING"),
         ("material_too_large", "WARNING"),
         ("drive_upload_failed", "ERROR"),

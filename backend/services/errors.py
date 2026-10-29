@@ -15,6 +15,8 @@ CONDITION_CODES = frozenset(
         "gemini_overloaded",
         "gemini_quota_exhausted",
         "gemini_quota_blocked",
+        "gemini_timeout",
+        "gemini_unreachable",
         "groq_rate_limited",
         "groq_rate_limit_blocked",
         "material_too_large",
