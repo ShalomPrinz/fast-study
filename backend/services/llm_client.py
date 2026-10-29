@@ -13,6 +13,9 @@ from services import providers
 from services.errors import CodedError
 from services.settings import GEMINI_MODELS, gemini_auto_fallback, gemini_model
 
+# Client-level HTTP timeout so a stalled Gemini connection fails instead of hanging the step.
+GEMINI_TIMEOUT_SECONDS = 600
+
 # Called with (from_model, to_model) when a call retries on the next model; the runner that
 # owns the work sets it around the worker thread, so this module knows nothing of runs.
 fallback_hook: ContextVar[Callable[[str, str], None] | None] = ContextVar(
@@ -85,6 +88,30 @@ def _overloaded_error(err: Exception, body: dict, model: str) -> CodedError | No
             f"Gemini model {model} is overloaded right now (503)",
             "gemini_overloaded",
             model=model,
+        )
+    return None
+
+
+def _timeout_error(err: Exception, body: dict, model: str) -> CodedError | None:
+    """A gemini_timeout CodedError for a client-side timeout or a server 504 / DEADLINE_EXCEEDED."""
+
+    # Matched by class name: the SDK may raise httpx or its httpx2 fork, which share no base.
+    inner = body.get("error", body) if isinstance(body, dict) else None
+    if (
+        isinstance(err, TimeoutError)
+        or any(c.__name__ == "TimeoutException" for c in type(err).__mro__)
+        or getattr(err, "code", None) == 504
+        or (
+            isinstance(inner, dict)
+            and (inner.get("code") == 504 or inner.get("status") == "DEADLINE_EXCEEDED")
+        )
+        or "DEADLINE_EXCEEDED" in str(err)
+    ):
+        return CodedError(
+            f"Gemini model {model} did not answer within {GEMINI_TIMEOUT_SECONDS}s",
+            "gemini_timeout",
+            model=model,
+            seconds=GEMINI_TIMEOUT_SECONDS,
         )
     return None
 
@@ -180,7 +207,10 @@ class LLMClient:
         self.client = genai.Client(
             api_key=api_key,
             vertexai=False,
-            http_options=types.HttpOptions(base_url=providers.base_url("gemini")),
+            http_options=types.HttpOptions(
+                base_url=providers.base_url("gemini"),
+                timeout=GEMINI_TIMEOUT_SECONDS * 1000,
+            ),
         )
 
     def _fallback_model(self) -> str:
@@ -236,7 +266,8 @@ class LLMClient:
                 info["message"] = _quota_message(info, model)
                 raise GeminiRateLimitError(info) from e
             raise (
-                _overloaded_error(e, body, model)
+                _timeout_error(e, body, model)
+                or _overloaded_error(e, body, model)
                 or _key_rejected_error(e, body)
                 or RuntimeError(str(e))
             ) from e
@@ -252,7 +283,8 @@ class LLMClient:
         except Exception as e:
             body = _extract_gemini_body(e)
             raise (
-                _overloaded_error(e, body, self.model)
+                _timeout_error(e, body, self.model)
+                or _overloaded_error(e, body, self.model)
                 or _key_rejected_error(e, body)
                 or RuntimeError(str(e))
             ) from e

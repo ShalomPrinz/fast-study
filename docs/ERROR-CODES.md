@@ -141,6 +141,7 @@ failures it was given, so a refusal the user can act on is caught by the route i
 | `services/llm_client.py`                | `gemini_quota_exhausted`    | `scope`, `model`, `limit`, `tier`| user |
 | `pipeline/runner.py` blocked record     | `gemini_quota_blocked`      | `scope`, `model`, `limit`, `tier`| user |
 | `services/llm_client.py`                | `gemini_overloaded`         | `model`                         | user  |
+| `services/llm_client.py`                | `gemini_timeout`            | `model`, `seconds`              | user  |
 | `services/notices.py`                   | `model_fallback`            | `from`, `to`                    | user  |
 | `pipeline/transcribe.py`                | `groq_rate_limited`         | `limit`, `used`, `requested`, `retry_after_seconds` | user |
 | `pipeline/runner.py` blocked record     | `groq_rate_limit_blocked`   | same as `groq_rate_limited`     | user  |
@@ -177,6 +178,9 @@ with one string, and `provider` and `blocked` stay on the record — the fronten
 `gemini_overloaded` is Gemini's 503 `UNAVAILABLE` ("high demand"); it carries no `detail`, since
 the raw text says only that and the step fails at once with no run-scoped block. It can also end a
 course-overview `analyze` phase, which passes `llm_client`'s codes through.
+`gemini_timeout` is a Gemini call (generate or file upload) that got no response within the
+client's request timeout, or that Gemini itself cut off with a 504 `DEADLINE_EXCEEDED`; the step
+fails at once with no retry and no run-scoped block. It can also end a course-overview `analyze` phase.
 `model_fallback` is not a failure but a notice: with `GEMINI_AUTO_FALLBACK` on, a 503 retried on the
 next model raises it in the `notices` list of `GET /status` and of the overview status, `from`/`to`
 naming the models. It toasts once per `id` and never lands in `errors`.

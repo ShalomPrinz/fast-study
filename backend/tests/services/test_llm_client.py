@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import httpx
 import pytest
 import services.llm_client as llm_mod
 from google.genai import types
@@ -80,7 +81,7 @@ def test_uses_explicit_api_key_and_default_model(monkeypatch):
         api_key="explicit-key",
         vertexai=False,
         http_options=types.HttpOptions(
-            base_url="https://generativelanguage.googleapis.com/"
+            base_url="https://generativelanguage.googleapis.com/", timeout=600_000
         ),
     )
     assert client.model == gemini_model()
@@ -415,3 +416,65 @@ def test_429_never_falls_back(monkeypatch):
     with pytest.raises(GeminiRateLimitError):
         client.generate(["x"])
     assert len(_models_called(sdk)) == 1
+
+
+def test_client_is_built_with_a_ten_minute_timeout(monkeypatch):
+    sdk = MagicMock()
+    _patched_client(sdk, monkeypatch)
+    LLMClient(api_key="k")
+    opts = llm_mod.genai.Client.call_args.kwargs["http_options"]
+    assert opts.timeout == 600_000
+
+
+@pytest.mark.parametrize("call", ["generate", "upload"])
+def test_a_timeout_raises_gemini_timeout(monkeypatch, call):
+    sdk = MagicMock()
+    err = httpx.ReadTimeout("stalled")
+    sdk.models.generate_content.side_effect = err
+    sdk.files.upload.side_effect = err
+    _patched_client(sdk, monkeypatch)
+    client = LLMClient(api_key="k", model="m")
+    with pytest.raises(CodedError) as exc:
+        if call == "generate":
+            client.generate(["x"])
+        else:
+            client.upload_file("/tmp/t.txt", "text/plain")
+    assert exc.value.code == "gemini_timeout"
+    assert exc.value.params == {"model": "m", "seconds": 600}
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        _SdkError(
+            {"error": {"code": 504, "status": "DEADLINE_EXCEEDED"}},
+            text="504 DEADLINE_EXCEEDED.",
+            code=504,
+        ),
+        _SdkError({"code": 504, "status": "DEADLINE_EXCEEDED"}, text="?", code=None),
+    ],
+)
+@pytest.mark.parametrize("call", ["generate", "upload"])
+def test_a_504_deadline_exceeded_raises_gemini_timeout(monkeypatch, error, call):
+    sdk = MagicMock()
+    sdk.models.generate_content.side_effect = error
+    sdk.files.upload.side_effect = error
+    _patched_client(sdk, monkeypatch)
+    client = LLMClient(api_key="k", model="m")
+    with pytest.raises(CodedError) as exc:
+        if call == "generate":
+            client.generate(["x"])
+        else:
+            client.upload_file("/tmp/t.txt", "text/plain")
+    assert exc.value.code == "gemini_timeout"
+    assert exc.value.params == {"model": "m", "seconds": 600}
+
+
+def test_a_timeout_never_falls_back(monkeypatch):
+    sdk = MagicMock()
+    sdk.models.generate_content.side_effect = httpx.ReadTimeout("stalled")
+    _patched_client(sdk, monkeypatch)
+    monkeypatch.setattr(llm_mod, "gemini_auto_fallback", lambda: True)
+    with pytest.raises(CodedError):
+        LLMClient(api_key="k").generate(["x"])
+    assert sdk.models.generate_content.call_count == 1
