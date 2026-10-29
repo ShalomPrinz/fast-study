@@ -11,6 +11,7 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item, ProbedMedia } from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingJobList from './RecordingJobList'
+import SkippedMark from './SkippedMark'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import {
   jobsForTarget,
@@ -219,6 +220,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
             <span className="chip chip--neutral">{verdict ? t(RESOLVED_LABEL[verdict]) : '?'}</span>
           </Tooltip>
         )}
+        <SkippedMark course={course} refKey={item.ref} />
       </div>
 
       <div className="recording-card-line">

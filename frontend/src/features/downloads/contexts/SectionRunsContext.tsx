@@ -22,6 +22,8 @@ let playlistRunsBySection: ReadonlyMap<string, readonly SectionRun[]> = new Map(
 const NO_RUNS: readonly SectionRun[] = Object.freeze([])
 let pausedRuns: readonly SectionRun[] = []
 let activeCourses: ReadonlySet<string> = new Set()
+let engagedByCourse: ReadonlyMap<string, ReadonlySet<string>> = new Map()
+const NO_REFS: ReadonlySet<string> = new Set()
 // Paused run ids whose passcode prompt the user closed without cancelling; the banner reopens it.
 let dismissedRuns: ReadonlySet<string> = new Set()
 const listeners = new Set<() => void>()
@@ -39,10 +41,27 @@ export function coursesWithActiveRuns(snapshot: readonly SectionRun[]): Readonly
   )
 }
 
+// The rows a walking run still holds, per course: every target it has yet to reach or whose download
+// it started. A row in this set is not for the New view to select again.
+export function engagedRefs(
+  snapshot: readonly SectionRun[],
+): ReadonlyMap<string, ReadonlySet<string>> {
+  const byCourse = new Map<string, Set<string>>()
+  for (const run of snapshot) {
+    if (run.status !== 'running' && run.status !== 'paused') continue
+    const refs = byCourse.get(run.course) ?? new Set<string>()
+    for (const t of run.targets)
+      if (t.disposition === 'pending' || t.disposition === 'queued') refs.add(t.ref)
+    byCourse.set(run.course, refs)
+  }
+  return byCourse
+}
+
 function publish(snapshot: SectionRun[]) {
   runsBySection = new Map(snapshot.map((run) => [run.sectionId, run]))
   playlistRunsBySection = nestedRuns(snapshot)
   activeCourses = coursesWithActiveRuns(snapshot)
+  engagedByCourse = engagedRefs(snapshot)
   const paused = snapshot.filter((run) => run.status === 'paused')
   // Same parked ids keep the previous array, or every ping would re-render the banner. Keyed by id
   // alone: a consumer reading a mutable field must widen this comparison first.
@@ -127,6 +146,16 @@ export function usePasscodeDismissed(runId: string | null): boolean {
   if (!useContext(SectionRunsContext))
     throw new Error('usePasscodeDismissed must be used inside <SectionRunsProvider>')
   return useSyncExternalStore(subscribe, () => runId !== null && dismissedRuns.has(runId))
+}
+
+// The refs a walking run holds in this course; a stable empty set when none does.
+export function useEngagedRefs(course: string): ReadonlySet<string> {
+  if (!useContext(SectionRunsContext))
+    throw new Error('useEngagedRefs must be used inside <SectionRunsProvider>')
+  return useSyncExternalStore(
+    subscribe,
+    useCallback(() => engagedByCourse.get(course) ?? NO_REFS, [course]),
+  )
 }
 
 // Whether a section run is still walking this course; read through `useCourseDownloading`, the one

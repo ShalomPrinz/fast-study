@@ -26,18 +26,26 @@ export default function BulkRunNotes({ bulk, scope }: Props) {
   const dismissed = usePasscodeDismissed(run?.id ?? null)
   const { stalled, notStarted, captchaTimedOut } = state
   const section = scope === 'section'
+  const course = scope === 'course'
+  const playlist = scope === 'playlist'
   const stoppedBecause =
     run?.status === 'reconnect'
-      ? section
-        ? t`the university session expired. Reconnect, then run the section again.`
-        : t`the university session expired. Reconnect, then run the playlist again.`
-      : run?.status === 'cancelled'
-        ? section
-          ? t`the run was cancelled. Run the section again to pick them up.`
-          : t`the run was cancelled. Run the playlist again to pick them up.`
+      ? course
+        ? t`the university session expired. Reconnect, then download them again.`
         : section
-          ? t`the run stopped early. Run the section again to pick them up.`
-          : t`the run stopped early. Run the playlist again to pick them up.`
+          ? t`the university session expired. Reconnect, then run the section again.`
+          : t`the university session expired. Reconnect, then run the playlist again.`
+      : run?.status === 'cancelled'
+        ? course
+          ? t`the run was cancelled. Download them again to pick them up.`
+          : section
+            ? t`the run was cancelled. Run the section again to pick them up.`
+            : t`the run was cancelled. Run the playlist again to pick them up.`
+        : course
+          ? t`the run stopped early. Download them again to pick them up.`
+          : section
+            ? t`the run stopped early. Run the section again to pick them up.`
+            : t`the run stopped early. Run the playlist again to pick them up.`
 
   const unsolvedBecause = captchaTimeoutReason()
 
@@ -74,7 +82,7 @@ export default function BulkRunNotes({ bulk, scope }: Props) {
       )}
 
       {/* A playlist run never parks: its children are YouTube, and only a Zoom share has a passcode. */}
-      {section && paused && run && !dismissed && (
+      {!playlist && paused && run && !dismissed && (
         <PasscodePrompt
           reason={paused.reason}
           busy={passcode.saving}

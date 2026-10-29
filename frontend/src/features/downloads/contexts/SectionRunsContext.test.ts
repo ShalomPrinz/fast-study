@@ -5,7 +5,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import type { SectionRun } from '../services/downloadServer'
 import { playlistRunId } from '../utils/sections'
-import { coursesWithActiveRuns, nestedRuns } from './SectionRunsContext'
+import { coursesWithActiveRuns, engagedRefs, nestedRuns } from './SectionRunsContext'
 
 const noop = () => {}
 
@@ -13,6 +13,7 @@ function run(course: string, status: SectionRun['status']): SectionRun {
   return {
     id: `${course}-${status}`,
     sectionId: `${course}:video:Week 1`,
+    scope: 'section',
     course,
     targets: [],
     at: 1,
@@ -80,5 +81,27 @@ describe('passcode dismissal', () => {
     snapshot = [run('Logic', 'paused')]
     await act(async () => ping())
     expect(result.current).toBe(false)
+  })
+})
+
+describe('engagedRefs', () => {
+  const target = (ref: string, disposition: SectionRun['targets'][number]['disposition']) =>
+    ({
+      ref,
+      name: ref,
+      kind: 'lecture',
+      media: 'video',
+      disposition,
+    }) as SectionRun['targets'][number]
+
+  it('holds the unreached and started rows of a walking run, per course', () => {
+    const walking = {
+      ...run('A', 'running'),
+      targets: [target('p', 'pending'), target('q', 'queued'), target('s', 'skipped')],
+    }
+    const done = { ...run('B', 'done'), targets: [target('x', 'queued')] }
+    const refs = engagedRefs([walking, done])
+    expect([...(refs.get('A') ?? [])]).toEqual(['p', 'q'])
+    expect(refs.has('B')).toBe(false)
   })
 })

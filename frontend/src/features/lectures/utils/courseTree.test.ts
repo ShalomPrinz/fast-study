@@ -13,6 +13,7 @@ const node = (lectures: string[], recitations: string[], lectures_only: boolean)
   lectures: sortLectures(lectures.map((name) => ({ name }) as Lecture)),
   recitations: sortLectures(recitations.map((name) => ({ name }) as Lecture)),
   assignments: [],
+  skipped: [],
 })
 
 const shown = (c: Course) => lectureTrack(c).map((i) => `${i.kind}:${i.name}`)

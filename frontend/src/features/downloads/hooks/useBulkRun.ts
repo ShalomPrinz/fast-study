@@ -44,9 +44,14 @@ export interface BulkRun {
   }
 }
 
-// One "Download all" — a section's or a playlist's — keyed by its run key (null: no run). Starts the
+// One "Download all" — a section's or a playlist's, or the New view's course run (`scope`) — keyed by its run key (null: no run). Starts the
 // run, then only reflects it; see docs/BULK.md.
-export function useBulkRun(runKey: string | null, course: string, label: string): BulkRun {
+export function useBulkRun(
+  runKey: string | null,
+  course: string,
+  label: string,
+  scope?: 'course',
+): BulkRun {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   const jobsByRef = useJobsByRef()
@@ -96,7 +101,7 @@ export function useBulkRun(runKey: string | null, course: string, label: string)
       )
       return
     }
-    const post = () => startSectionRun({ sectionId: runKey, course, targets: built })
+    const post = () => startSectionRun({ sectionId: runKey, course, targets: built, scope })
     try {
       const renames = await startAndLock(
         () => (gated ? withMoodleLock(post) : post()),

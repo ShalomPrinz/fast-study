@@ -133,6 +133,17 @@ export async function setCourseLecturesOnly(course: string, lecturesOnly: boolea
   })
 }
 
+// Adds and removes discovery `ref`s in the course's skip set; idempotent, answers the resulting set.
+export async function updateSkipped(
+  course: string,
+  change: { add?: string[]; remove?: string[] },
+): Promise<string[]> {
+  const { refs } = await database.post<{ refs: string[] }>(path`/courses/${course}/skipped`, {
+    json: change,
+  })
+  return refs
+}
+
 export async function createCourse(name: string, source_url?: string | null): Promise<void> {
   await database.post('/courses', { json: { name, source_url: source_url || null } })
 }

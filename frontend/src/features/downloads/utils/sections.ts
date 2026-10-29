@@ -30,6 +30,12 @@ export function sectionId(course: string, media: Media, title: string): string {
   return `${course}:${media}:${title}`
 }
 
+// The New view's course run key. A section key has two colons and a course name none, so this
+// one-colon key can never equal one, and `parseSectionId` reads it as no section.
+export function courseRunId(course: string): string {
+  return `${course}:course`
+}
+
 // Joins a playlist's run key onto its section's: a control character no Moodle heading or ref carries,
 // so a playlist key never collides with a section key and splits back unambiguously.
 const PLAYLIST_SEP = '\u001f'
@@ -97,9 +103,10 @@ export function showsMediaSegment(media: Media, count: number): boolean {
 }
 
 // Which kind of collapsible group a header heads, and the stable-selector prefix each one carries.
-export type GroupScope = 'section' | 'playlist'
+export type GroupScope = 'section' | 'playlist' | 'course'
 
 export const GROUP_SELECTOR: Record<GroupScope, string> = {
+  course: 'recordings-course',
   section: 'recordings-section',
   playlist: 'recording-playlist',
 }

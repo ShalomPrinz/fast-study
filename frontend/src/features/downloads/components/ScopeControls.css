@@ -1,0 +1,41 @@
+/* One row, centred in the panel's middle track: the two groups sit apart without reaching the edges. */
+.recordings-panel > .downloads-controls {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-6) var(--space-8);
+}
+
+.downloads-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.downloads-control-caption {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+/* Each segment keeps its words on one line; the switch stays compact beside the cards. */
+.downloads-scope-switch.mode-toggle--light {
+  align-self: center;
+}
+
+/* The cards shrink to share what the switch leaves, so both groups stay on one row. */
+.downloads-controls .downloads-control:has(.mode-toggle--cards) {
+  min-inline-size: 0;
+}
+
+.downloads-controls .mode-toggle.mode-toggle--cards {
+  grid-auto-columns: minmax(calc(var(--space-8) * 2), calc(var(--space-8) * 3));
+}
+
+.downloads-controls .mode-toggle--cards .mode-toggle-btn {
+  padding-inline: var(--space-4);
+}

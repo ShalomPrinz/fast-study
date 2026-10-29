@@ -7,6 +7,7 @@ import type { Section } from './sections'
 import {
   OTHER_SECTION,
   OTHER_LINKS_SECTION,
+  courseRunId,
   groupSections,
   leafCount,
   parseSectionId,
@@ -262,5 +263,13 @@ describe('groupSections with assignment items', () => {
 
   it('shows the Assignments segment even while empty', () => {
     expect(showsMediaSegment('assignment', 0)).toBe(true)
+  })
+})
+
+describe('courseRunId', () => {
+  it('never equals a section key and parses as no section', () => {
+    expect(courseRunId('Algebra')).toBe('Algebra:course')
+    expect(parseSectionId(courseRunId('Algebra'))).toBeNull()
+    expect(courseRunId('Algebra')).not.toBe(sectionId('Algebra', 'video', 'course'))
   })
 })

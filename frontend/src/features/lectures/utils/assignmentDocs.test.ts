@@ -129,6 +129,7 @@ const course = (): Course => ({
   lectures: [lecture('L1', true, 100), lecture('L2', false)],
   recitations: [lecture('R1', true, 50)],
   assignments: [],
+  skipped: [],
 })
 
 describe('summarizedLectures', () => {

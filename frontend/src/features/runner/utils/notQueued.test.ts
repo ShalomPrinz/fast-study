@@ -40,6 +40,7 @@ function course(name: string, lectures: Lecture[], recitations: Lecture[] = []):
     lectures,
     recitations,
     assignments: [],
+    skipped: [],
   }
 }
 

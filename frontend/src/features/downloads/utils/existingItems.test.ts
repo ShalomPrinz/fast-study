@@ -22,7 +22,7 @@ function material(spec: string): MaterialInfo {
 
 function node(
   name: string,
-  has: { materials?: string[]; video?: boolean; removedVideo?: boolean } = {},
+  has: { materials?: string[]; video?: boolean; removedVideo?: boolean; source?: string } = {},
 ): Lecture {
   const files = {
     'video.mp4': has.video ? PRESENT : EMPTY,
@@ -41,6 +41,7 @@ function node(
     transcribePartial: null,
     removed: has.removedVideo ? ['video.mp4'] : [],
     done: false,
+    ...(has.source ? { videoSource: has.source } : {}),
   }
 }
 
@@ -73,6 +74,7 @@ function tree(lectures: Lecture[], recitations: Lecture[] = []): Course[] {
       lectures,
       recitations,
       assignments: [],
+      skipped: [],
     },
   ]
 }
@@ -309,5 +311,25 @@ describe('isAssignmentDone', () => {
     expect(isAssignmentDone('B', courses, 'Algebra')).toBe(false)
     expect(isAssignmentDone('New', courses, 'Algebra')).toBe(false)
     expect(isAssignmentDone('A', courses, 'Other')).toBe(false)
+  })
+})
+
+describe('hasResource by video source', () => {
+  const row = { ref: 'r1', media: 'video' as const }
+
+  it('matches a video by the stored source under any lecture name and kind', () => {
+    const courses = tree([node('Lecture 1', { video: true, source: 'r1' })])
+    expect(hasResource(row, 'Another name', 'recitation', courses, 'Algebra')).toBe(true)
+  })
+
+  it('still counts a removed video, which keeps its source', () => {
+    const courses = tree([node('Lecture 1', { removedVideo: true, source: 'r1' })])
+    expect(hasResource(row, 'Other', 'lecture', courses, 'Algebra')).toBe(true)
+  })
+
+  it('falls back to the name when no node stores this ref', () => {
+    const courses = tree([node('Lecture 2', { video: true, source: 'other' })])
+    expect(hasResource(row, 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(hasResource(row, 'Lecture 3', 'lecture', courses, 'Algebra')).toBe(false)
   })
 })

@@ -13,6 +13,7 @@ const course = (lectures: string[], recitations: string[] = []): Course[] => [
     lectures: lectures.map(lecture),
     recitations: recitations.map(lecture),
     assignments: [],
+    skipped: [],
   },
 ]
 

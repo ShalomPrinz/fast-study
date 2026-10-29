@@ -154,6 +154,15 @@ export function runBusy(run: SectionRun, course: string, jobsByRef: JobsByRef): 
   )
 }
 
+// Whether any of these runs (a section's playlists, this course's course run) still holds its rows.
+export function anyRunBusy(
+  runs: readonly (SectionRun | null)[],
+  course: string,
+  jobsByRef: JobsByRef,
+): boolean {
+  return runs.some((run) => run !== null && runBusy(run, course, jobsByRef))
+}
+
 // Why "Download all" can't start, first reason wins; a busy run has no tooltip, its label says so.
 // `otherBusy` is the other run over the same rows (section vs playlist), which would download them twice.
 export function bulkGate(args: {

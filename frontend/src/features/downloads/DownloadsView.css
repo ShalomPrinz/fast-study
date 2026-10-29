@@ -52,20 +52,6 @@
   grid-column: 1 / -1;
 }
 
-/* Each card's floor is capped at a third of the middle track, so three cards never outgrow it. */
-.recordings-panel > .mode-toggle.mode-toggle--cards {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: center;
-  grid-auto-columns: minmax(
-    min(
-      calc(var(--space-8) * 4),
-      (100cqi - 2 * (var(--recordings-close-size) + var(--space-5)) - 2 * var(--space-3)) / 3
-    ),
-    1fr
-  );
-}
-
 .recordings-panel > .recordings-close {
   grid-column: 3;
   grid-row: 1;

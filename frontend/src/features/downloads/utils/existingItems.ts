@@ -46,8 +46,21 @@ export function isAssignmentDone(name: string, courses: Course[], course: string
   )
 }
 
+// The course's lectures and recitations, whichever kind a row would save as.
+function allNodes(courses: Course[], course: string): Lecture[] {
+  const node = courses.find((c) => c.name === course)
+  return [...(node?.lectures ?? []), ...(node?.recitations ?? [])]
+}
+
+// Whether a stored video came from this discovery row, whatever its lecture is called now. A removed
+// video keeps its source, so it still counts.
+export function videoSourceHeld(ref: string, courses: Course[], course: string): boolean {
+  return allNodes(courses, course).some((l) => l.videoSource === ref)
+}
+
 // The single "already on disk" rule for the green row, bulk skip and landed check; a material matches by
-// `source === ref`, so several share a node. An unprobed 'unknown' or 'unsupported' row is always false.
+// `source === ref`, so several share a node. A video matches its stored source first, then the lecture
+// name. An unprobed 'unknown' or 'unsupported' row is always false.
 export function hasResource(
   item: { ref?: string; media: Media; resolvedMedia?: Media | ResolvedMedia },
   name: string,
@@ -71,6 +84,7 @@ export function hasResource(
     )
   }
   if (media !== 'video') return false
+  if (item.ref !== undefined && videoSourceHeld(item.ref, courses, course)) return true
   return holdsVideo(name, kind, courses, course)
 }
 

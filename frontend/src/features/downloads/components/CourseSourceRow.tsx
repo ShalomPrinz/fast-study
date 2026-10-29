@@ -26,7 +26,7 @@ interface Props {
   discovering?: boolean
 }
 
-// One course: name, source URL and Load recordings, a Loaded chip on the open course. The pencil, or
+// One course: name, source URL and Load course, a Loaded chip on the open course. The pencil, or
 // "+ add source URL" with none, opens the course picker under the row.
 export default function CourseSourceRow({ course, onDiscover, selected, discovering }: Props) {
   const { t } = useLingui()
@@ -115,7 +115,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
                   onClick={onDiscover}
                   disabled={discovering || disconnected || locked}
                 >
-                  {discovering ? t`Loading…` : t`Load recordings`}
+                  {discovering ? t`Loading…` : t`Load course`}
                 </button>
               </Tooltip>
             )

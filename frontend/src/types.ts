@@ -72,6 +72,8 @@ export interface Lecture {
   removed: RemovableFile[]
   // The user marked it studied; always present.
   done: boolean
+  // The discovery row's `ref` its video came from; absent for a hand-placed video. Kept after the video is removed.
+  videoSource?: string
 }
 
 // One file of a course assignment; `source` is the discovery row's `ref`, absent on a hand-placed file.
@@ -114,6 +116,8 @@ export interface Course {
   recitations: Lecture[]
   // Always present, [] when none; never folded into lectures, whatever `lectures_only` says.
   assignments: Assignment[]
+  // Discovery `ref`s the user marked irrelevant (or the downloader refused); always present.
+  skipped: string[]
 }
 
 export type Kind = 'lecture' | 'recitation'

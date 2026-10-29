@@ -222,11 +222,13 @@ export interface RunTarget {
   captchaSolved?: true
 }
 
-// One section's bulk run as the server holds it: at most one per `sectionId`, which is the
-// frontend's own `${course}:${media}:${title}`. `at` is the 1-based position the queue is on.
+// One bulk run as the server holds it: at most one per `sectionId`, the frontend's own
+// `${course}:${media}:${title}` for a section run and `courseRunId(course)` for the New view's course
+// run. `at` is the 1-based position the queue is on.
 export interface SectionRun {
   id: string
   sectionId: string
+  scope: 'section' | 'course'
   course: string
   targets: RunTarget[]
   at: number
@@ -235,12 +237,14 @@ export interface SectionRun {
   paused: { index: number; reason: PasscodeError['reason']; name: string } | null
 }
 
-// Hands the section queue to the server, replacing any earlier run. Returns only the renames — the
-// run itself is read back off `/runs`.
+// Hands the queue to the server. A section run replaces any earlier one; a `scope: 'course'` submit
+// appends to the in-flight run instead. Returns only the renames of this submit's targets — the run
+// itself is read back off `/runs`.
 export async function startSectionRun(args: {
   sectionId: string
   course: string
   targets: RunTarget[]
+  scope?: 'section' | 'course'
 }): Promise<Rename[]> {
   const { renames } = await downloadServer.post<{ runId: string; renames?: Rename[] }>(
     '/download-section',

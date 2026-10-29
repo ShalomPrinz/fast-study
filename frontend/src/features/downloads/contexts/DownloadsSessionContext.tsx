@@ -22,6 +22,8 @@ interface DownloadsSessionState {
   items: Item[]
   edits: Record<string, RowEdit>
   reconnectKey: number
+  // Bumps with every discovery that paints, so a reload of the open course is a new load.
+  loadKey: number
 }
 
 interface DownloadsSessionActions {
@@ -51,6 +53,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   const [pending, setPending] = useState<string | null>(null)
   const [items, setItems] = useState<Item[]>([])
   const [reconnectKey, setReconnectKey] = useState(0)
+  const [loadKey, setLoadKey] = useState(0)
   // Keyed by item ref and living above the media toggle, so a typed name, a kind toggle and a
   // playlist's cached children all survive a segment switch.
   const [edits, setEdits] = useState<Record<string, RowEdit>>({})
@@ -110,6 +113,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
         if (id !== discoveryId.current) return
         clear()
         setItems(found)
+        setLoadKey((k) => k + 1)
         setSelected(course.name)
       } catch (err) {
         // The expired session is true whichever discovery learned it, so the hint fires even for a
@@ -120,7 +124,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
         }
         if (id !== discoveryId.current) return
         // The client already toasted an unreachable service; a second toast would restate it. A busy
-        // lock only raced the push that disables Load recordings.
+        // lock only raced the push that disables Load course.
         if (isConnectionError(err) || isMoodleBusyError(err)) return
         // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
         // hint it stays behind the ticket guard.
@@ -160,8 +164,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     [discover, close, reconnectHint, resolveMedia, rowEdits],
   )
   const state = useMemo(
-    () => ({ selected, pending, items, edits, reconnectKey }),
-    [selected, pending, items, edits, reconnectKey],
+    () => ({ selected, pending, items, edits, reconnectKey, loadKey }),
+    [selected, pending, items, edits, reconnectKey, loadKey],
   )
 
   // Rendering `{children}` and nothing else is what keeps the sidebar and the outlet out of this:

@@ -8,6 +8,7 @@ import {
   bulkRunState,
   captchaTimeoutCount,
   collidingNames,
+  anyRunBusy,
   runBusy,
   notStartedCount,
   runningCount,
@@ -51,6 +52,7 @@ function tree(lectures: Lecture[]): Course[] {
       lectures,
       recitations: [],
       assignments: [],
+      skipped: [],
     },
   ]
 }
@@ -324,6 +326,7 @@ function run(over: Partial<SectionRun> = {}): SectionRun {
   return {
     id: 'run1',
     sectionId: 'Algebra:video:Week 1',
+    scope: 'section',
     course: 'Algebra',
     targets: [target()],
     at: 1,
@@ -349,6 +352,18 @@ describe('runBusy', () => {
     const jobs = groupJobsByRef([job({ id: 'a', status: 'done' })])
     expect(runBusy(run(), 'Algebra', jobs)).toBe(false)
     expect(runBusy(run({ status: 'cancelled' }), 'Algebra', NO_JOBS)).toBe(false)
+  })
+})
+
+describe('anyRunBusy', () => {
+  it('is busy when any run, such as the course run, still holds its rows', () => {
+    expect(anyRunBusy([null, run({ status: 'running' })], 'Algebra', NO_JOBS)).toBe(true)
+    expect(anyRunBusy([run({ status: 'paused' })], 'Algebra', NO_JOBS)).toBe(true)
+  })
+
+  it('is free with no run or only finished ones', () => {
+    expect(anyRunBusy([], 'Algebra', NO_JOBS)).toBe(false)
+    expect(anyRunBusy([null, run({ status: 'cancelled' })], 'Algebra', NO_JOBS)).toBe(false)
   })
 })
 

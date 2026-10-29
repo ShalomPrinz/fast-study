@@ -114,7 +114,7 @@ its mode persisted in `localStorage`. The insertion order of `modes` is both seg
 and a stored or chosen key absent from `modes` falls back to it (`effectiveMode`), so a caller may hide
 a segment without losing the choice. A mode names a zero-prop `Component`, or the caller passes
 `children(mode, selectMode)` — `selectMode` lets the body switch segments itself (the paused-runs banner).
-A mode may carry a `count` and an `icon` (an `IconName`, drawn above the label).
+A mode may carry a `count` and an `icon` (an `IconName`, drawn above the label). `wrap(toggle)` places the segmented control inside a caller's layout (the Downloads control row).
 
 `.mode-toggle` is styled for the dark sidebar; `.mode-toggle--light` is the same control on a light
 surface, shared by the Downloads page tabs, the manual download and each recording's kind toggle so they

@@ -17,6 +17,7 @@ import BulkRunControls from './BulkRunControls'
 import BulkRunNotes from './BulkRunNotes'
 import GroupHeader from './GroupHeader'
 import RecordingRow from './RecordingRow'
+import SkippedMark from './SkippedMark'
 import '@/features/downloads/DownloadsView.css'
 import './PlaylistGroup.css'
 
@@ -28,6 +29,8 @@ interface Props {
   sectionKey: string | null
   sectionBusy: boolean
   onReconnect: () => void
+  // The New view's playlist: only the expand toggle, its children selected as rows of the view.
+  expandOnly?: boolean
 }
 
 // A playlist row as a collapsible group: a section-style header with its own "Download all", and its
@@ -38,6 +41,7 @@ const PlaylistGroup = memo(function PlaylistGroup({
   sectionKey,
   sectionBusy,
   onReconnect,
+  expandOnly = false,
 }: Props) {
   // Subscribed per ref, so expanding one playlist leaves every other row alone. The store is shared
   // with SectionGroup, whose own queue needs the same children.
@@ -79,7 +83,7 @@ const PlaylistGroup = memo(function PlaylistGroup({
       <GroupHeader
         scope="playlist"
         title={item.title}
-        count={children?.length ?? null}
+        count={expandOnly ? null : (children?.length ?? null)}
         toggle={{
           open: expand.expanded,
           loading: expand.expanding,
@@ -87,7 +91,8 @@ const PlaylistGroup = memo(function PlaylistGroup({
           onClick: () => void toggle(),
         }}
       >
-        {runKey !== null && (
+        {!expandOnly && <SkippedMark course={course} refKey={item.ref} />}
+        {runKey !== null && !expandOnly && (
           <BulkRunControls
             scope="playlist"
             bulk={bulk}
@@ -101,7 +106,7 @@ const PlaylistGroup = memo(function PlaylistGroup({
         <div className="recordings-status recordings-status--error">{expand.error}</div>
       )}
       {/* Hidden, not unmounted: the rows hold in-flight download state. */}
-      {children && (
+      {children && !expandOnly && (
         <div id={bodyId} className="recording-children" hidden={!expand.expanded}>
           <BulkRunNotes bulk={bulk} scope="playlist" />
           <ChildRows items={children} course={course} onReconnect={onReconnect} />

@@ -61,7 +61,7 @@
   color: var(--accent);
 }
 
-/* Pencil and Load recordings ride one cell, at the row's far edge — the URL's centring depends on
+/* Pencil and Load course ride one cell, at the row's far edge — the URL's centring depends on
    the side tracks staying equal, which a second grid item on this side would break. Its track is
    floored at the pair's own width (the name's is not — a long name ellipsizes), so a narrow window
    costs the URL its exact centring rather than sliding the buttons over it. */

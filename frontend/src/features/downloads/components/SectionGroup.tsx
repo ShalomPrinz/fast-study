@@ -9,7 +9,7 @@ import BulkRunNotes from './BulkRunNotes'
 import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
 import { useRowEdits, useRowLocksMap } from '@/features/downloads/contexts/RowEditsContext'
 import { IDLE_EXPAND, useAllExpansions } from '@/features/downloads/contexts/RowExpansionsContext'
-import { usePlaylistRuns } from '@/features/downloads/contexts/SectionRunsContext'
+import { usePlaylistRuns, useSectionRun } from '@/features/downloads/contexts/SectionRunsContext'
 import { useMoodleLockState } from '@/features/downloads/contexts/MoodleLockContext'
 import { moodleLocked } from '@/features/downloads/utils/moodleLock'
 import {
@@ -18,8 +18,8 @@ import {
   useSectionOpen,
 } from '@/features/downloads/contexts/SectionCollapseContext'
 import { useBulkRun } from '@/features/downloads/hooks/useBulkRun'
-import { bulkGate, runBusy } from '@/features/downloads/utils/runStatus'
-import { leafCount, sectionTitle } from '@/features/downloads/utils/sections'
+import { anyRunBusy, bulkGate } from '@/features/downloads/utils/runStatus'
+import { courseRunId, leafCount, sectionTitle } from '@/features/downloads/utils/sections'
 import './SectionGroup.css'
 
 interface Props {
@@ -49,8 +49,10 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   const label = section.synthetic ? t`Other links` : sectionTitle(section.title)
   const bulk = useBulkRun(id, course, label)
   const locked = moodleLocked(useMoodleLockState())
-  // A playlist's own run over rows this section's run would queue too.
-  const playlistBusy = usePlaylistRuns(id).some((run) => runBusy(run, course, jobsByRef))
+  // A playlist's run, or this course's New-view course run, over rows this section's run would queue too.
+  const playlistRuns = usePlaylistRuns(id)
+  const courseRun = useSectionRun(courseRunId(course))
+  const otherRunBusy = anyRunBusy([...playlistRuns, courseRun], course, jobsByRef)
   const paused = bulk.run?.status === 'paused'
   const open = useSectionOpen(collapseKey)
   const bodyId = useId()
@@ -67,7 +69,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   const gate = bulkGate({
     ready: allExpanded,
     busy: bulk.state.busy,
-    otherBusy: playlistBusy,
+    otherBusy: otherRunBusy,
     locked,
   })
 

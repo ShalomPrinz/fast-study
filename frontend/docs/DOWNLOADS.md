@@ -42,7 +42,7 @@ touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
 
 ## Course sources
 
-A course's source is the course page URL (`…/course/view.php?id=N`) — what Load recordings and auto's
+A course's source is the course page URL (`…/course/view.php?id=N`) — what Load course and auto's
 `/list` read. `CoursePicker` sets it: the pencil, "+ add source URL" and `AddCourseRow`'s "+ Add course from
 Moodle" open it under their row. It fetches auto's `GET /courses?lang=<UI locale>` once per open
 (`useEnrolledCourses`, through the Moodle lock with `{ wait: true }`, one request even across StrictMode's
@@ -63,7 +63,7 @@ reconnect, blocked, busy — shows its reason under the input (`CourseCheckFailu
 with "Save anyway" (saves unchecked) and "Edit". An empty paste saves with no check: it clears the source.
 `needsCheck` is that one rule. In the add form, a picked course prefills the name (editable) and fixes the
 URL (`addFormDraft`); a typed URL is checked on Create the same way. A URL saved anyway that `/list` then
-refuses reads as the service's reason on Load recordings — `invalid_request` with `field: courseUrl` has its
+refuses reads as the service's reason on Load course — `invalid_request` with `field: courseUrl` has its
 own branch in the catalog row, so it never reads as the bare generic line.
 
 ## Manual download
@@ -164,11 +164,11 @@ serves the first-run wall ([SETTINGS.md](SETTINGS.md)).
 
 `/auth/status`'s 409 `moodle_site_not_configured` is an answer, not a failure: `fetchAuthStatus` maps it to
 `unconfigured`: the chip reads "no university chosen" with no Connect, the page leads with a nudge linking to
-Settings, and Load recordings is disabled with a tooltip saying why — the init wall lets a user in without one. A login the site's post-login
+Settings, and Load course is disabled with a tooltip saying why — the init wall lets a user in without one. A login the site's post-login
 check refuses answers with 422 (a rejected `/auth/complete`, or the state's error) `moodle_site_unsupported`, which `loginFailure` toasts in
 its `reason`'s sentence.
 
-`Load recordings` disables only on `connected: false`; unknown leaves it enabled, since guessing
+`Load course` disables only on `connected: false`; unknown leaves it enabled, since guessing
 "disconnected" from an unanswered probe would lock a working session out.
 
 ## The Moodle lock
@@ -176,7 +176,7 @@ its `reason`'s sentence.
 auto talks to Moodle one request at a time and holds one global lock for each request plus 3 s after it
 (and for a whole login, or while a challenge window is open) — `downloader/auto/docs/GATE.md`. Every
 frontend call that can reach Moodle goes through `withMoodleLock(fn)` (`useWithMoodleLock`, from
-`MoodleLockProvider`, which `AuthStatusProvider` renders): Connect, Complete, Load recordings,
+`MoodleLockProvider`, which `AuthStatusProvider` renders): Connect, Complete, Load course,
 "Download all", the settings site probe, and a row's Download, Download again and clip retry — but only on
 a row whose `moodle` flag auto set (`rowLocked`); a Zoom, YouTube or Drive row calls directly and stays
 enabled. The flag is the only source for a row: the frontend infers nothing from kind or URL, and a wrong
@@ -257,6 +257,36 @@ a sibling module store (`SectionCollapseContext.ts`, keyed `section.id`, or `cou
 default), so they survive a segment switch; `clear()` resets it, and a paused run re-opens its section so
 the passcode prompt can't stay hidden.
 
+## Scope and the control row
+
+The panel's top is `ScopeControls`: two captioned groups on one row, the **New | All** switch ("What to show", a light
+segmented control) and, in All only, today's media cards ("Content type"). `ModeToggle`'s `wrap` places the cards inside that row.
+The scope persists in `localStorage` as `fastStudyDownloadsScope` (`utils/scope.ts`, try/catch, default New). The course
+row's button is **Load course** — on demand, never on launch.
+
+## New view
+
+`NewView` (mounted per load, `key={loadKey}` from the session, so checks and the banner's dismissal reset on every
+reload) lists the rows that are neither downloaded nor skipped, grouped by media (Videos, Materials, Assignments, Unknown) and then Moodle
+section, each section header with a select-all checkbox; `buildNewView` in `utils/newView.ts` holds the rules. Every row keeps its
+editable name, kind and target and starts checked; a sticky bar acts on exactly the checked rows:
+**Download selected (n)** (one course run — [BULK.md](BULK.md) §Course run) and **Mark selected as irrelevant**
+(`updateSkipped(course, { add })`).
+
+- A row is done when its ref is held (`recognisedByRef`: video source, material source, assignment-file source) or `hasResource` holds for its
+  **suggested** name — never the typed one, so a row does not vanish while the user retypes onto an existing lecture.
+- An **engaged** row — a run walking it, or a download running on it — stays listed, unchecked and disabled, until it lands.
+- The first-load banner ("This course has N items you haven't marked. Skip all old content?", **Skip all** / **Review**) shows when the
+  course has no skips, no listed item is recognised by ref, and something is new; Review dismisses it for this load.
+- A playlist renders as `PlaylistGroup expandOnly`: only the expand toggle, no checkbox and no run controls. Its expanded children join the
+  list as ordinary rows, minus the done and skipped ones, in the playlist's section.
+- `PausedRunsBanner` (media `null`) shows the course run's passcode entry; paused section runs of the All view send the user there via `onShowAll`.
+
+## Skipped rows in All
+
+All is today's page. A row whose ref is in the course's `skipped` set (and a skipped playlist header) also shows a **Skipped** chip and a
+**Restore** action (`SkippedMark`, `updateSkipped(course, { remove })`), which returns the row to New.
+
 ## Unknown rows
 
 An `unknown` row carries a chip — `?`, then `Video` / `Unsupported` — and **never changes
@@ -296,7 +326,7 @@ NTFS) and answer `renames`; `applyRenames` writes them back through `setName` wi
 submission. The stored name is then the on-disk one, which is what lets every "already there" check
 match — no client-side sanitizing, which would only hide the desync.
 
-`hasResource(item, name, kind, courses, course)` is the single already-downloaded rule: the named node
+`hasResource(item, name, kind, courses, course)` is the single already-downloaded rule: a lecture whose `videoSource` equals the row's `ref` holds a video, else the named node
 holds `video.mp4` for a video (`holdsVideo`, a removed one included, so bulk skips the lecture and a
 manual re-download still confirms), or for a material a material whose `source` equals the row's `ref`
 (equality only; a source-less manual or legacy file matches no row), so several materials share one

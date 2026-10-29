@@ -7,13 +7,16 @@ import './PausedRunsBanner.css'
 
 interface Props {
   course: string
-  media: Media
+  media: Media | null
   onSelectMedia: (media: Media) => void
+  // Switches to the New view, where a course run's prompt renders.
+  onShowNew?: () => void
 }
 
-// Every run parked at a passcode gate, since the prompt renders only in its own `SectionGroup`. A run
-// in the open course is a button: it reopens a closed prompt, jumping segments first — see docs/BULK.md.
-export default function PausedRunsBanner({ course, media, onSelectMedia }: Props) {
+// Every run parked at a passcode gate, since the prompt renders only in its own `SectionGroup` (All) or
+// the New view (course run). A run in the open course is a button: it reopens a closed prompt, jumping
+// segments or scope first — see docs/BULK.md.
+export default function PausedRunsBanner({ course, media, onSelectMedia, onShowNew }: Props) {
   const { t } = useLingui()
   const paused = usePausedRuns()
   if (!paused.length) return null
@@ -21,6 +24,29 @@ export default function PausedRunsBanner({ course, media, onSelectMedia }: Props
   return (
     <div className="recordings-paused-banner">
       {paused.map((run) => {
+        // The New view's course run: its prompt sits in the view, one click from a closed state.
+        if (run.scope === 'course') {
+          const label = t`The course download is waiting for a passcode`
+          if (run.course !== course)
+            return (
+              <div key={run.id} className="recordings-paused-entry" dir="auto">
+                {run.course} · {label}
+              </div>
+            )
+          return (
+            <button
+              key={run.id}
+              className="recordings-paused-entry recordings-paused-entry--link"
+              dir="auto"
+              onClick={() => {
+                reopenPasscode(run.id)
+                if (media !== null) onShowNew?.()
+              }}
+            >
+              {label}
+            </button>
+          )
+        }
         const parsed = parseSectionId(run.sectionId)
         const label = parsed
           ? t`Section ${sectionTitle(parsed.title)} is waiting for a passcode`

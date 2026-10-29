@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Link } from 'react-router-dom'
 import { ResolvedMediaContext } from './contexts/ResolvedMediaContext'
@@ -16,11 +16,15 @@ import AddCourseRow from '@/features/downloads/components/AddCourseRow'
 import ManualDownload from '@/features/downloads/components/ManualDownload'
 import MediaNote from '@/features/downloads/components/MediaNote'
 import FolderJobList from '@/features/downloads/components/FolderJobList'
+import NewView from '@/features/downloads/components/NewView'
+import ScopeControls from '@/features/downloads/components/ScopeControls'
 import SectionGroup from '@/features/downloads/components/SectionGroup'
 import PausedRunsBanner from '@/features/downloads/components/PausedRunsBanner'
 import DownloadsTabs from '@/features/downloads/components/DownloadsTabs'
 import ExtensionGuide from '@/features/extension/ExtensionGuide'
 import { useDownloadsTab } from '@/features/downloads/hooks/useDownloadsTab'
+import type { Scope } from '@/features/downloads/utils/scope'
+import { MEDIA_KEY, readScope, writeScope } from '@/features/downloads/utils/scope'
 import { groupSections, sectionId, showsMediaSegment } from '@/features/downloads/utils/sections'
 import {
   RowEditsDispatchContext,
@@ -51,7 +55,7 @@ export default function DownloadsView() {
   const active = courses.filter((c) => !c.archived)
   const withSource = active.filter((c) => c.source_url).length
 
-  const { selected, pending, items, edits, reconnectKey } = useDownloadsSession()
+  const { selected, pending, items, edits, reconnectKey, loadKey } = useDownloadsSession()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
   // The university is optional on the init wall, so a user without one lands here with nothing to sign in to.
   const unconfigured = useAuthStatus().status?.unconfigured
@@ -65,6 +69,21 @@ export default function DownloadsView() {
   }, [edits, locks])
   const read = useCallback(() => rows.current, [])
   const dispatch = useMemo(() => ({ ...rowEdits, lock, read }), [rowEdits, lock, read])
+
+  const [scope, setScope] = useState<Scope>(readScope)
+  function chooseScope(next: Scope) {
+    setScope(next)
+    writeScope(next)
+  }
+  // A paused section run's prompt lives in All, so open it on that run's media.
+  function showAll(media: Media) {
+    try {
+      localStorage.setItem(MEDIA_KEY, media)
+    } catch {
+      // Storage blocked: All opens on its last media.
+    }
+    chooseScope('all')
+  }
 
   const countOf = (media: Media) => items.filter((i) => i.media === media).length
 
@@ -195,49 +214,70 @@ export default function DownloadsView() {
                       <RowEditsDispatchContext.Provider value={dispatch}>
                         <RowEditsStateContext.Provider value={edits}>
                           <RowLocksContext.Provider value={locks}>
-                            <ModeToggle
-                              modes={mediaModes}
-                              storageKey="fastStudyDownloadsMedia"
-                              className="mode-toggle--cards"
-                            >
-                              {(media, selectMedia) => {
-                                const sections = groupSections(items, media)
-                                return (
-                                  <>
-                                    <MediaNote media={media} />
-                                    <PausedRunsBanner
-                                      course={selected}
-                                      media={media}
-                                      onSelectMedia={selectMedia}
-                                    />
-                                    {!sections.length ? (
-                                      <div className="recordings-status">{emptyState[media]}</div>
-                                    ) : (
-                                      sections.map((section) => {
-                                        // No run identity for the synthetic bucket: an id would collide
-                                        // with a real heading spelled the same — see docs/DOWNLOADS.md.
-                                        const id = section.synthetic
-                                          ? null
-                                          : sectionId(selected, media, section.title)
-                                        // The pile is per course and media too; one colon never matches a
-                                        // run id, which always has two.
-                                        const key = id ?? `${selected}:${media}`
-                                        return (
-                                          <SectionGroup
-                                            key={key}
-                                            collapseKey={key}
-                                            section={{ ...section, id }}
-                                            items={section.items}
-                                            course={selected}
-                                            onReconnect={reconnectHint}
-                                          />
-                                        )
-                                      })
-                                    )}
-                                  </>
-                                )
-                              }}
-                            </ModeToggle>
+                            {scope === 'new' ? (
+                              <>
+                                <ScopeControls scope={scope} onScope={chooseScope} />
+                                <NewView
+                                  key={loadKey}
+                                  course={selected}
+                                  items={items}
+                                  onReconnect={reconnectHint}
+                                  onShowAll={showAll}
+                                />
+                              </>
+                            ) : (
+                              <ModeToggle
+                                modes={mediaModes}
+                                storageKey={MEDIA_KEY}
+                                className="mode-toggle--cards"
+                                wrap={(cards) => (
+                                  <ScopeControls
+                                    scope={scope}
+                                    onScope={chooseScope}
+                                    cards={cards}
+                                  />
+                                )}
+                              >
+                                {(media, selectMedia) => {
+                                  const sections = groupSections(items, media)
+                                  return (
+                                    <>
+                                      <MediaNote media={media} />
+                                      <PausedRunsBanner
+                                        course={selected}
+                                        media={media}
+                                        onSelectMedia={selectMedia}
+                                        onShowNew={() => chooseScope('new')}
+                                      />
+                                      {!sections.length ? (
+                                        <div className="recordings-status">{emptyState[media]}</div>
+                                      ) : (
+                                        sections.map((section) => {
+                                          // No run identity for the synthetic bucket: an id would collide
+                                          // with a real heading spelled the same — see docs/DOWNLOADS.md.
+                                          const id = section.synthetic
+                                            ? null
+                                            : sectionId(selected, media, section.title)
+                                          // The pile is per course and media too; one colon never matches a
+                                          // run id, which always has two.
+                                          const key = id ?? `${selected}:${media}`
+                                          return (
+                                            <SectionGroup
+                                              key={key}
+                                              collapseKey={key}
+                                              section={{ ...section, id }}
+                                              items={section.items}
+                                              course={selected}
+                                              onReconnect={reconnectHint}
+                                            />
+                                          )
+                                        })
+                                      )}
+                                    </>
+                                  )
+                                }}
+                              </ModeToggle>
+                            )}
                           </RowLocksContext.Provider>
                         </RowEditsStateContext.Provider>
                       </RowEditsDispatchContext.Provider>

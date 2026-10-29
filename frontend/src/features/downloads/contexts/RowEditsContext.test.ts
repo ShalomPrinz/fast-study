@@ -37,6 +37,7 @@ const COURSES: Course[] = [
     lectures: [node('Lecture 1'), node('Lecture 2')],
     recitations: [node('Recitation 4')],
     assignments: [],
+    skipped: [],
   },
 ]
 
@@ -104,6 +105,7 @@ describe('a download lock', () => {
       lectures: [],
       recitations: [],
       assignments: [],
+      skipped: [],
     },
   ]
   // The SSE refresh after the first download lands.

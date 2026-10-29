@@ -49,6 +49,17 @@ downloads themselves overlap. A 401 stops the run at `reconnect`, a 409 parks it
 `unsupported`, anything else `queue-failed` and continues. The run's recorded verdicts also feed
 `ResolvedMediaContext`, once per ref.
 
+## Course run
+
+The New view's "Download selected" is one run per course: `sectionId = courseRunId(course)` (`${course}:course`, one colon, which
+`parseSectionId` reads as no section), `scope: 'course'`, targets of every media in on-screen order, walked serially by the server so only one row waits at the
+Moodle lock. `useBulkRun(runKey, course, label, 'course')` is the same hook; `BulkRunNotes scope="course"` words the stopped and
+"run again" lines for it, and `PausedRunsBanner` lists its passcode pause as "The course download is waiting for a passcode".
+
+A submit while the course run is `running` or `paused` **appends** its targets (the server dedups by ref) and returns the in-flight run. Because
+that run itself holds the Moodle lock, such a submit is never gated by it (`courseSubmitGated`): the button stays enabled and the post skips
+`withMoodleLock`. Everything else keeps the lock gate — per-row and per-section actions, and a course submit while the lock is held with no course run in flight (a 429 `moodle_busy` still disables the button).
+
 ## Playlists
 
 `SectionGroup` renders an `expandable` row as `PlaylistGroup`: the section's own `GroupHeader` (caret,
@@ -124,7 +135,7 @@ component guards.
 
 `PausedRunsBanner`, inside the open course panel, lists every paused run. An entry is a button only when
 its section is in the open course: it reopens a closed prompt, expands the section and, on another
-segment, calls `ModeToggle`'s `selectMode`; anything else has nowhere to go. `usePausedRuns` caches its array **keyed by run id only** — a consumer reading
+segment, calls `ModeToggle`'s `selectMode`; anything else has nowhere to go. A course run's entry in All switches the scope to New (`onShowNew`), where its prompt renders. Its running or paused course run also gates every section's "Download all" in All (`anyRunBusy`). `usePausedRuns` caches its array **keyed by run id only** — a consumer reading
 anything beyond `id`/`sectionId`/`course` must widen that comparison first.
 
 In a single row the passcode prompt and the overwrite confirm never co-render; submit saves and resumes

@@ -17,6 +17,7 @@ const course = (
     lectures: lectures.map(lecture),
     recitations: recitations.map(lecture),
     assignments: [],
+    skipped: [],
   },
 ]
 

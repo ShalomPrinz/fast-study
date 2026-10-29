@@ -36,6 +36,7 @@ function tree(...lectures: Lecture[]): Course[] {
       lectures,
       recitations: [],
       assignments: [],
+      skipped: [],
     },
   ]
 }

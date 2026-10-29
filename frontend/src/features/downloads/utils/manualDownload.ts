@@ -54,6 +54,7 @@ export function suggestManualName(
           lectures: [],
           recitations: [],
           assignments: [],
+          skipped: [],
         },
       ]
   const extra = claimed

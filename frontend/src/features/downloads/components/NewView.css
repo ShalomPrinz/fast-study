@@ -1,0 +1,103 @@
+.new-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.new-media {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.new-media-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.new-count {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.new-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.new-section-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.new-section-title {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.new-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.new-row-check {
+  margin-block-start: var(--space-5);
+  flex-shrink: 0;
+}
+
+.new-row-card {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.new-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  font-size: var(--fs-body);
+  color: var(--accent-ink);
+}
+
+.new-banner-text {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* Pinned to the bottom of the page's scroller, so the actions stay in reach down a long list. */
+.new-bar {
+  position: sticky;
+  inset-block-end: calc(-1 * var(--space-7));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  margin-block-end: calc(-1 * var(--space-5));
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.new-bar-status {
+  flex: 1;
+  min-inline-size: 0;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
