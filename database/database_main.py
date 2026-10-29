@@ -14,6 +14,7 @@ from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fs import assignments, crud, materials, overview, paths, tree
+from fs import sources as skips
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
@@ -21,6 +22,7 @@ from fs.paths import (
     ARCHIVED_MARKER,
     DONE_MARKER,
     LECTURES_ONLY_MARKER,
+    SKIPPED_MARKER,
     SOURCE_URL_MARKER,
     AssignmentFileNotFound,
     CodedError,
@@ -230,6 +232,21 @@ async def patch_course_lectures_only(course: str, request: Request):
         return _failure(e, 400, "file_write_failed", {"file": LECTURES_ONLY_MARKER})
 
 
+@app.post("/courses/{course}/skipped")
+async def post_course_skipped(course: str, request: Request):
+    """Add and/or remove discovery refs in the course's skip set (body: {add?, remove?}); answers the resulting {refs}."""
+
+    # On the loop, no await between read and write: concurrent batches from server and frontend serialise.
+    try:
+        body = await request.json()
+        refs, changed = skips.update_skipped(course, body)
+        if changed:
+            broadcast_notify()
+        return {"refs": refs}
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": SKIPPED_MARKER})
+
+
 @app.post("/courses/{course}/lectures")
 async def post_lecture(course: str, request: Request, kind: str = Query("lecture")):
     """Create a lecture or recitation, answering the sanitized folder name actually created."""
@@ -288,13 +305,17 @@ async def delete_lecture_done(course: str, lecture: str, kind: str = Query("lect
 
 @app.put("/courses/{course}/lectures/{lecture}/video")
 async def put_video(
-    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+    course: str,
+    lecture: str,
+    request: Request,
+    kind: str = Query("lecture"),
+    source: str | None = Query(None),
 ):
-    """Upload video.mp4 from a raw body, wiping derived artifacts (materials stay)."""
+    """Upload video.mp4 from a raw body, wiping derived artifacts (materials stay); ?source= records its discovery ref."""
 
     try:
         data = await request.body()
-        crud.write_video(course, lecture, kind, data)
+        crud.write_video(course, lecture, kind, data, source)
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": "video.mp4"})

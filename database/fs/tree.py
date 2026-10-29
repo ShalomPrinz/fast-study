@@ -17,6 +17,7 @@ from .paths import (
     SOURCE_URL_MARKER,
     data_root,
 )
+from .sources import read_skipped, read_video_source
 from .summary import read_summary_materials
 
 # The live course-structure mode, written only by set_course_structure(); see docs/SETTINGS.md.
@@ -116,7 +117,7 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
             if warning is not None:
                 entry["warning"] = warning
         files[f] = entry
-    return {
+    entry = {
         "name": name,
         "files": files,
         "materials": list_materials(lecture_path),
@@ -125,6 +126,10 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         "removed": _removed(files),
         "done": (lecture_path / DONE_MARKER).exists(),
     }
+    source = read_video_source(lecture_path)
+    if source is not None:
+        entry["videoSource"] = source
+    return entry
 
 
 def _read_lectures(course_path: Path) -> list[dict]:
@@ -173,6 +178,7 @@ def read_course(name: str) -> Optional[dict]:
         "archived": (course_path / ARCHIVED_MARKER).exists(),
         "lectures_only": _lectures_only(course_path),
         "source_url": _read_source_url(course_path),
+        "skipped": read_skipped(course_path),
         "lectures": _read_lectures(course_path),
         "recitations": _read_recitations(course_path),
         "assignments": list_assignments(course_path),

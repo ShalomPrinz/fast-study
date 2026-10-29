@@ -131,6 +131,8 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.archived`              | course dir  | empty marker; course is archived                          |
 | `.lectures_only`         | course dir  | empty marker; picked as lectures-only, counted only under `lectures_some` ([SETTINGS.md](SETTINGS.md)) |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
+| `.skipped.json`          | course dir  | `{"refs": [...]}`: discovery refs the user or the downloader skipped; one set per course, recitations included; removed once empty |
+| `.video_source.json`     | lecture dir | `{"source": ref}`: the discovery ref of the current video (`?source=` on `PUT …/video`); a removed video keeps it, a rename moves it, every fresh upload drops the old ref in the wipe and writes the new one best-effort, so a failed write leaves none, never a stale one |
 | `.done`                  | lecture or assignment dir | empty marker; the user studied it — a fresh video upload or an assignment file upload keeps it |
 | `.materials.json`        | lecture dir | `{material name: {source?, filename?, attach?}}` per-material meta |
 | `.assignment_files.json` | assignment dir | `{"v": 2, "files": {filename: source}}`: every file the app saved (source `""` when none, else an opaque string); the listing is these entries whose file still exists |
@@ -161,6 +163,7 @@ A materials-only lecture has neither, so it reports nothing removed.
 ## Tree shape
 
 `read_tree` returns one node per course: `name`, `archived`, `lectures_only`, `source_url`,
+`skipped` (`string[]` of refs from `.skipped.json`, insertion order, always present, `[]` when none),
 `lectures`, `recitations`, `assignments`. `lectures_only` is resolved, never raw: `course_structure == lectures_all`,
 or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations`, `Assignments` and `overview` are skipped as lectures.
 `assignments` is always present (`[]` when none): `[{name, done, files: [{name, size, mtime, attach[, source]}], lectures: [{name, kind}], docs: {intuition, solution}}]` (`done`: the `.done` marker exists; `attach` defaults `true`; `lectures` only existing ones; each doc is `null` without its `.md`, else `{md_mtime, pdf_mtime|null, pdf_warning|null}`), both levels sorted by name, `source` omitted when absent. Files are exactly the `.assignment_files.json` entries still on disk: a file added in Explorer is never a row, and a junk-like upload name (`x.tmp`, `~$x`) is.
@@ -168,8 +171,8 @@ or `lectures_some` and the course has `.lectures_only` — consumers read only t
 Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
 `materials` (index-ordered `{name, size, mtime}` plus `source`, `filename` and `attach` when set, always present and `[]` when none — presence
 in the list *is* existence, so entries carry no `exists`), `transcribePartial`, and `removed` (the
-names derived above, in `REMOVABLE_FILES` order; always present, `[]` when none), `summaryMaterials` (`string[]` from `.summary_materials.json`, `null` when absent or unreadable), and `done` (`.done`
-exists; always present, `false` when absent). Three fields are inlined onto file entries rather than exposed as separate
+names derived above, in `REMOVABLE_FILES` order; always present, `[]` when none), `summaryMaterials` (`string[]` from `.summary_materials.json`, `null` when absent or unreadable), `done` (`.done`
+exists; always present, `false` when absent) and `videoSource` (the ref from `.video_source.json`; omitted when absent, and kept while `files["video.mp4"].exists` is false). Three fields are inlined onto file entries rather than exposed as separate
 endpoints, because the frontend needs them on every render of the tree:
 
 - `drive_url.txt` → `url` on its own entry.
@@ -186,7 +189,7 @@ field stay backwards-compatible.
 ## Degrade, don't fail
 
 Every metadata read (`transcript.partial.meta.json`, both `.pdf_warning` readers,
-`overview/meta.json`, `.materials.json`) swallows parse and read errors and falls back to "absent". A corrupt
+`overview/meta.json`, `.materials.json`, `.skipped.json`, `.video_source.json`) swallows parse and read errors and falls back to "absent". A corrupt
 side-file must never take down a whole tree or listing; the next write self-heals it.
 Writing `.materials.json` degrades the same way: a failed write is logged and the upload or delete still succeeds, untagged. The one exception is `PATCH …/materials/{name}`: the flag lives only in the sidecar, so a failed write answers `500 file_write_failed` and does not notify.
 

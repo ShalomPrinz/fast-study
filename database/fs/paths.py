@@ -34,6 +34,10 @@ OVERVIEW_DIR = "overview"
 ARCHIVED_MARKER = ".archived"
 LECTURES_ONLY_MARKER = ".lectures_only"
 SOURCE_URL_MARKER = ".source_url"
+# Course-dir JSON {"refs": [...]}: discovery refs the user or the downloader skipped, one set per course (recitations included).
+SKIPPED_MARKER = ".skipped.json"
+# Lecture-dir JSON {"source": ref}: the discovery ref the current video came from; a removed video keeps it.
+VIDEO_SOURCE_MARKER = ".video_source.json"
 
 # Lecture-dir dotfiles: one line of LaTeX warning text for summary.pdf, and the generated
 # LaTeX the backend keeps only on a hard render failure. Dotfiles never become tree rows.

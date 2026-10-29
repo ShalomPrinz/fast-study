@@ -54,7 +54,8 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file in it is open elsewhere |
 | `PUT    /courses/{course}/lectures/{lecture}/done`         | mark studied (creates `.done`); idempotent `204`; 404 if the lecture is missing |
 | `DELETE /courses/{course}/lectures/{lecture}/done`         | clear studied (removes `.done`); idempotent `204`; 404 if the lecture is missing |
-| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials and `.done`; `423` if one is open elsewhere |
+| `POST   /courses/{course}/skipped`                         | body `{add?: [ref], remove?: [ref]}` (either optional, adds applied first so a ref in both ends removed); `200 {refs}` with the resulting set; idempotent, atomic, notifies only when the set changed; `404` `course_not_found`; `400` `bad_request_body` for a non-object body or a non-list / non-string / empty item |
+| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; optional `?source=` records the discovery ref as `videoSource` on the tree (replaced by every fresh PUT, cleared when absent); wipes derived artifacts, keeps materials and `.done`; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material of any type, optional `?source=` and `?filename=` (original name; ext source, default `.pdf`); returns `{name}` with the allocated (or adopted) filename |
 | `PATCH  /courses/{course}/lectures/{lecture}/materials/{name}` | body `{attach: bool}` sets the meta flag; `204`; `404` `file_not_found` for a non-material or absent name; `400` `bad_request_body` for another body; `500` `file_write_failed` if the sidecar can't be written |
@@ -107,6 +108,8 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   the _old_ video. Materials stay: they are attached, not derived. The wipe is all-or-nothing: the whole set is probed for locks first, so one
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand (the downloader uploads to brand-new lectures) but never the course: a missing one is `404` `course_not_found`.
+- **`POST /…/skipped`** runs on the event loop with no `await` between read and write, so concurrent batches (server auto-skip, frontend Skip all) never lose refs. Sidecar: [LAYOUT.md](LAYOUT.md#dotfiles).
+- **`PUT /…/video`'s `?source=`** replaces the old ref: the old sidecar is dropped in the wipe (strictly, lock probe included), then the new one is written after the bytes best-effort. A failed write is logged and the upload still succeeds, leaving no ref, never the previous video's. It does not notify (the uploader tells the backend, whose run notifies).
 - **`POST /…/materials`** appends an attached file (any extension), allocating its name server-side (see
   [LAYOUT.md](LAYOUT.md#materials)) and returning it. An optional `?source=` records the opaque download source,
   echoed as `source` on the entry, and `?filename=` is echoed as `filename`; a byte-identical source-less material is adopted instead of duplicated. Like the video upload, it creates the lecture dir on demand, never the course. Callers that already know

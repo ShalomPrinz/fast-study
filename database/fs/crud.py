@@ -16,6 +16,7 @@ from .paths import (
     REMOVABLE_FILES,
     SOURCE_URL_MARKER,
     SUMMARY_MATERIALS_MARKER,
+    VIDEO_SOURCE_MARKER,
     CodedError,
     CodedValueError,
     CourseNotFound,
@@ -31,6 +32,7 @@ from .paths import (
     reject_if_locked,
     safe_name,
 )
+from .sources import write_video_source
 
 # Course-level folders the tree skips as lectures; casefolded because NTFS matches names case-insensitively.
 _RESERVED_LECTURE_NAMES = {
@@ -165,8 +167,10 @@ def rename_lecture(course: str, old: str, new: str, kind: str) -> str:
     return target.name
 
 
-def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
-    """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source."""
+def write_video(
+    course: str, lecture: str, kind: str, data: bytes, source: str | None = None
+) -> None:
+    """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source, and record its discovery ref (the old one is always dropped)."""
 
     # The downloader uploads here for brand-new lectures, so the create path's name check applies.
     check_not_reserved(lecture)
@@ -187,6 +191,8 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
             PDF_WARNING_MARKER,
             PDF_BUILD_TEX_MARKER,
             SUMMARY_MATERIALS_MARKER,
+            # The old ref names the video being replaced; dropped strictly so a failed new write leaves none, never a stale one.
+            VIDEO_SOURCE_MARKER,
         )
     ]
     # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
@@ -200,6 +206,8 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
                 reject_if_locked(e, p.name)
                 raise
     (d / "video.mp4").write_bytes(data)
+    if source:
+        write_video_source(d, source)
 
 
 def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
