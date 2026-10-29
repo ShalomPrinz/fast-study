@@ -20,6 +20,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `gemini_api_key_set` / `groq_api_key_set` (bool)   | `GEMINI_API_KEY` / `GROQ_API_KEY`                 |
 | `gemini_model`                                     | `GEMINI_MODEL`                                    |
 | `gemini_auto_fallback` (bool)                      | `GEMINI_AUTO_FALLBACK`                            |
+| `auto_retry` (bool), `auto_retry_count`, `auto_retry_minutes` (ints) | `AUTO_RETRY`, `AUTO_RETRY_COUNT`, `AUTO_RETRY_MINUTES` |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
 | `auto_run`                                         | `AUTO_RUN`                                        |
 | `moodle_site` (the auto-downloader's)              | `MOODLE_SITE`                                     |
@@ -27,9 +28,9 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `auto_remove`, `auto_remove_after`                 | `AUTO_REMOVE`, `AUTO_REMOVE_AFTER`                |
 | `course_structure`                                 | `COURSE_STRUCTURE`                                |
 
-Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` (empty today) — which is
+Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` (the two `auto_retry_*` counts) — which is
 all the store knows about a value. It validates the _type_ and nothing else: an integer is stored as
-any integer, and clamping it to a meaningful range is the owning service's job. Meaning belongs to the owning service;
+any integer, and clamping it to a meaningful range is the owning service's job. The backend owns the `auto_retry*` defaults (on, 3, 10) and ranges; the store holds no default and reads `null` when unset. Meaning belongs to the owning service;
 the store stays generic. The one exception is `auto_run`, stored lowercased and refused
 (`setting_invalid_choice`) unless `off`/`audio`/`full`, because the backend silently runs an unknown
 mode as `full`; the list is a deliberate copy of the backend's `AUTO_RUN_MODES`. `ai_provider` follows

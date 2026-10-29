@@ -21,8 +21,12 @@ STRING_FIELDS = {
 BOOL_FIELDS = {
     "drive_enabled": "DRIVE_ENABLED",
     "gemini_auto_fallback": "GEMINI_AUTO_FALLBACK",
+    "auto_retry": "AUTO_RETRY",
 }
-INT_FIELDS: dict[str, str] = {}
+INT_FIELDS = {
+    "auto_retry_count": "AUTO_RETRY_COUNT",
+    "auto_retry_minutes": "AUTO_RETRY_MINUTES",
+}
 
 # Write-only: the read path reports set/unset only, so a stored key never travels to the client.
 SECRET_FIELDS = {

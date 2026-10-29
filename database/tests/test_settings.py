@@ -126,9 +126,32 @@ def test_gemini_auto_fallback_round_trips(env_file):
     assert "GEMINI_AUTO_FALLBACK='false'" in env_file.read_text(encoding="utf-8")
 
 
+def test_auto_retry_fields_round_trip_and_read_null_when_unset(env_file):
+    stored = settings.read_settings()
+    assert stored["auto_retry"] is None
+    assert stored["auto_retry_count"] is None
+    assert stored["auto_retry_minutes"] is None
+
+    stored = settings.write_settings(
+        {"auto_retry": False, "auto_retry_count": 5, "auto_retry_minutes": 30}
+    )
+    assert (stored["auto_retry"], stored["auto_retry_count"]) == (False, 5)
+    assert stored["auto_retry_minutes"] == 30
+    text = env_file.read_text(encoding="utf-8")
+    assert "AUTO_RETRY='false'" in text
+    assert "AUTO_RETRY_COUNT='5'" in text
+    assert "AUTO_RETRY_MINUTES='30'" in text
+
+
+def test_auto_retry_fields_are_type_checked(env_file):
+    assert _rejected({"auto_retry": "true"})[0] == "setting_must_be_boolean"
+    assert _rejected({"auto_retry_count": True})[0] == "setting_must_be_integer"
+    assert _rejected({"auto_retry_minutes": "10"})[0] == "setting_must_be_integer"
+
+
 @pytest.fixture
 def int_field(monkeypatch):
-    """Patch a throwaway integer field into the store; none is registered today."""
+    """Patch a throwaway integer field into the store, independent of the real ones."""
 
     monkeypatch.setitem(settings.INT_FIELDS, "some_count", "SOME_COUNT")
     return "some_count"
