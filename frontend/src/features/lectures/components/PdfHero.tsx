@@ -15,6 +15,9 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString()
 
+// Below this the page scrolls instead of cropping further.
+const MIN_VISIBLE = 160
+
 interface Props {
   course: string
   lecture: string
@@ -43,6 +46,51 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
     return () => ro.disconnect()
   }, [])
 
+  // Cap = room below the thumbnail's top, less what renders under it (left-track rest, Materials) and one gap.
+  // The side-by-side AI card is left out of "under it", so it never shrinks the cap; if it alone overflows, the page scrolls.
+  const [cap, setCap] = useState<number | null>(null)
+  const [cropped, setCropped] = useState(false)
+  const measureRef = useRef<() => void>(() => {})
+  useEffect(() => {
+    const thumb = thumbRef.current
+    const scroller = thumb?.closest<HTMLElement>('.page-body')
+    const column = thumb?.closest<HTMLElement>('.page-column')
+    const split = thumb?.closest<HTMLElement>('.lecture-split')
+    if (!thumb || !scroller || !column || !split) return
+    const measure = () => {
+      const cs = getComputedStyle(scroller)
+      const t = thumb.getBoundingClientRect()
+      const sc = scroller.getBoundingClientRect()
+      const topInContent = t.top - sc.top - scroller.clientTop + scroller.scrollTop
+      let leftBottom = t.bottom
+      for (const child of Array.from(split.children)) {
+        const r = child.getBoundingClientRect()
+        if (child.classList.contains('ai-split-card') && r.top < t.top) continue
+        const mb = parseFloat(getComputedStyle(child).marginBottom) || 0
+        leftBottom = Math.max(leftBottom, r.bottom + mb)
+      }
+      const trailing =
+        leftBottom -
+        t.bottom +
+        (column.getBoundingClientRect().bottom - split.getBoundingClientRect().bottom)
+      const margin = parseFloat(cs.getPropertyValue('--space-4')) || 16
+      const next = Math.max(
+        MIN_VISIBLE,
+        Math.floor(
+          scroller.clientHeight - parseFloat(cs.paddingBottom) - topInContent - trailing - margin,
+        ),
+      )
+      setCap((prev) => (prev === next ? prev : next))
+      setCropped(thumb.scrollHeight > next + 1)
+    }
+    measureRef.current = measure
+    const ro = new ResizeObserver(measure)
+    ro.observe(scroller)
+    ro.observe(column)
+    measure()
+    return () => ro.disconnect()
+  }, [width, failed])
+
   return (
     <section className="pdf-hero" data-testid="pdf-hero">
       <div className="pdf-hero-actions">
@@ -62,6 +110,8 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
       <button
         ref={thumbRef}
         className="pdf-thumbnail"
+        data-cropped={cropped || undefined}
+        style={cap ? { maxHeight: cap } : undefined}
         data-testid="pdf-thumbnail"
         onClick={open}
         aria-label={t`Open PDF`}
@@ -76,6 +126,7 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
               renderTextLayer={false}
               renderAnnotationLayer={false}
               loading=""
+              onRenderSuccess={() => measureRef.current()}
             />
           </Document>
         ) : null}
