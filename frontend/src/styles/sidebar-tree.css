@@ -171,3 +171,25 @@
 .recitation-list {
   padding-inline-start: var(--space-4);
 }
+
+/* A downloading lecture that is not in the tree yet: not clickable, with its ETA bar under the name. */
+.lecture-placeholder {
+  cursor: default;
+}
+
+.lecture-placeholder:hover {
+  background: none;
+  opacity: 0.85;
+}
+
+.lecture-placeholder-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lecture-placeholder .progress-label {
+  color: var(--sidebar-muted);
+}

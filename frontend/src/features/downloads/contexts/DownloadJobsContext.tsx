@@ -187,11 +187,51 @@ export function indexJobsById(snapshot: DownloadJob[]): JobsById {
   return new Map(snapshot.map((j) => [j.id, j]))
 }
 
+const EMPTY_COURSE_JOBS: readonly DownloadJob[] = Object.freeze([])
+
+export type JobsByCourse = ReadonlyMap<string, readonly DownloadJob[]>
+
+// What a placeholder row reads of a job; two jobs equal on these render identically.
+function sameShown(a: DownloadJob, b: DownloadJob): boolean {
+  return (
+    a.id === b.id &&
+    a.lecture === b.lecture &&
+    a.kind === b.kind &&
+    a.status === b.status &&
+    a.startedAt === b.startedAt &&
+    a.expectedBytes === b.expectedBytes &&
+    a.operation === b.operation
+  )
+}
+
+// Live, named jobs per course, reusing a course's previous bucket when nothing it shows changed so
+// that course's tree list does not re-render on another course's ping.
+export function groupJobsByCourse(snapshot: DownloadJob[], prev: JobsByCourse): JobsByCourse {
+  const next = new Map<string, DownloadJob[]>()
+  for (const j of snapshot) {
+    if (!j.lecture || j.status === 'error' || j.status === 'cancelled') continue
+    const bucket = next.get(j.course)
+    if (bucket) bucket.push(j)
+    else next.set(j.course, [j])
+  }
+  for (const [course, bucket] of next) {
+    const old = prev.get(course)
+    if (old && old.length === bucket.length && old.every((j, i) => sameShown(j, bucket[i])))
+      next.set(course, old as DownloadJob[])
+  }
+  return next
+}
+
+export function jobsForCourse(byCourse: JobsByCourse, course: string): readonly DownloadJob[] {
+  return byCourse.get(course) ?? EMPTY_COURSE_JOBS
+}
+
 // Module store of the grouped snapshot with per-ref subscriptions; it outlives the provider, which
 // clears it on unmount so no phantom jobs survive.
 let jobsByRef: JobsByRef = new Map()
 let activeCourses: ReadonlySet<string> = new Set()
 let jobsById: JobsById = new Map()
+let jobsByCourse: JobsByCourse = new Map()
 let folderJobs: readonly FolderJob[] = Object.freeze([])
 const listeners = new Set<() => void>()
 
@@ -204,6 +244,7 @@ function publish(snapshot: DownloadJob[], folders: readonly FolderJob[]) {
   jobsByRef = groupJobsByRef(snapshot)
   activeCourses = coursesWithActiveJobs(snapshot)
   jobsById = indexJobsById(snapshot)
+  jobsByCourse = groupJobsByCourse(snapshot, jobsByCourse)
   folderJobs = folders
   for (const listener of listeners) listener()
 }
@@ -249,6 +290,16 @@ export function useJobById(id: string): DownloadJob | null {
   return useSyncExternalStore(
     subscribe,
     useCallback(() => jobsById.get(id) ?? null, [id]),
+  )
+}
+
+// A course's live named jobs, for the tree's placeholder rows. A course with none reads the shared
+// empty constant and never re-renders on a ping.
+export function useCourseJobs(course: string): readonly DownloadJob[] {
+  useProviderGuard()
+  return useSyncExternalStore(
+    subscribe,
+    useCallback(() => jobsForCourse(jobsByCourse, course), [course]),
   )
 }
 

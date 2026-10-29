@@ -4,9 +4,11 @@ import { splitJobs } from '../services/downloadServer'
 import {
   coursesWithActiveJobs,
   failedJobLabel,
+  groupJobsByCourse,
   groupJobsByRef,
   indexJobsById,
   jobState,
+  jobsForCourse,
   jobsForRef,
   jobsForTarget,
   reconcileVanished,
@@ -306,5 +308,22 @@ describe('splitJobs', () => {
     expect(folderJobs).toMatchObject([{ id: 'f', folder: '/d', fileName: 'Talk' }])
     expect(folderJobs[0]).not.toHaveProperty('course')
     expect(coursesWithActiveJobs(jobs)).toEqual(new Set(['Algo']))
+  })
+})
+
+describe('groupJobsByCourse', () => {
+  it('reads one shared empty bucket for a course with no live jobs', () => {
+    const byCourse = groupJobsByCourse([job({ id: 'a', status: 'error' })], new Map())
+    expect(jobsForCourse(byCourse, 'Algo')).toBe(jobsForCourse(byCourse, 'Other'))
+  })
+
+  it('keeps a course bucket identity while its jobs are unchanged', () => {
+    const first = groupJobsByCourse([job({ id: 'a' }), job({ id: 'b', course: 'Os' })], new Map())
+    const second = groupJobsByCourse(
+      [job({ id: 'a' }), job({ id: 'b', course: 'Os', startedAt: 5 })],
+      first,
+    )
+    expect(second.get('Algo')).toBe(first.get('Algo'))
+    expect(second.get('Os')).not.toBe(first.get('Os'))
   })
 })

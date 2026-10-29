@@ -72,6 +72,15 @@ button.
 `RecordingRow` integrates the display and owns the overwrite confirm; `useRecordingDownload` is the
 download effect only; `RecordingJobList` is presentational.
 
+## Placeholder rows
+
+A non-terminal job (or a `done` one the tree has not caught up to) whose course+lecture+kind is not in the
+course tree shows as a non-clickable sidebar row with a spinner and its ETA bar, in the lecture or
+recitation list it will land in (a lectures-only course's lecture list takes both kinds). It is derived
+from the `/jobs` snapshot (`placeholderJobs`, `useCourseJobs`) with nothing created early on disk, and
+gives way to the real lecture when the tree SSE brings it. An `error` or `cancelled` job leaves none; the
+failure toast is the signal. The Running pipelines page does not list downloads.
+
 ## Manual jobs
 
 The manual form's jobs carry `ref: null`, so nothing server-side ties them to the form:
