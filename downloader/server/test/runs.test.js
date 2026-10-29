@@ -272,3 +272,114 @@ test('cancelling a run aborts every live job its rows started, and never a finis
   );
   assert.ok(!('jobIds' in JSON.parse(JSON.stringify(run))), 'job ids stay off the wire');
 });
+
+const courseRun = (id, targets) => ({ sectionId: id, course: 'c', targets, scope: 'course' });
+const refusal = (code) => ({ status: 422, body: { error: 'no', code, params: {} } });
+
+test('a course run appends new refs while active; a section run drops them', () => {
+  const run = createRun(courseRun('c:course:append', [target('a', 'skipped')]));
+  const first = run.id;
+  assert.equal(run.scope, 'course');
+  const again = startRun(
+    courseRun('c:course:append', [target('a'), target('b', 'skipped'), target('b'), target('c')]),
+  );
+  assert.equal(again, first);
+  assert.deepEqual(
+    run.targets.map((t) => t.ref),
+    ['r-a', 'r-b', 'r-c'],
+  );
+  assert.equal(run.total, 3);
+
+  run.status = 'paused';
+  startRun(courseRun('c:course:append', [target('d', 'skipped')]));
+  assert.equal(run.total, 4);
+
+  const sectionRun = createRun({
+    sectionId: 'c:video:nodrop',
+    course: 'c',
+    targets: [target('a', 'skipped')],
+  });
+  startRun({ sectionId: 'c:video:nodrop', course: 'c', targets: [target('x', 'skipped')] });
+  assert.equal(sectionRun.total, 1);
+});
+
+test('the driver reaches targets appended while it runs', async () => {
+  const run = createRun({ ...courseRun('c:course:live', [target('a'), target('b')]) });
+  const sent = [];
+  await drive(run, 0, async ({ name }) => {
+    sent.push(name);
+    if (name === 'a') startRun(courseRun('c:course:live', [target('c')]));
+    return { status: 200, body: { media: 'video', jobIds: [] } };
+  });
+  assert.deepEqual(sent, ['a', 'b', 'c']);
+  assert.deepEqual(
+    { status: run.status, at: run.at, total: run.total },
+    { status: 'done', at: 3, total: 3 },
+  );
+});
+
+test('a course run skips the ref on each of the six codes, and only those', async () => {
+  const codes = [
+    'link_not_a_video',
+    'expand_unsupported_host',
+    'recording_strategy_unsupported',
+    'drive_link_malformed',
+    'link_dead',
+    'drive_not_shared',
+  ];
+  const names = [...codes, 'other_code'];
+  const run = createRun(
+    courseRun(
+      'c:course:skip',
+      names.map((n) => target(n)),
+    ),
+  );
+  const skipped = [];
+  await drive(
+    run,
+    0,
+    async ({ name }) => refusal(name),
+    async (course, refs) => skipped.push([course, refs]),
+  );
+  assert.deepEqual(
+    skipped,
+    codes.map((c) => ['c', [`r-${c}`]]),
+  );
+  assert.ok(run.targets.every((t) => t.disposition === 'unsupported'));
+});
+
+test('a section run never auto-skips, and a 422 without a code does not either', async () => {
+  const section = createRun({
+    sectionId: 'c:video:noskip',
+    course: 'c',
+    targets: [target('a')],
+  });
+  const course = createRun(courseRun('c:course:nocode', [target('b')]));
+  const skipped = [];
+  const skip = async (...args) => skipped.push(args);
+  await drive(section, 0, async () => refusal('link_dead'), skip);
+  await drive(course, 0, async () => ({ status: 422, body: null }), skip);
+  assert.deepEqual(skipped, []);
+});
+
+test('a failed skip write is logged and the run carries on', async () => {
+  const run = createRun(courseRun('c:course:skipfail', [target('a'), target('b')]));
+  const sent = [];
+  await drive(
+    run,
+    0,
+    async ({ name }) => {
+      sent.push(name);
+      return name === 'a' ? refusal('link_dead') : { status: 200, body: { media: 'video' } };
+    },
+    async () => {
+      throw new Error('database down');
+    },
+  );
+  assert.deepEqual(sent, ['a', 'b']);
+  assert.deepEqual(
+    run.targets.map((t) => t.disposition),
+    ['unsupported', 'queued'],
+  );
+  assert.equal(run.status, 'done');
+});

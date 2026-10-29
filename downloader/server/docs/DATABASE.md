@@ -24,9 +24,18 @@ as success. Any other refusal is answered as a 502 with the database's own `code
 
 ## `uploadVideo` — the video PUT wipes derived artifacts
 
-Streams the temp `video.mp4` to `PUT /courses/{course}/lectures/{lecture}/video?kind=`, which **also
+Streams the temp `video.mp4` to `PUT /courses/{course}/lectures/{lecture}/video?kind=[&source=<ref>]`, which **also
 wipes any derived `audio.mp3` / `transcript.txt` / `summary.*`** — correct for a fresh video.
 `duplex: 'half'` is required by undici for a stream body.
+
+`&source=<ref>` records the discovery row's ref as the lecture's video source (every fresh PUT replaces
+it; none clears it). `/download-item` and run rows send it (`startJob`'s `ref` → the runner's `source`);
+`/download`, `/download-youtube` and `/download-url` have no row, so send none.
+
+## `addSkipped` — the course skip set
+
+`POST /courses/{course}/skipped` with `{add:[ref]}` (idempotent), called by a course run's auto-skip
+([RUNS.md](RUNS.md#course-runs)). Throws on a network error or refusal; the driver logs it.
 
 ## `uploadMaterial` / `uploadPdf` — the `/materials` POST appends and wipes nothing
 
@@ -43,7 +52,7 @@ A material downloaded from a discovery row — `/download-item` or a section run
 `&source=<ref>`: the row's `ref`, verbatim as `/list` gave it, which the database stores as the
 material's identity so the frontend can tell this row's file from another one in the same lecture
 (`startJob`'s `ref` → the runner's `source` → `uploadMaterial`). Every other path
-(`/download-url`, `/upload-pdf`) sends none, and a video upload never carries one. The match holds
+(`/download-url`, `/upload-pdf`) sends none, and a video upload's source is the lecture's, above. The match holds
 only because `auto/`'s ref is a pure function of the WS listing ([BROWSING.md](../../auto/docs/BROWSING.md#the-item--ref-contract)).
 
 ## `uploadAssignmentFile` — a `media: 'assignment'` target

@@ -134,3 +134,9 @@ test("a target's filename rides into the job input and up to the upload", async 
   await until(() => listJobs().find((j) => j.id === id)?.status === 'done');
   assert.equal(posts[0].searchParams.get('filename'), 'a b.pptx');
 });
+
+test('videoUrl carries source only when given', async () => {
+  const { videoUrl } = await import('../src/services/database.js');
+  assert.equal(new URL(videoUrl('C', 'L', 'lecture', REF)).searchParams.get('source'), REF);
+  assert.equal(new URL(videoUrl('C', 'L', 'lecture')).searchParams.has('source'), false);
+});

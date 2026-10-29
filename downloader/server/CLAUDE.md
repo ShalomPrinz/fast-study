@@ -70,13 +70,13 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); creates a missing course first; 200 with a `jobId`; takes `dest:'folder'` like `/download` |
 | `POST /download-url`                      | any http(s) URL (the Downloads page's manual entry) → auto/ `/resolve`, then one job: plain yt-dlp off the Moodle site, curl on auto's proxy on it; auto's refusals forwarded verbatim; 200 with a `jobId` ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames, captchaSolved?}` — `captchaSolved:true` relayed from auto when the zoom capture waited for the user to solve a captcha on screen (auto's 4xx forwarded verbatim, `429 moodle_busy` included) |
-| `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives or joins that section's bulk run                      |
+| `POST /download-section`                  | `{sectionId, course, targets, scope?}` → `{runId, renames}`; drives or joins that section's bulk run; `scope:'course'` makes a mixed-media course run that appends and auto-skips ([RUNS.md](docs/RUNS.md#course-runs)) |
 | `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                 |
 | `POST /runs/:id/cancel`                   | abandon the rest of a run and cancel every job it started (each ends `cancelled`)                                 |
 | `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition; a `?picker=1` stream also gets `folder:pick {folder}`, asking that window for a folder |
 | `POST /jobs/:id/cancel`                   | cancel one job (app or folder; it ends `cancelled`) → `{}`; `404 job_unknown` for an unknown id                    |
 | `GET  /jobs`                              | `{boot, jobs}` — every live download job plus a per-process boot id; the resync for `job:change`                  |
-| `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                      |
+| `GET  /runs`                              | every current run (section or course), one per `sectionId` — the resync for `run:change`                                      |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`; creates a missing course first; `?dest=folder&fileName=` writes them into the general folder → `{folder, fileName}` |
 | `GET  /general-folder`                    | `{folder}` — where general-mode downloads land; `~/Downloads` until one is chosen                                |
 | `POST /general-folder`                    | `{folder}` (absolute, existing, writable) persists it → `{folder}`; else 400 with a typed code                    |
@@ -96,7 +96,7 @@ All `DATABASE_URL` I/O goes through `services/database.js`.
 | ---------------------------------- | ---------------------------------------------------------------------------------------- |
 | [DOWNLOAD.md](docs/DOWNLOAD.md)    | header replay and `SKIP_HEADERS`, yt-dlp's JS runtime, the writable copy + self-update, size probe |
 | [JOBS.md](docs/JOBS.md)            | job lifecycle, `done` = uploaded, silent auth recovery, event stream vs resync, retention, timing samples |
-| [RUNS.md](docs/RUNS.md)            | one run per section, dispositions, the indefinite passcode pause, the caller-owned skip rule, `RunTarget` |
+| [RUNS.md](docs/RUNS.md)            | one run per section, course runs (append, auto-skip), dispositions, the indefinite passcode pause, the caller-owned skip rule, `RunTarget` |
 | [DATABASE.md](docs/DATABASE.md)    | video PUT wipes derived artifacts vs appending `/materials`, `/tree` reshape, notify, arrival report |
 
 ## Terminal progress (`src/progress.js`)

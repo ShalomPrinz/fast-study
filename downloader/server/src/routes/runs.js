@@ -16,12 +16,15 @@ function targetError(target) {
   return validateKind(target.kind);
 }
 
-// Start (or restart) this section's bulk run, or join the one already in flight. Answers the run id
+// Start (or restart) this section's bulk run, or join the one already in flight; `scope:'course'` makes it a course run that appends instead. Answers the run id
 // immediately — the queue is driven in the background and followed over `/events` + `GET /runs`.
 router.post('/download-section', (req, res) => {
-  const { sectionId, course, targets } = req.body ?? {};
+  const { sectionId, course, targets, scope = 'section' } = req.body ?? {};
   if (typeof sectionId !== 'string' || !sectionId) {
     return res.status(400).json(invalidRequest('sectionId', 'valid sectionId required'));
+  }
+  if (scope !== 'section' && scope !== 'course') {
+    return res.status(400).json(invalidRequest('scope', "scope must be 'section' or 'course'"));
   }
   const storedCourse = storedName(course);
   if (!storedCourse) {
@@ -43,7 +46,7 @@ router.post('/download-section', (req, res) => {
     .filter((target, i) => target.name !== targets[i].name)
     .map(({ ref, name }) => ({ ref, name }));
   res.json({
-    runId: startRun({ sectionId, course: storedCourse, targets: canonical }),
+    runId: startRun({ sectionId, course: storedCourse, targets: canonical, scope }),
     renames,
   });
 });

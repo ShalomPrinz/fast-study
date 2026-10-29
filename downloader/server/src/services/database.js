@@ -66,12 +66,20 @@ export async function ensureCourse(course) {
   return failure;
 }
 
+// The video PUT URL. `source` is the discovery row's ref, stored as the lecture's video source
+// (a fresh PUT replaces it); a download from no row sends none, which clears it.
+export function videoUrl(course, lecture, kind, source = null) {
+  let url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/video?kind=${encodeURIComponent(kind)}`;
+  if (source) url += `&source=${encodeURIComponent(source)}`;
+  return url;
+}
+
 // Stream the temp video.mp4 to the database (a PUT that wipes derived artifacts), removing the
 // temp dir either way. Never throws: null on success, else the job's failure.
-export async function uploadVideo(tempDir, course, lecture, kind, tool) {
+export async function uploadVideo(tempDir, course, lecture, kind, tool, source = null) {
   const file = path.join(tempDir, VIDEO_FILENAME);
   try {
-    const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/video?kind=${encodeURIComponent(kind)}`;
+    const url = videoUrl(course, lecture, kind, source);
     // duplex: 'half' is required when a fetch body is a stream (undici).
     const res = await fetch(url, {
       method: 'PUT',
@@ -103,6 +111,20 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch {}
+  }
+}
+
+// Add refs to a course's skip set (`POST /courses/{c}/skipped`, idempotent). Throws on a network
+// error or a refusal; the caller decides whether that matters.
+export async function addSkipped(course, refs) {
+  const res = await fetch(`${DATABASE_URL}/courses/${encodeURIComponent(course)}/skipped`, {
+    method: 'POST',
+    headers: peerHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ add: refs }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.code ?? `HTTP ${res.status}`);
   }
 }
 

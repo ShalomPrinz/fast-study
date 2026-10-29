@@ -11,10 +11,11 @@ Held here, the queue keeps triggering and the page is a view of it.
 
 ## The record
 
-`{ id, sectionId, course, targets, at, total, status, paused }`
+`{ id, sectionId, scope, course, targets, at, total, status, paused }`
 
 - **`sectionId`** is an opaque key the frontend picks: a section's `${course}:${media}:${title}`, or for
   one playlist's run that key + U+001F + the playlist's ref (YouTube-only, so it never pauses on a passcode).
+- **`scope`** is `'section'` (default) or `'course'` ([below](#course-runs)).
 - **`at`** is the 1-based position the queue is on, not a count of work done: rows it only walked past
   (`skipped`, `unsupported`) are behind it, so two skips and one download read `3/3` while that
   download starts.
@@ -49,6 +50,24 @@ run cancelled or replaced mid-flight stops where it is and writes nothing furthe
 malformed 2xx — records that row `queue-failed` and the queue continues, with no retry. A throw
 outside a target's work ends the run `cancelled`; a run is never left at `running`, which would
 disable the section's button until a restart.
+
+## Course runs
+
+A submit with `scope:'course'` is a **course run**: the same record, driver, Moodle-lock wait, captcha
+stop, passcode pause, reconnect stop and cancel, but its `sectionId` is the frontend's id for the
+course (one run per id) and its targets are mixed media in submit order, so one driver walks them
+serially. It differs from a section run in two rules:
+
+- **A submit while `running` or `paused` appends** the targets whose `ref` the run doesn't hold yet,
+  to the end (`total` grows, one `run:change`), and answers the in-flight `runId`; `renames` covers
+  the submitted rows. Dedupe is by ref against every row of the run in any disposition, so a failed
+  row is retried by a fresh run once this one ends, not by an append. A section run keeps join-and-drop.
+- **Auto-skip.** A row auto answers 422 with `link_not_a_video`, `expand_unsupported_host`,
+  `recording_strategy_unsupported`, `drive_link_malformed`, `link_dead` or `drive_not_shared` is
+  recorded `unsupported` and its ref is added to the course's skip set (database
+  `POST /courses/{c}/skipped`, [DATABASE.md](DATABASE.md#addskipped--the-course-skip-set)), server-side so it
+  lands with the page closed. A failed write is logged and costs only the skip. Section runs and
+  single downloads never skip.
 
 ## Dispositions
 

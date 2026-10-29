@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { broadcastRuns } from './events.js';
 import { cancelJob } from './jobs.js';
 import { downloadItem } from './routes/downloadItem.js';
+import { addSkipped } from './services/database.js';
+import { emitError } from './progress.js';
 
 // The section-run registry (docs/RUNS.md): one bulk "download all" per section, keyed by the
 // section identity so a client that reloaded can find its run again with no id to remember.
@@ -31,15 +33,27 @@ function toTarget({ ref, name, kind, media, disposition, moodle }) {
   return moodle === true ? { ...target, moodle } : target;
 }
 
+// The auto 422 codes that mean "this ref can never be downloaded as it is": a course run skips the ref
+// in the course's skip set (docs/RUNS.md). A fixed link gets a new ref, so it reappears by itself.
+export const AUTO_SKIP_CODES = new Set([
+  'link_not_a_video',
+  'expand_unsupported_host',
+  'recording_strategy_unsupported',
+  'drive_link_malformed',
+  'link_dead',
+  'drive_not_shared',
+]);
+
 // A row whose resolve ended with Moodle's captcha unsolved for 10 minutes (auto MOODLE.md).
 const CAPTCHA_TIMEOUT = 'site_captcha_timeout';
 
 // Registering replaces any previous run for this section outright — one run per section is what
 // keeps a run re-findable and removes any need for time-based eviction.
-export function createRun({ sectionId, course, targets }) {
+export function createRun({ sectionId, course, targets, scope = 'section' }) {
   const run = {
     id: randomUUID(),
     sectionId,
+    scope,
     course,
     targets: targets.map(toTarget),
     at: 0,
@@ -59,14 +73,30 @@ export function createRun({ sectionId, course, targets }) {
   return run;
 }
 
-// A submit for a section already running or parked joins that run instead of starting a second
-// driver over the same rows — two drivers would re-trigger every remaining row concurrently.
+// A submit for a run already running or parked reaches that run instead of starting a second driver
+// over the same rows — two drivers would re-trigger every remaining row concurrently. A section run
+// drops the new targets (join); a course run appends those whose ref it doesn't hold yet, to the
+// end, where the one driver reaches them (its loop reads `targets.length` live).
 export function startRun(args) {
   const active = runs.get(args.sectionId);
-  if (active && (active.status === 'running' || active.status === 'paused')) return active.id;
+  if (active && (active.status === 'running' || active.status === 'paused')) {
+    if (active.scope === 'course') appendTargets(active, args.targets);
+    return active.id;
+  }
   const run = createRun(args);
   void drive(run, 0);
   return run.id;
+}
+
+function appendTargets(run, targets) {
+  const held = new Set(run.targets.map((t) => t.ref));
+  for (const t of targets) {
+    if (held.has(t.ref)) continue;
+    held.add(t.ref);
+    run.targets.push(toTarget(t));
+  }
+  run.total = run.targets.length;
+  broadcastRuns();
 }
 
 export function listRuns() {
@@ -118,7 +148,7 @@ function isCurrent(run) {
 
 // Trigger the queue sequentially from `from` — the downloads themselves still overlap. `trigger`
 // is the tests' seam; production always uses `downloadItem`.
-export async function drive(run, from, trigger = downloadItem) {
+export async function drive(run, from, trigger = downloadItem, skip = addSkipped) {
   run.status = 'running';
   run.paused = null;
   // A resume means the user is back, so the Moodle rows still pending are sent again.
@@ -187,6 +217,18 @@ export async function drive(run, from, trigger = downloadItem) {
         target.captchaSolved = true;
       if (outcome.disposition === 'unsupported') target.media = 'unsupported';
       broadcastRuns();
+      if (
+        run.scope === 'course' &&
+        outcome.disposition === 'unsupported' &&
+        AUTO_SKIP_CODES.has(body?.code)
+      ) {
+        // Server-side so it lands with the page closed; a failed write costs only the skip.
+        try {
+          await skip(run.course, [target.ref]);
+        } catch (err) {
+          emitError(`❌ Skipping ${target.ref} in ${run.course} failed: ${err.message}`);
+        }
+      }
     }
     run.status = 'done';
   } catch {
