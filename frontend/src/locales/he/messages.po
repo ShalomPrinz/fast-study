@@ -2034,8 +2034,8 @@ msgid "Open in Drive"
 msgstr "פתיחה ב-Drive"
 
 #: src/features/lectures/components/PdfHero.tsx:50
-msgid "Open in your own viewer"
-msgstr "פתיחה בתצוגה לבחירתך"
+msgid "Open in full screen"
+msgstr "פתיחה במסך מלא"
 
 #: src/features/runner/RunnerView.tsx:132
 #: src/features/runner/RunnerView.tsx:136

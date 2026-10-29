@@ -34,7 +34,7 @@ A complete lecture (`filesComplete`) shows the pipeline as one `Summary ready` r
 and the last-error block. The modal closes on its one floating Close pill, Escape (not while the rotate confirm is above it) or a backdrop
 click; confirming a rotate closes it, since the lecture is then incomplete and the page shows the running step itself. Under the row, in the
 same column, sits `PdfHero` — a static page-1 render of `summary.pdf` (react-pdf, no viewer) under an
-"Open in your own viewer" button and, where `canOpenWith()`, "Choose app". The modal state resets per lecture.
+"Open in full screen" button and, where `canOpenWith()`, "Choose app". The modal state resets per lecture.
 Completion is carried by the `StatusNode` alone, never a row tint; the running row sits on
 `--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
 `ProgressBar` keeps its track in every state — the whole track pulsing in the accent while estimating, flat gray with

@@ -2034,8 +2034,8 @@ msgid "Open in Drive"
 msgstr "Open in Drive"
 
 #: src/features/lectures/components/PdfHero.tsx:50
-msgid "Open in your own viewer"
-msgstr "Open in your own viewer"
+msgid "Open in full screen"
+msgstr "Open in full screen"
 
 #: src/features/runner/RunnerView.tsx:132
 #: src/features/runner/RunnerView.tsx:136

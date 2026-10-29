@@ -47,7 +47,7 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
     <section className="pdf-hero" data-testid="pdf-hero">
       <div className="pdf-hero-actions">
         <button className="btn btn--primary pdf-hero-open" onClick={open}>
-          <Trans>Open in your own viewer</Trans>
+          <Trans>Open in full screen</Trans>
           <Icon icon="external-link" />
         </button>
         {canOpenWith() && (
