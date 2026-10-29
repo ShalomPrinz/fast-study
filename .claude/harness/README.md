@@ -447,7 +447,8 @@ type (chips by original name, the Gemini switch, a pptx sent as text, the 10 MB 
 assignments (listed by section in Downloads, downloaded into the tree's group, opened by name), the first-run wall then a
 data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
 out the site's captcha (and failing `site_captcha_timeout` unsolved), and study progress (done
-marks, the current arrow, the counts and the overview's current-item buttons) — and run with
+marks, the current arrow, the counts and the overview's current-item buttons) and the first-run tour
+(seven steps, spotlight or screenshot card, Back, Skip, Esc, "Don't show again", Settings replay, Tab trapped) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to a running
 `setup.mjs --harness DIR`; the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to `main` and on pull
@@ -464,6 +465,10 @@ A distinct but ordinary flow, such as a materials-only lecture, is in scope. Thi
 holds from source: the bundled binaries, the shipped tectonic cache, keys encrypted in `settings.json`, a
 real Windows lock, the launcher's boot and the updater belong to the release smoke suite, per the root
 `CLAUDE.md`'s test boundaries.
+
+Every browser the harness opens (e2e pages and `hb` sessions) has `fast-study:tour-dismissed` preset
+so the tour overlay never blocks a drive; `tour.spec.mjs` opts out with
+`test.use({ tourDismissed: false })`, and `HB_TOUR=1` does the same for `hb` sessions.
 
 `e2e/fixtures.mjs` holds what more than one spec needs: the stack's levers (`providers`, `site`, `lock`,
 `reseed`, `reset`), a lecture view's `step` rows and `expectStepsDone`, `treeLecture` over the database's

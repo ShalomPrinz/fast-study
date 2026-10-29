@@ -114,11 +114,22 @@ export async function launchChromium(launcher = chromium, options = {}) {
   return browser;
 }
 
-/** Launch headless chromium and open one page, 1400×900, with a 10 s action timeout. */
+/** Init script that marks the first-run tour dismissed, so its overlay never blocks a drive. */
+export const dismissTour = () => {
+  try {
+    localStorage.setItem('fast-study:tour-dismissed', '1');
+  } catch {
+    /* no storage */
+  }
+};
+
+/** Launch headless chromium and open one page, 1400×900, with a 10 s action timeout; the tour
+ *  is dismissed unless HB_TOUR=1. */
 export async function openBrowser() {
   const browser = await launchChromium();
   const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   context.setDefaultTimeout(10_000);
+  if (process.env.HB_TOUR !== '1') await context.addInitScript(dismissTour);
   const page = await context.newPage();
   return { browser, context, page };
 }

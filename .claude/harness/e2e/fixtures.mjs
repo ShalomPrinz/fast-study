@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DATABASE, PROVIDERS, SITE, bindPorts, call, json } from '../lib/api.mjs';
 import { markSeeded, reseed as reseedStack } from '../lib/baseline.mjs';
-import { launchChromium } from '../lib/browser.mjs';
+import { dismissTour, launchChromium } from '../lib/browser.mjs';
 import { harnessPaths, readPorts } from '../lib/env.mjs';
 import { readLocks } from '../lib/state.mjs';
 
@@ -127,7 +127,13 @@ export async function dropFile(target, filePath, type) {
     await target.dispatchEvent(event, { dataTransfer: transfer });
 }
 
+// `tourDismissed: false` (test.use) lets a spec meet the first-run tour; otherwise it is marked dismissed.
 export const test = base.extend({
+  tourDismissed: [true, { option: true }],
+  context: async ({ context, tourDismissed }, use) => {
+    if (tourDismissed) await context.addInitScript(dismissTour);
+    await use(context);
+  },
   browser: [
     async ({ playwright }, use) => {
       const browser = await launchChromium(playwright.chromium);
