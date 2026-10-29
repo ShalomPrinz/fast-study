@@ -86,6 +86,6 @@ test('Tab stays inside the tour dialog', async ({ page }) => {
   await expect(page.locator('.tour-next')).toBeFocused();
   await page.keyboard.press('Tab');
   expect(
-    await page.evaluate(() => !!document.activeElement?.closest('.tour-popover, .tour-card')),
+    await page.locator(':focus').evaluate((el) => !!el.closest('.tour-popover, .tour-card')),
   ).toBe(true);
 });
