@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Document, Page, pdfjs } from 'react-pdf'
+import type { PDFDocumentProxy } from 'pdfjs-dist'
 import Icon from '@/shared/components/Icon'
 import { secretHeaders } from '@/services/runtime'
 import { canOpenWith, openLectureFile, openLectureFileWith } from '@/services/open'
 import { fileUrl } from '@/services/database'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
-import { snapTransform, snapWidth } from '@/features/lectures/utils/pdfSnap'
+import {
+  cropFromText,
+  snapTransform,
+  snapWidth,
+  type Crop,
+} from '@/features/lectures/utils/pdfSnap'
 import type { Kind } from '@/types'
 import '@/styles/button.css'
 import './PdfHero.css'
@@ -66,14 +72,49 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
   }, [dpr])
   const snapped = width > 0 ? snapWidth(width, dpr) : null
 
+  // The text block of page 1, measured from the PDF so a template change can't break it; null shows the whole page.
+  // The Page waits for this (keyed by url) so it renders once at its zoomed width.
+  const [cropState, setCropState] = useState<{ url: string; crop: Crop | null } | null>(null)
+  const cropReady = cropState?.url === url
+  const crop = cropReady ? cropState.crop : null
+  const cropRef = useRef(crop)
+  cropRef.current = crop
+  const measureText = async (pdf: PDFDocumentProxy) => {
+    let next: Crop | null = null
+    try {
+      const page = await pdf.getPage(1)
+      if (page.rotate % 360 === 0) {
+        const tc = await page.getTextContent()
+        const boxes = tc.items.flatMap((it) =>
+          'str' in it && it.str.trim()
+            ? [{ x: it.transform[4], y: it.transform[5], w: it.width, h: it.height }]
+            : [],
+        )
+        next = cropFromText(boxes, page.view as [number, number, number, number])
+      }
+    } catch {
+      // unreadable text just shows the whole page
+    }
+    setCropState({ url, crop: next })
+  }
+  const pageWidth = snapped
+    ? crop
+      ? snapWidth(width / (crop.x1 - crop.x0), dpr).pageWidth
+      : snapped.pageWidth
+    : 0
+
   // Lay the canvas out at its buffer size, absolute in the Page box, and show it 1:1 on the device grid.
   const snapCanvas = () => {
     const canvas = thumbRef.current?.querySelector('canvas')
     const page = canvas?.parentElement
     if (!canvas || !page) return
     const d = window.devicePixelRatio || 1
-    page.style.width = `${canvas.width / d}px`
-    page.style.height = `${canvas.height / d}px`
+    // Whole device px cut off the top-left, so the zoomed canvas stays on the grid; the card clips the rest.
+    const c = cropRef.current
+    const offX = c ? Math.round(c.x0 * canvas.width) : 0
+    const offY = c ? Math.round(c.y0 * canvas.height) : 0
+    page.style.width = `${(c ? Math.round(c.x1 * canvas.width) - offX : canvas.width) / d}px`
+    page.style.height = `${(canvas.height - offY) / d}px`
     const r = page.getBoundingClientRect()
     const scroller = thumbRef.current?.closest<HTMLElement>('.page-body')
     const sc = scroller?.getBoundingClientRect()
@@ -90,6 +131,8 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
         d,
         sc && scroller ? sc.left + scroller.clientLeft : 0,
         sc && scroller ? sc.top + scroller.clientTop : 0,
+        -offX / d,
+        -offY / d,
       ),
     })
   }
@@ -168,16 +211,24 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
         {failed ? (
           <Icon icon="document" />
         ) : snapped ? (
-          <Document file={file} loading="" error="" onLoadError={() => setFailedUrl(url)}>
-            <Page
-              pageNumber={1}
-              width={snapped.pageWidth}
-              devicePixelRatio={dpr}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              loading=""
-              onRenderSuccess={() => measureRef.current()}
-            />
+          <Document
+            file={file}
+            loading=""
+            error=""
+            onLoadError={() => setFailedUrl(url)}
+            onLoadSuccess={measureText}
+          >
+            {cropReady && (
+              <Page
+                pageNumber={1}
+                width={pageWidth}
+                devicePixelRatio={dpr}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                loading=""
+                onRenderSuccess={() => measureRef.current()}
+              />
+            )}
           </Document>
         ) : null}
       </button>
