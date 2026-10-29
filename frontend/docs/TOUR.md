@@ -2,6 +2,7 @@
 
 An in-house spotlight tour (`features/tour/`, built on `@floating-ui/react`, no tour library) over the real UI.
 
+- **Disabled.** `TOUR_ENABLED` in `features/tour/tourEnabled.ts` is `false`: no auto-start, no Settings replay button. Set it to `true` to restore both.
 - **Start.** `shared/contexts/TourContext` is mounted in `Layout`, so the tour starts on every launch that reaches
   the app (right after the first-run wall included) unless dismissed. Settings → "Replay tutorial" starts it regardless.
 - **Dismissal.** `localStorage['fast-study:tour-dismissed'] = '1'`, written only when "Don't show again" (unchecked

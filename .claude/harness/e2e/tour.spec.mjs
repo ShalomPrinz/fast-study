@@ -2,6 +2,8 @@
 // stops it returning. Every other spec runs with the tour dismissed.
 import { expect, reseed, reset, test } from './fixtures.mjs';
 
+// Skipped while TOUR_ENABLED is false (frontend/src/features/tour/tourEnabled.ts); un-skip when it is flipped on.
+test.skip(true, 'tour disabled: TOUR_ENABLED is false');
 test.use({ tourDismissed: false });
 test.beforeEach(reseed);
 test.afterEach(reset);

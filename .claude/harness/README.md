@@ -450,7 +450,7 @@ assignments (listed by section in Downloads, downloaded into the tree's group, o
 data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
 out the site's captcha (and failing `site_captcha_timeout` unsolved), and study progress (done
 marks, the current arrow, the counts and the overview's current-item buttons) and the first-run tour
-(seven steps, spotlight or screenshot card, Back, Skip, Esc, "Don't show again", Settings replay, Tab trapped) — and run with
+(seven steps, spotlight or screenshot card, Back, Skip, Esc, "Don't show again", Settings replay, Tab trapped; skipped while `TOUR_ENABLED` is false) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to a running
 `setup.mjs --harness DIR`; the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to `main` and on pull

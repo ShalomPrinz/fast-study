@@ -61,6 +61,7 @@ import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
 import { privacyAnswer, restartNotice } from './utils/privacy'
 import { useTour } from '@/shared/contexts/TourContext'
+import { TOUR_ENABLED } from '@/features/tour/tourEnabled'
 import Tooltip from '@/shared/components/Tooltip'
 import '@/styles/panel.css'
 import '@/styles/button.css'
@@ -495,18 +496,20 @@ export default function SettingsView() {
               <Trans>Appearance and behaviour</Trans>
             </h2>
             <LanguageField />
-            <div className="settings-field">
-              <div className="settings-label">
-                <span>
-                  <Trans>Tutorial</Trans>
-                </span>
+            {TOUR_ENABLED && (
+              <div className="settings-field">
+                <div className="settings-label">
+                  <span>
+                    <Trans>Tutorial</Trans>
+                  </span>
+                </div>
+                <div>
+                  <button className="btn btn--ghost settings-replay-tour" onClick={tour.start}>
+                    <Trans>Replay tutorial</Trans>
+                  </button>
+                </div>
               </div>
-              <div>
-                <button className="btn btn--ghost settings-replay-tour" onClick={tour.start}>
-                  <Trans>Replay tutorial</Trans>
-                </button>
-              </div>
-            </div>
+            )}
             <div className="settings-field">
               <div className="settings-label">
                 <label htmlFor="auto-run">
