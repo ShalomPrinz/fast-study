@@ -50,7 +50,7 @@ const MAX_CROP_W = 0.97
 export function cropFromText(
   boxes: TextBox[],
   view: [number, number, number, number],
-  gutter = 0.03,
+  gutter = 0.07,
 ): Crop | null {
   const [vx0, vy0, vx1, vy1] = view
   const pw = vx1 - vx0
