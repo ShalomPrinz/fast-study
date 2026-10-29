@@ -10,7 +10,7 @@ export const recordingCard = (page, title) =>
     .locator('.recording-card')
     .filter({ has: page.locator('.recording-title', { hasText: title }) });
 
-/** Open Downloads' University tab and load `course`'s recordings off its source; → its source row. */
+/** Open Downloads' University tab, load `course` off its source and switch the list to All, the old per-card view; → its source row. */
 export async function loadRecordings(page, course) {
   await page.goto(new URL('/downloads', appUrl()).href);
   await page.locator('.downloads-tabs [role=tab]').first().click();
@@ -19,6 +19,7 @@ export async function loadRecordings(page, course) {
   });
   await source.locator('.source-row-actions .btn').click();
   await source.locator('.chip--accent').waitFor();
+  await page.locator('.downloads-scope-switch .mode-toggle-btn', { hasText: 'All' }).click();
   return source;
 }
 

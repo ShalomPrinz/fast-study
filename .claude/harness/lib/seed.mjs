@@ -38,6 +38,11 @@ export const FLOWS = {
     sourceUrl: FAKE_COURSE_URL,
     lectures: [['שיעור 1', ['video.mp4']]],
   },
+  'hb-dl-fresh': {
+    // The same source with nothing filed, so no row is recognised and the New view's first-load banner shows.
+    sourceUrl: FAKE_COURSE_URL,
+    lectures: [],
+  },
   'hb-edit': {
     lectures: [
       ['שיעור 1', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],

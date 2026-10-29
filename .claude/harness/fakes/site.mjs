@@ -54,6 +54,14 @@ function courseContents() {
       ],
     },
     {
+      id: 4,
+      name: 'ערוץ חיצוני',
+      summary: '',
+      modules: [
+        mod('url', 'ערוץ הקורס ביוטיוב', 'https://www.youtube.com/playlist?list=huntbugs-channel'),
+      ],
+    },
+    {
       id: 2,
       name: 'תרגולים',
       summary: '',

@@ -83,6 +83,7 @@ named for `/hunt-bugs`' flows, and any task can use them as ready-made fixtures:
 | -------------- | ----------------------------- | ----------------------------------------------------------------------------- |
 | `hb-mgmt`      | course and lecture management | a video lecture, `שיעור 10` / `שיעור 10 - המשך`, a very long name, a Latin name, a recitation |
 | `hb-dl`        | downloads                     | the fake site as `source_url`; `שיעור 1` has a video, so recording 1 reads as downloaded |
+| `hb-dl-fresh`  | the New view's first-load banner | the same fake site as `source_url` and no lectures, so nothing is recognised by ref |
 | `hb-edit`      | editor and PDF                | three lectures with video, audio, transcript and `summary.md`                 |
 | `hb-nav`       | search, materials, links      | `שיעור 1` finished (fixture `summary.pdf`, `drive_url.txt`, a material), `שיעור 2` summarised with a material, one empty |
 | `hb-pipeline`  | pipeline and course overview  | one lecture per stage, two video-only for queue + lock, a recitation          |
@@ -476,7 +477,7 @@ so the tour overlay never blocks a drive; `tour.spec.mjs` opts out with
 `reseed`, `reset`), a lecture view's `step` rows and `expectStepsDone`, `treeLecture` over the database's
 `/tree`, `driveFile` walking the fake Drive's folder chain, and `dropFile`, which drops a local file on an
 element the way a drag from the file manager does. `lib/downloads.mjs` loads a course's recordings
-and finds or downloads a row by title, for the specs and `hb download` alike.
+and finds or downloads a row by title, for the specs and `hb download` alike; it switches the loaded list to the All scope (the New view hides the cards and segments the specs drive). The fake course's `ערוץ חיצוני` section holds one lone playlist row, `ערוץ הקורס ביוטיוב`, for the New view's select-all rule.
 
 ## Driving failures
 
