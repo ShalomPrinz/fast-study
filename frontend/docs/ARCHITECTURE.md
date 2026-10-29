@@ -190,5 +190,7 @@ inline and the menu is absent; below, `open-pdf` appears only once the ⋮ menu 
 | `pdf-hero` | — | `features/lectures/components/PdfHero.tsx` | the complete lecture's PDF hero |
 | `pdf-thumbnail` | — | `features/lectures/components/PdfHero.tsx` | its page-1 thumbnail, a button opening the PDF |
 | `pipeline-collapsed` | — | `features/lectures/MainView.tsx` | the collapsed "Summary ready" row |
-| `pipeline-collapse` | — | `features/lectures/MainView.tsx` | the expanded head's "Collapse view" link |
+| `pipeline-steps-open` | — | `features/lectures/MainView.tsx` | the collapsed row's button that opens the steps modal |
+| `pipeline-steps-modal` | — | `features/lectures/components/PipelineStepsModal.tsx` | the steps modal's panel |
+| `pipeline-steps-close` | — | `features/lectures/components/PipelineStepsModal.tsx` | the steps modal's floating Close |
 | `drive-consent-modal`         | —                                                                                                                        | `app/DriveConsentPrompt.tsx`                      | the Drive consent modal's body                  |

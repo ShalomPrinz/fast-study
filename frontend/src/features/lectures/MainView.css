@@ -11,8 +11,9 @@
     grid-template-areas:
       'head .'
       'steps ai'
+      'pdf ai'
       'error ai';
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto 1fr;
   }
 
   .lecture-split-head {
@@ -21,6 +22,10 @@
 
   .lecture-split-steps {
     grid-area: steps;
+  }
+
+  .lecture-split-pdf {
+    grid-area: pdf;
   }
 
   .lecture-split-error {
@@ -182,36 +187,23 @@
   margin-inline-end: var(--space-2);
 }
 
-/* The expanded card's way back to the single row: small soft-blue text, no underline. */
-.pipeline-collapse {
-  margin-inline-start: var(--space-4);
-  padding: 0;
-  border: 0;
-  background: none;
-  font-size: var(--fs-meta);
-  color: var(--accent-ink);
-  cursor: pointer;
-}
-
-.pipeline-collapse:hover {
-  color: var(--accent-hover);
-}
-
 .lecture-head-title {
   display: flex;
   align-items: baseline;
 }
 
-button.pipeline-row.pipeline-collapsed {
-  width: 100%;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
+/* The open button sits at the row's end. */
+.pipeline-collapsed .pipeline-icon-btn {
+  margin-inline-start: auto;
 }
 
-.pipeline-collapsed .pipeline-chevron {
-  margin-inline-start: auto;
-  color: var(--text-3);
+/* Reserve the scrollbar's width so the PDF hero, sized to the column, cannot flip the scrollbar on and off. */
+.lecture-page-body {
+  scrollbar-gutter: stable;
+}
+
+/* Under the Summary ready row, filling the pipeline column. */
+.lecture-split-pdf {
+  min-width: 0;
+  margin-block-start: var(--space-6);
 }

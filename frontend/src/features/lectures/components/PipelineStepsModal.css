@@ -1,0 +1,54 @@
+/* The look of the site page's zoom view: a dimmed window, the panel centred, one pill Close below it. */
+.steps-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 32px 16px;
+  box-sizing: border-box;
+  background: rgba(23, 23, 31, 0.6);
+}
+
+.steps-modal {
+  inline-size: min(640px, 100%);
+  min-block-size: 0;
+  overflow-y: auto;
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.steps-modal-title {
+  margin-block-end: var(--space-4);
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.steps-modal-close {
+  flex: none;
+  block-size: 40px;
+  padding-inline: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.steps-modal-close:hover {
+  background: var(--surface-sunken);
+}
+
+.steps-modal-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
