@@ -4,12 +4,19 @@ import { OK, createRules, parseRule } from '../fakes/provider-rules.mjs';
 
 // The header as the shim stamps it: percent-encoded, slashes kept.
 const header = (lecture) => lecture.split('/').map(encodeURIComponent).join('/');
-const ALL = ['429', '429min', '503', '500', 'empty', 'slow', 'invalidkey'];
+const ALL = ['429', '429min', '503', '504', 'reset', '500', 'empty', 'slow', 'invalidkey'];
 
 describe('parseRule', () => {
   test('429min is Gemini only', () => {
     assert.equal(parseRule('gemini', '429min').mode, '429min');
     assert.throws(() => parseRule('groq', '429min'), /groq mode must be one of/);
+  });
+  test('504 and reset are Gemini only', () => {
+    for (const mode of ['504', 'reset']) {
+      assert.equal(parseRule('gemini', { mode, times: 2 }).mode, mode);
+      assert.throws(() => parseRule('groq', mode), /groq mode must be one of/);
+    }
+    assert.throws(() => parseRule('gemini', { mode: '504', model: 'm' }), /only with mode 503/);
   });
   test('a bare string is the untargeted rule', () => {
     assert.deepEqual(parseRule('gemini', '429'), { ...OK, mode: '429' });
@@ -161,5 +168,23 @@ describe('take — 503 per model', () => {
     assert.equal(rules.take('gemini', undefined, ALL, 'gemini-3.6-flash').hit, 'ok');
     assert.equal(rules.take('gemini', undefined, ALL, 'gemini-3.8-flash').hit, '503');
     assert.equal(rules.take('gemini', undefined, ALL, 'gemini-3.8-flash').hit, 'ok');
+  });
+});
+
+describe('take — a transient failure for the first N calls', () => {
+  for (const mode of ['503', '504', 'reset']) {
+    test(`${mode} fails times calls, then the provider is ok`, () => {
+      const rules = createRules();
+      rules.control({ gemini: { mode, match: 'c/l', times: 2 } });
+      const hits = [1, 2, 3].map(() => rules.take('gemini', header('c/l'), ALL).hit);
+      assert.deepEqual(hits, [mode, mode, 'ok']);
+      assert.equal(rules.mode.gemini.mode, 'ok');
+    });
+  }
+  test('a route that does not honour it is not failed or drained', () => {
+    const rules = createRules();
+    rules.control({ gemini: { mode: 'reset', times: 1 } });
+    assert.equal(rules.take('gemini', undefined, ['500']).hit, 'ok');
+    assert.equal(rules.mode.gemini.times, 1);
   });
 });

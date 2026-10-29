@@ -120,6 +120,13 @@ function geminiOverloaded(res) {
   });
 }
 
+// The 504 the SDK raises when Gemini's own deadline passes.
+function geminiTimeout(res) {
+  json(res, 504, {
+    error: { code: 504, status: 'DEADLINE_EXCEEDED', message: 'The request timed out.' },
+  });
+}
+
 function geminiRateLimit(res, perMinute = false) {
   json(res, 429, {
     error: {
@@ -294,10 +301,12 @@ async function handle(req, res) {
     const fail = await failure(
       'gemini',
       req,
-      ['429', '429min', '503', '500', 'empty', 'slow'],
+      ['429', '429min', '503', '504', 'reset', '500', 'empty', 'slow'],
       model,
     );
+    if (fail === 'reset') return req.socket.destroy();
     if (fail === '503') return geminiOverloaded(res);
+    if (fail === '504') return geminiTimeout(res);
     if (fail === '429') return geminiRateLimit(res);
     if (fail === '429min') return geminiRateLimit(res, true);
     if (fail === '500')

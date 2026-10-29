@@ -308,6 +308,25 @@ if _HARNESS:
         module.CHUNK_SECONDS = 8
         module.OVERLAP_SECONDS = 2
 
+    def _patch_auto_retry(module):
+        """The wait between Gemini auto retries is half a second whatever the setting says, so a
+        spec sees the countdown and the re-run in seconds; the timer and its `at` stay real."""
+
+        from datetime import datetime, timedelta, timezone
+
+        delay = 0.5
+        real = module.next_retry
+
+        def next_retry(done):
+            due = real(done)
+            if due is None:
+                return None
+            field, _ = due
+            at = datetime.now(timezone.utc) + timedelta(seconds=delay)
+            return {**field, "at": at.isoformat()}, delay
+
+        module.next_retry = next_retry
+
     def _patch_course_analyze(module):
         module.run_analyze = _targeting(module.run_analyze, lambda course, *_: course)
 
@@ -424,6 +443,7 @@ if _HARNESS:
         "pipeline.runner": _patch_pipeline_runner,
         "pipeline.transcribe": _patch_transcribe,
         "course.analyze": _patch_course_analyze,
+        "services.auto_retry": _patch_auto_retry,
         "httpx": _patch_httpx,
     }
 

@@ -188,3 +188,19 @@ def test_transcribe_chunks_shrink_to_split_the_fixture(child, tmp_path):
         "print(json.dumps([t.CHUNK_SECONDS, t.OVERLAP_SECONDS]))"
     )
     assert child(code) == [8, 2]
+
+
+def test_auto_retry_waits_half_a_second(child, tmp_path):
+    services = tmp_path / "stubs" / "services"
+    services.mkdir()
+    (services / "__init__.py").write_text("")
+    (services / "auto_retry.py").write_text(
+        "def next_retry(done):\n"
+        "    return None if done >= 3 else ({'attempt': done + 1, 'of': 3, 'at': 'x'}, 600.0)\n"
+    )
+    code = (
+        "import services.auto_retry as a\n"
+        "field, delay = a.next_retry(0)\n"
+        "print(json.dumps([field['attempt'], field['of'], field['at'] != 'x', delay, a.next_retry(3)]))"
+    )
+    assert child(code) == [1, 3, True, 0.5, None]

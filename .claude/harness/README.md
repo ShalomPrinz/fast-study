@@ -343,6 +343,8 @@ host lands on the TLS port and fails `ERR_EMPTY_RESPONSE` — every fixture URL 
 cannot write `network.log`, so each context it opens logs an http(s) request that failed
 `ERR_NAME_NOT_RESOLVED` as `downloader-auto REFUSED host:port (browser)`.
 
+The shim holds the backend's Gemini auto-retry wait (`services.auto_retry.next_retry`) at half a second, the `at` of the `retry` field included, whatever minutes Settings says, so a retry fires in the spec's time while its countdown and timer stay real.
+
 The shim also cuts auto/'s Moodle-lock cooldown from 3 s to 200 ms. The harness shortens the app's
 delays rather than removing them, so the lock still reads busy for a moment after each request and a
 row's Download still waits it out; the lock itself — one request at a time, `moodle_busy` for a racing
@@ -438,7 +440,7 @@ They run in CI's `internal-tests` job beside the lib tests.
 
 The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`), assignment AI docs (`hb-assign`: a file switched off, a lecture chosen, guide
 generated, edited, regenerated, copied for Study with AI, a failed solution), failure surfacing
-(`hb-fail`), download (`hb-dl`), a locked `summary.pdf`, "Run these now" joining a live run
+(`hb-fail`), Gemini auto retry (`gemini-auto-retry`: the wait on `/running` and the step row, the re-run landing a PDF, cancel), download (`hb-dl`), a locked `summary.pdf`, "Run these now" joining a live run
 (its own two-lecture course in `data-empty`, so its queue holds nothing else), a recitation from
 bare video to Drive, a video dropped on a tree row (new and replacing), a course created, filled
 and renamed from the tree, a summary edited, reloaded over another window's edit and restored, a
@@ -486,6 +488,7 @@ curl -s $P/control -d '{"gemini":"429"}'   # every call; `429min` is Gemini's pe
 curl -s $P/control -d '{"gemini":"invalidkey"}'  # gemini also: invalidkey
 curl -s $P/control -d '{"gemini":"503"}'  # overloaded UNAVAILABLE on every model
 curl -s $P/control -d '{"gemini":{"mode":"503","model":"gemini-3.8-flash"}}'  # only that model; a fallback to another succeeds
+curl -s $P/control -d '{"gemini":{"mode":"504","match":"hb-fail/שיעור 2","times":1}}'  # transient: 504 timeout, `reset` drops the connection, `503`/`429min` too; the first `times` calls fail
 curl -s $P/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
 curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/שיעור 4"}}'  # held, then ok
 curl -s $P/control -d '{"reset":true}'     # every provider back to ok
@@ -513,7 +516,7 @@ is that course, `שיעור 4` that name in any course, never `שיעור 40`. A
 so only an untargeted rule reaches it. `times` counts the calls the rule failed (one per Groq
 chunk, one per Gemini request) and puts the provider back to `ok` at zero. A mode applies where it
 means something: `429` and `empty` to transcription and generation, `429min` and `503` to generation alone (the real 503 `UNAVAILABLE` body),
-`500` to both and to the key probe, `invalidkey` to every Gemini route — the real 400 `API_KEY_INVALID` body, so the first
+`504` (the real `DEADLINE_EXCEEDED` body) and `reset` (the socket destroyed, no response) to generation alone, `500` to both and to the key probe, `invalidkey` to every Gemini route — the real 400 `API_KEY_INVALID` body, so the first
 upload of a run is what fails. `slow`, on transcription and generation, holds each matched call
 `ms` and then answers as `ok` — sooner if a `/control` sets that provider's rule or resets — a step that stays in flight long enough to cancel, rename, reload or
 queue behind; Groq is held once per chunk, so a lecture's step takes `ms` × its chunks. The shim cuts
