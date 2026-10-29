@@ -30,7 +30,7 @@ column with no width floor. Below 960px `useCompactHeaderActions` (one `matchMed
 content pane is always the window less 536) folds them into `LectureActionsMenu`, a ⋮ left of
 `Run Remaining` so the primary button never moves.
 A complete lecture (`filesComplete`) shows the pipeline as one `Summary ready` row with `N steps` on its `pipeline-file` line and an
-`external-link` button at its end; the button opens `PipelineStepsModal` with the full rows (the same `stepRows` the incomplete page renders)
+`info` button at its end; the button opens `PipelineStepsModal` with the full rows (the same `stepRows` the incomplete page renders)
 and the last-error block. The modal closes on its one floating Close pill, Escape (not while the rotate confirm is above it) or a backdrop
 click; confirming a rotate closes it, since the lecture is then incomplete and the page shows the running step itself. Under the row, in the
 same column, sits `PdfHero` — a static page-1 render of `summary.pdf` (react-pdf, no viewer) under an

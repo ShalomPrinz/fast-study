@@ -538,7 +538,7 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
                       data-testid="pipeline-steps-open"
                       onClick={() => setStepsOpen(true)}
                     >
-                      <Icon icon="external-link" />
+                      <Icon icon="info" />
                     </button>
                   </Tooltip>
                 </div>
