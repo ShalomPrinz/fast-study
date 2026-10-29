@@ -28,7 +28,7 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
   min-height: 160px;
   padding: 0;
@@ -44,9 +44,9 @@
   border-color: var(--accent-line);
 }
 
-.pdf-thumbnail canvas {
-  max-width: 100%;
-  height: auto !important;
+/* The failed-load icon centres itself; the page stays start-aligned so the canvas never lands on a half pixel. */
+.pdf-thumbnail > svg {
+  margin-inline: auto;
 }
 
 /* A cropped page fades into the card so it reads as continuing below. */

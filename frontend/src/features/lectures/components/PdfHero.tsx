@@ -6,6 +6,7 @@ import { secretHeaders } from '@/services/runtime'
 import { canOpenWith, openLectureFile, openLectureFileWith } from '@/services/open'
 import { fileUrl } from '@/services/database'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
+import { snapTransform, snapWidth } from '@/features/lectures/utils/pdfSnap'
 import type { Kind } from '@/types'
 import '@/styles/button.css'
 import './PdfHero.css'
@@ -41,10 +42,57 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
   useEffect(() => {
     const el = thumbRef.current
     if (!el) return
-    const ro = new ResizeObserver(() => setWidth(el.clientWidth))
+    const ro = new ResizeObserver(() => {
+      const cs = getComputedStyle(el)
+      const border = parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth)
+      setWidth(el.getBoundingClientRect().width - border)
+    })
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // Re-render the page when the display scale changes with no width change (monitor move, zoom).
+  // The resolution query catches a monitor move; zoom also resizes the window.
+  const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1)
+  useEffect(() => {
+    const sync = () => setDpr(window.devicePixelRatio || 1)
+    const mq = window.matchMedia(`(resolution: ${dpr}dppx)`)
+    mq.addEventListener('change', sync)
+    window.addEventListener('resize', sync)
+    return () => {
+      mq.removeEventListener('change', sync)
+      window.removeEventListener('resize', sync)
+    }
+  }, [dpr])
+  const snapped = width > 0 ? snapWidth(width, dpr) : null
+
+  // Lay the canvas out at its buffer size, absolute in the Page box, and show it 1:1 on the device grid.
+  const snapCanvas = () => {
+    const canvas = thumbRef.current?.querySelector('canvas')
+    const page = canvas?.parentElement
+    if (!canvas || !page) return
+    const d = window.devicePixelRatio || 1
+    page.style.width = `${canvas.width / d}px`
+    page.style.height = `${canvas.height / d}px`
+    const r = page.getBoundingClientRect()
+    const scroller = thumbRef.current?.closest<HTMLElement>('.page-body')
+    const sc = scroller?.getBoundingClientRect()
+    Object.assign(canvas.style, {
+      position: 'absolute',
+      left: '0',
+      top: '0',
+      width: `${canvas.width}px`,
+      height: `${canvas.height}px`,
+      transformOrigin: '0 0',
+      transform: snapTransform(
+        r.left + (scroller?.scrollLeft ?? 0),
+        r.top + (scroller?.scrollTop ?? 0),
+        d,
+        sc && scroller ? sc.left + scroller.clientLeft : 0,
+        sc && scroller ? sc.top + scroller.clientTop : 0,
+      ),
+    })
+  }
 
   // Cap = room below the thumbnail's top, less what renders under it (left-track rest, Materials) and one gap.
   // The side-by-side AI card is left out of "under it", so it never shrinks the cap; if it alone overflows, the page scrolls.
@@ -82,6 +130,7 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
       )
       setCap((prev) => (prev === next ? prev : next))
       setCropped(thumb.scrollHeight > next + 1)
+      snapCanvas() // layout moved, so the grid correction is stale
     }
     measureRef.current = measure
     const ro = new ResizeObserver(measure)
@@ -118,11 +167,12 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
       >
         {failed ? (
           <Icon icon="document" />
-        ) : width > 0 ? (
+        ) : snapped ? (
           <Document file={file} loading="" error="" onLoadError={() => setFailedUrl(url)}>
             <Page
               pageNumber={1}
-              width={width}
+              width={snapped.pageWidth}
+              devicePixelRatio={dpr}
               renderTextLayer={false}
               renderAnnotationLayer={false}
               loading=""
