@@ -27,50 +27,15 @@ export function snapTransform(
   return `translate(${shift(left, scrollerLeft) + offsetX}px, ${shift(top, scrollerTop) + offsetY}px) scale(${1 / dpr})`
 }
 
-// A text run in PDF user units: x/y is its baseline start, y grows upward.
-export interface TextBox {
-  x: number
-  y: number
-  w: number
-  h: number
-}
-
-// Fractions of the page (from its top-left) that the preview shows: the text block plus a gutter.
+// Fractions of the page (from its top-left) that the preview shows.
 export interface Crop {
   x0: number
   x1: number
   y0: number
 }
 
-const MIN_CROP_W = 0.6
-const MAX_CROP_W = 0.97
-
-// The text block's bounds as page fractions, widened by `gutter` (a share of the block's width, same unit on the top edge).
-// A block narrower than MIN_CROP_W is widened to it, centred and kept inside the page, which caps the zoom. Null when there is no text or the crop would barely change the page.
-export function cropFromText(
-  boxes: TextBox[],
-  view: [number, number, number, number],
-  gutter = 0.07,
-): Crop | null {
-  const [vx0, vy0, vx1, vy1] = view
-  const pw = vx1 - vx0
-  const ph = vy1 - vy0
-  if (!(pw > 0) || !(ph > 0)) return null
-  const real = boxes.filter(
-    (b) => b.w > 0 && b.h > 0 && [b.x, b.y, b.w, b.h].every(Number.isFinite),
-  )
-  if (!real.length) return null
-  const minX = Math.min(...real.map((b) => b.x))
-  const maxX = Math.max(...real.map((b) => b.x + b.w))
-  const maxY = Math.max(...real.map((b) => b.y + b.h))
-  const pad = (maxX - minX) * gutter
-  let x0 = Math.max(0, (minX - pad - vx0) / pw)
-  let x1 = Math.min(1, (maxX + pad - vx0) / pw)
-  const y0 = Math.max(0, (vy1 - maxY - pad) / ph)
-  if (x1 - x0 > MAX_CROP_W) return null
-  if (x1 - x0 < MIN_CROP_W) {
-    x0 = Math.min(Math.max(0, (x0 + x1) / 2 - MIN_CROP_W / 2), 1 - MIN_CROP_W)
-    x1 = x0 + MIN_CROP_W
-  }
-  return { x0, x1, y0 }
+// Centred zoom on the width, with the top cropped by the same absolute length so the top margin equals the side margins.
+export function zoomCrop(zoom: number, bufW: number, bufH: number): Crop {
+  const x0 = (1 - 1 / zoom) / 2
+  return { x0, x1: 1 - x0, y0: bufH > 0 ? (x0 * bufW) / bufH : 0 }
 }
