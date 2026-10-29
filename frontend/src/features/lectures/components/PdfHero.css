@@ -1,0 +1,49 @@
+.pdf-hero {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-7);
+}
+
+.pdf-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.pdf-hero-open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 100%;
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--fs-row);
+}
+
+.pdf-thumbnail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  min-height: 160px;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.pdf-thumbnail:hover {
+  border-color: var(--accent-line);
+}
+
+.pdf-thumbnail canvas {
+  max-width: 100%;
+  height: auto !important;
+}

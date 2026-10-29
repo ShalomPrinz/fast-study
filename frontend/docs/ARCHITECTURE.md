@@ -187,4 +187,8 @@ inline and the menu is absent; below, `open-pdf` appears only once the ⋮ menu 
 | `lecture-error-message`       | —                                                                                                                        | `features/lectures/MainView.tsx`                  | that error's sentence, and any raw detail       |
 | `lecture-actions-menu`        | —                                                                                                                        | `features/lectures/components/LectureActionsMenu` | the ⋮ trigger, only below 960px                 |
 | `open-pdf`                    | —                                                                                                                        | `features/lectures/MainView.tsx`                  | "Open PDF", through `services/open.ts`'s bridge |
+| `pdf-hero` | — | `features/lectures/components/PdfHero.tsx` | the complete lecture's PDF hero |
+| `pdf-thumbnail` | — | `features/lectures/components/PdfHero.tsx` | its page-1 thumbnail, a button opening the PDF |
+| `pipeline-collapsed` | — | `features/lectures/MainView.tsx` | the collapsed "Summary ready" row |
+| `pipeline-collapse` | — | `features/lectures/MainView.tsx` | the expanded head's "Collapse view" link |
 | `drive-consent-modal`         | —                                                                                                                        | `app/DriveConsentPrompt.tsx`                      | the Drive consent modal's body                  |

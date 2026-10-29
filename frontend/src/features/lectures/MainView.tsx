@@ -26,6 +26,7 @@ import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { stageControl, stepState } from '@/features/lectures/utils/stepState'
 import { useSupportedMaterials } from '@/shared/contexts/SupportedMaterialsContext'
 import { attachedMaterials, displayName } from '@/features/lectures/utils/materials'
+import PdfHero from '@/features/lectures/components/PdfHero'
 import MaterialChip from '@/features/lectures/components/MaterialChip'
 import { clipboardText } from '@/features/lectures/utils/aiChat'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
@@ -121,6 +122,14 @@ export default function MainView() {
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null)
+  // Reset on every lecture change (MainView stays mounted across navigation) so each visit starts collapsed.
+  const [expandedFor, setExpandedFor] = useState<string | null>(null)
+  const routeKey = `${course}/${lecture}/${kind ?? ''}`
+  const [seenRoute, setSeenRoute] = useState(routeKey)
+  if (seenRoute !== routeKey) {
+    setSeenRoute(routeKey)
+    setExpandedFor(null)
+  }
 
   const { isInFlight, getError } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
@@ -160,6 +169,9 @@ export default function MainView() {
   const summaryExists = files['summary.md'].exists
   const hasActions = canRunRemaining(files, attached, driveEnabled)
   const complete = filesComplete(files, driveEnabled)
+
+  const lectureKey = `${course}/${lecture}/${kind ?? ''}`
+  const collapsed = complete && expandedFor !== lectureKey
 
   const summaryMtime = files['summary.md'].mtime
   const stageCount = counted.length
@@ -352,147 +364,192 @@ To start, reply with a single sentence — "What do you want to learn first?" �
 
       <div className="page-body ai-split-body">
         <div className="page-column lecture-page ai-split-page">
+          {complete && pdfExists && (
+            <PdfHero
+              course={course}
+              lecture={lecture}
+              kind={kind}
+              pdfMtime={files['summary.pdf'].mtime}
+            />
+          )}
           <div className="lecture-split ai-split">
             <div className="section-head lecture-split-head">
-              <h2 className="section-title">
+              <h2 className="section-title lecture-head-title">
                 <Trans>Pipeline</Trans>
+                {complete && !collapsed && (
+                  <button
+                    className="pipeline-collapse"
+                    data-testid="pipeline-collapse"
+                    onClick={() => setExpandedFor(null)}
+                  >
+                    <Trans>Collapse view</Trans>
+                  </button>
+                )}
               </h2>
               <span className="section-count">{t`${doneCount} of ${stageCount} complete`}</span>
             </div>
 
-            <div className="pipeline-card lecture-pipeline lecture-split-steps">
-              {stages.map((stage) => {
-                const { file, step, stageLabel, runningLabel, actionLabel } = stage
-                const exists = files[file].exists
-                const isRunning = runningFile === file
-                const skipped = skippedStage(file, files, attached)
-                const isRemoved = (removed as FileName[]).includes(file)
-                const state = stepState(isRemoved, exists, isRunning, step, lectureError)
-                const prereqMet = stagePrereqMet(stage, files, attached)
-                const control = stageControl({
-                  removed: isRemoved,
-                  exists,
-                  running: isRunning,
-                  skipped,
-                  hasStep: !!step,
-                  canRotate: hasAnyStepFile,
-                })
-                // A step whose input was removed cannot run again until a new video arrives.
-                const input = stage.prereq
-                const inputRemoved =
-                  input && (removed as FileName[]).includes(input)
-                    ? t`${input} was removed`
-                    : undefined
-                const isResumeTranscribe =
-                  file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
-                const buttonLabel = isResumeTranscribe
-                  ? t`Continue transcription`
-                  : actionLabel && t(actionLabel)
+            {collapsed ? (
+              <div className="pipeline-card lecture-pipeline lecture-split-steps">
+                <button
+                  className="pipeline-row pipeline-collapsed"
+                  data-testid="pipeline-collapsed"
+                  aria-expanded={false}
+                  onClick={() => setExpandedFor(lectureKey)}
+                >
+                  <StatusNode state="done" />
+                  <div className="pipeline-row-body">
+                    <div className="pipeline-stage-line">
+                      <span className="pipeline-stage">
+                        <Trans>Summary ready</Trans>
+                      </span>
+                    </div>
+                    <p className="pipeline-file">
+                      <Plural value={stageCount} one="# step" other="# steps" />
+                    </p>
+                  </div>
+                  <span className="pipeline-chevron">
+                    <Icon icon="chevron-down" />
+                  </span>
+                </button>
+              </div>
+            ) : (
+              <div className="pipeline-card lecture-pipeline lecture-split-steps">
+                {stages.map((stage) => {
+                  const { file, step, stageLabel, runningLabel, actionLabel } = stage
+                  const exists = files[file].exists
+                  const isRunning = runningFile === file
+                  const skipped = skippedStage(file, files, attached)
+                  const isRemoved = (removed as FileName[]).includes(file)
+                  const state = stepState(isRemoved, exists, isRunning, step, lectureError)
+                  const prereqMet = stagePrereqMet(stage, files, attached)
+                  const control = stageControl({
+                    removed: isRemoved,
+                    exists,
+                    running: isRunning,
+                    skipped,
+                    hasStep: !!step,
+                    canRotate: hasAnyStepFile,
+                  })
+                  // A step whose input was removed cannot run again until a new video arrives.
+                  const input = stage.prereq
+                  const inputRemoved =
+                    input && (removed as FileName[]).includes(input)
+                      ? t`${input} was removed`
+                      : undefined
+                  const isResumeTranscribe =
+                    file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
+                  const buttonLabel = isResumeTranscribe
+                    ? t`Continue transcription`
+                    : actionLabel && t(actionLabel)
 
-                const size = files[file].size
-                const subtitle: number | null =
-                  !isRunning && exists && !isRemoved && size !== null ? size : null
+                  const size = files[file].size
+                  const subtitle: number | null =
+                    !isRunning && exists && !isRemoved && size !== null ? size : null
 
-                return (
-                  <div
-                    key={file}
-                    className={`pipeline-row${isRunning ? ' pipeline-row--running' : ''}${isRemoved ? ' pipeline-row--removed' : ''}`}
-                    data-testid={step ? 'step-status' : undefined}
-                    data-step={step}
-                    data-status={step ? state : undefined}
-                  >
-                    <StatusNode
-                      state={state}
-                      hint={
-                        (state === 'failed' || state === 'quota') && lectureError
-                          ? serviceErrorText(lectureError)
-                          : undefined
-                      }
-                    />
-                    <div className="pipeline-row-body">
-                      <div className="pipeline-stage-line">
-                        <span
-                          className={`pipeline-stage${(exists && !isRemoved) || isRunning ? '' : ' pipeline-stage--pending'}`}
-                        >
-                          {isRunning && runningLabel ? t(runningLabel) : t(stageLabel)}
-                        </span>
-                        {file === 'summary.md' && (
-                          <MaterialIndicator
-                            materials={materials}
-                            summaryExists={summaryExists}
-                            summaryMtime={summaryMtime}
-                            summaryMaterials={summaryMaterials}
+                  return (
+                    <div
+                      key={file}
+                      className={`pipeline-row${isRunning ? ' pipeline-row--running' : ''}${isRemoved ? ' pipeline-row--removed' : ''}`}
+                      data-testid={step ? 'step-status' : undefined}
+                      data-step={step}
+                      data-status={step ? state : undefined}
+                    >
+                      <StatusNode
+                        state={state}
+                        hint={
+                          (state === 'failed' || state === 'quota') && lectureError
+                            ? serviceErrorText(lectureError)
+                            : undefined
+                        }
+                      />
+                      <div className="pipeline-row-body">
+                        <div className="pipeline-stage-line">
+                          <span
+                            className={`pipeline-stage${(exists && !isRemoved) || isRunning ? '' : ' pipeline-stage--pending'}`}
+                          >
+                            {isRunning && runningLabel ? t(runningLabel) : t(stageLabel)}
+                          </span>
+                          {file === 'summary.md' && (
+                            <MaterialIndicator
+                              materials={materials}
+                              summaryExists={summaryExists}
+                              summaryMtime={summaryMtime}
+                              summaryMaterials={summaryMaterials}
+                            />
+                          )}
+                          {file === 'summary.pdf' && <PdfWarningBadge badge={pdfBadge(files)} />}
+                        </div>
+                        {file === 'summary.md' && summarizedFromMaterials(files, attached) && (
+                          <p className="pipeline-materials-note">
+                            <Trans>summarized from materials only</Trans>
+                          </p>
+                        )}
+                        <p className="pipeline-file">
+                          {file}
+                          {subtitle !== null && (
+                            <>
+                              {' · '}
+                              <FileSize bytes={subtitle} />
+                            </>
+                          )}
+                        </p>
+                        {isRunning && remote && (
+                          <ProgressBar
+                            stats={remote.timingStats}
+                            startedAt={remote.startedAt}
+                            completedFraction={remote.completedFraction}
+                            className="pipeline-progress"
                           />
                         )}
-                        {file === 'summary.pdf' && <PdfWarningBadge badge={pdfBadge(files)} />}
                       </div>
-                      {file === 'summary.md' && summarizedFromMaterials(files, attached) && (
-                        <p className="pipeline-materials-note">
-                          <Trans>summarized from materials only</Trans>
-                        </p>
+                      {control === 'removed' && (
+                        <span className="pipeline-missing pipeline-removed">
+                          <Trans>Removed</Trans>
+                        </span>
                       )}
-                      <p className="pipeline-file">
-                        {file}
-                        {subtitle !== null && (
-                          <>
-                            {' · '}
-                            <FileSize bytes={subtitle} />
-                          </>
-                        )}
-                      </p>
-                      {isRunning && remote && (
-                        <ProgressBar
-                          stats={remote.timingStats}
-                          startedAt={remote.startedAt}
-                          completedFraction={remote.completedFraction}
-                          className="pipeline-progress"
-                        />
+                      {control === 'rotate' && step && (
+                        <Tooltip content={inputRemoved ?? t`Rotate ${file}`}>
+                          <button
+                            className="pipeline-icon-btn"
+                            aria-label={t`Rotate ${file}`}
+                            onClick={() => openRotateModal(file, step)}
+                            disabled={inflight || !!inputRemoved}
+                          >
+                            <Icon icon="rotate" />
+                          </button>
+                        </Tooltip>
+                      )}
+                      {control === 'skipped' && (
+                        <span className="pipeline-missing pipeline-skipped">
+                          <Trans>skipped (no video)</Trans>
+                        </span>
+                      )}
+                      {control === 'run' && step && (
+                        <Tooltip
+                          content={
+                            inputRemoved ?? (prereqMet ? undefined : t`Create ${input} first`)
+                          }
+                        >
+                          <button
+                            className="btn btn--ghost"
+                            onClick={() => handleStep(step)}
+                            disabled={inflight || !prereqMet || !!inputRemoved}
+                          >
+                            {buttonLabel}
+                          </button>
+                        </Tooltip>
+                      )}
+                      {control === 'not-provided' && (
+                        <span className="pipeline-missing">
+                          <Trans>not provided</Trans>
+                        </span>
                       )}
                     </div>
-                    {control === 'removed' && (
-                      <span className="pipeline-missing pipeline-removed">
-                        <Trans>Removed</Trans>
-                      </span>
-                    )}
-                    {control === 'rotate' && step && (
-                      <Tooltip content={inputRemoved ?? t`Rotate ${file}`}>
-                        <button
-                          className="pipeline-icon-btn"
-                          aria-label={t`Rotate ${file}`}
-                          onClick={() => openRotateModal(file, step)}
-                          disabled={inflight || !!inputRemoved}
-                        >
-                          <Icon icon="rotate" />
-                        </button>
-                      </Tooltip>
-                    )}
-                    {control === 'skipped' && (
-                      <span className="pipeline-missing pipeline-skipped">
-                        <Trans>skipped (no video)</Trans>
-                      </span>
-                    )}
-                    {control === 'run' && step && (
-                      <Tooltip
-                        content={inputRemoved ?? (prereqMet ? undefined : t`Create ${input} first`)}
-                      >
-                        <button
-                          className="btn btn--ghost"
-                          onClick={() => handleStep(step)}
-                          disabled={inflight || !prereqMet || !!inputRemoved}
-                        >
-                          {buttonLabel}
-                        </button>
-                      </Tooltip>
-                    )}
-                    {control === 'not-provided' && (
-                      <span className="pipeline-missing">
-                        <Trans>not provided</Trans>
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
 
             {lectureError && (
               <div

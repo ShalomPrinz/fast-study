@@ -29,6 +29,10 @@ open PDF, open in Drive, each once its file exists — sit on a second header ro
 column with no width floor. Below 960px `useCompactHeaderActions` (one `matchMedia` on window width; the
 content pane is always the window less 536) folds them into `LectureActionsMenu`, a ⋮ left of
 `Run Remaining` so the primary button never moves.
+A complete lecture (`filesComplete`) leads with `PdfHero` — a static page-1 render of `summary.pdf` (react-pdf, no viewer) under an
+"Open in your own viewer" button and, where `canOpenWith()`, "Choose app" — and shows the pipeline as one
+`Summary ready` row with `N steps` on its `pipeline-file` line; a click expands the card, and the head's "Collapse view" folds it back. The
+expansion is per lecture and never persisted, so every visit starts collapsed.
 Completion is carried by the `StatusNode` alone, never a row tint; the running row sits on
 `--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
 `ProgressBar` keeps its track in every state — the whole track pulsing in the accent while estimating, flat gray with
