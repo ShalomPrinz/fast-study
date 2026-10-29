@@ -2,7 +2,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: var(--space-4);
   margin-bottom: var(--space-7);
 }
@@ -10,13 +10,14 @@
 .pdf-hero-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: var(--space-3);
 }
 
 .pdf-hero-open {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
   gap: var(--space-3);
   max-width: 100%;
   padding: var(--space-4) var(--space-6);
@@ -27,9 +28,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 120px;
+  width: 100%;
   min-height: 160px;
-  max-width: 100%;
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--line);

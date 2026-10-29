@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Document, Page, pdfjs } from 'react-pdf'
 import Icon from '@/shared/components/Icon'
@@ -32,6 +32,16 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
   // react-pdf compares `file` by identity, so a fresh literal would re-fetch on every render.
   const file = useMemo(() => ({ url, httpHeaders: secretHeaders() }), [url])
   const open = () => openLectureFile(course, lecture, 'summary.pdf', kind)
+  // The page renders at the column's measured width so it stays crisp; height follows the aspect ratio.
+  const thumbRef = useRef<HTMLButtonElement>(null)
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    const el = thumbRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setWidth(el.clientWidth))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   return (
     <section className="pdf-hero" data-testid="pdf-hero">
@@ -50,6 +60,7 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
         )}
       </div>
       <button
+        ref={thumbRef}
         className="pdf-thumbnail"
         data-testid="pdf-thumbnail"
         onClick={open}
@@ -57,17 +68,17 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
       >
         {failed ? (
           <Icon icon="document" />
-        ) : (
+        ) : width > 0 ? (
           <Document file={file} loading="" error="" onLoadError={() => setFailedUrl(url)}>
             <Page
               pageNumber={1}
-              width={240}
+              width={width}
               renderTextLayer={false}
               renderAnnotationLayer={false}
               loading=""
             />
           </Document>
-        )}
+        ) : null}
       </button>
     </section>
   )
