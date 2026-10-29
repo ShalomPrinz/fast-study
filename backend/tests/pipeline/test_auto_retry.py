@@ -313,6 +313,73 @@ class TestCancelAndSupersede:
 
         asyncio.run(go())
 
+    def test_a_prune_that_removed_an_error_notifies(self):
+        async def go():
+            runner._errors[SKEY] = {"code": "unknown_error", "params": {}}
+            ping = []
+            with (
+                patch.object(runner.db_client, "get_tree", return_value=[]),
+                patch.object(runner.db_client, "notify", lambda: ping.append(1)),
+            ):
+                await runner.prune_stale_errors()
+                assert ping == [1]
+                await runner.prune_stale_errors()  # nothing left to remove
+                assert ping == [1]
+
+        asyncio.run(go())
+
+    def test_concurrent_prunes_share_one_tree_fetch(self):
+        async def go():
+            runner._errors[SKEY] = {"code": "unknown_error", "params": {}}
+            calls = []
+
+            def tree():
+                calls.append(1)
+                return []
+
+            with patch.object(runner.db_client, "get_tree", tree):
+                await asyncio.gather(*(runner.prune_stale_errors() for _ in range(5)))
+            assert len(calls) == 1
+
+        asyncio.run(go())
+
+    def test_a_join_during_a_prune_with_a_pre_rename_tree_triggers_one_rerun(self):
+        async def go():
+            handle = await self._armed()
+            trees = [[{"name": C, "lectures": [{"name": L}]}], []]
+            calls = []
+            started = asyncio.Event()
+            release = asyncio.Event()
+
+            def tree():
+                calls.append(1)
+                return trees[len(calls) - 1] if len(calls) <= 2 else []
+
+            async def slow_thread(fn):
+                result = fn()
+                if len(calls) == 1:
+                    started.set()
+                    await release.wait()
+                return result
+
+            with (
+                patch.object(runner.asyncio, "to_thread", slow_thread),
+                patch.object(runner.db_client, "get_tree", tree),
+            ):
+                first = asyncio.create_task(runner.prune_stale_errors())
+                await started.wait()
+                joins = [
+                    asyncio.create_task(runner.prune_stale_errors()) for _ in range(5)
+                ]
+                await asyncio.sleep(0)
+                release.set()
+                await asyncio.gather(first, *joins)
+            assert len(calls) == 2
+            assert handle.cancelled()
+            assert SKEY not in runner._errors and runner._retries == {}
+
+        asyncio.run(go())
+
 
 class TestRetryVsErrorRecord:
     def test_a_summarize_start_keeps_a_quota_record_with_a_waiting_retry(self):
@@ -349,3 +416,30 @@ class TestRetryVsErrorRecord:
             assert SKEY not in runner._attempts
 
         asyncio.run(go())
+
+
+def test_status_answers_before_a_slow_prune_finishes():
+    import threading
+
+    import backend_main
+
+    async def go():
+        runner._errors[SKEY] = {"code": "unknown_error", "params": {}}
+        release = threading.Event()
+        ping = []
+
+        def slow_tree():
+            release.wait(5)
+            return []
+
+        with (
+            patch.object(runner.db_client, "get_tree", slow_tree),
+            patch.object(runner.db_client, "notify", lambda: ping.append(1)),
+        ):
+            status = await asyncio.wait_for(backend_main.runner_status_endpoint(), 1)
+            assert SKEY in status["errors"] and ping == []
+            release.set()
+            await runner.prune_stale_errors()
+        assert SKEY not in runner._errors and ping == [1]
+
+    asyncio.run(go())

@@ -405,9 +405,11 @@ async def cancel_retry(
 async def runner_status_endpoint():
     """Live status snapshot for the runner. Cheap; refetched by the UI on each SSE notify."""
 
-    # Async so runner state is read and pruned on the loop that mutates it, never a threadpool.
-    await runner.prune_stale_errors()
-    return runner.get_status()
+    # Async so runner state is read on the loop that mutates it, never a threadpool. The snapshot is
+    # built before the prune, which runs behind it and pings SSE if it removed anything.
+    status = runner.get_status()
+    runner.schedule_prune()
+    return status
 
 
 @app.get("/timing/{operation}")

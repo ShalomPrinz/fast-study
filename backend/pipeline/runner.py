@@ -194,9 +194,41 @@ def get_status() -> dict:
     }
 
 
+_prune_task: asyncio.Task | None = None
+_prune_dirty = False
+
+
+def schedule_prune() -> asyncio.Task:
+    """Start a stale-error prune, or join the one running; a join marks it dirty so one more
+    prune follows, since the running one may have read the tree before the caller's change."""
+
+    global _prune_task, _prune_dirty
+    if _prune_task is None or _prune_task.done():
+        _prune_task = asyncio.get_running_loop().create_task(_prune_until_clean())
+    else:
+        _prune_dirty = True
+    return _prune_task
+
+
+async def _prune_until_clean() -> None:
+    global _prune_dirty
+    while True:
+        _prune_dirty = False
+        await _prune()
+        if not _prune_dirty:
+            return
+
+
 async def prune_stale_errors() -> None:
+    """Run (or join) a prune and wait for it."""
+
+    await asyncio.shield(schedule_prune())
+
+
+async def _prune() -> None:
     """Drop errors whose lecture no longer exists: a rename or delete never reaches the runner.
-    Any existing lecture keeps its error whatever files it has, since a step may run off any of them."""
+    Any existing lecture keeps its error whatever files it has, since a step may run off any of them.
+    Pings SSE when it removed something, so clients refetch a /status that was built before it."""
 
     if not _errors:
         return
@@ -216,10 +248,14 @@ async def prune_stale_errors() -> None:
         for c in tree
         for a in c.get("assignments") or []
     }
+    removed = False
     for skey, record in before.items():
         if skey not in live and skey not in _in_flight and _errors.get(skey) is record:
             _drop_retry(skey)
             del _errors[skey]
+            removed = True
+    if removed:
+        db_client.notify()
 
 
 # ---- Gemini auto retry (docs/PIPELINE.md#auto-retry) ----

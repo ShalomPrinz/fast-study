@@ -383,13 +383,20 @@ class TestStatus:
 
         skey = backend_main.runner._skey("C", "Gone", "lecture")
         errors = LoopOnlyDict({skey: backend_main.runner._error_record("pdf", "x")})
+
+        async def go():
+            status = await backend_main.runner_status_endpoint()
+            await backend_main.runner.prune_stale_errors()
+            return status
+
         with (
             patch.object(backend_main.runner, "_errors", errors),
             patch.object(backend_main.runner.db_client, "get_tree", get_tree),
+            patch.object(backend_main.runner.db_client, "notify", lambda: None),
         ):
-            response = client.get("/status")
-        assert response.status_code == 200
-        assert response.json()["errors"] == {}
+            status = asyncio.run(go())
+            assert skey in status["errors"]  # the snapshot precedes the prune
+            assert errors == {}
         assert seen == {"delete_on_loop": True, "fetch_on_loop": False}
 
 
