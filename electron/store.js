@@ -28,9 +28,14 @@ const CHOICES = {
 const BOOL_FIELDS = {
   drive_enabled: 'DRIVE_ENABLED',
   gemini_auto_fallback: 'GEMINI_AUTO_FALLBACK',
+  auto_retry: 'AUTO_RETRY',
 };
-// Integers with their env var and inclusive range; none today, a value outside it reads as unset.
-const INT_FIELDS = {};
+// Integers with their env var and inclusive range, mirroring backend/services/settings.py's clamp;
+// a stored value outside it reads as unset.
+const INT_FIELDS = {
+  auto_retry_count: { env: 'AUTO_RETRY_COUNT', min: 1, max: 10 },
+  auto_retry_minutes: { env: 'AUTO_RETRY_MINUTES', min: 1, max: 120 },
+};
 // Booleans no service gets as a settings env var: `error_reports` main turns into each process's
 // Sentry flag itself; `privacy_confirmed` is the renderer's record that the privacy notice was answered.
 const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed'];
@@ -50,6 +55,9 @@ const FIELDS = {
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
   geminiAutoFallback: 'gemini_auto_fallback',
+  autoRetry: 'auto_retry',
+  autoRetryCount: 'auto_retry_count',
+  autoRetryMinutes: 'auto_retry_minutes',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
   aiProvider: 'ai_provider',
@@ -135,6 +143,9 @@ function read() {
     geminiModel: text(stored.gemini_model),
     driveEnabled: bool(stored.drive_enabled),
     geminiAutoFallback: bool(stored.gemini_auto_fallback),
+    autoRetry: bool(stored.auto_retry),
+    autoRetryCount: int('auto_retry_count', stored.auto_retry_count),
+    autoRetryMinutes: int('auto_retry_minutes', stored.auto_retry_minutes),
     gdriveRootFolder: text(stored.gdrive_root_folder),
     autoRun: text(stored.auto_run),
     autoRemove: choice('auto_remove', stored.auto_remove),
@@ -259,5 +270,4 @@ function tokenKey() {
   return { key, regenerated: Boolean(stored.token_key) };
 }
 
-// FIELDS and INT_FIELDS are exported so a test can inject an integer field while none is real.
-module.exports = { FIELDS, INT_FIELDS, file, read, serviceEnv, tokenKey, write };
+module.exports = { file, read, serviceEnv, tokenKey, write };

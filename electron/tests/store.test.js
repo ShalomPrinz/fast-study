@@ -6,17 +6,7 @@ const stub = require('./stubElectron');
 const store = require('../store');
 
 beforeEach(() => stub.useTempUserData());
-afterEach(() => {
-  delete store.FIELDS.someCount;
-  delete store.INT_FIELDS.some_count;
-  stub.cleanup();
-});
-
-/** Register a test-only integer field, since the store ships none. */
-function withIntField() {
-  store.FIELDS.someCount = 'some_count';
-  store.INT_FIELDS.some_count = { env: 'SOME_COUNT', min: 1, max: 5 };
-}
+afterEach(() => stub.cleanup());
 
 /** A refusal is returned, never thrown, in the error-code contract's shape. */
 function assertRefused(result, message) {
@@ -35,6 +25,9 @@ const full = {
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
   geminiAutoFallback: true,
+  autoRetry: true,
+  autoRetryCount: 4,
+  autoRetryMinutes: 15,
   errorReports: false,
   privacyConfirmed: true,
   aiProvider: 'gemini',
@@ -51,7 +44,6 @@ test('an unknown patch key is refused and nothing is written', () => {
 });
 
 test('an unknown key and a bad value each return their code and params', () => {
-  withIntField();
   assert.deepEqual(store.write({ bogus: true }), {
     code: 'unknown_setting',
     params: { field: 'bogus' },
@@ -62,15 +54,15 @@ test('an unknown key and a bad value each return their code and params', () => {
     params: { field: 'driveEnabled' },
     message: 'driveEnabled must be a boolean',
   });
-  assert.deepEqual(store.write({ someCount: 3.5 }), {
+  assert.deepEqual(store.write({ autoRetryCount: 3.5 }), {
     code: 'setting_must_be_integer',
-    params: { field: 'someCount' },
-    message: 'someCount must be an integer',
+    params: { field: 'autoRetryCount' },
+    message: 'autoRetryCount must be an integer',
   });
-  assert.deepEqual(store.write({ someCount: 6 }), {
+  assert.deepEqual(store.write({ autoRetryCount: 11 }), {
     code: 'setting_out_of_range',
-    params: { field: 'someCount', min: 1, max: 5 },
-    message: 'someCount must be between 1 and 5',
+    params: { field: 'autoRetryCount', min: 1, max: 10 },
+    message: 'autoRetryCount must be between 1 and 10',
   });
   assert.deepEqual(store.write({ dataRoot: 5 }), {
     code: 'setting_must_be_string',
@@ -86,11 +78,22 @@ test('an unknown key and a bad value each return their code and params', () => {
 });
 
 test('an integer field stores each bound and reaches the env as a string', () => {
-  withIntField();
-  store.write({ someCount: 1 });
-  assert.deepEqual(store.serviceEnv(), { SOME_COUNT: '1' });
-  store.write({ someCount: 5 });
-  assert.deepEqual(store.serviceEnv(), { SOME_COUNT: '5' });
+  store.write({ autoRetryCount: 1, autoRetryMinutes: 1 });
+  assert.deepEqual(store.serviceEnv(), { AUTO_RETRY_COUNT: '1', AUTO_RETRY_MINUTES: '1' });
+  const view = store.write({ autoRetryCount: 10, autoRetryMinutes: 120 });
+  assert.equal(view.autoRetryCount, 10);
+  assert.equal(view.autoRetryMinutes, 120);
+  assert.deepEqual(store.serviceEnv(), { AUTO_RETRY_COUNT: '10', AUTO_RETRY_MINUTES: '120' });
+  assertRefused(store.write({ autoRetryMinutes: 0 }), /autoRetryMinutes must be between 1 and 120/);
+  assertRefused(store.write({ autoRetryMinutes: '10' }), /autoRetryMinutes must be an integer/);
+});
+
+test('autoRetry round-trips and reaches the backend env', () => {
+  assert.equal(store.write({ autoRetry: false }).autoRetry, false);
+  assert.deepEqual(store.serviceEnv(), { AUTO_RETRY: 'false' });
+  assert.equal(store.write({ autoRetry: true }).autoRetry, true);
+  assert.deepEqual(store.serviceEnv(), { AUTO_RETRY: 'true' });
+  assertRefused(store.write({ autoRetry: 'false' }), /autoRetry must be a boolean/);
 });
 
 test('geminiAutoFallback round-trips and reaches the backend env', () => {
@@ -105,8 +108,9 @@ test('geminiAutoFallback round-trips and reaches the backend env', () => {
 });
 
 test('an out-of-range integer in the file stays out of the env', () => {
-  withIntField();
-  fs.writeFileSync(store.file(), JSON.stringify({ some_count: 30 }));
+  fs.writeFileSync(store.file(), JSON.stringify({ auto_retry_count: 30, auto_retry_minutes: 2.5 }));
+  assert.equal(store.read().autoRetryCount, null);
+  assert.equal(store.read().autoRetryMinutes, null);
   assert.deepEqual(store.serviceEnv(), {});
 });
 
@@ -235,6 +239,9 @@ test('echoing a read back blanks nothing', () => {
     geminiModel: written.geminiModel,
     driveEnabled: written.driveEnabled,
     geminiAutoFallback: written.geminiAutoFallback,
+    autoRetry: written.autoRetry,
+    autoRetryCount: written.autoRetryCount,
+    autoRetryMinutes: written.autoRetryMinutes,
     gdriveRootFolder: written.gdriveRootFolder,
     autoRun: written.autoRun,
     autoRemove: written.autoRemove,
@@ -276,6 +283,9 @@ const unset = {
   geminiModel: null,
   driveEnabled: null,
   geminiAutoFallback: null,
+  autoRetry: null,
+  autoRetryCount: null,
+  autoRetryMinutes: null,
   gdriveRootFolder: null,
   autoRun: null,
   autoRemove: null,
@@ -339,6 +349,9 @@ test('serviceEnv maps every field onto its service env var', () => {
     COURSE_STRUCTURE: 'lectures_some',
     DRIVE_ENABLED: 'true',
     GEMINI_AUTO_FALLBACK: 'true',
+    AUTO_RETRY: 'true',
+    AUTO_RETRY_COUNT: '4',
+    AUTO_RETRY_MINUTES: '15',
     GEMINI_API_KEY: 'gemini-secret',
     GROQ_API_KEY: 'groq-secret',
   });
