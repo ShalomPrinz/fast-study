@@ -59,6 +59,7 @@ import {
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
 import { privacyAnswer, restartNotice } from './utils/privacy'
+import { useTour } from '@/shared/contexts/TourContext'
 import Tooltip from '@/shared/components/Tooltip'
 import '@/styles/panel.css'
 import '@/styles/button.css'
@@ -103,6 +104,7 @@ export default function SettingsView() {
   const { status } = useRunnerStatus()
   const { setSettings } = useSettingsContext()
   const { refresh: refreshAccount } = useAuthStatus()
+  const tour = useTour()
   const browser = useBrowserPrereq()
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
@@ -440,7 +442,7 @@ export default function SettingsView() {
             />
           </section>
 
-          <section className="settings-section">
+          <section className="settings-section" data-tour="settings-drive">
             <h2 className="settings-section-title">
               <Trans>Google Drive</Trans>
             </h2>
@@ -486,6 +488,18 @@ export default function SettingsView() {
               <Trans>Appearance and behaviour</Trans>
             </h2>
             <LanguageField />
+            <div className="settings-field">
+              <div className="settings-label">
+                <span>
+                  <Trans>Tutorial</Trans>
+                </span>
+              </div>
+              <div>
+                <button className="btn btn--ghost settings-replay-tour" onClick={tour.start}>
+                  <Trans>Replay tutorial</Trans>
+                </button>
+              </div>
+            </div>
             <div className="settings-field">
               <div className="settings-label">
                 <label htmlFor="auto-run">

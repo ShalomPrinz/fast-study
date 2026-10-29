@@ -158,7 +158,7 @@ export default function SearchView() {
         <div className="page-column">
           {/* The course picker rides inside the field: switching course mid-search is rare, so the
               course reads as scope on the query rather than a control standing beside it. */}
-          <div className="search-field">
+          <div className="search-field" data-tour="search-field">
             <span className="search-field-icon">
               <Icon icon="search" />
             </span>

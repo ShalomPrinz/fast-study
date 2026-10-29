@@ -34,6 +34,7 @@ import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import {
   canRunRemaining,
   filesComplete,
+  showsPdfHero,
   markRemoved,
   skippedStage,
   stagePrereqMet,
@@ -547,8 +548,8 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
               )}
             </div>
 
-            {complete && pdfExists && (
-              <div className="lecture-split-pdf">
+            {showsPdfHero(files, driveEnabled) && (
+              <div className="lecture-split-pdf" data-tour="lecture-pdf">
                 <PdfHero
                   course={course}
                   lecture={lecture}

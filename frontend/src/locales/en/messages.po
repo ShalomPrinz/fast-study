@@ -56,7 +56,7 @@ msgid "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} 
 msgstr "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} other {# summaries}}"
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:426
+#: src/features/runner/RunnerView.tsx:428
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 
@@ -73,7 +73,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {# lecture} other {# lectures}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:439
+#: src/features/lectures/MainView.tsx:440
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
 
@@ -148,7 +148,7 @@ msgid "{0} remaining"
 msgstr "{0} remaining"
 
 #. placeholder {0}: formatDuration(videoDuration)
-#: src/features/lectures/MainView.tsx:436
+#: src/features/lectures/MainView.tsx:437
 msgid "{0} video"
 msgstr "{0} video"
 
@@ -184,11 +184,11 @@ msgstr "{course} · assignment {assignment}"
 msgid "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 msgstr "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 
-#: src/features/lectures/MainView.tsx:618
+#: src/features/lectures/MainView.tsx:619
 msgid "{deleteName} will be deleted."
 msgstr "{deleteName} will be deleted."
 
-#: src/features/lectures/MainView.tsx:517
+#: src/features/lectures/MainView.tsx:518
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
@@ -254,7 +254,7 @@ msgstr "{generated} of {0} generated"
 msgid "{host} could not be reached. Check your internet connection and try again."
 msgstr "{host} could not be reached. Check your internet connection and try again."
 
-#: src/features/lectures/MainView.tsx:263
+#: src/features/lectures/MainView.tsx:264
 msgid "{input} was removed"
 msgstr "{input} was removed"
 
@@ -302,6 +302,10 @@ msgstr "{path} exists but is not a folder."
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
+#: src/features/tour/Tour.tsx:78
+msgid "{position} of {total}"
+msgstr "{position} of {total}"
+
 #: src/features/course-overview/CourseView.tsx:100
 msgid "{processed} fully processed"
 msgstr "{processed} fully processed"
@@ -338,11 +342,11 @@ msgstr "{removed, plural, =0 {No lecture had files to remove.} one {Removed file
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 
-#: src/features/lectures/MainView.tsx:416
+#: src/features/lectures/MainView.tsx:417
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · step {stepNumber} of {stepCount}"
 
-#: src/features/lectures/MainView.tsx:531
+#: src/features/lectures/MainView.tsx:532
 msgid "{stageCount, plural, one {# step} other {# steps}}"
 msgstr "{stageCount, plural, one {# step} other {# steps}}"
 
@@ -410,6 +414,10 @@ msgstr "A file inside \"{name}\" is open in another program. Close it and try ag
 msgid "A file the PDF template needs is missing: {asset}."
 msgstr "A file the PDF template needs is missing: {asset}."
 
+#: src/features/tour/tourSteps.ts:55
+msgid "A finished lecture opens with its PDF summary. Open it in full screen, or send it to Google Drive."
+msgstr "A finished lecture opens with its PDF summary. Open it in full screen, or send it to Google Drive."
+
 #: src/app/DriveConsentPrompt.tsx:58
 msgid "A finished summary is waiting to upload, and FastStudy has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
 msgstr "A finished summary is waiting to upload, and FastStudy has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
@@ -422,7 +430,7 @@ msgstr "A font the PDF needs is missing."
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:631
+#: src/features/settings/SettingsView.tsx:645
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "A lecture running now would save some files in the old folder and the rest in the new one."
 
@@ -473,7 +481,7 @@ msgstr "After the PDF is created"
 msgid "After the PDF is uploaded to Drive"
 msgstr "After the PDF is uploaded to Drive"
 
-#: src/features/settings/SettingsView.tsx:554
+#: src/features/settings/SettingsView.tsx:568
 msgid "AI chat provider"
 msgstr "AI chat provider"
 
@@ -521,11 +529,11 @@ msgstr "Analyzing the collected passages failed."
 msgid "Another Download all is downloading these recordings"
 msgstr "Another Download all is downloading these recordings"
 
-#: src/features/settings/SettingsView.tsx:360
+#: src/features/settings/SettingsView.tsx:362
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:486
+#: src/features/settings/SettingsView.tsx:488
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
@@ -587,11 +595,11 @@ msgstr "Attachments changed since the summary"
 msgid "Audio"
 msgstr "Audio"
 
-#: src/features/runner/RunnerView.tsx:404
+#: src/features/runner/RunnerView.tsx:406
 msgid "Audio only"
 msgstr "Audio only"
 
-#: src/features/settings/SettingsView.tsx:419
+#: src/features/settings/SettingsView.tsx:421
 msgid "Auto change model when busy"
 msgstr "Auto change model when busy"
 
@@ -603,7 +611,7 @@ msgstr "Auto changing to another model: {from} to {to}."
 msgid "Auto-remove files from computer"
 msgstr "Auto-remove files from computer"
 
-#: src/features/settings/SettingsView.tsx:267
+#: src/features/settings/SettingsView.tsx:269
 msgid "Auto-remove saved"
 msgstr "Auto-remove saved"
 
@@ -619,7 +627,7 @@ msgstr "Auto-run: off"
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
-#: src/features/lectures/MainView.tsx:387
+#: src/features/lectures/MainView.tsx:388
 msgid "Available once the summary is generated."
 msgstr "Available once the summary is generated."
 
@@ -629,6 +637,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "Available once you choose course material or generate a guide."
 
 #: src/features/lectures/DocEditor.tsx:221
+#: src/features/tour/Tour.tsx:87
 msgid "Back"
 msgstr "Back"
 
@@ -643,6 +652,10 @@ msgstr "Bar-Ilan University"
 #: src/features/settings/utils/moodleSites.ts:18
 msgid "Ben-Gurion University"
 msgstr "Ben-Gurion University"
+
+#: src/features/tour/tourSteps.ts:38
+msgid "Bring in recordings"
+msgstr "Bring in recordings"
 
 #: src/features/settings/components/BrowserPrereqField.tsx:54
 msgid "Browser for downloading recordings"
@@ -698,6 +711,10 @@ msgstr "Captcha solved."
 msgid "Captcha solved. Continuing."
 msgstr "Captcha solved. Continuing."
 
+#: src/features/tour/tourSteps.ts:39
+msgid "Capture a lecture video from your browser with the Chrome extension, or let the auto-downloader fetch the recordings of your university course for you."
+msgstr "Capture a lecture video from your browser with the Chrome extension, or let the auto-downloader fetch the recordings of your university course for you."
+
 #: src/features/downloads/utils/zoomCaptcha.ts:9
 msgid "Caught the Zoom video. The download is in progress."
 msgstr "Caught the Zoom video. The download is in progress."
@@ -706,7 +723,7 @@ msgstr "Caught the Zoom video. The download is in progress."
 msgid "Change in Settings"
 msgstr "Change in Settings"
 
-#: src/features/settings/SettingsView.tsx:630
+#: src/features/settings/SettingsView.tsx:644
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -743,7 +760,7 @@ msgstr "Choose a data folder."
 msgid "Choose AI provider"
 msgstr "Choose AI provider"
 
-#: src/features/lectures/components/PdfHero.tsx:58
+#: src/features/lectures/components/PdfHero.tsx:106
 msgid "Choose app"
 msgstr "Choose app"
 
@@ -805,7 +822,7 @@ msgstr "Click \"Create API Key\"."
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 
-#: src/features/lectures/MainView.tsx:386
+#: src/features/lectures/MainView.tsx:387
 msgid "Click \"Open chat\" to study this lecture with {provider}."
 msgstr "Click \"Open chat\" to study this lecture with {provider}."
 
@@ -859,7 +876,7 @@ msgstr "Collect"
 msgid "Compile"
 msgstr "Compile"
 
-#: src/features/lectures/MainView.tsx:430
+#: src/features/lectures/MainView.tsx:431
 msgid "Complete"
 msgstr "Complete"
 
@@ -907,7 +924,7 @@ msgstr "Contact"
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
-#: src/features/lectures/MainView.tsx:267
+#: src/features/lectures/MainView.tsx:268
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
@@ -986,7 +1003,7 @@ msgstr "Could not tell what {url} is — the site didn't answer usefully."
 msgid "Couldn't copy the assignment material. Try again."
 msgstr "Couldn't copy the assignment material. Try again."
 
-#: src/features/lectures/MainView.tsx:391
+#: src/features/lectures/MainView.tsx:392
 msgid "Couldn't copy the summary. Try again."
 msgstr "Couldn't copy the summary. Try again."
 
@@ -1012,11 +1029,11 @@ msgstr "Couldn't load recordings for \"{name}\". Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/settings/SettingsView.tsx:177
+#: src/features/settings/SettingsView.tsx:179
 msgid "Couldn't load your settings. Part of FastStudy isn't responding."
 msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 
-#: src/features/settings/SettingsView.tsx:134
+#: src/features/settings/SettingsView.tsx:136
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."
 
@@ -1062,7 +1079,7 @@ msgstr "Course structure"
 msgid "Course URL"
 msgstr "Course URL"
 
-#: src/features/settings/SettingsView.tsx:475
+#: src/features/settings/SettingsView.tsx:477
 msgid "Courses"
 msgstr "Courses"
 
@@ -1078,7 +1095,7 @@ msgstr "Courses failed to load."
 msgid "Create"
 msgstr "Create"
 
-#: src/features/lectures/MainView.tsx:353
+#: src/features/lectures/MainView.tsx:354
 msgid "Create {input} first"
 msgstr "Create {input} first"
 
@@ -1114,7 +1131,7 @@ msgstr "Current PDF"
 msgid "Current recitation"
 msgstr "Current recitation"
 
-#: src/features/settings/SettingsView.tsx:528
+#: src/features/settings/SettingsView.tsx:542
 msgid "Daily run time"
 msgstr "Daily run time"
 
@@ -1151,15 +1168,20 @@ msgstr "Disconnect the university account?"
 msgid "disconnecting…"
 msgstr "disconnecting…"
 
-#: src/features/settings/SettingsView.tsx:577
+#: src/features/settings/SettingsView.tsx:591
 msgid "Disk space"
 msgstr "Disk space"
 
-#: src/features/settings/SettingsView.tsx:503
+#: src/features/settings/SettingsView.tsx:517
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
+#: src/features/tour/Tour.tsx:75
+msgid "Don't show again"
+msgstr "Don't show again"
+
 #: src/features/lectures/components/StudyDoneButton.tsx:54
+#: src/features/tour/Tour.tsx:94
 msgid "Done"
 msgstr "Done"
 
@@ -1219,7 +1241,7 @@ msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
 #: src/features/settings/InitWall.tsx:316
-#: src/features/settings/SettingsView.tsx:458
+#: src/features/settings/SettingsView.tsx:460
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
@@ -1257,6 +1279,10 @@ msgstr "Drive folder name"
 msgid "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 msgstr "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 
+#: src/features/tour/tourSteps.ts:47
+msgid "Each lecture runs through its steps: audio, transcript, summary, PDF and Drive. Here you see the current step, its progress and the time left."
+msgstr "Each lecture runs through its steps: audio, transcript, summary, PDF and Drive. Here you see the current step, its progress and the time left."
+
 #: src/features/settings/components/PrivacyPolicyModal.tsx:154
 msgid "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
 msgstr "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
@@ -1275,9 +1301,13 @@ msgstr "Edit"
 msgid "Edit source URL"
 msgstr "Edit source URL"
 
-#: src/features/lectures/MainView.tsx:449
+#: src/features/lectures/MainView.tsx:450
 msgid "Edit summary"
 msgstr "Edit summary"
+
+#: src/features/tour/tourSteps.ts:63
+msgid "Edit the summary text next to the PDF, then update the PDF to see your changes."
+msgstr "Edit the summary text next to the PDF, then update the PDF to see your changes."
 
 #: src/features/downloads/components/AddCourseRow.tsx:128
 msgid "Enter a course name first"
@@ -1293,15 +1323,15 @@ msgstr "Enter the zoom passcode for this recording"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:171
 #: src/features/settings/InitWall.tsx:293
-#: src/features/settings/SettingsView.tsx:595
+#: src/features/settings/SettingsView.tsx:609
 msgid "Error reports"
 msgstr "Error reports"
 
-#: src/features/settings/SettingsView.tsx:614
+#: src/features/settings/SettingsView.tsx:628
 msgid "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 msgstr "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 
-#: src/features/settings/SettingsView.tsx:609
+#: src/features/settings/SettingsView.tsx:623
 msgid "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 msgstr "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 
@@ -1354,7 +1384,7 @@ msgstr "Extract"
 msgid "Extract Audio"
 msgstr "Extract Audio"
 
-#: src/features/settings/SettingsView.tsx:502
+#: src/features/settings/SettingsView.tsx:516
 msgid "Extract the audio only"
 msgstr "Extract the audio only"
 
@@ -1444,9 +1474,13 @@ msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
 #: src/features/settings/InitWall.tsx:331
-#: src/features/settings/SettingsView.tsx:325
+#: src/features/settings/SettingsView.tsx:327
 msgid "Fill in the required fields first"
 msgstr "Fill in the required fields first"
+
+#: src/features/tour/tourSteps.ts:30
+msgid "Find your way around"
+msgstr "Find your way around"
 
 #: src/features/downloads/components/AccountStatus.tsx:157
 msgid "finish login in the browser window"
@@ -1460,6 +1494,10 @@ msgstr "finish signing in to Google"
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "Finish signing in to Google in the browser tab that opened."
 
+#: src/features/tour/tourSteps.ts:62
+msgid "Fix the summary"
+msgstr "Fix the summary"
+
 #. placeholder {0}: status.site
 #: src/features/settings/components/MoodleSiteField.tsx:90
 msgid "Found your university's Moodle: <0>{0}</0>"
@@ -1469,7 +1507,7 @@ msgstr "Found your university's Moodle: <0>{0}</0>"
 msgid "Frees up disk space once a lecture is finished. The transcript, the summary and the PDF are always kept."
 msgstr "Frees up disk space once a lecture is finished. The transcript, the summary and the PDF are always kept."
 
-#: src/features/settings/SettingsView.tsx:652
+#: src/features/settings/SettingsView.tsx:666
 msgid "From now on, each lecture's files are removed the same way once it reaches that point."
 msgstr "From now on, each lecture's files are removed the same way once it reaches that point."
 
@@ -1515,7 +1553,7 @@ msgstr "Generate"
 msgid "Generate Course Overviews"
 msgstr "Generate Course Overviews"
 
-#: src/features/lectures/MainView.tsx:388
+#: src/features/lectures/MainView.tsx:389
 msgid "Generate the summary first"
 msgstr "Generate the summary first"
 
@@ -1545,7 +1583,7 @@ msgid "Google account"
 msgstr "Google account"
 
 #: src/features/settings/InitWall.tsx:279
-#: src/features/settings/SettingsView.tsx:445
+#: src/features/settings/SettingsView.tsx:447
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -1602,7 +1640,7 @@ msgstr "I confirmed, try again"
 msgid "I solved the captcha"
 msgstr "I solved the captcha"
 
-#: src/features/lectures/MainView.tsx:396
+#: src/features/lectures/MainView.tsx:397
 msgid "I want to study this lecture in depth, and soon I'll ask you specific questions about it. Its summary is below.\n"
 "\n"
 "To start, reply with a single sentence — \"What do you want to learn first?\" — followed by a numbered list of 4–6 topics from the lecture to choose from."
@@ -1647,6 +1685,10 @@ msgstr "Intuition Guide — {assignment}"
 msgid "just this lecture"
 msgstr "just this lecture"
 
+#: src/features/tour/tourSteps.ts:78
+msgid "Keep a copy in Google Drive"
+msgstr "Keep a copy in Google Drive"
+
 #: src/features/lectures/DocEditor.tsx:294
 msgid "Keep my edits"
 msgstr "Keep my edits"
@@ -1660,7 +1702,7 @@ msgstr "Key verified"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:377
+#: src/features/lectures/MainView.tsx:378
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -1774,7 +1816,7 @@ msgstr "Match whole word"
 
 #: src/features/downloads/DownloadsView.tsx:74
 #: src/features/lectures/AssignmentView.tsx:141
-#: src/features/lectures/MainView.tsx:572
+#: src/features/lectures/MainView.tsx:573
 msgid "Materials"
 msgstr "Materials"
 
@@ -1801,7 +1843,8 @@ msgstr "Needs the desktop app"
 msgid "New course"
 msgstr "New course"
 
-#: src/features/runner/RunnerView.tsx:400
+#: src/features/runner/RunnerView.tsx:402
+#: src/features/tour/Tour.tsx:94
 msgid "Next"
 msgstr "Next"
 
@@ -1947,11 +1990,11 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/lectures/MainView.tsx:365
+#: src/features/lectures/MainView.tsx:366
 msgid "not provided"
 msgstr "not provided"
 
-#: src/features/runner/RunnerView.tsx:421
+#: src/features/runner/RunnerView.tsx:423
 msgid "Not queued"
 msgstr "Not queued"
 
@@ -2029,11 +2072,11 @@ msgstr "Open folder"
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 
-#: src/features/lectures/MainView.tsx:460
+#: src/features/lectures/MainView.tsx:461
 msgid "Open in Drive"
 msgstr "Open in Drive"
 
-#: src/features/lectures/components/PdfHero.tsx:50
+#: src/features/lectures/components/PdfHero.tsx:98
 msgid "Open in full screen"
 msgstr "Open in full screen"
 
@@ -2049,10 +2092,10 @@ msgstr "Open material"
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/AssignmentDocCard.tsx:165
-#: src/features/lectures/components/PdfHero.tsx:67
+#: src/features/lectures/components/PdfHero.tsx:117
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
-#: src/features/lectures/MainView.tsx:454
+#: src/features/lectures/MainView.tsx:455
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
 msgstr "Open PDF"
@@ -2152,7 +2195,7 @@ msgstr "Paste the assignment material with Ctrl+V, we already copied it for you.
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "Paste the course page's address (…/course/view.php?id=…)"
 
-#: src/features/lectures/MainView.tsx:389
+#: src/features/lectures/MainView.tsx:390
 msgid "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgstr "Paste the lecture content with Ctrl+V, we already copied it for you."
 
@@ -2174,11 +2217,11 @@ msgstr "PDF rendered with warnings"
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
 
-#: src/features/lectures/MainView.tsx:515
+#: src/features/lectures/MainView.tsx:516
 msgid "Pipeline"
 msgstr "Pipeline"
 
-#: src/features/lectures/MainView.tsx:208
+#: src/features/lectures/MainView.tsx:209
 #: src/features/runner/RunnerView.tsx:249
 msgid "Pipeline already running"
 msgstr "Pipeline already running"
@@ -2201,7 +2244,7 @@ msgstr "Questions go to the project's GitHub issues page: <0>github.com/ShalomPr
 
 #: src/features/downloads/components/FolderJobList.tsx:78
 #: src/features/downloads/components/ManualDownload.tsx:266
-#: src/features/runner/RunnerView.tsx:374
+#: src/features/runner/RunnerView.tsx:376
 msgid "Queued"
 msgstr "Queued"
 
@@ -2217,6 +2260,10 @@ msgstr "Re-generate {title}"
 #: src/features/course-overview/components/StepRow.tsx:53
 msgid "Re-generate from {stepLabel}"
 msgstr "Re-generate from {stepLabel}"
+
+#: src/features/tour/tourSteps.ts:54
+msgid "Read the finished lecture"
+msgstr "Read the finished lecture"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:102
 msgid "Ready"
@@ -2300,11 +2347,11 @@ msgstr "Reload"
 msgid "Remove {name}"
 msgstr "Remove {name}"
 
-#: src/features/settings/SettingsView.tsx:650
+#: src/features/settings/SettingsView.tsx:664
 msgid "Remove files from every existing lecture?"
 msgstr "Remove files from every existing lecture?"
 
-#: src/features/lectures/MainView.tsx:332
+#: src/features/lectures/MainView.tsx:333
 msgid "Removed"
 msgstr "Removed"
 
@@ -2324,6 +2371,10 @@ msgstr "Renamed to \"{name}\" — some characters can't be used in a folder name
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:63
 msgid "Replace the existing video in \"{0}\"?"
 msgstr "Replace the existing video in \"{0}\"?"
+
+#: src/features/settings/SettingsView.tsx:499
+msgid "Replay tutorial"
+msgstr "Replay tutorial"
 
 #: src/features/settings/components/DriveFields.tsx:49
 msgid "Required"
@@ -2346,7 +2397,7 @@ msgstr "Restore original"
 msgid "Results"
 msgstr "Results"
 
-#: src/features/settings/SettingsView.tsx:180
+#: src/features/settings/SettingsView.tsx:182
 msgid "Retry"
 msgstr "Retry"
 
@@ -2356,24 +2407,24 @@ msgstr "Retry"
 msgid "Retry ✗"
 msgstr "Retry ✗"
 
-#: src/features/lectures/MainView.tsx:336
-#: src/features/lectures/MainView.tsx:339
+#: src/features/lectures/MainView.tsx:337
+#: src/features/lectures/MainView.tsx:340
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
-#: src/features/lectures/MainView.tsx:488
+#: src/features/lectures/MainView.tsx:489
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
-#: src/features/settings/SettingsView.tsx:501
+#: src/features/settings/SettingsView.tsx:515
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
-#: src/features/runner/RunnerView.tsx:433
+#: src/features/runner/RunnerView.tsx:435
 msgid "Run these now"
 msgstr "Run these now"
 
-#: src/features/settings/SettingsView.tsx:522
+#: src/features/settings/SettingsView.tsx:536
 msgid "Run unfinished lectures daily"
 msgstr "Run unfinished lectures daily"
 
@@ -2389,7 +2440,7 @@ msgid "Running pipelines"
 msgstr "Running pipelines"
 
 #: src/features/downloads/components/CourseUrlPaste.tsx:58
-#: src/features/settings/SettingsView.tsx:351
+#: src/features/settings/SettingsView.tsx:353
 msgid "Save"
 msgstr "Save"
 
@@ -2445,6 +2496,10 @@ msgstr "Search summaries"
 msgid "Search this course's summaries…"
 msgstr "Search this course's summaries…"
 
+#: src/features/tour/tourSteps.ts:70
+msgid "Search your summaries"
+msgstr "Search your summaries"
+
 #: src/features/search/SearchView.tsx:152
 msgid "Searches the summaries of the course picked in the field"
 msgstr "Searches the summaries of the course picked in the field"
@@ -2482,13 +2537,13 @@ msgstr "Sent to Gemini with the summary"
 msgid "session expired"
 msgstr "session expired"
 
-#: src/features/settings/SettingsView.tsx:171
-#: src/features/settings/SettingsView.tsx:337
+#: src/features/settings/SettingsView.tsx:173
+#: src/features/settings/SettingsView.tsx:339
 #: src/shared/sidebar/Sidebar.tsx:87
 msgid "Settings"
 msgstr "Settings"
 
-#: src/features/settings/SettingsView.tsx:250
+#: src/features/settings/SettingsView.tsx:252
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -2512,16 +2567,20 @@ msgstr "Show more"
 msgid "Show screenshot"
 msgstr "Show screenshot"
 
-#: src/features/lectures/MainView.tsx:534
-#: src/features/lectures/MainView.tsx:537
+#: src/features/lectures/MainView.tsx:535
+#: src/features/lectures/MainView.tsx:538
 msgid "Show steps"
 msgstr "Show steps"
+
+#: src/features/tour/Tour.tsx:80
+msgid "Skip"
+msgstr "Skip"
 
 #: src/features/course-overview/constants/overview.ts:90
 msgid "skipped"
 msgstr "skipped"
 
-#: src/features/lectures/MainView.tsx:349
+#: src/features/lectures/MainView.tsx:350
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
@@ -2555,11 +2614,11 @@ msgstr "Step {0} of {1}"
 #: src/features/lectures/components/AssignmentDocCard.tsx:82
 #: src/features/lectures/DocEditor.tsx:192
 #: src/features/lectures/DocEditor.tsx:251
-#: src/features/lectures/MainView.tsx:184
+#: src/features/lectures/MainView.tsx:185
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:435
+#: src/features/settings/SettingsView.tsx:437
 msgid "Storage"
 msgstr "Storage"
 
@@ -2583,7 +2642,7 @@ msgstr "Summaries upload to this account's Drive. Connecting opens a Google sign
 msgid "Summarize"
 msgstr "Summarize"
 
-#: src/features/lectures/MainView.tsx:309
+#: src/features/lectures/MainView.tsx:310
 msgid "summarized from materials only"
 msgstr "summarized from materials only"
 
@@ -2599,7 +2658,7 @@ msgstr "Summarizing the transcript failed."
 msgid "Summary"
 msgstr "Summary"
 
-#: src/features/lectures/MainView.tsx:390
+#: src/features/lectures/MainView.tsx:391
 msgid "Summary copied — paste it in the chat with Ctrl+V."
 msgstr "Summary copied — paste it in the chat with Ctrl+V."
 
@@ -2611,11 +2670,11 @@ msgstr "summary did not use {name}"
 msgid "summary did not use any material"
 msgstr "summary did not use any material"
 
-#: src/features/settings/SettingsView.tsx:394
+#: src/features/settings/SettingsView.tsx:396
 msgid "Summary model"
 msgstr "Summary model"
 
-#: src/features/lectures/MainView.tsx:527
+#: src/features/lectures/MainView.tsx:528
 msgid "Summary ready"
 msgstr "Summary ready"
 
@@ -2689,7 +2748,7 @@ msgstr "That step is turned off in settings."
 msgid "That's probably because Windows quarantined the app — restart the app and follow the instructions."
 msgstr "That's probably because Windows quarantined the app — restart the app and follow the instructions."
 
-#: src/features/settings/SettingsView.tsx:367
+#: src/features/settings/SettingsView.tsx:369
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "The API keys and the summary model aren't available right now. They'll come back here on their own."
 
@@ -2709,7 +2768,7 @@ msgstr "The course \"{course}\" was not found."
 msgid "The course's assignments. Each assignment can take several files."
 msgstr "The course's assignments. Each assignment can take several files."
 
-#: src/features/settings/SettingsView.tsx:545
+#: src/features/settings/SettingsView.tsx:559
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 
@@ -2741,7 +2800,7 @@ msgstr "The downloaded file could not be stored."
 msgid "The downloader can't fetch this file"
 msgstr "The downloader can't fetch this file"
 
-#: src/features/settings/SettingsView.tsx:220
+#: src/features/settings/SettingsView.tsx:222
 msgid "The files weren't removed. Press Apply under “Disk space” to try again."
 msgstr "The files weren't removed. Press Apply under “Disk space” to try again."
 
@@ -2753,7 +2812,7 @@ msgstr "The folder in your Drive that summaries are uploaded into. It is created
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
-#: src/features/lectures/MainView.tsx:602
+#: src/features/lectures/MainView.tsx:603
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
@@ -2782,7 +2841,7 @@ msgstr "The Moodle login timed out. Try connecting again."
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "The Moodle session expired. Reconnect the account and try again."
 
-#: src/features/lectures/MainView.tsx:619
+#: src/features/lectures/MainView.tsx:620
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -2826,7 +2885,7 @@ msgstr "the run was cancelled. Run the playlist again to pick them up."
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
-#: src/features/runner/RunnerView.tsx:378
+#: src/features/runner/RunnerView.tsx:380
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
 
@@ -2849,6 +2908,10 @@ msgstr "The setting \"{field}\" must be on or off."
 #: src/shared/i18n/serviceErrors.ts:315
 msgid "The setting \"{field}\" must be text."
 msgstr "The setting \"{field}\" must be text."
+
+#: src/features/tour/tourSteps.ts:31
+msgid "The sidebar takes you between your lectures, the running pipelines, Downloads, Search and Settings."
+msgstr "The sidebar takes you between your lectures, the running pipelines, Downloads, Search and Settings."
 
 #: src/features/downloads/components/MediaNote.tsx:21
 msgid "The site doesn't say what these files are. Only videos can be downloaded from here, known only after download."
@@ -2887,11 +2950,11 @@ msgstr "The university site is busy with another request. Try again in a moment.
 msgid "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 msgstr "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 
-#: src/features/settings/SettingsView.tsx:96
+#: src/features/settings/SettingsView.tsx:97
 msgid "The video and audio of every lecture already uploaded to Drive will be deleted from this computer. They cannot be recovered."
 msgstr "The video and audio of every lecture already uploaded to Drive will be deleted from this computer. They cannot be recovered."
 
-#: src/features/settings/SettingsView.tsx:95
+#: src/features/settings/SettingsView.tsx:96
 msgid "The video and audio of every lecture that already has a PDF will be deleted from this computer. They cannot be recovered."
 msgstr "The video and audio of every lecture that already has a PDF will be deleted from this computer. They cannot be recovered."
 
@@ -2899,11 +2962,11 @@ msgstr "The video and audio of every lecture that already has a PDF will be dele
 msgid "The video downloaded, but it couldn't be saved into {folder}."
 msgstr "The video downloaded, but it couldn't be saved into {folder}."
 
-#: src/features/settings/SettingsView.tsx:92
+#: src/features/settings/SettingsView.tsx:93
 msgid "The video of every lecture already uploaded to Drive will be deleted from this computer. It cannot be recovered."
 msgstr "The video of every lecture already uploaded to Drive will be deleted from this computer. It cannot be recovered."
 
-#: src/features/settings/SettingsView.tsx:91
+#: src/features/settings/SettingsView.tsx:92
 msgid "The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered."
 msgstr "The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered."
 
@@ -2924,7 +2987,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "The Zoom window was closed during the capture. Try the download again."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:603
+#: src/features/lectures/MainView.tsx:604
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
@@ -2932,11 +2995,11 @@ msgstr "Then {0} will be regenerated."
 msgid "These materials are over {limit_mb} MB: {files}. Turn them off for the summary, then try again."
 msgstr "These materials are over {limit_mb} MB: {files}. Turn them off for the summary, then try again."
 
-#: src/features/runner/RunnerView.tsx:456
+#: src/features/runner/RunnerView.tsx:458
 msgid "These won't start until you run them, or until the daily run does."
 msgstr "These won't start until you run them, or until the daily run does."
 
-#: src/features/runner/RunnerView.tsx:460
+#: src/features/runner/RunnerView.tsx:462
 msgid "These won't start until you run them."
 msgstr "These won't start until you run them."
 
@@ -2944,7 +3007,7 @@ msgstr "These won't start until you run them."
 msgid "Third-party services"
 msgstr "Third-party services"
 
-#: src/features/settings/SettingsView.tsx:506
+#: src/features/settings/SettingsView.tsx:520
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 
@@ -3034,13 +3097,25 @@ msgstr "Try again"
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
 
+#: src/features/tour/tourSteps.ts:79
+msgid "Turn on Google Drive in Settings and every finished PDF is uploaded to the folder you choose."
+msgstr "Turn on Google Drive in Settings and every finished PDF is uploaded to the folder you choose."
+
 #: src/features/settings/components/AutoRemoveField.tsx:111
 msgid "Turn on the Google Drive upload above to choose this."
 msgstr "Turn on the Google Drive upload above to choose this."
 
+#: src/features/settings/SettingsView.tsx:494
+msgid "Tutorial"
+msgstr "Tutorial"
+
 #: src/features/downloads/components/ManualDownload.tsx:154
 msgid "Type"
 msgstr "Type"
+
+#: src/features/tour/tourSteps.ts:71
+msgid "Type a phrase to find it across the summaries of a course, with the lecture it came from."
+msgstr "Type a phrase to find it across the summaries of a course, with the lecture it came from."
 
 #: src/features/settings/components/ApiKeyField.tsx:71
 msgid "Type any name (for example FastStudy) and click \"Submit\"."
@@ -3064,7 +3139,7 @@ msgstr "University account"
 msgid "University account connected"
 msgstr "University account connected"
 
-#: src/features/settings/SettingsView.tsx:125
+#: src/features/settings/SettingsView.tsx:127
 msgid "University saved"
 msgstr "University saved"
 
@@ -3146,6 +3221,10 @@ msgstr "Videos"
 msgid "waiting for you to solve the captcha"
 msgstr "waiting for you to solve the captcha"
 
+#: src/features/tour/tourSteps.ts:46
+msgid "Watch a lecture being processed"
+msgstr "Watch a lecture being processed"
+
 #: src/features/settings/components/BrowserPrereqField.tsx:39
 msgid "We couldn't check right now."
 msgstr "We couldn't check right now."
@@ -3162,7 +3241,7 @@ msgstr "We couldn't check this site right now. You can still save it."
 msgid "What to remove"
 msgstr "What to remove"
 
-#: src/features/settings/SettingsView.tsx:492
+#: src/features/settings/SettingsView.tsx:506
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
@@ -3170,7 +3249,7 @@ msgstr "When a new video arrives"
 msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 msgstr "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 
-#: src/features/settings/SettingsView.tsx:424
+#: src/features/settings/SettingsView.tsx:426
 msgid "When the summary model is under high demand, retry once on the next model."
 msgstr "When the summary model is under high demand, retry once on the next model."
 
@@ -3178,7 +3257,7 @@ msgstr "When the summary model is under high demand, retry once on the next mode
 msgid "When to remove"
 msgstr "When to remove"
 
-#: src/features/settings/SettingsView.tsx:570
+#: src/features/settings/SettingsView.tsx:584
 msgid "Where \"Study with AI\" opens a lecture's summary."
 msgstr "Where \"Study with AI\" opens a lecture's summary."
 

@@ -18,7 +18,11 @@ export default function DownloadsTabs({ tab, onSelect }: Props) {
     manual: t`Manual`,
   }
   return (
-    <div className="mode-toggle mode-toggle--light downloads-tabs" role="tablist">
+    <div
+      className="mode-toggle mode-toggle--light downloads-tabs"
+      role="tablist"
+      data-tour="downloads-tabs"
+    >
       {DOWNLOADS_TABS.map((id) => (
         <button
           key={id}

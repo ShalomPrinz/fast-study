@@ -16,6 +16,8 @@ import { loadSupportedMaterials } from './supportedMaterials'
 import { SupportedMaterialsProvider } from '@/shared/contexts/SupportedMaterialsContext'
 import type { SupportedExtensions } from '@/features/lectures/utils/materials'
 import { useGeneralFolderPicker } from '@/features/downloads/hooks/useGeneralFolderPicker'
+import { TourProvider } from '@/shared/contexts/TourContext'
+import Tour from '@/features/tour/Tour'
 import './Layout.css'
 
 export default function Layout() {
@@ -29,31 +31,34 @@ export default function Layout() {
   }, [])
   useGeneralFolderPicker()
   return (
-    <SupportedMaterialsProvider supported={supported}>
-      <SnapshotProvider sendUpdate={toast}>
-        <DownloadJobsProvider>
-          <AuthStatusProvider onSiteCaptchaSolved={toastSiteCaptchaSolved}>
-            <DownloadsSessionProvider sendUpdate={toast}>
-              <SectionRunsProvider onCaptchaSolved={() => toastCaptchaSolved(true)}>
-                <div className="layout">
-                  <Sidebar />
-                  {/* The banner spans the content column only, never the sidebar; the route keeps the row
+    <TourProvider>
+      <SupportedMaterialsProvider supported={supported}>
+        <SnapshotProvider sendUpdate={toast}>
+          <DownloadJobsProvider>
+            <AuthStatusProvider onSiteCaptchaSolved={toastSiteCaptchaSolved}>
+              <DownloadsSessionProvider sendUpdate={toast}>
+                <SectionRunsProvider onCaptchaSolved={() => toastCaptchaSolved(true)}>
+                  <div className="layout">
+                    <Sidebar />
+                    {/* The banner spans the content column only, never the sidebar; the route keeps the row
                       flex its pages were built for. */}
-                  <div className="layout-content">
-                    <CaptchaBanner />
-                    <div className="layout-route">
-                      <Outlet />
+                    <div className="layout-content">
+                      <CaptchaBanner />
+                      <div className="layout-route">
+                        <Outlet />
+                      </div>
                     </div>
-                  </div>
-                  {/* Route-independent by design: the run that needs consent is not the screen the
+                    {/* Route-independent by design: the run that needs consent is not the screen the
                       user is on. */}
-                  <DriveConsentPrompt />
-                </div>
-              </SectionRunsProvider>
-            </DownloadsSessionProvider>
-          </AuthStatusProvider>
-        </DownloadJobsProvider>
-      </SnapshotProvider>
-    </SupportedMaterialsProvider>
+                    <DriveConsentPrompt />
+                    <Tour />
+                  </div>
+                </SectionRunsProvider>
+              </DownloadsSessionProvider>
+            </AuthStatusProvider>
+          </DownloadJobsProvider>
+        </SnapshotProvider>
+      </SupportedMaterialsProvider>
+    </TourProvider>
   )
 }
