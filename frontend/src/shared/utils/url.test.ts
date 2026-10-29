@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { matchRoutes } from 'react-router-dom'
 import {
   path,
+  retryPath,
+  overviewRetryPath,
   kindQuery,
   runStepQuery,
   courseRoute,
@@ -105,5 +107,19 @@ describe('overviewGenerateQuery', () => {
     expect(overviewGenerateQuery(['x'], 'topics', true)).toBe(
       '?extractors=x&from_phase=topics&skip_existing=true',
     )
+  })
+})
+
+describe('retry cancel paths', () => {
+  it('encodes every name and carries the kind', () => {
+    expect(retryPath('קורס א', 'שיעור 1', 'recitation')).toBe(
+      `/retry?course=${encodeURIComponent('קורס א')}&lecture=${encodeURIComponent('שיעור 1')}&kind=recitation`,
+    )
+    expect(retryPath('C', 'hw 1', 'assignment')).toBe(
+      '/retry?course=C&lecture=hw%201&kind=assignment',
+    )
+  })
+  it('puts the extractor on the course overview route, encoded once', () => {
+    expect(overviewRetryPath('a b', 'x/y')).toBe('/courses/a%20b/overview/retry?extractor=x%2Fy')
   })
 })

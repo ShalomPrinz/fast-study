@@ -15,13 +15,20 @@ import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
 import Icon from '@/shared/components/Icon'
-import { moveToFront, runPipeline } from '@/services/backend'
+import { cancelRetry, moveToFront, runPipeline } from '@/services/backend'
+import RetryLine from '@/shared/components/RetryLine'
 import { toast, toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { assignmentRoute, lectureRoute } from '@/shared/utils/url'
 import { assignmentStepLabel } from './utils/assignmentSteps'
 import { notQueued, notQueuedState, notQueuedTitle } from './utils/notQueued'
-import { canMoveToFront, headerState, isLectureRun, type LectureRun } from './utils/runnerState'
+import {
+  canMoveToFront,
+  headerState,
+  isLectureRun,
+  waitingRetries,
+  type LectureRun,
+} from './utils/runnerState'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -48,10 +55,12 @@ interface RowProps {
   // The status node's hover text, e.g. a not-queued row's last error.
   hint?: string
   chip?: ReactNode
+  // Extra muted line under the title block, e.g. a waiting auto retry.
+  note?: ReactNode
 }
 
 // The status node, title, course and chip every row here shows, whatever acts on it.
-function RowContent({ course, lecture, kind, state, hint, chip }: RowProps) {
+function RowContent({ course, lecture, kind, state, hint, chip, note }: RowProps) {
   return (
     <>
       <StatusNode state={state} hint={hint} />
@@ -68,6 +77,7 @@ function RowContent({ course, lecture, kind, state, hint, chip }: RowProps) {
             </>
           )}
         </div>
+        {note}
       </div>
       {chip}
     </>
@@ -225,14 +235,16 @@ export default function RunnerView() {
   const header = headerState(status)
   const inFlight = status?.inFlight ?? []
   const queue = status?.queue ?? []
-  const pending = notQueued(courses, queue, inFlight, driveEnabled)
+  const waiting = waitingRetries(status?.errors ?? {})
+  const pending = notQueued(courses, [...queue, ...waiting], inFlight, driveEnabled)
 
   // Assignments never take the focus card: it reads a lecture's files and timing.
   const lectureRuns = inFlight.filter(isLectureRun)
   const [focus, ...alsoRunning] = lectureRuns
   const assignmentRuns = inFlight.filter((e) => e.kind === 'assignment')
   // One line for a page with nothing in any section; a lone empty section keeps only its title.
-  const allEmpty = inFlight.length === 0 && queue.length === 0 && pending.length === 0
+  const allEmpty =
+    inFlight.length === 0 && queue.length === 0 && waiting.length === 0 && pending.length === 0
   const none = t`None`
 
   // Runs beside the runner, not through its queue — the same call as a lecture's "run remaining".
@@ -368,14 +380,15 @@ export default function RunnerView() {
                     <h2 className="section-title">
                       <Trans>Queued</Trans>
                     </h2>
-                    {queue.length > 0 && (
+                    {queue.length + waiting.length > 0 && (
                       <span className="section-count">
-                        {queue.length} · <Trans>the runner takes these in order</Trans>
+                        {queue.length + waiting.length} ·{' '}
+                        <Trans>the runner takes these in order</Trans>
                       </span>
                     )}
                   </div>
 
-                  {queue.length > 0 ? (
+                  {queue.length + waiting.length > 0 ? (
                     <div className="pipeline-card">
                       {queue.map((entry, i) => (
                         <ActionRow
@@ -399,6 +412,21 @@ export default function RunnerView() {
                                 <Trans>Audio only</Trans>
                               </span>
                             ) : undefined
+                          }
+                        />
+                      ))}
+                      {waiting.map((w) => (
+                        <ActionRow
+                          key={`${w.course}||${w.lecture}||${w.kind}`}
+                          course={w.course}
+                          lecture={w.lecture}
+                          kind={w.kind}
+                          state="failed"
+                          note={
+                            <RetryLine
+                              retry={w.retry}
+                              onCancel={() => cancelRetry(w.course, w.lecture, w.kind)}
+                            />
                           }
                         />
                       ))}

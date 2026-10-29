@@ -208,6 +208,15 @@ export interface RunError {
   params: ErrorParams
   provider: 'gemini' | null
   blocked: boolean
+  // Present only while an automatic Gemini retry waits.
+  retry: RetryInfo | null
+}
+
+// A waiting auto retry: `attempt` of `of`, firing at the UTC instant `at` (ISO).
+export interface RetryInfo {
+  attempt: number
+  of: number
+  at: string
 }
 
 export type CoursePhase = 'extract' | 'analyze' | 'topics' | 'compile' | 'to_pdf'
@@ -226,6 +235,7 @@ export interface CourseExtractorState {
   phase?: CoursePhase | null
   // ISO stamp of when this branch's phase chain began — one per chain, not per phase.
   startedAt?: string | null
+  retry?: RetryInfo | null
 }
 
 export interface CourseStatus {

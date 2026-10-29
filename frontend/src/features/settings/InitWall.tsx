@@ -26,6 +26,7 @@ import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import { buildPatch, type SettingsForm } from './utils/patch'
 import { autoRemoveFromStore } from './utils/autoRemove'
+import { autoRetryFromStore } from './utils/autoRetry'
 import { privacyAnswer, wallMustAskPrivacy } from './utils/privacy'
 import { missingEntries, sectionMark } from './utils/required'
 import '@/styles/button.css'
@@ -89,6 +90,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     gdriveRootFolder: stored.gdriveRootFolder ?? 'FastStudy',
     geminiModel: stored.geminiModel ?? '',
     geminiAutoFallback: stored.geminiAutoFallback ?? false,
+    autoRetry: autoRetryFromStore(stored),
     // Not asked about here — carried through so the wall's save leaves the default alone.
     autoRun: toAutoRun(stored.autoRun),
     autoRemove: autoRemoveFromStore(stored),

@@ -54,6 +54,12 @@ describe('ownerBodies', () => {
     expect(database).toEqual({ data_root: '/d' })
   })
 
+  it('pushes the auto retry fields to the backend as a bool and integers', () => {
+    expect(
+      ownerBodies({ autoRetry: false, autoRetryCount: 5, autoRetryMinutes: 20 }).backend,
+    ).toEqual({ auto_retry: false, auto_retry_count: 5, auto_retry_minutes: 20 })
+  })
+
   it('applies the course structure live on the database, which resolves every course flag', () => {
     expect(ownerBodies({ courseStructure: 'lectures_some' })).toEqual({
       backend: null,

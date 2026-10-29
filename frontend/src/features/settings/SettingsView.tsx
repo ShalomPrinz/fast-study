@@ -36,6 +36,7 @@ import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import AutoRemoveField from './components/AutoRemoveField'
 import CourseStructureField from './components/CourseStructureField'
+import AutoRetryField from './components/AutoRetryField'
 import AutoRemoveSummary from './components/AutoRemoveSummary'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import {
@@ -476,6 +477,16 @@ export default function SettingsView() {
               value={form.courseStructure}
               saved={toCourseStructure(stored.courseStructure)}
               onChange={(v) => setForm({ ...form, courseStructure: v })}
+            />
+          </section>
+
+          <section className="settings-section">
+            <h2 className="settings-section-title">
+              <Trans>Automatic retry</Trans>
+            </h2>
+            <AutoRetryField
+              value={form.autoRetry}
+              onChange={(v) => setForm({ ...form, autoRetry: v })}
             />
           </section>
 

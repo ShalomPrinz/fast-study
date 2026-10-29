@@ -1,0 +1,17 @@
+.retry-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.retry-line .retry-line-cancel {
+  padding: 0 var(--space-2);
+  font-size: var(--fs-meta);
+}
+
+.retry-line .retry-line-text {
+  white-space: nowrap;
+}

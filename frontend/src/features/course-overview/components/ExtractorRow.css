@@ -13,3 +13,9 @@
   height: 1px;
   background: var(--line-soft);
 }
+
+/* A waiting auto retry, under the branch's row and aligned with its title. */
+.overview-branch-retry {
+  padding-inline: var(--pipeline-inset) var(--space-6);
+  padding-block-end: var(--space-4);
+}

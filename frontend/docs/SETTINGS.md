@@ -16,6 +16,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Drive root folder | `FastStudy`, sent only once Drive is on  | any folder name       | `backend/`        |
 | Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
 | Auto change model when busy | off (a checkbox beside the model) | on        | `backend/`        |
+| Auto retry        | on, 3 retries, 10 minutes apart           | off; 1-10 retries, 1-120 minutes | `backend/`, `electron/` store |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Auto-remove       | off                                       | video, video + audio  | `backend/`        |
 | Auto-remove after | none — the user must choose               | the PDF, the Drive upload | `backend/`    |
@@ -25,6 +26,13 @@ edits them all, and the prerequisites and accounts both screens show.
 
 The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
+
+**Auto retry** (`AutoRetryField`, rules in `utils/autoRetry.ts`) is its own section: a switch plus "Number of
+retries" and "Minutes between retries", disabled while off. Unset reads as the defaults; the box commits only whole
+numbers in range (`parseRetryInt`) and falls back to the last good value on blur, so a patch never carries an
+out-of-range value (the launcher store would refuse it with `setting_out_of_range`). The three fields go to the
+backend's `POST /config`, which clamps them; turning the switch off drops every waiting retry there. The countdown
+UI is in [LECTURES.md](LECTURES.md) §Runner status.
 
 **Auto-run is a ceiling on unattended work, not a schedule.** It caps a dropped or downloaded video; it
 never caps a run the user starts. An unset value reads as the backend's own fallback (`useAutoRun`), so

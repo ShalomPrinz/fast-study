@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import type { InFlightEntry, RunnerStatus } from '@/types'
-import { canMoveToFront, headerState } from './runnerState'
+import type { InFlightEntry, RunError, RunnerStatus } from '@/types'
+import { canMoveToFront, headerState, waitingRetries } from './runnerState'
 
 const entry: InFlightEntry = {
   course: 'c',
@@ -52,5 +52,39 @@ describe('canMoveToFront', () => {
     expect(canMoveToFront(0)).toBe(false)
     expect(canMoveToFront(1)).toBe(true)
     expect(canMoveToFront(5)).toBe(true)
+  })
+})
+
+describe('waitingRetries', () => {
+  const err = (retry: RunError['retry']): RunError => ({
+    step: 'summarize',
+    message: '',
+    code: 'gemini_overloaded',
+    params: {},
+    provider: null,
+    blocked: false,
+    retry,
+  })
+  const at = (iso: string) => ({ attempt: 1, of: 3, at: iso })
+
+  it('lists lectures and recitations that wait, soonest first', () => {
+    const out = waitingRetries({
+      'C||late||lecture': err(at('2026-10-29T12:20:00Z')),
+      'C||soon||recitation': err(at('2026-10-29T12:10:00Z')),
+    })
+    expect(out.map((w) => [w.lecture, w.kind])).toEqual([
+      ['soon', 'recitation'],
+      ['late', 'lecture'],
+    ])
+  })
+
+  it('skips plain errors, assignments and keys that are not lectures', () => {
+    expect(
+      waitingRetries({
+        'C||plain||lecture': err(null),
+        'C||hw||assignment': err(at('2026-10-29T12:10:00Z')),
+        'runner-crash': err(at('2026-10-29T12:10:00Z')),
+      }),
+    ).toEqual([])
   })
 })

@@ -184,10 +184,18 @@ On `/running` an in-flight row is one link to its lecture. A waiting row's text 
 trailing icon opens the lecture. A not-queued row shows `failed` or `quota` from `errors` (pending otherwise) and runs its pipeline beside the runner, and a queued one
 moves to the front (the head row's text is inert). Either way the reorder arrives over SSE.
 
-`errors` maps each key to `{ step, message, code, params, provider, blocked }`. The "Last error" box and
+`errors` maps each key to `{ step, message, code, params, provider, blocked, retry }`. The "Last error" box and
 the toast both render it through `ServiceError` ([I18N.md](I18N.md)), the toast led by `LectureLead`, the lecture and course
 `parseInFlightKey` reads off the key, since it shows on any page; `isQuotaError` (`utils/runError.ts`)
 tests the four quota codes (two Gemini, two Groq) `backend/pipeline/runner.py` spells, which is also what marks the row's glyph.
+
+**A waiting Gemini auto retry** is `errors[key].retry = { attempt, of, at }`; the lecture is then in neither
+`in_flight` nor `queue`. `RetryLine` (`shared/components/`) renders it everywhere a failed Gemini step shows:
+muted "Retrying in m:ss (attempt n/N)" plus a "Cancel retry" button (`cancelRetry`, `DELETE /retry`), counting down
+locally from `at` with no polling. `/running` lists `waitingRetries(errors)` (lectures and recitations, soonest first)
+at the end of "Queued" with the line under the row, and `notQueued` skips them; the failed step's lecture row and an
+assignment doc card show the line under the error. The line leaves when the next status drops `retry`
+(fire, cancel, supersede); after the last failure the plain error stays.
 
 Error toasts go through `useReportOnce`, which dedupes `(key, failureId)` across refreshes; `prune` lets a
 key fire again if the error recurs. A run that fails within milliseconds (a locked file) can clear and re-set

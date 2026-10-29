@@ -138,6 +138,7 @@ describe('notQueuedTitle', () => {
       params: { detail: 'boom' },
       provider: null,
       blocked: false,
+      retry: null,
     }
     const errors = { [inFlightKey('C1', 'L1', 'lecture')]: error }
     expect(notQueuedTitle(errors, item)).toBe(serviceErrorText(error))

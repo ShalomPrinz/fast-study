@@ -9,6 +9,7 @@ const error = (step: string, code: RunError['code'] = null): RunError => ({
   params: {},
   provider: code ? 'gemini' : null,
   blocked: false,
+  retry: null,
 })
 
 describe('stepState', () => {

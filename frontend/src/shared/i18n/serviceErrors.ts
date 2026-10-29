@@ -90,6 +90,11 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       '{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}',
   }),
+  // The transport's own text rides in `detail`.
+  gemini_unreachable: msg({
+    message:
+      '{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the Gemini model {model}. Check your internet connection and try again.}}',
+  }),
   // A notice, not a failure: toasted as info when the backend retries a busy model on the next one.
   model_fallback: msg({ message: 'Auto changing to another model: {from} to {to}.' }),
   summarization_failed: msg({ message: 'Summarizing the transcript failed.' }),

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import type { AssignmentDocInfo, AssignmentDocName, InFlightEntry, RunError } from '@/types'
-import { runAssignmentStep } from '@/services/backend'
+import { cancelRetry, runAssignmentStep } from '@/services/backend'
 import { openAssignmentGenerated } from '@/services/open'
 import { toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
@@ -14,6 +14,7 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import ProgressBar from '@/shared/components/ProgressBar'
+import RetryLine from '@/shared/components/RetryLine'
 import ServiceError from '@/shared/components/ServiceError'
 import Tooltip from '@/shared/components/Tooltip'
 import { assignmentEditorRoute } from '@/shared/utils/url'
@@ -192,6 +193,12 @@ export default function AssignmentDocCard({
         <div className="doc-card-error" role="alert">
           <ServiceError failure={state.error} />
         </div>
+      )}
+      {state.error?.retry && (
+        <RetryLine
+          retry={state.error.retry}
+          onCancel={() => cancelRetry(course, assignment, 'assignment')}
+        />
       )}
       {confirming && (
         <ConfirmModal

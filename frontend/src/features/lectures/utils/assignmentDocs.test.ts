@@ -31,6 +31,7 @@ const err = (step: string): RunError => ({
   params: {},
   provider: null,
   blocked: false,
+  retry: null,
 })
 const doc = (pdf: number | null, warning: string | null = null): AssignmentDocInfo => ({
   md_mtime: 1,

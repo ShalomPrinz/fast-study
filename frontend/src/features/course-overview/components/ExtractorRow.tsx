@@ -8,6 +8,8 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { ExtractorContext } from '@/features/course-overview/contexts/ExtractorContext'
 import type { ExtractorValue } from '@/features/course-overview/contexts/ExtractorContext'
+import { cancelOverviewRetry } from '@/services/backend'
+import RetryLine from '@/shared/components/RetryLine'
 import ExtractorHeader from './ExtractorHeader'
 import ExtractorSteps from './ExtractorSteps'
 import '@/styles/modal.css'
@@ -16,8 +18,9 @@ import './ExtractorRow.css'
 
 export default function ExtractorRow({ extractor }: { extractor: OverviewExtractor }) {
   const { t } = useLingui()
-  const { generate } = useCourseOverview()
+  const { course, status, generate } = useCourseOverview()
   const { slug, phases } = extractor
+  const retry = status?.extractors[slug]?.retry ?? null
   const [expanded, setExpanded] = useState(false)
   const [regenerateOpen, setRegenerateOpen] = useState(false)
 
@@ -46,6 +49,11 @@ export default function ExtractorRow({ extractor }: { extractor: OverviewExtract
           branches rather than between a row and the panel it opened. */}
       <div className="overview-branch">
         <ExtractorHeader />
+        {retry && (
+          <div className="overview-branch-retry">
+            <RetryLine retry={retry} onCancel={() => cancelOverviewRetry(course, slug)} />
+          </div>
+        )}
         <ExtractorSteps />
       </div>
 

@@ -15,7 +15,7 @@ export interface PendingLecture {
  *  never reports these — the tree is already in memory, and the queue is what it lacks. */
 export function notQueued(
   courses: Course[],
-  queue: QueueEntry[],
+  queue: Pick<QueueEntry, 'course' | 'lecture' | 'kind'>[],
   inFlight: InFlightEntry[],
   driveEnabled: boolean,
 ): PendingLecture[] {

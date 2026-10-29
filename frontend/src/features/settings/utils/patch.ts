@@ -8,6 +8,7 @@ import {
   type SettingsPatch,
 } from '@/services/settings'
 import { toAiProvider, type AiProvider } from '@/features/lectures/utils/aiChat'
+import { autoRetryFromStore, autoRetryPatch, type AutoRetryForm } from './autoRetry'
 import { autoRemoveFromStore, autoRemovePatch, type AutoRemoveForm } from './autoRemove'
 
 export interface SettingsForm {
@@ -18,6 +19,7 @@ export interface SettingsForm {
   gdriveRootFolder: string
   geminiModel: string
   geminiAutoFallback: boolean
+  autoRetry: AutoRetryForm
   autoRun: AutoRun
   autoRemove: AutoRemoveForm
   // `''` is "no university", which clears a stored site; `null` while a site is chosen but not yet
@@ -50,6 +52,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: formModel(stored, options),
     geminiAutoFallback: stored.geminiAutoFallback ?? false,
+    autoRetry: autoRetryFromStore(stored),
     autoRun: toAutoRun(stored.autoRun),
     autoRemove: autoRemoveFromStore(stored),
     moodleSite: stored.moodleSite ?? '',
@@ -86,6 +89,7 @@ export function buildPatch(
   if (form.geminiModel !== (stored.geminiModel ?? '')) patch.geminiModel = form.geminiModel
   if (form.geminiAutoFallback !== (stored.geminiAutoFallback ?? false))
     patch.geminiAutoFallback = form.geminiAutoFallback
+  Object.assign(patch, autoRetryPatch(form.autoRetry, stored))
   if (form.driveEnabled !== (stored.driveEnabled ?? false)) patch.driveEnabled = form.driveEnabled
   // Only while Drive is on, where the field shows: the wall's untouched default is no choice to store.
   if (form.driveEnabled && form.gdriveRootFolder.trim() !== (stored.gdriveRootFolder ?? '')) {

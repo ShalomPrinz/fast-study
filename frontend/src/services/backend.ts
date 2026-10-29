@@ -25,6 +25,8 @@ import {
   runStepQuery,
   courseOverviewBase,
   overviewGenerateQuery,
+  retryPath,
+  overviewRetryPath,
 } from '@/shared/utils/url'
 import { createClient } from './http'
 import { BACKEND_URL } from './runtime'
@@ -155,6 +157,7 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
           params: e.params ?? {},
           provider: e.provider ?? null,
           blocked: e.blocked ?? false,
+          retry: e.retry ?? null,
         },
       ]),
     ),
@@ -184,6 +187,23 @@ export async function applyAutoRemove(): Promise<AutoRemoveSweep> {
 
 export async function fetchRunnerStatus(): Promise<RunnerStatus> {
   return normalizeRunner(await backend.get<RawRunnerStatus>('/status'))
+}
+
+/** Drops a waiting auto retry and leaves the error; `lecture` is the assignment name for that kind. */
+export async function cancelRetry(
+  course: string,
+  lecture: string,
+  kind: RunKind,
+): Promise<{ cancelled: boolean }> {
+  return backend.delete<{ cancelled: boolean }>(retryPath(course, lecture, kind))
+}
+
+/** Drops an overview extractor's waiting auto retry. */
+export async function cancelOverviewRetry(
+  course: string,
+  extractor: string,
+): Promise<{ cancelled: boolean }> {
+  return backend.delete<{ cancelled: boolean }>(overviewRetryPath(course, extractor))
 }
 
 interface RawOverviewExtractor {

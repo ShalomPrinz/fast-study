@@ -1,4 +1,4 @@
-import type { AssignmentDocName, Kind, CoursePhase } from '@/types'
+import type { AssignmentDocName, Kind, RunKind, CoursePhase } from '@/types'
 
 // Percent-encodes every interpolated value, literals untouched (Hebrew names stay URL-safe).
 // Invariant: never re-feed its output (or `lectureBase`) into another `path` — that double-encodes.
@@ -58,6 +58,16 @@ export function courseRoute(course: string): string {
 // Overview prefix, shared by the backend and database services.
 export function courseOverviewBase(course: string): string {
   return path`/courses/${course}/overview`
+}
+
+// `DELETE /retry`: cancels a lecture's, recitation's or assignment's waiting auto retry.
+export function retryPath(course: string, lecture: string, kind: RunKind): string {
+  return path`/retry?course=${course}&lecture=${lecture}&kind=${kind}`
+}
+
+// `DELETE /courses/{c}/overview/retry`: cancels one extractor's waiting auto retry.
+export function overviewRetryPath(course: string, extractor: string): string {
+  return courseOverviewBase(course) + path`/retry?extractor=${extractor}`
 }
 
 // `?extractors=a,b`; empty selects all extractors server-side.

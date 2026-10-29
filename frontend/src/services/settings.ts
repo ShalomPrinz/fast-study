@@ -37,6 +37,11 @@ export function toCourseStructure(stored: string | null): CourseStructure {
     : 'split'
 }
 
+// The auto retry's defaults and ranges; the backend clamps to the same, the launcher's store refuses beyond.
+export const AUTO_RETRY_DEFAULTS = { on: true, count: 3, minutes: 10 } as const
+export const AUTO_RETRY_COUNT_RANGE = { min: 1, max: 10 } as const
+export const AUTO_RETRY_MINUTES_RANGE = { min: 1, max: 120 } as const
+
 // The store's read view. `null` is "nothing stored", which has to stay distinguishable from a
 // stored value: the client, not the store, owns every default.
 export interface Settings {
@@ -46,6 +51,10 @@ export interface Settings {
   geminiModel: string | null
   // Unset means off: a busy model fails the call instead of retrying on the next one.
   geminiAutoFallback: boolean | null
+  // Unset reads as the backend's defaults: on, 3 retries, 10 minutes apart (`AUTO_RETRY_DEFAULTS`).
+  autoRetry: boolean | null
+  autoRetryCount: number | null
+  autoRetryMinutes: number | null
   driveEnabled: boolean | null
   gdriveRootFolder: string | null
   autoRun: string | null
@@ -76,6 +85,9 @@ export interface SettingsPatch {
   groqApiKey?: string
   geminiModel?: string
   geminiAutoFallback?: boolean
+  autoRetry?: boolean
+  autoRetryCount?: number
+  autoRetryMinutes?: number
   driveEnabled?: boolean
   gdriveRootFolder?: string
   autoRun?: AutoRun
@@ -96,6 +108,9 @@ const WIRE: Record<SettingsField, string> = {
   groqApiKey: 'groq_api_key',
   geminiModel: 'gemini_model',
   geminiAutoFallback: 'gemini_auto_fallback',
+  autoRetry: 'auto_retry',
+  autoRetryCount: 'auto_retry_count',
+  autoRetryMinutes: 'auto_retry_minutes',
   driveEnabled: 'drive_enabled',
   gdriveRootFolder: 'gdrive_root_folder',
   autoRun: 'auto_run',
@@ -117,6 +132,9 @@ const BACKEND_FIELDS: SettingsField[] = [
   'groqApiKey',
   'geminiModel',
   'geminiAutoFallback',
+  'autoRetry',
+  'autoRetryCount',
+  'autoRetryMinutes',
   'driveEnabled',
   'gdriveRootFolder',
   'autoRun',
@@ -132,6 +150,9 @@ interface RawSettings {
   groq_api_key_set: boolean | null
   gemini_model: string | null
   gemini_auto_fallback?: boolean | null
+  auto_retry?: boolean | null
+  auto_retry_count?: number | null
+  auto_retry_minutes?: number | null
   drive_enabled: boolean | null
   gdrive_root_folder: string | null
   auto_run: string | null
@@ -149,6 +170,9 @@ function normalize(raw: RawSettings): Settings {
     groqApiKeySet: raw.groq_api_key_set ?? false,
     geminiModel: raw.gemini_model,
     geminiAutoFallback: raw.gemini_auto_fallback ?? null,
+    autoRetry: raw.auto_retry ?? null,
+    autoRetryCount: raw.auto_retry_count ?? null,
+    autoRetryMinutes: raw.auto_retry_minutes ?? null,
     driveEnabled: raw.drive_enabled,
     gdriveRootFolder: raw.gdrive_root_folder,
     autoRun: raw.auto_run,

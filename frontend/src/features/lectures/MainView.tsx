@@ -8,7 +8,7 @@ import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import ServiceError from '@/shared/components/ServiceError'
 import { deleteFile, deleteMaterial, fetchSummaryContent } from '@/services/database'
 import { openLectureFile, openExternalUrl } from '@/services/open'
-import { runStep, runPipeline } from '@/services/backend'
+import { runStep, runPipeline, cancelRetry } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { useCompactHeaderActions } from '@/features/lectures/hooks/useCompactHeaderActions'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
@@ -49,6 +49,7 @@ import StudyWithAiCard, {
 } from '@/features/lectures/components/StudyWithAiCard'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
+import RetryLine from '@/shared/components/RetryLine'
 import StatusNode from '@/shared/components/StatusNode'
 import Icon from '@/shared/components/Icon'
 import type { IconName } from '@/shared/components/Icon'
@@ -319,6 +320,16 @@ export default function MainView() {
                   </>
                 )}
               </p>
+              {!exists &&
+                !isRunning &&
+                step &&
+                lectureError?.step === step &&
+                lectureError.retry && (
+                  <RetryLine
+                    retry={lectureError.retry}
+                    onCancel={() => cancelRetry(course, lecture, kind)}
+                  />
+                )}
               {isRunning && remote && (
                 <ProgressBar
                   stats={remote.timingStats}
