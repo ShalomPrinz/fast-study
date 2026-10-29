@@ -28,7 +28,7 @@ A lecture may hold any number of materials of any file type. `database/` owns th
 
 **Record.** After `summary.md` is written, the attached selection's names (skipped empty, unreadable or text-less files included, since the UI compares against what is attached; `[]` when none) are PUT to the database's `summary-materials`. A failed PUT is logged and the run stays successful.
 
-**Materials-only lectures.** A lecture with no `video.mp4`, no `audio.mp3` and at least one material (`is_materials_only`) summarizes from its materials alone: `summarize_materials()` uploads them under one marker with the separate `assets/instructions/summarize_materials.md` prompt plus `LENGTH_BUDGET_SUFFIX`, and no transcript part. `_run_pipeline_unlocked` lists materials only when both `video.mp4` and `audio.mp3` are missing and passes `materials_only` to `next_step`, which then skips `audio` and `transcribe`, so the run goes summarize → pdf → drive. It is manual only: `_lecture_pending`/`scan_pending` stay video-only, so `run_all` (nightly, Run-all, `AUTO_RUN`) never picks one up. A removed `video.mp4`/`audio.mp3` is not "missing" here ([Auto-remove](#auto-remove)). `_summarize_source` is the single readiness rule, shared by `_exec_summarize` and the route's `summarize_ready`: `transcript.txt` takes the transcript path; without one, a video or audio, or no materials, is `missing_prerequisite`. A later video upload keeps the database's usual wipe; there is no marker file. A video that lands mid-summarize supersedes the materials: `_exec_summarize` re-checks `video.mp4` before `put_summary` and, if present, writes nothing and fails `missing_prerequisite` (`{file: transcript.txt, step: transcribe}`), so the run stops and the video path is what runs next; a tiny check-then-write window remains, the same as on the transcript path.
+**Materials-only lectures.** A lecture with no `video.mp4`, no `audio.mp3` and at least one material (`is_materials_only`) summarizes from its materials alone: `summarize_materials()` uploads them under one marker with the separate `assets/instructions/summarize_materials.md` prompt plus `LENGTH_BUDGET_SUFFIX`, and no transcript part. `_run_pipeline_unlocked` lists materials only when both `video.mp4` and `audio.mp3` are missing and passes `materials_only` to `next_step`, which then skips `audio` and `transcribe`, so the run goes summarize → pdf → drive. It is manual only: `_lecture_pending`/`scan_pending` stay video-only, so `run_all` (Run-all, `AUTO_RUN`) never picks one up. A removed `video.mp4`/`audio.mp3` is not "missing" here ([Auto-remove](#auto-remove)). `_summarize_source` is the single readiness rule, shared by `_exec_summarize` and the route's `summarize_ready`: `transcript.txt` takes the transcript path; without one, a video or audio, or no materials, is `missing_prerequisite`. A later video upload keeps the database's usual wipe; there is no marker file. A video that lands mid-summarize supersedes the materials: `_exec_summarize` re-checks `video.mp4` before `put_summary` and, if present, writes nothing and fails `missing_prerequisite` (`{file: transcript.txt, step: transcribe}`), so the run stops and the video path is what runs next; a tiny check-then-write window remains, the same as on the transcript path.
 
 Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode. The model is `settings.gemini_model()` — `LLMClient`'s default, so summarize and the course overview cannot drift apart.
 
@@ -84,11 +84,11 @@ Every automatic trigger feeds one sequential queue rather than a task per lectur
 
 `settings.auto_run()` returns `off`, `audio` or `full`; unset or unrecognised means `full`, so a typo can never silently stop every unattended run.
 
-| Value   | A video arriving (`/video-arrived`) | The nightly cron                                |
-| ------- | ----------------------------------- | ----------------------------------------------- |
-| `off`   | logged and dropped                  | does nothing, not even a scan                   |
-| `audio` | queued at depth `audio`             | scans and queues at depth `audio`               |
-| `full`  | queued at depth `full`              | scans and queues at depth `full`                |
+| Value   | A video arriving (`/video-arrived`) |
+| ------- | ----------------------------------- |
+| `off`   | logged and dropped                  |
+| `audio` | queued at depth `audio`             |
+| `full`  | queued at depth `full`              |
 
 It never caps a run the user asked for: `POST /run-all` always enqueues at depth `full`.
 
@@ -100,15 +100,7 @@ Once a lecture reaches the user-chosen point, its intermediates are deleted thro
 
 - **Every run.** `run_step` and `run_pipeline_for` end, still under the lecture's lock, with `auto_remove()`, which reads the live setting, HEADs the files and removes if the rule holds — every trigger (queue, manual pipeline, lone step) passes through one of them, so a lecture removes as soon as its PDF or Drive upload lands, and one in flight when the user changes the rule applies the rule current when it finishes. A failure, `file_locked` (open elsewhere) included, is a warning and never the run's outcome.
 - **Apply.** `apply_auto_remove()` (`POST /auto-remove/apply`) sweeps the tree, archived courses included like `scan_pending`. A lecture whose lock is held is mid-run and counted `deferred`, since its own end-of-run call covers it. Otherwise the sweep takes the free lock without yielding and, for its one removal call, adds the lecture to `_removing`. `_busy()` — the check `enqueue`, `try_run_*` and `run_all`'s skip use — ignores a lock held that way, so a trigger arriving meanwhile is never refused and `run_all` never skips a queued lecture: each waits on the lock instead. `_claim()` drops the lecture from `_removing` as the first such trigger takes it, so a second still answers `busy`. Holding the lock means no step is ever reading a file the sweep deletes.
-- **Removed counts as present.** The tree's `removed` is derived from the files, not recorded: an absent `video.mp4` is removed when `audio.mp3` or `transcript.txt` exists, an absent `audio.mp3` when `transcript.txt` does, so a file deleted in File Explorer counts the same as an auto-removed one. `_mark_removed` flags those names on a files map and `_present` reads them as done, so `next_step` resumes such a lecture at `drive` rather than `audio`, `_lecture_pending` keeps it pending for the nightly pass until its final output exists, and `is_materials_only` never mistakes it for a materials-only lecture. `_fetch_files` reads the tree only when `audio.mp3` is absent and `transcript.txt` exists; otherwise `removed` either cannot name `audio.mp3` or is empty.
-
-## The nightly catch-up pass
-
-`pipeline/schedule.py` owns the APScheduler instance that fires `_scheduled_run` once a day. It lives there, not in `backend_main.py`'s lifespan, so `POST /config` can re-apply the settings on the running process: `apply()` adds, reschedules or removes the single `run_all_daily` job and is idempotent, so the endpoint calls it unconditionally.
-
-`settings.nightly_run()` is the switch and `settings.nightly_hour()` the hour. Unset means on at 03:00, and an hour that is non-numeric or outside 0-23 falls back to 03:00 rather than leaving the install with no nightly pass. The store validates an integer, not an hour; the range is enforced here.
-
-`NIGHTLY_RUN` and `AUTO_RUN` are independent gates and are deliberately not merged: `AUTO_RUN` is the depth ceiling on _all_ unattended work, `NIGHTLY_RUN` switches off only this pass. `AUTO_RUN=off` still stops the scheduled run from inside `_scheduled_run`.
+- **Removed counts as present.** The tree's `removed` is derived from the files, not recorded: an absent `video.mp4` is removed when `audio.mp3` or `transcript.txt` exists, an absent `audio.mp3` when `transcript.txt` does, so a file deleted in File Explorer counts the same as an auto-removed one. `_mark_removed` flags those names on a files map and `_present` reads them as done, so `next_step` resumes such a lecture at `drive` rather than `audio`, `_lecture_pending` keeps it pending until its final output exists, and `is_materials_only` never mistakes it for a materials-only lecture. `_fetch_files` reads the tree only when `audio.mp3` is absent and `transcript.txt` exists; otherwise `removed` either cannot name `audio.mp3` or is empty.
 
 ## Rate limits
 
@@ -121,7 +113,7 @@ Resume validates the meta against `audio.mp3`'s size AND mtime. Re-downloading a
 **Gemini / summarize.** `LLMClient.generate` parses a 429 body into `GeminiRateLimitError` (`{quota_id, quota_value, model, is_daily}`) instead of leaking the SDK's JSON blob. Those same facts ride the wire as the `gemini_quota_exhausted` params `{scope, model, limit, tier}` (`quota_params`), so the sentence is a renderer's to build rather than the backend's. The 429's `retryDelay` is never parsed — the quota kind says everything actionable, and a daily quota's `retryDelay` lies (claims 59s, actually resets at midnight Pacific).
 
 - Per-minute quota → plain `gemini_quota_exhausted` error (`scope: per_minute`) that stops only its lecture; no run-wide block.
-- Daily quota (`quotaId` containing `PerDay`, or anything unrecognised — the safe default) → plain error. It also sets the run-scoped `_summarize_block` so every later lecture in the same `run_all` stops at `transcript.txt` without calling Gemini, carrying the same quota record so it reads as blocked rather than pending. Audio+transcribe are Groq (separate quota) so the queue still gets fully transcribed, and tomorrow's run resumes each lecture at summarize.
+- Daily quota (`quotaId` containing `PerDay`, or anything unrecognised — the safe default) → plain error. It also sets the run-scoped `_summarize_block` so every later lecture in the same `run_all` stops at `transcript.txt` without calling Gemini, carrying the same quota record so it reads as blocked rather than pending. Audio+transcribe are Groq (separate quota) so the queue still gets fully transcribed, and a later run resumes each lecture at summarize.
 
 Manual `/run/summarize` and `/pipeline` triggers ignore both blocks, and `POST /run-all` clears them before it enqueues (a live run included) — the user may have swapped keys. An automatic arrival never clears them.
 
@@ -131,7 +123,7 @@ An assignment's Intuition Guide and Full Solution are runner steps under `kind="
 
 - Steps: `intuition` / `solution` = inputs → Gemini → `{doc}.md` (written `fresh`, dropping edits and the restore snapshot) → the PDF render in the same run; `intuition_pdf` / `solution_pdf` only re-render (`fresh` drops the old PDF first). The PDF, warning and build-tex markers go through the database's `.generated/` routes with the lecture `pdf` step's keep/drop rules. The two docs are independent: neither is an input to the other.
 - Inputs, in this order: the assignment's files whose switch is on and whose type `gemini_mime` supports (the 10 MB cap, `material_too_large`; Office files go as extracted text and the cap applies to that text), then the `summary.md` of each selected lecture/recitation as one inline `<lecture kind title>` text part (a vanished or summary-less one is skipped with a log line), then the prompt (`assets/instructions/assignment_{doc}.md`). None left is `assignment_inputs_empty`; a Gemini failure is `assignment_generation_failed {detail}`.
-- Manual only: `try_run_assignment_step` never touches `_queue`, and run-all, the nightly pass and `AUTO_RUN` never start one. `auto_remove` is skipped.
+- Manual only: `try_run_assignment_step` never touches `_queue`, and run-all and `AUTO_RUN` never start one. `auto_remove` is skipped.
 - A daily quota records `gemini_quota_exhausted` like any step but never sets `_summarize_block` and never sweeps other records: no run-all depends on it.
 - `prune_stale_errors` keeps an assignment's error while the assignment is in the tree.
 

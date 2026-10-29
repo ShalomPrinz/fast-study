@@ -7,7 +7,6 @@ import { canSetErrorReports, canStoreApiKeys, runtimeBridge } from '@/services/r
 import {
   toAutoRun,
   toCourseStructure,
-  toNightlyHour,
   fetchConfigOptions,
   saveSettings,
   type ConfigOptions,
@@ -90,11 +89,8 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     gdriveRootFolder: stored.gdriveRootFolder ?? 'FastStudy',
     geminiModel: stored.geminiModel ?? '',
     geminiAutoFallback: stored.geminiAutoFallback ?? false,
-    // Not asked about here — carried through so the wall's save leaves the defaults alone. A first
-    // install has nothing to catch up on, so the cron's switch and hour belong on `/settings` only.
+    // Not asked about here — carried through so the wall's save leaves the default alone.
     autoRun: toAutoRun(stored.autoRun),
-    nightlyRun: stored.nightlyRun ?? true,
-    nightlyHour: toNightlyHour(stored.nightlyHour),
     autoRemove: autoRemoveFromStore(stored),
     moodleSite: stored.moodleSite ?? '',
     // Starts checked for a first answer, though unset means off until the wall's save stores it.

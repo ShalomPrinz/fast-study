@@ -27,11 +27,10 @@ const CHOICES = {
 };
 const BOOL_FIELDS = {
   drive_enabled: 'DRIVE_ENABLED',
-  nightly_run: 'NIGHTLY_RUN',
   gemini_auto_fallback: 'GEMINI_AUTO_FALLBACK',
 };
-// Integers with their inclusive range; the backend reads anything else as its default hour.
-const INT_FIELDS = { nightly_hour: { env: 'NIGHTLY_HOUR', min: 0, max: 23 } };
+// Integers with their env var and inclusive range; none today, a value outside it reads as unset.
+const INT_FIELDS = {};
 // Booleans no service gets as a settings env var: `error_reports` main turns into each process's
 // Sentry flag itself; `privacy_confirmed` is the renderer's record that the privacy notice was answered.
 const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed'];
@@ -50,9 +49,7 @@ const FIELDS = {
   courseStructure: 'course_structure',
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
-  nightlyRun: 'nightly_run',
   geminiAutoFallback: 'gemini_auto_fallback',
-  nightlyHour: 'nightly_hour',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
   aiProvider: 'ai_provider',
@@ -137,9 +134,7 @@ function read() {
     groqApiKeySet: Boolean(text(stored.groq_api_key)),
     geminiModel: text(stored.gemini_model),
     driveEnabled: bool(stored.drive_enabled),
-    nightlyRun: bool(stored.nightly_run),
     geminiAutoFallback: bool(stored.gemini_auto_fallback),
-    nightlyHour: int('nightly_hour', stored.nightly_hour),
     gdriveRootFolder: text(stored.gdrive_root_folder),
     autoRun: text(stored.auto_run),
     autoRemove: choice('auto_remove', stored.auto_remove),
@@ -264,4 +259,5 @@ function tokenKey() {
   return { key, regenerated: Boolean(stored.token_key) };
 }
 
-module.exports = { file, read, serviceEnv, tokenKey, write };
+// FIELDS and INT_FIELDS are exported so a test can inject an integer field while none is real.
+module.exports = { FIELDS, INT_FIELDS, file, read, serviceEnv, tokenKey, write };

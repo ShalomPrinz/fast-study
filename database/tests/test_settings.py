@@ -101,7 +101,6 @@ def test_absent_keys_read_as_null(env_file):
 
     assert stored["gdrive_root_folder"] is None
     assert stored["drive_enabled"] is None
-    assert stored["nightly_run"] is None
     assert stored["gemini_auto_fallback"] is None
 
 
@@ -127,38 +126,51 @@ def test_gemini_auto_fallback_round_trips(env_file):
     assert "GEMINI_AUTO_FALLBACK='false'" in env_file.read_text(encoding="utf-8")
 
 
-def test_an_unset_int_reads_as_null(env_file):
-    assert settings.read_settings()["nightly_hour"] is None
+@pytest.fixture
+def int_field(monkeypatch):
+    """Patch a throwaway integer field into the store; none is registered today."""
+
+    monkeypatch.setitem(settings.INT_FIELDS, "some_count", "SOME_COUNT")
+    return "some_count"
 
 
-def test_a_non_numeric_stored_int_reads_as_null(env_file):
-    env_file.write_text("NIGHTLY_HOUR=midnight\n", encoding="utf-8")
-
-    assert settings.read_settings()["nightly_hour"] is None
+def test_an_unset_int_reads_as_null(env_file, int_field):
+    assert settings.read_settings()[int_field] is None
 
 
-def test_integers_round_trip(env_file):
-    assert settings.write_settings({"nightly_hour": 3})["nightly_hour"] == 3
-    assert "NIGHTLY_HOUR='3'" in env_file.read_text(encoding="utf-8")
+def test_a_non_numeric_stored_int_reads_as_null(env_file, int_field):
+    env_file.write_text("SOME_COUNT=many\n", encoding="utf-8")
+
+    assert settings.read_settings()[int_field] is None
+
+
+def test_integers_round_trip(env_file, int_field):
+    assert settings.write_settings({int_field: 3})[int_field] == 3
+    assert "SOME_COUNT='3'" in env_file.read_text(encoding="utf-8")
 
 
 # `isinstance(True, int)` is True, so a bool must be refused rather than stored as 1.
-def test_a_boolean_is_rejected_for_an_int_field(env_file):
-    assert _rejected({"nightly_hour": True}) == (
+def test_a_boolean_is_rejected_for_an_int_field(env_file, int_field):
+    assert _rejected({int_field: True}) == (
         "setting_must_be_integer",
-        {"field": "nightly_hour"},
+        {"field": int_field},
     )
 
-    assert "NIGHTLY_HOUR" not in env_file.read_text(encoding="utf-8")
+    assert "SOME_COUNT" not in env_file.read_text(encoding="utf-8")
 
 
-def test_a_non_int_is_rejected_for_an_int_field(env_file):
-    assert _rejected({"nightly_hour": "3"}) == (
+def test_a_non_int_is_rejected_for_an_int_field(env_file, int_field):
+    assert _rejected({int_field: "3"}) == (
         "setting_must_be_integer",
-        {"field": "nightly_hour"},
+        {"field": int_field},
     )
 
-    assert "NIGHTLY_HOUR" not in env_file.read_text(encoding="utf-8")
+    assert "SOME_COUNT" not in env_file.read_text(encoding="utf-8")
+
+
+# The store validates an integer, not a range — clamping is the owning service's job.
+def test_an_out_of_range_int_is_stored_unchanged(env_file, int_field):
+    assert settings.write_settings({int_field: 99})[int_field] == 99
 
 
 @pytest.mark.parametrize("mode", ["off", "audio", "full"])
@@ -174,9 +186,9 @@ def test_auto_run_is_stored_trimmed_and_lowercased(env_file):
 
 # The backend runs an unknown mode as `full`, so a typo must fail loudly instead of being stored.
 def test_an_unknown_auto_run_mode_is_rejected(env_file):
-    assert _rejected({"auto_run": " Nightly "}) == (
+    assert _rejected({"auto_run": " Weekly "}) == (
         "setting_invalid_choice",
-        {"field": "auto_run", "value": "nightly"},
+        {"field": "auto_run", "value": "weekly"},
     )
 
     assert "AUTO_RUN" not in env_file.read_text(encoding="utf-8")
@@ -231,15 +243,10 @@ def test_put_then_get_round_trips_ai_provider(client):
     assert client.get("/settings").json()["ai_provider"] == "gemini"
 
 
-# The store validates an integer, not an hour — clamping to 0..23 is the owning service's job.
-def test_an_out_of_range_hour_is_stored_unchanged(env_file):
-    assert settings.write_settings({"nightly_hour": 99})["nightly_hour"] == 99
+def test_a_value_is_merged_into_env_quoted_like_every_other_value():
+    merged = settings.merge_env_text("A=1\n", {"AUTO_RUN": "full"})
 
-
-def test_an_int_is_merged_into_env_quoted_like_every_other_value():
-    merged = settings.merge_env_text("A=1\n", {"NIGHTLY_HOUR": "3"})
-
-    assert merged == "A=1\nNIGHTLY_HOUR='3'\n"
+    assert merged == "A=1\nAUTO_RUN='full'\n"
 
 
 def test_export_prefix_and_trailing_comment_survive_a_rewrite(env_file):

@@ -70,7 +70,7 @@ baseline again.
 ## The baseline, and one course per flow
 
 A seed wipes both scratch roots and restores everything a flow can change: the scratch `.env` (fake
-keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, `AUTO_REMOVE=off`, nightly off at hour 3,
+keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, `AUTO_REMOVE=off`,
 `MOODLE_SITE=https://lemida.biu.ac.il`) pushed to the running backend, database and auto-downloader through
 `POST /config`, the Moodle token (after
 `/auth/disconnect`, the only thing that clears the auto-downloader's in-memory "expired"), both

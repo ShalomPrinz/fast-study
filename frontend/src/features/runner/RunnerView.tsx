@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import type { InFlightEntry, Kind, Lecture } from '@/types'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import { useAutoRun, useDriveEnabled, useNightlyRun } from '@/shared/contexts/SettingsContext'
+import { useAutoRun, useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { PIPELINE, stepPosition, visiblePipeline } from '@/features/lectures/constants/pipeline'
 import { markRemoved, skippedStage } from '@/features/lectures/utils/lectureProgress'
@@ -21,13 +21,7 @@ import { toastFailure } from '@/shared/utils/failure'
 import { assignmentRoute, lectureRoute } from '@/shared/utils/url'
 import { assignmentStepLabel } from './utils/assignmentSteps'
 import { notQueued, notQueuedState, notQueuedTitle } from './utils/notQueued'
-import {
-  canMoveToFront,
-  headerState,
-  isLectureRun,
-  nightlyPicksUp,
-  type LectureRun,
-} from './utils/runnerState'
+import { canMoveToFront, headerState, isLectureRun, type LectureRun } from './utils/runnerState'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -227,7 +221,6 @@ export default function RunnerView() {
   const { courses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
   const autoRun = useAutoRun()
-  const nightlyRun = useNightlyRun()
 
   const header = headerState(status)
   const inFlight = status?.inFlight ?? []
@@ -454,13 +447,7 @@ export default function RunnerView() {
                         ))}
                       </div>
                       <p className="queue-note">
-                        {nightlyPicksUp(nightlyRun, autoRun) ? (
-                          <Trans>
-                            These won't start until you run them, or until the daily run does.
-                          </Trans>
-                        ) : (
-                          <Trans>These won't start until you run them.</Trans>
-                        )}
+                        <Trans>These won't start until you run them.</Trans>
                       </p>
                     </>
                   ) : (

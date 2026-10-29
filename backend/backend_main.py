@@ -14,7 +14,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from logging_setup import setup_logging
-from pipeline import runner, schedule
+from pipeline import runner
 from pipeline.material_types import supported_extensions
 from pydantic import BaseModel
 from sentry_sdk.integrations.google_genai import GoogleGenAIIntegration
@@ -79,16 +79,12 @@ _tool_probe = _start_tool_probe()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Run the nightly cron (NIGHTLY_RUN/NIGHTLY_HOUR) for the app's lifetime, and notify once at boot
-    so a page still showing a step a previous process was running refetches the now-empty /status."""
+    """Notify once at boot so a page still showing a step a previous process was running
+    refetches the now-empty /status."""
 
-    schedule.start()
     # Not awaited: lifespan startup gates the bind, and a down database would stall it for the timeout.
     asyncio.get_running_loop().run_in_executor(None, db_client.notify)
-    try:
-        yield
-    finally:
-        schedule.shutdown()
+    yield
 
 
 app = FastAPI(lifespan=lifespan)
@@ -429,8 +425,6 @@ class ConfigUpdate(BaseModel):
     drive_enabled: bool | None = None
     gdrive_root_folder: str | None = None
     auto_run: str | None = None
-    nightly_run: bool | None = None
-    nightly_hour: int | None = None
     auto_remove: str | None = None
     auto_remove_after: str | None = None
     error_reports: bool | None = None
@@ -454,8 +448,6 @@ def config_update(update: ConfigUpdate):
     else:
         applied = []
     applied += settings.apply_config(values)
-    # Unconditional: apply() is idempotent, so it costs less than tracking which fields moved.
-    schedule.apply()
     return {"status": "ok", "applied": applied}
 
 

@@ -46,11 +46,11 @@ describe('resolveServiceError', () => {
       expect(serviceErrorRow(code), code).not.toBeNull()
     }
     const { headline, detail } = resolveServiceError({
-      message: 'unknown setting: nightly',
+      message: 'unknown setting: bogus',
       code: 'unknown_setting',
-      params: { field: 'nightly' },
+      params: { field: 'bogus' },
     })
-    expect(headline).toContain('nightly')
+    expect(headline).toContain('bogus')
     expect(detail).toBeNull()
   })
 

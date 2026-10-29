@@ -17,8 +17,6 @@ edits them all, and the prerequisites and accounts both screens show.
 | Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
 | Auto change model when busy | off (a checkbox beside the model) | on        | `backend/`        |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
-| Daily run         | on                                        | off                   | `backend/`        |
-| Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`        |
 | Auto-remove       | off                                       | video, video + audio  | `backend/`        |
 | Auto-remove after | none — the user must choose               | the PDF, the Drive upload | `backend/`    |
 | Error reports     | off until answered; the wall starts it on | on                    | `electron/`, live    |
@@ -28,11 +26,9 @@ edits them all, and the prerequisites and accounts both screens show.
 The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
 
-**Auto-run is a ceiling on unattended work, not a schedule.** It caps a dropped or downloaded video and
-the nightly pass; it never caps a run the user starts. **The nightly pass has two gates**: its own switch
-decides whether the cron runs and when, auto-run still caps what it does. Every unset value reads as the
-backend's own fallback (`useAutoRun`, `useNightlyRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
-a number on the wire, never the `<select>`'s string, which the store rejects.
+**Auto-run is a ceiling on unattended work, not a schedule.** It caps a dropped or downloaded video; it
+never caps a run the user starts. An unset value reads as the backend's own fallback (`useAutoRun`), so
+both ends agree on a fresh install.
 
 **Auto-remove deletes a finished lecture's video (and audio) from disk**, and saves differently from
 the rest of the page. Its section (`AutoRemoveField`, rules in `utils/autoRemove.ts`) has its own Apply,
@@ -88,7 +84,7 @@ The list is closed on purpose; each of these looks like a field and deliberately
 | `FRONTEND_URL`                                            | Dev-only CORS wiring the packaged app never uses                                            |
 | The last opened lecture, the search view's course         | Per-view memory in `localStorage`; nothing else has to agree on it                          |
 | The Google Drive account                                  | A consent flow and a token, connected or not — see below                                    |
-| Running unfinished lectures at app start                  | A sweep is a deliberate act; `/running`'s button and the nightly pass cover both cases      |
+| Running unfinished lectures at app start                  | A sweep is a deliberate act; `/running`'s button covers it      |
 
 ## The store — `services/settings.ts`
 
@@ -136,7 +132,7 @@ unreachable store shows the app anyway: a downed service is not an unconfigured 
 
 The wall also offers the language (so the rest reads in it) and the Drive toggle (so the account is
 connected now, not mid-run); neither blocks, and Drive's folder is required only while it is on. Auto-run
-and the nightly pass keep their defaults. The data folder is **prefilled and taken as is** — the stored one, else the bridge's `defaultDataRoot`,
+keeps its default. The data folder is **prefilled and taken as is** — the stored one, else the bridge's `defaultDataRoot`,
 else empty, which in browser dev reads red — but
 probed as it is typed (`probeDataRoot`, the database's read-only `POST /settings/data-root/probe`, debounced
 and latest-wins): an unusable verdict renders its coded reason under the field and blocks the wall, while an

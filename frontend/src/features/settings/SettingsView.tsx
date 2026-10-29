@@ -67,10 +67,6 @@ import '@/styles/modal.css'
 import '@/styles/settings-form.css'
 import './SettingsView.css'
 
-// The hours the nightly pass can be set to. The value stays a number all the way to the wire — the
-// store rejects a JSON string — while the label is a clock time, which reads the same in every locale.
-const NIGHTLY_HOURS = Array.from({ length: 24 }, (_, hour) => hour)
-
 // A save held back by the advisory guard: a data root change that would split the runs in flight.
 interface Pending {
   patch: SettingsPatch
@@ -518,47 +514,8 @@ export default function SettingsView() {
               </select>
               <span className="settings-hint">
                 <Trans>
-                  This applies only to work that starts on its own: a video you drop in, a video
-                  that finishes downloading, and the daily run. Runs you start yourself are not
-                  affected.
-                </Trans>
-              </span>
-            </div>
-            <div className="settings-field">
-              <label className="settings-check">
-                <input
-                  type="checkbox"
-                  checked={form.nightlyRun}
-                  onChange={(e) => setForm({ ...form, nightlyRun: e.target.checked })}
-                />
-                <span className="settings-check-text">
-                  <span>
-                    <Trans>Run unfinished lectures daily</Trans>
-                  </span>
-                </span>
-              </label>
-              <div className="settings-label">
-                <label htmlFor="nightly-hour">
-                  <Trans>Daily run time</Trans>
-                </label>
-              </div>
-              <select
-                id="nightly-hour"
-                className="settings-select"
-                value={form.nightlyHour}
-                disabled={!form.nightlyRun}
-                onChange={(e) => setForm({ ...form, nightlyHour: Number(e.target.value) })}
-              >
-                {NIGHTLY_HOURS.map((hour) => (
-                  <option key={hour} value={hour}>
-                    {`${String(hour).padStart(2, '0')}:00`}
-                  </option>
-                ))}
-              </select>
-              <span className="settings-hint">
-                <Trans>
-                  The daily run also follows the setting above: if it's set to do nothing, the daily
-                  run does nothing either.
+                  This applies only to work that starts on its own: a video you drop in or a video
+                  that finishes downloading. Runs you start yourself are not affected.
                 </Trans>
               </span>
             </div>

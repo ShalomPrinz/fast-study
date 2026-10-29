@@ -1,4 +1,3 @@
-import type { AutoRun } from '@/services/settings'
 import type { InFlightEntry, Kind, RunnerStatus } from '@/types'
 
 // An in-flight entry that is a lecture or recitation, as the lecture-only helpers need it.
@@ -20,12 +19,6 @@ export function headerState(status: RunnerStatus | null): HeaderState {
   if (status.inFlight.length > 0)
     return { kind: 'manual', count: status.inFlight.filter(isLectureRun).length }
   return { kind: 'idle' }
-}
-
-// Whether the nightly pass will pick up unqueued lectures: it needs both its own switch and an
-// auto-run ceiling above off.
-export function nightlyPicksUp(nightlyRun: boolean, autoRun: AutoRun): boolean {
-  return nightlyRun && autoRun !== 'off'
 }
 
 // The queue's head is next regardless, so only a later row can be moved in front of it.

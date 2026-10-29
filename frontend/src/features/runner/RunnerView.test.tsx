@@ -15,7 +15,6 @@ vi.mock('@/shared/contexts/CourseTreeContext', () => ({
 vi.mock('@/shared/contexts/SettingsContext', () => ({
   useAutoRun: () => 'off',
   useDriveEnabled: () => false,
-  useNightlyRun: () => false,
 }))
 vi.mock('@/shared/contexts/SupportedMaterialsContext', () => ({
   useSupportedMaterials: () => ({}),

@@ -74,10 +74,8 @@ describe('baseline', () => {
       settingsPatch({
         DATA_ROOT: '/d',
         DRIVE_ENABLED: 'YES',
-        NIGHTLY_RUN: 'off',
-        NIGHTLY_HOUR: '3',
       }),
-      { data_root: '/d', drive_enabled: true, nightly_run: false, nightly_hour: 3 },
+      { data_root: '/d', drive_enabled: true },
     );
   });
 

@@ -119,9 +119,6 @@ function baseEnv(paths) {
     DRIVE_ENABLED: 'true',
     // auto/ reads it at boot; set here so the repo-root .env's own never wins the dotenv race.
     MOODLE_SITE: FAKE_MOODLE_SITE,
-    // Off by default: a cron firing mid-sweep would attribute its runs to whatever the agent
-    // happened to be doing. The agent turns it on deliberately when testing the nightly pass.
-    NIGHTLY_RUN: 'false',
   };
 }
 

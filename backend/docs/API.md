@@ -83,10 +83,10 @@ Static `{"extractors": [{"slug", "title", "phases"}]}` in declaration order. `ph
 
 ## Config
 
-The backend-owned settings: both API keys, the Gemini model, the Drive toggle, the Drive root folder, the `AUTO_RUN` ceiling, the nightly cron's on/off switch and hour, the `AUTO_REMOVE` / `AUTO_REMOVE_AFTER` rule, plus the error-reports switch. `database/` owns `DATA_ROOT` and the persistent store; these endpoints only move values in and out of the running process.
+The backend-owned settings: both API keys, the Gemini model, the Drive toggle, the Drive root folder, the `AUTO_RUN` ceiling, the `AUTO_REMOVE` / `AUTO_REMOVE_AFTER` rule, plus the error-reports switch. `database/` owns `DATA_ROOT` and the persistent store; these endpoints only move values in and out of the running process.
 
 `POST /config`
-body: any subset of `{gemini_api_key, groq_api_key, gemini_model, gemini_auto_fallback, drive_enabled, gdrive_root_folder, auto_run, nightly_run, nightly_hour, auto_remove, auto_remove_after, error_reports}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. `error_reports` (bool, sent by the launcher when the user flips the switch) is no env var: it sets the Sentry transport gate, so sending stops or starts from that call on. The nightly cron is then re-applied unconditionally — an out-of-range `nightly_hour` is clamped to 03:00 there, never rejected here ([PIPELINE.md](PIPELINE.md)). → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
+body: any subset of `{gemini_api_key, groq_api_key, gemini_model, gemini_auto_fallback, drive_enabled, gdrive_root_folder, auto_run, auto_remove, auto_remove_after, error_reports}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. `error_reports` (bool, sent by the launcher when the user flips the switch) is no env var: it sets the Sentry transport gate, so sending stops or starts from that call on. → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
 
 `GET /config/options`
 `{"providers": [{"id", "display_name", "key_prefix", "console_url"}], "gemini_models": [...]}` from `services/providers.py` and `services/settings.py`, so the settings screens hold no second copy of either list. Each provider's base URL stays server-side.

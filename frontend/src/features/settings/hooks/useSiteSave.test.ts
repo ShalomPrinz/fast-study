@@ -89,12 +89,12 @@ describe('useSiteSave', () => {
     const { hook, onSaved } = render(BIU)
     let landed: Settings | undefined
     act(() => {
-      void hook.result.current.save({ nightlyHour: 5 }).then((s) => (landed = s))
+      void hook.result.current.save({ dataRoot: '/x' }).then((s) => (landed = s))
     })
     act(() => hook.result.current.pick(BGU))
     await settle()
     // The pick waits for the Save.
-    expect(saveSettings.mock.calls).toEqual([[{ nightlyHour: 5 }]])
+    expect(saveSettings.mock.calls).toEqual([[{ dataRoot: '/x' }]])
     await act(async () => form.resolve(stored(BIU)))
     await settle()
     expect(landed).toEqual(stored(BIU))

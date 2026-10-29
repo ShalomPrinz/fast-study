@@ -6,7 +6,17 @@ const stub = require('./stubElectron');
 const store = require('../store');
 
 beforeEach(() => stub.useTempUserData());
-afterEach(() => stub.cleanup());
+afterEach(() => {
+  delete store.FIELDS.someCount;
+  delete store.INT_FIELDS.some_count;
+  stub.cleanup();
+});
+
+/** Register a test-only integer field, since the store ships none. */
+function withIntField() {
+  store.FIELDS.someCount = 'some_count';
+  store.INT_FIELDS.some_count = { env: 'SOME_COUNT', min: 1, max: 5 };
+}
 
 /** A refusal is returned, never thrown, in the error-code contract's shape. */
 function assertRefused(result, message) {
@@ -24,9 +34,7 @@ const full = {
   courseStructure: 'lectures_some',
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
-  nightlyRun: false,
   geminiAutoFallback: true,
-  nightlyHour: 22,
   errorReports: false,
   privacyConfirmed: true,
   aiProvider: 'gemini',
@@ -43,46 +51,46 @@ test('an unknown patch key is refused and nothing is written', () => {
 });
 
 test('an unknown key and a bad value each return their code and params', () => {
-  assert.deepEqual(store.write({ nightly: true }), {
+  withIntField();
+  assert.deepEqual(store.write({ bogus: true }), {
     code: 'unknown_setting',
-    params: { field: 'nightly' },
-    message: 'unknown setting: nightly',
+    params: { field: 'bogus' },
+    message: 'unknown setting: bogus',
   });
-  assert.deepEqual(store.write({ nightlyRun: 'yes' }), {
+  assert.deepEqual(store.write({ driveEnabled: 'yes' }), {
     code: 'setting_must_be_boolean',
-    params: { field: 'nightlyRun' },
-    message: 'nightlyRun must be a boolean',
+    params: { field: 'driveEnabled' },
+    message: 'driveEnabled must be a boolean',
   });
-  assert.deepEqual(store.write({ nightlyHour: 3.5 }), {
+  assert.deepEqual(store.write({ someCount: 3.5 }), {
     code: 'setting_must_be_integer',
-    params: { field: 'nightlyHour' },
-    message: 'nightlyHour must be an integer',
+    params: { field: 'someCount' },
+    message: 'someCount must be an integer',
   });
-  assert.deepEqual(store.write({ nightlyHour: 24 }), {
+  assert.deepEqual(store.write({ someCount: 6 }), {
     code: 'setting_out_of_range',
-    params: { field: 'nightlyHour', min: 0, max: 23 },
-    message: 'nightlyHour must be between 0 and 23',
+    params: { field: 'someCount', min: 1, max: 5 },
+    message: 'someCount must be between 1 and 5',
   });
   assert.deepEqual(store.write({ dataRoot: 5 }), {
     code: 'setting_must_be_string',
     params: { field: 'dataRoot' },
     message: 'dataRoot must be a string',
   });
-  assert.deepEqual(store.write({ autoRun: ' Nightly ' }), {
+  assert.deepEqual(store.write({ autoRun: ' Weekly ' }), {
     code: 'setting_invalid_choice',
-    params: { field: 'autoRun', value: 'Nightly' },
+    params: { field: 'autoRun', value: 'Weekly' },
     message: 'autoRun must be one of off, audio, full',
   });
   assert.equal(fs.existsSync(store.file()), false);
 });
 
-test('nightlyRun and nightlyHour round-trip and reach the backend env', () => {
-  const view = store.write({ nightlyRun: true, nightlyHour: 0 });
-
-  assert.equal(view.nightlyRun, true);
-  assert.equal(view.nightlyHour, 0);
-  assert.deepEqual(store.serviceEnv(), { NIGHTLY_RUN: 'true', NIGHTLY_HOUR: '0' });
-  assert.equal(store.write({ nightlyHour: 23 }).nightlyHour, 23);
+test('an integer field stores each bound and reaches the env as a string', () => {
+  withIntField();
+  store.write({ someCount: 1 });
+  assert.deepEqual(store.serviceEnv(), { SOME_COUNT: '1' });
+  store.write({ someCount: 5 });
+  assert.deepEqual(store.serviceEnv(), { SOME_COUNT: '5' });
 });
 
 test('geminiAutoFallback round-trips and reaches the backend env', () => {
@@ -96,10 +104,19 @@ test('geminiAutoFallback round-trips and reaches the backend env', () => {
   );
 });
 
-test('an out-of-range nightly_hour in the file reads as unset and stays out of the env', () => {
-  fs.writeFileSync(store.file(), JSON.stringify({ nightly_hour: 30 }));
-  assert.equal(store.read().nightlyHour, null);
+test('an out-of-range integer in the file stays out of the env', () => {
+  withIntField();
+  fs.writeFileSync(store.file(), JSON.stringify({ some_count: 30 }));
   assert.deepEqual(store.serviceEnv(), {});
+});
+
+test('a stored key the store no longer knows is inert on read, env and write', () => {
+  fs.writeFileSync(store.file(), JSON.stringify({ retired_flag: true, retired_hour: 22 }));
+
+  assert.deepEqual(store.read(), unset);
+  assert.deepEqual(store.serviceEnv(), {});
+  assert.equal(store.write({ dataRoot: '/data/root' }).dataRoot, '/data/root');
+  assert.deepEqual(store.serviceEnv(), { DATA_ROOT: '/data/root' });
 });
 
 test('a patch is all-or-nothing even when the valid field comes first', () => {
@@ -116,7 +133,7 @@ test('an unknown autoRun mode is refused and nothing is written', () => {
   const before = fs.readFileSync(store.file());
 
   assertRefused(
-    store.write({ dataRoot: '/data/root', autoRun: 'nightly' }),
+    store.write({ dataRoot: '/data/root', autoRun: 'weekly' }),
     /autoRun must be one of off, audio, full/,
   );
   assert.deepEqual(fs.readFileSync(store.file()), before);
@@ -217,9 +234,7 @@ test('echoing a read back blanks nothing', () => {
     dataRoot: written.dataRoot,
     geminiModel: written.geminiModel,
     driveEnabled: written.driveEnabled,
-    nightlyRun: written.nightlyRun,
     geminiAutoFallback: written.geminiAutoFallback,
-    nightlyHour: written.nightlyHour,
     gdriveRootFolder: written.gdriveRootFolder,
     autoRun: written.autoRun,
     autoRemove: written.autoRemove,
@@ -251,26 +266,26 @@ test('the read view trims, and a blank string reads as unset', () => {
 });
 
 test('an unset store reads as all-null, bar privacyConfirmed, which reads false', () => {
-  assert.deepEqual(store.read(), {
-    dataRoot: null,
-    geminiApiKeySet: false,
-    groqApiKeySet: false,
-    geminiModel: null,
-    driveEnabled: null,
-    nightlyRun: null,
-    geminiAutoFallback: null,
-    nightlyHour: null,
-    gdriveRootFolder: null,
-    autoRun: null,
-    autoRemove: null,
-    autoRemoveAfter: null,
-    courseStructure: null,
-    moodleSite: null,
-    errorReports: null,
-    privacyConfirmed: false,
-    aiProvider: null,
-  });
+  assert.deepEqual(store.read(), unset);
 });
+
+const unset = {
+  dataRoot: null,
+  geminiApiKeySet: false,
+  groqApiKeySet: false,
+  geminiModel: null,
+  driveEnabled: null,
+  geminiAutoFallback: null,
+  gdriveRootFolder: null,
+  autoRun: null,
+  autoRemove: null,
+  autoRemoveAfter: null,
+  courseStructure: null,
+  moodleSite: null,
+  errorReports: null,
+  privacyConfirmed: false,
+  aiProvider: null,
+};
 
 test('errorReports round-trips as a boolean and never reaches a child env', () => {
   assert.equal(store.write({ errorReports: false }).errorReports, false);
@@ -323,9 +338,7 @@ test('serviceEnv maps every field onto its service env var', () => {
     AUTO_REMOVE_AFTER: 'drive',
     COURSE_STRUCTURE: 'lectures_some',
     DRIVE_ENABLED: 'true',
-    NIGHTLY_RUN: 'false',
     GEMINI_AUTO_FALLBACK: 'true',
-    NIGHTLY_HOUR: '22',
     GEMINI_API_KEY: 'gemini-secret',
     GROQ_API_KEY: 'groq-secret',
   });

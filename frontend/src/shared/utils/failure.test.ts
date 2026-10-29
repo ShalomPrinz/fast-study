@@ -42,13 +42,13 @@ describe('failureOf', () => {
     expect(
       failureOf({
         code: 'setting_out_of_range',
-        params: { field: 'nightlyHour', min: 0, max: 23 },
+        params: { field: 'autoRemoveAfter', min: 0, max: 23 },
         message: 'm',
       }),
     ).toEqual({
       message: 'm',
       code: 'setting_out_of_range',
-      params: { field: 'nightlyHour', min: 0, max: 23 },
+      params: { field: 'autoRemoveAfter', min: 0, max: 23 },
     })
     expect(failureOf({ code: 'unknown_setting' })).toEqual({
       message: '',

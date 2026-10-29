@@ -209,8 +209,9 @@ written from both processes would put two writers on one file.
   Codes and params (`field` = the camelCase patch key) are `database/settings.py`'s for the same
   refusals: `unknown_setting`, `setting_must_be_{string,boolean,integer}`, `setting_invalid_choice`
   (+`value`), plus the launcher's `setting_out_of_range` (+`min`, `max`). The keystore refusal still throws.
-- **`nightly_run` (`nightlyRun`) and `nightly_hour` (`nightlyHour`, integer 0-23)** reach the backend
-  as `NIGHTLY_RUN` (`true`/`false`) and `NIGHTLY_HOUR`; an out-of-range stored hour reads `null`.
+- **Integer fields (`INT_FIELDS`, `{ env, min, max }`) are empty today**; the validation path stays
+  for the next one, and an out-of-range stored value reads `null` and stays out of the env.
+- **A stored key the store no longer knows is inert**: neither the read view nor the env lists it.
 - **`gemini_auto_fallback` (`geminiAutoFallback`)** reaches the backend as `GEMINI_AUTO_FALLBACK`
   (`true`/`false`); unset reads `null`, which the backend treats as off.
 - **`error_reports` and `privacy_confirmed` are the launcher's own fields**, in no service's settings

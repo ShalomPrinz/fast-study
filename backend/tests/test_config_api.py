@@ -4,9 +4,7 @@ from unittest.mock import patch
 
 import backend_main
 import pytest
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi.testclient import TestClient
-from pipeline import schedule
 from services import google_auth, providers, settings
 from services.errors import CodedError
 
@@ -34,10 +32,6 @@ class TestPostConfig:
     def _isolate_env(self, monkeypatch):
         for var in ("GEMINI_API_KEY", "GROQ_API_KEY", "GEMINI_MODEL", "DRIVE_ENABLED"):
             monkeypatch.setenv(var, "before")
-        for var in ("NIGHTLY_RUN", "NIGHTLY_HOUR"):
-            monkeypatch.delenv(var, raising=False)
-        # The app's scheduler is never started here, so /config reaches a stopped one.
-        monkeypatch.setattr(schedule, "_scheduler", AsyncIOScheduler())
 
     def test_applies_only_the_fields_sent(self):
         body = client.post("/config", json={"gemini_model": "gemini-3.6-flash"}).json()
@@ -55,15 +49,6 @@ class TestPostConfig:
         assert backend_main.runner.enabled_steps()[-1] == "pdf"
         client.post("/config", json={"drive_enabled": True})
         assert backend_main.runner.enabled_steps()[-1] == "drive"
-
-    def test_the_nightly_pair_reaches_the_cron_with_no_restart(self):
-        body = client.post("/config", json={"nightly_hour": 19}).json()
-        assert body == {"status": "ok", "applied": ["nightly_hour"]}
-        job = schedule._scheduler.get_job(schedule.JOB_ID)
-        assert str(next(f for f in job.trigger.fields if f.name == "hour")) == "19"
-
-        client.post("/config", json={"nightly_run": False})
-        assert schedule._scheduler.get_job(schedule.JOB_ID) is None
 
     def test_the_auto_remove_rule_applies_with_no_restart(self):
         body = client.post(

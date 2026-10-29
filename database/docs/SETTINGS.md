@@ -23,14 +23,13 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
 | `auto_run`                                         | `AUTO_RUN`                                        |
 | `moodle_site` (the auto-downloader's)              | `MOODLE_SITE`                                     |
-| `nightly_run` (bool), `nightly_hour` (int)         | `NIGHTLY_RUN`, `NIGHTLY_HOUR`                     |
 | `ai_provider` (the "Study with AI" pick)           | `AI_PROVIDER`                                     |
 | `auto_remove`, `auto_remove_after`                 | `AUTO_REMOVE`, `AUTO_REMOVE_AFTER`                |
 | `course_structure`                                 | `COURSE_STRUCTURE`                                |
 
-Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` — which is all the store
-knows about a value. It validates the _type_ and nothing else: `nightly_hour` is stored as any
-integer, and clamping it to a real hour is the backend's job. Meaning belongs to the owning service;
+Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` (empty today) — which is
+all the store knows about a value. It validates the _type_ and nothing else: an integer is stored as
+any integer, and clamping it to a meaningful range is the owning service's job. Meaning belongs to the owning service;
 the store stays generic. The one exception is `auto_run`, stored lowercased and refused
 (`setting_invalid_choice`) unless `off`/`audio`/`full`, because the backend silently runs an unknown
 mode as `full`; the list is a deliberate copy of the backend's `AUTO_RUN_MODES`. `ai_provider` follows

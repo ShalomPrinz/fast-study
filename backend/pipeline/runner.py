@@ -1224,7 +1224,7 @@ def try_run_assignment_step(
     course: str, assignment: str, step: str, *, fresh: bool = False
 ) -> str:
     """Fire-and-forget one assignment step if its lock is free. Returns 'busy' or 'started'; it
-    never joins the runner queue, and no run-all, nightly or AUTO_RUN pass starts one."""
+    never joins the runner queue, and no run-all or AUTO_RUN pass starts one."""
 
     key = _lkey(course, assignment, ASSIGNMENT_KIND)
     if not _claim(key):
@@ -1447,23 +1447,3 @@ async def run_all() -> dict:
         _transcribe_block = None
         _drop_handover()
         db_client.notify()
-
-
-async def _scheduled_run() -> None:
-    """Cron entry point: queue everything pending, at the depth AUTO_RUN allows. `off` means no
-    automatic work at all, this nightly pass included."""
-
-    if _runner_status["running"]:
-        log.info("cron: runner already running, skipping")
-        return
-    depth = settings.auto_run()
-    if depth == "off":
-        log.info("cron: AUTO_RUN=off, nothing runs unattended")
-        return
-    pending = await scan_pending()
-    if not pending:
-        log.info("cron: nothing pending")
-        return
-    for course, lecture, kind in pending:
-        enqueue(QueueEntry(course, lecture, kind, depth))
-    db_client.notify()

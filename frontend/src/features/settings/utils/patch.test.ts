@@ -11,8 +11,6 @@ const STORED: Settings = {
   driveEnabled: false,
   gdriveRootFolder: null,
   autoRun: null,
-  nightlyRun: null,
-  nightlyHour: null,
   autoRemove: null,
   autoRemoveAfter: null,
   moodleSite: 'https://lemida.biu.ac.il',
@@ -31,8 +29,6 @@ const UNCHANGED: SettingsForm = {
   geminiModel: 'gemini-3.5-flash',
   geminiAutoFallback: false,
   autoRun: 'full',
-  nightlyRun: true,
-  nightlyHour: 3,
   autoRemove: { on: false, what: 'video', after: null },
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: false,
@@ -73,25 +69,8 @@ describe('buildPatch', () => {
     )
   })
 
-  it('treats an unset nightly switch as on and an unset hour as 03:00', () => {
+  it('sends nothing for an unchanged form', () => {
     expect(buildPatch(UNCHANGED, STORED, true)).toEqual({})
-    expect(buildPatch({ ...UNCHANGED, nightlyRun: false }, STORED, true)).toEqual({
-      nightlyRun: false,
-    })
-  })
-
-  it('diffs the nightly hour against the stored value, clamping an out-of-range one to 3', () => {
-    expect(buildPatch(UNCHANGED, { ...STORED, nightlyHour: 99 }, true)).toEqual({})
-    expect(
-      buildPatch({ ...UNCHANGED, nightlyHour: 21 }, { ...STORED, nightlyHour: 21 }, true),
-    ).toEqual({})
-    expect(buildPatch({ ...UNCHANGED, nightlyHour: 0 }, STORED, true)).toEqual({ nightlyHour: 0 })
-  })
-
-  it('sends the nightly hour as a number, which is what the store accepts', () => {
-    const patch = buildPatch({ ...UNCHANGED, nightlyHour: 21 }, STORED, true)
-    expect(patch.nightlyHour).toBe(21)
-    expect(storeBody(patch)).toEqual({ nightly_hour: 21 })
   })
 
   it('sends only the changed fields', () => {
@@ -195,9 +174,9 @@ describe('formFromStore', () => {
   // After a save the page re-reads the form from the store's fresh answer, which already holds
   // another writer's change, so the next save carries only what this page edits.
   it('never reverts a field another writer changed once the form is re-read after a save', () => {
-    const fresh = { ...STORED, gdriveRootFolder: 'Harness-B', nightlyRun: true }
-    const next = { ...formFromStore(fresh, OPTIONS), nightlyRun: false }
-    expect(buildPatch(next, fresh, true)).toEqual({ nightlyRun: false })
+    const fresh = { ...STORED, gdriveRootFolder: 'Harness-B', autoRun: 'full' }
+    const next = { ...formFromStore(fresh, OPTIONS), autoRun: 'off' as const }
+    expect(buildPatch(next, fresh, true)).toEqual({ autoRun: 'off' })
   })
 })
 
@@ -232,13 +211,13 @@ describe('withSavedSite', () => {
     const edited = {
       ...UNCHANGED,
       dataRoot: '/elsewhere',
-      nightlyHour: 5,
+      autoRun: 'off' as const,
       moodleSite: 'https://moodle.bgu.ac.il/moodle',
     }
     const saved = { ...STORED, moodleSite: 'https://moodle.bgu.ac.il/moodle' }
     expect(buildPatch(withSavedSite(edited, saved), saved, true)).toEqual({
       dataRoot: '/elsewhere',
-      nightlyHour: 5,
+      autoRun: 'off',
     })
   })
 

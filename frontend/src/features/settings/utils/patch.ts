@@ -2,7 +2,6 @@ import {
   toAutoRun,
   toCourseStructure,
   type CourseStructure,
-  toNightlyHour,
   type AutoRun,
   type ConfigOptions,
   type Settings,
@@ -20,8 +19,6 @@ export interface SettingsForm {
   geminiModel: string
   geminiAutoFallback: boolean
   autoRun: AutoRun
-  nightlyRun: boolean
-  nightlyHour: number
   autoRemove: AutoRemoveForm
   // `''` is "no university", which clears a stored site; `null` while a site is chosen but not yet
   // savable (in flight, unsupported), which leaves the stored one alone.
@@ -54,9 +51,6 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     geminiModel: formModel(stored, options),
     geminiAutoFallback: stored.geminiAutoFallback ?? false,
     autoRun: toAutoRun(stored.autoRun),
-    // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
-    nightlyRun: stored.nightlyRun ?? true,
-    nightlyHour: toNightlyHour(stored.nightlyHour),
     autoRemove: autoRemoveFromStore(stored),
     moodleSite: stored.moodleSite ?? '',
     // Unset means off, as the launcher reads it; only the init wall starts its box checked.
@@ -98,9 +92,6 @@ export function buildPatch(
     patch.gdriveRootFolder = form.gdriveRootFolder.trim()
   }
   if (form.autoRun !== toAutoRun(stored.autoRun)) patch.autoRun = form.autoRun
-  // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
-  if (form.nightlyRun !== (stored.nightlyRun ?? true)) patch.nightlyRun = form.nightlyRun
-  if (form.nightlyHour !== toNightlyHour(stored.nightlyHour)) patch.nightlyHour = form.nightlyHour
   // Nothing while the section is unchanged or half chosen; Save waits on the latter (`autoRemoveComplete`).
   Object.assign(patch, autoRemovePatch(form.autoRemove, stored, form.driveEnabled))
   if (form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')) {

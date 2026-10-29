@@ -26,8 +26,6 @@ export const SETTINGS = {
   GDRIVE_ROOT_FOLDER: ['gdrive_root_folder', 'string'],
   DRIVE_ENABLED: ['drive_enabled', 'bool'],
   AUTO_RUN: ['auto_run', 'string'],
-  NIGHTLY_RUN: ['nightly_run', 'bool'],
-  NIGHTLY_HOUR: ['nightly_hour', 'int'],
   MOODLE_SITE: ['moodle_site', 'string'],
   AUTO_REMOVE: ['auto_remove', 'string'],
   AUTO_REMOVE_AFTER: ['auto_remove_after', 'string'],
@@ -47,9 +45,6 @@ export function baselineEnv(paths, geminiModel) {
     GDRIVE_ROOT_FOLDER: 'Harness',
     DRIVE_ENABLED: 'true',
     AUTO_RUN: 'full',
-    // Off: a cron firing mid-sweep would attribute its runs to whatever the agent was doing.
-    NIGHTLY_RUN: 'false',
-    NIGHTLY_HOUR: '3',
     // Off, so a rule a flow saved never deletes the next flow's seeded video or audio.
     AUTO_REMOVE: 'off',
     // Empty reads as unset in both the store and the backend; omitted, the backend keeps the last value.

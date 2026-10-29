@@ -229,10 +229,7 @@ async function capture() {
   await openEditor(page);
   await shot('feature-editor');
 
-  // The harness baseline turns the daily run off; the shot shows the app's default, on, unsaved.
   await open('/settings');
-  const daily = page.getByLabel('להריץ מדי יום הרצאות שלא הסתיימו');
-  if (!(await daily.isChecked())) await daily.check();
   await page.evaluate(() =>
     document.getElementById('auto-run').scrollIntoView({ block: 'center' }),
   );

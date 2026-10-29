@@ -185,27 +185,6 @@ def test_scan_pending_ignores_materials_only_lectures():
     list_materials.assert_not_called()
 
 
-# ---- _scheduled_run guard ----
-
-
-def test_scheduled_run_skips_when_locked():
-    """_scheduled_run must not call scan_pending or run_all if already running."""
-    scan_calls: list = []
-
-    async def go():
-        runner._runner_status["running"] = True
-        try:
-            with patch.object(
-                runner, "scan_pending", side_effect=lambda: scan_calls.append(1)
-            ):
-                await runner._scheduled_run()
-        finally:
-            runner._runner_status["running"] = False
-
-    asyncio.run(go())
-    assert scan_calls == [], "scan_pending should not be called while runner is running"
-
-
 # ---- empty-file guard ----
 
 
@@ -1719,8 +1698,8 @@ class TestQueueDrain:
 
 
 class TestAutoRun:
-    """AUTO_RUN is a ceiling on automatic work: it caps a video's arrival and the nightly
-    cron alike, and never a run the user asked for."""
+    """AUTO_RUN is a ceiling on automatic work: it caps a video's arrival,
+    and never a run the user asked for."""
 
     @pytest.fixture(autouse=True)
     def _no_drain(self, clean_queue):
@@ -1759,38 +1738,6 @@ class TestAutoRun:
 
         asyncio.run(go())
         assert runner._queue == []
-
-    def test_cron_queues_nothing_when_off(self, monkeypatch):
-        monkeypatch.setenv("AUTO_RUN", "off")
-        scanned: list = []
-
-        async def go():
-            with patch.object(
-                runner, "scan_pending", side_effect=lambda: scanned.append(1)
-            ):
-                await runner._scheduled_run()
-
-        asyncio.run(go())
-        assert scanned == [], "off must not even scan — nothing runs unattended"
-        assert runner._queue == []
-
-    @pytest.mark.parametrize("mode,depth", [("audio", "audio"), ("full", "full")])
-    def test_cron_queues_at_the_settings_depth(self, monkeypatch, mode, depth):
-        monkeypatch.setenv("AUTO_RUN", mode)
-
-        async def fake_scan():
-            return [("C1", "L1", "lecture"), ("C1", "L2", "lecture")]
-
-        async def go():
-            with (
-                patch.object(runner, "scan_pending", fake_scan),
-                patch.object(runner.db_client, "notify"),
-            ):
-                await runner._scheduled_run()
-            await asyncio.sleep(0)
-
-        asyncio.run(go())
-        assert runner._queue == [_entry("L1", depth), _entry("L2", depth)]
 
 
 # ---- _exec_pdf: the .pdf_warning / .pdf_build.tex dotfiles ----
@@ -2228,7 +2175,7 @@ class TestRemovedCountsAsPresent:
         files = self._stripped(transcript=True, summary=True, pdf=True)
         assert runner.is_materials_only(files, [{"name": "m.pdf"}]) is False
 
-    def test_still_pending_for_the_nightly_pass(self):
+    def test_still_pending_until_its_final_output_exists(self):
         assert runner._lecture_pending(self._stripped(pdf=True)) is True
         assert runner._lecture_pending(self._stripped(pdf=True, drive=True)) is False
 
@@ -2502,7 +2449,7 @@ class TestApplyAutoRemove:
 
 
 def test_an_audio_entry_whose_audio_was_auto_removed_has_nothing_left(clean_queue):
-    """Otherwise AUTO_RUN=audio re-runs audio on a stripped lecture every night and fails on video.mp4."""
+    """Otherwise AUTO_RUN=audio re-runs audio on a stripped lecture and fails on video.mp4."""
 
     tree = [
         {

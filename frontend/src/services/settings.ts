@@ -37,15 +37,6 @@ export function toCourseStructure(stored: string | null): CourseStructure {
     : 'split'
 }
 
-// The hour the nightly catch-up pass fires. The backend clamps an unset or out-of-range value to
-// the same 3, so a store holding anything else still shows the hour that will actually run.
-export const DEFAULT_NIGHTLY_HOUR = 3
-
-export function toNightlyHour(stored: number | null): number {
-  if (stored === null || !Number.isInteger(stored)) return DEFAULT_NIGHTLY_HOUR
-  return stored >= 0 && stored <= 23 ? stored : DEFAULT_NIGHTLY_HOUR
-}
-
 // The store's read view. `null` is "nothing stored", which has to stay distinguishable from a
 // stored value: the client, not the store, owns every default.
 export interface Settings {
@@ -58,8 +49,6 @@ export interface Settings {
   driveEnabled: boolean | null
   gdriveRootFolder: string | null
   autoRun: string | null
-  nightlyRun: boolean | null
-  nightlyHour: number | null
   autoRemove: string | null
   autoRemoveAfter: string | null
   // The university's Moodle root, always the canonical `wwwroot` the site probe answered.
@@ -90,9 +79,6 @@ export interface SettingsPatch {
   driveEnabled?: boolean
   gdriveRootFolder?: string
   autoRun?: AutoRun
-  nightlyRun?: boolean
-  // A number, never the raw string a `<select>` hands back: the store rejects a JSON string.
-  nightlyHour?: number
   autoRemove?: AutoRemove
   autoRemoveAfter?: AutoRemoveAfter
   moodleSite?: string
@@ -113,8 +99,6 @@ const WIRE: Record<SettingsField, string> = {
   driveEnabled: 'drive_enabled',
   gdriveRootFolder: 'gdrive_root_folder',
   autoRun: 'auto_run',
-  nightlyRun: 'nightly_run',
-  nightlyHour: 'nightly_hour',
   autoRemove: 'auto_remove',
   autoRemoveAfter: 'auto_remove_after',
   moodleSite: 'moodle_site',
@@ -136,8 +120,6 @@ const BACKEND_FIELDS: SettingsField[] = [
   'driveEnabled',
   'gdriveRootFolder',
   'autoRun',
-  'nightlyRun',
-  'nightlyHour',
   'autoRemove',
   'autoRemoveAfter',
 ]
@@ -153,8 +135,6 @@ interface RawSettings {
   drive_enabled: boolean | null
   gdrive_root_folder: string | null
   auto_run: string | null
-  nightly_run: boolean | null
-  nightly_hour: number | null
   auto_remove: string | null
   auto_remove_after: string | null
   moodle_site: string | null
@@ -172,8 +152,6 @@ function normalize(raw: RawSettings): Settings {
     driveEnabled: raw.drive_enabled,
     gdriveRootFolder: raw.gdrive_root_folder,
     autoRun: raw.auto_run,
-    nightlyRun: raw.nightly_run,
-    nightlyHour: raw.nightly_hour,
     autoRemove: raw.auto_remove ?? null,
     autoRemoveAfter: raw.auto_remove_after ?? null,
     moodleSite: raw.moodle_site ?? null,
