@@ -33,7 +33,7 @@ export async function showRecording(page, title) {
     );
   if (await shown()) return card;
   for (const segment of await page
-    .locator('.recordings-panel > .mode-toggle .mode-toggle-btn')
+    .locator('.recordings-panel .mode-toggle--cards .mode-toggle-btn')
     .all()) {
     await segment.click();
     if (await shown()) return card;
