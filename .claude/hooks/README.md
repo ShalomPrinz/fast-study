@@ -4,7 +4,8 @@ Three scripts wired to `Stop` and `SubagentStop` in [`../settings.json`](../sett
 run at the end of every turn and every subagent, plus `extract.sh` on `SubagentStop` for `frontend-dev` only. They exist
 to keep the repo's stated invariants — "new code lands lint-clean", "never hand-format", "zero missing
 translations" — true without anyone remembering them. A fifth,
-`checkpoint.py`, is wired to `PostToolUse` — see [the context checkpoint](#the-context-checkpoint).
+`checkpoint.py`, is wired to `PostToolUse` — see [the context checkpoint](#the-context-checkpoint). A sixth, `waits.py`, is wired to
+`PreToolUse` — see [foreground waits](#foreground-waits).
 
 | Script | Does | Blocks the turn |
 | ------ | ---- | --------------- |
@@ -63,6 +64,15 @@ the runs that got that large were multi-concern briefs. The hook gets the parent
 `transcript_path`, so it reads `<session>/subagents/agent-<agent_id>.jsonl` for usage, and an empty
 `.checkpoint` file beside it keeps it to one firing. It runs synchronously: a full parse of an 8.5 MB
 transcript takes about 45 ms.
+
+## Foreground waits
+
+`waits.py` runs on `PreToolUse` for `Bash` and `Monitor` and denies the two ways agents lost track
+of a run. A `Monitor` from a subagent (an input with `agent_id`): ending its turn ends a subagent, so
+it re-armed instead of idling, once 32 times in 90 s. A harness command (`setup.mjs`, `test:e2e`,
+`hb`) with `run_in_background`, `nohup` or a lone `&`: both exit on their own within a foreground
+call's 10 minutes, and a backgrounded one either never notified or orphaned the real process. It
+matches text per line, so a line that merely names `setup.mjs` and ends in `&` is denied too.
 
 ## Scope
 
