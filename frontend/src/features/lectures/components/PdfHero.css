@@ -24,6 +24,18 @@
   font-size: var(--fs-row);
 }
 
+/* The one accent-filled button on the lecture page. */
+.btn.pdf-hero-open {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn.pdf-hero-open:hover:not(:disabled) {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
 .pdf-thumbnail {
   position: relative;
   display: flex;
