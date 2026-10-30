@@ -192,9 +192,20 @@
   align-items: baseline;
 }
 
-/* The open button sits at the row's end. */
+/* The whole row opens the steps; the icon sits at its end, enlarged. */
+.pipeline-collapsed {
+  cursor: pointer;
+}
+
 .pipeline-collapsed .pipeline-icon-btn {
+  width: 40px;
+  height: 40px;
   margin-inline-start: auto;
+}
+
+.pipeline-collapsed .pipeline-icon-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Reserve the scrollbar's width so the PDF hero, sized to the column, cannot flip the scrollbar on and off. */

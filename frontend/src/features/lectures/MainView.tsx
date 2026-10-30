@@ -531,7 +531,11 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
 
             <div className="pipeline-card lecture-pipeline lecture-split-steps">
               {complete ? (
-                <div className="pipeline-row pipeline-collapsed" data-testid="pipeline-collapsed">
+                <div
+                  className="pipeline-row pipeline-collapsed"
+                  data-testid="pipeline-collapsed"
+                  onClick={() => setStepsOpen(true)}
+                >
                   <StatusNode state="done" />
                   <div className="pipeline-row-body">
                     <div className="pipeline-stage-line">
@@ -548,7 +552,10 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
                       className="pipeline-icon-btn"
                       aria-label={t`Show steps`}
                       data-testid="pipeline-steps-open"
-                      onClick={() => setStepsOpen(true)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setStepsOpen(true)
+                      }}
                     >
                       <Icon icon="info" />
                     </button>
