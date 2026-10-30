@@ -6,7 +6,7 @@ import {
   test,
   expect,
   driveFile,
-  expectStepsDone,
+  expectRunComplete,
   reseed,
   reset,
   step as stepOf,
@@ -15,7 +15,6 @@ import {
 
 const COURSE = 'hb-pipeline';
 const RECITATION = 'תרגול 1';
-const STEPS = ['audio', 'transcribe', 'summarize', 'pdf', 'drive'];
 
 test.beforeEach(reseed);
 test.afterEach(reset);
@@ -38,7 +37,7 @@ test('a bare recitation video runs to a PDF uploaded to Drive', async ({ page })
   // Past the start first, so a stale `failed` left by an earlier run never reads as this run's end.
   await expect(step('audio')).toHaveAttribute('data-status', /^(running|done)$/);
 
-  await expectStepsDone(view, STEPS, 90_000);
+  await expectRunComplete(view, 200_000);
   await expect(view.locator('.page-header-state--done')).toBeVisible();
   await expect(view.getByTestId('open-pdf')).toBeVisible();
   await expect(view.getByTestId('lecture-error')).toHaveCount(0);

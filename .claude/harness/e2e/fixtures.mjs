@@ -74,14 +74,14 @@ export async function reseed() {
 export const step = (view, name) =>
   view.locator(`[data-testid="step-status"][data-step="${name}"]`);
 
-/** Wait for each step in order to settle, then require `done`, so a failed step fails at once. */
-export async function expectStepsDone(view, names, timeout = 45_000) {
-  for (const name of names) {
-    await expect(step(view, name)).toHaveAttribute('data-status', /^(done|failed|quota)$/, {
-      timeout,
-    });
-    await expect(step(view, name)).toHaveAttribute('data-status', 'done', { timeout: 1_000 });
-  }
+/** A complete lecture folds its step rows into one `pipeline-collapsed` row; a failed or quota step row ends the wait at once. */
+export async function expectRunComplete(view, timeout = 45_000) {
+  const collapsed = view.getByTestId('pipeline-collapsed');
+  const failed = view.locator(
+    '[data-testid="step-status"][data-status="failed"], [data-testid="step-status"][data-status="quota"]',
+  );
+  await expect(collapsed.or(failed).first()).toBeVisible({ timeout });
+  await expect(collapsed).toBeVisible({ timeout: 1_000 });
 }
 
 /** One lecture's `/tree` entry (`files`, `materials`), or undefined when the database lists none. */

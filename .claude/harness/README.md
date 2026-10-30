@@ -479,7 +479,7 @@ so the tour overlay never blocks a drive; `tour.spec.mjs` opts out with
 `test.use({ tourDismissed: false })`, and `HB_TOUR=1` does the same for `hb` sessions.
 
 `e2e/fixtures.mjs` holds what more than one spec needs: the stack's levers (`providers`, `site`, `lock`,
-`reseed`, `reset`), a lecture view's `step` rows and `expectStepsDone`, `treeLecture` over the database's
+`reseed`, `reset`), a lecture view's `step` rows and `expectRunComplete` (the folded "Summary ready" row), `treeLecture` over the database's
 `/tree`, `driveFile` walking the fake Drive's folder chain, and `dropFile`, which drops a local file on an
 element the way a drag from the file manager does. `lib/downloads.mjs` loads a course's recordings
 and finds or downloads a row by title, for the specs and `hb download` alike; it switches the loaded list to the All scope (the New view hides the cards and segments the specs drive). The fake course's `ערוץ חיצוני` section holds one lone playlist row, `ערוץ הקורס ביוטיוב`, for the New view's select-all rule.

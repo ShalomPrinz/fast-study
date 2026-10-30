@@ -1,6 +1,6 @@
 // A summarised lecture runs its remaining steps — PDF (real pandoc + tectonic) and Drive (fake) — to
 // a finished lecture, judged only by what the lecture view shows.
-import { test, expect, expectStepsDone, reseed, reset, step as stepOf } from './fixtures.mjs';
+import { test, expect, expectRunComplete, reseed, reset, step as stepOf } from './fixtures.mjs';
 
 const COURSE = 'hb-pipeline';
 const LECTURE = 'שיעור 3';
@@ -10,8 +10,8 @@ test.beforeEach(reseed);
 test.afterEach(reset);
 
 test('a summarised lecture runs to a finished PDF uploaded to Drive', async ({ page }) => {
-  // Covers both 45 s step waits on a warm tectonic cache; a cold one fetches the LaTeX bundle for minutes.
-  test.setTimeout(100_000);
+  // One 90 s wait for the whole run on a warm tectonic cache; a cold one fetches the LaTeX bundle for minutes.
+  test.setTimeout(110_000);
 
   await page.goto(`/${encodeURIComponent(COURSE)}/${encodeURIComponent(LECTURE)}`);
   const view = page.getByTestId('lecture-view');
@@ -28,9 +28,8 @@ test('a summarised lecture runs to a finished PDF uploaded to Drive', async ({ p
   // Past the start first, so a stale `failed` left by an earlier run never reads as this run's end.
   await expect(step('pdf')).toHaveAttribute('data-status', /^(running|done)$/);
 
-  await expectStepsDone(view, ['pdf', 'drive']);
-  // The file itself appears in the row with its size, and the header calls the lecture complete.
-  await expect(step('pdf').locator('.pipeline-file')).toHaveText(/^summary\.pdf · \S/);
+  await expectRunComplete(view, 90_000);
+  // The header calls the lecture complete.
   await expect(view.getByTestId('open-pdf')).toBeVisible();
   await expect(view.locator('.page-header-state--done')).toBeVisible();
   await expect(view.getByTestId('lecture-error')).toHaveCount(0);

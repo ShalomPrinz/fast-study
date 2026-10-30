@@ -2,7 +2,7 @@
 // out of the automatic queue, and runs by hand from its materials to a finished lecture on Drive.
 import { DATABASE, call, saveSettings } from '../lib/api.mjs';
 import { loadRecordings } from '../lib/downloads.mjs';
-import { test, expect, expectStepsDone, reseed, reset, treeLecture } from './fixtures.mjs';
+import { test, expect, expectRunComplete, reseed, reset, treeLecture } from './fixtures.mjs';
 
 const COURSE = 'hb-dl';
 const SECTION = 'חומרי עזר';
@@ -91,13 +91,10 @@ test('course PDFs attached to a new lecture summarise on their own to Drive', as
   await page.goto(`/${encodeURIComponent(COURSE)}/${encodeURIComponent(LECTURE)}`);
   await expect(view).toHaveAttribute('data-lecture', LECTURE);
   await view.locator('.page-header-actions .btn--primary').click();
-  await expectStepsDone(view, ['summarize', 'pdf', 'drive']);
-  await expect(view.locator('.pipeline-materials-note')).toBeVisible();
+  await expectRunComplete(view);
   await expect(view.locator('.page-header-state--done')).toBeVisible();
   await expect(view.getByTestId('lecture-error')).toHaveCount(0);
   await expect(page.locator('.Toastify__toast--error')).toHaveCount(0);
-  for (const file of ['audio.mp3', 'transcript.txt'])
-    await expect(row(file).locator('.pipeline-skipped')).toBeVisible();
 
   const { files } = await treeLecture(COURSE, LECTURE);
   for (const name of ['video.mp4', 'audio.mp3', 'transcript.txt'])

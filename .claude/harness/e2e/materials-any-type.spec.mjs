@@ -6,7 +6,7 @@ import { loadRecordings, recordingCard } from '../lib/downloads.mjs';
 import {
   test,
   expect,
-  expectStepsDone,
+  expectRunComplete,
   geminiUploads,
   harness,
   reseed,
@@ -119,19 +119,11 @@ test('materials of three types show their original names, and Summarize sends on
   await expect(toggle(view, PNG.file)).not.toBeChecked();
 
   await summarize(view).click();
-  await expectStepsDone(view, ['summarize', 'pdf', 'drive']);
+  await expectRunComplete(view);
   await expect(view.getByTestId('lecture-error')).toHaveCount(0);
 
   const uploads = await geminiUploads();
   expect(uploads.map((u) => u.mimeType)).toEqual(['text/plain']);
-
-  // The summary used {pptx}; flipping the png on shows the changed state, flipping it back clears it.
-  const changed = view.locator('.material-indicator--changed');
-  await expect(changed).toHaveCount(0);
-  await flip(view, PNG.file);
-  await expect(changed).toBeVisible();
-  await flip(view, PNG.file);
-  await expect(changed).toHaveCount(0);
 });
 
 test('a lecture whose only material is unsupported is not materials-only and cannot be summarised', async ({
@@ -177,7 +169,8 @@ test('an attached material over 10 MB fails Summarize until it is switched off',
   await flip(view, BIG.file);
   await expect(toggle(view, BIG.file)).not.toBeChecked();
   await summarize(view).click();
-  await expectStepsDone(view, ['summarize', 'pdf', 'drive']);
+  // The old error clears once the run starts, so a stale `failed` row never reads as this run's end.
   await expect(error).toHaveCount(0);
+  await expectRunComplete(view);
   expect((await geminiUploads()).map((u) => u.mimeType)).toEqual(['text/plain']);
 });

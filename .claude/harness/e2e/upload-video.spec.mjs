@@ -5,7 +5,7 @@ import {
   test,
   expect,
   dropFile,
-  expectStepsDone,
+  expectRunComplete,
   harness,
   reseed,
   reset,
@@ -46,7 +46,7 @@ test('a video dropped on an empty lecture is saved and runs to a finished lectur
   // No click: AUTO_RUN=full queues the run when the video arrives. Past the start first, so a
   // stale `failed` an earlier run left never reads as this run's end.
   await expect(step(view, 'audio')).toHaveAttribute('data-status', /^(running|done)$/);
-  await expectStepsDone(view, ['audio', 'transcribe', 'summarize', 'pdf', 'drive'], 90_000);
+  await expectRunComplete(view, 120_000);
   await expect(view.getByTestId('open-pdf')).toBeVisible();
   await expect(view.locator('.page-header-state--done')).toBeVisible();
   await expect(view.getByTestId('lecture-error')).toHaveCount(0);
