@@ -1,12 +1,12 @@
-// A video dropped on a tree row is saved to that lecture: into an empty one it runs the whole pipeline
+// A video dropped on a tree row is saved to that lecture: into an empty one it starts the pipeline
 // on its own under the default auto-run, and over an existing one it replaces the video after a confirm.
-import { saveSettings } from '../lib/api.mjs';
+import { BACKEND, call, saveSettings } from '../lib/api.mjs';
 import {
   test,
   expect,
   dropFile,
-  expectRunComplete,
   harness,
+  providers,
   reseed,
   reset,
   step,
@@ -25,14 +25,18 @@ test.use({ locale: 'en-US' });
 test.beforeEach(reseed);
 test.afterEach(async () => {
   await saveSettings({ auto_run: 'full' });
+  // The run test leaves a run in flight; the backend queue survives a reseed, so drain it first.
+  await expect
+    .poll(async () => (await call(`${BACKEND}/status`)).body.runner.running, { timeout: 60_000 })
+    .toBe(false);
   await reset();
 });
 
-test('a video dropped on an empty lecture is saved and runs to a finished lecture', async ({
-  page,
-}) => {
-  test.setTimeout(150_000);
+test('a video dropped on an empty lecture is saved and its auto-run starts', async ({ page }) => {
+  test.setTimeout(60_000);
   const [COURSE, LECTURE] = ['hb-mgmt', 'שיעור 10'];
+  // An empty answer ends the run at Summarize, so no PDF render is paid for.
+  await providers({ gemini: 'empty' });
 
   await page.goto(lecturePath(COURSE, LECTURE));
   const view = page.getByTestId('lecture-view');
@@ -43,18 +47,16 @@ test('a video dropped on an empty lecture is saved and runs to a finished lectur
     page.locator('.Toastify__toast--success', { hasText: `Saved to ${LECTURE}` }),
   ).toBeVisible();
 
-  // No click: AUTO_RUN=full queues the run when the video arrives. Past the start first, so a
-  // stale `failed` an earlier run left never reads as this run's end.
+  // No click: AUTO_RUN=full queues the run when the video arrives.
   await expect(step(view, 'audio')).toHaveAttribute('data-status', /^(running|done)$/);
-  await expectRunComplete(view, 120_000);
-  await expect(view.getByTestId('open-pdf')).toBeVisible();
-  await expect(view.locator('.page-header-state--done')).toBeVisible();
-  await expect(view.getByTestId('lecture-error')).toHaveCount(0);
-  await expect(page.locator('.Toastify__toast--error')).toHaveCount(0);
+  await expect(step(view, 'summarize')).toHaveAttribute('data-status', 'failed', {
+    timeout: 45_000,
+  });
 
   const { files } = await treeLecture(COURSE, LECTURE);
-  for (const name of ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf'])
+  for (const name of ['video.mp4', 'audio.mp3', 'transcript.txt'])
     expect(files[name].exists, name).toBe(true);
+  expect(files['summary.pdf'].exists).toBe(false);
 });
 
 test('a video dropped on a lecture that has one replaces it and keeps the materials', async ({

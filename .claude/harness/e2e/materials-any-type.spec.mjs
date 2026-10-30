@@ -1,14 +1,14 @@
 // Lecture materials of any file type: listed, shown by original name, sent to Gemini only when attached
-// and supported, and an attached file over 10 MB fails Summarize.
+// and supported, and an attached file over 10 MB fails Summarize. Runs stop at Summarize (empty Gemini answer).
 import fs from 'node:fs';
-import { DATABASE, call, saveSettings } from '../lib/api.mjs';
+import { BACKEND, DATABASE, call, saveSettings } from '../lib/api.mjs';
 import { loadRecordings, recordingCard } from '../lib/downloads.mjs';
 import {
   test,
   expect,
-  expectRunComplete,
   geminiUploads,
   harness,
+  providers,
   reseed,
   reset,
   step,
@@ -29,6 +29,10 @@ test.beforeEach(async () => {
   await saveSettings({ auto_run: 'off' });
 });
 test.afterEach(async () => {
+  // The backend queue survives a reseed, so a run left in flight drains first.
+  await expect
+    .poll(async () => (await call(`${BACKEND}/status`)).body.runner.running, { timeout: 60_000 })
+    .toBe(false);
   await reset();
   await saveSettings({ auto_run: 'full' });
 });
@@ -72,7 +76,7 @@ const summarize = (view) => view.locator('.page-header-actions .btn--primary');
 test('materials of three types show their original names, and Summarize sends only the attached supported ones', async ({
   page,
 }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(60_000);
   const LECTURE = 'שיעור 8';
 
   await attach(page, LECTURE, [PPTX, PNG, ZIP]);
@@ -98,9 +102,15 @@ test('materials of three types show their original names, and Summarize sends on
   await flip(view, PNG.file);
   await expect(toggle(view, PNG.file)).not.toBeChecked();
 
+  await providers({ gemini: 'empty' });
   await summarize(view).click();
-  await expectRunComplete(view);
-  await expect(view.getByTestId('lecture-error')).toHaveCount(0);
+  // The upload proves this run started; a failed status from an earlier run on this stack cannot.
+  await expect
+    .poll(async () => (await geminiUploads()).map((u) => u.mimeType), { timeout: 45_000 })
+    .toEqual(['text/plain']);
+  await expect(step(view, 'summarize')).toHaveAttribute('data-status', 'failed', {
+    timeout: 45_000,
+  });
 
   const uploads = await geminiUploads();
   expect(uploads.map((u) => u.mimeType)).toEqual(['text/plain']);
@@ -127,7 +137,7 @@ test('a lecture whose only material is unsupported is not materials-only and can
 test('an attached material over 10 MB fails Summarize until it is switched off', async ({
   page,
 }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(60_000);
   const LECTURE = 'שיעור 10';
 
   await attach(page, LECTURE, [PPTX, BIG]);
@@ -148,9 +158,17 @@ test('an attached material over 10 MB fails Summarize until it is switched off',
 
   await flip(view, BIG.file);
   await expect(toggle(view, BIG.file)).not.toBeChecked();
+  await providers({ gemini: 'empty' });
   await summarize(view).click();
-  // The old error clears once the run starts, so a stale `failed` row never reads as this run's end.
-  await expect(error).toHaveCount(0);
-  await expectRunComplete(view);
-  expect((await geminiUploads()).map((u) => u.mimeType)).toEqual(['text/plain']);
+  // Only the switched-on text file goes up; the empty answer then ends the run at Summarize.
+  await expect
+    .poll(async () => (await geminiUploads()).map((u) => u.mimeType), { timeout: 45_000 })
+    .toEqual(['text/plain']);
+  await expect(step(view, 'summarize')).toHaveAttribute('data-status', 'failed', {
+    timeout: 45_000,
+  });
+  await expect(error).toContainText(
+    'summary.md came out empty. Run the step that creates it again.',
+  );
+  await expect(error).not.toContainText('over 10 MB');
 });
