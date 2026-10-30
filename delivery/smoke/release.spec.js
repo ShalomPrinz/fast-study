@@ -507,10 +507,8 @@ test('6. the PDF, for real', async () => {
   expect(carriesPhrase(text, PDF_PHRASE), 'summary.pdf dropped glyphs of the fixed summary').toBe(
     true,
   );
-  await expect(byTestId(page, 'step-status', { step: 'pdf' })).toHaveAttribute(
-    'data-status',
-    'done',
-  );
+  // A complete lecture folds its step rows into one row.
+  await expect(page.getByTestId('pipeline-collapsed')).toBeVisible();
 });
 
 test('7. a live SSE update', async () => {
@@ -534,11 +532,16 @@ test('8. drive off', async () => {
   const { page } = session;
   const { db, api } = services;
   await openLecture(page, COURSE, LECTURE);
-  await expect(byTestId(page, 'step-status', { step: 'pdf' })).toHaveAttribute(
+  // The step rows of a complete lecture render only in the steps modal.
+  await page.getByTestId('pipeline-steps-open').click();
+  const steps = page.getByTestId('pipeline-steps-modal');
+  await expect(byTestId(steps, 'step-status', { step: 'pdf' })).toHaveAttribute(
     'data-status',
     'done',
   );
-  await expect(byTestId(page, 'step-status', { step: 'drive' })).toHaveCount(0);
+  await expect(byTestId(steps, 'step-status', { step: 'drive' })).toHaveCount(0);
+  await page.getByTestId('pipeline-steps-close').click();
+  await expect(steps).toHaveCount(0);
 
   expect(await api.runPipeline(COURSE, LECTURE)).toEqual({ status: 'started' });
   // A run with nothing left never shows in flight, so a drive step would have to appear inside a
