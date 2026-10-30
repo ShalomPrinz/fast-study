@@ -27,7 +27,8 @@ vi.mock('@/services/events', () => ({
 // Files, meta and status tagged with the same version, so a render can tell whether they agree.
 const files = (v: number): CourseFile[] => [{ name: `v${v}`, size: 0, mtime: 0 }]
 const meta = (v: number) => ({ [`v${v}`]: {} }) as unknown as OverviewMeta
-const status = (v: number) => ({ running: true, extractors: {}, v }) as unknown as CourseStatus
+const status = (v: number) =>
+  ({ running: true, extractors: {}, notices: [], v }) as unknown as CourseStatus
 
 function deferred<T>() {
   let resolve!: (v: T) => void
