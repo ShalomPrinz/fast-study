@@ -10,7 +10,7 @@ reason = None
 if tool == "Monitor" and ev.get("agent_id"):
     reason = (
         "Monitor is not available to subagents: a subagent cannot idle until it fires, so it "
-        "re-arms in a loop. Run the command in the foreground (Bash timeout up to 600000) instead."
+        "re-arms in a loop. Run the command in the foreground (Bash timeout up to 1200000) instead."
     )
 elif tool == "Bash":
     harness = re.compile(r"setup\.mjs|test:e2e|hb\.mjs|(^|[\s;&|(])hb\s")
@@ -24,7 +24,7 @@ elif tool == "Bash":
         reason = (
             "Run harness commands in the foreground: `setup.mjs` returns once the stack is "
             "ready and `npm run test:e2e` exits when the suite ends, so give the Bash call "
-            "timeout: 600000. Never run_in_background, nohup or `&` them."
+            "timeout: 600000 for setup and 1200000 for e2e. Never run_in_background, nohup or `&` them."
         )
 
 if reason:

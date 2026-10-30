@@ -71,7 +71,7 @@ transcript takes about 45 ms.
 of a run. A `Monitor` from a subagent (an input with `agent_id`): ending its turn ends a subagent, so
 it re-armed instead of idling, once 32 times in 90 s. A harness command (`setup.mjs`, `test:e2e`,
 `hb`) with `run_in_background`, `nohup` or a lone `&`: both exit on their own within a foreground
-call's 10 minutes, and a backgrounded one either never notified or orphaned the real process. It
+call's 20 minutes (`BASH_MAX_TIMEOUT_MS` in `settings.json`, raised because a full e2e run takes ~8 min), and a backgrounded one either never notified or orphaned the real process. It
 matches text per line, so a line that merely names `setup.mjs` and ends in `&` is denied too.
 
 ## Scope

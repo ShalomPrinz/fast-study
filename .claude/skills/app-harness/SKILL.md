@@ -69,7 +69,7 @@ A helper for a fake's setting earns a new `hb` subcommand only when the job take
 
 Nothing a run shows is real provider behaviour: transcripts, summaries and downloads are fixtures.
 
-The Playwright e2e specs run against your stack with `HARNESS_DIR=$HARNESS_DIR npm run test:e2e`, in the foreground with `timeout: 600000`; never background it.
+The Playwright e2e specs run against your stack with `HARNESS_DIR=$HARNESS_DIR npm run test:e2e`, in the foreground with `timeout: 1200000`; never background it.
 The suite reseeds the stack (wipes scratch data, resets settings, locks and fakes), so run it on a stack whose state you don't need.
 
 ## Tear down
