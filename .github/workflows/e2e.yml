@@ -103,27 +103,9 @@ jobs:
       - name: Install the headless Chromium
         run: npx playwright install --with-deps chromium --only-shell
 
-      # Backgrounded because setup.mjs holds the stack in the foreground; never under `timeout`, whose
-      # kill would orphan the stack it started.
+      # Returns once the stack is ready and leaves it running; a failed self-check fails the step.
       - name: Start the harness
-        run: |
-          node .claude/harness/setup.mjs --harness "$HARNESS_DIR" > "$HARNESS_DIR.setup.log" 2>&1 &
-          pid=$!
-          for _ in $(seq 300); do
-            if grep -q 'harness ready' "$HARNESS_DIR.setup.log"; then
-              cat "$HARNESS_DIR.setup.log"
-              exit 0
-            fi
-            if ! kill -0 "$pid" 2> /dev/null; then
-              echo "::error::setup.mjs exited before the harness was ready"
-              cat "$HARNESS_DIR.setup.log"
-              exit 1
-            fi
-            sleep 1
-          done
-          echo "::error::the harness was not ready after 5 minutes"
-          cat "$HARNESS_DIR.setup.log"
-          exit 1
+        run: node .claude/harness/setup.mjs --harness "$HARNESS_DIR"
 
       - name: Run the e2e specs
         run: npm run test:e2e
@@ -144,5 +126,4 @@ jobs:
           path: |
             ${{ runner.temp }}/harness/logs
             ${{ runner.temp }}/harness/evidence
-            ${{ runner.temp }}/harness.setup.log
           if-no-files-found: ignore

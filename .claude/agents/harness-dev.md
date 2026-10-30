@@ -28,7 +28,7 @@ Read the README's sections for the part you touch. Its "what earns a spec" rules
 
 ```bash
 npm run test:harness                                   # from the repo root
-node .claude/harness/setup.mjs --harness <scratchpad>/harness   # in the background; wait for `harness ready`
+node .claude/harness/setup.mjs --harness <scratchpad>/harness   # foreground; returns once `harness ready`
 HARNESS_DIR=<scratchpad>/harness npm run test:e2e      # the specs your change touches, or all of them
 uvx --from actionlint-py actionlint .github/workflows/e2e.yml   # when it changed
 ```

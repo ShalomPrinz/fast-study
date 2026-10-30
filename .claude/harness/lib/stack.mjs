@@ -40,6 +40,29 @@ export function resetStack(paths) {
   writeStack(paths, { holder: process.pid, services: {} });
 }
 
+/** Hand the stack over: the setup process is done and no longer holds it. */
+export function releaseStack(paths) {
+  const stack = readStack(paths);
+  delete stack.holder;
+  writeStack(paths, stack);
+}
+
+/** True when every recorded service has a live process group and answers its health URL (and there is at least one). */
+export async function stackAlive(paths) {
+  const services = Object.values(readStack(paths).services);
+  if (!services.length || !services.every((spec) => spec.health && groupAlive(spec.pid)))
+    return false;
+  const answers = await Promise.all(
+    services.map((spec) =>
+      fetch(spec.health, { signal: AbortSignal.timeout(3000) }).then(
+        (response) => response.ok,
+        () => false,
+      ),
+    ),
+  );
+  return answers.every(Boolean);
+}
+
 /** The log file a service writes to. */
 export function logOf(paths, name) {
   return path.join(paths.logs, `${name}.log`);

@@ -7,12 +7,12 @@ on its own ports, so several agents run side by side without sharing data. The `
 is the entry point, `/hunt-bugs` builds its wave on it, and nothing in the app imports it.
 
 ```bash
-node .claude/harness/setup.mjs                 # build, launch, prove, stay up (Ctrl-C stops all)
+node .claude/harness/setup.mjs                 # build, launch, prove, then return; the stack keeps running
 node .claude/harness/setup.mjs --harness DIR   # put the scratch root somewhere specific
 node .claude/harness/setup.mjs --browsers main,other   # also one browser session per named tag
 node .claude/harness/setup.mjs --harness DIR --down                          # stop that stack, exit
 node .claude/harness/setup.mjs --harness DIR --restart <service> [ENV=val…]  # restart one service
-node .claude/harness/setup.mjs --reseed        # start from the baseline and the fixtures again
+node .claude/harness/setup.mjs --reseed        # fresh root only; on a live stack use `hb reseed`
 node .claude/harness/setup.mjs --skip-pipeline-check   # skip the slowest self-check
 ```
 
@@ -47,12 +47,17 @@ open the app at `http://localhost:<frontend>`, which in dev (`FASTSTUDY_SECRET` 
 service's CORS takes on any port, and `127.0.0.1` is not that origin. Vite listens on `127.0.0.1`
 only (`--host`), so `localhost` reaches it on IPv4 even where it resolves to `::1` first.
 
-A second `setup.mjs` on a root whose setup is still alive refuses to start; use that stack, or
-`--down` it first.
+`setup.mjs` is a plain foreground command: it returns once `harness ready` printed, with exit 0, and
+the stack keeps running in its own process groups (give the Bash call `timeout: 600000`; a cold start
+takes up to ~3 min). Never background, `nohup` or `&` it. A failure exits non-zero and tears down
+what it started. Run on a root whose stack is alive it prints that stack's summary and exits 0; it
+refuses only a setup still in progress, `--reseed` (the live data is not its to wipe; use
+`hb reseed`) and `--browsers` tags the stack lacks (use `hb browser <tag>`). No process holds the
+stack: per-service output is in `<harness>/logs/`.
 
-`setup.mjs` stays in the foreground holding the stack, and records each service's exact spawn spec
-(command, cwd, full environment) and process group in `<harness>/stack.json`. Ctrl-C, `--down` and
-`--restart` all act on that record — browser sessions included, killing whole process groups — the `uv`/`npm` parent with the
+It records each service's exact spawn spec
+(command, cwd, full environment) and process group in `<harness>/stack.json`. `--down` and
+`--restart` act on that record — browser sessions included, killing whole process groups — the `uv`/`npm` parent with the
 server it wraps — so nothing is found by port or by `pkill -f`. `--restart` takes a service name as
 recorded (`fake-providers`, `fake-site`, `database`, `backend`, `downloader-server`,
 `downloader-auto`, `frontend`), lays any `ENV=val` over its recorded environment, notes the restart
@@ -452,8 +457,8 @@ data-folder switch, a section's bulk "Download all", a videostream and a PDF row
 out the site's captcha (and failing `site_captcha_timeout` unsolved), and study progress (done
 marks, the current arrow, the counts and the overview's current-item buttons) and the first-run tour
 (seven steps, spotlight or screenshot card, Back, Skip, Esc, "Don't show again", Settings replay, Tab trapped; skipped while `TOUR_ENABLED` is false) — and run with
-`npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to a running
-`setup.mjs --harness DIR`; the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
+`npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to one
+`setup.mjs --harness DIR` started (run it in the foreground with `timeout: 600000`); the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to `main` and on pull
 requests, with real ffmpeg, pandoc and tectonic. The
 release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a

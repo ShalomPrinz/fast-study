@@ -12,15 +12,14 @@ skill is the short path through it.
 One stack per agent, never shared: pick a harness root nobody else uses, under your scratchpad.
 
 ```bash
-node .claude/harness/setup.mjs --harness <scratchpad>/harness --browsers main   # run in the background
+node .claude/harness/setup.mjs --harness <scratchpad>/harness --browsers main
 ```
 
-Wait for `harness ready` in its output (about 10 s warm); a failed self-check aborts and names the
-assumption that broke — fix that before anything else. It stays in the foreground holding the stack.
-
-Never wrap it in `timeout` or a foreground call: the stack lives exactly as long as that process, so
-a time limit kills it mid-session. Launch it with no limit in the background, redirect to a log, and
-poll that log for `harness ready` for up to 3 minutes (a cold start runs the self-check's pipeline).
+Run it in the foreground with Bash `timeout: 600000`. It returns on its own once the stack is ready
+(about 15 s warm, up to ~3 min cold, when the self-check runs the pipeline) and the stack keeps
+running after it exits. Never background it, `nohup` it or end it with `&`. A failed self-check
+exits non-zero, names the assumption that broke and leaves nothing running; fix that first. Run on
+a live root it prints that stack's summary and exits 0. Stop the stack with `--down`.
 
 It runs the code of the checkout it lives in, so in a worktree run the worktree's own
 `.claude/harness/setup.mjs`.
@@ -70,7 +69,7 @@ A helper for a fake's setting earns a new `hb` subcommand only when the job take
 
 Nothing a run shows is real provider behaviour: transcripts, summaries and downloads are fixtures.
 
-The Playwright e2e specs run against your stack with `HARNESS_DIR=$HARNESS_DIR npm run test:e2e`.
+The Playwright e2e specs run against your stack with `HARNESS_DIR=$HARNESS_DIR npm run test:e2e`, in the foreground with `timeout: 600000`; never background it.
 The suite reseeds the stack (wipes scratch data, resets settings, locks and fakes), so run it on a stack whose state you don't need.
 
 ## Tear down

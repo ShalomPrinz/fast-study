@@ -13,7 +13,16 @@ import {
   isScratchData,
   readPorts,
 } from '../lib/env.mjs';
-import { down, kill, readStack, restart, start, waitForService } from '../lib/stack.mjs';
+import {
+  down,
+  kill,
+  readStack,
+  releaseStack,
+  resetStack,
+  restart,
+  start,
+  waitForService,
+} from '../lib/stack.mjs';
 import { diff } from '../lib/state.mjs';
 
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-tests-'));
@@ -184,5 +193,17 @@ describe('start', () => {
     const server = await hold(port);
     t.after(() => close(server));
     await assert.rejects(restart(paths, 'child', {}), /child exited/);
+  });
+});
+
+describe('releaseStack', () => {
+  test('drops the recorded holder and keeps the services', () => {
+    const paths = freshPaths('release');
+    fs.mkdirSync(paths.root, { recursive: true });
+    resetStack(paths);
+    assert.equal(readStack(paths).holder, process.pid);
+    releaseStack(paths);
+    assert.equal(readStack(paths).holder, undefined);
+    assert.deepEqual(readStack(paths).services, {});
   });
 });

@@ -39,8 +39,11 @@ import { selfCheck } from './lib/selfcheck.mjs';
 import {
   down,
   liveHolder,
+  releaseStack,
   resetStack,
   restart,
+  stackAlive,
+  readStack,
   start,
   startBrowser,
   waitForService,
@@ -357,6 +360,9 @@ async function main() {
   say(`harness root: ${paths.root}`);
 
   refuseSecondSetup();
+  if (await stackAlive(paths)) return reuseStack();
+  // Whatever a crashed run left half-alive must not be orphaned by the fresh record.
+  await down(paths);
   previous = readPorts(paths);
   say(`  ✓ ${checkNpmDeps()}`);
 
@@ -400,13 +406,20 @@ async function main() {
   for (const tag of browsers) sessions.push(`${tag} :${await startBrowser(paths, tag)}`);
   if (sessions.length) say(`  ✓ browser sessions: ${sessions.join(', ')}`);
 
-  say(`
+  say(readySummary());
+  releaseStack(paths);
+  launched = false;
+  process.exit(0);
+}
+
+function readySummary() {
+  return `
 harness ready — drive the app at ${appUrl()}  (localhost, not 127.0.0.1: the services' dev CORS takes localhost only)
 
   ports       ${paths.ports}   (hb url <name> prints one: ${[...Object.keys(PORTS), 'browser-<tag>'].join(', ')})
   logs        ${paths.logs}          (network.log lists every redirected and refused connection)
   restart     node .claude/harness/setup.mjs --harness ${paths.root} --restart <service> [ENV=val…]
-  stop        Ctrl-C here, or the same with --down
+  stop        node .claude/harness/setup.mjs --harness ${paths.root} --down
   helpers     node .claude/harness/hb.mjs --harness ${paths.root} help   (url, set, reseed, state, wall, lock, add-material, rm-lecture, refused…)
   browsers    node .claude/harness/hb.mjs --harness ${paths.root} browser <tag>   (one more session; README lists its commands)
   evidence    ${paths.evidence}      (screenshots, <tag>-mutations.jsonl)
@@ -433,14 +446,28 @@ harness ready — drive the app at ${appUrl()}  (localhost, not 127.0.0.1: the s
   not covered by this harness: the Electron shell, the installer, real provider behaviour,
   a real site's SSO and MFA pages, the zoom login, and the real zoom player (captcha, two-clip shares).
 
-Ctrl-C stops every service and fake.`);
-  return keepRunning();
+setup exits now; the stack keeps running in its own process groups (per-service output in ${paths.logs}).`;
 }
 
-// A pending promise alone does not keep Node alive, and every child is unref'd — without a live
-// timer the process would exit here and leave the stack orphaned.
-function keepRunning() {
-  setInterval(() => {}, 1 << 30);
+// A live stack is reused as is; only a request it cannot honour is refused.
+function reuseStack() {
+  if (flag('--reseed')) {
+    throw new Error(
+      `a stack is already running under ${paths.root}; reseed it with: hb --harness ${paths.root} reseed`,
+    );
+  }
+  const { services } = readStack(paths);
+  const missing = browsers.filter((tag) => !services[`browser-${tag}`]);
+  if (missing.length) {
+    throw new Error(
+      `a stack is already running under ${paths.root} without browser session(s) ${missing.join(', ')}; open one with: hb --harness ${paths.root} browser <tag>`,
+    );
+  }
+  releaseStack(paths); // a setup that died after ready left its pid recorded
+  bindPorts(paths);
+  say('  ✓ stack already running — reusing it');
+  say(readySummary());
+  process.exit(0);
 }
 
 async function teardown(code) {
@@ -463,6 +490,6 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
 }
 
 main().catch((error) => {
-  console.error(`\nharness failed: ${error.message}`);
+  console.error(`\nharness failed: ${error.message}\n  logs: ${paths.logs}`);
   teardown(1);
 });

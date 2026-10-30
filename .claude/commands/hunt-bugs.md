@@ -54,11 +54,10 @@ node .claude/harness/setup.mjs --harness <wave>/<tag> --browsers <tag>
 `--browsers <tag>` gives the flow its browser session. Stacks pick their own ports, so several run
 side by side; each takes about 1 GB and 10–14 s to boot.
 
-Run it in the background with stdout and stderr redirected to `<wave>-<tag>.log` beside the wave
-root, and leave it running: it holds the stack up until
-`node .claude/harness/setup.mjs --harness <wave>/<tag> --down`. Never read that log whole. Wait (up
-to 3 minutes) until the log shows `harness ready`, or `harness failed:` / `harness stopped:`, or the
-setup process has exited; then pull only the verdict with `grep`:
+Run it in the foreground with Bash `timeout: 600000`, stdout and stderr redirected to
+`<wave>-<tag>.log` beside the wave root. It returns once the stack is ready or failed, and the stack
+stays up until `node .claude/harness/setup.mjs --harness <wave>/<tag> --down`. Never read that log
+whole; pull only the verdict with `grep`:
 
 ```bash
 grep -E '^harness (ready|failed|stopped)' <wave>-<tag>.log
@@ -137,8 +136,8 @@ Note the wave start (`date -u +%Y-%m-%dT%H:%M:%SZ`) before the first stack boots
 `settings`, `mgmt`, `dl`, `pipeline`, `fail`, `edit` and `nav` (or the ones an argument narrows to),
 run as a rolling window of three:
 
-1. Start the first three flows' stacks (Step 1) together.
-2. As each stack reports `harness ready`, spawn its flow agent: Agent tool,
+1. Start the first three flows' stacks (Step 1) together, as parallel Bash calls in one message.
+2. As each setup call returns `harness ready`, spawn its flow agent: Agent tool,
    `subagent_type: "general-purpose"`, `run_in_background: true`, with only this prompt, the
    harness as an absolute path:
 
