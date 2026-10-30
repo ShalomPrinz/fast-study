@@ -184,7 +184,7 @@ msgstr "{course} · מטלה {assignment}"
 msgid "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 msgstr "{deferred, plural, one {הרצאה אחת בעיבוד כרגע; הקבצים שלה יוסרו כשההרצה שלה תסתיים.} two {# הרצאות בעיבוד כרגע; הקבצים שלהן יוסרו כשההרצה שלהן תסתיים.} other {# הרצאות בעיבוד כרגע; הקבצים שלהן יוסרו כשההרצה שלהן תסתיים.}}"
 
-#: src/features/lectures/MainView.tsx:630
+#: src/features/lectures/MainView.tsx:637
 msgid "{deleteName} will be deleted."
 msgstr "{deleteName} יימחק."
 
@@ -354,7 +354,7 @@ msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. �
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stepCount}"
 
-#: src/features/lectures/MainView.tsx:543
+#: src/features/lectures/MainView.tsx:547
 msgid "{stageCount, plural, one {# step} other {# steps}}"
 msgstr "{stageCount, plural, one {שלב אחד} two {# שלבים} other {# שלבים}}"
 
@@ -789,7 +789,7 @@ msgstr "בחר תיקיית נתונים."
 msgid "Choose AI provider"
 msgstr "בחירת ספק AI"
 
-#: src/features/lectures/components/PdfHero.tsx:198
+#: src/features/lectures/components/PdfHero.tsx:167
 msgid "Choose app"
 msgstr "בחירת אפליקציה"
 
@@ -1861,7 +1861,7 @@ msgstr "התאמת מילה שלמה"
 #: src/features/downloads/components/NewView.tsx:134
 #: src/features/downloads/DownloadsView.tsx:93
 #: src/features/lectures/AssignmentView.tsx:141
-#: src/features/lectures/MainView.tsx:584
+#: src/features/lectures/MainView.tsx:591
 msgid "Materials"
 msgstr "חומרים"
 
@@ -2137,7 +2137,7 @@ msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת 
 msgid "Open in Drive"
 msgstr "פתיחה ב-Drive"
 
-#: src/features/lectures/components/PdfHero.tsx:190
+#: src/features/lectures/components/PdfHero.tsx:159
 msgid "Open in full screen"
 msgstr "פתיחה במסך מלא"
 
@@ -2153,7 +2153,7 @@ msgstr "פתיחת החומר"
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/AssignmentDocCard.tsx:166
-#: src/features/lectures/components/PdfHero.tsx:209
+#: src/features/lectures/components/PdfHero.tsx:178
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
 #: src/features/lectures/MainView.tsx:466
@@ -2646,8 +2646,8 @@ msgstr "הצג עוד"
 msgid "Show screenshot"
 msgstr "הצג צילום מסך"
 
-#: src/features/lectures/MainView.tsx:546
-#: src/features/lectures/MainView.tsx:549
+#: src/features/lectures/MainView.tsx:550
+#: src/features/lectures/MainView.tsx:553
 msgid "Show steps"
 msgstr "הצגת השלבים"
 
@@ -2761,7 +2761,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
-#: src/features/lectures/MainView.tsx:539
+#: src/features/lectures/MainView.tsx:543
 msgid "Summary ready"
 msgstr "הסיכום מוכן"
 
@@ -2899,7 +2899,7 @@ msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
-#: src/features/lectures/MainView.tsx:614
+#: src/features/lectures/MainView.tsx:621
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -2928,7 +2928,7 @@ msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחב
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:631
+#: src/features/lectures/MainView.tsx:638
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -3086,7 +3086,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:615
+#: src/features/lectures/MainView.tsx:622
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 

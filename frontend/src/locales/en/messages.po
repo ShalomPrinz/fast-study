@@ -184,7 +184,7 @@ msgstr "{course} · assignment {assignment}"
 msgid "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 msgstr "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 
-#: src/features/lectures/MainView.tsx:630
+#: src/features/lectures/MainView.tsx:637
 msgid "{deleteName} will be deleted."
 msgstr "{deleteName} will be deleted."
 
@@ -354,7 +354,7 @@ msgstr "{scope, select, daily {Gemini's daily quota is used up. It resets at mid
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · step {stepNumber} of {stepCount}"
 
-#: src/features/lectures/MainView.tsx:543
+#: src/features/lectures/MainView.tsx:547
 msgid "{stageCount, plural, one {# step} other {# steps}}"
 msgstr "{stageCount, plural, one {# step} other {# steps}}"
 
@@ -789,7 +789,7 @@ msgstr "Choose a data folder."
 msgid "Choose AI provider"
 msgstr "Choose AI provider"
 
-#: src/features/lectures/components/PdfHero.tsx:198
+#: src/features/lectures/components/PdfHero.tsx:167
 msgid "Choose app"
 msgstr "Choose app"
 
@@ -1861,7 +1861,7 @@ msgstr "Match whole word"
 #: src/features/downloads/components/NewView.tsx:134
 #: src/features/downloads/DownloadsView.tsx:93
 #: src/features/lectures/AssignmentView.tsx:141
-#: src/features/lectures/MainView.tsx:584
+#: src/features/lectures/MainView.tsx:591
 msgid "Materials"
 msgstr "Materials"
 
@@ -2137,7 +2137,7 @@ msgstr "Open Google Chrome, paste this address into the address bar at the top a
 msgid "Open in Drive"
 msgstr "Open in Drive"
 
-#: src/features/lectures/components/PdfHero.tsx:190
+#: src/features/lectures/components/PdfHero.tsx:159
 msgid "Open in full screen"
 msgstr "Open in full screen"
 
@@ -2153,7 +2153,7 @@ msgstr "Open material"
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/AssignmentDocCard.tsx:166
-#: src/features/lectures/components/PdfHero.tsx:209
+#: src/features/lectures/components/PdfHero.tsx:178
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
 #: src/features/lectures/MainView.tsx:466
@@ -2646,8 +2646,8 @@ msgstr "Show more"
 msgid "Show screenshot"
 msgstr "Show screenshot"
 
-#: src/features/lectures/MainView.tsx:546
-#: src/features/lectures/MainView.tsx:549
+#: src/features/lectures/MainView.tsx:550
+#: src/features/lectures/MainView.tsx:553
 msgid "Show steps"
 msgstr "Show steps"
 
@@ -2761,7 +2761,7 @@ msgstr "summary did not use any material"
 msgid "Summary model"
 msgstr "Summary model"
 
-#: src/features/lectures/MainView.tsx:539
+#: src/features/lectures/MainView.tsx:543
 msgid "Summary ready"
 msgstr "Summary ready"
 
@@ -2899,7 +2899,7 @@ msgstr "The folder in your Drive that summaries are uploaded into. It is created
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
-#: src/features/lectures/MainView.tsx:614
+#: src/features/lectures/MainView.tsx:621
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
@@ -2928,7 +2928,7 @@ msgstr "The Moodle login timed out. Try connecting again."
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "The Moodle session expired. Reconnect the account and try again."
 
-#: src/features/lectures/MainView.tsx:631
+#: src/features/lectures/MainView.tsx:638
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -3086,7 +3086,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "The Zoom window was closed during the capture. Try the download again."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:615
+#: src/features/lectures/MainView.tsx:622
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
