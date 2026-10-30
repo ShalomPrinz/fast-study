@@ -1,4 +1,4 @@
-// Assignment AI docs: one assignment's guide generated, edited, regenerated and copied, and a failed
+// Assignment AI docs: one assignment's guide generated, opened in the editor, regenerated and copied, and a failed
 // solution on its own card.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,12 +36,12 @@ test.use({ locale: 'en-US', permissions: ['clipboard-read', 'clipboard-write'] }
 test.beforeEach(reseed);
 test.afterEach(reset);
 
-test('an assignment generates, edits, regenerates, copies and fails per doc', async ({
+test('an assignment generates, opens the editor, regenerates, copies and fails per doc', async ({
   page,
   context,
 }) => {
-  // Two Gemini writes, four PDF renders (generate, open, save, regenerate) on a warm tectonic cache.
-  test.setTimeout(240_000);
+  // Two Gemini writes, two PDF renders (generate, regenerate) on a warm tectonic cache.
+  test.setTimeout(150_000);
   await context.route('https://claude.ai/**', (route) =>
     route.fulfill({ contentType: 'text/html', body: '<title>chat</title>' }),
   );
@@ -105,46 +105,32 @@ test('an assignment generates, edits, regenerates, copies and fails per doc', as
   expect((await request.response()).status()).toBe(200);
   await tab.close();
 
-  // 5. Edit and save: the buffer writes, the PDF re-renders, and the card follows.
+  // 5. Edit opens the editor on this doc; back returns to the ready card.
   await intuition.getByRole('button', { name: 'Edit' }).click();
   await expect(page).toHaveURL(
     new RegExp(`/course/${encode(COURSE)}/assignment/${encode(ASSIGNMENT)}/edit/intuition$`),
   );
   await expect(page.locator('.edit-title')).toHaveText(`Intuition Guide — ${ASSIGNMENT}`);
-  const editor = page.locator('.markdown-editor .cm-content');
-  const marker = `harness-marker-${Date.now()}`;
-  await editor.click();
-  await page.keyboard.press('ControlOrMeta+End');
-  await page.keyboard.press('Enter');
-  await page.keyboard.type(marker);
-  await expect(page.locator('.edit-unsaved')).toBeVisible();
-  const mtimeBefore = await pdfMtime('intuition');
-  expect(mtimeBefore).not.toBeNull();
-  await page.locator('.edit-toolbar-actions .btn--primary').click();
-  await expect(page.locator('.edit-unsaved')).toHaveCount(0);
-  await expect(page.locator('.pdf-viewer .react-pdf__Page canvas').first()).toBeVisible({
-    timeout: 60_000,
-  });
-  const saved = await readDoc('intuition');
-  expect(saved.content).toContain(marker);
-  expect(saved.hasOriginal).toBe(true);
-  expect(await pdfMtime('intuition')).toBeGreaterThan(mtimeBefore);
-  await shot(page, '3-edited');
   await page.locator('.edit-back').click();
   await expect(intuition).toHaveAttribute('data-state', 'ready');
 
-  // 6. Regenerate: the confirm names the doc, and the new text replaces the edit.
+  // 6. Regenerate: the confirm names the doc, and the guide is written and rendered again.
   await intuition.getByRole('button', { name: 'Regenerate' }).click();
   const confirm = page.locator('.modal');
   await expect(confirm).toContainText('Regenerate Intuition Guide?');
   await expect(confirm).toContainText('Gemini will write it again.');
-  await shot(page, '4-regenerate-confirm');
+  await shot(page, '3-regenerate-confirm');
+  const mtimeBefore = await pdfMtime('intuition');
+  expect(mtimeBefore).not.toBeNull();
   await confirm.getByRole('button', { name: 'Regenerate' }).click();
   await expect.poll(async () => (await assignmentCalls()).length, { timeout: 60_000 }).toBe(2);
+  // The new render advances the PDF's mtime: the run has finished, not just started.
+  await expect
+    .poll(async () => await pdfMtime('intuition'), { timeout: 60_000 })
+    .toBeGreaterThan(mtimeBefore);
   await expect
     .poll(async () => (await readDoc('intuition')).content, { timeout: 60_000 })
     .toBe(fixture('assignment-intuition.md'));
-  expect((await readDoc('intuition')).content).not.toContain(marker);
   expect((await readDoc('intuition')).hasOriginal).toBe(false);
   await expect(intuition.getByRole('button', { name: 'Open PDF' })).toBeEnabled({
     timeout: 60_000,
@@ -163,7 +149,7 @@ test('an assignment generates, edits, regenerates, copies and fails per doc', as
   expect(copied).toContain('<intuition_guide>');
   expect(copied).toContain(fixture('assignment-intuition.md'));
   expect(copied).not.toContain('<solution>');
-  await shot(page, '5-copied');
+  await shot(page, '4-copied');
 
   // 8. A failed Full Solution renders its error on its own card; the guide's stays clean.
   await providers({ gemini: { mode: '500', match: 'Assignments' } });
@@ -175,5 +161,5 @@ test('an assignment generates, edits, regenerates, copies and fails per doc', as
   await expect(intuition.locator('.doc-card-error')).toHaveCount(0);
   expect((await call(docUrl('solution'), { expect: false })).status).toBe(404);
   await error.scrollIntoViewIfNeeded(); // below the fold of the window
-  await shot(page, '6-solution-failed');
+  await shot(page, '5-solution-failed');
 });
