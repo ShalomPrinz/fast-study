@@ -454,7 +454,7 @@ materials-only lecture made from course PDFs attached in Downloads, lecture mate
 type (chips by original name, the Gemini switch, a pptx sent as text, the 10 MB refusal), course
 assignments (listed by section in Downloads, downloaded into the tree's group, opened by name), the first-run wall then a
 data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
-out the site's captcha (and failing `site_captcha_timeout` unsolved), and study progress (done
+out the site's captcha (and failing `site_captcha_timeout` unsolved), the smart Downloads page's New view (`smart-downloads`: first-load banner, mark irrelevant and restore, a subset downloaded with the dead link auto-skipped; it restarts auto and the server per test, since their probe cache and last run would pre-decide that row), and study progress (done
 marks, the current arrow, the counts and the overview's current-item buttons) and the first-run tour
 (seven steps, spotlight or screenshot card, Back, Skip, Esc, "Don't show again", Settings replay, Tab trapped; skipped while `TOUR_ENABLED` is false) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to one

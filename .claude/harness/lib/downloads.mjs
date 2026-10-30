@@ -2,7 +2,7 @@
 // `hb download` runs the same code inside a browser session.
 import { appUrl } from './browser.mjs';
 
-const exactly = (text) => new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+export const exactly = (text) => new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
 
 /** The recording card titled `title` (a substring, as Playwright's hasText reads it). */
 export const recordingCard = (page, title) =>
