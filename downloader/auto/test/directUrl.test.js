@@ -83,3 +83,14 @@ test('a listed row is one unexpandable unknown target', () => {
     likelyRecording: true,
   });
 });
+
+test('an audio resource is claimed by no extractor, by mimetype or by extension alone', () => {
+  const resource = (mimetype, filename) => ({
+    ...activity(undefined, 'resource'),
+    viewUrl: 'https://moodle.test/mod/resource/view.php?id=2',
+    mimetype,
+    filename,
+  });
+  assert.equal(resolveExtractor(resource('audio/mpeg', 'rec.mp3')), null);
+  assert.equal(resolveExtractor(resource('application/octet-stream', 'rec.mp3')), null);
+});

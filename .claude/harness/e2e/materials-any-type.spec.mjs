@@ -20,7 +20,6 @@ const COURSE = 'hb-dl';
 const PPTX = { title: 'שקפי שיעור 3', file: 'lecture3-slides.pptx' };
 const PNG = { title: 'תרשים עצים', file: 'diagram.png' };
 const ZIP = { title: 'דוגמאות קוד', file: 'code-samples.zip' };
-const MP3_TITLE = 'הקלטת שמע שיעור 3';
 const BIG = { title: 'נספח גדול', file: 'big-appendix.pdf' };
 
 test.use({ locale: 'en-US' });
@@ -69,25 +68,6 @@ const toggle = (view, file) => chip(view, file).getByRole('switch');
 // The input is visually hidden behind the track, so a click goes to the switch's label.
 const flip = (view, file) => chip(view, file).locator('.material-switch').click();
 const summarize = (view) => view.locator('.page-header-actions .btn--primary');
-
-test('Downloads lists pptx, png and zip resources as materials and leaves the mp3 out', async ({
-  page,
-}) => {
-  await loadRecordings(page, COURSE);
-  await page.locator('.recordings-panel .mode-toggle-btn', { hasText: 'Materials' }).click();
-  for (const { title } of [PPTX, PNG, ZIP]) await expect(recordingCard(page, title)).toHaveCount(1);
-
-  // Audio is not a material, and auto lists no other row for it either.
-  // Each segment is anchored on a row it holds before the mp3 is checked absent.
-  const anchors = { Materials: PPTX.title, Videos: 'הקלטה 4 — גרפים', Unknown: 'קישור לסילבוס' };
-  for (const [segment, title] of Object.entries(anchors)) {
-    const tab = page.locator('.recordings-panel .mode-toggle-btn', { hasText: segment });
-    await tab.click();
-    await expect(tab).toHaveClass(/active/);
-    await expect(recordingCard(page, title)).toHaveCount(1);
-    await expect(recordingCard(page, MP3_TITLE)).toHaveCount(0);
-  }
-});
 
 test('materials of three types show their original names, and Summarize sends only the attached supported ones', async ({
   page,
