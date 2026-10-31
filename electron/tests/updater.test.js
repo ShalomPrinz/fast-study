@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { EventEmitter } = require('node:events');
 const { app } = require('./stubElectron');
 
-const HOUR = 60 * 60 * 1000;
+const MINUTE = 60 * 1000;
 
 // `updater.js` keeps module state (`started`), so each test loads a fresh copy over a fake autoUpdater.
 function load(t) {
@@ -32,15 +32,15 @@ function load(t) {
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
-test('the timer fires a recheck every 4 hours', async (t) => {
+test('the timer fires a recheck every 30 minutes', async (t) => {
   const { fake, startUpdater, log } = load(t);
   startUpdater(log);
   assert.equal(fake.checks, 1);
   await flush();
-  t.mock.timers.tick(4 * HOUR);
+  t.mock.timers.tick(30 * MINUTE);
   assert.equal(fake.checks, 2);
   await flush();
-  t.mock.timers.tick(4 * HOUR);
+  t.mock.timers.tick(30 * MINUTE);
   assert.equal(fake.checks, 3);
 });
 
@@ -49,12 +49,12 @@ test('a tick during a running check does not start another', async (t) => {
   let release;
   fake.next = () => new Promise((resolve) => (release = resolve));
   startUpdater(log);
-  t.mock.timers.tick(4 * HOUR);
+  t.mock.timers.tick(30 * MINUTE);
   assert.equal(fake.checks, 1);
   release();
   await flush();
   fake.next = () => Promise.resolve();
-  t.mock.timers.tick(4 * HOUR);
+  t.mock.timers.tick(30 * MINUTE);
   assert.equal(fake.checks, 2);
 });
 
@@ -63,7 +63,7 @@ test('the timer stops once an update is downloaded', async (t) => {
   startUpdater(log);
   await flush();
   fake.emit('update-downloaded', { version: '9.9.9' });
-  t.mock.timers.tick(8 * HOUR);
+  t.mock.timers.tick(60 * MINUTE);
   assert.equal(fake.checks, 1);
 });
 
@@ -73,7 +73,7 @@ test('a failed recheck is logged and leaves the phase alone', async (t) => {
   fake.emit('update-not-available');
   await flush();
   fake.next = () => Promise.reject(new Error('offline'));
-  t.mock.timers.tick(4 * HOUR);
+  t.mock.timers.tick(30 * MINUTE);
   fake.emit('checking-for-update');
   fake.emit('error', new Error('offline'));
   await flush();
@@ -95,7 +95,7 @@ test('the app window sees every check, rechecks included, and only its two phase
   fake.emit('checking-for-update');
   fake.emit('update-not-available');
   await flush();
-  t.mock.timers.tick(4 * HOUR);
+  t.mock.timers.tick(30 * MINUTE);
   fake.emit('checking-for-update');
   fake.emit('update-available');
   fake.emit('update-downloaded', { version: '9.9.9' });

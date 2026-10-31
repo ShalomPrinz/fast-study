@@ -4,7 +4,7 @@ const { app } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { wirePhases } = require('./updatePhases');
 
-const RECHECK_MS = 4 * 60 * 60 * 1000;
+const RECHECK_MS = 30 * 60 * 1000;
 
 // One updater per launch: `runBoot()` can be re-run by the launch screen's Try again, and a second
 // start would add a second timer and download the same release twice.
@@ -16,7 +16,7 @@ let shown = null;
 let onShown = () => {};
 let restarting = null;
 
-/** Check GitHub Releases at launch and every 4 hours, download in the background, install on quit. `log` is main's
+/** Check GitHub Releases at launch and every 30 minutes, download in the background, install on quit. `log` is main's
  *  `log(source, line)`; `onPhase` (optional, may arrive on a later call, replayed with the current
  *  phase) feeds the launch screen's failure view — see docs/UPDATES.md. */
 function startUpdater(log, onPhase) {

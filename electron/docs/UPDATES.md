@@ -8,7 +8,7 @@
 
 ## The sidebar row and the launch screen's failure view
 
-One check at launch, then one every 4 hours while the app stays open, so a release published
+One check at launch, then one every 30 minutes while the app stays open, so a release published
 mid-session is already downloaded when the user closes it. The launch check is fired from `runBoot()`
 right after the window navigates to the frontend — not before, so it never competes with four service
 starts and never sits on the path that decides whether the app comes up. A newer release downloads in
