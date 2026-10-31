@@ -534,6 +534,10 @@ msgstr "All lectures done"
 msgid "All recitations done"
 msgstr "All recitations done"
 
+#: src/features/downloads/components/ScopeControls.tsx:40
+msgid "All types are displayed"
+msgstr "All types are displayed"
+
 #: src/shared/i18n/serviceErrors.ts:132
 msgid "Already generated."
 msgstr "Already generated."
@@ -954,7 +958,7 @@ msgstr "connecting…"
 msgid "Contact"
 msgstr "Contact"
 
-#: src/features/downloads/components/ScopeControls.tsx:40
+#: src/features/downloads/components/ScopeControls.tsx:39
 msgid "Content type"
 msgstr "Content type"
 

@@ -534,6 +534,10 @@ msgstr "סיימת את כל ההרצאות"
 msgid "All recitations done"
 msgstr "סיימת את כל התרגולים"
 
+#: src/features/downloads/components/ScopeControls.tsx:40
+msgid "All types are displayed"
+msgstr "כל הסוגים מופיעים"
+
 #: src/shared/i18n/serviceErrors.ts:132
 msgid "Already generated."
 msgstr "כבר נוצר."
@@ -954,7 +958,7 @@ msgstr "מתחבר…"
 msgid "Contact"
 msgstr "יצירת קשר"
 
-#: src/features/downloads/components/ScopeControls.tsx:40
+#: src/features/downloads/components/ScopeControls.tsx:39
 msgid "Content type"
 msgstr "סוג תוכן"
 

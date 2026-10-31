@@ -27,15 +27,38 @@
   align-self: center;
 }
 
-/* The cards shrink to share what the switch leaves, so both groups stay on one row. */
-.downloads-controls .downloads-control:has(.mode-toggle--cards) {
+/* The content-type slot is one box in both scopes, so the row never resizes on a scope switch. */
+.downloads-controls {
+  --types-inline-size: calc(var(--space-8) * 12 + var(--space-3) * 3);
+  --types-block-size: calc(var(--space-8) + var(--space-7) + var(--space-1));
+}
+
+.downloads-control--types {
+  inline-size: var(--types-inline-size);
   min-inline-size: 0;
 }
 
+.downloads-types-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: var(--types-block-size);
+  margin: 0;
+  font-size: var(--fs-row);
+  color: var(--text-3);
+}
+
 .downloads-controls .mode-toggle.mode-toggle--cards {
-  grid-auto-columns: minmax(calc(var(--space-8) * 2), calc(var(--space-8) * 3));
+  inline-size: 100%;
+  grid-auto-columns: minmax(0, 1fr);
 }
 
 .downloads-controls .mode-toggle--cards .mode-toggle-btn {
+  min-block-size: var(--types-block-size);
+  min-inline-size: 0;
   padding-inline: var(--space-4);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
 }

@@ -260,7 +260,12 @@ the passcode prompt can't stay hidden.
 ## Scope and the control row
 
 The panel's top is `ScopeControls`: two captioned groups on one row, the **New | All** switch ("What to show", a light
-segmented control) and, in All only, today's media cards ("Content type"). `ModeToggle`'s `wrap` places the cards inside that row.
+segmented control) and the "Content type" slot: today's media cards in All, a muted "All types are displayed" in New.
+`ModeToggle`'s `wrap` places the cards inside that row. The slot is one CSS box in both scopes (`--types-inline-size` /
+`--types-block-size` in `ScopeControls.css`), so at the slot's full width the row's size is fixed and a switch changes
+nothing; the switch's position never changes. The cards fill it with `minmax(0, 1fr)` columns and wrap a long label, so
+they shrink with the slot instead of overflowing it. Once the slot is narrow enough for a label to wrap, the cards grow
+taller than New's 70px note and the row height does change on a switch.
 The scope persists in `localStorage` as `fastStudyDownloadsScope` (`utils/scope.ts`, try/catch, default New). The course
 row's button is **Load course** — on demand, never on launch.
 

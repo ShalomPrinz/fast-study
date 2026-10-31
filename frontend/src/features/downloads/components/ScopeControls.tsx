@@ -7,11 +7,11 @@ import './ScopeControls.css'
 interface Props {
   scope: Scope
   onScope: (scope: Scope) => void
-  // The content-type cards, shown only in All; their caption goes with them.
+  // The content-type cards, shown only in All; New shows a muted note in their slot.
   cards?: ReactNode
 }
 
-// The panel's control row: the New | All switch, and in All the media cards, each under its caption.
+// The panel's control row: the New | All switch, and the content-type slot (the media cards in All, a note in New), each under its caption.
 export default function ScopeControls({ scope, onScope, cards }: Props) {
   const { t } = useLingui()
   const options: [Scope, string][] = [
@@ -35,12 +35,10 @@ export default function ScopeControls({ scope, onScope, cards }: Props) {
           ))}
         </div>
       </div>
-      {cards && (
-        <div className="downloads-control">
-          <span className="downloads-control-caption">{t`Content type`}</span>
-          {cards}
-        </div>
-      )}
+      <div className="downloads-control downloads-control--types">
+        <span className="downloads-control-caption">{t`Content type`}</span>
+        {cards ?? <p className="downloads-types-note">{t`All types are displayed`}</p>}
+      </div>
     </div>
   )
 }
