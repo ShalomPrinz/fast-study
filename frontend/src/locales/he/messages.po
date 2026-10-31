@@ -3374,7 +3374,7 @@ msgstr "כשמשהו נכשל, FastStudy שולחת דיווח ל-Sentry. הוא
 
 #: src/features/settings/SettingsView.tsx:436
 msgid "When the summary model is under high demand, retry once on the next model."
-msgstr "כשמודל הסיכום עמוס, מנסים שוב פעם אחת במודל הבא."
+msgstr "כשמודל הסיכום עמוס, מנסים שוב פעם אחת במודל אחר."
 
 #: src/features/settings/components/AutoRemoveField.tsx:93
 msgid "When to remove"
