@@ -118,7 +118,7 @@ msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, other {# unsupported}}"
 
 #. placeholder {0}: current + 1
-#: src/features/settings/components/SettingsSearchBar.tsx:73
+#: src/features/settings/components/SettingsSearchBar.tsx:75
 msgid "{0} / {count}"
 msgstr "{0} / {count}"
 
@@ -1978,7 +1978,7 @@ msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
 
-#: src/features/settings/components/SettingsSearchBar.tsx:73
+#: src/features/settings/components/SettingsSearchBar.tsx:75
 msgid "No matches"
 msgstr "No matches"
 
@@ -2575,8 +2575,8 @@ msgstr "Scroll to the end to confirm."
 msgid "Search"
 msgstr "Search"
 
-#: src/features/settings/components/SettingsSearchBar.tsx:66
 #: src/features/settings/components/SettingsSearchBar.tsx:67
+#: src/features/settings/components/SettingsSearchBar.tsx:68
 msgid "Search settings"
 msgstr "Search settings"
 

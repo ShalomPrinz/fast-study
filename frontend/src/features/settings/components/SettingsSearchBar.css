@@ -3,29 +3,53 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-3);
   padding: var(--space-4) var(--space-8);
   background: var(--surface);
   border-bottom: 1px solid var(--line);
 }
 
-.settings-search-icon {
+.settings-search-field {
+  position: relative;
   display: flex;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
+  max-width: 470px;
+}
+
+/* Sits at the inline end of the box, opposite where text starts. */
+.settings-search-icon {
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
   color: var(--text-4);
+  pointer-events: none;
+}
+
+.settings-search-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .settings-search-input {
   flex: 1;
   min-width: 0;
-  padding: var(--space-3) var(--space-5);
+  /* Both sides clear the icon: the typed text's direction can differ from the page's. */
+  padding: var(--space-3) calc(var(--space-4) + 20px + var(--space-3));
   border: 1px solid var(--control-line);
   border-radius: var(--r-sm);
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: var(--fs-row);
+  font-size: var(--fs-section);
   outline: none;
+}
+
+.settings-search-input::placeholder {
+  color: var(--text-3);
 }
 
 .settings-search-input:focus {

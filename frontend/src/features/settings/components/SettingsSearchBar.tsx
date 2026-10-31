@@ -53,21 +53,23 @@ export default function SettingsSearchBar({ query, onQuery, current, count, onSt
       className="settings-search"
       data-settings-search={none ? 'none' : searched ? 'found' : 'idle'}
     >
-      <span className="settings-search-icon">
-        <Icon icon="search" />
-      </span>
-      <input
-        ref={input}
-        className="settings-search-input"
-        type="text"
-        value={query}
-        onChange={(e) => onQuery(e.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder={t`Search settings`}
-        aria-label={t`Search settings`}
-        dir="auto"
-        spellCheck={false}
-      />
+      <div className="settings-search-field">
+        <span className="settings-search-icon">
+          <Icon icon="search" />
+        </span>
+        <input
+          ref={input}
+          className="settings-search-input"
+          type="text"
+          value={query}
+          onChange={(e) => onQuery(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={t`Search settings`}
+          aria-label={t`Search settings`}
+          dir="auto"
+          spellCheck={false}
+        />
+      </div>
       {searched && (
         <span className="settings-search-count" aria-live="polite">
           {none ? t`No matches` : <bdi dir="ltr">{t`${current + 1} / ${count}`}</bdi>}
