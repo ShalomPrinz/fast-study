@@ -34,10 +34,43 @@ for f in "${changed[@]}"; do
 done
 [ "$ts" -eq 0 ] && { report "typecheck -"; exit 0; }
 
+# Shared by every session and subagent on this tree, keyed by its path — see README.md.
+cache="${TMPDIR:-/tmp}/claude-typecheck-tree-$(printf '%s' "$ROOT" | md5sum | cut -c1-12)"
+mkdir -p "$cache"
+
+# Everything tsc reads that git can see; lib/ too, since frontend links @faststudy/sentry from it.
+inputs() {
+  {
+    git rev-parse HEAD
+    git diff --binary HEAD -- frontend lib
+    git ls-files --others --exclude-standard -z -- frontend lib |
+      while IFS= read -r -d '' f; do [ -f "$f" ] && printf '%s\0' "$f" && cat "$f"; done
+    cat frontend/node_modules/.package-lock.json 2>/dev/null
+  } | md5sum | cut -d' ' -f1
+}
+passed() { [ "$(cat "$cache/ok" 2>/dev/null)" = "$1" ]; }
+
+before="$(inputs)"
+passed "$before" && { rm -f "$state"; report "typecheck ✓ (unchanged)"; exit 0; }
+
+# One tsc per tree at a time, so parallel agents never write the build info together.
+exec 9>"$cache/lock"
+if flock -w 60 9; then
+  # A parallel run may have passed these exact inputs while this one waited.
+  passed "$before" && { rm -f "$state"; report "typecheck ✓ (unchanged)"; exit 0; }
+  incr=(--incremental --tsBuildInfoFile "$cache/tsbuildinfo")
+else
+  incr=()
+fi
+
 # Same typecheck `npm run build` does, without the vite bundle. Whole-project: tsc
-# has no meaningful per-file mode.
-if out="$(cd frontend && npx tsc --noEmit 2>&1)"; then
+# has no meaningful per-file mode; --incremental rechecks only what a change reaches.
+if out="$(cd frontend && npx tsc --noEmit "${incr[@]}" 2>&1)"; then
   rm -f "$state"
+  # Stamp only if nothing moved mid-run, else tsc may have checked a mix of two states.
+  if [ "$(inputs)" = "$before" ]; then
+    printf '%s' "$before" > "$cache/ok.$$" && mv -f "$cache/ok.$$" "$cache/ok"
+  fi
   report "typecheck ✓"
   exit 0
 fi

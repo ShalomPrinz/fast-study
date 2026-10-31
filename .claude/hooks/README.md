@@ -54,6 +54,17 @@ stylesheet but `styles/tokens.css`, that `tokens.css` holds no class selector, a
 [`../../frontend/docs/ARCHITECTURE.md`](../../frontend/docs/ARCHITECTURE.md); the greps are only its
 enforcement.
 
+**`typecheck.sh` skips inputs that already passed and rechecks incrementally.** A full `tsc` costs
+~15s, and an uncommitted `.ts` file would otherwise pay it on every turn. After a pass it stamps a
+hash of everything `tsc` reads that git sees — `HEAD`, the uncommitted diff and untracked files under
+`frontend/` and `lib/` (it links `@faststudy/sentry` from there), `node_modules/.package-lock.json` — and an identical hash skips the run. The stamp, the
+`--incremental` build info and a `flock` live in `$TMPDIR/claude-typecheck-tree-<hash of the tree's
+path>`, shared by every session and subagent on that tree and separate per worktree. The lock keeps
+parallel agents from writing the build info at once; a waiter re-reads the stamp first, so it skips
+when the run it waited on passed the same inputs, and after 60s it runs without the build info rather
+than block. A run stamps only if the inputs hash the same afterwards, so an edit made mid-run is
+never marked as passed. A stale cache is cleared by deleting that directory.
+
 ## The context checkpoint
 
 `checkpoint.py` runs on `PostToolUse` for `*-dev` subagents only. When one passes 140K context it
