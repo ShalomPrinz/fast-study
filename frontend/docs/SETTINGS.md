@@ -127,7 +127,9 @@ scrolling body (`SettingsSearchBar`, `useSettingsSearch`, matcher in `utils/sett
 case-insensitive match of the text rendered in the columns: titles, labels, hints, notes, buttons and every `<select>`'s option
 text, never input values, placeholders or modals. It is highlight only, nothing hides. Text is painted with the CSS Custom
 Highlight API (no `<mark>`, React's DOM untouched); a select with a matching option counts once and the whole control is
-outlined. The first match scrolls to centre per keystroke, and a `MutationObserver` re-scans while a query stands. Enter or
+outlined. The first match scrolls to centre per keystroke; a match inside a closed `<details>` (the key guide, a
+screenshot) opens it first, like the browser's find, and it stays open. A `MutationObserver` (childList/characterData,
+not attributes, so opening never re-scans) re-scans while a query stands. Enter or
 the down arrow steps next, Shift+Enter or the up arrow previous, wrapping; Ctrl/Cmd+F focuses the box only while the page is mounted;
 Escape clears a query, or blurs an empty box.
 

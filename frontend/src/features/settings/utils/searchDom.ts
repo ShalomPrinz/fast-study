@@ -68,8 +68,17 @@ export function paint(root: HTMLElement | null, matches: DomMatch[], current: nu
   registry?.set(CURRENT_HIGHLIGHT, new Highlight(...now))
 }
 
+// Opens each closed `<details>` hiding `el`, as the browser's find does; a match in its summary is already visible.
+function openAncestors(el: Element) {
+  for (let d = el.closest('details'); d; d = d.parentElement?.closest('details') ?? null) {
+    if (!d.open && !el.closest('summary')?.parentElement?.isSameNode(d)) d.open = true
+  }
+}
+
 export function scrollToMatch(match: DomMatch | undefined) {
   if (!match) return
   const el = 'select' in match ? match.select : match.range.startContainer.parentElement
-  el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  if (!el) return
+  openAncestors(el)
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
