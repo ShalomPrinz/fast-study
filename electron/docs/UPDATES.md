@@ -20,7 +20,8 @@ sidebar shows "Downloading update…" or "Restart now" from them. Main pushes ea
 `faststudy:update`, and `snapshot()` answers a listener that subscribed late. An unpackaged run never
 starts the updater, so it stays `null`, and `packaged: false` tells the frontend so.
 
-The recheck timer is `unref`'d, skips a tick while a check is still running, and stops for good on
+The recheck timer is `unref`'d, skips a tick while a check is still running or an update is downloading (a mid-download check
+only blanks the window's row; the timer keeps running so a failed download is retried), and stops for good on
 `update-downloaded` (another check could replace the pending installer). A failed recheck is logged
 and dropped, and once the first recheck runs the launch screen's phases freeze.
 

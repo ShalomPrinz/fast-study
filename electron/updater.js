@@ -87,6 +87,8 @@ function startUpdater(log, onPhase) {
 
   check(fail);
   timer = setInterval(() => {
+    // A check mid-download only re-emits `checking-for-update`, which would blank the window's row.
+    if (shown === 'downloading') return;
     rechecked = true;
     check(() => {});
   }, RECHECK_MS);

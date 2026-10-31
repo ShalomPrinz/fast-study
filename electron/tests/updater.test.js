@@ -58,6 +58,18 @@ test('a tick during a running check does not start another', async (t) => {
   assert.equal(fake.checks, 2);
 });
 
+test('a tick while downloading is skipped, and a failed download is retried', async (t) => {
+  const { fake, startUpdater, log } = load(t);
+  startUpdater(log);
+  await flush();
+  fake.emit('update-available');
+  t.mock.timers.tick(30 * MINUTE);
+  assert.equal(fake.checks, 1);
+  fake.emit('error', new Error('download failed'));
+  t.mock.timers.tick(30 * MINUTE);
+  assert.equal(fake.checks, 2);
+});
+
 test('the timer stops once an update is downloaded', async (t) => {
   const { fake, startUpdater, log } = load(t);
   startUpdater(log);
