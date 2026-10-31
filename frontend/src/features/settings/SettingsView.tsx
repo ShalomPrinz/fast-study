@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { msg } from '@lingui/core/macro'
 import type { MessageDescriptor } from '@lingui/core'
@@ -39,6 +39,8 @@ import CourseStructureField from './components/CourseStructureField'
 import AutoRetryField from './components/AutoRetryField'
 import AutoRemoveSummary from './components/AutoRemoveSummary'
 import SecureStorageNotice from './components/SecureStorageNotice'
+import SettingsSearchBar from './components/SettingsSearchBar'
+import { useSettingsSearch } from './hooks/useSettingsSearch'
 import {
   buildPatch,
   formFromStore,
@@ -104,6 +106,8 @@ export default function SettingsView() {
   const { refresh: refreshAccount } = useAuthStatus()
   const tour = useTour()
   const browser = useBrowserPrereq()
+  const columns = useRef<HTMLDivElement>(null)
+  const search = useSettingsSearch(columns)
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
@@ -353,260 +357,271 @@ export default function SettingsView() {
           </Tooltip>
         }
       />
+      <SettingsSearchBar
+        query={search.query}
+        onQuery={search.setQuery}
+        current={search.current}
+        count={search.count}
+        onStep={search.step}
+      />
       <div className="page-body">
-        <div className="page-column settings-page">
-          <section className="settings-section">
-            <h2 className="settings-section-title">
-              <Trans>API keys</Trans>
-            </h2>
-            {/* The note stands in for the whole section: with no key to store, neither a key
-                field nor the model that would consume one has anything to offer. */}
-            <SecureStorageNotice />
-            {canStoreApiKeys && !options && (
-              <p className="settings-note" data-settings-options="unavailable">
-                <Trans>
-                  The API keys and the summary model aren't available right now. They'll come back
-                  here on their own.
-                </Trans>
-              </p>
-            )}
-            {canStoreApiKeys && options && (
-              <>
-                {gemini && (
-                  <ApiKeyField
-                    provider={gemini}
-                    value={form.geminiApiKey}
-                    onChange={(v) => setForm({ ...form, geminiApiKey: v })}
-                    storedKeyExists={stored.geminiApiKeySet}
-                  />
-                )}
-                {groq && (
-                  <ApiKeyField
-                    provider={groq}
-                    value={form.groqApiKey}
-                    onChange={(v) => setForm({ ...form, groqApiKey: v })}
-                    storedKeyExists={stored.groqApiKeySet}
-                  />
-                )}
-                <div className="settings-field">
-                  <div className="settings-label">
-                    <label htmlFor="gemini-model">
-                      <Trans>Summary model</Trans>
-                    </label>
-                  </div>
-                  <select
-                    id="gemini-model"
-                    className="settings-select"
-                    value={form.geminiModel}
-                    onChange={(e) => setForm({ ...form, geminiModel: e.target.value })}
-                  >
-                    {options.geminiModels.map((model) => (
-                      <option key={model} value={model}>
-                        {model}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="settings-field">
-                  <label className="settings-check">
-                    <input
-                      type="checkbox"
-                      checked={form.geminiAutoFallback}
-                      onChange={(e) => setForm({ ...form, geminiAutoFallback: e.target.checked })}
-                    />
-                    <span className="settings-check-text">
-                      <span>
-                        <Trans>Auto change model when busy</Trans>
-                      </span>
-                    </span>
-                  </label>
-                  <span className="settings-hint">
-                    <Trans>
-                      When the summary model is under high demand, retry once on the next model.
-                    </Trans>
-                  </span>
-                </div>
-              </>
-            )}
-          </section>
-
-          <section className="settings-section">
-            <h2 className="settings-section-title">
-              <Trans>Storage</Trans>
-            </h2>
-            <DataRootField
-              value={form.dataRoot}
-              onChange={(v) => setForm({ ...form, dataRoot: v })}
-            />
-          </section>
-
-          <section className="settings-section" data-tour="settings-drive">
-            <h2 className="settings-section-title">
-              <Trans>Google Drive</Trans>
-            </h2>
-            <DriveFields
-              value={{ enabled: form.driveEnabled, folder: form.gdriveRootFolder }}
-              onChange={(v) =>
-                setForm({ ...form, driveEnabled: v.enabled, gdriveRootFolder: v.folder })
-              }
-              folderMissing={missing.includes('gdriveRootFolder')}
-            />
-          </section>
-
-          <section className="settings-section">
-            <h2 className="settings-section-title">
-              <Trans>Downloading recordings</Trans>
-            </h2>
-            <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
-            {/* A confirmed site, or no university, saves at once; an unverified one waits for Save. */}
-            <MoodleSiteField
-              value={form.moodleSite}
-              // Functional: the probe answers after other fields may have changed.
-              onChange={(v) => setForm((f) => f && { ...f, moodleSite: v })}
-              onSupported={site.pick}
-              onNoSite={() => site.pick('')}
-              onChecking={setSiteChecking}
-            />
-            <MoodleAccountField site={stored.moodleSite} choice={form.moodleSite} />
-          </section>
-
-          <section className="settings-section">
-            <h2 className="settings-section-title">
-              <Trans>Courses</Trans>
-            </h2>
-            <CourseStructureField
-              value={form.courseStructure}
-              saved={toCourseStructure(stored.courseStructure)}
-              onChange={(v) => setForm({ ...form, courseStructure: v })}
-            />
-          </section>
-
-          <section className="settings-section">
-            <h2 className="settings-section-title">
-              <Trans>Automatic retry</Trans>
-            </h2>
-            <AutoRetryField
-              value={form.autoRetry}
-              onChange={(v) => setForm({ ...form, autoRetry: v })}
-            />
-          </section>
-
-          <section className="settings-section">
-            <h2 className="settings-section-title">
-              <Trans>Appearance and behaviour</Trans>
-            </h2>
-            <LanguageField />
-            {TOUR_ENABLED && (
-              <div className="settings-field">
-                <div className="settings-label">
-                  <span>
-                    <Trans>Tutorial</Trans>
-                  </span>
-                </div>
-                <div>
-                  <button className="btn btn--ghost settings-replay-tour" onClick={tour.start}>
-                    <Trans>Replay tutorial</Trans>
-                  </button>
-                </div>
-              </div>
-            )}
-            <div className="settings-field">
-              <div className="settings-label">
-                <label htmlFor="auto-run">
-                  <Trans>When a new video arrives</Trans>
-                </label>
-              </div>
-              <select
-                id="auto-run"
-                className="settings-select"
-                value={form.autoRun}
-                onChange={(e) => setForm({ ...form, autoRun: e.target.value as AutoRun })}
-              >
-                <option value="full">{t`Run the whole pipeline`}</option>
-                <option value="audio">{t`Extract the audio only`}</option>
-                <option value="off">{t`Do nothing — I'll start runs myself`}</option>
-              </select>
-              <span className="settings-hint">
-                <Trans>
-                  This applies only to work that starts on its own: a video you drop in or a video
-                  that finishes downloading. Runs you start yourself are not affected.
-                </Trans>
-              </span>
-            </div>
-            <div className="settings-field">
-              <div className="settings-label">
-                <label htmlFor="ai-provider">
-                  <Trans>AI chat provider</Trans>
-                </label>
-              </div>
-              <select
-                id="ai-provider"
-                className="settings-select"
-                value={form.aiProvider}
-                onChange={(e) => setForm({ ...form, aiProvider: e.target.value as AiProvider })}
-              >
-                {AI_PROVIDER_IDS.map((id) => (
-                  <option key={id} value={id}>
-                    {AI_PROVIDERS[id].name}
-                  </option>
-                ))}
-              </select>
-              <span className="settings-hint">
-                <Trans>Where "Study with AI" opens a lecture's summary.</Trans>
-              </span>
-            </div>
-          </section>
-
-          <section className="settings-section">
-            <h2 className="settings-section-title">
-              <Trans>Disk space</Trans>
-            </h2>
-            <AutoRemoveField
-              value={form.autoRemove}
-              onChange={(v) => setForm({ ...form, autoRemove: v })}
-              driveEnabled={form.driveEnabled}
-              apply={
-                saving || siteChecking
-                  ? null
-                  : autoRemoveApply(form.autoRemove, stored, form.driveEnabled)
-              }
-              onApply={applyAutoRemoveSection}
-            />
-          </section>
-
-          {canSetErrorReports && (
+        <div className="page-column settings-page" ref={columns}>
+          <div className="settings-column">
             <section className="settings-section">
               <h2 className="settings-section-title">
-                <Trans>Error reports</Trans>
+                <Trans>API keys</Trans>
               </h2>
-              <ErrorReportsField
-                value={form.errorReports}
-                confirmed={form.privacyConfirmed}
-                onChange={(v) => setForm({ ...form, errorReports: v })}
-                onAnswer={(confirmed) => setForm({ ...form, ...privacyAnswer(confirmed) })}
-                notice={
-                  reportsRestart && (
-                    <p
-                      className="settings-note settings-note--warn"
-                      data-reports-restart={reportsRestart}
+              {/* The note stands in for the whole section: with no key to store, neither a key
+                field nor the model that would consume one has anything to offer. */}
+              <SecureStorageNotice />
+              {canStoreApiKeys && !options && (
+                <p className="settings-note" data-settings-options="unavailable">
+                  <Trans>
+                    The API keys and the summary model aren't available right now. They'll come back
+                    here on their own.
+                  </Trans>
+                </p>
+              )}
+              {canStoreApiKeys && options && (
+                <>
+                  {gemini && (
+                    <ApiKeyField
+                      provider={gemini}
+                      value={form.geminiApiKey}
+                      onChange={(v) => setForm({ ...form, geminiApiKey: v })}
+                      storedKeyExists={stored.geminiApiKeySet}
+                    />
+                  )}
+                  {groq && (
+                    <ApiKeyField
+                      provider={groq}
+                      value={form.groqApiKey}
+                      onChange={(v) => setForm({ ...form, groqApiKey: v })}
+                      storedKeyExists={stored.groqApiKeySet}
+                    />
+                  )}
+                  <div className="settings-field">
+                    <div className="settings-label">
+                      <label htmlFor="gemini-model">
+                        <Trans>Summary model</Trans>
+                      </label>
+                    </div>
+                    <select
+                      id="gemini-model"
+                      className="settings-select"
+                      value={form.geminiModel}
+                      onChange={(e) => setForm({ ...form, geminiModel: e.target.value })}
                     >
-                      {reportsRestart === 'on' ? (
-                        <Trans>
-                          Error reports are now on. Some parts of FastStudy will start sending them
-                          only after you restart the app.
-                        </Trans>
-                      ) : (
-                        <Trans>
-                          Error reports are now off. Some parts of FastStudy will stop sending them
-                          only after you restart the app.
-                        </Trans>
-                      )}
-                    </p>
-                  )
-                }
+                      {options.geminiModels.map((model) => (
+                        <option key={model} value={model}>
+                          {model}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="settings-field">
+                    <label className="settings-check">
+                      <input
+                        type="checkbox"
+                        checked={form.geminiAutoFallback}
+                        onChange={(e) => setForm({ ...form, geminiAutoFallback: e.target.checked })}
+                      />
+                      <span className="settings-check-text">
+                        <span>
+                          <Trans>Auto change model when busy</Trans>
+                        </span>
+                      </span>
+                    </label>
+                    <span className="settings-hint">
+                      <Trans>
+                        When the summary model is under high demand, retry once on the next model.
+                      </Trans>
+                    </span>
+                  </div>
+                </>
+              )}
+            </section>
+
+            <section className="settings-section">
+              <h2 className="settings-section-title">
+                <Trans>Storage</Trans>
+              </h2>
+              <DataRootField
+                value={form.dataRoot}
+                onChange={(v) => setForm({ ...form, dataRoot: v })}
               />
             </section>
-          )}
+
+            <section className="settings-section" data-tour="settings-drive">
+              <h2 className="settings-section-title">
+                <Trans>Google Drive</Trans>
+              </h2>
+              <DriveFields
+                value={{ enabled: form.driveEnabled, folder: form.gdriveRootFolder }}
+                onChange={(v) =>
+                  setForm({ ...form, driveEnabled: v.enabled, gdriveRootFolder: v.folder })
+                }
+                folderMissing={missing.includes('gdriveRootFolder')}
+              />
+            </section>
+          </div>
+
+          <div className="settings-column">
+            <section className="settings-section">
+              <h2 className="settings-section-title">
+                <Trans>Downloading recordings</Trans>
+              </h2>
+              <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
+              {/* A confirmed site, or no university, saves at once; an unverified one waits for Save. */}
+              <MoodleSiteField
+                value={form.moodleSite}
+                // Functional: the probe answers after other fields may have changed.
+                onChange={(v) => setForm((f) => f && { ...f, moodleSite: v })}
+                onSupported={site.pick}
+                onNoSite={() => site.pick('')}
+                onChecking={setSiteChecking}
+              />
+              <MoodleAccountField site={stored.moodleSite} choice={form.moodleSite} />
+            </section>
+
+            <section className="settings-section">
+              <h2 className="settings-section-title">
+                <Trans>Courses</Trans>
+              </h2>
+              <CourseStructureField
+                value={form.courseStructure}
+                saved={toCourseStructure(stored.courseStructure)}
+                onChange={(v) => setForm({ ...form, courseStructure: v })}
+              />
+            </section>
+
+            <section className="settings-section">
+              <h2 className="settings-section-title">
+                <Trans>Automatic retry</Trans>
+              </h2>
+              <AutoRetryField
+                value={form.autoRetry}
+                onChange={(v) => setForm({ ...form, autoRetry: v })}
+              />
+            </section>
+
+            <section className="settings-section">
+              <h2 className="settings-section-title">
+                <Trans>Appearance and behaviour</Trans>
+              </h2>
+              <LanguageField />
+              {TOUR_ENABLED && (
+                <div className="settings-field">
+                  <div className="settings-label">
+                    <span>
+                      <Trans>Tutorial</Trans>
+                    </span>
+                  </div>
+                  <div>
+                    <button className="btn btn--ghost settings-replay-tour" onClick={tour.start}>
+                      <Trans>Replay tutorial</Trans>
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="settings-field">
+                <div className="settings-label">
+                  <label htmlFor="auto-run">
+                    <Trans>When a new video arrives</Trans>
+                  </label>
+                </div>
+                <select
+                  id="auto-run"
+                  className="settings-select"
+                  value={form.autoRun}
+                  onChange={(e) => setForm({ ...form, autoRun: e.target.value as AutoRun })}
+                >
+                  <option value="full">{t`Run the whole pipeline`}</option>
+                  <option value="audio">{t`Extract the audio only`}</option>
+                  <option value="off">{t`Do nothing — I'll start runs myself`}</option>
+                </select>
+                <span className="settings-hint">
+                  <Trans>
+                    This applies only to work that starts on its own: a video you drop in or a video
+                    that finishes downloading. Runs you start yourself are not affected.
+                  </Trans>
+                </span>
+              </div>
+              <div className="settings-field">
+                <div className="settings-label">
+                  <label htmlFor="ai-provider">
+                    <Trans>AI chat provider</Trans>
+                  </label>
+                </div>
+                <select
+                  id="ai-provider"
+                  className="settings-select"
+                  value={form.aiProvider}
+                  onChange={(e) => setForm({ ...form, aiProvider: e.target.value as AiProvider })}
+                >
+                  {AI_PROVIDER_IDS.map((id) => (
+                    <option key={id} value={id}>
+                      {AI_PROVIDERS[id].name}
+                    </option>
+                  ))}
+                </select>
+                <span className="settings-hint">
+                  <Trans>Where "Study with AI" opens a lecture's summary.</Trans>
+                </span>
+              </div>
+            </section>
+
+            <section className="settings-section">
+              <h2 className="settings-section-title">
+                <Trans>Disk space</Trans>
+              </h2>
+              <AutoRemoveField
+                value={form.autoRemove}
+                onChange={(v) => setForm({ ...form, autoRemove: v })}
+                driveEnabled={form.driveEnabled}
+                apply={
+                  saving || siteChecking
+                    ? null
+                    : autoRemoveApply(form.autoRemove, stored, form.driveEnabled)
+                }
+                onApply={applyAutoRemoveSection}
+              />
+            </section>
+
+            {canSetErrorReports && (
+              <section className="settings-section">
+                <h2 className="settings-section-title">
+                  <Trans>Error reports</Trans>
+                </h2>
+                <ErrorReportsField
+                  value={form.errorReports}
+                  confirmed={form.privacyConfirmed}
+                  onChange={(v) => setForm({ ...form, errorReports: v })}
+                  onAnswer={(confirmed) => setForm({ ...form, ...privacyAnswer(confirmed) })}
+                  notice={
+                    reportsRestart && (
+                      <p
+                        className="settings-note settings-note--warn"
+                        data-reports-restart={reportsRestart}
+                      >
+                        {reportsRestart === 'on' ? (
+                          <Trans>
+                            Error reports are now on. Some parts of FastStudy will start sending
+                            them only after you restart the app.
+                          </Trans>
+                        ) : (
+                          <Trans>
+                            Error reports are now off. Some parts of FastStudy will stop sending
+                            them only after you restart the app.
+                          </Trans>
+                        )}
+                      </p>
+                    )
+                  }
+                />
+              </section>
+            )}
+          </div>
         </div>
       </div>
 

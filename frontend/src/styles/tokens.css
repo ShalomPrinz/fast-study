@@ -44,6 +44,9 @@
   --danger: #c0392f;
   --danger-soft: #fdf1ef;
   --highlight: #fdf0c8;
+  /* Find-in-page tints: a muted wash of the accent; the current match steps stronger. */
+  --find-tint: color-mix(in srgb, var(--accent) 18%, transparent);
+  --find-tint-current: color-mix(in srgb, var(--accent) 45%, transparent);
 
   --sidebar-bg: #1b1b26;
   --sidebar-raise: #2c2c3d;
