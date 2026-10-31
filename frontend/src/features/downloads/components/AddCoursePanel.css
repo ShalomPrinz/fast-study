@@ -1,7 +1,5 @@
-/* Dashed so it reads as an empty slot in the list rather than another source. Both states —
-   the invitation and the two fields it opens — wear the same outline. */
-.source-add-row,
-.source-add-btn {
+/* Dashed so it reads as an empty slot rather than a saved source. */
+.source-add-row {
   display: flex;
   align-items: center;
   gap: var(--space-5);
@@ -16,15 +14,6 @@
   text-align: start;
 }
 
-.source-add-btn {
-  cursor: pointer;
-}
-
-.source-add-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 /* The new course's name is capped like an existing one's; its URL takes the rest of the row. */
 .source-add-name {
   flex-shrink: 0;
@@ -32,16 +21,6 @@
 }
 
 .source-add-url {
-  flex: 1;
-}
-
-/* The two ways to start a course, side by side, each taking half the row. */
-.source-add-actions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.source-add-actions .source-add-btn {
   flex: 1;
 }
 

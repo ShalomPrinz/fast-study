@@ -124,7 +124,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
         }
         if (id !== discoveryId.current) return
         // The client already toasted an unreachable service; a second toast would restate it. A busy
-        // lock only raced the push that disables Load course.
+        // lock only raced the push that bars discovery.
         if (isConnectionError(err) || isMoodleBusyError(err)) return
         // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
         // hint it stays behind the ticket guard.

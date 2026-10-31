@@ -24,16 +24,26 @@ one-shot read finishing or failing — it is mounted on every tab, so that read 
 body is a spinner and no tab is selected. That default is then fixed for the app session, so a later
 sign-out or a return to the page never moves it.
 
-The University tab is the unconfigured-site nudge, then one `CourseSourceRow` per active course plus `AddCourseRow` (alone with no courses; under a `.source-list-failed` danger note when
-`courseLoadNotice` says the load failed, still usable since a create reports its own failure), then — once a course is loaded — the `.recordings-panel`. The 880px measure
+The University tab's frozen row sits in the header under the tabs (`CourseSourceBar`, only while University
+is chosen): the course box, a pencil ("Edit source URL"; always shown, disabled with a "Choose a course first" hint until a course is picked) and "+ Add course", centred as a group, text and controls at 1.2x size, the box a fixed narrower width. The box
+is `CourseCombobox` in pick-only mode (`onPick`; typed text filters and reverts to the picked name on blur,
+so it never creates) over every active course. Picking loads at once (`discover`); a course with no source
+is still pickable: it opens the Moodle picker (`EditSourcePanel`) at once, one `/courses` fetch per open, and
+if cancelled leaves a "No source URL yet" note instead of recordings (the pencil reopens it); a pick made while
+discovery is barred (account disconnected, Moodle lock busy) closes the open recordings, shows the reason
+as a note, and loads when the bar lifts (held by course name, so it loads the source URL current then; a
+cleared one loads nothing). Saving a source on the picked course loads it the same way. A discovery that
+fails leaves the box on the session's loaded course, so the box always names what is shown. An unconfigured
+site is the nudge, not a note (it reads as disconnected too). The body then holds
+the nudge, the `.source-list-failed` danger note when `courseLoadNotice` says the load failed, the
+pencil's `EditSourcePanel` or the add flow's `AddCoursePanel` (one at a time, under the frozen row), and — once a
+course is loaded — the `.recordings-panel`. The 880px measure
 fits a recording's second line: kind toggle, name input and action side by side.
 
-A source row is three grid tracks with the side ones equal, so every row's URL sits at the midpoint and
-lines up down the list; only the action track is floored at its content, so a narrow window costs the
-URL its centring rather than sliding the buttons over it. `ModeToggle` emits its cards and body as
-siblings, so the panel is a three-column grid: the cards centred in row 1 between two close-button-wide
-tracks, the close button in the end one, the body spanning all three beneath; each card's floor yields to
-a third of the middle track, so the cards never run under the close button.
+`ModeToggle` emits its cards and body as siblings, so the panel is a three-column grid: the cards centred
+in row 1 between two close-button-wide tracks, the close button in the end one, the body spanning all three
+beneath; each card's floor yields to a third of the middle track, so the cards never run under the close
+button.
 
 A recording is a two-line card — what it is, then where it is going (`Save as`, kind toggle, name,
 action). States are tints: accent while downloading, `--ok` once the target is in the course (an
@@ -42,9 +52,10 @@ touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
 
 ## Course sources
 
-A course's source is the course page URL (`…/course/view.php?id=N`) — what Load course and auto's
-`/list` read. `CoursePicker` sets it: the pencil, "+ add source URL" and `AddCourseRow`'s "+ Add course from
-Moodle" open it under their row. It fetches auto's `GET /courses?lang=<UI locale>` once per open
+A course's source is the course page URL (`…/course/view.php?id=N`) — what picking a course and auto's
+`/list` read. `CoursePicker` sets it: the pencil and a source-less pick (`EditSourcePanel`) and "+ Add course"
+(`AddCoursePanel`) open it under the frozen row. With a saved source the picker leads with the paste input,
+URL selected, above the list that marks the matching course current; "+ Add course" opens on the list. It fetches auto's `GET /courses?lang=<UI locale>` once per open
 (`useEnrolledCourses`, through the Moodle lock with `{ wait: true }`, one request even across StrictMode's
 remount — the site walls a second call seconds after the first) and lists current courses, then the `past`
 ones (hidden or ended) behind "Show past courses". Each row is the name in that language plus the course
@@ -63,7 +74,7 @@ reconnect, blocked, busy — shows its reason under the input (`CourseCheckFailu
 with "Save anyway" (saves unchecked) and "Edit". An empty paste saves with no check: it clears the source.
 `needsCheck` is that one rule. In the add form, a picked course prefills the name (editable) and fixes the
 URL (`addFormDraft`); a typed URL is checked on Create the same way. A URL saved anyway that `/list` then
-refuses reads as the service's reason on Load course — `invalid_request` with `field: courseUrl` has its
+refuses reads as the service's reason on picking the course — `invalid_request` with `field: courseUrl` has its
 own branch in the catalog row, so it never reads as the bare generic line.
 
 ## Manual download
@@ -164,11 +175,11 @@ serves the first-run wall ([SETTINGS.md](SETTINGS.md)).
 
 `/auth/status`'s 409 `moodle_site_not_configured` is an answer, not a failure: `fetchAuthStatus` maps it to
 `unconfigured`: the chip reads "no university chosen" with no Connect, the page leads with a nudge linking to
-Settings, and Load course is disabled with a tooltip saying why — the init wall lets a user in without one. A login the site's post-login
+Settings, and a picked course does not load — the init wall lets a user in without one. A login the site's post-login
 check refuses answers with 422 (a rejected `/auth/complete`, or the state's error) `moodle_site_unsupported`, which `loginFailure` toasts in
 its `reason`'s sentence.
 
-`Load course` disables only on `connected: false`; unknown leaves it enabled, since guessing
+Picking a course defers its load only on `connected: false`; unknown leaves it enabled, since guessing
 "disconnected" from an unanswered probe would lock a working session out.
 
 ## The Moodle lock
@@ -176,7 +187,7 @@ its `reason`'s sentence.
 auto talks to Moodle one request at a time and holds one global lock for each request plus 3 s after it
 (and for a whole login, or while a challenge window is open) — `downloader/auto/docs/GATE.md`. Every
 frontend call that can reach Moodle goes through `withMoodleLock(fn)` (`useWithMoodleLock`, from
-`MoodleLockProvider`, which `AuthStatusProvider` renders): Connect, Complete, Load course,
+`MoodleLockProvider`, which `AuthStatusProvider` renders): Connect, Complete, picking a course,
 "Download all", the settings site probe, and a row's Download, Download again and clip retry — but only on
 a row whose `moodle` flag auto set (`rowLocked`); a Zoom, YouTube or Drive row calls directly and stays
 enabled. The flag is the only source for a row: the frontend infers nothing from kind or URL, and a wrong
@@ -214,9 +225,10 @@ coded refusal, or a generic "couldn't load" line. Each discovery takes a ticket;
 another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
 the exception — an expired session is true whichever discovery found it.
 
-Saving a new source URL on the course `selected` or `pending` closes the panel and, unless the URL was
-cleared, rediscovers from the new one (`sourceChangeAction`, called from `CourseSourceRow`) with
-`{ wait: true }`, since nobody pressed it; a failed reload leaves the panel closed with discovery's usual toast. Other courses' edits touch nothing.
+Saving a new source URL on the picked course closes the panel and, unless the URL was cleared,
+rediscovers from the new one (`sourceChangeAction`, called from `EditSourcePanel`) with
+`{ wait: true }`, since nobody pressed it; a cleared URL closes what was loaded or loading but keeps
+the course in the box with that note; a failed reload leaves the panel closed with discovery's usual toast. Other courses' edits touch nothing.
 
 ## Discovery
 
@@ -266,8 +278,8 @@ segmented control) and the "Content type" slot: today's media cards in All, a mu
 nothing; the switch's position never changes. The cards fill it with `minmax(0, 1fr)` columns and wrap a long label, so
 they shrink with the slot instead of overflowing it. Once the slot is narrow enough for a label to wrap, the cards grow
 taller than New's 70px note and the row height does change on a switch.
-The scope persists in `localStorage` as `fastStudyDownloadsScope` (`utils/scope.ts`, try/catch, default New). The course
-row's button is **Load course** — on demand, never on launch.
+The scope persists in `localStorage` as `fastStudyDownloadsScope` (`utils/scope.ts`, try/catch, default New). Recordings
+load when a course is picked — on demand, never on launch.
 
 ## New view
 

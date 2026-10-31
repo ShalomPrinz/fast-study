@@ -6,7 +6,7 @@ import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { MoodleLockProvider } from '@/features/downloads/contexts/MoodleLockContext'
 import LanguageSwitcher from '@/shared/sidebar/LanguageSwitcher'
-import AddCourseRow from './AddCourseRow'
+import AddCoursePanel from './AddCoursePanel'
 
 const { checkCourseUrl, createCourse, fetchEnrolledCourses } = vi.hoisted(() => ({
   checkCourseUrl: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError: vi.
 
 const PASTED = 'https://m/mod/resource/view.php?id=5'
 
-function mount() {
+function mount(onDone = vi.fn()) {
   return render(
     createElement(I18nProvider, {
       i18n,
@@ -41,53 +41,67 @@ function mount() {
         createElement(MoodleLockProvider, {
           key: 'row',
           frame: { moodleBusy: false },
-          children: createElement(AddCourseRow),
+          children: createElement(AddCoursePanel, { onDone }),
         }),
       ],
     }),
   )
 }
 
-function openForm() {
+// The site's list is closed, so the picker opens on the paste input; a pasted URL leads to the form.
+async function pasteUrl() {
+  fetchEnrolledCourses.mockResolvedValue({ available: false })
   const view = mount()
-  const [, manual] = view.container.querySelectorAll('.source-add-btn')
-  fireEvent.click(manual)
+  const paste = (await waitFor(() => {
+    const el = view.container.querySelector('.course-url-paste-input')
+    if (!el) throw new Error('no paste input')
+    return el
+  })) as HTMLInputElement
+  fireEvent.change(paste, { target: { value: PASTED } })
+  return { view, paste }
+}
+
+function fillName(view: ReturnType<typeof mount>) {
   const name = view.container.querySelector('.source-add-name') as HTMLInputElement
-  const url = view.container.querySelector('.source-add-url') as HTMLInputElement
   fireEvent.change(name, { target: { value: 'Algebra' } })
-  fireEvent.change(url, { target: { value: PASTED } })
-  return { view, url }
+  return name
 }
 
 afterEach(cleanup)
 beforeEach(() => vi.clearAllMocks())
 
-describe('AddCourseRow', () => {
-  it('sends one check however often Enter is pressed while it is in flight', async () => {
+describe('AddCoursePanel', () => {
+  it('checks a pasted URL once however often Enter is pressed, then creates once', async () => {
     let answer!: () => void
     checkCourseUrl.mockReturnValue(new Promise<void>((r) => (answer = r)))
     createCourse.mockResolvedValue(undefined)
-    const { url } = openForm()
-    fireEvent.keyDown(url, { key: 'Enter' })
-    fireEvent.keyDown(url, { key: 'Enter' })
+    const { view, paste } = await pasteUrl()
+    fireEvent.keyDown(paste, { key: 'Enter' })
+    fireEvent.keyDown(paste, { key: 'Enter' })
     expect(checkCourseUrl).toHaveBeenCalledTimes(1)
     await act(async () => answer())
+    const url = view.container.querySelector('.source-add-url') as HTMLInputElement
+    expect(url.value).toBe(PASTED)
+    expect(url.readOnly).toBe(true)
+    const name = fillName(view)
+    fireEvent.keyDown(name, { key: 'Enter' })
+    fireEvent.keyDown(name, { key: 'Enter' })
     expect(createCourse).toHaveBeenCalledTimes(1)
+    expect(createCourse).toHaveBeenCalledWith('Algebra', PASTED)
+    expect(checkCourseUrl).toHaveBeenCalledTimes(1)
   })
 
-  it('creates once on a double "Save anyway", unchecked', async () => {
+  it('saves a refused paste anyway and creates unchecked', async () => {
     checkCourseUrl.mockRejectedValue(new Error('refused'))
-    let created!: () => void
-    createCourse.mockReturnValue(new Promise<void>((r) => (created = r)))
-    const { view, url } = openForm()
-    await act(async () => fireEvent.keyDown(url, { key: 'Enter' }))
+    createCourse.mockResolvedValue(undefined)
+    const { view, paste } = await pasteUrl()
+    await act(async () => fireEvent.keyDown(paste, { key: 'Enter' }))
     const saveAnyway = view.container.querySelector('.course-check-save-anyway') as HTMLElement
     fireEvent.click(saveAnyway)
-    fireEvent.click(saveAnyway)
+    fireEvent.keyDown(fillName(view), { key: 'Enter' })
     expect(checkCourseUrl).toHaveBeenCalledTimes(1)
     expect(createCourse).toHaveBeenCalledTimes(1)
     expect(createCourse).toHaveBeenCalledWith('Algebra', PASTED)
-    await act(async () => created())
   })
 
   it('shows the course code as its own chip and prefills only the name', async () => {
@@ -104,24 +118,25 @@ describe('AddCourseRow', () => {
       ],
     })
     const view = mount()
-    const [fromMoodle] = view.container.querySelectorAll('.source-add-btn')
-    await act(async () => fireEvent.click(fromMoodle))
+    const item = (await waitFor(() => {
+      const el = view.container.querySelector('.course-picker-item')
+      if (!el) throw new Error('no item')
+      return el
+    })) as HTMLElement
     expect(fetchEnrolledCourses).toHaveBeenCalledWith('en')
-    const item = view.container.querySelector('.course-picker-item') as HTMLElement
     expect(item.querySelector('.course-picker-code')?.textContent).toBe('868922001')
     fireEvent.click(item)
     const name = view.container.querySelector('.source-add-name') as HTMLInputElement
     expect(name.value).toBe('Algorithms 1')
   })
 
-  it('disables the language switcher with its hint while the picker is open, and frees it on close', async () => {
+  it('disables the language switcher with its hint while the picker is open, and Cancel closes the panel', async () => {
     fetchEnrolledCourses.mockResolvedValue({ available: false })
-    const view = mount()
+    const onDone = vi.fn()
+    const view = mount(onDone)
     const switcher = view.container.querySelector('.language-switcher') as HTMLElement
     const langs = () => [...switcher.querySelectorAll('button')].map((b) => b.disabled)
-    expect(langs()).toEqual([false, false])
-    const [fromMoodle] = view.container.querySelectorAll('.source-add-btn')
-    await act(async () => fireEvent.click(fromMoodle))
+    await act(async () => {})
     expect(langs()).toEqual([true, true])
     fireEvent.mouseEnter(switcher)
     await waitFor(() =>
@@ -134,6 +149,6 @@ describe('AddCourseRow', () => {
       (b) => b.textContent === 'Cancel',
     ) as HTMLElement
     fireEvent.click(cancel)
-    expect(langs()).toEqual([false, false])
+    expect(onDone).toHaveBeenCalled()
   })
 })

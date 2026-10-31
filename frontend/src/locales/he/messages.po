@@ -88,7 +88,7 @@ msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {תוצאה אחת} two {# תוצאות} other {# תוצאות}}"
 
 #. placeholder {0}: past.length
-#: src/features/downloads/components/CoursePicker.tsx:93
+#: src/features/downloads/components/CoursePicker.tsx:108
 msgid "{0, plural, one {Show # past course} other {Show # past courses}}"
 msgstr "{0, plural, one {הצגת קורס קודם אחד} two {הצגת # קורסים קודמים} other {הצגת # קורסים קודמים}}"
 
@@ -133,7 +133,7 @@ msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:207
+#: src/features/downloads/DownloadsView.tsx:304
 msgid "{0} found"
 msgstr "נמצאו {0}"
 
@@ -395,21 +395,13 @@ msgstr "{total, plural, one {בקורס הזה יש פריט # שלא סימנת
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
-#: src/features/downloads/DownloadsView.tsx:135
+#: src/features/downloads/DownloadsView.tsx:206
 msgid "{withSource} courses with a source"
 msgstr "{withSource} קורסים עם מקור"
 
-#: src/features/downloads/components/AddCourseRow.tsx:78
-msgid "+ Add a course source URL"
-msgstr "+ הוספת כתובת מקור לקורס"
-
-#: src/features/downloads/components/AddCourseRow.tsx:75
-msgid "+ Add course from Moodle"
-msgstr "+ הוספת קורס מ-Moodle"
-
-#: src/features/downloads/components/CourseSourceRow.tsx:84
-msgid "+ add source URL"
-msgstr "+ הוספת כתובת מקור"
+#: src/features/downloads/components/CourseSourceBar.tsx:60
+msgid "+ Add course"
+msgstr "+ הוספת קורס"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:147
 msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
@@ -455,7 +447,7 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 msgstr "בקורס של הרצאות בלבד התרגולים מופיעים בין ההרצאות, וכל מה שתוסיף אליו יישמר כהרצאה. שום דבר שכבר נשמר לא זז."
 
-#: src/features/downloads/DownloadsView.tsx:138
+#: src/features/downloads/DownloadsView.tsx:209
 msgid "A one-time setup of about three minutes."
 msgstr "הגדרה חד־פעמית של כשלוש דקות."
 
@@ -600,7 +592,7 @@ msgid "Assignment Solution"
 msgstr "פתרון המטלה"
 
 #: src/features/downloads/components/NewView.tsx:135
-#: src/features/downloads/DownloadsView.tsx:95
+#: src/features/downloads/DownloadsView.tsx:159
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:37
 msgid "Assignments"
 msgstr "מטלות"
@@ -720,8 +712,8 @@ msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הו�
 msgid "Can't replace the video while it's being processed or waiting in line"
 msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או המתנה בתור"
 
-#: src/features/downloads/components/AddCourseRow.tsx:138
-#: src/features/downloads/components/CoursePicker.tsx:110
+#: src/features/downloads/components/AddCoursePanel.tsx:123
+#: src/features/downloads/components/CoursePicker.tsx:125
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
@@ -777,7 +769,7 @@ msgstr "בודק חשבון…"
 msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
-#: src/features/downloads/components/AddCourseRow.tsx:134
+#: src/features/downloads/components/AddCoursePanel.tsx:119
 #: src/features/downloads/components/CourseUrlPaste.tsx:58
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
@@ -785,9 +777,14 @@ msgstr "בודק את Drive…"
 msgid "Checking…"
 msgstr "בודק…"
 
+#: src/features/downloads/components/CourseSourceBar.tsx:49
 #: src/features/downloads/components/ManualDownload.tsx:83
 msgid "Choose a course first"
 msgstr "בחר קורס קודם"
+
+#: src/features/downloads/components/CourseSourceBar.tsx:44
+msgid "Choose a course…"
+msgstr "בחירת קורס…"
 
 #: src/shared/i18n/serviceErrors.ts:160
 msgid "Choose a data folder."
@@ -827,12 +824,11 @@ msgstr "בחר מתי להסיר את הוידאו והשמע"
 msgid "Choose your university above to connect its account."
 msgstr "בחר את האוניברסיטה שלך למעלה כדי לחבר את החשבון שלה."
 
-#: src/features/downloads/DownloadsView.tsx:170
+#: src/features/downloads/DownloadsView.tsx:256
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי להוריד מ-Moodle."
 
-#: src/features/downloads/components/CoursePicker.tsx:64
-#: src/features/downloads/components/CourseSourceRow.tsx:105
+#: src/features/downloads/components/CoursePicker.tsx:78
 msgid "Choose your university in Settings first"
 msgstr "יש לבחור תחילה אוניברסיטה בהגדרות"
 
@@ -892,7 +888,7 @@ msgstr "לחץ כדי לסמן שעוד לא סיימת את ההרצאה הזו
 msgid "Click to mark this recitation as not done"
 msgstr "לחץ כדי לסמן שעוד לא סיימת את התרגול הזה"
 
-#: src/features/downloads/DownloadsView.tsx:211
+#: src/features/downloads/DownloadsView.tsx:308
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
 msgid "Close"
 msgstr "סגירה"
@@ -941,8 +937,8 @@ msgstr "להתחבר בכל זאת?"
 msgid "Connect Google Drive now?"
 msgstr "לחבר את Google Drive עכשיו?"
 
-#: src/features/downloads/components/CoursePicker.tsx:66
-#: src/features/downloads/components/CourseSourceRow.tsx:107
+#: src/features/downloads/components/CoursePicker.tsx:80
+#: src/features/downloads/DownloadsView.tsx:76
 msgid "Connect your university account first"
 msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
 
@@ -1100,7 +1096,7 @@ msgstr "הקורס \"{course}\" לא קיים."
 msgid "Course material"
 msgstr "חומר מהקורס"
 
-#: src/features/downloads/components/AddCourseRow.tsx:106
+#: src/features/downloads/components/AddCoursePanel.tsx:91
 #: src/features/lectures/sidebar/NewCourseRow.tsx:44
 msgid "Course name…"
 msgstr "שם הקורס…"
@@ -1108,10 +1104,6 @@ msgstr "שם הקורס…"
 #: src/features/course-overview/CourseView.tsx:122
 msgid "Course overview"
 msgstr "סקירת קורס"
-
-#: src/features/downloads/DownloadsView.tsx:179
-msgid "Course sources"
-msgstr "מקורות קורסים"
 
 #: src/features/settings/components/CourseStructureField.tsx:28
 msgid "Course structure"
@@ -1126,14 +1118,14 @@ msgid "Courses"
 msgstr "קורסים"
 
 #: src/App.tsx:39
-#: src/features/downloads/DownloadsView.tsx:186
+#: src/features/downloads/DownloadsView.tsx:265
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:238
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
 msgstr "לא הצלחנו לטעון את הקורסים."
 
-#: src/features/downloads/components/AddCourseRow.tsx:134
+#: src/features/downloads/components/AddCoursePanel.tsx:119
 msgid "Create"
 msgstr "יצירה"
 
@@ -1251,7 +1243,7 @@ msgstr "הורדת הכול"
 msgid "Download all {leaves}"
 msgstr "הורדת הכול ({leaves})"
 
-#: src/features/downloads/DownloadsView.tsx:141
+#: src/features/downloads/DownloadsView.tsx:212
 msgid "Download any open video on the internet"
 msgstr "הורד כל וידאו שפתוח לצפייה באינטרנט"
 
@@ -1303,7 +1295,7 @@ msgstr "מוריד עדכון…"
 msgid "Downloading…"
 msgstr "מוריד…"
 
-#: src/features/downloads/DownloadsView.tsx:118
+#: src/features/downloads/DownloadsView.tsx:189
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "הורדות"
@@ -1345,8 +1337,8 @@ msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה ח�
 msgid "Edit"
 msgstr "עריכה"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:89
-#: src/features/downloads/components/CourseSourceRow.tsx:90
+#: src/features/downloads/components/CourseSourceBar.tsx:49
+#: src/features/downloads/components/CourseSourceBar.tsx:54
 msgid "Edit source URL"
 msgstr "עריכת כתובת מקור"
 
@@ -1358,7 +1350,7 @@ msgstr "עריכת סיכום"
 msgid "Edit the summary text next to the PDF, then update the PDF to see your changes."
 msgstr "ערוך את טקסט הסיכום לצד ה-PDF, ואז עדכן את ה-PDF כדי לראות את השינויים."
 
-#: src/features/downloads/components/AddCourseRow.tsx:128
+#: src/features/downloads/components/AddCoursePanel.tsx:113
 msgid "Enter a course name first"
 msgstr "הזן קודם שם קורס"
 
@@ -1664,7 +1656,7 @@ msgstr "יותר מדי בקשות ל-Groq. נסה שוב בעוד כמה דקו
 msgid "Hebrew University"
 msgstr "האוניברסיטה העברית"
 
-#: src/features/downloads/components/CoursePicker.tsx:91
+#: src/features/downloads/components/CoursePicker.tsx:106
 msgid "Hide past courses"
 msgstr "הסתרת קורסים קודמים"
 
@@ -1822,10 +1814,6 @@ msgstr "הרצאות שסיימת"
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:118
-msgid "Load course"
-msgstr "טען קורס"
-
 #: src/features/lectures/DocEditor.tsx:291
 msgid "Load new version"
 msgstr "טעינת הגרסה החדשה"
@@ -1834,23 +1822,19 @@ msgstr "טעינת הגרסה החדשה"
 msgid "Load the FastStudy folder"
 msgstr "טעינת התיקייה של FastStudy"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:98
-msgid "Loaded"
-msgstr "הקלטות נטענו"
-
 #: src/features/search/SearchView.tsx:247
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
-#: src/features/downloads/components/CoursePicker.tsx:72
+#: src/features/downloads/components/CoursePicker.tsx:87
 msgid "Loading your courses…"
 msgstr "טוען את הקורסים שלך…"
 
-#: src/features/downloads/DownloadsView.tsx:144
+#: src/features/downloads/DownloadsView.tsx:215
 msgid "Loading your data…"
 msgstr "טוען את הנתונים שלך…"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:118
+#: src/features/downloads/DownloadsView.tsx:181
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
 msgstr "טוען…"
@@ -1868,7 +1852,7 @@ msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
 #: src/features/downloads/components/NewView.tsx:134
-#: src/features/downloads/DownloadsView.tsx:93
+#: src/features/downloads/DownloadsView.tsx:157
 #: src/features/lectures/AssignmentView.tsx:141
 #: src/features/lectures/MainView.tsx:591
 msgid "Materials"
@@ -1922,7 +1906,7 @@ msgstr "לא"
 msgid "No archived courses"
 msgstr "אין קורסים בארכיון"
 
-#: src/features/downloads/DownloadsView.tsx:110
+#: src/features/downloads/DownloadsView.tsx:174
 msgid "No assignments found."
 msgstr "לא נמצאו מטלות."
 
@@ -1946,7 +1930,7 @@ msgstr "כבר אין חלון Chrome שמחכה לפתרון חידה."
 msgid "No courses yet."
 msgstr "עדיין אין קורסים."
 
-#: src/features/downloads/components/CoursePicker.tsx:81
+#: src/features/downloads/components/CoursePicker.tsx:96
 msgid "No current courses."
 msgstr "אין קורסים נוכחיים."
 
@@ -1954,7 +1938,7 @@ msgstr "אין קורסים נוכחיים."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקיית נתונים. בחר אחת בהגדרות."
 
-#: src/features/downloads/DownloadsView.tsx:111
+#: src/features/downloads/DownloadsView.tsx:175
 msgid "No files of unknown type found."
 msgstr "לא נמצאו קבצים מסוג לא ידוע."
 
@@ -1994,7 +1978,7 @@ msgstr "לא נמצא חומר"
 msgid "no material will be sent"
 msgstr "אף חומר לא יישלח"
 
-#: src/features/downloads/DownloadsView.tsx:109
+#: src/features/downloads/DownloadsView.tsx:173
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
@@ -2022,9 +2006,13 @@ msgstr "אין תרגולים"
 msgid "No recitations yet"
 msgstr "אין עדיין תרגולים"
 
-#: src/features/downloads/DownloadsView.tsx:108
+#: src/features/downloads/DownloadsView.tsx:172
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
+
+#: src/features/downloads/DownloadsView.tsx:293
+msgid "No source URL yet. Use the pencil to choose one."
+msgstr "אין עדיין כתובת מקור. בחרו אותה בעזרת העיפרון."
 
 #: src/features/downloads/components/AccountStatus.tsx:166
 msgid "no university chosen"
@@ -2258,7 +2246,7 @@ msgstr "חלק מ-FastStudy לא מגיב. הפעל מחדש את האפליקצ
 msgid "Passcode"
 msgstr "קוד גישה"
 
-#: src/features/downloads/components/CoursePicker.tsx:107
+#: src/features/downloads/components/CoursePicker.tsx:122
 msgid "Paste a URL instead"
 msgstr "הדבקת כתובת במקום"
 
@@ -2396,7 +2384,7 @@ msgstr "תרגולים שסיימת"
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
-#: src/features/downloads/DownloadsView.tsx:205
+#: src/features/downloads/DownloadsView.tsx:302
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
@@ -2710,7 +2698,7 @@ msgstr "משהו השתבש."
 msgid "Sorry about that. Go home to keep working, or copy the details below to report it."
 msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד, או העתק את הפרטים למטה כדי לדווח על כך."
 
-#: src/features/downloads/components/AddCourseRow.tsx:124
+#: src/features/downloads/components/AddCoursePanel.tsx:109
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (לא חובה)…"
 
@@ -3269,7 +3257,7 @@ msgid "University saved"
 msgstr "האוניברסיטה נשמרה"
 
 #: src/features/downloads/components/NewView.tsx:136
-#: src/features/downloads/DownloadsView.tsx:99
+#: src/features/downloads/DownloadsView.tsx:163
 msgid "Unknown"
 msgstr "לא ידוע"
 
@@ -3340,7 +3328,7 @@ msgid "Video link"
 msgstr "קישור לווידאו"
 
 #: src/features/downloads/components/NewView.tsx:133
-#: src/features/downloads/DownloadsView.tsx:92
+#: src/features/downloads/DownloadsView.tsx:156
 msgid "Videos"
 msgstr "וידאו"
 

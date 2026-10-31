@@ -1,8 +1,7 @@
 // Downloads → University's New view on a course nothing is filed from: the first-load banner,
 // marking a row irrelevant and restoring it from All, then "Download selected" on a subset where
 // the dead link is auto-skipped.
-import { appUrl } from '../lib/browser.mjs';
-import { exactly, recordingCard, showRecording } from '../lib/downloads.mjs';
+import { exactly, pickCourse, recordingCard, showRecording } from '../lib/downloads.mjs';
 import { FAILURE_ROWS } from '../lib/env.mjs';
 import { restart } from '../lib/stack.mjs';
 import { expect, harness, reseed, reset, site, test } from './fixtures.mjs';
@@ -34,13 +33,7 @@ const newRow = (page, title) =>
 
 /** Load the course as Downloads does, leaving the list on its default New scope. */
 async function loadNew(page) {
-  await page.goto(new URL('/downloads', appUrl()).href);
-  await page.locator('.downloads-tabs [role=tab]').first().click();
-  const source = page.locator('.source-row').filter({
-    has: page.locator('.source-row-name', { hasText: exactly(COURSE) }),
-  });
-  await source.locator('.source-row-actions .btn').click();
-  await source.locator('.chip--accent').waitFor();
+  await pickCourse(page, COURSE);
   await expect(page.locator('.new-view')).toBeVisible();
 }
 

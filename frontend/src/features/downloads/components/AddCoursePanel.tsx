@@ -10,16 +10,20 @@ import CoursePicker from './CoursePicker'
 import CourseCheckFailure from './CourseCheckFailure'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
-import './AddCourseRow.css'
+import './AddCoursePanel.css'
 
-type Mode = 'idle' | 'picking' | 'form'
+type Mode = 'picking' | 'form'
 
-// A new course, typed in or picked from Moodle (name prefilled, URL fixed). Plain inputs, not
+// A new course, picked from Moodle (name prefilled, URL fixed) or from a pasted URL. Plain inputs, not
 // InlineEditInput: moving between the name and URL fields must not blur-cancel.
-export default function AddCourseRow() {
+interface Props {
+  onDone: () => void
+}
+
+export default function AddCoursePanel({ onDone }: Props) {
   const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
-  const [mode, setMode] = useState<Mode>('idle')
+  const [mode, setMode] = useState<Mode>('picking')
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   // The URL came from the picker (Moodle's list, or a paste it checked or saved anyway), so it is shown, not edited.
@@ -31,11 +35,8 @@ export default function AddCourseRow() {
   const inFlight = useRef(false)
 
   function reset() {
-    setMode('idle')
-    setName('')
-    setUrl('')
-    setUrlFixed(false)
     clear()
+    onDone()
   }
 
   function openForm(courseName: string, courseUrl: string) {
@@ -63,22 +64,6 @@ export default function AddCourseRow() {
       inFlight.current = false
       setSaving(false)
     }
-  }
-
-  if (mode === 'idle') {
-    return (
-      <div className="source-add-actions">
-        <button
-          className="source-add-btn source-add-btn--moodle"
-          onClick={() => setMode('picking')}
-        >
-          <Trans>+ Add course from Moodle</Trans>
-        </button>
-        <button className="source-add-btn" onClick={() => openForm('', '')}>
-          <Trans>+ Add a course source URL</Trans>
-        </button>
-      </div>
-    )
   }
 
   if (mode === 'picking') {

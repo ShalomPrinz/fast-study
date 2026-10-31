@@ -35,7 +35,7 @@ hb click 'text=…'
 hb fill 'input[placeholder="Course name…"]' 'קורס'
 hb press Enter --shot saved              # click, fill and press take --shot NAME; all take --browser TAG
 hb shot dialog --before --setup "await page.click('text=…')"  # en+he, before+after → evidence/main-dialog-[before-]<lang>.png
-hb download hb-dl 'הקלטה 4 — גרפים'      # Downloads → load the course → press that row's Download
+hb download hb-dl 'הקלטה 4 — גרפים'      # Downloads → pick the course in the combobox → press that row's Download
 hb eval <<'JS'                           # JS on stdin (or as one argument), given page and context
 return page.url()
 JS

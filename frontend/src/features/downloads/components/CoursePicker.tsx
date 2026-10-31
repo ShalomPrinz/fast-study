@@ -12,6 +12,8 @@ import '@/styles/chip.css'
 import './CoursePicker.css'
 
 interface Props {
+  // Changing it resets the paste state (typed text, failure) while the course list stays loaded.
+  resetKey?: string
   // The source already saved, marked in the list and prefilled in the paste input.
   currentUrl: string
   onChoose: (course: EnrolledCourse) => void
@@ -22,13 +24,18 @@ interface Props {
 
 // Picks a course's source from the enrolled courses (past ones behind a toggle) or a pasted URL; with no
 // list to offer (not connected, or the site's list closed) it opens straight on the paste input.
-export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }: Props) {
+export default function CoursePicker({ resetKey, currentUrl, onChoose, onPaste, onCancel }: Props) {
   const { status } = useAuthStatus()
   const disconnected = status?.connected === false
   // Its names are in the locale at open, so the language stays put while it is open.
   useLocaleHold()
   const list = useEnrolledCourses(!disconnected)
   const [pasting, setPasting] = useState(false)
+  const [seenKey, setSeenKey] = useState(resetKey)
+  if (seenKey !== resetKey) {
+    setSeenKey(resetKey)
+    setPasting(false)
+  }
   const [showPast, setShowPast] = useState(false)
   const view = pickerView(status, list, pasting)
   const { current, past } = splitCourses(Array.isArray(list) ? list : [])
@@ -56,6 +63,13 @@ export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }
     </li>
   )
 
+  // With a source already saved the paste input leads, URL selected, above the list that marks it
+  // current; otherwise it is the fallback after the list.
+  const paste = (
+    <CourseUrlPaste key={resetKey} initial={currentUrl} onSave={onPaste} onCancel={onCancel} />
+  )
+  const pasteFirst = currentUrl !== ''
+
   return (
     <div className={`course-picker course-picker--${view}`}>
       {disconnected && (
@@ -67,6 +81,7 @@ export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }
           )}
         </p>
       )}
+      {pasteFirst && paste}
       {view === 'loading' && (
         <p className="course-picker-note">
           <Trans>Loading your courses…</Trans>
@@ -99,8 +114,8 @@ export default function CoursePicker({ currentUrl, onChoose, onPaste, onCancel }
           )}
         </>
       )}
-      {view === 'paste' ? (
-        <CourseUrlPaste initial={currentUrl} onSave={onPaste} onCancel={onCancel} />
+      {pasteFirst ? null : view === 'paste' ? (
+        paste
       ) : (
         <div className="course-picker-actions">
           <button className="btn btn--ghost course-picker-paste" onClick={() => setPasting(true)}>

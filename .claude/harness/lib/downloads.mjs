@@ -10,17 +10,18 @@ export const recordingCard = (page, title) =>
     .locator('.recording-card')
     .filter({ has: page.locator('.recording-title', { hasText: title }) });
 
-/** Open Downloads' University tab, load `course` off its source and switch the list to All, the old per-card view; → its source row. */
-export async function loadRecordings(page, course) {
+/** Open Downloads' University tab and pick `course` (exact name) in the course combobox, which loads it. */
+export async function pickCourse(page, course) {
   await page.goto(new URL('/downloads', appUrl()).href);
   await page.locator('.downloads-tabs [role=tab]').first().click();
-  const source = page.locator('.source-row').filter({
-    has: page.locator('.source-row-name', { hasText: exactly(course) }),
-  });
-  await source.locator('.source-row-actions .btn').click();
-  await source.locator('.chip--accent').waitFor();
+  await page.locator('#course-source').click();
+  await page.getByRole('option', { name: exactly(course) }).click();
+}
+
+/** Pick `course` and switch the loaded list to All, the old per-card view. */
+export async function loadRecordings(page, course) {
+  await pickCourse(page, course);
   await page.locator('.downloads-scope-switch .mode-toggle-btn', { hasText: 'All' }).click();
-  return source;
 }
 
 /** Open the loaded list's segment (Videos, Materials, Unknown) holding `title`; → its card. */

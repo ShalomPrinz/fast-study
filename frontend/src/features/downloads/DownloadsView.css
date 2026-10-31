@@ -14,15 +14,7 @@
   font-weight: 500;
 }
 
-/* Course source-URL list, parted from the recordings caption that follows it. */
-.source-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-bottom: var(--space-7);
-}
-
-/* A failed course load, where the course rows would be; AddCourseRow stays below it. */
+/* A failed course load: the course box stays usable, since a create reports its own failure. */
 .source-list-failed {
   margin: 0;
   padding: var(--space-3) var(--space-5);
@@ -31,6 +23,19 @@
   background: var(--danger-soft);
   font-size: var(--fs-meta);
   color: var(--danger);
+  margin-bottom: var(--space-5);
+}
+
+/* The edit or add panel, parted from what follows it. */
+.source-panel {
+  margin-bottom: var(--space-6);
+}
+
+/* Why the picked course shows no recordings: loading, the bar on discovery, or no source yet. */
+.downloads-load-note {
+  margin: 0 0 var(--space-5);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
 }
 
 /* The open course's recordings. `ModeToggle` emits cards and body as siblings, so the panel centres the
@@ -91,10 +96,15 @@
   color: var(--danger);
 }
 
-/* The tab row rides in the header's secondary row, which `.main-view--page` keeps frozen above the
-   scrolling body, and spans its full width; `.mode-toggle-btn`'s `flex: 1` shares it out equally. */
-.downloads-page .downloads-tabs {
+/* The tab row, and under it the University course row, ride in the header's secondary row, which
+   `.main-view--page` keeps frozen above the scrolling body; both span its full width, and
+   `.mode-toggle-btn`'s `flex: 1` shares the tabs out equally. */
+.downloads-header-rows {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 /* Each tab's header facts stacked in one cell; the hidden ones still claim their height. */

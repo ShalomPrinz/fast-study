@@ -15,8 +15,12 @@ describe('sourceChangeAction', () => {
     expect(sourceChangeAction(false, true, 'https://a', '')).toBe('close')
   })
 
-  it('leaves a course neither loaded nor loading alone', () => {
-    expect(sourceChangeAction(false, false, 'https://a', 'https://b')).toBe('none')
+  it('loads a picked course that was neither loaded nor loading, including one with no source', () => {
+    expect(sourceChangeAction(false, false, 'https://a', 'https://b')).toBe('reload')
+    expect(sourceChangeAction(false, false, '', 'https://b')).toBe('reload')
+  })
+
+  it('leaves a course neither loaded nor loading alone when its URL is cleared', () => {
     expect(sourceChangeAction(false, false, 'https://a', '')).toBe('none')
   })
 

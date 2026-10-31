@@ -168,8 +168,8 @@ a row auto/ flags `moodle` locks, so a zoom row's passcode Submit never does; a 
 overwrite confirm on the videostream row does.
 
 `download` drives the `main` session (or `--browser TAG`) through `lib/downloads.mjs`, the helpers
-the specs import: Downloads → University, the course's Load, the segment holding the title, its
-Download. An overwrite confirm or a passcode prompt it opens is left for the next action.
+the specs import: Downloads → University, the course picked in the `#course-source` combobox (exact name; it loads at once), the segment holding the title, its
+Download. `pick-course <course>` stops after the pick. An overwrite confirm or a passcode prompt it opens is left for the next action.
 
 `kill` ends one service's whole recorded process group, the server with the `uv`/`npm` parent
 wrapping it, so the port stops answering; a bare `kill` of the recorded pid can leave the server up.
@@ -481,7 +481,7 @@ so the tour overlay never blocks a drive; `tour.spec.mjs` opts out with
 `e2e/fixtures.mjs` holds what more than one spec needs: the stack's levers (`providers`, `site`, `lock`,
 `reseed`, `reset`), a lecture view's `step` rows and `expectRunComplete` (the folded "Summary ready" row), `treeLecture` over the database's
 `/tree`, `driveFile` walking the fake Drive's folder chain, and `dropFile`, which drops a local file on an
-element the way a drag from the file manager does. `lib/downloads.mjs` loads a course's recordings
+element the way a drag from the file manager does. `lib/downloads.mjs` picks a course in the combobox (`pickCourse`), loads its recordings
 and finds or downloads a row by title, for the specs and `hb download` alike; it switches the loaded list to the All scope (the New view hides the cards and segments the specs drive). The fake course's `ערוץ חיצוני` section holds one lone playlist row, `ערוץ הקורס ביוטיוב`, for the New view's select-all rule.
 
 ## Driving failures

@@ -7,11 +7,25 @@ interface Props {
   value: string
   options: readonly string[]
   onChange: (value: string) => void
+  // Fired only when an option is chosen, never for typed text.
+  onPick?: (option: string) => void
+  onBlur?: () => void
+  placeholder?: string
+  className?: string
 }
 
 // Free text with the options as an ARIA combobox listbox; unedited since focus it lists every option,
 // so a prefilled value never hides the others, and only typed text filters.
-export default function CourseCombobox({ id, value, options, onChange }: Props) {
+export default function CourseCombobox({
+  id,
+  value,
+  options,
+  onChange,
+  onPick,
+  onBlur,
+  placeholder,
+  className,
+}: Props) {
   const [open, setOpen] = useState(false)
   const [edited, setEdited] = useState(false)
   const [active, setActive] = useState(-1)
@@ -31,6 +45,7 @@ export default function CourseCombobox({ id, value, options, onChange }: Props) 
 
   function pick(option: string) {
     onChange(option)
+    onPick?.(option)
     setOpen(false)
     setEdited(false)
   }
@@ -58,7 +73,7 @@ export default function CourseCombobox({ id, value, options, onChange }: Props) 
   }
 
   return (
-    <div className="course-combobox">
+    <div className={className ? `course-combobox ${className}` : 'course-combobox'}>
       <input
         id={id}
         className="source-row-input"
@@ -69,6 +84,7 @@ export default function CourseCombobox({ id, value, options, onChange }: Props) 
         aria-activedescendant={expanded && active >= 0 ? optionId(active) : undefined}
         autoComplete="off"
         value={value}
+        placeholder={placeholder}
         onChange={(e) => {
           onChange(e.target.value)
           setOpen(true)
@@ -77,7 +93,10 @@ export default function CourseCombobox({ id, value, options, onChange }: Props) 
         }}
         onFocus={show}
         onClick={() => !open && show()}
-        onBlur={() => setOpen(false)}
+        onBlur={() => {
+          setOpen(false)
+          onBlur?.()
+        }}
         onKeyDown={onKeyDown}
       />
       {expanded && (

@@ -277,6 +277,27 @@ return ${JSON.stringify(`pressed Download on "${title}" in ${course}`)};`;
       if (!response.ok) process.exitCode = 1;
     },
   },
+  'pick-course': {
+    usage: 'pick-course <course> [--browser TAG]',
+    summary:
+      'open Downloads → University and pick a course (exact name) in the course combobox, which loads it',
+    async run(paths, args) {
+      const at = args.indexOf('--browser');
+      const tag = at === -1 ? 'main' : args.splice(at, 2)[1];
+      const [course] = args;
+      if (!course || !tag) throw new Error(`usage: ${COMMANDS['pick-course'].usage}`);
+      const port = readPorts(paths)[`browser-${tag}`];
+      if (!port)
+        throw new Error(`no browser session "${tag}" — start one with \`hb browser ${tag}\``);
+      const helper = pathToFileURL(path.join(HARNESS_ROOT, 'lib', 'downloads.mjs')).href;
+      const body = `const { pickCourse } = await import(${JSON.stringify(helper)});
+await pickCourse(page, ${JSON.stringify(course)});
+return ${JSON.stringify(`picked ${course}`)};`;
+      const response = await fetch(`http://127.0.0.1:${port}/eval`, { method: 'POST', body });
+      process.stdout.write(await response.text());
+      if (!response.ok) process.exitCode = 1;
+    },
+  },
   'forget-probes': {
     usage: 'forget-probes',
     summary:

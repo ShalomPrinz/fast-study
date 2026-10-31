@@ -75,4 +75,27 @@ describe('CourseCombobox', () => {
     expect(input.value).toBe('Physics')
     expect(shown()).toEqual([])
   })
+
+  it('reports a pick through onPick, never typed text, and tells of a blur', () => {
+    const onPick = vi.fn()
+    const onBlur = vi.fn()
+    render(
+      createElement(CourseCombobox, {
+        id: 'p',
+        value: '',
+        options: COURSES,
+        onChange: vi.fn(),
+        onPick,
+        onBlur,
+      }),
+    )
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'ph' } })
+    expect(onPick).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('option', { name: 'Physics' }))
+    expect(onPick).toHaveBeenCalledWith('Physics')
+    fireEvent.blur(input)
+    expect(onBlur).toHaveBeenCalled()
+  })
 })

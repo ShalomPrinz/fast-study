@@ -1,0 +1,32 @@
+/* One centred line under the tabs: course box, pencil and Add course. Text, pencil and button are 1.2x
+   their usual size; the box is a fixed, narrower width rather than taking the slack. */
+.course-source-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.course-source-select {
+  flex: 0 1 calc(50% - 80px);
+  min-width: 0;
+}
+
+.course-source-select .source-row-input {
+  font-size: calc(var(--fs-body) * 1.2);
+}
+
+.course-source-bar .pipeline-icon-btn {
+  width: 33.6px;
+  height: 33.6px;
+}
+
+.course-source-bar .pipeline-icon-btn svg {
+  width: 15.6px;
+  height: 15.6px;
+}
+
+.course-source-bar .btn {
+  padding: calc(var(--space-2) * 1.2) calc(var(--space-5) * 1.2);
+  font-size: calc(var(--fs-meta) * 1.2);
+}

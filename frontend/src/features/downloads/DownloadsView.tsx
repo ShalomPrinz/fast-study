@@ -5,14 +5,19 @@ import { ResolvedMediaContext } from './contexts/ResolvedMediaContext'
 import ModeToggle from '@/shared/components/ModeToggle'
 import type { ModeConfig } from '@/shared/components/ModeToggle'
 import type { Media } from './services/autoDownloader'
+import type { Course } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import AccountStatus from '@/features/downloads/components/AccountStatus'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { ROUTES } from '@/shared/utils/routes'
 import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
-import CourseSourceRow from '@/features/downloads/components/CourseSourceRow'
-import AddCourseRow from '@/features/downloads/components/AddCourseRow'
+import CourseSourceBar from '@/features/downloads/components/CourseSourceBar'
+import EditSourcePanel from '@/features/downloads/components/EditSourcePanel'
+import AddCoursePanel from '@/features/downloads/components/AddCoursePanel'
+import { useMoodleLockState } from '@/features/downloads/contexts/MoodleLockContext'
+import { moodleLocked } from '@/features/downloads/utils/moodleLock'
+import { moodleBusyMessage } from '@/features/downloads/utils/downloadErrors'
 import ManualDownload from '@/features/downloads/components/ManualDownload'
 import MediaNote from '@/features/downloads/components/MediaNote'
 import FolderJobList from '@/features/downloads/components/FolderJobList'
@@ -58,7 +63,27 @@ export default function DownloadsView() {
   const { selected, pending, items, edits, reconnectKey, loadKey } = useDownloadsSession()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
   // The university is optional on the init wall, so a user without one lands here with nothing to sign in to.
-  const unconfigured = useAuthStatus().status?.unconfigured
+  const status = useAuthStatus().status
+  const unconfigured = status?.unconfigured
+  // Only a probe that came back "not connected" bars discovery; one still in flight or failed says nothing.
+  const disconnected = status?.connected === false
+  const locked = moodleLocked(useMoodleLockState())
+  // An unconfigured site bars discovery too, but the nudge already covers it, so it has no note.
+  const barred = unconfigured || disconnected || locked
+  const blockReason = unconfigured
+    ? null
+    : disconnected
+      ? t`Connect your university account first`
+      : locked
+        ? moodleBusyMessage()
+        : null
+  // The course picked in the box; the session's `selected` is the one whose recordings are loaded.
+  const [chosen, setChosen] = useState(pending ?? selected ?? '')
+  const [panel, setPanel] = useState<'edit' | 'add' | null>(null)
+  // A pick made while discovery was barred loads once the bar lifts; held by name so the load sees
+  // the course's source URL as it is then.
+  const [deferred, setDeferred] = useState<string | null>(null)
+  const chosenCourse = active.find((c) => c.name === chosen)
   const [tab, selectTab] = useDownloadsTab()
   // Held here rather than in the session, so leaving the page drops every lock.
   const { locks, lock } = useRowLocks()
@@ -69,6 +94,45 @@ export default function DownloadsView() {
   }, [edits, locks])
   const read = useCallback(() => rows.current, [])
   const dispatch = useMemo(() => ({ ...rowEdits, lock, read }), [rowEdits, lock, read])
+
+  useEffect(() => {
+    if (deferred && !barred) {
+      setDeferred(null)
+      const course = courses.find((c) => c.name === deferred && !c.archived)
+      if (course?.source_url) void discover(course, { wait: true })
+    }
+  }, [deferred, barred, courses, discover])
+
+  // A discovery that ended without painting its course leaves the box on the session's course, so
+  // the box always names what is shown below.
+  const prevPending = useRef(pending)
+  useEffect(() => {
+    const was = prevPending.current
+    prevPending.current = pending
+    // A course whose URL was just cleared stays in the box with the empty note.
+    const hasSource = courses.some((c) => c.name === was && c.source_url)
+    if (was && !pending && selected !== was && chosen === was && !deferred && hasSource)
+      setChosen(selected ?? '')
+  }, [pending, selected, chosen, deferred, courses])
+
+  // Loads a course now, or once discovery is no longer barred (closing what is open meanwhile).
+  function loadCourse(course: Course, wait: boolean) {
+    if (barred) {
+      close()
+      setDeferred(course.name)
+    } else void discover(course, { wait })
+  }
+
+  function pickCourse(name: string) {
+    const course = active.find((c) => c.name === name)
+    setChosen(name)
+    // A course with no source opens the picker at once; a Moodle list already open is kept, not refetched.
+    setPanel(course && !course.source_url ? 'edit' : null)
+    if (!course || (name === selected && !deferred) || name === pending) return
+    setDeferred(null)
+    if (!course.source_url) return close()
+    loadCourse(course, false)
+  }
 
   const [scope, setScope] = useState<Scope>(readScope)
   function chooseScope(next: Scope) {
@@ -111,6 +175,13 @@ export default function DownloadsView() {
     unknown: t`No files of unknown type found.`,
   }
 
+  const loadNote =
+    chosenCourse?.source_url && selected !== chosen
+      ? pending === chosen
+        ? t`Loading…`
+        : blockReason
+      : null
+
   return (
     <ResolvedMediaContext.Provider value={resolveMedia}>
       <main className="main-view main-view--page downloads-page">
@@ -145,7 +216,22 @@ export default function DownloadsView() {
               </div>
             </div>
           }
-          secondaryActions={<DownloadsTabs tab={tab} onSelect={selectTab} />}
+          secondaryActions={
+            <div className="downloads-header-rows">
+              <DownloadsTabs tab={tab} onSelect={selectTab} />
+              {tab === 'university' && (
+                <CourseSourceBar
+                  chosen={chosenCourse?.name ?? ''}
+                  names={active.map((c) => c.name)}
+                  onPick={pickCourse}
+                  onEdit={() => setPanel('edit')}
+                  onAdd={() => setPanel('add')}
+                  editing={panel === 'edit'}
+                  adding={panel === 'add'}
+                />
+              )}
+            </div>
+          }
         />
 
         {/* Keyed by tab so each one opens at its own top rather than the last tab's scroll offset. */}
@@ -174,29 +260,40 @@ export default function DownloadsView() {
                   </p>
                 )}
 
-                <div className="section-head">
-                  <h2 className="section-title">
-                    <Trans>Course sources</Trans>
-                  </h2>
-                </div>
+                {courseLoadNotice(courses, loaded, loadFailed) === 'failed' && (
+                  <p className="source-list-failed">
+                    <Trans>Courses failed to load.</Trans>
+                  </p>
+                )}
 
-                <div className="source-list">
-                  {courseLoadNotice(courses, loaded, loadFailed) === 'failed' && (
-                    <p className="source-list-failed">
-                      <Trans>Courses failed to load.</Trans>
-                    </p>
-                  )}
-                  {active.map((course) => (
-                    <CourseSourceRow
-                      key={course.name}
-                      course={course}
-                      onDiscover={course.source_url ? () => discover(course) : undefined}
-                      selected={selected === course.name}
-                      discovering={pending === course.name}
-                    />
-                  ))}
-                  <AddCourseRow />
-                </div>
+                {panel && (
+                  <div className="source-panel">
+                    {panel === 'add' ? (
+                      <AddCoursePanel onDone={() => setPanel(null)} />
+                    ) : (
+                      chosenCourse && (
+                        <EditSourcePanel
+                          course={chosenCourse}
+                          loaded={selected === chosenCourse.name}
+                          loading={pending === chosenCourse.name}
+                          onLoad={(course) => {
+                            setDeferred(null)
+                            close()
+                            loadCourse(course, true)
+                          }}
+                          onDone={() => setPanel(null)}
+                        />
+                      )
+                    )}
+                  </div>
+                )}
+
+                {panel === null && chosenCourse && !chosenCourse.source_url && (
+                  <p className="downloads-load-note" dir="auto">
+                    <Trans>No source URL yet. Use the pencil to choose one.</Trans>
+                  </p>
+                )}
+                {panel === null && loadNote && <p className="downloads-load-note">{loadNote}</p>}
 
                 {selected && (
                   <>

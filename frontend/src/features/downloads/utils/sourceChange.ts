@@ -1,13 +1,14 @@
 export type SourceChangeAction = 'reload' | 'close' | 'none'
 
-// What a saved source-URL edit does to the recordings panel: only the course loaded or loading
-// follows it — closed, then reloaded from the new URL unless the URL was cleared.
+// What a saved source-URL edit does to the picked course: a new URL loads it (replacing whatever
+// was open), a cleared one closes it only if its recordings are loaded or loading.
 export function sourceChangeAction(
   loaded: boolean,
   loading: boolean,
   oldUrl: string,
   newUrl: string,
 ): SourceChangeAction {
-  if (oldUrl === newUrl || !(loaded || loading)) return 'none'
-  return newUrl ? 'reload' : 'close'
+  if (oldUrl === newUrl) return 'none'
+  if (newUrl) return 'reload'
+  return loaded || loading ? 'close' : 'none'
 }
