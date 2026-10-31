@@ -33,11 +33,10 @@ export function autoRetryPatch(
   return patch
 }
 
-/** The typed text as a number the store accepts, or null while it is empty, fractional or out of range. */
+/** The typed text as a whole number clamped into the range, or null while it is empty or not an integer. */
 export function parseRetryInt(text: string, range: { min: number; max: number }): number | null {
   if (!/^\d+$/.test(text.trim())) return null
-  const n = Number(text)
-  return n >= range.min && n <= range.max ? n : null
+  return Math.min(range.max, Math.max(range.min, Number(text)))
 }
 
 export const COUNT_RANGE = AUTO_RETRY_COUNT_RANGE

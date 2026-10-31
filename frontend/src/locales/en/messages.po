@@ -1858,7 +1858,7 @@ msgstr "Match whole word"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/features/settings/components/AutoRetryField.tsx:90
+#: src/features/settings/components/AutoRetryField.tsx:91
 msgid "Minutes between retries"
 msgstr "Minutes between retries"
 
@@ -2098,7 +2098,7 @@ msgstr "Nothing was found to analyze in this course."
 msgid "Now running"
 msgstr "Now running"
 
-#: src/features/settings/components/AutoRetryField.tsx:76
+#: src/features/settings/components/AutoRetryField.tsx:77
 msgid "Number of retries"
 msgstr "Number of retries"
 

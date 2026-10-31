@@ -24,6 +24,13 @@
   gap: var(--space-2);
 }
 
+/* Two fields side by side; each column keeps a floor so a narrow window stacks them instead. */
+.settings-field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-6);
+}
+
 .settings-label {
   display: flex;
   align-items: baseline;

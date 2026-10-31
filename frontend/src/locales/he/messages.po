@@ -1858,7 +1858,7 @@ msgstr "התאמת מילה שלמה"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/features/settings/components/AutoRetryField.tsx:90
+#: src/features/settings/components/AutoRetryField.tsx:91
 msgid "Minutes between retries"
 msgstr "דקות בין ניסיונות"
 
@@ -2098,7 +2098,7 @@ msgstr "לא נמצא חומר לניתוח בקורס הזה."
 msgid "Now running"
 msgstr "בעיבוד עכשיו"
 
-#: src/features/settings/components/AutoRetryField.tsx:76
+#: src/features/settings/components/AutoRetryField.tsx:77
 msgid "Number of retries"
 msgstr "מספר ניסיונות חוזרים"
 

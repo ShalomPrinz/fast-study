@@ -31,8 +31,12 @@ describe('parseRetryInt', () => {
     expect(parseRetryInt('4', range)).toBe(4)
     expect(parseRetryInt('10', range)).toBe(10)
   })
-  it('refuses empty, fractional, signed and out of range text', () => {
-    for (const text of ['', '2.5', '-1', '0', '11', 'x'])
-      expect(parseRetryInt(text, range)).toBeNull()
+  it('clamps out of range numbers to the nearest bound', () => {
+    expect(parseRetryInt('11', range)).toBe(10)
+    expect(parseRetryInt('0', range)).toBe(1)
+    expect(parseRetryInt('99999999999999999999', range)).toBe(10)
+  })
+  it('refuses empty, fractional, signed and non-numeric text', () => {
+    for (const text of ['', '2.5', '-1', 'x']) expect(parseRetryInt(text, range)).toBeNull()
   })
 })

@@ -28,8 +28,8 @@ The model list comes from `GET /config/options`, so a model the free tier does n
 typed in and fail minutes later mid-pipeline.
 
 **Auto retry** (`AutoRetryField`, rules in `utils/autoRetry.ts`) is its own section: a switch plus "Number of
-retries" and "Minutes between retries", disabled while off. Unset reads as the defaults; the box commits only whole
-numbers in range (`parseRetryInt`) and falls back to the last good value on blur, so a patch never carries an
+retries" and "Minutes between retries", disabled while off. Unset reads as the defaults; the two boxes share one row and commit
+only whole numbers, clamped to the range (`parseRetryInt`; empty or fractional text commits nothing), so a patch never carries an
 out-of-range value (the launcher store would refuse it with `setting_out_of_range`). The three fields go to the
 backend's `POST /config`, which clamps them; turning the switch off drops every waiting retry there. The countdown
 UI is in [LECTURES.md](LECTURES.md) §Runner status.

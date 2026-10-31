@@ -3,8 +3,8 @@ import { Trans } from '@lingui/react/macro'
 import { COUNT_RANGE, MINUTES_RANGE, parseRetryInt, type AutoRetryForm } from '../utils/autoRetry'
 import '@/styles/settings-form.css'
 
-// A number box that only ever holds a value the store accepts: a half-typed or out-of-range entry
-// is shown but not committed, and the box falls back to the last good value on blur.
+// A number box that only commits a value the store accepts: an out-of-range integer commits its
+// clamped value, an empty or fractional entry commits nothing; blur shows the committed value.
 function IntInput({
   id,
   value,
@@ -70,33 +70,35 @@ export default function AutoRetryField({
           </Trans>
         </span>
       </div>
-      <div className="settings-field">
-        <div className="settings-label">
-          <label htmlFor="auto-retry-count">
-            <Trans>Number of retries</Trans>
-          </label>
+      <div className="settings-field-row">
+        <div className="settings-field">
+          <div className="settings-label">
+            <label htmlFor="auto-retry-count">
+              <Trans>Number of retries</Trans>
+            </label>
+          </div>
+          <IntInput
+            id="auto-retry-count"
+            value={value.count}
+            range={COUNT_RANGE}
+            disabled={!value.on}
+            onChange={(count) => onChange({ ...value, count })}
+          />
         </div>
-        <IntInput
-          id="auto-retry-count"
-          value={value.count}
-          range={COUNT_RANGE}
-          disabled={!value.on}
-          onChange={(count) => onChange({ ...value, count })}
-        />
-      </div>
-      <div className="settings-field">
-        <div className="settings-label">
-          <label htmlFor="auto-retry-minutes">
-            <Trans>Minutes between retries</Trans>
-          </label>
+        <div className="settings-field">
+          <div className="settings-label">
+            <label htmlFor="auto-retry-minutes">
+              <Trans>Minutes between retries</Trans>
+            </label>
+          </div>
+          <IntInput
+            id="auto-retry-minutes"
+            value={value.minutes}
+            range={MINUTES_RANGE}
+            disabled={!value.on}
+            onChange={(minutes) => onChange({ ...value, minutes })}
+          />
         </div>
-        <IntInput
-          id="auto-retry-minutes"
-          value={value.minutes}
-          range={MINUTES_RANGE}
-          disabled={!value.on}
-          onChange={(minutes) => onChange({ ...value, minutes })}
-        />
       </div>
     </>
   )
