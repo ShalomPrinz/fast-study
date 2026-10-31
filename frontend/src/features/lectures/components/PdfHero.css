@@ -3,37 +3,67 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-4);
   margin-bottom: var(--space-7);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+
+.pdf-hero:hover {
+  border-color: var(--accent-line);
+}
+
+.pdf-hero-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-sunken);
+}
+
+.pdf-hero-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--text-2);
 }
 
 .pdf-hero-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
-.pdf-hero-open {
+.pdf-hero-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  flex: 1 1 auto;
-  gap: var(--space-3);
-  max-width: 100%;
-  padding: var(--space-4) var(--space-6);
-  font-size: var(--fs-row);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  cursor: pointer;
 }
 
-/* The one accent-filled button on the lecture page. */
-.btn.pdf-hero-open {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
+.pdf-hero-link:hover {
+  background: var(--accent-soft);
 }
 
-.btn.pdf-hero-open:hover:not(:disabled) {
-  border-color: var(--accent-hover);
-  background: var(--accent-hover);
+.pdf-hero-link svg {
+  width: 14px;
+  height: 14px;
 }
 
 .pdf-thumbnail {
@@ -45,15 +75,10 @@
   min-height: 160px;
   padding: 0;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  background: var(--surface);
+  border: 0;
+  background: transparent;
   color: var(--text-3);
   cursor: pointer;
-}
-
-.pdf-thumbnail:hover {
-  border-color: var(--accent-line);
 }
 
 /* The failed-load icon centres itself; the page stays start-aligned so the canvas never lands on a half pixel. */
@@ -69,4 +94,65 @@
   height: 64px;
   background: linear-gradient(to bottom, transparent, var(--surface));
   pointer-events: none;
+}
+
+/* Loading: the page draws off-flow so the skeleton alone sizes the card, then swaps in at the same height. */
+.pdf-doc-pending {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: 100%;
+  visibility: hidden;
+}
+
+.pdf-skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pdf-skeleton > span {
+  display: block;
+  flex: none;
+  height: 10px;
+  border-radius: var(--r-sm);
+  background: var(--line-soft);
+  animation: pdf-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.pdf-skeleton > .pdf-skeleton-title {
+  width: 55%;
+  height: 18px;
+  margin-block-end: var(--space-4);
+  background: var(--control-line);
+}
+
+.pdf-skeleton-line {
+  width: 100%;
+}
+
+.pdf-skeleton-line:nth-child(4n + 3) {
+  width: 92%;
+}
+
+.pdf-skeleton-line:nth-child(5n + 1) {
+  width: 78%;
+}
+
+@keyframes pdf-skeleton-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-skeleton > span {
+    animation: none;
+  }
 }

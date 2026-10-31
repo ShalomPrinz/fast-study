@@ -7,8 +7,8 @@ import { canOpenWith, openLectureFile, openLectureFileWith } from '@/services/op
 import { fileUrl } from '@/services/database'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import { snapTransform, snapWidth, zoomCrop } from '@/features/lectures/utils/pdfSnap'
+import { heroPhase, skeletonHeight } from '@/features/lectures/utils/pdfSkeleton'
 import type { Kind } from '@/types'
-import '@/styles/button.css'
 import './PdfHero.css'
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -37,6 +37,9 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
   // A failed load belongs to one url; a new lecture or regenerated PDF gets a fresh try.
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
   const failed = failedUrl === url
+  // The first render of this url's page 1; until then a skeleton stands in.
+  const [renderedUrl, setRenderedUrl] = useState<string | null>(null)
+  const phase = heroPhase(failed, renderedUrl === url)
   // react-pdf compares `file` by identity, so a fresh literal would re-fetch on every render.
   const file = useMemo(() => ({ url, httpHeaders: secretHeaders() }), [url])
   const open = () => openLectureFile(course, lecture, 'summary.pdf', kind)
@@ -152,35 +155,60 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
     return () => ro.disconnect()
   }, [width, failed])
 
+  // Once the skeleton is gone the page is in flow; re-measure on the committed layout.
+  useEffect(() => {
+    if (phase === 'ready') measureRef.current()
+  }, [phase])
+
   return (
     <section className="pdf-hero" data-testid="pdf-hero">
-      <div className="pdf-hero-actions">
-        <button className="btn btn--primary pdf-hero-open" onClick={open}>
-          <Trans>Open in full screen</Trans>
-          <Icon icon="external-link" />
-        </button>
-        {canOpenWith() && (
-          <button
-            className="btn btn--ghost"
-            onClick={() => openLectureFileWith(course, lecture, 'summary.pdf', kind)}
-          >
-            <Trans>Choose app</Trans>
+      <div className="pdf-hero-strip">
+        <span className="pdf-hero-name">summary.pdf</span>
+        <div className="pdf-hero-actions">
+          {canOpenWith() && (
+            <button
+              className="pdf-hero-link"
+              onClick={() => openLectureFileWith(course, lecture, 'summary.pdf', kind)}
+            >
+              <Trans>Choose app</Trans>
+            </button>
+          )}
+          <button className="pdf-hero-link" onClick={open}>
+            <Trans>Open in full screen</Trans>
+            <Icon icon="external-link" />
           </button>
-        )}
+        </div>
       </div>
       <button
         ref={thumbRef}
         className="pdf-thumbnail"
         data-cropped={cropped || undefined}
-        style={cap ? { maxHeight: cap } : undefined}
+        style={{
+          maxHeight: cap ?? undefined,
+          minHeight: phase === 'loading' ? skeletonHeight(pageWidth, PREVIEW_ZOOM, cap) : undefined,
+        }}
         data-testid="pdf-thumbnail"
         onClick={open}
         aria-label={t`Open PDF`}
       >
+        {phase === 'loading' && (
+          <div className="pdf-skeleton" aria-hidden="true">
+            <span className="pdf-skeleton-title" />
+            {Array.from({ length: 40 }, (_, i) => (
+              <span key={i} className="pdf-skeleton-line" />
+            ))}
+          </div>
+        )}
         {failed ? (
           <Icon icon="document" />
         ) : snapped ? (
-          <Document file={file} loading="" error="" onLoadError={() => setFailedUrl(url)}>
+          <Document
+            file={file}
+            loading=""
+            error=""
+            className={phase === 'loading' ? 'pdf-doc-pending' : undefined}
+            onLoadError={() => setFailedUrl(url)}
+          >
             <Page
               pageNumber={1}
               width={pageWidth}
@@ -188,7 +216,10 @@ export default function PdfHero({ course, lecture, kind, pdfMtime }: Props) {
               renderTextLayer={false}
               renderAnnotationLayer={false}
               loading=""
-              onRenderSuccess={() => measureRef.current()}
+              onRenderSuccess={() => {
+                measureRef.current()
+                setRenderedUrl(url)
+              }}
             />
           </Document>
         ) : null}

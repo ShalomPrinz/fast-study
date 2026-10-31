@@ -794,7 +794,7 @@ msgstr "בחר תיקיית נתונים."
 msgid "Choose AI provider"
 msgstr "בחירת ספק AI"
 
-#: src/features/lectures/components/PdfHero.tsx:167
+#: src/features/lectures/components/PdfHero.tsx:173
 msgid "Choose app"
 msgstr "בחירת אפליקציה"
 
@@ -2150,7 +2150,7 @@ msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת 
 msgid "Open in Drive"
 msgstr "פתיחה ב-Drive"
 
-#: src/features/lectures/components/PdfHero.tsx:159
+#: src/features/lectures/components/PdfHero.tsx:177
 msgid "Open in full screen"
 msgstr "פתיחה במסך מלא"
 
@@ -2166,7 +2166,7 @@ msgstr "פתיחת החומר"
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/AssignmentDocCard.tsx:166
-#: src/features/lectures/components/PdfHero.tsx:178
+#: src/features/lectures/components/PdfHero.tsx:192
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
 #: src/features/lectures/MainView.tsx:466
