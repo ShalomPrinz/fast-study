@@ -1,20 +1,25 @@
-/* The settings route's own layout: sections flow down column 1, then column 2, with no gap under a short
-   one. `columns: 2 440px` drops to one column on its own once two 440px columns no longer fit. */
+/* Two fixed columns, each stacking its own sections, so a section never changes column when another
+   grows. One column once two 440px columns no longer fit. */
 .page-column.settings-page {
   max-width: 1240px;
-  columns: 2 440px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr));
   column-gap: var(--space-8);
+  align-items: start;
   padding-block-end: var(--space-8);
 }
 
+.settings-page .settings-column {
+  min-width: 0;
+}
+
 .settings-page .settings-section {
-  break-inside: avoid;
   margin-block-end: var(--space-6);
 }
 
-/* The error that replaces the sections is not a column item. */
+/* The error that replaces the sections spans both columns. */
 .settings-page .settings-load-failed {
-  column-span: all;
+  grid-column: 1 / -1;
 }
 
 /* A dropdown whose option text matches the search: the whole control takes the match tint. */

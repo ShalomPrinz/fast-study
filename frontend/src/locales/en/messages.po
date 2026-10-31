@@ -447,7 +447,7 @@ msgstr "A font the PDF needs is missing."
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:627
+#: src/features/settings/SettingsView.tsx:631
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "A lecture running now would save some files in the old folder and the rest in the new one."
 
@@ -502,7 +502,7 @@ msgstr "After the PDF is created"
 msgid "After the PDF is uploaded to Drive"
 msgstr "After the PDF is uploaded to Drive"
 
-#: src/features/settings/SettingsView.tsx:550
+#: src/features/settings/SettingsView.tsx:553
 msgid "AI chat provider"
 msgstr "AI chat provider"
 
@@ -554,11 +554,11 @@ msgstr "Analyzing the collected passages failed."
 msgid "Another Download all is downloading these recordings"
 msgstr "Another Download all is downloading these recordings"
 
-#: src/features/settings/SettingsView.tsx:371
+#: src/features/settings/SettingsView.tsx:372
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:507
+#: src/features/settings/SettingsView.tsx:510
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
@@ -625,7 +625,7 @@ msgstr "Audio"
 msgid "Audio only"
 msgstr "Audio only"
 
-#: src/features/settings/SettingsView.tsx:430
+#: src/features/settings/SettingsView.tsx:431
 msgid "Auto change model when busy"
 msgstr "Auto change model when busy"
 
@@ -653,7 +653,7 @@ msgstr "Auto-run: off"
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
-#: src/features/settings/SettingsView.tsx:497
+#: src/features/settings/SettingsView.tsx:500
 msgid "Automatic retry"
 msgstr "Automatic retry"
 
@@ -757,7 +757,7 @@ msgstr "Caught the Zoom video. The download is in progress."
 msgid "Change in Settings"
 msgstr "Change in Settings"
 
-#: src/features/settings/SettingsView.tsx:626
+#: src/features/settings/SettingsView.tsx:630
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -1117,7 +1117,7 @@ msgstr "Course structure"
 msgid "Course URL"
 msgstr "Course URL"
 
-#: src/features/settings/SettingsView.tsx:486
+#: src/features/settings/SettingsView.tsx:489
 msgid "Courses"
 msgstr "Courses"
 
@@ -1202,11 +1202,11 @@ msgstr "Disconnect the university account?"
 msgid "disconnecting…"
 msgstr "disconnecting…"
 
-#: src/features/settings/SettingsView.tsx:573
+#: src/features/settings/SettingsView.tsx:576
 msgid "Disk space"
 msgstr "Disk space"
 
-#: src/features/settings/SettingsView.tsx:538
+#: src/features/settings/SettingsView.tsx:541
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
@@ -1286,7 +1286,7 @@ msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
 #: src/features/settings/InitWall.tsx:314
-#: src/features/settings/SettingsView.tsx:469
+#: src/features/settings/SettingsView.tsx:470
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
@@ -1368,15 +1368,15 @@ msgstr "Enter the zoom passcode for this recording"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:171
 #: src/features/settings/InitWall.tsx:291
-#: src/features/settings/SettingsView.tsx:591
+#: src/features/settings/SettingsView.tsx:594
 msgid "Error reports"
 msgstr "Error reports"
 
-#: src/features/settings/SettingsView.tsx:610
+#: src/features/settings/SettingsView.tsx:613
 msgid "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 msgstr "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 
-#: src/features/settings/SettingsView.tsx:605
+#: src/features/settings/SettingsView.tsx:608
 msgid "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 msgstr "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 
@@ -1429,7 +1429,7 @@ msgstr "Extract"
 msgid "Extract Audio"
 msgstr "Extract Audio"
 
-#: src/features/settings/SettingsView.tsx:537
+#: src/features/settings/SettingsView.tsx:540
 msgid "Extract the audio only"
 msgstr "Extract the audio only"
 
@@ -1552,7 +1552,7 @@ msgstr "Found your university's Moodle: <0>{0}</0>"
 msgid "Frees up disk space once a lecture is finished. The transcript, the summary and the PDF are always kept."
 msgstr "Frees up disk space once a lecture is finished. The transcript, the summary and the PDF are always kept."
 
-#: src/features/settings/SettingsView.tsx:648
+#: src/features/settings/SettingsView.tsx:652
 msgid "From now on, each lecture's files are removed the same way once it reaches that point."
 msgstr "From now on, each lecture's files are removed the same way once it reaches that point."
 
@@ -1628,7 +1628,7 @@ msgid "Google account"
 msgstr "Google account"
 
 #: src/features/settings/InitWall.tsx:277
-#: src/features/settings/SettingsView.tsx:456
+#: src/features/settings/SettingsView.tsx:457
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -2426,7 +2426,7 @@ msgstr "Reload"
 msgid "Remove {name}"
 msgstr "Remove {name}"
 
-#: src/features/settings/SettingsView.tsx:646
+#: src/features/settings/SettingsView.tsx:650
 msgid "Remove files from every existing lecture?"
 msgstr "Remove files from every existing lecture?"
 
@@ -2451,7 +2451,7 @@ msgstr "Renamed to \"{name}\" — some characters can't be used in a folder name
 msgid "Replace the existing video in \"{0}\"?"
 msgstr "Replace the existing video in \"{0}\"?"
 
-#: src/features/settings/SettingsView.tsx:519
+#: src/features/settings/SettingsView.tsx:522
 msgid "Replay tutorial"
 msgstr "Replay tutorial"
 
@@ -2507,7 +2507,7 @@ msgstr "Rotate {file}"
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
-#: src/features/settings/SettingsView.tsx:536
+#: src/features/settings/SettingsView.tsx:539
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
@@ -2727,7 +2727,7 @@ msgstr "Step {0} of {1}"
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:446
+#: src/features/settings/SettingsView.tsx:447
 msgid "Storage"
 msgstr "Storage"
 
@@ -2779,7 +2779,7 @@ msgstr "summary did not use {name}"
 msgid "summary did not use any material"
 msgstr "summary did not use any material"
 
-#: src/features/settings/SettingsView.tsx:405
+#: src/features/settings/SettingsView.tsx:406
 msgid "Summary model"
 msgstr "Summary model"
 
@@ -2857,7 +2857,7 @@ msgstr "That step is turned off in settings."
 msgid "That's probably because Windows quarantined the app — restart the app and follow the instructions."
 msgstr "That's probably because Windows quarantined the app — restart the app and follow the instructions."
 
-#: src/features/settings/SettingsView.tsx:378
+#: src/features/settings/SettingsView.tsx:379
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "The API keys and the summary model aren't available right now. They'll come back here on their own."
 
@@ -3124,7 +3124,7 @@ msgstr "These won't start until you run them."
 msgid "Third-party services"
 msgstr "Third-party services"
 
-#: src/features/settings/SettingsView.tsx:541
+#: src/features/settings/SettingsView.tsx:544
 msgid "This applies only to work that starts on its own: a video you drop in or a video that finishes downloading. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in or a video that finishes downloading. Runs you start yourself are not affected."
 
@@ -3222,7 +3222,7 @@ msgstr "Turn on Google Drive in Settings and every finished PDF is uploaded to t
 msgid "Turn on the Google Drive upload above to choose this."
 msgstr "Turn on the Google Drive upload above to choose this."
 
-#: src/features/settings/SettingsView.tsx:514
+#: src/features/settings/SettingsView.tsx:517
 msgid "Tutorial"
 msgstr "Tutorial"
 
@@ -3364,7 +3364,7 @@ msgstr "What to remove"
 msgid "What to show"
 msgstr "What to show"
 
-#: src/features/settings/SettingsView.tsx:527
+#: src/features/settings/SettingsView.tsx:530
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
@@ -3372,7 +3372,7 @@ msgstr "When a new video arrives"
 msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 msgstr "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 
-#: src/features/settings/SettingsView.tsx:435
+#: src/features/settings/SettingsView.tsx:436
 msgid "When the summary model is under high demand, retry once on the next model."
 msgstr "When the summary model is under high demand, retry once on the next model."
 
@@ -3380,7 +3380,7 @@ msgstr "When the summary model is under high demand, retry once on the next mode
 msgid "When to remove"
 msgstr "When to remove"
 
-#: src/features/settings/SettingsView.tsx:566
+#: src/features/settings/SettingsView.tsx:569
 msgid "Where \"Study with AI\" opens a lecture's summary."
 msgstr "Where \"Study with AI\" opens a lecture's summary."
 
