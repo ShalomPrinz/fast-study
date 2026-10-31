@@ -96,8 +96,12 @@ class TestAutoRemoveAfter:
         assert settings.auto_remove_after() == value.lower()
 
 
-def test_gemini_auto_fallback_defaults_off_and_reads_at_call_time(monkeypatch):
+def test_gemini_auto_fallback_defaults_on_and_reads_at_call_time(monkeypatch):
     monkeypatch.delenv("GEMINI_AUTO_FALLBACK", raising=False)
+    assert settings.gemini_auto_fallback() is True
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "")
+    assert settings.gemini_auto_fallback() is True
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "false")
     assert settings.gemini_auto_fallback() is False
     monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
     assert settings.gemini_auto_fallback() is True

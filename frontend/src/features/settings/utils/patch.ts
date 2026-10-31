@@ -51,7 +51,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: formModel(stored, options),
-    geminiAutoFallback: stored.geminiAutoFallback ?? false,
+    geminiAutoFallback: stored.geminiAutoFallback ?? true,
     autoRetry: autoRetryFromStore(stored),
     autoRun: toAutoRun(stored.autoRun),
     autoRemove: autoRemoveFromStore(stored),
@@ -87,7 +87,7 @@ export function buildPatch(
   if (form.groqApiKey.trim()) patch.groqApiKey = form.groqApiKey.trim()
   if (form.dataRoot.trim() !== (stored.dataRoot ?? '')) patch.dataRoot = form.dataRoot.trim()
   if (form.geminiModel !== (stored.geminiModel ?? '')) patch.geminiModel = form.geminiModel
-  if (form.geminiAutoFallback !== (stored.geminiAutoFallback ?? false))
+  if (form.geminiAutoFallback !== (stored.geminiAutoFallback ?? true))
     patch.geminiAutoFallback = form.geminiAutoFallback
   Object.assign(patch, autoRetryPatch(form.autoRetry, stored))
   if (form.driveEnabled !== (stored.driveEnabled ?? false)) patch.driveEnabled = form.driveEnabled

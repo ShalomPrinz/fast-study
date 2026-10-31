@@ -213,7 +213,7 @@ written from both processes would put two writers on one file.
   out-of-range stored value reads `null` and stays out of the env.
 - **A stored key the store no longer knows is inert**: neither the read view nor the env lists it.
 - **`gemini_auto_fallback` (`geminiAutoFallback`)** reaches the backend as `GEMINI_AUTO_FALLBACK`
-  (`true`/`false`); unset reads `null`, which the backend treats as off.
+  (`true`/`false`); unset reads `null`, which the backend treats as on.
 - **`auto_retry` (`autoRetry`, bool), `auto_retry_count` (`autoRetryCount`, 1–10) and
   `auto_retry_minutes` (`autoRetryMinutes`, 1–120)** reach the backend as `AUTO_RETRY`,
   `AUTO_RETRY_COUNT` and `AUTO_RETRY_MINUTES`; unset reads `null` and the backend's defaults apply.

@@ -49,9 +49,9 @@ def gemini_model() -> str:
 
 
 def gemini_auto_fallback() -> bool:
-    """Whether a 503 from Gemini retries the call once on the next model. Opt-in: unset is off."""
+    """Whether a 503 from Gemini retries the call once on the next model. On unless set false."""
 
-    return os.environ.get("GEMINI_AUTO_FALLBACK", "").strip().lower() in _TRUTHY
+    return os.environ.get("GEMINI_AUTO_FALLBACK", "").strip().lower() not in _FALSY
 
 
 def auto_run() -> str:

@@ -342,7 +342,7 @@ def _models_called(sdk):
 
 
 def test_503_without_auto_fallback_does_not_retry(monkeypatch):
-    monkeypatch.delenv("GEMINI_AUTO_FALLBACK", raising=False)
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "false")
     sdk, client = _fallback_client(monkeypatch, [_overloaded()], "gemini-3.8-flash")
     with pytest.raises(CodedError) as exc:
         client.generate(["x"])

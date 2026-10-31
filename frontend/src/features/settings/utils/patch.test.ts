@@ -30,7 +30,7 @@ const UNCHANGED: SettingsForm = {
   driveEnabled: false,
   gdriveRootFolder: '',
   geminiModel: 'gemini-3.5-flash',
-  geminiAutoFallback: false,
+  geminiAutoFallback: true,
   autoRetry: { on: true, count: 3, minutes: 10 },
   autoRun: 'full',
   autoRemove: { on: false, what: 'video', after: null },
@@ -42,11 +42,21 @@ const UNCHANGED: SettingsForm = {
 }
 
 describe('buildPatch', () => {
-  it('sends the auto-fallback switch only when it differs from the stored one', () => {
-    expect(buildPatch({ ...UNCHANGED, geminiAutoFallback: true }, STORED, true)).toEqual({
+  it('treats an unset auto-fallback as on: unchecking sends false, leaving it sends nothing', () => {
+    expect(formFromStore(STORED, OPTIONS).geminiAutoFallback).toBe(true)
+    expect(buildPatch({ ...UNCHANGED, geminiAutoFallback: false }, STORED, true)).toEqual({
+      geminiAutoFallback: false,
+    })
+    expect(buildPatch(UNCHANGED, STORED, true)).toEqual({})
+    expect(storeBody({ geminiAutoFallback: false })).toEqual({ gemini_auto_fallback: false })
+  })
+
+  it('keeps an explicitly stored false unchecked and sends true when checked', () => {
+    const stored = { ...STORED, geminiAutoFallback: false }
+    expect(formFromStore(stored, OPTIONS).geminiAutoFallback).toBe(false)
+    expect(buildPatch({ ...UNCHANGED, geminiAutoFallback: true }, stored, true)).toEqual({
       geminiAutoFallback: true,
     })
-    expect(storeBody({ geminiAutoFallback: true })).toEqual({ gemini_auto_fallback: true })
   })
 
   it('sends nothing when nothing changed', () => {

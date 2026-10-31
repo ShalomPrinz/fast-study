@@ -15,7 +15,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Drive upload      | off                                       | on                    | `backend/`        |
 | Drive root folder | `FastStudy`, sent only once Drive is on  | any folder name       | `backend/`        |
 | Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
-| Auto change model when busy | off (a checkbox beside the model) | on        | `backend/`        |
+| Auto change model when busy | on (a checkbox beside the model) | off       | `backend/`        |
 | Auto retry        | on, 3 retries, 10 minutes apart           | off; 1-10 retries, 1-120 minutes | `backend/`, `electron/` store |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Auto-remove       | off                                       | video, video + audio  | `backend/`        |

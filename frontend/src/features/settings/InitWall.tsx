@@ -89,7 +89,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     // The brand, not copy: the folder lands in the user's Drive under the same name in every locale.
     gdriveRootFolder: stored.gdriveRootFolder ?? 'FastStudy',
     geminiModel: stored.geminiModel ?? '',
-    geminiAutoFallback: stored.geminiAutoFallback ?? false,
+    geminiAutoFallback: stored.geminiAutoFallback ?? true,
     autoRetry: autoRetryFromStore(stored),
     // Not asked about here — carried through so the wall's save leaves the default alone.
     autoRun: toAutoRun(stored.autoRun),
