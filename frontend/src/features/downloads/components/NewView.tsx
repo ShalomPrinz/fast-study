@@ -237,13 +237,15 @@ export default function NewView({ course, items, onReconnect, onShowAll }: Props
           {!state.queueing && state.active > 0 && <Trans>Downloading {state.active} more…</Trans>}
           {state.summary}
         </span>
-        <button
-          className="btn btn--ghost new-bar-skip"
-          disabled={!checked.length || marking}
-          onClick={() => void mark(checked)}
-        >
-          <Trans>Mark selected as irrelevant</Trans>
-        </button>
+        <Tooltip content={t`They'll no longer show under New, but stay listed under All.`}>
+          <button
+            className="btn btn--ghost new-bar-skip"
+            disabled={!checked.length || marking}
+            onClick={() => void mark(checked)}
+          >
+            <Trans>Mark selected as irrelevant</Trans>
+          </button>
+        </Tooltip>
         <Tooltip content={blocked ? moodleBusyMessage() : undefined}>
           <button
             className="btn btn--primary new-bar-download"

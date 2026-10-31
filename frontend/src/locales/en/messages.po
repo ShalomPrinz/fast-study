@@ -1256,7 +1256,7 @@ msgid "Download any open video on the internet"
 msgstr "Download any open video on the internet"
 
 #. placeholder {0}: queue.length
-#: src/features/downloads/components/NewView.tsx:253
+#: src/features/downloads/components/NewView.tsx:255
 msgid "Download selected ({0})"
 msgstr "Download selected ({0})"
 
@@ -1859,7 +1859,7 @@ msgstr "Loading…"
 msgid "Manual"
 msgstr "Manual"
 
-#: src/features/downloads/components/NewView.tsx:245
+#: src/features/downloads/components/NewView.tsx:246
 msgid "Mark selected as irrelevant"
 msgstr "Mark selected as irrelevant"
 
@@ -2606,7 +2606,7 @@ msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
 #. placeholder {0}: item.title
-#: src/features/downloads/components/NewView.tsx:300
+#: src/features/downloads/components/NewView.tsx:302
 msgid "Select {0}"
 msgstr "Select {0}"
 
@@ -3123,6 +3123,10 @@ msgstr "These materials are over {limit_mb} MB: {files}. Turn them off for the s
 #: src/features/runner/RunnerView.tsx:478
 msgid "These won't start until you run them."
 msgstr "These won't start until you run them."
+
+#: src/features/downloads/components/NewView.tsx:240
+msgid "They'll no longer show under New, but stay listed under All."
+msgstr "They'll no longer show under New, but stay listed under All."
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:113
 msgid "Third-party services"

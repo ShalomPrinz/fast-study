@@ -1256,7 +1256,7 @@ msgid "Download any open video on the internet"
 msgstr "הורד כל וידאו שפתוח לצפייה באינטרנט"
 
 #. placeholder {0}: queue.length
-#: src/features/downloads/components/NewView.tsx:253
+#: src/features/downloads/components/NewView.tsx:255
 msgid "Download selected ({0})"
 msgstr "הורדת הנבחרים ({0})"
 
@@ -1859,7 +1859,7 @@ msgstr "טוען…"
 msgid "Manual"
 msgstr "ידני"
 
-#: src/features/downloads/components/NewView.tsx:245
+#: src/features/downloads/components/NewView.tsx:246
 msgid "Mark selected as irrelevant"
 msgstr "סימון הנבחרים כלא רלוונטיים"
 
@@ -2606,7 +2606,7 @@ msgid "Section {0} is waiting for a passcode"
 msgstr "היחידה {0} ממתינה לקוד גישה"
 
 #. placeholder {0}: item.title
-#: src/features/downloads/components/NewView.tsx:300
+#: src/features/downloads/components/NewView.tsx:302
 msgid "Select {0}"
 msgstr "בחירת {0}"
 
@@ -3123,6 +3123,10 @@ msgstr "החומרים האלה גדולים מ-{limit_mb} MB: {files}. כבה �
 #: src/features/runner/RunnerView.tsx:478
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
+
+#: src/features/downloads/components/NewView.tsx:240
+msgid "They'll no longer show under New, but stay listed under All."
+msgstr "הם לא יופיעו עוד ב״חדשים״, אבל יישארו ברשימה ב״הכול״."
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:113
 msgid "Third-party services"
