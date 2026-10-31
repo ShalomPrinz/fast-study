@@ -464,7 +464,9 @@ export default function SettingsView() {
                 folderMissing={missing.includes('gdriveRootFolder')}
               />
             </section>
+          </div>
 
+          <div className="settings-column">
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Downloading recordings</Trans>
@@ -481,9 +483,7 @@ export default function SettingsView() {
               />
               <MoodleAccountField site={stored.moodleSite} choice={form.moodleSite} />
             </section>
-          </div>
 
-          <div className="settings-column">
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Courses</Trans>

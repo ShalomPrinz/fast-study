@@ -1286,7 +1286,7 @@ msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
 #: src/features/settings/InitWall.tsx:314
-#: src/features/settings/SettingsView.tsx:470
+#: src/features/settings/SettingsView.tsx:472
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 

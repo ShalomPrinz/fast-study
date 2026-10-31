@@ -122,7 +122,7 @@ save never reverts another writer's change; a stored model the options no longer
 A failure after the store write leaves the service behind until a retry, so the toast asks for one.
 
 **Layout and search.** Sections sit in two fixed columns (`.settings-column` inside `.settings-page`, wider than the
-shared 880px measure): left is API keys, Storage, Google Drive, Downloading recordings; right is Courses, Automatic retry,
+shared 880px measure): left is API keys, Storage, Google Drive; right is Downloading recordings, Courses, Automatic retry,
 Appearance and behaviour, Disk space, Error reports. Each column stacks independently, so a section never changes column when
 another grows; below two 440px columns the grid collapses to one, left above right. DOM order is left then right, so match order
 reads column 1 then column 2. A search bar pinned between the header and the
