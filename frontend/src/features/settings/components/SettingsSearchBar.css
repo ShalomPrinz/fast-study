@@ -1,0 +1,81 @@
+/* Pinned between the page header and the scrolling body, so it stays put while the columns scroll. */
+.settings-search {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-8);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-search-icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--text-4);
+}
+
+.settings-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-row);
+  outline: none;
+}
+
+.settings-search-input:focus {
+  border-color: var(--accent);
+}
+
+.settings-search-count {
+  flex-shrink: 0;
+  min-width: 64px;
+  text-align: center;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-search-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.settings-search-step svg {
+  width: 22px;
+  height: 22px;
+}
+
+.settings-search-step--up svg {
+  transform: rotate(180deg);
+}
+
+.settings-search-step:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.settings-search-step:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.settings-search-step:disabled {
+  color: var(--text-4);
+  cursor: not-allowed;
+}

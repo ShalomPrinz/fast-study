@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { msg } from '@lingui/core/macro'
 import type { MessageDescriptor } from '@lingui/core'
@@ -39,6 +39,8 @@ import CourseStructureField from './components/CourseStructureField'
 import AutoRetryField from './components/AutoRetryField'
 import AutoRemoveSummary from './components/AutoRemoveSummary'
 import SecureStorageNotice from './components/SecureStorageNotice'
+import SettingsSearchBar from './components/SettingsSearchBar'
+import { useSettingsSearch } from './hooks/useSettingsSearch'
 import {
   buildPatch,
   formFromStore,
@@ -104,6 +106,8 @@ export default function SettingsView() {
   const { refresh: refreshAccount } = useAuthStatus()
   const tour = useTour()
   const browser = useBrowserPrereq()
+  const columns = useRef<HTMLDivElement>(null)
+  const search = useSettingsSearch(columns)
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
@@ -353,8 +357,15 @@ export default function SettingsView() {
           </Tooltip>
         }
       />
+      <SettingsSearchBar
+        query={search.query}
+        onQuery={search.setQuery}
+        current={search.current}
+        count={search.count}
+        onStep={search.step}
+      />
       <div className="page-body">
-        <div className="page-column settings-page">
+        <div className="page-column settings-page" ref={columns}>
           <section className="settings-section">
             <h2 className="settings-section-title">
               <Trans>API keys</Trans>

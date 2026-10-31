@@ -1,12 +1,41 @@
-/* The settings route's own layout: a stack of sections at the page's reading measure. */
-.settings-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+/* The settings route's own layout: sections flow down column 1, then column 2, with no gap under a short
+   one. `columns: 2 440px` drops to one column on its own once two 440px columns no longer fit. */
+.page-column.settings-page {
+  max-width: 1240px;
+  columns: 2 440px;
+  column-gap: var(--space-8);
   padding-block-end: var(--space-8);
 }
 
-/* The page reads at the wide 880px measure, but a key, path or model is short: cap each control, and the
+.settings-page .settings-section {
+  break-inside: avoid;
+  margin-block-end: var(--space-6);
+}
+
+/* The error that replaces the sections is not a column item. */
+.settings-page .settings-load-failed {
+  column-span: all;
+}
+
+/* A dropdown whose option text matches the search: the whole control takes the match tint. */
+.settings-page .settings-search-hit {
+  outline: 2px solid var(--find-tint);
+  outline-offset: 2px;
+}
+
+.settings-page .settings-search-hit--current {
+  outline-color: var(--find-tint-current);
+}
+
+::highlight(settings-search) {
+  background-color: var(--find-tint);
+}
+
+::highlight(settings-search-current) {
+  background-color: var(--find-tint-current);
+}
+
+/* The route is widened to two columns, but a key, path or model is short: cap each control, and the
    label row above it, so a trailing "Get a key" or "Required" stays over the control's end edge. */
 .settings-page .settings-label,
 .settings-page .settings-input,
