@@ -2,7 +2,7 @@
 // Set on open by bridge.js's discoverServer(): {base, secret}, or {running: false} when the app is closed.
 let server = null;
 
-// Every call to our server carries the launch secret when the bridge gave one; the PDF fetch does not.
+// Every call to our server carries the launch secret when the bridge gave one.
 function api(path, init = {}) {
   const headers = { ...init.headers };
   if (server.secret) headers['X-FastStudy-Secret'] = server.secret;
@@ -99,11 +99,11 @@ function setStatus(text, danger = false) {
 }
 
 // The one line under the button: a translated headline, plus the server's own prose verbatim.
-function showResult(headline, { detail = '', ok = false } = {}) {
+function showResult(headline, { detail = '', ok = false, neutral = false } = {}) {
   $('resultHeadline').textContent = headline;
   $('resultDetail').textContent = detail;
   $('resultDetail').hidden = !detail;
-  $('result').className = `result ${ok ? 'result--ok' : 'result--danger'}`;
+  $('result').className = neutral ? 'result' : `result ${ok ? 'result--ok' : 'result--danger'}`;
   $('result').hidden = false;
 }
 
@@ -486,45 +486,45 @@ async function startGeneralVideo(fileName) {
   showResult(msg('doneGeneralVideo', isolate(body.fileName), isolate(body.folder)), { ok: true });
 }
 
-// Fetched here so Chrome attaches the user's own session cookies for the site; null after showing
-// the failure.
-async function fetchPdf() {
-  try {
-    const pdfRes = await fetch(pdfUrl, { credentials: 'include' });
-    if (!pdfRes.ok) throw new Error(`HTTP ${pdfRes.status}`);
-    return await pdfRes.blob();
-  } catch (e) {
-    showResult(msg('errPdfFetch'), { detail: e.message });
-    return null;
+// The service worker fetches and uploads the PDF, so closing this popup never drops it; this page
+// only renders the worker's entry for the tab's URL.
+const pdfKey = () => `pdf:${pdfUrl}`;
+
+const sizeText = (bytes) => msg('sizeMb', (bytes / (1024 * 1024)).toFixed(1));
+
+function renderPdf(entry) {
+  const active = entry?.state === 'downloading' || entry?.state === 'uploading';
+  $('submit').disabled = active;
+  $('submit').textContent = msg(active ? 'btnDownloading' : 'btnDownload');
+  if (!entry) return clearResult();
+  if (entry.state === 'downloading') {
+    const progress = entry.total
+      ? `${sizeText(entry.bytes)} / ${sizeText(entry.total)}`
+      : sizeText(entry.bytes);
+    return showResult(msg('progressPdfDownloading', progress), { neutral: true });
   }
+  if (entry.state === 'uploading')
+    return showResult(msg('progressPdfUploading'), { neutral: true });
+  showResult(msg(entry.headline, ...(entry.params ?? []).map(isolate)), {
+    detail: entry.detail,
+    ok: entry.state === 'done',
+  });
 }
 
-async function saveGeneralPdf(fileName) {
-  const blob = await fetchPdf();
-  if (!blob) return;
-  const qs = new URLSearchParams({ dest: 'folder', fileName }).toString();
-  const res = await api(`/upload-pdf?${qs}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/pdf' },
-    body: blob,
+// Shows the current entry and follows the worker's writes to it.
+async function trackPdf() {
+  const key = pdfKey();
+  // Wakes a worker Chrome stopped, so a download it never finished is marked interrupted now.
+  chrome.runtime.sendMessage({ type: 'wake' }).catch(() => {});
+  // Listen first so a write in the gap is not missed; a late get never overwrites a newer change.
+  let changed = false;
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'session' || !(key in changes)) return;
+    changed = true;
+    renderPdf(changes[key].newValue);
   });
-  if (!res.ok) return showResult(msg('errPdfStore'), { detail: await serverError(res) });
-  const body = await res.json();
-  showResult(msg('doneGeneralPdf', isolate(body.fileName), isolate(body.folder)), { ok: true });
-}
-
-async function uploadPdf(course, lecture, kind) {
-  const blob = await fetchPdf();
-  if (!blob) return;
-  const qs = new URLSearchParams({ course, lecture, kind }).toString();
-  const res = await api(`/upload-pdf?${qs}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/pdf' },
-    body: blob,
-  });
-  if (!res.ok) return showResult(msg('errPdfStore'), { detail: await serverError(res) });
-  const { target } = await res.json();
-  showResult(msg('donePdf', isolate(target)), { ok: true });
+  const entry = (await chrome.storage.session.get(key))[key];
+  if (!changed) renderPdf(entry);
 }
 
 async function submit(event) {
@@ -536,14 +536,32 @@ async function submit(event) {
   if (mode === 'app' && (!course || !lecture)) return showResult(msg('errMissingTarget'));
   if (mode === 'general' && !fileName) return showResult(msg('errMissingFileName'));
 
+  const video = !!(youtubeUrl || capture);
+  if (!video) {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'downloadPdf',
+        url: pdfUrl,
+        tabId: tab?.id ?? null,
+        mode,
+        course,
+        lecture,
+        kind: getKind(),
+        fileName,
+      });
+    } catch {
+      showResult(msg('statusOffline'));
+    }
+    return;
+  }
+
   const btn = $('submit');
   btn.disabled = true;
   btn.textContent = msg('btnDownloading');
   try {
-    const video = !!(youtubeUrl || capture);
-    if (mode === 'general') await (video ? startGeneralVideo(fileName) : saveGeneralPdf(fileName));
-    else if (video) await startVideo(course, lecture, getKind());
-    else await uploadPdf(course, lecture, getKind());
+    if (mode === 'general') await startGeneralVideo(fileName);
+    else await startVideo(course, lecture, getKind());
   } catch {
     // fetch() itself threw: the local server is not answering.
     showResult(msg('statusOffline'));
@@ -584,4 +602,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     el.addEventListener('change', refreshLectureSuggestions);
   }
   $('form').addEventListener('submit', submit);
+  if (pdfUrl && !capture && !youtubeUrl) trackPdf();
 });

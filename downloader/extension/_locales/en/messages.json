@@ -244,5 +244,23 @@
         "example": "C:\\Users\\me\\Downloads"
       }
     }
+  },
+  "progressPdfDownloading": {
+    "message": "Downloading the PDF… $PROGRESS$",
+    "description": "Headline while the worker fetches the PDF; the sizes read so far.",
+    "placeholders": {
+      "progress": {
+        "content": "$1",
+        "example": "3.2 MB / 10.0 MB"
+      }
+    }
+  },
+  "progressPdfUploading": {
+    "message": "Saving the PDF…",
+    "description": "Headline while the worker hands the PDF to FastStudy."
+  },
+  "errPdfInterrupted": {
+    "message": "The download was interrupted before it finished.",
+    "description": "Headline when the browser stopped the extension mid-download."
   }
 }
