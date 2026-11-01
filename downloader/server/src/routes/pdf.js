@@ -21,7 +21,7 @@ function saveToFolder(req, res) {
   res.json({ status: 'PDF saved', folder: target.folder, fileName });
 }
 
-// The popup fetches the PDF itself (its session cookies authenticate) and streams
+// The extension's service worker fetches the PDF itself (its session cookies authenticate) and streams
 // the raw bytes here; express.raw collects them into a Buffer.
 router.post('/upload-pdf', express.raw({ type: '*/*', limit: '1gb' }), async (req, res) => {
   if (req.query.dest === 'folder') return saveToFolder(req, res);
