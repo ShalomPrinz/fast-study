@@ -107,6 +107,14 @@ toast** — the fallback has replaced the `App` that mounts the `ToastContainer`
 (`.error-sent`), or a failure (`.error-sent--failed`) pointing at Copy details. It renders only while
 reports are sent (`isReporting()`); browser dev, a DSN-less build and a switched-off launch say nothing.
 
+## Combobox
+
+`shared/components/Combobox({ id, value, options, onChange, onPick?, onBlur?, placeholder?, className?, inputClassName?, ariaLabel?, dir? })`
+is the one free-text ARIA combobox: unedited since focus it lists every option (a prefilled value never hides
+the others), typed text filters (`shared/utils/filterOptions`); arrows, Enter and click pick, Escape closes.
+`onPick` fires only for a chosen option. The host passes the input's look (`inputClassName`) and layout
+(`className` on the wrapper). Native `<select>`s are not it.
+
 ## Mode toggles
 
 `shared/components/ModeToggle<M>({ modes, storageKey, className?, children? })` is the segmented switch,

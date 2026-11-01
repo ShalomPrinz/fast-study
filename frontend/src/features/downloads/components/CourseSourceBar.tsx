@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import Tooltip from '@/shared/components/Tooltip'
 import Icon from '@/shared/components/Icon'
-import CourseCombobox from './CourseCombobox'
+import Combobox from '@/shared/components/Combobox'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
 import '@/styles/pipeline-card.css'
@@ -36,8 +36,9 @@ export default function CourseSourceBar({
 
   return (
     <div className="course-source-bar">
-      <CourseCombobox
+      <Combobox
         id="course-source"
+        inputClassName="source-row-input"
         className="course-source-select"
         value={text}
         options={names}

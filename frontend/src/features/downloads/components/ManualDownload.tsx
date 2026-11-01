@@ -29,7 +29,7 @@ import { useManualStart } from '@/features/downloads/hooks/useManualStart'
 import { useNewCoursesLecturesOnly } from '@/shared/hooks/useNewCoursesLecturesOnly'
 import { lecturesOnly, lecturesOnlyKind } from '@/features/lectures/utils/courseTree'
 import { JobProgressBar } from './RecordingJobList'
-import CourseCombobox from './CourseCombobox'
+import Combobox from '@/shared/components/Combobox'
 import '@/styles/pipeline-card.css'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
@@ -140,8 +140,9 @@ function ManualForm() {
           <Trans>Course</Trans>
         </label>
         {/* Free text with the active courses as suggestions: a name none of them has is a new course. */}
-        <CourseCombobox
+        <Combobox
           id={`${id}-course`}
+          inputClassName="source-row-input"
           value={courseText}
           options={active.map((c) => c.name)}
           onChange={(course) => updateManualDraft({ course })}

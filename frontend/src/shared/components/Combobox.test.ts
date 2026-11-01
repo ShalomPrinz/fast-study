@@ -2,7 +2,7 @@
 import { createElement, useState } from 'react'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, fireEvent, cleanup, screen } from '@testing-library/react'
-import CourseCombobox from './CourseCombobox'
+import Combobox from './Combobox'
 
 const COURSES = ['Algebra', 'Calculus', 'Physics']
 
@@ -11,7 +11,7 @@ function open(initial = 'Calculus') {
   const onChange = vi.fn()
   function Host() {
     const [value, setValue] = useState(initial)
-    return createElement(CourseCombobox, {
+    return createElement(Combobox, {
       id: 'c',
       value,
       options: COURSES,
@@ -31,7 +31,7 @@ const shown = () => screen.queryAllByRole('option').map((o) => o.textContent)
 
 afterEach(cleanup)
 
-describe('CourseCombobox', () => {
+describe('Combobox', () => {
   it('lists every course for an unedited prefilled value, highlighting it', () => {
     open('Calculus')
     expect(shown()).toEqual(COURSES)
@@ -80,7 +80,7 @@ describe('CourseCombobox', () => {
     const onPick = vi.fn()
     const onBlur = vi.fn()
     render(
-      createElement(CourseCombobox, {
+      createElement(Combobox, {
         id: 'p',
         value: '',
         options: COURSES,
@@ -97,5 +97,14 @@ describe('CourseCombobox', () => {
     expect(onPick).toHaveBeenCalledWith('Physics')
     fireEvent.blur(input)
     expect(onBlur).toHaveBeenCalled()
+  })
+
+  it('ignores the arrows with no options, leaving the key default alone', () => {
+    render(createElement(Combobox, { id: 'e', value: '', options: [], onChange: vi.fn() }))
+    const input = screen.getByRole('combobox')
+    fireEvent.focus(input)
+    expect(fireEvent.keyDown(input, { key: 'ArrowDown' })).toBe(true)
+    expect(fireEvent.keyDown(input, { key: 'ArrowUp' })).toBe(true)
+    expect(input.getAttribute('aria-activedescendant')).toBeNull()
   })
 })

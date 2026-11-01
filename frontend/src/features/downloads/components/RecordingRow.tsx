@@ -8,6 +8,7 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import { lectureTrack, lecturesOnly } from '@/features/lectures/utils/courseTree'
 import ConfirmModal from '@/shared/components/ConfirmModal'
+import Combobox from '@/shared/components/Combobox'
 import type { Item, ProbedMedia } from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingJobList from './RecordingJobList'
@@ -107,7 +108,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
     onReconnect,
   })
 
-  const listId = useId()
+  const id = useId()
   const onlyLectures = lecturesOnly(courses, course, false)
   // A lectures-only course lists its recitations among the lectures, so a material can reach either.
   const node = courses.find((c) => c.name === course)
@@ -248,25 +249,20 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
 
         {/* Material and assignment rows pick an existing lecture or assignment, so the input offers
             them — while staying free text, since the target may not exist yet. */}
-        <input
-          className="source-row-input recording-name-input"
+        <Combobox
+          id={id}
+          className="recording-name-field"
+          inputClassName="source-row-input recording-name-input"
           value={value}
-          onChange={(e) => setName(e.target.value)}
+          options={material || assignment ? attachable : []}
+          onChange={setName}
           placeholder={suggestion}
-          list={material || assignment ? listId : undefined}
-          aria-label={
+          ariaLabel={
             assignment ? t`Assignment` : material ? t`Attach material to` : t`Lecture name`
           }
           // A suggestion input follows the UI direction so its text aligns with the list (I18N.md).
           dir={material || assignment ? undefined : 'auto'}
         />
-        {(material || assignment) && (
-          <datalist id={listId}>
-            {attachable.map((n) => (
-              <option key={n} value={n} />
-            ))}
-          </datalist>
-        )}
         {fileCount > 0 && (
           <span className="recording-material-count">
             <Plural value={fileCount} one="# file" other="# files" />

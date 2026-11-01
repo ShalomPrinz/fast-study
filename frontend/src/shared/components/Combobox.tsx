@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { courseOptions } from '@/features/downloads/utils/manualDownload'
-import './CourseCombobox.css'
+import { filterOptions } from '@/shared/utils/filterOptions'
+import './Combobox.css'
 
 interface Props {
   id: string
@@ -11,12 +11,16 @@ interface Props {
   onPick?: (option: string) => void
   onBlur?: () => void
   placeholder?: string
+  // Classes for the wrapper and the input, so the host sets layout and the input's look.
   className?: string
+  inputClassName?: string
+  ariaLabel?: string
+  dir?: 'auto' | 'ltr' | 'rtl'
 }
 
 // Free text with the options as an ARIA combobox listbox; unedited since focus it lists every option,
 // so a prefilled value never hides the others, and only typed text filters.
-export default function CourseCombobox({
+export default function Combobox({
   id,
   value,
   options,
@@ -25,13 +29,16 @@ export default function CourseCombobox({
   onBlur,
   placeholder,
   className,
+  inputClassName,
+  ariaLabel,
+  dir,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [edited, setEdited] = useState(false)
   const [active, setActive] = useState(-1)
   const listRef = useRef<HTMLUListElement>(null)
   const key = value.trim().toLowerCase()
-  const shown = courseOptions(options, value, edited)
+  const shown = filterOptions(options, value, edited)
   const expanded = open && shown.length > 0
   const listId = `${id}-listbox`
   const optionId = (i: number) => `${id}-option-${i}`
@@ -57,6 +64,7 @@ export default function CourseCombobox({
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (shown.length === 0) return
       e.preventDefault()
       if (!open) return show()
       const step = e.key === 'ArrowDown' ? 1 : -1
@@ -73,10 +81,12 @@ export default function CourseCombobox({
   }
 
   return (
-    <div className={className ? `course-combobox ${className}` : 'course-combobox'}>
+    <div className={className ? `combobox ${className}` : 'combobox'}>
       <input
         id={id}
-        className="source-row-input"
+        className={inputClassName}
+        aria-label={ariaLabel}
+        dir={dir}
         role="combobox"
         aria-expanded={expanded}
         aria-controls={listId}
@@ -100,7 +110,7 @@ export default function CourseCombobox({
         onKeyDown={onKeyDown}
       />
       {expanded && (
-        <ul id={listId} ref={listRef} className="course-combobox-listbox" role="listbox">
+        <ul id={listId} ref={listRef} className="combobox-listbox" role="listbox">
           {shown.map((option, i) => (
             <li
               key={option}
@@ -108,9 +118,7 @@ export default function CourseCombobox({
               role="option"
               aria-selected={i === active}
               className={
-                i === active
-                  ? 'course-combobox-option course-combobox-option--active'
-                  : 'course-combobox-option'
+                i === active ? 'combobox-option combobox-option--active' : 'combobox-option'
               }
               // Keeps focus on the input, so its blur does not close the list before the click lands.
               onMouseDown={(e) => e.preventDefault()}

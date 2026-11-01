@@ -42,8 +42,9 @@
 }
 
 /* The name takes whatever the fixed-width furniture on either side of it leaves. */
-.recording-name-input {
+.recording-name-field {
   flex: 1;
+  min-width: 0;
 }
 
 /* Materials append rather than overwrite, so the card states how many the target already holds

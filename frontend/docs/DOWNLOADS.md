@@ -26,7 +26,7 @@ sign-out or a return to the page never moves it.
 
 The University tab's frozen row sits in the header under the tabs (`CourseSourceBar`, only while University
 is chosen): the course box, a pencil ("Edit source URL"; always shown, disabled with a "Choose a course first" hint until a course is picked) and "+ Add course", centred as a group, text and controls at 1.2x size, the box a fixed narrower width. The box
-is `CourseCombobox` in pick-only mode (`onPick`; typed text filters and reverts to the picked name on blur,
+is the shared `Combobox` in pick-only mode (`onPick`; typed text filters and reverts to the picked name on blur,
 so it never creates) over every active course. Picking loads at once (`discover`); a course with no source
 is still pickable: it opens the Moodle picker (`EditSourcePanel`) at once, one `/courses` fetch per open, and
 if cancelled leaves a "No source URL yet" note instead of recordings (the pencil reopens it); a pick made while
@@ -88,9 +88,9 @@ this session's manual downloads already claimed (`suggestManualName`), since an 
 the tree yet; replacing a stored video confirms first. The link is never cleared for the user, whether
 the download starts, lands or fails. Its jobs are [JOBS.md](JOBS.md) §Manual jobs.
 The whole draft (link, course, kind, name) is a module store, so it survives leaving the page but not an app restart.
-The course field is `CourseCombobox`, an in-app ARIA combobox rather than a `<datalist>`, whose Chromium popup
+The course field is the shared `Combobox`, an in-app ARIA combobox rather than a `<datalist>`, whose Chromium popup
 can't be styled or made to list everything: unedited since it opened it lists every active course, after an edit
-only those containing the text (`courseOptions`); arrows move, Enter or a click picks, Escape closes.
+only those containing the text (`filterOptions`); arrows move, Enter or a click picks, Escape closes.
 The form is a two-column grid in reading order: link and course a full row each, kind beside name, then
 the wide Download button centred; its text and controls are one type step above the page's other forms.
 
@@ -363,7 +363,7 @@ assignment row is never pipeline-locked: it writes no lecture.
 
 ## Assignment rows
 
-An assignment row has no kind toggle and its input is a `<datalist>` of the course's assignment names (free
+An assignment row has no kind toggle and its input is a `Combobox` of the course's assignment names (free
 text for a new one; `aria-label` "Assignment"). The suggestion is `item.assignment` verbatim (`resolveRow`'s
 assignment branch) — no number extraction, so `תרגיל 1` and `תרגילון 1` never merge and every file of one
 assignment lands in one node. The segment groups rows by Moodle heading, a blank one under "Other". The
@@ -373,8 +373,8 @@ existing assignment marked done (`isAssignmentDone`, live as the name is edited)
 
 ## Material rows and name suggestion
 
-A material row's destination is a native `<input list>` + `<datalist>` of `existingNames(kind, …)`:
-existing lectures plus free text for a new one, with no focus handling to reinvent. Its `aria-label`
+A material row's destination is a `Combobox` of `existingNames(kind, …)`:
+existing lectures plus free text for a new one, listing every one while the prefilled name is unedited. Its `aria-label`
 reads "Attach material to".
 
 `suggestItemName` turns the title's first integer into `<prefix> N`, plus at most one sub-session marker

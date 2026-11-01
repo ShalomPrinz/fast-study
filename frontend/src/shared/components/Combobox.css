@@ -1,12 +1,12 @@
 /* The list drops below the input, over what follows, and scrolls past a few rows; it wears the
    same surface as the lecture actions menu. */
-.course-combobox {
+.combobox {
   position: relative;
   display: flex;
   flex-direction: column;
 }
 
-.course-combobox-listbox {
+.combobox-listbox {
   position: absolute;
   inset-block-start: 100%;
   inset-inline: 0;
@@ -22,20 +22,20 @@
   box-shadow: var(--shadow-md);
 }
 
-.course-combobox-option {
+.combobox-option {
   padding: var(--space-3) var(--space-5);
   border-radius: var(--r-sm);
   color: var(--text-2);
   cursor: pointer;
 }
 
-.course-combobox-option:hover {
+.combobox-option:hover {
   background: var(--surface-sunken);
   color: var(--text);
 }
 
-.course-combobox-option--active,
-.course-combobox-option--active:hover {
+.combobox-option--active,
+.combobox-option--active:hover {
   background: var(--accent-soft);
   color: var(--accent-ink);
 }
