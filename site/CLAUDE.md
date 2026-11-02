@@ -61,7 +61,7 @@ python3 -m http.server -d /tmp/stage 8080
 showcase dataset (`.claude/harness/showcase/`) through the database routes, renders its PDFs and Drive links with the real steps
 on the fakes, and rewrites `hero.jpg`, `feature-*.jpg` and `journey-*.jpg` in Hebrew; it is rerunnable.
 Every name and text a shot shows comes from the showcase dataset, which is separate from the harness's test fixtures. The journey
-follows `JOURNEY`: downloaded from the fake Moodle course's plain-link row `הקלטה 3 — עצים`, whose
+follows `JOURNEY`: downloaded from the fake Moodle course's videostream row `הקלטה 4 — גרפים` on the `וידאו` tab, whose
 probed size gives the download card a bar with time left, its run held on a slow fake Groq, then
 given its dataset text. `feature-search` is shot after it, so the journey lecture is among the hits.
 

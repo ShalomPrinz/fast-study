@@ -21,6 +21,7 @@ import {
   waitFor,
   writeLecture,
 } from '../.claude/harness/showcase/capture.mjs';
+import { showRecording } from '../.claude/harness/lib/downloads.mjs';
 
 const IMG = path.join(path.dirname(fileURLToPath(import.meta.url)), 'img');
 const SIZE = { width: 1280, height: 800 };
@@ -119,19 +120,20 @@ async function journey(page, open, shot, lectureRoute) {
   // The fake site serves a 20-second clip; the run starts by hand once a lecture-length video replaces it.
   await call('POST', `${BACKEND}/config`, { auto_run: 'off' });
   await call('POST', `${SITE}/control`, { downloadMs: 30_000 });
-  // Samples for the download's own bar (a curl-replayed link), so it shows time left, not "not enough data".
+  // Samples for the download's own bar (a curl download), so it shows time left, not "not enough data".
   await calibrate('download:curl', 470_000, 30);
   await open('/downloads');
-  await page.click('text=טעינת הקלטות');
-  // A plain-link row is unprobed until downloaded, so it lists under "unknown" rather than "video".
-  await page.click('.recordings-panel >> text=לא ידוע');
-  const row = page.locator('.recording-card', { hasText: JOURNEY.recording });
+  // Picking the course in the bar loads it; the panel opens on New, so switch to All, the per-card list.
+  await page.locator('.downloads-tabs [role=tab]').first().click();
+  await page.locator('#course-source').click();
+  await page.getByRole('option', { name: new RegExp(`^${course}$`) }).click();
+  await page.locator('.downloads-scope-switch .mode-toggle-btn').nth(1).click();
+  const row = await showRecording(page, JOURNEY.recording);
   await row.locator('.recording-name-input').fill(lecture);
   await row.locator('.recording-download-btn').click();
   await page.waitForTimeout(4000);
   await page.evaluate(() => document.querySelector('.recordings-panel').scrollIntoView());
   await shot('journey-download');
-  await page.click('.recordings-panel >> text=וידאו');
   await page.click('.recording-playlist [aria-controls]');
   await page.waitForSelector('.recording-playlist .recording-children .recording-card');
   // The page's header is a fixed panel above the scrolling body; put the cards just below it.
@@ -186,10 +188,10 @@ async function journey(page, open, shot, lectureRoute) {
   await openEditor(page);
   // An edit in progress: a new bullet under the lesson's goals (Enter continues the list), so the
   // save button reads live.
-  await page.locator('.cm-line', { hasText: 'למה הגובה קובע את זמן הריצה' }).first().click();
+  await page.locator('.cm-line', { hasText: 'חיפוש לרוחב וחיפוש לעומק' }).first().click();
   await page.keyboard.press('End');
   await page.keyboard.press('Enter');
-  await page.keyboard.type('תרגיל: מה קורה כשמכניסים מפתחות ממוינים');
+  await page.keyboard.type('תרגיל: מתי רשימת שכנויות עדיפה על מטריצה');
   await shot('journey-edit');
 }
 
