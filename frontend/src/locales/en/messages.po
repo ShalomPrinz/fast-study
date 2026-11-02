@@ -387,7 +387,7 @@ msgstr "{tool} doesn't run correctly, so the parts of FastStudy that need it wil
 msgid "{tool} is missing, so the parts of FastStudy that need it will fail. Reinstall FastStudy to fix this."
 msgstr "{tool} is missing, so the parts of FastStudy that need it will fail. Reinstall FastStudy to fix this."
 
-#: src/features/downloads/components/NewView.tsx:147
+#: src/features/downloads/components/NewView.tsx:155
 msgid "{total, plural, one {This course has # item you haven't marked. Skip all old content?} other {This course has # items you haven't marked. Skip all old content?}}"
 msgstr "{total, plural, one {This course has # item you haven't marked. Skip all old content?} other {This course has # items you haven't marked. Skip all old content?}}"
 
@@ -591,7 +591,7 @@ msgstr "Assignment material copied — paste it in the chat with Ctrl+V."
 msgid "Assignment Solution"
 msgstr "Assignment Solution"
 
-#: src/features/downloads/components/NewView.tsx:135
+#: src/features/downloads/components/NewView.tsx:143
 #: src/features/downloads/DownloadsView.tsx:159
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:37
 msgid "Assignments"
@@ -1248,7 +1248,7 @@ msgid "Download any open video on the internet"
 msgstr "Download any open video on the internet"
 
 #. placeholder {0}: queue.length
-#: src/features/downloads/components/NewView.tsx:255
+#: src/features/downloads/components/NewView.tsx:263
 msgid "Download selected ({0})"
 msgstr "Download selected ({0})"
 
@@ -1266,14 +1266,14 @@ msgid "Downloading"
 msgstr "Downloading"
 
 #. placeholder {0}: state.active
-#: src/features/downloads/components/NewView.tsx:237
+#: src/features/downloads/components/NewView.tsx:245
 msgid "Downloading {0} more…"
 msgstr "Downloading {0} more…"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
 #: src/features/downloads/components/BulkRunControls.tsx:44
-#: src/features/downloads/components/NewView.tsx:233
+#: src/features/downloads/components/NewView.tsx:241
 msgid "Downloading {0}/{1}…"
 msgstr "Downloading {0}/{1}…"
 
@@ -1843,7 +1843,7 @@ msgstr "Loading…"
 msgid "Manual"
 msgstr "Manual"
 
-#: src/features/downloads/components/NewView.tsx:246
+#: src/features/downloads/components/NewView.tsx:254
 msgid "Mark selected as irrelevant"
 msgstr "Mark selected as irrelevant"
 
@@ -1851,7 +1851,7 @@ msgstr "Mark selected as irrelevant"
 msgid "Match whole word"
 msgstr "Match whole word"
 
-#: src/features/downloads/components/NewView.tsx:134
+#: src/features/downloads/components/NewView.tsx:142
 #: src/features/downloads/DownloadsView.tsx:157
 #: src/features/lectures/AssignmentView.tsx:141
 #: src/features/lectures/MainView.tsx:591
@@ -2069,7 +2069,7 @@ msgstr "Note: This deletes the lecture's audio, transcript, summary and PDF. Mat
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
-#: src/features/downloads/components/NewView.tsx:167
+#: src/features/downloads/components/NewView.tsx:175
 msgid "Nothing new in this course."
 msgstr "Nothing new in this course."
 
@@ -2207,7 +2207,7 @@ msgstr "Optional"
 msgid "Other"
 msgstr "Other"
 
-#: src/features/downloads/components/NewView.tsx:202
+#: src/features/downloads/components/NewView.tsx:210
 #: src/features/downloads/components/SectionGroup.tsx:49
 msgid "Other links"
 msgstr "Other links"
@@ -2594,7 +2594,7 @@ msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
 #. placeholder {0}: item.title
-#: src/features/downloads/components/NewView.tsx:302
+#: src/features/downloads/components/NewView.tsx:310
 msgid "Select {0}"
 msgstr "Select {0}"
 
@@ -2602,7 +2602,7 @@ msgstr "Select {0}"
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
-#: src/features/downloads/components/NewView.tsx:198
+#: src/features/downloads/components/NewView.tsx:206
 msgid "Select all in this section"
 msgstr "Select all in this section"
 
@@ -2669,7 +2669,7 @@ msgstr "Show steps"
 msgid "Skip"
 msgstr "Skip"
 
-#: src/features/downloads/components/NewView.tsx:158
+#: src/features/downloads/components/NewView.tsx:166
 msgid "Skip all"
 msgstr "Skip all"
 
@@ -3112,7 +3112,7 @@ msgstr "These materials are over {limit_mb} MB: {files}. Turn them off for the s
 msgid "These won't start until you run them."
 msgstr "These won't start until you run them."
 
-#: src/features/downloads/components/NewView.tsx:240
+#: src/features/downloads/components/NewView.tsx:248
 msgid "They'll no longer show under New, but stay listed under All."
 msgstr "They'll no longer show under New, but stay listed under All."
 
@@ -3256,7 +3256,7 @@ msgstr "University account connected"
 msgid "University saved"
 msgstr "University saved"
 
-#: src/features/downloads/components/NewView.tsx:136
+#: src/features/downloads/components/NewView.tsx:144
 #: src/features/downloads/DownloadsView.tsx:163
 msgid "Unknown"
 msgstr "Unknown"
@@ -3327,7 +3327,7 @@ msgstr "Video and audio"
 msgid "Video link"
 msgstr "Video link"
 
-#: src/features/downloads/components/NewView.tsx:133
+#: src/features/downloads/components/NewView.tsx:141
 #: src/features/downloads/DownloadsView.tsx:156
 msgid "Videos"
 msgstr "Videos"

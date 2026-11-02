@@ -69,6 +69,8 @@ export default function NewView({ course, items, onReconnect, onShowAll }: Props
     const state = expansions[ref]
     return state?.expanded ? state.children : null
   }
+  // Fetched children, even once collapsed: a playlist counts as 1 only while never fetched.
+  const fetchedOf = (ref: string) => expansions[ref]?.children ?? null
 
   // Downloaded by stored source, or by the suggested name — never the typed one, so a row does not
   // vanish while the user retypes its name onto an existing lecture.
@@ -96,12 +98,18 @@ export default function NewView({ course, items, onReconnect, onShowAll }: Props
     return working && !(item && isDone(item))
   }
 
-  const groups = buildNewView(items, { skipped: new Set(skipped), isDone, engaged, childrenOf })
+  const groups = buildNewView(items, {
+    skipped: new Set(skipped),
+    isDone,
+    engaged,
+    childrenOf,
+    fetchedOf,
+  })
   const refs = selectableRefs(groups)
   const checked = checkedRefs(refs, unchecked, engaged)
   const queue = checked.flatMap((ref) => byRef.get(ref) ?? [])
   const total = groups.reduce(
-    (n, g) => n + g.sections.reduce((m, s) => m + entryCount(s.entries, childrenOf), 0),
+    (n, g) => n + g.sections.reduce((m, s) => m + entryCount(s.entries), 0),
     0,
   )
   const moodleGated = queue.some((i) => i.moodle)
@@ -173,7 +181,7 @@ export default function NewView({ course, items, onReconnect, onShowAll }: Props
           <h3 className="new-media-title">
             {labels[group.media]}
             <span className="new-count">
-              {group.sections.reduce((n, s) => n + entryCount(s.entries, childrenOf), 0)}
+              {group.sections.reduce((n, s) => n + entryCount(s.entries), 0)}
             </span>
           </h3>
           {group.sections.map((section) => {
@@ -201,7 +209,7 @@ export default function NewView({ course, items, onReconnect, onShowAll }: Props
                   <span className="new-section-title" dir="auto">
                     {section.synthetic ? t`Other links` : sectionTitle(section.title)}
                   </span>
-                  <span className="new-count">{entryCount(section.entries, childrenOf)}</span>
+                  <span className="new-count">{entryCount(section.entries)}</span>
                 </label>
                 {section.entries.map((entry) => (
                   <NewRow

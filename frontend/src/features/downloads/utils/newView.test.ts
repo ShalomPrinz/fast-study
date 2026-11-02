@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Course } from '@/types'
 import type { Item } from '../services/autoDownloader'
+import type { NewViewInput } from './newView'
 import {
   buildNewView,
   courseSubmitGated,
@@ -35,6 +36,7 @@ const base = {
   isDone: none,
   engaged: none,
   childrenOf: () => null,
+  fetchedOf: () => null,
 }
 
 describe('buildNewView', () => {
@@ -94,8 +96,24 @@ describe('buildNewView', () => {
     const playlist = item('p', 'W1', { expandable: true })
     const groups = buildNewView([playlist], base)
     expect(selectableRefs(groups)).toEqual([])
-    expect(entryCount(groups[0].sections[0].entries, () => null)).toBe(1)
+    expect(entryCount(groups[0].sections[0].entries)).toBe(1)
     expect(buildNewView([playlist], { ...base, skipped: new Set(['p']) })).toEqual([])
+  })
+
+  describe('playlist count', () => {
+    const playlist = item('p', 'W1', { expandable: true })
+    const kids = [item('c1', 'W1'), item('c2', 'W1'), item('c3', 'W1')]
+    const count = (over: Partial<NewViewInput>) =>
+      entryCount(buildNewView([playlist], { ...base, ...over })[0].sections[0].entries)
+
+    it('is 1 while unfetched', () => expect(count({})).toBe(1))
+    it('is 0 when collapsed with none listed', () => expect(count({ fetchedOf: () => [] })).toBe(0))
+    it('counts only listed children when collapsed', () =>
+      expect(count({ fetchedOf: () => kids, skipped: new Set(['c2']) })).toBe(2))
+    it('counts listed children once when expanded', () => {
+      const two = kids.slice(0, 2)
+      expect(count({ fetchedOf: () => two, childrenOf: () => two })).toBe(2)
+    })
   })
 })
 

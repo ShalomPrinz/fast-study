@@ -45,6 +45,9 @@ export function showsSkipBanner(args: {
 export interface NewEntry {
   item: Item
   playlist: boolean
+  // What the row adds to a header's count: a playlist's listed rows while its children are hidden or
+  // fetched, 1 while unfetched; an expanded playlist adds 0 since its children are entries.
+  count: number
 }
 
 export interface NewSection {
@@ -66,6 +69,8 @@ export interface NewViewInput {
   engaged: (ref: string) => boolean
   // An expanded playlist's children, null while collapsed or unfetched.
   childrenOf: (ref: string) => Item[] | null
+  // A playlist's children once fetched, expanded or not; null while never fetched.
+  fetchedOf: (ref: string) => Item[] | null
 }
 
 function listed(item: Item, input: NewViewInput): boolean {
@@ -79,11 +84,14 @@ function listed(item: Item, input: NewViewInput): boolean {
 export function buildNewView(items: Item[], input: NewViewInput): NewGroup[] {
   const entriesOf = (item: Item): NewEntry[] => {
     if (!listed(item, input)) return []
-    if (!item.expandable) return [{ item, playlist: false }]
-    const children = (input.childrenOf(item.ref) ?? []).filter((c) => listed(c, input))
+    if (!item.expandable) return [{ item, playlist: false, count: 1 }]
+    const shown = input.childrenOf(item.ref)
+    const fetched = input.fetchedOf(item.ref)
+    const children = (shown ?? []).filter((c) => listed(c, input))
+    const count = !fetched ? 1 : shown ? 0 : fetched.filter((c) => listed(c, input)).length
     return [
-      { item, playlist: true },
-      ...children.map((child) => ({ item: child, playlist: false })),
+      { item, playlist: true, count },
+      ...children.map((child) => ({ item: child, playlist: false, count: 1 })),
     ]
   }
   const groups: NewGroup[] = []
@@ -100,12 +108,9 @@ export function buildNewView(items: Item[], input: NewViewInput): NewGroup[] {
   return groups
 }
 
-// What a header counts: the rows to approve, plus a playlist that has not shown its rows yet.
-export function entryCount(
-  entries: readonly NewEntry[],
-  childrenOf: (ref: string) => unknown,
-): number {
-  return entries.filter((e) => !e.playlist || !childrenOf(e.item.ref)).length
+// What a header counts: the rows to approve, plus a collapsed playlist's listed children.
+export function entryCount(entries: readonly NewEntry[]): number {
+  return entries.reduce((n, e) => n + e.count, 0)
 }
 
 // Every selectable row on screen, in on-screen order.

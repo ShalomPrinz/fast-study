@@ -297,6 +297,7 @@ editable name, kind and target and starts checked; a sticky bar acts on exactly 
   course has no skips, no listed item is recognised by ref, and something is new, and goes away once anything is skipped or a downloaded file is recognised by its source.
 - A playlist renders as `PlaylistGroup expandOnly`: only the expand toggle, no checkbox and no run controls. Its expanded children join the
   list as ordinary rows, minus the done and skipped ones, in the playlist's section.
+  The section, media and banner counts count a playlist as 1 while its children were never fetched, else its listed children (not skipped, not done unless engaged), so one found empty stays 0 and a collapsed one keeps its count.
 - `PausedRunsBanner` (media `null`) shows the course run's passcode entry; paused section runs of the All view send the user there via `onShowAll`.
 
 ## Skipped rows in All
