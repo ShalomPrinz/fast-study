@@ -5,6 +5,7 @@ repoints the settings store at a scratch .env, and refuses any connection off lo
 here edits production code: each patch is applied to a module right after it is imported.
 """
 
+import asyncio
 import importlib.util
 import json
 import os
@@ -163,6 +164,13 @@ if _HARNESS:
             token_file.parent.mkdir(parents=True, exist_ok=True)
             token_file.write_text(json.dumps({"fake": True}), encoding="utf-8")
             module._set_consent_needed(False)
+            from pipeline import runner  # local: runner imports this module
+
+            async def sweep():
+                runner.clear_drive_not_connected()
+
+            # Same loop-side hand-off as the real consent thread: the error map belongs to the loop.
+            asyncio.run_coroutine_threadsafe(sweep(), module._loop).result(timeout=5)
             with module._lock:
                 if module._pending_url == url:
                     module._pending_url = None
