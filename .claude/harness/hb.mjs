@@ -72,6 +72,7 @@ function shotScript(paths, tag, sides, langs, setup) {
   return `
 const KEY = 'fast-study:locale';
 const back = page.url();
+if (!/^https?:/.test(back)) throw new Error('hb shot: no page loaded in browser-${tag} — run hb goto / first');
 const saved = await page.evaluate((key) => localStorage.getItem(key), KEY);
 const at = new URL(back);
 const files = [];
