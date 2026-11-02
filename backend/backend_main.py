@@ -21,11 +21,15 @@ from sentry_sdk.integrations.google_genai import GoogleGenAIIntegration
 from sentry_sdk.transport import HttpTransport
 from services import db_client, google_auth, providers, settings
 from services.errors import CodedError, error_fields, failure
+from services.job import join_kill_on_close_job
 from timing import get_stats, init_db, record
 from tools import check_tools
 
 setup_logging()
 log = logging.getLogger("api")
+
+# Before anything spawns, the tool probe included (docs/PIPELINE.md, Execution model).
+join_kill_on_close_job()
 
 # At import, after `runtime` loaded .env, so the dev uvicorn path and the frozen entry both init
 # before the app exists; no DSN means no SDK at all.

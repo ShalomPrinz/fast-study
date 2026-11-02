@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock
 
 import pytest
 from google.oauth2.credentials import Credentials
@@ -162,3 +163,37 @@ class TestStartConsent:
         )
         with pytest.raises(RuntimeError):
             google_auth.start_consent()
+
+
+class TestOpenBrowser:
+    def test_windows_breaks_away_from_the_job(self, monkeypatch):
+        popen, opened = MagicMock(), MagicMock()
+        monkeypatch.setattr(google_auth.sys, "platform", "win32")
+        monkeypatch.setattr(google_auth.subprocess, "Popen", popen)
+        monkeypatch.setattr(google_auth.webbrowser, "open", opened)
+        google_auth._open_browser("https://x/")
+        popen.assert_called_once_with(
+            ["explorer.exe", "https://x/"], creationflags=0x01000000
+        )
+        opened.assert_not_called()
+
+    def test_windows_launch_error_falls_back_and_logs(self, monkeypatch, caplog):
+        opened = MagicMock()
+        monkeypatch.setattr(google_auth.sys, "platform", "win32")
+        monkeypatch.setattr(
+            google_auth.subprocess, "Popen", MagicMock(side_effect=OSError(5, "denied"))
+        )
+        monkeypatch.setattr(google_auth.webbrowser, "open", opened)
+        with caplog.at_level("WARNING", logger="google_auth"):
+            google_auth._open_browser("https://x/")
+        opened.assert_called_once_with("https://x/")
+        assert "Breakaway browser launch failed" in caplog.text
+
+    def test_posix_uses_webbrowser(self, monkeypatch):
+        popen, opened = MagicMock(), MagicMock()
+        monkeypatch.setattr(google_auth.sys, "platform", "linux")
+        monkeypatch.setattr(google_auth.subprocess, "Popen", popen)
+        monkeypatch.setattr(google_auth.webbrowser, "open", opened)
+        google_auth._open_browser("https://x/")
+        popen.assert_not_called()
+        opened.assert_called_once_with("https://x/")

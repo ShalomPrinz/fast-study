@@ -2,6 +2,8 @@
 non-blocking Drive consent flow the settings screen starts."""
 
 import logging
+import subprocess
+import sys
 import threading
 import webbrowser
 from pathlib import Path
@@ -156,6 +158,27 @@ class _QuietHandler(WSGIRequestHandler):
         pass
 
 
+# Win32 CREATE_BREAKAWAY_FROM_JOB: keeps the browser out of backend's kill-on-close job.
+_CREATE_BREAKAWAY_FROM_JOB = 0x01000000
+
+
+def _open_browser(url: str) -> None:
+    """Open the default browser; on Windows outside our job, so exiting never kills the user's browser."""
+
+    if sys.platform == "win32":
+        try:
+            subprocess.Popen(
+                ["explorer.exe", url], creationflags=_CREATE_BREAKAWAY_FROM_JOB
+            )
+            return
+        except OSError:
+            log.warning(
+                "Breakaway browser launch failed; falling back to webbrowser.open",
+                exc_info=True,
+            )
+    webbrowser.open(url)
+
+
 def start_consent() -> str:
     """Start the Drive consent flow and return its URL, without waiting for the user. The
     browser is opened here too, so the URL is the UI's 'didn't open?' fallback."""
@@ -192,7 +215,7 @@ def start_consent() -> str:
         ).start()
         # Its own thread: with only a console browser installed, webbrowser.open blocks
         # until that browser exits. Never printed to stdout — the launcher parses stdout.
-        threading.Thread(target=webbrowser.open, args=(auth_url,), daemon=True).start()
+        threading.Thread(target=_open_browser, args=(auth_url,), daemon=True).start()
         return auth_url
 
 
