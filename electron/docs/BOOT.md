@@ -68,8 +68,12 @@ The page's test ids are a contract held for `delivery/smoke/`: each row's `data-
 A child that exits while still listed died on its own — every kill main sends unlists the child first.
 Main unlists it and, on POSIX, `SIGKILL`s what its process group still holds (chrome under `auto`,
 ffmpeg under `backend`). Windows has no process group and `taskkill /T` walks the tree from a live
-pid only, so a dead child's descendants there run on until they end by themselves; a `taskkill` on the
-dead pid is never sent, since Windows may already have reused it for an unrelated process.
+pid only; a `taskkill` on the dead pid is never sent, since Windows may already have reused it for an
+unrelated process. There `backend` kills its own tree through its kill-on-close job — only the Drive
+consent browser leaves it ([PIPELINE.md](../../backend/docs/PIPELINE.md#execution-model)). A dead Node
+service's descendants run on until they end by themselves, an accepted gap: `server`'s `yt-dlp`/`curl`
+finish their current download and exit, and `auto`'s Chromium should exit when its control pipe
+closes (unconfirmed on Windows).
 
 While a boot runs, that exit fails the boot onto the failure view above, whether or not the port line
 had arrived — the app never loads with a service already dead. After the boot, main removes
