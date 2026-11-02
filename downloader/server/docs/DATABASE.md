@@ -46,13 +46,13 @@ attaching material shouldn't invalidate an existing summary.
 
 `uploadMaterial` sends `application/octet-stream` (the database ignores the type) and, when the
 resolved target carried one, `&filename=<original name>`, from which the database picks the disk
-extension. `uploadPdf` (the extension, PDF-only) sends none, so it lands as `.pdf`.
+extension. `uploadPdf` (the extension) sends the original `filename` and a fitting content type when `/upload-file` carries one; `/upload-pdf` sends none, so it lands as `.pdf`.
 
 A material downloaded from a discovery row — `/download-item` or a section run — also sends
 `&source=<ref>`: the row's `ref`, verbatim as `/list` gave it, which the database stores as the
 material's identity so the frontend can tell this row's file from another one in the same lecture
 (`startJob`'s `ref` → the runner's `source` → `uploadMaterial`). Every other path
-(`/download-url`, `/upload-pdf`) sends none, and a video upload's source is the lecture's, above. The match holds
+(`/download-url`, `/upload-pdf`, `/upload-file`) sends none, and a video upload's source is the lecture's, above. The match holds
 only because `auto/`'s ref is a pure function of the WS listing ([BROWSING.md](../../auto/docs/BROWSING.md#the-item--ref-contract)).
 
 ## `uploadAssignmentFile` — a `media: 'assignment'` target

@@ -10,7 +10,7 @@ registry line.
 
 ## General mode — into a computer folder (`src/generalFolder.js`)
 
-`dest:'folder'` on `/download`, `/download-youtube` or `/upload-pdf` (the popup's "General video")
+`dest:'folder'` on `/download`, `/download-youtube`, `/upload-pdf` or `/upload-file` (the popup's "General video")
 saves the file into a folder on the computer instead of the database: same job, child, progress,
 cancel and timing sample, but the runner's last step is the route's `save` (a move out of the temp
 dir) instead of the source's `upload` — no course, no `/video-arrived`, no notify.
@@ -25,7 +25,7 @@ dir) instead of the source's `upload` — no course, no `/video-arrived`, no not
   general_folder_missing {folder}` / `general_folder_not_writable {folder, detail}`. `fileName` goes
   through `storedName` (traversal and separators refused, the rest made Windows-legal).
 - **Never overwrites**: the name is `<stem><ext>` with the extension of the file actually produced
-  (`.mp4`, yt-dlp's choice, `.pdf`), then ` (2)`, ` (3)`… — claimed with an exclusive create, so two
+  (`.mp4`, yt-dlp's choice, `.pdf`; `/upload-file` keeps the original extension, lowercased), then ` (2)`, ` (3)`… — claimed with an exclusive create, so two
   jobs finishing together can't pick the same one. A cross-drive rename (`EXDEV`) copies + unlinks;
   any failure is `general_folder_save_failed {folder, detail}`.
 

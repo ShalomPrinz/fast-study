@@ -139,12 +139,12 @@ export function outputFile(tempDir) {
 }
 
 // The `dest:'folder'` half of a download request → `{folder, stem}` or `{status, body}` to refuse.
-export function folderTarget(fileName) {
+export function folderTarget(fileName, field = 'fileName') {
   const stem = fileStem(fileName);
   if (!stem)
     return {
       status: 400,
-      body: invalidRequest('fileName', 'fileName with a legal character and no path is required'),
+      body: invalidRequest(field, `${field} with a legal character and no path is required`),
     };
   const folder = readFolder();
   const error = folderError(folder);

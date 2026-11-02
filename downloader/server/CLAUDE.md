@@ -78,6 +78,7 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `GET  /jobs`                              | `{boot, jobs}` — every live download job plus a per-process boot id; the resync for `job:change`                  |
 | `GET  /runs`                              | every current run (section or course), one per `sectionId` — the resync for `run:change`                                      |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`; creates a missing course first; `?dest=folder&fileName=` writes them into the general folder → `{folder, fileName}` |
+| `POST /upload-file?course=&lecture=&kind=&filename=` | `/upload-pdf` for any supported material type (pdf, png, jpg, jpeg, webp, heic, heif, txt, md, csv, docx, pptx, xlsx): `filename` (required, original name) goes to `/materials`; `?dest=folder` saves `<name>.<original ext>` and needs no `fileName`; a missing or unsupported `filename` is 400 `invalid_request` |
 | `GET  /general-folder`                    | `{folder}` — where general-mode downloads land; `~/Downloads` until one is chosen                                |
 | `POST /general-folder`                    | `{folder}` (absolute, existing, writable) persists it → `{folder}`; else 400 with a typed code                    |
 | `POST /general-folder/pick`               | broadcasts `folder:pick` to picker streams → `{status:'ok'}`; `409 folder_picker_unavailable` when no `/events?picker=1` stream is open |

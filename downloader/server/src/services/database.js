@@ -211,13 +211,20 @@ export function uploadAssignmentFile(
   return postTempFile(url, tempDir, tool, `${course}/Assignments/${assignment}`);
 }
 
-// Forward already-fetched PDF bytes to /materials. Throws on a network error (route → 500);
+// Forward already-fetched bytes (a PDF unless `filename`/`contentType` say otherwise) to /materials. Throws on a network error (route → 500);
 // returns the failure body on a database-level failure (route → 502).
-export async function uploadPdf(buf, course, lecture, kind) {
-  const url = materialsUrl(course, lecture, kind);
+export async function uploadPdf(
+  buf,
+  course,
+  lecture,
+  kind,
+  filename = null,
+  contentType = 'application/pdf',
+) {
+  const url = materialsUrl(course, lecture, kind, null, filename);
   const res = await fetch(url, {
     method: 'POST',
-    headers: peerHeaders({ 'Content-Type': 'application/pdf' }),
+    headers: peerHeaders({ 'Content-Type': contentType }),
     body: buf,
   });
   let body = null;
