@@ -549,7 +549,8 @@ function renderReceived(entry) {
   $('submit').textContent = msg(
     entry.state === 'downloading' || entry.state === 'uploading' ? 'btnDownloading' : 'btnDownload',
   );
-  const label = `${isolate(entry.name)} (${entry.type})`;
+  $('receivedField').hidden = false;
+  $('receivedName').value = entry.name ?? '';
   if (entry.state === 'resolving') {
     $('notice').hidden = true;
     clearResult();
@@ -559,7 +560,7 @@ function renderReceived(entry) {
     clearResult();
     showNotice(msg(entry.headline, ...(entry.params ?? []).map(isolate)), { detail: entry.detail });
   } else {
-    showNotice(msg('noticeReceived', label), { ok: true });
+    showNotice(msg('noticeReceived', entry.type), { ok: true });
     if (entry.state === 'ready') clearResult();
     else if (entry.state === 'downloading') {
       const progress = entry.total

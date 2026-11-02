@@ -53,6 +53,10 @@
     "message": "קישור לווידאו",
     "description": "Label of the YouTube page URL field."
   },
+  "labelFile": {
+    "message": "קובץ",
+    "description": "Label of the received file's name box."
+  },
   "labelPdf": {
     "message": "PDF",
     "description": "Label of the PDF URL field."
@@ -268,12 +272,12 @@
     "description": "Right-click menu item on a file link."
   },
   "noticeReceived": {
-    "message": "התקבל $FILE$. בחר לאן לשמור אותו.",
-    "description": "Green notice once a right-clicked link resolved to a supported file.",
+    "message": "הקובץ התקבל ($TYPE$). בחר לאן לשמור אותו.",
+    "description": "Green notice above the file name box once a right-clicked link resolved to a supported file",
     "placeholders": {
-      "file": {
+      "type": {
         "content": "$1",
-        "example": "report.pptx (PPTX)"
+        "example": "PPTX"
       }
     }
   },

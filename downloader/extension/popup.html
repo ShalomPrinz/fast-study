@@ -14,11 +14,6 @@
     <p class="status" id="status" data-i18n="statusLoading"></p>
     <p class="status status--detail" id="statusDetail" dir="auto" hidden></p>
 
-    <p class="result" id="notice" role="status" hidden>
-      <span class="result-headline" id="noticeHeadline"></span>
-      <span class="result-detail" id="noticeDetail" dir="auto"></span>
-    </p>
-
     <form id="form" hidden>
       <div class="modes" role="radiogroup" data-i18n-aria-label="labelMode">
         <label class="mode"
@@ -27,6 +22,16 @@
         <label class="mode"
           ><input type="radio" name="mode" value="general" /><span data-i18n="modeGeneral"></span
         ></label>
+      </div>
+
+      <p class="result" id="notice" role="status" hidden>
+        <span class="result-headline" id="noticeHeadline"></span>
+        <span class="result-detail" id="noticeDetail" dir="auto"></span>
+      </p>
+
+      <div class="field" id="receivedField" hidden>
+        <label for="receivedName" data-i18n="labelFile"></label>
+        <input id="receivedName" class="control control--ltr" dir="auto" readonly />
       </div>
 
       <div class="field" id="videoField" hidden>
