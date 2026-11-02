@@ -14,7 +14,6 @@
 //                               /click, /fill and /press also take {"screenshot":name}: captured once the
 //                               action settles, so a short-lived toast is in the same call
 // /text {"selector"}            innerText; the whole body when no selector
-// /screenshot {"name"}          the full window, saved as <harness>/evidence/<tag>-<name>.png
 // /eval <js>                    raw body: an async function body given `page` and `context`
 // /log {"since"}                every recorded event from N on, numbered
 // /mutations                    every non-GET request so far
@@ -170,7 +169,6 @@ const COMMANDS = {
         .first()
         .innerText()
     ).replace(/\n{2,}/g, '\n'),
-  '/screenshot': async ({ name }) => shoot(name),
   '/eval': async (_, raw) => {
     const result = await new AsyncFunction('page', 'context', raw)(page, context);
     return result === undefined || typeof result === 'string'

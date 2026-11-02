@@ -245,7 +245,6 @@ Every route, those included, is also plain HTTP on the session's port:
 B=$(node .claude/harness/hb.mjs --harness DIR url browser-main)
 curl -s $B/fill -d '{"selector":"input","value":"hb-mgmt-x","screenshot":"filled"}'
 curl -s $B/text                                           # body innerText; or {"selector":…}
-curl -s $B/screenshot -d '{"name":"new-course"}'          # → evidence/mgmt-new-course.png
 curl -s $B/eval --data-binary 'await page.waitForTimeout(3000); return page.url()'
 curl -s "$B/log?since=0"                                  # every recorded event, numbered
 curl -s $B/mutations                                      # every non-GET request, with body and answer
@@ -262,7 +261,7 @@ alike. Never pick one by text: `has-text("No")` is a case-insensitive substring 
 Arguments ride as a JSON body or query parameters, whatever the method. `/eval`'s raw body is an
 async function body given `page` and `context` — the escape hatch for waits and new tabs.
 `/click`, `/fill` and `/press` take an optional `screenshot` name, captured once the action settles
-(half a second) into the same file `/screenshot` would write, so a toast that is gone before a
+(half a second) into `evidence/<tag>-<name>.png`, so a toast that is gone before a
 separate call still lands in the evidence.
 
 Each answer ends with any console error or warning, page error, 4xx/5xx or failed request that

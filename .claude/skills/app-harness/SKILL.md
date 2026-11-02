@@ -41,13 +41,12 @@ return page.url()
 JS
 B=$(hb url browser-main)                 # every other route over curl; a failed hb action exits 1
 curl -s $B/text
-curl -s $B/screenshot -d '{"name":"after-save"}' # → $HARNESS_DIR/evidence/main-after-save.png
 curl -s $B/dom -d '{"selector":".toast","since":"-10000"}'  # always-on DOM timeline: what it matched over time
 curl -s $B/dom/flicker -d '{"selector":".focus-card"}'      # content gone and back within 300 ms
 ```
 
-Screenshots are always the full app window (1400×900), never cropped to an element; for a
-before/after or per-language shot use `hb shot`.
+Screenshots are always the full app window (1400×900), never cropped to an element. Take every one
+with `hb shot <name>` (en+he by default), or `--shot NAME` on a click/fill/press; add `--before` for a before/after.
 
 The browser runs in its own network namespace; a `# harness: browser not network-isolated (<reason>)` line means it fell back to the host, where a host network change can fail a load with `net::ERR_NETWORK_CHANGED` — rerun the load.
 
