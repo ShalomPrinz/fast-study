@@ -57,6 +57,14 @@
     "message": "File",
     "description": "Label of the received file's name box."
   },
+  "fileNameError": {
+    "message": "Error",
+    "description": "Shown red in the received file's name box when the link was rejected before a name was known."
+  },
+  "fileNameChecking": {
+    "message": "Checking the link…",
+    "description": "Placeholder of the received file's name box while the worker reads the link's headers."
+  },
   "labelPdf": {
     "message": "PDF",
     "description": "Label of the PDF URL field."
@@ -281,10 +289,6 @@
       }
     }
   },
-  "progressFileResolving": {
-    "message": "Checking the file…",
-    "description": "Neutral line while the worker reads the link's headers."
-  },
   "progressFileDownloading": {
     "message": "Downloading $NAME$… $PROGRESS$",
     "description": "Headline while the worker fetches the received file; the sizes read so far.",
@@ -323,7 +327,7 @@
   },
   "errFileType": {
     "message": "FastStudy can't use .$TYPE$ files.",
-    "description": "Red notice: the file's type is not a supported material; its name shows beneath.",
+    "description": "Red notice: the file's type is not a supported material.",
     "placeholders": {
       "type": {
         "content": "$1",

@@ -345,7 +345,7 @@ async function resolveReceived(entry, ctl) {
     entry.name = name;
     entry.type = ext.toUpperCase();
     if (!FILE_TYPES.includes(ext)) {
-      return await settle(entry, 'rejected', 'errFileType', { detail: name, params: [ext || '?'] });
+      return await settle(entry, 'rejected', 'errFileType', { params: [ext || '?'] });
     }
     entry.total = Number(res.headers.get('content-length')) || null;
     Object.assign(entry, { state: 'ready', seen: false });

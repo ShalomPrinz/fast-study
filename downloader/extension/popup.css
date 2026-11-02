@@ -166,6 +166,10 @@ form {
   color: var(--text-2);
 }
 
+.control--error[readonly] {
+  color: var(--danger);
+}
+
 /* URLs and capture labels are LTR whatever the UI language; they must not be reordered. */
 .control--ltr {
   direction: ltr;

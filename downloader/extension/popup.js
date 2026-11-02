@@ -540,8 +540,8 @@ function showNotice(headline, { detail = '', ok = false } = {}) {
   $('notice').hidden = false;
 }
 
-// The received file's notice (green once resolved, red when it can never be sent) and, beneath the
-// button, its progress and result. A settled entry is shown until it has been seen once.
+// The received file's notice (green once resolved, red when unsendable; never the name, the box has it)
+// and the progress and result beneath the button. A settled entry shows until seen once.
 function renderReceived(entry) {
   if (!entry) return;
   const active = isActiveState(entry.state);
@@ -550,11 +550,16 @@ function renderReceived(entry) {
     entry.state === 'downloading' || entry.state === 'uploading' ? 'btnDownloading' : 'btnDownload',
   );
   $('receivedField').hidden = false;
-  $('receivedName').value = entry.name ?? '';
+  const nameBox = $('receivedName');
+  const noName = !entry.name;
+  const failedNoName = noName && entry.state !== 'resolving';
+  nameBox.value = failedNoName ? msg('fileNameError') : (entry.name ?? '');
+  nameBox.placeholder = noName && !failedNoName ? msg('fileNameChecking') : '';
+  nameBox.classList.toggle('control--error', failedNoName);
+  nameBox.classList.toggle('control--ltr', !failedNoName);
   if (entry.state === 'resolving') {
     $('notice').hidden = true;
-    clearResult();
-    return showResult(msg('progressFileResolving'), { neutral: true });
+    return clearResult();
   }
   if (entry.state === 'rejected') {
     clearResult();
