@@ -2,6 +2,7 @@
 
 MAX_GEMINI_FILE_BYTES = 10 * 1024 * 1024
 
+# Copied as FILE_TYPES in downloader/extension/background.js and downloader/server/src/routes/pdf.js; change all three together.
 # Extension → mime sent to Gemini; the docx/pptx/xlsx text is extracted first, then sent as text/plain.
 _MIME = {
     "pdf": "application/pdf",
