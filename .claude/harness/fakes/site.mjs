@@ -177,9 +177,15 @@ function videostream(name) {
 }
 
 // BIU's videostream .mp4s live on Oracle object storage, off the Moodle host: no token, no cookie,
-// never behind the site's bot wall. The fake serves this one path on that host.
+// never behind the site's bot wall. The fake serves this one path on that host, and the sidebar video
+// block's bucket (its own host) below.
 const OBJECT_STORE_HOST = 'harness.compat.objectstorage.il-jerusalem-1.oraclecloud.com';
 const VIDEOSTREAM_MP4 = `https://${OBJECT_STORE_HOST}/video_bucket/3d/3dac113ed4a4b0299883cc4dca27d65008f266f4.mp4`;
+
+// BIU's sidebar video block: one recitation recording, its `filename` key naming the bucket file.
+const BLOCK_BUCKET_HOST = 'axt1t2yu790u.compat.objectstorage.il-jerusalem-1.oraclecloud.com';
+const BLOCK_VIDEO_KEY = 'ab/harness-block-video';
+const BLOCK_VIDEO_NAME = 'תרגול 2 - אוהד';
 
 // mod_videostream's Moodle-app page, shaped like the real reply: the template's <video> names the
 // .mp4 in a <source>, on the object store as on BIU.
@@ -440,6 +446,16 @@ function handle(req, res) {
 
   const host = (req.headers.host ?? '').split(':')[0];
   if (host === 'zoom.us' || host.endsWith('.zoom.us')) return serveZoom(req, res, route);
+  if (host === BLOCK_BUCKET_HOST) {
+    if (route === `/video_bucket/${BLOCK_VIDEO_KEY}.mp4`) {
+      return serveFile(req, res, VIDEO, 'video/mp4');
+    }
+    return json(
+      res,
+      { code: 'ObjectNotFound', message: `harness object store has no ${route}` },
+      404,
+    );
+  }
   if (host === OBJECT_STORE_HOST) {
     if (route === new URL(VIDEOSTREAM_MP4).pathname) return serveFile(req, res, VIDEO, 'video/mp4');
     return json(
@@ -615,6 +631,30 @@ function serveSite(req, res, url, route, host) {
       errorcode: 'invalidfunction',
       message: `harness fake site has no ${fn}`,
     });
+  }
+
+  // The sidebar video block's list: JSON under text/html, no token; another course has no block.
+  if (route === '/blocks/video/ajax/get_video_data_biu.php') {
+    const body =
+      url.searchParams.get('course') === `course-${COURSE_ID}`
+        ? {
+            zoomvideos: [
+              {
+                id: '9001',
+                name: BLOCK_VIDEO_NAME,
+                filename: BLOCK_VIDEO_KEY,
+                timecreated: '1731243698',
+              },
+            ],
+            videos: [],
+          }
+        : { zoomvideos: [], videos: [] };
+    const text = JSON.stringify(body);
+    res.writeHead(200, {
+      'content-type': 'text/html; charset=UTF-8',
+      'content-length': Buffer.byteLength(text),
+    });
+    return res.end(text);
   }
 
   if (route.startsWith('/pluginfile.php/')) {
