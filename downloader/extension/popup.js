@@ -25,6 +25,9 @@ let capture = null;
 let youtubeUrl = null;
 let pdfUrl = null;
 let tabTitle = '';
+// The right-click-received file pending in storage.session, shown in place of the tab's own source.
+const RECEIVED_KEY = 'received';
+let received = false;
 // 'app' saves into a course in FastStudy; 'general' into the computer folder the server keeps.
 let mode = 'app';
 let generalFolder = '';
@@ -52,6 +55,8 @@ function applyMode(next) {
   mode = next;
   for (const el of document.querySelectorAll('[data-mode]')) el.hidden = el.dataset.mode !== mode;
   $('kinds').hidden ||= lecturesOnly;
+  // A received file keeps its original name in both modes.
+  if (received) $('fileNameField').hidden = true;
   document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
 }
 
@@ -213,7 +218,7 @@ function refreshLectureSuggestions() {
   $('lecture').placeholder = msg(
     kind === 'recitation' ? 'placeholderRecitation' : 'placeholderLecture',
   );
-  const isPdfMode = !youtubeUrl && !capture && !!pdfUrl;
+  const isPdfMode = received || (!youtubeUrl && !capture && !!pdfUrl);
   $('lecture').value = suggestName(courseName, kind, isPdfMode ? 'latest' : 'next');
 }
 
@@ -527,6 +532,67 @@ async function trackPdf() {
   if (!changed) renderPdf(entry);
 }
 
+function showNotice(headline, { detail = '', ok = false } = {}) {
+  $('noticeHeadline').textContent = headline;
+  $('noticeDetail').textContent = detail;
+  $('noticeDetail').hidden = !detail;
+  $('notice').className = `result ${ok ? 'result--ok' : 'result--danger'}`;
+  $('notice').hidden = false;
+}
+
+// The received file's notice (green once resolved, red when it can never be sent) and, beneath the
+// button, its progress and result. A settled entry is shown until it has been seen once.
+function renderReceived(entry) {
+  if (!entry) return;
+  const active = isActiveState(entry.state);
+  $('submit').disabled = active || entry.state !== 'ready';
+  $('submit').textContent = msg(
+    entry.state === 'downloading' || entry.state === 'uploading' ? 'btnDownloading' : 'btnDownload',
+  );
+  const label = `${isolate(entry.name)} (${entry.type})`;
+  if (entry.state === 'resolving') {
+    $('notice').hidden = true;
+    clearResult();
+    return showResult(msg('progressFileResolving'), { neutral: true });
+  }
+  if (entry.state === 'rejected') {
+    clearResult();
+    showNotice(msg(entry.headline, ...(entry.params ?? []).map(isolate)), { detail: entry.detail });
+  } else {
+    showNotice(msg('noticeReceived', label), { ok: true });
+    if (entry.state === 'ready') clearResult();
+    else if (entry.state === 'downloading') {
+      const progress = entry.total
+        ? `${sizeText(entry.bytes)} / ${sizeText(entry.total)}`
+        : sizeText(entry.bytes);
+      showResult(msg('progressFileDownloading', isolate(entry.name), progress), { neutral: true });
+    } else if (entry.state === 'uploading') {
+      showResult(msg('progressFileUploading', isolate(entry.name)), { neutral: true });
+    } else {
+      showResult(msg(entry.headline, ...(entry.params ?? []).map(isolate)), {
+        detail: entry.detail,
+        ok: entry.state === 'done',
+      });
+    }
+  }
+  if (!active && entry.state !== 'ready' && !entry.seen) {
+    chrome.storage.session.set({ [RECEIVED_KEY]: { ...entry, seen: true } }).catch(() => {});
+  }
+}
+
+const isActiveState = (s) => s === 'resolving' || s === 'downloading' || s === 'uploading';
+
+// Follows the worker's writes to the entry; listen first so a write in the gap is not missed.
+async function trackReceived(initial) {
+  let changed = false;
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'session' || !(RECEIVED_KEY in changes)) return;
+    changed = true;
+    renderReceived(changes[RECEIVED_KEY].newValue);
+  });
+  if (!changed) renderReceived(initial);
+}
+
 async function submit(event) {
   event.preventDefault();
   clearResult();
@@ -534,7 +600,22 @@ async function submit(event) {
   const lecture = $('lecture').value.trim();
   const fileName = $('fileName').value.trim();
   if (mode === 'app' && (!course || !lecture)) return showResult(msg('errMissingTarget'));
-  if (mode === 'general' && !fileName) return showResult(msg('errMissingFileName'));
+  if (mode === 'general' && !received && !fileName) return showResult(msg('errMissingFileName'));
+
+  if (received) {
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'downloadFile',
+        mode,
+        course,
+        lecture,
+        kind: getKind(),
+      });
+    } catch {
+      showResult(msg('statusOffline'));
+    }
+    return;
+  }
 
   const video = !!(youtubeUrl || capture);
   if (!video) {
@@ -573,19 +654,48 @@ async function submit(event) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   translateStatic();
+  // A right-click file arriving while this tab view is open: reopen on the received view. Registered
+  // before any await and gated on viewKnown so it holds when the app is closed and never loops.
+  let viewKnown = false;
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (
+      viewKnown &&
+      !received &&
+      area === 'session' &&
+      changes[RECEIVED_KEY]?.newValue?.state === 'resolving'
+    )
+      location.reload();
+  });
   const { popupMode } = await chrome.storage.local.get('popupMode');
   applyMode(popupMode === 'general' ? 'general' : 'app');
   server = await discoverServer();
-  if (server.running === false) return setStatus(msg('statusAppClosed'), true);
+  if (server.running === false) {
+    viewKnown = true;
+    return setStatus(msg('statusAppClosed'), true);
+  }
+  // A received file replaces the tab's own source; one whose outcome was already seen is dropped.
+  let entry = (await chrome.storage.session.get(RECEIVED_KEY))[RECEIVED_KEY];
+  if (entry?.seen && !isActiveState(entry.state) && entry.state !== 'ready') {
+    chrome.storage.session.remove(RECEIVED_KEY).catch(() => {});
+    entry = null;
+  }
+  received = !!entry;
+  viewKnown = true;
+  if (received) {
+    applyMode(mode);
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id != null) chrome.action.setBadgeText({ tabId: tab.id, text: '' }).catch(() => {});
+  }
   const [online, status] = await Promise.all([
     loadCourses(),
-    loadSource(),
+    received ? '' : loadSource(),
     loadFolder(),
     loadCourseStructure(),
   ]);
-  const hasSource = !!(youtubeUrl || capture || pdfUrl);
+  const hasSource = received || !!(youtubeUrl || capture || pdfUrl);
   if (!online) setStatus(msg('statusOffline'), true);
   else setStatus(status, !$('statusDetail').hidden);
+  $('status').hidden = received && online;
   $('form').hidden = !hasSource;
   $('fileName').value = suggestFileName(tabTitle);
   for (const el of document.querySelectorAll('input[name="mode"]')) {
@@ -602,5 +712,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     el.addEventListener('change', refreshLectureSuggestions);
   }
   $('form').addEventListener('submit', submit);
-  if (pdfUrl && !capture && !youtubeUrl) trackPdf();
+  if (received) trackReceived(entry);
+  else if (pdfUrl && !capture && !youtubeUrl) trackPdf();
 });

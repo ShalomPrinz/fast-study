@@ -262,5 +262,77 @@
   "errPdfInterrupted": {
     "message": "ההורדה הופסקה לפני שהסתיימה.",
     "description": "Headline when the browser stopped the extension mid-download."
+  },
+  "menuSend": {
+    "message": "שלח ל-FastStudy",
+    "description": "Right-click menu item on a file link."
+  },
+  "noticeReceived": {
+    "message": "התקבל $FILE$. בחר לאן לשמור אותו.",
+    "description": "Green notice once a right-clicked link resolved to a supported file.",
+    "placeholders": {
+      "file": {
+        "content": "$1",
+        "example": "report.pptx (PPTX)"
+      }
+    }
+  },
+  "progressFileResolving": {
+    "message": "בודק את הקובץ…",
+    "description": "Neutral line while the worker reads the link's headers."
+  },
+  "progressFileDownloading": {
+    "message": "מוריד את $NAME$… $PROGRESS$",
+    "description": "Headline while the worker fetches the received file; the sizes read so far.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "report.pptx"
+      },
+      "progress": {
+        "content": "$2",
+        "example": "3.2 MB / 10.0 MB"
+      }
+    }
+  },
+  "progressFileUploading": {
+    "message": "שומר את $NAME$…",
+    "description": "Headline while the worker hands the received file to FastStudy.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "report.pptx"
+      }
+    }
+  },
+  "errFileFetch": {
+    "message": "לא ניתן לקרוא את הקובץ מהאתר.",
+    "description": "Headline when the worker could not fetch the received file; the reason shows beneath."
+  },
+  "errFileStore": {
+    "message": "לא ניתן לשמור את הקובץ.",
+    "description": "Headline when the server refused the received file; its own text shows beneath."
+  },
+  "errFileHtml": {
+    "message": "הקישור הזה פותח דף אינטרנט ולא קובץ. אם החיבור לאתר פג, התחבר אליו מחדש ונסה שוב.",
+    "description": "Red notice: the link answered with an HTML page."
+  },
+  "errFileType": {
+    "message": "FastStudy לא תומך בקבצי .$TYPE$.",
+    "description": "Red notice: the file's type is not a supported material; its name shows beneath.",
+    "placeholders": {
+      "type": {
+        "content": "$1",
+        "example": "zip"
+      }
+    }
+  },
+  "errFileHttp": {
+    "message": "האתר סירב להעניק את הקובץ.",
+    "description": "Red notice: the link answered with an error status; the status shows beneath."
+  },
+  "errFileUnreachable": {
+    "message": "לא ניתן להגיע לקובץ.",
+    "description": "Red notice: the request for the link failed; the reason shows beneath."
   }
 }

@@ -14,6 +14,11 @@
     <p class="status" id="status" data-i18n="statusLoading"></p>
     <p class="status status--detail" id="statusDetail" dir="auto" hidden></p>
 
+    <p class="result" id="notice" role="status" hidden>
+      <span class="result-headline" id="noticeHeadline"></span>
+      <span class="result-detail" id="noticeDetail" dir="auto"></span>
+    </p>
+
     <form id="form" hidden>
       <div class="modes" role="radiogroup" data-i18n-aria-label="labelMode">
         <label class="mode"
@@ -39,7 +44,7 @@
         <input id="pdfUrl" class="control control--ltr" readonly />
       </div>
 
-      <div class="field" data-mode="general">
+      <div class="field" id="fileNameField" data-mode="general">
         <label for="fileName" data-i18n="labelFileName"></label>
         <input
           id="fileName"

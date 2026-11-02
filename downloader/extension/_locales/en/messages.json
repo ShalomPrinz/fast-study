@@ -262,5 +262,77 @@
   "errPdfInterrupted": {
     "message": "The download was interrupted before it finished.",
     "description": "Headline when the browser stopped the extension mid-download."
+  },
+  "menuSend": {
+    "message": "Send to FastStudy",
+    "description": "Right-click menu item on a file link."
+  },
+  "noticeReceived": {
+    "message": "Received $FILE$. Choose where to save it.",
+    "description": "Green notice once a right-clicked link resolved to a supported file.",
+    "placeholders": {
+      "file": {
+        "content": "$1",
+        "example": "report.pptx (PPTX)"
+      }
+    }
+  },
+  "progressFileResolving": {
+    "message": "Checking the file…",
+    "description": "Neutral line while the worker reads the link's headers."
+  },
+  "progressFileDownloading": {
+    "message": "Downloading $NAME$… $PROGRESS$",
+    "description": "Headline while the worker fetches the received file; the sizes read so far.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "report.pptx"
+      },
+      "progress": {
+        "content": "$2",
+        "example": "3.2 MB / 10.0 MB"
+      }
+    }
+  },
+  "progressFileUploading": {
+    "message": "Saving $NAME$…",
+    "description": "Headline while the worker hands the received file to FastStudy.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "report.pptx"
+      }
+    }
+  },
+  "errFileFetch": {
+    "message": "Couldn't read the file from the site.",
+    "description": "Headline when the worker could not fetch the received file; the reason shows beneath."
+  },
+  "errFileStore": {
+    "message": "Couldn't save the file.",
+    "description": "Headline when the server refused the received file; its own text shows beneath."
+  },
+  "errFileHtml": {
+    "message": "This link opens a web page, not a file. If your session expired, sign in to the site again and retry.",
+    "description": "Red notice: the link answered with an HTML page."
+  },
+  "errFileType": {
+    "message": "FastStudy can't use .$TYPE$ files.",
+    "description": "Red notice: the file's type is not a supported material; its name shows beneath.",
+    "placeholders": {
+      "type": {
+        "content": "$1",
+        "example": "zip"
+      }
+    }
+  },
+  "errFileHttp": {
+    "message": "The site refused the file.",
+    "description": "Red notice: the link answered with an error status; the status shows beneath."
+  },
+  "errFileUnreachable": {
+    "message": "Couldn't reach the file.",
+    "description": "Red notice: the request for the link failed; the reason shows beneath."
   }
 }
