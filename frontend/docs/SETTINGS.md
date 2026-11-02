@@ -158,7 +158,7 @@ connected now, not mid-run); neither blocks, and Drive's folder is required only
 keeps its default. The data folder is **prefilled and taken as is** — the stored one, else the bridge's `defaultDataRoot`,
 else empty, which in browser dev reads red — but
 probed as it is typed (`probeDataRoot`, the database's read-only `POST /settings/data-root/probe`, debounced
-and latest-wins): an unusable verdict renders its coded reason under the field and blocks the wall, while an
+and latest-wins; 200 usable, 422 with a coded reason unusable, any other status unknown): an unusable verdict renders its coded reason under the field and blocks the wall, while an
 unreachable probe is unknown and blocks nothing, since the save validates again. Packaged, the field is read-only and
 a click, Enter/Space or its folder button opens the bridge's native `pickFolder` dialog (one at a time;
 cancel keeps the value), so a non-technical user never types a path; browser dev keeps the typed input. In

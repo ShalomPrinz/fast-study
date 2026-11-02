@@ -492,11 +492,11 @@ def test_moodle_site_round_trips_to_its_env_key(env_file):
     assert settings.read_settings()["moodle_site"] == "https://x.ac.il/moodle"
 
 
-def _probe(client, data_root) -> dict:
-    """POST a candidate data root to the probe and return its 200 verdict body."""
+def _probe(client, data_root, status=422) -> dict:
+    """POST a candidate data root to the probe, assert its status (422 rejection by default), return the body."""
 
     r = client.post("/settings/data-root/probe", json={"data_root": data_root})
-    assert r.status_code == 200
+    assert r.status_code == status
     return r.json()
 
 
@@ -504,7 +504,7 @@ def test_probe_approves_a_missing_folder_under_a_writable_parent(client, tmp_pat
     target = tmp_path / "not" / "yet"
     before = sorted(tmp_path.iterdir())
 
-    assert _probe(client, str(target)) == {"ok": True, "path": str(target)}
+    assert _probe(client, str(target), 200) == {"path": str(target)}
     assert sorted(tmp_path.iterdir()) == before
 
 
@@ -512,7 +512,7 @@ def test_probe_leaves_an_existing_folder_untouched(client, tmp_path):
     target = tmp_path / "root"
     target.mkdir()
 
-    assert _probe(client, str(target))["ok"] is True
+    assert _probe(client, str(target), 200) == {"path": str(target)}
     assert list(target.iterdir()) == []
 
 
@@ -522,7 +522,6 @@ def test_probe_rejects_an_existing_file(client, tmp_path):
 
     body = _probe(client, str(blocker))
 
-    assert body["ok"] is False
     assert body["code"] == "data_root_not_a_directory"
     assert body["params"] == {"path": str(blocker)}
     assert body["error"]
@@ -574,7 +573,6 @@ def test_probe_rejects_an_unwritable_parent(client, tmp_path):
 
 def test_probe_rejects_a_relative_path(client):
     assert _probe(client, "relative/data") == {
-        "ok": False,
         "code": "data_root_not_absolute",
         "params": {"path": "relative/data"},
         "error": "data root must be an absolute path: relative/data",
@@ -584,7 +582,7 @@ def test_probe_rejects_a_relative_path(client):
 def test_probe_rejects_an_empty_path(client):
     body = _probe(client, "  ")
 
-    assert (body["ok"], body["code"], body["params"]) == (False, "data_root_empty", {})
+    assert (body["code"], body["params"]) == ("data_root_empty", {})
 
 
 def test_probe_answers_400_on_a_body_without_data_root(client):

@@ -30,7 +30,6 @@ already had.
 | Run target      | `{…, disposition, code?}` per target on `GET /runs` and the runs SSE        | `downloader/server/src/runs.js`                              |
 | Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
 | Bridge rejection | an `Error` whose `message` is the failure text, plus `code?`                | `electron/dataFiles.js`, `electron/preload.js`               |
-| Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
 | Settings IPC    | `{code, params, message}` returned in place of the settings view            | `electron/store.js` via `faststudy:settings-write`           |
 
 Every field is additive. `error`/`message` keep today's text and today's meaning, so a consumer that

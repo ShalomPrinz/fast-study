@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { isMoodleBusyError } from './http'
-import { storeBody, ownerBodies, saveSettings, pickBacking, probeMoodleSite } from './settings'
+import {
+  storeBody,
+  ownerBodies,
+  saveSettings,
+  pickBacking,
+  probeMoodleSite,
+  probeDataRoot,
+} from './settings'
 
 const STORED = {
   data_root: '/data',
@@ -299,5 +306,46 @@ describe('pickBacking', () => {
     vi.stubGlobal('window', {})
     expect(pickBacking()).not.toBeUndefined()
     expect(pickBacking()).toHaveProperty('read')
+  })
+})
+
+describe('probeDataRoot', () => {
+  const stub = (res: () => Response) =>
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => res()),
+    )
+
+  it('reads a 200 as usable', async () => {
+    stub(() => Response.json({ path: '/data' }))
+    expect(await probeDataRoot('/data')).toEqual({ kind: 'usable' })
+  })
+
+  it('carries a 422 as a coded unusable verdict', async () => {
+    stub(() =>
+      Response.json(
+        { error: 'not absolute', code: 'data_root_not_absolute', params: { path: 'x' } },
+        { status: 422 },
+      ),
+    )
+    expect(await probeDataRoot('x')).toEqual({
+      kind: 'unusable',
+      failure: { message: 'not absolute', code: 'data_root_not_absolute', params: { path: 'x' } },
+    })
+  })
+
+  it('reads any other status as unknown', async () => {
+    stub(() => Response.json({ error: 'bad', code: 'bad_request_body' }, { status: 400 }))
+    expect(await probeDataRoot('x')).toEqual({ kind: 'unknown' })
+  })
+
+  it('reads a failed request as unknown', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('network down')
+      }),
+    )
+    expect(await probeDataRoot('x')).toEqual({ kind: 'unknown' })
   })
 })

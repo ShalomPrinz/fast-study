@@ -91,7 +91,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /settings`                                         | the browser-dev settings store; API keys report set/unset only            |
 | `PUT    /settings`                                         | merge a partial settings object into the repo-root `.env`                 |
 | `GET    /course_structure`                                 | `{course_structure}`, the live mode `/tree` resolves against — never null, unlike `/settings`' `.env` view |
-| `POST   /settings/data-root/probe`                         | judge a candidate `{data_root}` without creating anything; `200` verdict  |
+| `POST   /settings/data-root/probe`                         | judge a candidate `{data_root}` without creating anything; `200` `{path}`, `422` coded |
 | `POST   /config`                                           | apply `{data_root, error_reports, course_structure}` to the running process |
 | `GET    /events`                                           | SSE stream of `notify` events                                             |
 | `POST   /notify`                                           | broadcast a `notify` event                                                |
@@ -190,7 +190,7 @@ merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
 | `GET /settings` | `200` with every field, `null` when unset; `500` `settings_store_io_failed` if the store is unreadable   |
 | `PUT /settings` | `200` with the same shape; `400` on a rejected value                                                     |
 | `POST /config`  | `204`, clearing the unconfigured state; `400` on a data root that is relative, not a dir, or unwritable, or a non-boolean `error_reports` (`setting_must_be_boolean`), or a `course_structure` off the list (`setting_invalid_choice`) |
-| `POST /settings/data-root/probe` | `200` `{ok: true, path}` or `{ok: false, error, code, params}`; `400` `bad_request_body` without `data_root` |
+| `POST /settings/data-root/probe` | `200` `{path}`; `422` `data_root_*` coded failure; `400` `bad_request_body` without `data_root` |
 
 A rejected value names which rule it broke: `setting_must_be_string`, `setting_must_be_boolean`,
 `setting_must_be_integer`, `setting_may_not_contain_quotes` and `unknown_setting` all carry `{field}`,

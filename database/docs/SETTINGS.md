@@ -82,8 +82,8 @@ traversal) is `data_root_not_writable` too.
 `POST /settings/data-root/probe` runs the same shape checks for the first-run wall but creates and
 writes nothing: a missing root passes when its nearest existing ancestor is a writable directory.
 Writability there is `os.access`, which reads permission bits only (on Windows just the read-only
-flag), so the probe is advisory and the save's real write stays authoritative. A rejection is a
-`200` `{ok: false, error, code, params}` verdict carrying the same four codes, not a failure.
+flag), so the probe is advisory and the save's real write stays authoritative. Approval is `200` `{path}`; a
+rejection is a `422` coded failure carrying the same four codes.
 
 ## Where the root lives, and the unconfigured state
 

@@ -1,4 +1,4 @@
-import { createClient, isMoodleBusyError } from './http'
+import { createClient, failureError, isMoodleBusyError } from './http'
 import { AUTO_DOWNLOADER_URL, BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
 import { applyErrorReports } from './sentry'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
@@ -258,24 +258,23 @@ export async function saveSettings(patch: SettingsPatch): Promise<SavedSettings>
 export type DataRootProbe =
   { kind: 'usable' } | { kind: 'unusable'; failure: ServiceFailure } | { kind: 'unknown' }
 
-/** Asks the database whether `path` can hold the data. It answers 200 both ways, so only a request
- *  that never got a verdict lands in the catch. */
+/** Asks the database whether `path` can hold the data: 200 usable, 422 with a coded reason unusable.
+ *  Any other status, or a request that never got an answer, is unknown. */
 export async function probeDataRoot(path: string): Promise<DataRootProbe> {
   try {
-    const raw = await database.post<{
-      ok?: boolean
-      error?: string
-      code?: string
-      params?: ErrorParams
-    }>('/settings/data-root/probe', { json: { data_root: path } })
-    if (raw.ok) return { kind: 'usable' }
-    if (!raw.code) return { kind: 'unknown' }
+    const res = await database.send('/settings/data-root/probe', 'POST', {
+      json: { data_root: path },
+    })
+    if (res.ok) return { kind: 'usable' }
+    if (res.status !== 422) return { kind: 'unknown' }
+    const err = await failureError(res)
+    if (!err.code) return { kind: 'unknown' }
     return {
       kind: 'unusable',
       failure: {
-        message: raw.error ?? 'This folder cannot hold the data.',
-        code: raw.code,
-        params: raw.params ?? null,
+        message: err.message || 'This folder cannot hold the data.',
+        code: err.code,
+        params: err.params ?? null,
       },
     }
   } catch {

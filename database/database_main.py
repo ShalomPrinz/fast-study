@@ -846,11 +846,11 @@ async def probe_data_root(request: Request):
         candidate = body["data_root"]
     except Exception as e:
         return _failure(e, 400, "bad_request_body")
-    # A verdict is data, not a failed request, so a rejection answers 200 like an approval.
     try:
-        return {"ok": True, "path": settings.probe_data_root(candidate)}
+        return {"path": settings.probe_data_root(candidate)}
     except CodedError as e:
-        return {"ok": False, "code": e.code, "params": e.params, "error": str(e)}
+        # 422, not 400, so a rejected candidate stays distinct from a malformed body.
+        return _failure(e, 422, e.code)
 
 
 @app.post("/config")
