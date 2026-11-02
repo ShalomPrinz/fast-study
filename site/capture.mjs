@@ -21,7 +21,7 @@ import {
   waitFor,
   writeLecture,
 } from '../.claude/harness/showcase/capture.mjs';
-import { showRecording } from '../.claude/harness/lib/downloads.mjs';
+import { pickCourse, showRecording } from '../.claude/harness/lib/downloads.mjs';
 
 const IMG = path.join(path.dirname(fileURLToPath(import.meta.url)), 'img');
 const SIZE = { width: 1280, height: 800 };
@@ -122,11 +122,8 @@ async function journey(page, open, shot, lectureRoute) {
   await call('POST', `${SITE}/control`, { downloadMs: 30_000 });
   // Samples for the download's own bar (a curl download), so it shows time left, not "not enough data".
   await calibrate('download:curl', 470_000, 30);
-  await open('/downloads');
   // Picking the course in the bar loads it; the panel opens on New, so switch to All, the per-card list.
-  await page.locator('.downloads-tabs [role=tab]').first().click();
-  await page.locator('#course-source').click();
-  await page.getByRole('option', { name: new RegExp(`^${course}$`) }).click();
+  await pickCourse(page, course);
   await page.locator('.downloads-scope-switch .mode-toggle-btn').nth(1).click();
   const row = await showRecording(page, JOURNEY.recording);
   await row.locator('.recording-name-input').fill(lecture);
