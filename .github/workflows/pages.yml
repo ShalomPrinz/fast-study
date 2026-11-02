@@ -1,8 +1,7 @@
 name: pages
 
-# Deploys site/ to GitHub Pages with the latest release's version stamped in. publish.yml dispatches
-# this after every release, since a release event raised by GITHUB_TOKEN starts no workflow. Before
-# deploying, `capture` recaptures the screenshots when the latest release differs from the tag in site/img/captured-version (shots come from main when that tag became latest).
+# publish.yml dispatches this after every release (a GITHUB_TOKEN release event starts no workflow).
+# `capture` recaptures the screenshots from main when the latest release differs from captured-version.
 on:
   push:
     branches: [main]
@@ -90,7 +89,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898783+github-actions[bot]@users.noreply.github.com'
           git add site/img
-          git commit -m "site: recapture the screenshots at $TAG"
+          git commit -m "site: recapture the screenshots for $TAG"
           for attempt in 1 2 3 4 5; do
             git fetch origin main
             git rebase origin/main
