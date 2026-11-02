@@ -41,7 +41,7 @@ msgstr "ב\"{name}\" אין תווים שאפשר להשתמש בהם בשם ת�
 msgid "\"{name}\" is reserved for the course's own folders. Choose another name."
 msgstr "השם \"{name}\" שמור לתיקיות של הקורס עצמו. בחר שם אחר."
 
-#: src/shared/i18n/serviceErrors.ts:327
+#: src/shared/i18n/serviceErrors.ts:330
 msgid "\"{value}\" is not an allowed value for the setting \"{field}\"."
 msgstr "\"{value}\" אינו ערך מותר להגדרה \"{field}\"."
 
@@ -1075,7 +1075,7 @@ msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastS
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:311
+#: src/shared/i18n/serviceErrors.ts:314
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נסה שוב."
 
@@ -1862,7 +1862,7 @@ msgstr "חומרים"
 msgid "Minutes between retries"
 msgstr "דקות בין ניסיונות"
 
-#: src/shared/i18n/serviceErrors.ts:317
+#: src/shared/i18n/serviceErrors.ts:320
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1922,7 +1922,7 @@ msgstr "לא נמצא Chrome או Edge במחשב הזה."
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "לא נמצא Chrome או Edge במחשב הזה. התקן את Chrome ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:318
+#: src/shared/i18n/serviceErrors.ts:321
 msgid "No Chrome window is waiting on a captcha anymore."
 msgstr "כבר אין חלון Chrome שמחכה לפתרון חידה."
 
@@ -1962,7 +1962,7 @@ msgstr "אין עדיין הרצאות"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:316
+#: src/shared/i18n/serviceErrors.ts:319
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
@@ -2022,7 +2022,7 @@ msgstr "לא נבחרה אוניברסיטה"
 msgid "No university is chosen yet. Choose yours in Settings."
 msgstr "עדיין לא נבחרה אוניברסיטה. בחר אותה בהגדרות."
 
-#: src/shared/i18n/serviceErrors.ts:297
+#: src/shared/i18n/serviceErrors.ts:300
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
@@ -2690,7 +2690,7 @@ msgid "Something went wrong"
 msgstr "משהו השתבש"
 
 #: src/shared/i18n/serviceErrors.ts:39
-#: src/shared/i18n/serviceErrors.ts:336
+#: src/shared/i18n/serviceErrors.ts:339
 msgid "Something went wrong."
 msgstr "משהו השתבש."
 
@@ -2929,11 +2929,11 @@ msgstr "אסימון הגישה של Google נשמר רק במחשב שלך ול
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:313
+#: src/shared/i18n/serviceErrors.ts:316
 msgid "The login window was closed before login finished. Connect again."
 msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:312
+#: src/shared/i18n/serviceErrors.ts:315
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
 
@@ -2998,23 +2998,23 @@ msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי
 msgid "the runner takes these in order"
 msgstr "ההרצות מתבצעות לפי הסדר"
 
-#: src/shared/i18n/serviceErrors.ts:321
+#: src/shared/i18n/serviceErrors.ts:324
 msgid "The setting \"{field}\" isn't recognized, so it wasn't saved."
 msgstr "ההגדרה \"{field}\" אינה מוכרת, ולכן לא נשמרה."
 
-#: src/shared/i18n/serviceErrors.ts:326
+#: src/shared/i18n/serviceErrors.ts:329
 msgid "The setting \"{field}\" must be a whole number."
 msgstr "ההגדרה \"{field}\" חייבת להיות מספר שלם."
 
-#: src/shared/i18n/serviceErrors.ts:330
+#: src/shared/i18n/serviceErrors.ts:333
 msgid "The setting \"{field}\" must be between {min} and {max}."
 msgstr "ההגדרה \"{field}\" חייבת להיות בין {min} ל-{max}."
 
-#: src/shared/i18n/serviceErrors.ts:325
+#: src/shared/i18n/serviceErrors.ts:328
 msgid "The setting \"{field}\" must be on or off."
 msgstr "ההגדרה \"{field}\" חייבת להיות פועלת או כבויה."
 
-#: src/shared/i18n/serviceErrors.ts:324
+#: src/shared/i18n/serviceErrors.ts:327
 msgid "The setting \"{field}\" must be text."
 msgstr "ההגדרה \"{field}\" חייבת להיות טקסט."
 
@@ -3091,11 +3091,11 @@ msgstr "החלון באתר האוניברסיטה עבר את הבדיקה, ו�
 msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 msgstr "החלון נסגר לפני שהחידה נפתרה. לחץ על \"פתיחת החידה מחדש\" כדי להחזיר אותה."
 
-#: src/shared/i18n/serviceErrors.ts:307
+#: src/shared/i18n/serviceErrors.ts:310
 msgid "The Zoom captcha wasn't solved within 10 minutes. Try the download again."
 msgstr "החידה של Zoom לא נפתרה תוך 10 דקות. נסה להוריד שוב."
 
-#: src/shared/i18n/serviceErrors.ts:301
+#: src/shared/i18n/serviceErrors.ts:304
 msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
@@ -3154,6 +3154,10 @@ msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
 
+#: src/shared/i18n/serviceErrors.ts:297
+msgid "This lecture's video is no longer available in BIU's video store."
+msgstr "הסרטון של ההרצאה הזו כבר אינו זמין במאגר הסרטונים של בר-אילן."
+
 #: src/shared/i18n/serviceErrors.ts:296
 msgid "This lecture's video isn't a downloadable MP4 file."
 msgstr "הווידאו של ההרצאה הזו אינו קובץ MP4 שאפשר להוריד."
@@ -3170,7 +3174,7 @@ msgstr "צריך לעשות את זה רק פעם אחת."
 msgid "This recording needs a passcode."
 msgstr "ההקלטה הזו דורשת קוד גישה."
 
-#: src/shared/i18n/serviceErrors.ts:310
+#: src/shared/i18n/serviceErrors.ts:313
 msgid "This recording type can't be downloaded."
 msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 
@@ -3448,7 +3452,7 @@ msgstr "תוקף החיבור לאוניברסיטה פג. חבר מחדש את 
 msgid "Your university's Moodle address"
 msgstr "כתובת ה-Moodle של האוניברסיטה"
 
-#: src/shared/i18n/serviceErrors.ts:304
+#: src/shared/i18n/serviceErrors.ts:307
 msgid "Zoom asked for a captcha, and solving it is only supported on Windows."
 msgstr "Zoom ביקש לפתור חידה, ופתרון החידה נתמך רק ב-Windows."
 

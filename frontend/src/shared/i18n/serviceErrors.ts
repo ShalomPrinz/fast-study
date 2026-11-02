@@ -294,6 +294,9 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   playlist_list_failed: msg({ message: 'Could not list the playlist.' }),
   playlist_empty: msg({ message: 'That playlist has no entries.' }),
   videostream_no_mp4: msg({ message: "This lecture's video isn't a downloadable MP4 file." }),
+  biu_video_missing: msg({
+    message: "This lecture's video is no longer available in BIU's video store.",
+  }),
   zoom_no_media_request: msg({
     message:
       'No video was captured on that Zoom page. The passcode or the player may need a manual start.',
