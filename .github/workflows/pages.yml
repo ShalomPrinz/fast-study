@@ -1,7 +1,8 @@
 name: pages
 
 # Deploys site/ to GitHub Pages with the latest release's version stamped in. publish.yml dispatches
-# this after every release, since a release event raised by GITHUB_TOKEN starts no workflow.
+# this after every release, since a release event raised by GITHUB_TOKEN starts no workflow. Before
+# deploying, `capture` recaptures the screenshots when the latest release differs from the tag in site/img/captured-version (shots come from main when that tag became latest).
 on:
   push:
     branches: [main]
@@ -21,13 +22,113 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Pushes the recaptured images; the job-level block replaces the workflow's, so it names only what it needs.
+    permissions:
+      contents: write
+    env:
+      UV_PYTHON: '3.12'
+    steps:
+      # main's tip, not the triggering sha: the push below must fast-forward or rebase onto it.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      # A compare of two strings; no release, or the marker already at the tag, skips every heavy step.
+      - id: check
+        name: Compare the latest release with the last capture
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name 2>/dev/null || true)
+          last=
+          if [ -f site/img/captured-version ]; then last=$(tr -d '[:space:]' < site/img/captured-version); fi
+          if [ -z "$tag" ]; then
+            echo "no latest release; skipping the capture"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          elif [ "$tag" = "$last" ]; then
+            echo "screenshots already captured for $tag; skipping the capture"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "recapturing: ${last:-none} -> $tag"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Here rather than in the job's env, where the runner context is not yet available.
+      - name: Set the harness root
+        if: steps.check.outputs.run == 'true'
+        run: echo "HARNESS_DIR=$RUNNER_TEMP/harness" >> "$GITHUB_ENV"
+
+      # Heebo, the app's UI font, ships as an npm webfont (@fontsource/heebo, Hebrew subset included),
+      # so the runner needs no system Hebrew font.
+      - uses: ./.github/actions/harness-setup
+        if: steps.check.outputs.run == 'true'
+
+      - name: Start the harness
+        if: steps.check.outputs.run == 'true'
+        run: node .claude/harness/setup.mjs --harness "$HARNESS_DIR"
+
+      - name: Capture the screenshots
+        if: steps.check.outputs.run == 'true'
+        run: node site/capture.mjs --harness "$HARNESS_DIR"
+
+      - name: Stop the harness
+        if: always() && steps.check.outputs.run == 'true'
+        run: node .claude/harness/setup.mjs --harness "$HARNESS_DIR" --down
+
+      # The bot identity, one parent and a site/img/-only change are what publish.yml's walk-back matches.
+      - name: Commit and push the screenshots
+        if: steps.check.outputs.run == 'true'
+        env:
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          echo "$TAG" > site/img/captured-version
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898783+github-actions[bot]@users.noreply.github.com'
+          git add site/img
+          git commit -m "site: recapture the screenshots at $TAG"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            echo "push raced (attempt $attempt); retrying"
+            sleep $((attempt * 3))
+          done
+          echo "could not push the screenshots" >&2
+          exit 1
+
+      - uses: actions/upload-artifact@v4
+        if: success() && steps.check.outputs.run == 'true'
+        with:
+          name: site-screenshots
+          path: site/img/*.jpg
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: site-capture
+          path: |
+            ${{ runner.temp }}/harness/logs
+            ${{ runner.temp }}/harness/evidence
+          if-no-files-found: ignore
+
   deploy:
+    # A broken capture must not block the version stamp; its own job still shows red.
+    needs: capture
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # main's tip, so the images capture just pushed ship, not the triggering sha's.
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: actions/configure-pages@v5
 
@@ -37,7 +138,7 @@ jobs:
         run: |
           mkdir -p _site
           cp -r site/. _site/
-          rm _site/stamp.sh _site/capture.mjs _site/CLAUDE.md
+          rm -f _site/img/captured-version; rm _site/stamp.sh _site/capture.mjs _site/CLAUDE.md
           if gh api "repos/${{ github.repository }}/releases/latest" > release.json; then
             bash site/stamp.sh _site release.json
           else

@@ -12,6 +12,7 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>`. Also the journey carousel, and the zoom overlay every `main img` opens (a `<dialog>`; Esc or a click anywhere but the arrows closes, focus returns). A journey shot's zoom also steps the four shots (edge arrows, ←/→ by reading direction, N of 4 counter, wrapping) by driving the carousel's `show()`, and the carousel and focus end on the last one viewed |
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
 | `capture.mjs` | Recaptures the eleven app screenshots on a live app-harness stack, using the showcase dataset and helpers in `.claude/harness/showcase/` |
+| `img/captured-version` | Release tag whose becoming latest triggered the last capture, taken from main at that time (`v1.2.3`); `pages.yml`'s `capture` job compares it with the latest release and never deploys it |
 | `img/`        | The app screenshots (a 1280×800 layout at 2×, 2560×1600 JPEG, sharp at the carousel's 925px (85% of the 1088px slide) on high-DPI screens: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
 | `sitemap.xml` | Both page URLs, for Search Console; a new page gets a `<url>` here               |
 
@@ -63,4 +64,13 @@ Every name and text a shot shows comes from the showcase dataset, which is separ
 follows `JOURNEY`: downloaded from the fake Moodle course's plain-link row `הקלטה 3 — עצים`, whose
 probed size gives the download card a bar with time left, its run held on a slow fake Groq, then
 given its dataset text. `feature-search` is shot after it, so the journey lecture is among the hits.
+
+`pages.yml`'s `capture` job runs this before every deploy: when the latest release's tag differs from
+`img/captured-version` (no marker counts as different; no release skips), it sets up the harness
+(`.github/actions/harness-setup`), captures, writes the marker and commits `site/img/` to main as
+`github-actions[bot]` — one parent, rebased onto `origin/main` with retries, the shape `publish.yml`'s
+walk-back over first-parent commits matches. `deploy` follows even when capture failed, checks out
+main so it ships the new images, and drops the marker from `_site`. Heebo comes from the
+`@fontsource/heebo` npm package (Hebrew subset included), so the runner needs no system Hebrew font.
+
 The SmartScreen steps come from a real Windows install and cannot be captured here.
