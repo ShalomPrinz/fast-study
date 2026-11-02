@@ -26,6 +26,7 @@ const TONE: Record<string, string> = {
   supported: 'settings-status--ok',
   unsupported: 'settings-status--danger',
   unverified: 'settings-status--warn',
+  invalid: 'settings-status--danger',
 }
 
 // The university's Moodle site: a preset or any pasted address, probed before it can be saved.
@@ -97,6 +98,8 @@ export default function MoodleSiteField({
         return status.captcha
           ? t`The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site.`
           : t`We couldn't check this site right now. You can still save it.`
+      case 'invalid':
+        return t`This isn't a web address. Copy the address from your browser's address bar.`
       default:
         return ''
     }

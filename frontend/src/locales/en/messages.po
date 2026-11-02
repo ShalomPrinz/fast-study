@@ -779,7 +779,7 @@ msgstr "checking Drive…"
 #: src/features/downloads/components/CourseUrlPaste.tsx:58
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
-#: src/features/settings/components/MoodleSiteField.tsx:87
+#: src/features/settings/components/MoodleSiteField.tsx:88
 msgid "Checking…"
 msgstr "Checking…"
 
@@ -838,7 +838,7 @@ msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 msgid "Choose your university in Settings first"
 msgstr "Choose your university in Settings first"
 
-#: src/features/settings/components/MoodleSiteField.tsx:122
+#: src/features/settings/components/MoodleSiteField.tsx:125
 msgid "Choose your university…"
 msgstr "Choose your university…"
 
@@ -1476,7 +1476,7 @@ msgstr "FastStudy can't save into {folder}. Choose another folder."
 msgid "FastStudy couldn't reach your files. Try again."
 msgstr "FastStudy couldn't reach your files. Try again."
 
-#: src/features/settings/components/MoodleSiteField.tsx:158
+#: src/features/settings/components/MoodleSiteField.tsx:161
 msgid "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 
@@ -1550,7 +1550,7 @@ msgid "Fix the summary"
 msgstr "Fix the summary"
 
 #. placeholder {0}: status.site
-#: src/features/settings/components/MoodleSiteField.tsx:90
+#: src/features/settings/components/MoodleSiteField.tsx:91
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "Found your university's Moodle: <0>{0}</0>"
 
@@ -2208,7 +2208,7 @@ msgstr "Open the university site in your browser and solve the captcha there, th
 msgid "Open with…"
 msgstr "Open with…"
 
-#: src/features/settings/components/MoodleSiteField.tsx:133
+#: src/features/settings/components/MoodleSiteField.tsx:136
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
 msgstr "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
 
@@ -2226,7 +2226,7 @@ msgstr "Other"
 msgid "Other links"
 msgstr "Other links"
 
-#: src/features/settings/components/MoodleSiteField.tsx:128
+#: src/features/settings/components/MoodleSiteField.tsx:131
 msgid "Other…"
 msgstr "Other…"
 
@@ -3090,7 +3090,7 @@ msgstr "The university site is asking for a captcha in a Chrome window. Solve it
 msgid "The university site is busy with another request. Try again in a moment."
 msgstr "The university site is busy with another request. Try again in a moment."
 
-#: src/features/settings/components/MoodleSiteField.tsx:98
+#: src/features/settings/components/MoodleSiteField.tsx:99
 msgid "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 msgstr "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 
@@ -3184,6 +3184,10 @@ msgstr "This error was reported automatically. Reference: <0>{eventId}</0>"
 #: src/shared/i18n/serviceErrors.ts:286
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
+
+#: src/features/settings/components/MoodleSiteField.tsx:102
+msgid "This isn't a web address. Copy the address from your browser's address bar."
+msgstr "This isn't a web address. Copy the address from your browser's address bar."
 
 #: src/features/downloads/components/RecordingRow.tsx:324
 msgid "This lecture holds a different video"
@@ -3279,7 +3283,7 @@ msgid "Unarchive course"
 msgstr "Unarchive course"
 
 #: src/features/downloads/components/DownloadsTabs.tsx:16
-#: src/features/settings/components/MoodleSiteField.tsx:112
+#: src/features/settings/components/MoodleSiteField.tsx:115
 msgid "University"
 msgstr "University"
 
@@ -3387,7 +3391,7 @@ msgstr "We couldn't check right now."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 
-#: src/features/settings/components/MoodleSiteField.tsx:99
+#: src/features/settings/components/MoodleSiteField.tsx:100
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "We couldn't check this site right now. You can still save it."
 
@@ -3487,7 +3491,7 @@ msgstr "Your university account can't open that course. It may not exist, or you
 msgid "Your university session expired. Reconnect your account."
 msgstr "Your university session expired. Reconnect your account."
 
-#: src/features/settings/components/MoodleSiteField.tsx:144
+#: src/features/settings/components/MoodleSiteField.tsx:147
 msgid "Your university's Moodle address"
 msgstr "Your university's Moodle address"
 

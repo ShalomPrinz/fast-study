@@ -8,11 +8,11 @@ export type SiteStatus =
   | { kind: 'supported'; site: string }
   | { kind: 'unsupported'; failure: ServiceFailure }
   | { kind: 'unverified'; site: string; captcha: boolean }
+  | { kind: 'invalid' }
   | null
 
-// What a probe answer means for the field. An unverified answer keeps the probe's root, or failing
-// that the typed address's origin, so the post-login check still has a site to judge; text that is
-// no address at all keeps nothing, and so cannot be saved.
+// What a probe answer means for the field. Unverified keeps the probe's root, else the typed origin;
+// text that is no address is `invalid`, so nothing to save.
 export function toSiteStatus(probe: SiteProbe, url: string): SiteStatus {
   if (probe.status === 'supported' && probe.site) return { kind: 'supported', site: probe.site }
   if (probe.status === 'unsupported') {
@@ -21,12 +21,19 @@ export function toSiteStatus(probe: SiteProbe, url: string): SiteStatus {
       failure: probe.failure ?? { message: 'This Moodle site cannot be used.' },
     }
   }
-  return { kind: 'unverified', site: probe.site ?? originOf(url), captcha: probe.captcha }
+  const site = probe.site ?? originOf(url)
+  if (!site) return { kind: 'invalid' }
+  return { kind: 'unverified', site, captcha: probe.captcha }
 }
 
+// A schemeless host gets `https://`, as the auto-downloader's candidateRoots does. A scheme typo
+// (`http:/x`, `mailto:a@b.c`) is no host:port, so it is invalid rather than glued onto `https://`.
 function originOf(url: string): string {
+  const text = url.trim()
+  const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(text)
+  if (!hasScheme && /^[a-z][a-z0-9+.-]*:(?!\d+(\/|$))/i.test(text)) return ''
   try {
-    const parsed = new URL(url.trim())
+    const parsed = new URL(hasScheme ? text : `https://${text}`)
     return /^https?:$/.test(parsed.protocol) ? parsed.origin : ''
   } catch {
     return ''
@@ -37,7 +44,7 @@ function originOf(url: string): string {
  *  "unsupported" can never work, so it saves nothing; neither does an answer still in flight. */
 export function savableSite(status: SiteStatus): string | null {
   if (status?.kind !== 'supported' && status?.kind !== 'unverified') return null
-  return status.site || null
+  return status.site
 }
 
 /** Runs site probes in order: a value already probed is skipped, and a slower earlier answer never

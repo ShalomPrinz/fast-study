@@ -779,7 +779,7 @@ msgstr "בודק את Drive…"
 #: src/features/downloads/components/CourseUrlPaste.tsx:58
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
-#: src/features/settings/components/MoodleSiteField.tsx:87
+#: src/features/settings/components/MoodleSiteField.tsx:88
 msgid "Checking…"
 msgstr "בודק…"
 
@@ -838,7 +838,7 @@ msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי �
 msgid "Choose your university in Settings first"
 msgstr "יש לבחור תחילה אוניברסיטה בהגדרות"
 
-#: src/features/settings/components/MoodleSiteField.tsx:122
+#: src/features/settings/components/MoodleSiteField.tsx:125
 msgid "Choose your university…"
 msgstr "בחר את האוניברסיטה שלך…"
 
@@ -1476,7 +1476,7 @@ msgstr "FastStudy לא יכולה לשמור בתיקייה {folder}. בחר ת�
 msgid "FastStudy couldn't reach your files. Try again."
 msgstr "FastStudy לא הצליחה לגשת לקבצים שלך. נסה שוב."
 
-#: src/features/settings/components/MoodleSiteField.tsx:158
+#: src/features/settings/components/MoodleSiteField.tsx:161
 msgid "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "FastStudy מוצאת את ההקלטות שלך באתר ה-Moodle של האוניברסיטה. אם היא לא ברשימה, בחר \"אחר…\" והדבק את כתובת ה-Moodle שלה."
 
@@ -1550,7 +1550,7 @@ msgid "Fix the summary"
 msgstr "תיקון הסיכום"
 
 #. placeholder {0}: status.site
-#: src/features/settings/components/MoodleSiteField.tsx:90
+#: src/features/settings/components/MoodleSiteField.tsx:91
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "נמצא ה-Moodle של האוניברסיטה: <0>{0}</0>"
 
@@ -2208,7 +2208,7 @@ msgstr "פתח את אתר האוניברסיטה בדפדפן שלך ופתור
 msgid "Open with…"
 msgstr "פתיחה באמצעות…"
 
-#: src/features/settings/components/MoodleSiteField.tsx:133
+#: src/features/settings/components/MoodleSiteField.tsx:136
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
 msgstr "פתח בדפדפן את ה-Moodle של האוניברסיטה (האתר עם הקורסים והקלטות ההרצאות שלך), העתק את הכתובת מהשורה שבראש הדפדפן והדבק אותה כאן."
 
@@ -2226,7 +2226,7 @@ msgstr "אחר"
 msgid "Other links"
 msgstr "קישורים אחרים"
 
-#: src/features/settings/components/MoodleSiteField.tsx:128
+#: src/features/settings/components/MoodleSiteField.tsx:131
 msgid "Other…"
 msgstr "אחר…"
 
@@ -3090,7 +3090,7 @@ msgstr "אתר האוניברסיטה מבקש לפתור חידה בחלון Ch
 msgid "The university site is busy with another request. Try again in a moment."
 msgstr "אתר האוניברסיטה עסוק בבקשה אחרת. נסה שוב בעוד רגע."
 
-#: src/features/settings/components/MoodleSiteField.tsx:98
+#: src/features/settings/components/MoodleSiteField.tsx:99
 msgid "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 msgstr "אתר האוניברסיטה מבקש ממך לפתור חידה. פתור אותה בחלון שנפתח. אפשר לשמור את האתר בכל זאת."
 
@@ -3184,6 +3184,10 @@ msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 #: src/shared/i18n/serviceErrors.ts:286
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
+
+#: src/features/settings/components/MoodleSiteField.tsx:102
+msgid "This isn't a web address. Copy the address from your browser's address bar."
+msgstr "זו לא כתובת אתר. העתק את הכתובת משורת הכתובת של הדפדפן."
 
 #: src/features/downloads/components/RecordingRow.tsx:324
 msgid "This lecture holds a different video"
@@ -3279,7 +3283,7 @@ msgid "Unarchive course"
 msgstr "הוצאת קורס מהארכיון"
 
 #: src/features/downloads/components/DownloadsTabs.tsx:16
-#: src/features/settings/components/MoodleSiteField.tsx:112
+#: src/features/settings/components/MoodleSiteField.tsx:115
 msgid "University"
 msgstr "אוניברסיטה"
 
@@ -3387,7 +3391,7 @@ msgstr "לא הצלחנו לבדוק כרגע."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/components/MoodleSiteField.tsx:99
+#: src/features/settings/components/MoodleSiteField.tsx:100
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור אותו בכל זאת."
 
@@ -3487,7 +3491,7 @@ msgstr "חשבון האוניברסיטה שלך לא יכול לפתוח את �
 msgid "Your university session expired. Reconnect your account."
 msgstr "תוקף החיבור לאוניברסיטה פג. חבר מחדש את החשבון."
 
-#: src/features/settings/components/MoodleSiteField.tsx:144
+#: src/features/settings/components/MoodleSiteField.tsx:147
 msgid "Your university's Moodle address"
 msgstr "כתובת ה-Moodle של האוניברסיטה"
 

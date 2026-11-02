@@ -58,9 +58,17 @@ describe('toSiteStatus', () => {
       site: 'https://x.ac.il',
       captcha: false,
     })
-    expect(toSiteStatus(unverified, 'not an address')).toEqual({
+    expect(toSiteStatus(unverified, 'foo bar')).toEqual({ kind: 'invalid' })
+    expect(toSiteStatus(unverified, 'http:/x')).toEqual({ kind: 'invalid' })
+    expect(toSiteStatus(unverified, 'mailto:a@b.c')).toEqual({ kind: 'invalid' })
+    expect(toSiteStatus(unverified, 'moodle.x.ac.il:8443')).toEqual({
       kind: 'unverified',
-      site: '',
+      site: 'https://moodle.x.ac.il:8443',
+      captcha: false,
+    })
+    expect(toSiteStatus(unverified, 'moodle.example.ac.il')).toEqual({
+      kind: 'unverified',
+      site: 'https://moodle.example.ac.il',
       captcha: false,
     })
   })
@@ -96,8 +104,8 @@ describe('savableSite', () => {
   })
 
   // `''` is the form's "no university", which clears the stored site — never what a probe means.
-  it('holds the save on an unverified answer with no address to keep', () => {
-    expect(savableSite({ kind: 'unverified', site: '', captcha: false })).toBeNull()
+  it('holds the save on text that is no address', () => {
+    expect(savableSite({ kind: 'invalid' })).toBeNull()
   })
 })
 
