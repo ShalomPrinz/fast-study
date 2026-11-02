@@ -474,7 +474,8 @@ marks, the current arrow, the counts and the overview's current-item buttons) an
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to one
 `setup.mjs --harness DIR` started (run it in the foreground with `timeout: 600000`); the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to `main` and on pull
-requests, with real ffmpeg, pandoc and tectonic. The
+requests, with real ffmpeg, pandoc and tectonic, installed by the composite action
+[`harness-setup`](../../.github/actions/harness-setup/action.yml) that other workflows reuse. The
 release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a
 production override, which [SMOKE.md](../../delivery/docs/SMOKE.md) rules out.
 
