@@ -75,11 +75,11 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
         // The database may sanitize the typed name, so the page follows the folder it answers with.
         follow: (effective) => {
           if (selected?.course === course.name) {
-            onSelect(effective, selected.lecture, selected.kind)
+            onSelect(effective, selected.lecture, selected.kind, { replace: true })
           } else if (overviewOpen) {
-            navigate(courseRoute(effective))
+            navigate(courseRoute(effective), { replace: true })
           } else if (openAssignment !== null) {
-            navigate(assignmentRoute(effective, openAssignment))
+            navigate(assignmentRoute(effective, openAssignment), { replace: true })
           }
         },
         show: setPendingName,

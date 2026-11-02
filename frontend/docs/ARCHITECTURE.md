@@ -73,6 +73,8 @@ the same render as any state set beside it. As a transition it would commit afte
 rename would render the refreshed tree under its old route for a frame — "not found". Nothing here suspends
 (no `Suspense`, `lazy` or data router), so a transition bought nothing to give up.
 
+A rename's follow navigates with `replace`, so Back skips the old name's dead URL instead of landing on "not found".
+
 `kind` is the query param `?kind=recitation`, propagated everywhere, never a segment. The static segments
 outrank `/:course/:lecture` in v7 ranking, and a pathless layout adds no segment. The overview is three
 segments rather than `/course/:course`, which would outrank `/:course/:lecture` and hide every lecture of a

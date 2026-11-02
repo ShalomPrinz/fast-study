@@ -11,8 +11,9 @@ export function useSelection() {
   const { pathname } = useLocation()
   const selected = lectureToRemember(pathname, kind)
 
-  function onSelect(course: string, lecture: string, k: Kind) {
-    navigate(lectureRoute(course, lecture, k))
+  // `replace` swaps the current entry, for a rename whose old URL no longer exists.
+  function onSelect(course: string, lecture: string, k: Kind, opts?: { replace?: boolean }) {
+    navigate(lectureRoute(course, lecture, k), opts)
   }
 
   return { selected, onSelect }

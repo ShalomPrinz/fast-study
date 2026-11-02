@@ -78,7 +78,7 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
           refreshUntil((tree) => !lectureNotFound(tree, course.name, effective, kind)),
         // The database may sanitize the typed name, so the page follows the folder it answers with.
         follow: (effective) => {
-          if (isSelected) onSelect(course.name, effective, kind)
+          if (isSelected) onSelect(course.name, effective, kind, { replace: true })
         },
         show: setPendingName,
       })
