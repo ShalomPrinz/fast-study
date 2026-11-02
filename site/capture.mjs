@@ -55,10 +55,14 @@ function summaryPdfShot() {
     `zoom = ${SIZE.width * SCALE} / width`,
     `page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), clip=clip).save(sys.argv[2], jpg_quality=${QUALITY})`,
   ].join('\n');
-  execFileSync('uv', ['run', 'python', '-c', script, pdf, path.join(IMG, 'feature-summary.jpg')], {
-    cwd: path.join(REPO, 'backend'),
-    stdio: 'inherit',
-  });
+  execFileSync(
+    'uv',
+    ['run', '--extra', 'test', 'python', '-c', script, pdf, path.join(IMG, 'feature-summary.jpg')],
+    {
+      cwd: path.join(REPO, 'backend'),
+      stdio: 'inherit',
+    },
+  );
   console.log('captured feature-summary.jpg');
 }
 
