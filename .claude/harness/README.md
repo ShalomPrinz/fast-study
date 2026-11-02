@@ -437,7 +437,7 @@ npm run test:harness     # from the repo root: node:test, then pytest — second
 
 A separate dataset (`dataset.mjs` + `text/`) of realistic Hebrew courses and lectures, seeded only by the screenshot scripts (`site/capture.mjs`, `frontend/scripts/capture-tour.mjs`). It is not `fixtures/` and not the reseed baseline: e2e specs and `hb reseed` never read it, and its `seedShowcase()` wipes the stack's data. `showcase/capture.mjs` holds what both scripts share:
 
-- `connect(usage)` reads `--harness`/`HARNESS_DIR`, exits with `usage` if no live stack, returns `{harness, DB, BACKEND, PROVIDERS, SITE, APP}` (also the live binding `env`).
+- `connect(usage)` reads `--harness`/`HARNESS_DIR`, exits with `usage` if no live stack, returns `{harness, DB, BACKEND, PROVIDERS, SITE, APP}` (also the live binding `env`), and binds `lib/` ports so `appUrl()` and the lib helpers work in that process.
 - `seedShowcase()` reseeds, waits for backend idle, wipes, seeds `COURSES`, notifies.
 - `launchBrowser({viewport, deviceScaleFactor, locale, storage})` returns `{browser, context}`, offline, version tag hidden.
 - Helpers: `call`, `waitFor`, `hasFile`, `lectureVideo`, `runStep`, `writeLecture`, `wipe`, `calibrate`, `openEditor`, `q`, `lecturePath`; it re-exports the dataset (`COURSES`, `HERO`, `EDITOR`, `JOURNEY`, `OVERVIEW`, `SEARCH`).

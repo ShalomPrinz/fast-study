@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { bindPorts } from '../lib/api.mjs';
 import { installedChromium } from '../lib/browser.mjs';
 import { FAKE_COURSE_URL, SCRATCH_MARKER } from '../lib/env.mjs';
 import { COURSES } from './dataset.mjs';
@@ -32,6 +33,7 @@ export function connect(usage) {
   }
   process.env.HARNESS_DIR = harness;
   const ports = JSON.parse(fs.readFileSync(path.join(harness, 'ports.json'), 'utf8'));
+  bindPorts(undefined, ports); // so lib helpers (pickCourse, appUrl) resolve in this process
   env = {
     harness,
     DB: `http://127.0.0.1:${ports.database}`,
