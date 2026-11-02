@@ -93,27 +93,32 @@ msgid "{0, plural, one {Show # past course} other {Show # past courses}}"
 msgstr "{0, plural, one {הצגת קורס קודם אחד} two {הצגת # קורסים קודמים} other {הצגת # קורסים קודמים}}"
 
 #. placeholder {0}: count('skipped')
-#: src/features/downloads/utils/runStatus.ts:111
+#: src/features/downloads/utils/runStatus.ts:129
 msgid "{0, plural, other {# already there}}"
 msgstr "{0, plural, one {כבר קיימות: #} two {כבר קיימות: #} other {כבר קיימות: #}}"
 
 #. placeholder {0}: count('cancelled')
-#: src/features/downloads/utils/runStatus.ts:109
+#: src/features/downloads/utils/runStatus.ts:127
 msgid "{0, plural, other {# cancelled}}"
 msgstr "{0, plural, one {בוטלו: #} two {בוטלו: #} other {בוטלו: #}}"
 
 #. placeholder {0}: count('downloaded')
-#: src/features/downloads/utils/runStatus.ts:107
+#: src/features/downloads/utils/runStatus.ts:125
 msgid "{0, plural, other {# downloaded}}"
 msgstr "{0, plural, one {הורדו: #} two {הורדו: #} other {הורדו: #}}"
 
 #. placeholder {0}: count('failed')
-#: src/features/downloads/utils/runStatus.ts:108
+#: src/features/downloads/utils/runStatus.ts:126
 msgid "{0, plural, other {# failed}}"
 msgstr "{0, plural, one {נכשלו: #} two {נכשלו: #} other {נכשלו: #}}"
 
+#. placeholder {0}: count('other-video')
+#: src/features/downloads/utils/runStatus.ts:130
+msgid "{0, plural, other {# skipped}}"
+msgstr "{0, plural, one {דולגו: #} two {דולגו: #} other {דולגו: #}}"
+
 #. placeholder {0}: count('unsupported')
-#: src/features/downloads/utils/runStatus.ts:110
+#: src/features/downloads/utils/runStatus.ts:128
 msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, one {לא נתמכות: #} two {לא נתמכות: #} other {לא נתמכות: #}}"
 
@@ -123,7 +128,7 @@ msgid "{0} / {count}"
 msgstr "{0} / {count}"
 
 #. placeholder {0}: job.title
-#: src/features/downloads/components/RecordingRow.tsx:192
+#: src/features/downloads/components/RecordingRow.tsx:201
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -197,11 +202,11 @@ msgstr "{deleteName} יימחק."
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
-#: src/features/downloads/components/RecordingRow.tsx:173
+#: src/features/downloads/components/RecordingRow.tsx:182
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
 msgstr "{effectiveName} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
-#: src/features/downloads/components/RecordingRow.tsx:181
+#: src/features/downloads/components/RecordingRow.tsx:190
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {existing} הקיימים ב{course}. להוריד בכל זאת?"
 
@@ -242,7 +247,7 @@ msgstr "{file} לא נמצא בסקירת הקורס."
 msgid "{file} was not found."
 msgstr "{file} לא נמצא."
 
-#: src/features/downloads/components/RecordingRow.tsx:268
+#: src/features/downloads/components/RecordingRow.tsx:277
 msgid "{fileCount, plural, one {# file} other {# files}}"
 msgstr "{fileCount, plural, one {קובץ אחד} two {# קבצים} other {# קבצים}}"
 
@@ -275,7 +280,7 @@ msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} oth
 msgid "{locked, plural, one {# lecture was skipped: a file is open in another program. Close it and press Apply under “Disk space” again.} other {# lectures were skipped: a file is open in another program. Close it and press Apply under “Disk space” again.}}"
 msgstr "{locked, plural, one {דילגנו על הרצאה אחת: קובץ שלה פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החל\" תחת \"מקום במחשב\".} two {דילגנו על # הרצאות: קובץ שלהן פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החל\" תחת \"מקום במחשב\".} other {דילגנו על # הרצאות: קובץ שלהן פתוח בתוכנה אחרת. סגור אותו ולחץ שוב על \"החל\" תחת \"מקום במחשב\".}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:273
+#: src/features/downloads/components/RecordingRow.tsx:282
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -575,7 +580,7 @@ msgstr "ארכיון ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שאתה רוצה ליצור מחדש?"
 
-#: src/features/downloads/components/RecordingRow.tsx:261
+#: src/features/downloads/components/RecordingRow.tsx:270
 msgid "Assignment"
 msgstr "מטלה"
 
@@ -605,7 +610,7 @@ msgstr "מטלות שסיימת"
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 msgstr "בראש הדף, הפעל את המתג \"מצב פיתוח\". תופיע שורה של כפתורים חדשים."
 
-#: src/features/downloads/components/RecordingRow.tsx:261
+#: src/features/downloads/components/RecordingRow.tsx:270
 msgid "Attach material to"
 msgstr "צירוף חומר אל"
 
@@ -695,7 +700,7 @@ msgstr "בניית ה-PDF נמשכה יותר מדי זמן ונעצרה אחר�
 msgid "Can't download {name} while it's being processed or waiting in line"
 msgstr "אי אפשר להוריד את {name} בזמן עיבוד או המתנה בתור"
 
-#: src/features/downloads/components/RecordingRow.tsx:145
+#: src/features/downloads/components/RecordingRow.tsx:154
 msgid "Can't download while this lecture is being processed or waiting in line"
 msgstr "אי אפשר להוריד כשההרצאה הזו בעיבוד או ממתינה בתור"
 
@@ -728,8 +733,8 @@ msgstr "ביטול הניסיון"
 #: src/features/downloads/components/FolderJobList.tsx:93
 #: src/features/downloads/components/ManualDownload.tsx:282
 #: src/features/downloads/components/RecordingJobList.tsx:49
-#: src/features/downloads/components/RecordingRow.tsx:285
-#: src/features/downloads/components/RecordingRow.tsx:317
+#: src/features/downloads/components/RecordingRow.tsx:294
+#: src/features/downloads/components/RecordingRow.tsx:334
 msgid "Cancelled"
 msgstr "בוטל"
 
@@ -1222,7 +1227,7 @@ msgstr "הושלם"
 
 #: src/features/downloads/components/ManualDownload.tsx:187
 #: src/features/downloads/components/RecordingJobList.tsx:63
-#: src/features/downloads/components/RecordingRow.tsx:341
+#: src/features/downloads/components/RecordingRow.tsx:358
 msgid "Download"
 msgstr "הורדה"
 
@@ -1230,8 +1235,8 @@ msgstr "הורדה"
 msgid "Download a lecture"
 msgstr "הורדת הרצאה"
 
-#: src/features/downloads/components/RecordingRow.tsx:301
-#: src/features/downloads/components/RecordingRow.tsx:306
+#: src/features/downloads/components/RecordingRow.tsx:310
+#: src/features/downloads/components/RecordingRow.tsx:315
 msgid "Download again"
 msgstr "הורדה מחדש"
 
@@ -1254,14 +1259,14 @@ msgstr "הורדת הנבחרים ({0})"
 
 #: src/features/downloads/components/FolderJobList.tsx:88
 #: src/features/downloads/components/ManualDownload.tsx:277
-#: src/features/downloads/components/RecordingRow.tsx:286
-#: src/features/downloads/components/RecordingRow.tsx:339
+#: src/features/downloads/components/RecordingRow.tsx:295
+#: src/features/downloads/components/RecordingRow.tsx:356
 msgid "Downloaded ✓"
 msgstr "הורד ✓"
 
 #: src/features/downloads/components/FolderJobList.tsx:83
 #: src/features/downloads/components/ManualDownload.tsx:272
-#: src/features/downloads/components/RecordingRow.tsx:291
+#: src/features/downloads/components/RecordingRow.tsx:300
 msgid "Downloading"
 msgstr "מוריד"
 
@@ -1291,7 +1296,7 @@ msgid "Downloading update…"
 msgstr "מוריד עדכון…"
 
 #: src/features/downloads/components/BulkRunControls.tsx:62
-#: src/features/downloads/components/RecordingRow.tsx:281
+#: src/features/downloads/components/RecordingRow.tsx:290
 msgid "Downloading…"
 msgstr "מוריד…"
 
@@ -1438,7 +1443,7 @@ msgstr "מחלץ שמע"
 msgid "failed"
 msgstr "נכשל"
 
-#: src/features/downloads/components/RecordingRow.tsx:283
+#: src/features/downloads/components/RecordingRow.tsx:292
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
@@ -1498,7 +1503,7 @@ msgstr "FastStudy משתמשת בשני שירותים חינמיים: אחד ה
 msgid "FastStudy's use and transfer of information received from Google APIs will adhere to the <0>Google API Services User Data Policy</0>, including the Limited Use requirements."
 msgstr "השימוש של FastStudy במידע שמתקבל מ-Google APIs והעברתו יעמדו ב<0>מדיניות נתוני המשתמש של Google API Services</0>, כולל דרישות השימוש המוגבל (⁨Limited Use⁩)."
 
-#: src/features/downloads/components/RecordingRow.tsx:220
+#: src/features/downloads/components/RecordingRow.tsx:229
 msgid "File type"
 msgstr "סוג קובץ"
 
@@ -1701,7 +1706,7 @@ msgstr "אני עובד על המטלה הזו ורוצה להבין אותה ל
 msgid "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
 msgstr "אם Chrome מציג את FastStudy עם שגיאה, פתח את <0>{EXTENSIONS_URL}</0> ולחץ על חץ הטעינה מחדש בכרטיס של FastStudy."
 
-#: src/features/downloads/components/RecordingRow.tsx:299
+#: src/features/downloads/components/RecordingRow.tsx:308
 msgid "In course"
 msgstr "כבר בקורס"
 
@@ -1747,7 +1752,7 @@ msgstr "שפה"
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
-#: src/features/downloads/components/RecordingRow.tsx:215
+#: src/features/downloads/components/RecordingRow.tsx:224
 msgid "Last modified on Moodle"
 msgstr "עודכן לאחרונה ב-Moodle"
 
@@ -1756,7 +1761,7 @@ msgid "lecture"
 msgstr "הרצאה"
 
 #: src/features/downloads/components/ManualDownload.tsx:162
-#: src/features/downloads/components/RecordingRow.tsx:239
+#: src/features/downloads/components/RecordingRow.tsx:248
 #: src/features/lectures/components/CourseMaterialBox.tsx:79
 msgid "Lecture"
 msgstr "הרצאה"
@@ -1775,7 +1780,7 @@ msgstr "הרצאה {0}"
 msgid "Lecture and recitation summaries to include with this assignment"
 msgstr "סיכומי הרצאות ותרגולים שיצורפו למטלה"
 
-#: src/features/downloads/components/RecordingRow.tsx:261
+#: src/features/downloads/components/RecordingRow.tsx:270
 msgid "Lecture name"
 msgstr "שם ההרצאה"
 
@@ -2047,6 +2052,10 @@ msgstr "לא מחובר"
 #: src/shared/components/ProgressBar.tsx:38
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
+
+#: src/features/downloads/components/RecordingRow.tsx:327
+msgid "Not in course"
+msgstr "לא בקורס"
 
 #: src/features/lectures/MainView.tsx:377
 msgid "not provided"
@@ -2346,7 +2355,7 @@ msgid "recitation"
 msgstr "תרגול"
 
 #: src/features/downloads/components/ManualDownload.tsx:168
-#: src/features/downloads/components/RecordingRow.tsx:245
+#: src/features/downloads/components/RecordingRow.tsx:254
 #: src/features/lectures/components/CourseMaterialBox.tsx:79
 msgid "Recitation"
 msgstr "תרגול"
@@ -2478,7 +2487,7 @@ msgstr "ניסיון חוזר"
 
 #: src/features/downloads/components/ManualDownload.tsx:292
 #: src/features/downloads/components/RecordingJobList.tsx:61
-#: src/features/downloads/components/RecordingRow.tsx:337
+#: src/features/downloads/components/RecordingRow.tsx:354
 msgid "Retry ✗"
 msgstr "ניסיון חוזר ✗"
 
@@ -2531,7 +2540,7 @@ msgstr "שמירה ועדכון PDF"
 msgid "Save anyway"
 msgstr "שמירה בכל זאת"
 
-#: src/features/downloads/components/RecordingRow.tsx:229
+#: src/features/downloads/components/RecordingRow.tsx:238
 msgid "Save as"
 msgstr "שמירה בשם"
 
@@ -2897,7 +2906,7 @@ msgstr "ההורדה נדחתה — תוקף החיבור פג. חבר מחדש 
 msgid "The downloaded file could not be stored."
 msgstr "לא ניתן לשמור את הקובץ שהורד."
 
-#: src/features/downloads/components/RecordingRow.tsx:323
+#: src/features/downloads/components/RecordingRow.tsx:340
 msgid "The downloader can't fetch this file"
 msgstr "אי אפשר להוריד את הקובץ הזה"
 
@@ -3154,6 +3163,10 @@ msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
 
+#: src/features/downloads/components/RecordingRow.tsx:324
+msgid "This lecture holds a different video"
+msgstr "בהרצאה הזו יש סרטון אחר"
+
 #: src/shared/i18n/serviceErrors.ts:297
 msgid "This lecture's video is no longer available in BIU's video store."
 msgstr "הסרטון של ההרצאה הזו כבר אינו זמין במאגר הסרטונים של בר-אילן."
@@ -3269,7 +3282,7 @@ msgstr "לא ידוע"
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
-#: src/features/downloads/components/RecordingRow.tsx:60
+#: src/features/downloads/components/RecordingRow.tsx:61
 msgid "Unsupported"
 msgstr "לא נתמך"
 
@@ -3317,7 +3330,7 @@ msgstr "לחץ קודם על שמירה בראש העמוד"
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ופתור שם את החידה. ואז לחץ על \"אישרתי, לנסות שוב\"."
 
-#: src/features/downloads/components/RecordingRow.tsx:59
+#: src/features/downloads/components/RecordingRow.tsx:60
 #: src/features/lectures/constants/pipeline.ts:18
 #: src/features/settings/components/AutoRemoveField.tsx:31
 msgid "Video"
@@ -3424,7 +3437,7 @@ msgstr "עליך לקרוא את מדיניות הפרטיות לפני שתמש
 msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
 msgstr "אתה מחובר לחשבון ב-{foreignName}. התחברות כאן תנתק אותך ממנו."
 
-#: src/features/downloads/components/RecordingRow.tsx:352
+#: src/features/downloads/components/RecordingRow.tsx:369
 msgid "You've finished this assignment."
 msgstr "סיימת את המטלה הזו"
 

@@ -4,12 +4,19 @@ import type { JobProgress, JobsByRef } from '../contexts/DownloadJobsContext'
 import { jobsForRef, jobsForTarget } from '../contexts/DownloadJobsContext'
 import type { Item } from '../services/autoDownloader'
 import type { RunTarget, SectionRun } from '../services/downloadServer'
-import { targetLanded } from './existingItems'
+import { holdsOtherVideo, targetLanded } from './existingItems'
 
 // `unsupported` is a permanent verdict, not a run failure; `pending` is a row the queue has not
 // reached, where no job means "not started". See docs/BULK.md.
 export type TargetStatus =
-  'downloaded' | 'failed' | 'cancelled' | 'unsupported' | 'skipped' | 'in-flight' | 'pending'
+  | 'downloaded'
+  | 'failed'
+  | 'cancelled'
+  | 'unsupported'
+  | 'skipped'
+  | 'other-video'
+  | 'in-flight'
+  | 'pending'
 
 // This target's jobs: course-, ref-, name- and kind-scoped.
 function targetJobs(
@@ -50,7 +57,18 @@ export function targetStatus(
   jobsByRef: JobsByRef,
 ): TargetStatus {
   if (target.disposition === 'pending') return 'pending'
-  if (target.disposition === 'skipped') return 'skipped'
+  if (target.disposition === 'skipped') {
+    // Skipped because the lecture holds a video from another source: not "already there".
+    return holdsOtherVideo(
+      { ref: target.ref, media: 'unknown', resolvedMedia: target.media },
+      target.name,
+      target.kind,
+      courses,
+      course,
+    )
+      ? 'other-video'
+      : 'skipped'
+  }
   if (target.disposition === 'unsupported') return 'unsupported'
   if (target.disposition === 'queue-failed') return 'failed'
   const jobs = targetJobs(jobsByRef, course, target)
@@ -109,6 +127,7 @@ export function summarize(
   if (count('cancelled')) parts.push(plural(count('cancelled'), { other: '# cancelled' }))
   if (count('unsupported')) parts.push(plural(count('unsupported'), { other: '# unsupported' }))
   if (count('skipped')) parts.push(plural(count('skipped'), { other: '# already there' }))
+  if (count('other-video')) parts.push(plural(count('other-video'), { other: '# skipped' }))
   return parts.join(', ')
 }
 

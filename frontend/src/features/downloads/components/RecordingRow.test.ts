@@ -49,6 +49,7 @@ vi.mock('@/features/downloads/utils/existingItems', () => ({
   existingNames: () => [],
   materialsOf: () => [],
   hasResource: (item: { media: string }) => item.media === 'video',
+  holdsOtherVideo: () => false,
   overwritesVideo: () => true,
   splitSiblings: () => [],
 }))

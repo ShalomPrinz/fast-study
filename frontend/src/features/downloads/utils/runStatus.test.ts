@@ -21,7 +21,7 @@ import {
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 const PRESENT: FileInfo = { exists: true, size: 10, mtime: 1 }
 
-function node(name: string, video = false): Lecture {
+function node(name: string, video = false, videoSource?: string): Lecture {
   const files = {
     'video.mp4': video ? PRESENT : EMPTY,
     'audio.mp3': EMPTY,
@@ -39,6 +39,7 @@ function node(name: string, video = false): Lecture {
     transcribePartial: null,
     removed: [],
     done: false,
+    ...(videoSource ? { videoSource } : {}),
   }
 }
 
@@ -305,6 +306,18 @@ describe('summarize', () => {
     ]
     expect(summarize(targets, tree([]), 'Algebra', NO_JOBS)).toBe(
       '0 downloaded, 1 unsupported, 2 already there',
+    )
+  })
+
+  it('counts a skip over another source video as skipped, apart from already there', () => {
+    const targets = [
+      target({ ref: 'r1', name: 'Lecture 1', disposition: 'skipped' }),
+      target({ ref: 'r2', name: 'Lecture 2', disposition: 'skipped' }),
+    ]
+    const courses = tree([node('Lecture 1', true, 'r1'), node('Lecture 2', true, 'x')])
+    expect(status(targets[1], courses, NO_JOBS)).toBe('other-video')
+    expect(summarize(targets, courses, 'Algebra', NO_JOBS)).toBe(
+      '0 downloaded, 1 already there, 1 skipped',
     )
   })
 

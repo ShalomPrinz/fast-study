@@ -26,6 +26,7 @@ import {
   existingAssignmentNames,
   existingNames,
   hasResource,
+  holdsOtherVideo,
   isAssignmentDone,
   materialsOf,
   overwritesVideo,
@@ -125,6 +126,14 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   const assignmentDone = assignment && isAssignmentDone(effectiveName, courses, course)
   // Live tree, so a completed download's SSE refresh flips the card green.
   const alreadyDownloaded = hasResource(
+    { ref: item.ref, media: item.media, resolvedMedia: resolved },
+    effectiveName,
+    kind,
+    courses,
+    course,
+  )
+  // The lecture holds a video from another source: warn instead of "In course"; Download still confirms.
+  const otherVideo = holdsOtherVideo(
     { ref: item.ref, media: item.media, resolvedMedia: resolved },
     effectiveName,
     kind,
@@ -311,6 +320,14 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
           </span>
         ) : (
           <>
+            {otherVideo && !failed && status !== 'cancelled' && (
+              <Tooltip content={t`This lecture holds a different video`}>
+                <span className="chip chip--warn">
+                  <Icon icon="warning" />
+                  <Trans>Not in course</Trans>
+                </span>
+              </Tooltip>
+            )}
             {/* A cancelled download is a neutral outcome: a chip naming it, with the plain Download. */}
             {status === 'cancelled' && !failed && (
               <span className="chip chip--neutral recording-cancelled">

@@ -35,7 +35,7 @@ header's are those leaves (`leafCount`; an unexpanded playlist counts as one unt
 because they read the live tree — `skipped` (`hasResource`, the rule that tints the row green, or
 `overwritesVideo`, so an unprobed `unknown` never replaces a stored video — a run has no confirm — or the
 pipeline running or queued on the target or a video's split sibling, which a single row refuses; the
-header counts it among "already there") and
+header counts it among "already there", except a skip over a video from another source, which `holdsOtherVideo` picks out and counts as "skipped") and
 `unsupported` (a probe already condemned it; skipping it saves a probe round-trip per run). Everything
 else goes as `pending`. A submit where two `pending` video targets share a kind and name
 (`collidingNames`; a material or an assignment file appends, so it never collides) is refused with a toast: they would race into one lecture and the later PUT would
@@ -83,7 +83,7 @@ busy meaning queue walking or a download it started still running.
 **Nothing about the outcome is stored.** `utils/runStatus.ts` derives each target on every render, in
 order: `pending` stops there; a non-`queued` disposition wins; a `running` job → `in-flight`; the tree has
 it → `downloaded`; an `error` job → `failed`; a `cancelled` job → `cancelled`; else `in-flight`.
-`summarize` counts the result into `N downloaded, N failed, N cancelled, N unsupported, N already there`. Both are pure and unit-tested; the run, the
+`summarize` counts the result into `N downloaded, N failed, N cancelled, N unsupported, N already there, N skipped`; `targetStatus` reads `other-video` for a skipped target whose lecture holds another source's video. Both are pure and unit-tested; the run, the
 tree and the jobs are all live reflections a remount simply re-reads.
 
 - A running job outranks the tree because a zoom share lands `name.1` while `name.2` is still going.

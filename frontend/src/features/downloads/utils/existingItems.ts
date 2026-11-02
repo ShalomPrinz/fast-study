@@ -58,9 +58,8 @@ export function videoSourceHeld(ref: string, courses: Course[], course: string):
   return allNodes(courses, course).some((l) => l.videoSource === ref)
 }
 
-// The single "already on disk" rule for the green row, bulk skip and landed check; a material matches by
-// `source === ref`, so several share a node. A video matches its stored source first, then the lecture
-// name. An unprobed 'unknown' or 'unsupported' row is always false.
+// The single "already on disk" rule for the green row, bulk skip and landed check. A video matches its
+// stored source, else the named lecture only while its video has no source; docs/DOWNLOADS.md has the rest.
 export function hasResource(
   item: { ref?: string; media: Media; resolvedMedia?: Media | ResolvedMedia },
   name: string,
@@ -84,12 +83,14 @@ export function hasResource(
     )
   }
   if (media !== 'video') return false
-  if (item.ref !== undefined && videoSourceHeld(item.ref, courses, course)) return true
-  return holdsVideo(name, kind, courses, course)
+  if (item.ref === undefined) return holdsVideo(name, kind, courses, course)
+  if (videoSourceHeld(item.ref, courses, course)) return true
+  const node = existingNodes(kind, courses, course).find((l) => l.name === name)
+  return node !== undefined && !node.videoSource && holdsVideo(name, kind, courses, course)
 }
 
-// A removed video is still held: the lecture was finished from it, so re-downloading is a
-// deliberate replace, not a gap to fill.
+// Whether the named node holds a video, whatever its source. A removed video is still held: the lecture
+// was finished from it, so re-downloading is a deliberate replace, not a gap to fill.
 export function holdsVideo(name: string, kind: Kind, courses: Course[], course: string): boolean {
   const node = existingNodes(kind, courses, course).find((l) => l.name === name)
   return node ? holdsFile(node, 'video.mp4') : false
@@ -108,6 +109,23 @@ export function overwritesVideo(
   const media = item.resolvedMedia ?? item.media
   if (media === 'material' || media === 'assignment' || media === 'unsupported') return false
   return holdsVideo(name, kind, courses, course)
+}
+
+// Whether the row's named lecture holds a video from another source — the "different video" warning and
+// the run's "skipped" count. Only the named node counts, not its split siblings.
+export function holdsOtherVideo(
+  item: { ref?: string; media: Media; resolvedMedia?: Media | ResolvedMedia },
+  name: string,
+  kind: Kind,
+  courses: Course[],
+  course: string,
+): boolean {
+  return (
+    (item.resolvedMedia ?? item.media) === 'video' &&
+    item.ref !== undefined &&
+    overwritesVideo(item, name, kind, courses, course) &&
+    !hasResource(item, name, kind, courses, course)
+  )
 }
 
 // A recording might split lazily into `${name}.1`/`.2` during download; returns whichever split

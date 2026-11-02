@@ -5,6 +5,7 @@ import {
   isAssignmentDone,
   existingNames,
   hasResource,
+  holdsOtherVideo,
   holdsVideo,
   materialsOf,
   overwritesVideo,
@@ -327,9 +328,58 @@ describe('hasResource by video source', () => {
     expect(hasResource(row, 'Other', 'lecture', courses, 'Algebra')).toBe(true)
   })
 
-  it('falls back to the name when no node stores this ref', () => {
-    const courses = tree([node('Lecture 2', { video: true, source: 'other' })])
+  it('falls back to the name only for a video with no recorded source', () => {
+    const courses = tree([
+      node('Lecture 2', { video: true }),
+      node('Lecture 4', { video: true, source: 'other' }),
+    ])
     expect(hasResource(row, 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(true)
     expect(hasResource(row, 'Lecture 3', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(hasResource(row, 'Lecture 4', 'lecture', courses, 'Algebra')).toBe(false)
+  })
+
+  it('keeps the plain name rule for a ref-less caller', () => {
+    const courses = tree([node('Lecture 4', { video: true, source: 'other' })])
+    expect(hasResource({ media: 'video' }, 'Lecture 4', 'lecture', courses, 'Algebra')).toBe(true)
+  })
+
+  it('reads a split holding this ref as landed, and one from another ref as not', () => {
+    const t = (name: string, source: string) =>
+      targetLanded(
+        { ref: 'r1', name, kind: 'lecture', media: 'video' },
+        tree([node('Lecture 5.1', { video: true, source })]),
+        'Algebra',
+      )
+    expect(t('Lecture 5', 'r1')).toBe(true)
+    expect(t('Lecture 5', 'x')).toBe(false)
+  })
+})
+
+describe('holdsOtherVideo', () => {
+  const courses = tree([
+    node('Lecture 1', { video: true, source: 'other' }),
+    node('Lecture 2', { video: true }),
+    node('Lecture 3', { video: true, source: 'r1' }),
+    node('Lecture 4'),
+  ])
+  const other = (name: string, row: Parameters<typeof holdsOtherVideo>[0]) =>
+    holdsOtherVideo(row, name, 'lecture', courses, 'Algebra')
+
+  it('is true only when the named lecture holds a video from another source', () => {
+    const row = { ref: 'r1', media: 'video' as const }
+    expect(other('Lecture 1', { ...row, ref: 'r9' })).toBe(true)
+    expect(other('Lecture 2', row)).toBe(false)
+    expect(other('Lecture 3', row)).toBe(false)
+    expect(other('Lecture 4', row)).toBe(false)
+  })
+
+  it('is false when the row own ref is held under another name', () => {
+    expect(other('Lecture 1', { ref: 'r1', media: 'video' })).toBe(false)
+  })
+
+  it('is false for a ref-less, unprobed or non-video row', () => {
+    expect(other('Lecture 1', { media: 'video' })).toBe(false)
+    expect(other('Lecture 1', { ref: 'r9', media: 'unknown' })).toBe(false)
+    expect(other('Lecture 1', { ref: 'r9', media: 'material' })).toBe(false)
   })
 })
