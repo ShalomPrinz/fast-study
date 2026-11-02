@@ -20,5 +20,5 @@ An in-house spotlight tour (`features/tour/`, built on `@floating-ui/react`, no 
 - **Focus.** Tab wraps inside the popover/card, focus moves to Next on each step and returns to the prior element when the tour ends, only if it is still on the page (`tourFocus.ts`, hand-rolled: the dialog switches between two elements, which `FloatingFocusManager` would fight).
 - **Recapturing the shots.** Manual, no CI. Against your own harness stack:
   `node .claude/harness/setup.mjs --harness DIR` then `node frontend/scripts/capture-tour.mjs --harness DIR`. It wipes
-  that stack, seeds `site/capture/dataset.mjs`, holds one run mid-transcription, and writes 1008x630 JPEGs
+  that stack, seeds the showcase dataset (`.claude/harness/showcase/`, not the harness's test fixtures), holds one run mid-transcription, and writes 1008x630 JPEGs
   (a ring marks the step's element). A new card step needs an entry in the script's `RING` map.

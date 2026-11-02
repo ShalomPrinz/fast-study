@@ -1,165 +1,38 @@
-// Recaptures the page's eleven app screenshots from a live app-harness stack, in Hebrew: 1280×800 layout at 2× (2560×1600 JPEG).
-//   node site/capture.mjs --harness DIR      (the stack must be up: node .claude/harness/setup.mjs --harness DIR)
-// It wipes that stack's data and writes the site's own dataset (site/capture/) in its place.
 import { execFileSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { COURSES, EDITOR, HERO, JOURNEY, OVERVIEW, SEARCH } from './capture/dataset.mjs';
+import {
+  EDITOR,
+  HERO,
+  JOURNEY,
+  OVERVIEW,
+  REPO,
+  SEARCH,
+  call,
+  calibrate,
+  connect,
+  hasFile,
+  launchBrowser,
+  lecturePath,
+  lectureVideo,
+  openEditor,
+  q,
+  seedShowcase,
+  waitFor,
+  writeLecture,
+} from '../.claude/harness/showcase/capture.mjs';
 
-const SITE = path.dirname(fileURLToPath(import.meta.url));
-const REPO = path.resolve(SITE, '..');
-const IMG = path.join(SITE, 'img');
-const TEXT = path.join(SITE, 'capture', 'text');
+const IMG = path.join(path.dirname(fileURLToPath(import.meta.url)), 'img');
 const SIZE = { width: 1280, height: 800 };
 const SCALE = 2;
 const QUALITY = 85;
 
-const harness = process.argv[process.argv.indexOf('--harness') + 1] || process.env.HARNESS_DIR;
-if (!harness || !fs.existsSync(path.join(harness, 'ports.json'))) {
-  console.error('usage: node site/capture.mjs --harness DIR (a live app-harness stack)');
-  process.exit(1);
-}
-process.env.HARNESS_DIR = harness;
-const ports = JSON.parse(fs.readFileSync(path.join(harness, 'ports.json'), 'utf8'));
-const DB = `http://127.0.0.1:${ports.database}`;
-const BACKEND = `http://127.0.0.1:${ports.backend}`;
-const PROVIDERS = `http://127.0.0.1:${ports.providers}`;
-const SITE_FAKE = `http://127.0.0.1:${ports.site}`;
-const APP = `http://localhost:${ports.frontend}`;
-const { installedChromium } = await import(path.join(REPO, '.claude/harness/lib/browser.mjs'));
-const { FAKE_COURSE_URL, SCRATCH_MARKER } = await import(
-  path.join(REPO, '.claude/harness/lib/env.mjs')
+const { harness, DB, BACKEND, PROVIDERS, SITE, APP } = connect(
+  'usage: node site/capture.mjs --harness DIR (a live app-harness stack)',
 );
-const { createRequire } = await import('node:module');
-const { chromium } = createRequire(path.join(REPO, 'downloader/auto/package.json'))('playwright');
-
-const q = encodeURIComponent;
-const lecturePath = (course, lecture) => `/courses/${q(course)}/lectures/${q(lecture)}`;
-const text = (name, ext) => fs.readFileSync(path.join(TEXT, `${name}.${ext}`));
-
-async function call(method, url, body, type = 'application/json') {
-  const res = await fetch(url, {
-    method,
-    headers: body === undefined ? {} : { 'content-type': type },
-    body: body === undefined || Buffer.isBuffer(body) ? body : JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`${method} ${url} → ${res.status} ${await res.text()}`);
-  return res.headers.get('content-type')?.includes('json') ? res.json() : res.text();
-}
-
-async function waitFor(what, check, ms = 120_000) {
-  for (const end = Date.now() + ms; Date.now() < end;) {
-    if (await check()) return;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`timed out waiting for ${what}`);
-}
-
-const fileUrl = (course, lecture, name, kind = 'lecture') =>
-  `${DB}${lecturePath(course, lecture)}/files/${q(name)}?kind=${kind}`;
-const hasFile = (course, lecture, name, kind) =>
-  fetch(fileUrl(course, lecture, name, kind), { method: 'HEAD' }).then((r) => r.ok);
-
-// A silent black video of a lecture's length, so the app reads a real duration; cached per length.
-function lectureVideo(minutes) {
-  const file = path.join(harness, 'site-capture', `${minutes}m.mp4`);
-  if (!fs.existsSync(file)) {
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    execFileSync('ffmpeg', [
-      ...['-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=black:s=64x36:r=1'],
-      ...['-f', 'lavfi', '-i', 'anullsrc=r=8000:cl=mono', '-t', String(minutes * 60)],
-      ...['-c:v', 'libx264', '-preset', 'ultrafast', '-g', '3600', '-c:a', 'aac', '-b:a', '8k'],
-      ...['-shortest', file],
-    ]);
-  }
-  return fs.readFileSync(file);
-}
-
-// One step through the backend, as the lecture view's retry button runs it, waiting for its output.
-async function runStep(course, lecture, kind, step, output) {
-  await fetch(fileUrl(course, lecture, output, kind), { method: 'DELETE' });
-  await call('POST', `${BACKEND}${lecturePath(course, lecture)}/run/${step}?kind=${kind}`);
-  await waitFor(`${course}/${lecture} ${output}`, () => hasFile(course, lecture, output, kind));
-}
-
-// A lecture's files from the dataset, its derived ones rendered by the real PDF and Drive steps.
-async function writeLecture(
-  course,
-  { name, kind = 'lecture', text: slug, minutes, state, studied },
-) {
-  const at = `${DB}${lecturePath(course, name)}`;
-  await call('PUT', `${at}/video?kind=${kind}`, lectureVideo(minutes), 'video/mp4');
-  if (studied) await call('PUT', `${at}/done?kind=${kind}`);
-  if (state === 'video') return;
-  const audio = fs.readFileSync(path.join(harness, 'fixtures', 'audio.mp3'));
-  await call('PUT', `${at}/files/audio.mp3?kind=${kind}`, audio, 'audio/mpeg');
-  await call(
-    'PUT',
-    `${at}/files/transcript.txt?kind=${kind}`,
-    text(slug, 'transcript.txt'),
-    'text/plain',
-  );
-  await call(
-    'PUT',
-    `${at}/summary?kind=${kind}&fresh=true`,
-    text(slug, 'summary.md'),
-    'text/markdown',
-  );
-  if (state === 'summarized') return;
-  await runStep(course, name, kind, 'pdf', 'summary.pdf');
-  if (state === 'done') await runStep(course, name, kind, 'drive', 'drive_url.txt');
-}
-
-// The app has no route that deletes a course, so the wipe is the one direct write, guarded the way
-// the harness guards its own: only a data root carrying the scratch marker.
-async function wipe() {
-  const { data_root: root } = await call('GET', `${DB}/settings`);
-  if (!root || !fs.existsSync(path.join(root, SCRATCH_MARKER)))
-    throw new Error(`data root ${root} has no ${SCRATCH_MARKER} marker — refusing to wipe it`);
-  for (const entry of fs.readdirSync(root))
-    if (entry !== SCRATCH_MARKER) fs.rmSync(path.join(root, entry), { recursive: true });
-  await call('POST', `${DB}/notify`);
-}
 
 async function prepare() {
-  // The harness baseline: settings, the Moodle token, the fakes' modes and a connected fake Drive.
-  execFileSync(
-    'node',
-    [path.join(REPO, '.claude/harness/hb.mjs'), '--harness', harness, 'reseed'],
-    {
-      stdio: 'inherit',
-    },
-  );
-  // A run an interrupted capture left behind would hold the journey lecture's download button.
-  await waitFor(
-    'the backend to go idle',
-    async () => {
-      const status = await call('GET', `${BACKEND}/status`);
-      return !status.runner.running && !status.queue.length && !status.in_flight.length;
-    },
-    300_000,
-  );
-  await wipe();
-  for (const course of COURSES) {
-    await call('POST', `${DB}/courses`, {
-      name: course.name,
-      ...(course.moodle && { source_url: FAKE_COURSE_URL }),
-    });
-    for (const lecture of course.lectures) {
-      await call(
-        'POST',
-        `${DB}/courses/${q(course.name)}/lectures?kind=${lecture.kind ?? 'lecture'}`,
-        {
-          name: lecture.name,
-        },
-      );
-      await writeLecture(course.name, lecture);
-    }
-  }
-  await call('POST', `${DB}/notify`);
-  console.log(`seeded ${COURSES.length} courses from site/capture/`);
-
+  await seedShowcase();
   await call('POST', `${BACKEND}/courses/${q(OVERVIEW)}/overview/generate`);
   await new Promise((r) => setTimeout(r, 1000));
   await waitFor(
@@ -190,19 +63,10 @@ function summaryPdfShot() {
 }
 
 async function capture() {
-  const browser = await chromium.launch({
-    executablePath: installedChromium(),
-    args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1'],
-  });
-  const context = await browser.newContext({ viewport: SIZE, deviceScaleFactor: SCALE });
-  // The sidebar's version tag reads "dev" outside the packaged app, where a user sees a release number.
-  await context.addInitScript(() => {
-    localStorage.setItem('fast-study:locale', 'he');
-    document.addEventListener('DOMContentLoaded', () => {
-      const style = document.createElement('style');
-      style.textContent = '.sidebar-version { visibility: hidden; }';
-      document.head.append(style);
-    });
+  const { browser, context } = await launchBrowser({
+    viewport: SIZE,
+    deviceScaleFactor: SCALE,
+    locale: 'he',
   });
   const page = await context.newPage();
   page.setDefaultTimeout(15_000);
@@ -244,24 +108,13 @@ async function capture() {
   await browser.close();
 }
 
-// Timing samples, sent as the app records its own, so the held step's and the download's bars show a
-// remaining time rather than "taking longer than expected" or "not enough data".
-async function calibrate(operation, bytes, seconds) {
-  for (const scale of [0.8, 0.9, 1.1, 1.2])
-    await call('POST', `${BACKEND}/timing`, {
-      operation,
-      file_size_bytes: Math.round(bytes * scale),
-      duration_seconds: seconds * scale,
-    });
-}
-
 // The journey: the recording downloaded from the course's Moodle page, its pipeline held mid-step on
 // the fake Groq, then the finished lecture given its dataset text and opened in the editor.
 async function journey(page, open, shot, lectureRoute) {
   const { course, lecture } = JOURNEY;
   // The fake site serves a 20-second clip; the run starts by hand once a lecture-length video replaces it.
   await call('POST', `${BACKEND}/config`, { auto_run: 'off' });
-  await call('POST', `${SITE_FAKE}/control`, { downloadMs: 30_000 });
+  await call('POST', `${SITE}/control`, { downloadMs: 30_000 });
   // Samples for the download's own bar (a curl-replayed link), so it shows time left, not "not enough data".
   await calibrate('download:curl', 470_000, 30);
   await open('/downloads');
@@ -293,7 +146,7 @@ async function journey(page, open, shot, lectureRoute) {
     scroller.scrollBy({ top: delta, behavior: 'instant' });
   });
   await shot('feature-download');
-  await call('POST', `${SITE_FAKE}/control`, { reset: true });
+  await call('POST', `${SITE}/control`, { reset: true });
   await waitFor('the recording', () => hasFile(course, lecture, 'video.mp4'), 60_000);
 
   const at = `${DB}${lecturePath(course, lecture)}`;
@@ -334,13 +187,6 @@ async function journey(page, open, shot, lectureRoute) {
   await page.keyboard.press('Enter');
   await page.keyboard.type('תרגיל: מה קורה כשמכניסים מפתחות ממוינים');
   await shot('journey-edit');
-}
-
-// The editor once its PDF has drawn, zoomed out a step so the whole page fits beside the text.
-async function openEditor(page) {
-  await page.waitForSelector('canvas');
-  await page.locator('.pdf-zoom-btn').first().click();
-  await page.waitForTimeout(500);
 }
 
 await prepare();
