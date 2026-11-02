@@ -1,0 +1,22 @@
+{
+  "wwwroot": "https://lemida.biu.ac.il",
+  "course": "course-105515",
+  "videos": [
+    { "id": "1111", "name": "הרצאה 1", "filename": "aa/aabbcc", "timecreated": "1700000000" }
+  ],
+  "zoomvideos": [
+    {
+      "id": "252087",
+      "name": "תרגול 2 - אוהד",
+      "filename": "99/99411e5fc3177f74f4c9b1075a67c19738176184",
+      "length": "0:30:55",
+      "timecreated": "1731243698",
+      "source": "https://lemida.biu.ac.il/blocks/video/viewvideo_biu.php?id=252087&courseid=105515&type=2",
+      "imgurl": "https://lemida.biu.ac.il/local/video_directory/thumb.php?id=252087&mini=1",
+      "date": "10-11-2024 15:01:38"
+    },
+    { "id": "249927", "name": "no file", "filename": "", "timecreated": "1" },
+    { "id": "249928", "name": "no key", "timecreated": "1" }
+  ],
+  "haszoomvideos": true
+}

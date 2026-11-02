@@ -17,8 +17,8 @@
  * `courseId`, absent on a row listed by an older build.
  * @typedef {{ title: string, pageUrl?: string, fileurl?: string, filename?: string, assignment?: string,
  *             courseId?: string, kind: 'lecture'|'recitation',
- *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file'|'direct-url',
- *             section: string, likelyRecording?: boolean }} Recording
+ *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file'|'direct-url'|'biu-video',
+ *             section: string, likelyRecording?: boolean, videoId?: string, objectKey?: string }} Recording
  *
  * A browser capture resolved for download — url = the sniffed .mp4, headers = its request's
  * headers in server/'s curl shape.

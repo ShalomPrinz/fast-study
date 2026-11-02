@@ -19,15 +19,20 @@ const MAX_WAITS = 2;
 
 // Every Moodle request: the gate, then Node's fetch or the challenge window's page; a wall reopens
 // the window and resends through it (docs/MOODLE.md § Bot protection; `route`/`reopen` there).
-async function moodleFetch(url, init, { route = true, reopen = route, label = '' } = {}) {
+async function moodleFetch(
+  url,
+  init,
+  { route = true, reopen = route, label = '', wall = wallShaped } = {},
+) {
   await enterMoodle(String(url).split('?')[0]);
-  // The request's own signal: a caller that hung up stops waiting on a captcha.
-  const call = { signal: init.signal ?? moodleGate.signal(), waits: reopen ? 0 : MAX_WAITS };
+  // The request's own signal: a caller that hung up stops waiting on a captcha. `wall` says whether
+  // an answer is the bot wall; an endpoint whose real reply is text/html passes its own.
+  const call = { signal: init.signal ?? moodleGate.signal(), waits: reopen ? 0 : MAX_WAITS, wall };
   const window = route ? challengeRoute(url) : null;
   let res = window ? await windowFetch(window, url, init, call) : await nodeFetch(url, init);
   const site = currentSite();
   if (!reopen || !site || !underSite(String(url), site)) return res;
-  while (wallShaped(res)) {
+  while (await wall(res)) {
     await res.body?.cancel().catch(() => {});
     const err = new WsBlockedError(`${label}${wallDetail(res)}`, ROUTED);
     const state = await reopenOn(site, call);
@@ -94,7 +99,7 @@ async function windowFetch(window, url, init, call) {
     throw err;
   }
   ROUTE.set(res, 'window');
-  if (!wallShaped(res)) await window.passed();
+  if (!(await call.wall(res))) await window.passed();
   return res;
 }
 
@@ -105,6 +110,33 @@ const wallDetail = (res) =>
   res.status >= 300 && res.status < 400
     ? `HTTP ${res.status} redirect`
     : `HTTP ${res.status}, ${res.headers.get('content-type') || 'no content-type'}`;
+
+// A redirect to the site's own /login/ (Moodle's require_login), whatever its relative or absolute form.
+function toSiteLogin(res) {
+  const site = currentSite();
+  const loc = res.headers.get('location');
+  if (!site || !loc) return false;
+  try {
+    const to = new URL(loc, res.url || site);
+    return to.origin === new URL(site).origin && to.pathname.startsWith('/login/');
+  } catch {
+    return false;
+  }
+}
+
+// The BIU video list's real reply is JSON served as text/html, so it is a wall only when it is a
+// redirect or a 200 whose body is not JSON; any other status is the site saying it has no such page.
+// A redirect to the site's own /login/ is Moodle's require_login (no block for this user), not a wall.
+async function videoListWall(res) {
+  if (res.status >= 300 && res.status < 400) return !toSiteLogin(res);
+  if (res.status !== 200) return false;
+  try {
+    JSON.parse(await res.clone().text());
+    return false;
+  } catch {
+    return true;
+  }
+}
 
 /** A Moodle WS exception body ({ exception, errorcode, message }) surfaced as an Error. */
 export class WsError extends CodedError {
@@ -363,6 +395,28 @@ export function getVideostreamContent(site, token, { courseid, cmid, userid }) {
     params[`args[${i}][value]`] = value;
   });
   return callWs(site, token, 'tool_mobile_get_content', params, { post: true });
+}
+
+/**
+ * BIU's sidebar video block list for a course: the `videos` and `zoomvideos` entries, or [] when the
+ * site has no such block (a 404, a non-JSON reply that is not a wall). No token, no cookie sent.
+ * A wall is blocked as any WS call's (docs/MOODLE.md § The BIU video block).
+ * @returns {Promise<object[]>}
+ */
+export async function getVideoBlockEntries(site, courseId) {
+  const url = new URL(`${site}/blocks/video/ajax/get_video_data_biu.php`);
+  url.searchParams.set('course', `course-${courseId}`);
+  const res = await moodleFetch(
+    url,
+    { headers: { 'User-Agent': APP_USER_AGENT } },
+    { wall: videoListWall, label: 'video block: ' },
+  );
+  if (res.status !== 200) {
+    await discard(res);
+    return [];
+  }
+  const body = JSON.parse(await res.text());
+  return [body?.zoomvideos, body?.videos].flatMap((list) => (Array.isArray(list) ? list : []));
 }
 
 // Pluginfile authenticates by a query-string token. Set via the URL API: fileurl may already

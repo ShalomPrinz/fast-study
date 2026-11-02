@@ -11,6 +11,7 @@ import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor
 import { GoogleDriveExtractor } from '../extractors/GoogleDriveExtractor.js';
 import { ZoomExtractor } from '../extractors/ZoomExtractor.js';
 import { MoodleFileExtractor } from '../extractors/MoodleFileExtractor.js';
+import { BiuVideoExtractor } from '../extractors/BiuVideoExtractor.js';
 import { DirectUrlExtractor } from '../extractors/DirectUrlExtractor.js';
 
 // One token file whatever the site: the record names its site, and one for another reads as absent.
@@ -98,6 +99,7 @@ const EXTRACTORS = [
   new GoogleDriveExtractor(), // modType 'url'          → single Google Drive file → probed on download
   new ZoomExtractor(), // modType 'zoom' (synthetic) → passcode-gated zoom share .mp4
   new MoodleFileExtractor(), // modType 'resource'     → course-hosted non-audio/video file → lecture material
+  new BiuVideoExtractor(), // modType 'biu-video' (synthetic) → BIU video block file in its object store
   new DirectUrlExtractor(), // modType 'url' (last)    → any other off-site link → probed on download
 ];
 

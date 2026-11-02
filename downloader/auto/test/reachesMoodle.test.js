@@ -90,11 +90,12 @@ test('every listed Item carries the flag', async (t) => {
       ],
     },
   ];
-  t.mock.method(globalThis, 'fetch', async () => ({
-    status: 200,
-    headers: { get: () => 'application/json' },
-    json: async () => sections,
-  }));
+  t.mock.method(globalThis, 'fetch', async (url) =>
+    // This site has no video block.
+    String(url).includes('get_video_data_biu')
+      ? new Response('', { status: 404 })
+      : { status: 200, headers: { get: () => 'application/json' }, json: async () => sections },
+  );
   const res = { status: (c) => ((res.code = c), res), json: (b) => (res.body = b), on() {} };
   await handleList({ body: { courseUrl: `${SITE}/course/view.php?id=5` }, headers: {} }, res);
   assert.equal(res.code, 200);

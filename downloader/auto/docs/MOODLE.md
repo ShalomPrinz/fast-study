@@ -249,6 +249,7 @@ user saved anyway still lists.
 | `resource`      | `moodle-file` (any file but video, audio, HTML)      | each `contents[]` entry with `type:'file'` — one module can hold several       |
 | `assign`        | `moodle-file` (any file, as `media:'assignment'`)     | `mod_assign_get_assignments`, not the contents                                 |
 | (section summary) | `zoom`                                              | `rec/share` links in `section.summary` HTML, not modules                        |
+| (BIU video block) | `biu-video`                                         | `get_video_data_biu.php`'s `zoomvideos` + `videos`, not modules ([§](#the-biu-video-block)) |
 
 Routing is in [BROWSING.md](BROWSING.md). Recitation vs lecture is a keyword match over heading +
 title (`discovery/moodleCourse.js`).
@@ -314,6 +315,33 @@ else stays `401 reconnect`.
 Only a `videostream` row reaches the handler: `/resolve` refuses any row its earlier branches did not
 take and that is not `zoom` (an unexpanded playlist, a strategy this build does not know) as
 `422 {status:'unsupported'}`, `recording_strategy_unsupported {strategy}`, before any Moodle call.
+
+## The BIU video block
+
+BIU's sidebar "וידיאו" block holds Zoom recordings BIU archived into its own store. They are not course
+modules and the block fills itself with JavaScript, so no WS function lists them (`core_block_get_course_blocks`
+returns only a spinner; no token function belongs to `block_video`). `getVideoBlockEntries` (`wsClient.js`) asks the block's
+own endpoint, once per `/list`, after the WS calls:
+
+```
+GET {site}/blocks/video/ajax/get_video_data_biu.php?course=course-<courseid>
+  → JSON served as Content-Type: text/html  { zoomvideos:[…], videos:[…], … }
+     entry: { id, name, filename:'99/99411e…', timecreated, length, imgurl, date, … }
+```
+
+No token, no cookie (Node sends none; the challenge window carries its own clearance). Both arrays are read; an entry without a
+usable `filename` is skipped. It goes through `moodleFetch`, so it is gated and, in block mode, routed through the challenge window.
+
+**Wall test.** `wallShaped` treats any `text/html` reply as a wall, which is this endpoint's real answer, so the call passes
+`moodleFetch` its own `wall` option: a 3xx, or a 200 whose body is not JSON, is a wall (the same `503 site_blocked` /
+`site_captcha_timeout` handling as a WS call); a redirect to the configured site's own `/login/` is Moodle's `require_login` answering 303 (no block for this user), so it is "no block", not a wall; any other status is "no such page". A 404, or a site without the block, adds no rows and no error.
+The risk: a non-BIU site answering HTTP 200 HTML to every unknown path would read as a wall.
+
+**The file.** `filename` is the object key: `https://axt1t2yu790u.compat.objectstorage.il-jerusalem-1.oraclecloud.com/video_bucket/<filename>.mp4`
+(`BIU_VIDEO_HOST`, `biuVideoUrl` in `extractors/BiuVideoExtractor.js`; a key that is not plain path characters yields no URL). This
+is the bucket videostream `.mp4`s live on, a plain `curl` target with no headers. The URL is built from one sample (`viewvideo_biu.php`'s
+`<source>` for id 252087), never read from the player page; if the `HEAD` below starts missing, read it per video instead.
+`/resolve` sends a `HEAD` to the bucket, never to Moodle; a 403/404 or a non-`video/*` 200 is `422 biu_video_missing {url}`, while a 5xx, a 429 or a network failure is the retryable `503 site_unreachable` (`detail` `HTTP <status>` for the status ones).
 
 ## Bot protection: what was learned
 

@@ -397,6 +397,11 @@ the URL to curl as is and the download never meets the captcha its resolve did.
 `core_course_get_course_module` answers for that cmid too, for a resolve that arrives without the
 course id. Site info lists both functions.
 
+The sidebar video block has no WS function: `GET /blocks/video/ajax/get_video_data_biu.php?course=course-101`
+answers JSON under `text/html` with one `zoomvideos` entry (`תרגול 2 - אוהד`, a recitation), any other
+course an empty list. Its file is `video_bucket/<filename>.mp4` on `axt1t2yu790u.compat.objectstorage.…`,
+a second object-store host the fake serves outside every mode, wall and hold (`biu-video-block.spec.mjs`).
+
 ## The guarantees, each proved before handover
 
 `setup.mjs` aborts unless all of these hold, because a silently broken shim costs more than no

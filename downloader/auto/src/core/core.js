@@ -12,12 +12,13 @@ import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
 import { probeDriveFile } from '../extractors/GoogleDriveExtractor.js';
 import { probeUrl } from '../lib/probeUrl.js';
-import { CodedError, UnsupportedError } from '../lib/errors.js';
+import { CodedError, UnsupportedError, fetchUpstream } from '../lib/errors.js';
 import { splitName } from '../lib/naming.js';
 import { cacheCap, getCap } from './replayCache.js';
 import { stripTags } from '../lib/html.js';
 import { proxyCap } from '../moodle/files.js';
 import { onMoodleHost } from '../moodle/site.js';
+import { biuVideoUrl } from '../extractors/BiuVideoExtractor.js';
 
 // Moodle unix seconds → ms, or undefined when Moodle gave no (or a zero) time.
 const toMs = (sec) => (Number(sec) > 0 ? Number(sec) * 1000 : undefined);
@@ -58,6 +59,30 @@ function mapModules(sections, courseId) {
         modifiedAt: toMs(module.contents?.[0]?.timemodified) ?? fallbackMs,
       });
     }
+  }
+  return activities;
+}
+
+// The `section` every block video is listed under: '' lands in the frontend's "Other" group, so
+// auto authors no wording. Change this one constant to name the group.
+const BLOCK_VIDEO_SECTION = '';
+
+// One activity per video of BIU's sidebar block; an entry without a usable `filename` is skipped.
+function mapBlockVideos(entries, courseId) {
+  const activities = [];
+  for (const entry of entries ?? []) {
+    if (!entry || !biuVideoUrl(entry.filename)) continue;
+    const title = stripTags(String(entry.name ?? '')) || String(entry.id ?? '');
+    activities.push({
+      modType: 'biu-video',
+      title,
+      videoId: String(entry.id ?? ''),
+      objectKey: entry.filename,
+      sectionName: BLOCK_VIDEO_SECTION,
+      courseId,
+      kind: classifyKind(BLOCK_VIDEO_SECTION, title),
+      modifiedAt: toMs(entry.timecreated),
+    });
   }
   return activities;
 }
@@ -104,13 +129,15 @@ function mapAssignments(sections, assignmentsAnswer, courseId) {
  *   core_course_get_contents result
  * @param {string} [courseId]  the listed course, carried on a videostream row for its resolve
  * @param {object} [assignmentsAnswer]  mod_assign_get_assignments result, absent when the site refuses it
+ * @param {object[]} [blockVideos]  the BIU video block's list entries, absent on a site without it
  * @returns {import('../extractors/VideoExtractor.js').Recording[]}
  */
-export function listRecordings(sections, courseId, assignmentsAnswer) {
+export function listRecordings(sections, courseId, assignmentsAnswer, blockVideos) {
   const activities = [
     ...mapModules(sections, courseId),
     ...parseZoomSummaries(sections),
     ...mapAssignments(sections, assignmentsAnswer, courseId),
+    ...mapBlockVideos(blockVideos, courseId),
   ];
   const recordings = [];
   for (const activity of activities) {
@@ -300,6 +327,53 @@ export async function resolveVideostream({
     cacheCap(course, name, kind, 'video', cap, ref);
   }
   return [toTarget({ name, cap, tool: 'curl', fromCache })];
+}
+
+// The block video's bucket object must exist and be a video; a miss is a typed refusal, never a saved file.
+async function assertBiuVideo(url) {
+  const res = await fetchUpstream(url, { method: 'HEAD', signal: AbortSignal.timeout(15_000) });
+  await res.body?.cancel().catch(() => {});
+  // A 5xx or 429 is the store failing, not the file missing: it rides as site_unreachable (retryable).
+  if (res.status >= 500 || res.status === 429) {
+    const err = new TypeError('fetch failed');
+    err.host = new URL(url).hostname;
+    err.detail = `HTTP ${res.status}`;
+    throw err;
+  }
+  const type = res.headers.get('content-type') ?? '';
+  if (res.status !== 200 || !type.toLowerCase().startsWith('video/'))
+    throw new UnsupportedError(
+      'biu_video_missing',
+      { url },
+      `${url} is not there or not a video (HTTP ${res.status}, ${type || 'no content-type'})`,
+    );
+}
+
+/**
+ * RESOLVE PATH (HTTP), no browser, no Moodle: a BIU video block file, checked with a HEAD to its
+ * object-store URL and handed to curl with no headers. See docs/MOODLE.md § The BIU video block.
+ * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
+ *           course: string, name: string, kind: string, ref?: string|null,
+ *           forceCapture?: boolean }} args
+ * @returns {Promise<object[]>} one download target for server/ to run.
+ */
+export async function resolveBiuVideo({
+  recording,
+  course,
+  name,
+  kind,
+  ref,
+  forceCapture = false,
+}) {
+  let cap = forceCapture ? null : getCap(course, name, kind, 'video')?.cap;
+  const fromCache = Boolean(cap);
+  if (!cap) {
+    const url = biuVideoUrl(recording.objectKey);
+    await assertBiuVideo(url);
+    cap = { url, headers: [] };
+    cacheCap(course, name, kind, 'video', cap, ref);
+  }
+  return [toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache })];
 }
 
 /**

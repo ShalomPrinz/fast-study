@@ -28,6 +28,7 @@ import {
   resolveRecording,
   resolveMoodleFile,
   resolveVideostream,
+  resolveBiuVideo,
   resolveYtDlp,
   resolveDriveFile,
   resolveDirectUrl,
@@ -49,6 +50,7 @@ import {
   courseIdFrom,
   getCourseContents,
   getAssignments,
+  getVideoBlockEntries,
   getUserCourses,
   invalidToken,
   WsError,
@@ -62,6 +64,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { moodleGate, MoodleBusyError, WAIT_HEADER } from '../moodle/gate.js';
 import { fileById } from '../moodle/files.js';
+import { biuVideoUrl } from '../extractors/BiuVideoExtractor.js';
 
 // Strategies whose row type is only knowable from a download-time probe — the WS payload names
 // no file for an off-site link, so 'unknown' is the honest stamp until one runs.
@@ -592,7 +595,15 @@ export const handleList = gated('/list', async (req, res) => {
       throw e;
     }
   }
-  const recordings = listRecordings(sections, courseId, assignments);
+  // BIU's sidebar video block: no token, and a site without it answers nothing.
+  let blockVideos;
+  try {
+    blockVideos = await getVideoBlockEntries(site, courseId);
+  } catch (e) {
+    if (await sentWsFailure(res, e, auth, '/list', courseUrl)) return;
+    throw e;
+  }
+  const recordings = listRecordings(sections, courseId, assignments, blockVideos);
   logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
 });
@@ -787,6 +798,22 @@ async function resolveItem(req, res) {
       if (await sentWall(res, '/resolve', e)) return;
       throw e;
     }
+    logResult('/resolve', `ok (${targets.length} target, video)`);
+    return send(res, 200, { media: 'video', targets });
+  }
+
+  // A BIU video block file is a public object-store file: a HEAD there, never Moodle (docs/MOODLE.md § The BIU video block).
+  if (recording.strategy === 'biu-video') {
+    if (!biuVideoUrl(recording.objectKey))
+      return send(res, 400, invalid('ref', 'ref is not downloadable'));
+    const targets = await resolveBiuVideo({
+      recording,
+      course,
+      name,
+      kind,
+      ref: rowRef,
+      forceCapture: opts.forceCapture,
+    });
     logResult('/resolve', `ok (${targets.length} target, video)`);
     return send(res, 200, { media: 'video', targets });
   }

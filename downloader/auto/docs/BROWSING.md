@@ -19,6 +19,10 @@ then each activity routes to the first extractor in `core/registry.js` whose `ca
   heading clears the label. Zoom links live in summaries,
   not modules.
 
+- BIU's sidebar video block is a third source: `/list` adds the block's entries as synthetic `modType:'biu-video'`
+  activities (`mapBlockVideos`), see [MOODLE.md](MOODLE.md#the-biu-video-block). `title` is the entry's `name`, `kind` comes from `classifyKind`,
+  `modifiedAt` is `timecreated` × 1000, and `section` is the one constant `BLOCK_VIDEO_SECTION` (`''`, so the frontend's "Other" group).
+
 WS names are HTML (Moodle wraps subsection headings in `<span class="course-mod_subsection">`), so
 both parsers flatten them through `stripTags` (`lib/html.js`) before they become titles or headings.
 
@@ -90,10 +94,12 @@ The frontend never sees the mechanism. `/list` and `/list/expand` return
   inherited. Kept off the ref (non-enumerable on the Recording): a changing time must not unmatch it.
 - `likelyRecording` — the keyword hint; `false` only for a `url` module that reads like a stray link.
   Every other strategy is unambiguously a recording.
+- `biu-video` ref — `{ title, kind, strategy, section, courseId, videoId, objectKey, likelyRecording:true }`; `objectKey` is the entry's `filename`
+  (the bucket key without `.mp4`). Date, length and thumbnail stay off it.
 - `moodle` — whether acting on the row (expanding, resolving, downloading) reaches the Moodle site,
   so the frontend disables only those rows while `moodleBusy` is true. Each extractor answers it with
   `reachesMoodle(recording)` — the base class throws, and a test fails for any registered extractor
-  that does not override it. `moodle-file` and `videostream` are always `true`; `zoom`,
+  that does not override it. `moodle-file` and `videostream` are always `true`; `zoom`, `biu-video`,
   `youtube-playlist` (its expanded children too) and `google-drive` always `false`; `direct-url` is
   `true` when its link is on the Moodle host or the probe cache saw it redirect there. Advisory:
   [GATE.md](GATE.md#state-on-the-wire).
@@ -105,7 +111,7 @@ says nothing on its own.
 
 `core/core.js` exports one function per resolve shape: `resolveRecording(page, …)` (browser capture:
 `zoom`), and the browserless `resolveMoodleFile`, `resolveVideostream`
-([MOODLE.md](MOODLE.md#videostream)), `resolveYtDlp`, `resolveDriveFile`, `resolveDirectUrl`, plus `resolvePastedLink` for the manual form's `{url}` body, which shares
+([MOODLE.md](MOODLE.md#videostream)), `resolveBiuVideo` (a bucket `HEAD`, then a `curl` target with no headers; never Moodle), `resolveYtDlp`, `resolveDriveFile`, `resolveDirectUrl`, plus `resolvePastedLink` for the manual form's `{url}` body, which shares
 `resolveDirectUrl`'s probe and refusals but never the replay cache ([GATE.md](GATE.md#files)).
 The split is by _needs a browser_: a browserless strategy has no page to carry
 its credential, so it takes one explicitly (`resolveMoodleFile`'s `wstoken`, `resolveVideostream`'s token). The browserless
