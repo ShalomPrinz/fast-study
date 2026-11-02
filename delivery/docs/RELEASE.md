@@ -28,7 +28,9 @@ Two workflows, neither taking an input.
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
   the outcome `boot-timing` (90 days). The run is
   green only when both jobs pass. It writes nothing to Releases.
-- **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It takes the
+- **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It first walks back
+  over `github-actions[bot]` commits that touch only `site/img/` — `pages.yml`'s screenshot refresh,
+  which no build runs on — to the first other commit, and releases that one. It takes the
   `installer` artifact of `build.yml`'s newest green run for that commit, reads the version off its
   `latest.yml`, refuses if Release or tag `v<version>` exists, checks all three files are there and
   creates Release `v<version>`, published and targeted at that commit, with the same run's

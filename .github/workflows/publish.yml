@@ -1,9 +1,9 @@
 name: Publish
 
 # Manual only, no input, and it builds nothing: it releases the `installer` artifact of build.yml's
-# green run for the dispatched commit — the bytes the smoke job tested — as Release v<version>, the
-# version build.yml computed and wrote into its latest.yml. That is the moment every installed
-# copy's updater can see it.
+# green run for the dispatched commit, or the one below pages.yml's screenshot commits — the bytes
+# the smoke job tested — as Release v<version>, the version build.yml computed and wrote into its
+# latest.yml. That is the moment every installed copy's updater can see it.
 on:
   workflow_dispatch:
 
@@ -22,17 +22,41 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # pages.yml's screenshot refresh pushes a bot commit build.yml never runs on, so release the
+      # newest commit below HEAD that is not one: skip only bot commits touching nothing but site/img/.
+      - name: Resolve the release commit
+        id: target
+        run: |
+          bot='github-actions[bot] <41898783+github-actions[bot]@users.noreply.github.com>'
+          sha=$GITHUB_SHA
+          skipped=()
+          while [ "$(git log -1 --format='%an <%ae>' "$sha")" = "$bot" ] \
+            && [ "$(git rev-list --parents -n 1 "$sha" | wc -w)" -eq 2 ] \
+            && paths=$(git diff-tree --no-commit-id --name-only -r "$sha^" "$sha") \
+            && [ -n "$paths" ] && ! grep -qv '^site/img/' <<< "$paths"; do
+            skipped+=("$sha")
+            sha=$(git rev-parse "$sha^")
+          done
+          if [ ${#skipped[@]} -gt 0 ]; then
+            echo "skipped screenshot commits ${skipped[*]}; releasing $sha"
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
       - name: Release the tested installer
+        env:
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
         run: |
           # A run's conclusion is success only when every job passed, smoke included.
-          run=$(gh run list --workflow build.yml --commit "$GITHUB_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          run=$(gh run list --workflow build.yml --commit "$TARGET_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
           if [ -z "$run" ]; then
-            echo "::error::no successful build.yml run for $GITHUB_SHA; dispatch build.yml on this commit, then publish again"
+            echo "::error::no successful build.yml run for $TARGET_SHA; dispatch build.yml on this commit, then publish again"
             exit 1
           fi
           if ! gh api "repos/$GH_REPO/actions/runs/$run/artifacts" --jq '.artifacts[] | select(.name == "installer" and (.expired | not)) | .id' | grep -q .; then
-            echo "::error::the installer artifact of build.yml run $run for $GITHUB_SHA has expired; dispatch build.yml on this commit, then publish again"
+            echo "::error::the installer artifact of build.yml run $run for $TARGET_SHA has expired; dispatch build.yml on this commit, then publish again"
             exit 1
           fi
           gh run download "$run" -n installer -D installer
@@ -70,8 +94,8 @@ jobs:
             echo "::notice::build.yml run $run has no boot-timing artifact; releasing without boot-timing.json"
           fi
 
-          gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "$tag" --notes "" --latest
-          echo "published $tag at $GITHUB_SHA from build.yml run $run"
+          gh release create "$tag" "${files[@]}" --target "$TARGET_SHA" --title "$tag" --notes "" --latest
+          echo "published $tag at $TARGET_SHA from build.yml run $run"
 
       # A release event raised by GITHUB_TOKEN starts no workflow, so the landing page's version line
       # is refreshed by dispatch — the one event that token may raise.
