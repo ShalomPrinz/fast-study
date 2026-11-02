@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { createClient, isConnectionError, type ConnectionError, type RequestError } from './http'
 
-const { toastConnectionError } = vi.hoisted(() => ({ toastConnectionError: vi.fn() }))
-vi.mock('@/services/toaster', () => ({ toastConnectionError }))
+const { reportConnectionError } = vi.hoisted(() => ({ reportConnectionError: vi.fn() }))
+vi.mock('@/services/serviceHealth', () => ({ reportConnectionError }))
 
 const BASE = 'http://svc.test'
 
@@ -26,7 +26,7 @@ async function rejection(p: Promise<unknown>): Promise<Error> {
 }
 
 beforeEach(() => {
-  toastConnectionError.mockClear()
+  reportConnectionError.mockClear()
 })
 
 afterEach(() => {
@@ -88,7 +88,7 @@ describe('http client failure prose', () => {
 describe('http client transport failures', () => {
   const client = createClient(BASE, 'test service')
 
-  it('turns a network TypeError into one toasted ConnectionError', async () => {
+  it('turns a network TypeError into one reported ConnectionError', async () => {
     stubFetch(async () => {
       throw new TypeError('Failed to fetch')
     })
@@ -98,8 +98,7 @@ describe('http client transport failures', () => {
     expect(isConnectionError(err)).toBe(true)
     expect((err as ConnectionError).serviceName).toBe('test service')
     expect((err as ConnectionError).baseUrl).toBe(BASE)
-    expect(toastConnectionError).toHaveBeenCalledTimes(1)
-    expect(toastConnectionError).toHaveBeenCalledWith(err)
+    expect(reportConnectionError).toHaveBeenCalledTimes(1)
   })
 
   it('rethrows an abort untouched and does not toast', async () => {
@@ -109,7 +108,7 @@ describe('http client transport failures', () => {
     })
 
     expect(await rejection(client.get('/x'))).toBe(abort)
-    expect(toastConnectionError).not.toHaveBeenCalled()
+    expect(reportConnectionError).not.toHaveBeenCalled()
   })
 })
 

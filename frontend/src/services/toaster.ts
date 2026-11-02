@@ -4,8 +4,6 @@ import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import './toaster.css'
 import type { RunInitResult } from '@/types'
-import type { ConnectionError } from '@/services/http'
-import { connectionsQuiet } from '@/services/runtime'
 
 export { ToastContainer }
 
@@ -17,12 +15,6 @@ function appToast(kind: ToastKind, message: ReactNode): void {
   toast[kind](message)
 }
 export { appToast as toast }
-
-// toastId is keyed per service, so a downed service reuses one toast instead of stacking.
-export function toastConnectionError(err: ConnectionError): void {
-  if (connectionsQuiet()) return
-  toast.error(err.message, { toastId: `conn:${err.baseUrl}` })
-}
 
 // A loading toast its caller settles: `succeed` turns it into a success toast, `dismiss` drops it so
 // the caller can report the failure its own way. The nulls fall back to the container's defaults.

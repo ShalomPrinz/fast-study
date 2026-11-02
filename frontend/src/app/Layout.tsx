@@ -6,6 +6,7 @@ import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusCont
 import { DownloadsSessionProvider } from '@/features/downloads/contexts/DownloadsSessionContext'
 import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsContext'
 import { toast } from '@/services/toaster'
+import ServiceBanner from './ServiceBanner'
 import CaptchaBanner from '@/features/downloads/components/CaptchaBanner'
 import { toastCaptchaSolved } from '@/features/downloads/utils/zoomCaptcha'
 import { toastSiteCaptchaSolved } from '@/features/downloads/utils/captchaBanner'
@@ -43,6 +44,7 @@ export default function Layout() {
                     {/* The banner spans the content column only, never the sidebar; the route keeps the row
                       flex its pages were built for. */}
                     <div className="layout-content">
+                      <ServiceBanner />
                       <CaptchaBanner />
                       <div className="layout-route">
                         <Outlet />

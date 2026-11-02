@@ -13,8 +13,9 @@ import {
 } from './autoDownloader'
 import { loginFailure } from '../utils/downloadErrors'
 
-const { toastConnectionError } = vi.hoisted(() => ({ toastConnectionError: vi.fn() }))
-vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError }))
+const { reportConnectionError } = vi.hoisted(() => ({ reportConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({ toast: vi.fn() }))
+vi.mock('@/services/serviceHealth', () => ({ reportConnectionError }))
 
 // A real Response, so the boundary can read a clone of the body and still hand the original on.
 function withBody(status: number, body: unknown): Response {
@@ -92,7 +93,7 @@ describe('an unreachable auto-downloader', () => {
     const err = await listRecordings('https://lemida.example/course/1').catch((e) => e)
 
     expect(isConnectionError(err)).toBe(true)
-    expect(toastConnectionError).toHaveBeenCalledTimes(1)
+    expect(reportConnectionError).toHaveBeenCalledTimes(1)
   })
 })
 

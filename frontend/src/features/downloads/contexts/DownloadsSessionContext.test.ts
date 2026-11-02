@@ -10,8 +10,9 @@ import {
 } from './DownloadsSessionContext'
 import { MoodleLockProvider } from './MoodleLockContext'
 
-const { toastConnectionError } = vi.hoisted(() => ({ toastConnectionError: vi.fn() }))
-vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError }))
+const { reportConnectionError } = vi.hoisted(() => ({ reportConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({ toast: vi.fn() }))
+vi.mock('@/services/serviceHealth', () => ({ reportConnectionError }))
 
 const sendUpdate = vi.fn()
 
@@ -52,7 +53,7 @@ const refused = () => new Response('{}', { status: 500, statusText: 'Internal Se
 beforeEach(() => {
   frame = null
   sendUpdate.mockClear()
-  toastConnectionError.mockClear()
+  reportConnectionError.mockClear()
 })
 
 afterEach(() => {
@@ -79,7 +80,7 @@ describe('a failed discovery', () => {
 
     expect(sendUpdate).toHaveBeenCalledTimes(1)
     expect(sendUpdate.mock.calls[0][0]).toBe('error')
-    expect(toastConnectionError).not.toHaveBeenCalled()
+    expect(reportConnectionError).not.toHaveBeenCalled()
   })
 
   it('leaves the course already open, and its items, as they were', async () => {
@@ -136,13 +137,13 @@ describe("a failed discovery's toast", () => {
 })
 
 describe('a discovery against a downed auto-downloader', () => {
-  it('toasts once, through the shared connection toast, and selects nothing', async () => {
+  it('reports the connection error once and selects nothing', async () => {
     stubFetch(new TypeError('Failed to fetch'))
     const { result } = render()
 
     await act(() => result.current.actions.discover(ALGEBRA))
 
-    expect(toastConnectionError).toHaveBeenCalledTimes(1)
+    expect(reportConnectionError).toHaveBeenCalledTimes(1)
     expect(sendUpdate).not.toHaveBeenCalled()
     expect(result.current.state.selected).toBeNull()
   })

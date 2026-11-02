@@ -717,6 +717,7 @@ msgstr "Can't rename while something in this course is being processed, download
 msgid "Can't replace the video while it's being processed or waiting in line"
 msgstr "Can't replace the video while it's being processed or waiting in line"
 
+#: src/app/ServiceBanner.tsx:85
 #: src/features/downloads/components/AddCoursePanel.tsx:124
 #: src/features/downloads/components/CoursePicker.tsx:125
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
@@ -1206,6 +1207,10 @@ msgstr "disconnecting…"
 #: src/features/settings/SettingsView.tsx:576
 msgid "Disk space"
 msgstr "Disk space"
+
+#: src/app/ServiceBanner.tsx:78
+msgid "Dismiss"
+msgstr "Dismiss"
 
 #: src/features/settings/SettingsView.tsx:541
 msgid "Do nothing — I'll start runs myself"
@@ -2246,10 +2251,18 @@ msgstr "Overview"
 msgid "Overview is already running for this course"
 msgstr "Overview is already running for this course"
 
+#: src/app/ServiceBanner.tsx:63
+msgid "Part of FastStudy isn't responding."
+msgstr "Part of FastStudy isn't responding."
+
 #: src/services/http.ts:62
 #: src/shared/i18n/serviceErrors.ts:40
 msgid "Part of FastStudy isn't responding. Restart the app."
 msgstr "Part of FastStudy isn't responding. Restart the app."
+
+#: src/app/ServiceBanner.tsx:65
+msgid "Part of FastStudy isn't responding. Restart the services."
+msgstr "Part of FastStudy isn't responding. Restart the services."
 
 #: src/features/downloads/components/PasscodePrompt.tsx:65
 msgid "Passcode"
@@ -2464,6 +2477,15 @@ msgstr "Required"
 msgctxt "section mark"
 msgid "Required"
 msgstr "Required"
+
+#: src/app/ServiceBanner.tsx:74
+#: src/app/ServiceBanner.tsx:84
+msgid "Restart"
+msgstr "Restart"
+
+#: src/app/ServiceBanner.tsx:82
+msgid "Restart FastStudy's services?"
+msgstr "Restart FastStudy's services?"
 
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Restart now"
@@ -3412,6 +3434,10 @@ msgstr "With this off, a lecture is done once its PDF is ready. If you turn it b
 #: src/features/settings/components/BrowserPrereqField.tsx:83
 msgid "Without one, FastStudy can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "Without one, FastStudy can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
+
+#: src/app/ServiceBanner.tsx:83
+msgid "Work in progress will be stopped."
+msgstr "Work in progress will be stopped."
 
 #: src/shared/sidebar/UpdateRow.tsx:50
 msgid "Work in progress will stop. Restart anyway?"

@@ -28,7 +28,7 @@ vi.mock('@/services/database', () => ({ createCourse }))
 vi.mock('@/shared/contexts/CourseTreeContext', () => ({
   useCourseTreeContext: () => ({ refreshCourses: vi.fn().mockResolvedValue(undefined) }),
 }))
-vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({ toast: vi.fn() }))
 
 const PASTED = 'https://m/mod/resource/view.php?id=5'
 

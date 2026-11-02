@@ -6,7 +6,7 @@ import { failureOf, toastFailure } from './failure'
 // The toaster is the boundary under observation: that it fired at all is the whole assertion —
 // what it says is the resolver's job (`shared/i18n/serviceErrors.test.ts`).
 const { toast } = vi.hoisted(() => ({ toast: vi.fn() }))
-vi.mock('@/services/toaster', () => ({ toast, toastConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({ toast }))
 
 beforeEach(() => {
   toast.mockClear()

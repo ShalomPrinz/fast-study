@@ -12,7 +12,7 @@ const { createLecture, refreshUntil, onSelect, toast } = vi.hoisted(() => ({
   toast: vi.fn(),
 }))
 vi.mock('@/services/database', () => ({ createLecture }))
-vi.mock('@/services/toaster', () => ({ toast, toastConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({ toast }))
 vi.mock('@/shared/contexts/CourseTreeContext', () => ({
   useCourseTreeContext: () => ({ courses: [], refreshUntil }),
 }))

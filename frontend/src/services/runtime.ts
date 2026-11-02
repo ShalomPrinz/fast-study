@@ -13,13 +13,13 @@ export type UpdateState = 'downloading' | 'downloaded' | null
 
 export type PowerState = 'suspend' | 'resume'
 
-/** How long after a resume connection toasts stay hidden, while sockets Chromium killed recover. */
+/** How long after a resume connection errors stay unreported, while sockets Chromium killed recover. */
 export const RESUME_QUIET_MS = 5000
 
 /** Longest a suspend hides toasts on its own: JS does not run asleep, so a missed resume must not mute a real outage. */
 export const SUSPEND_QUIET_MS = 60_000
 
-/** Whether connection toasts are hidden at `now`: from a suspend (capped at `SUSPEND_QUIET_MS`) until
+/** Whether connection errors are unreported at `now`: from a suspend (capped at `SUSPEND_QUIET_MS`) until
  *  `RESUME_QUIET_MS` after the resume. `last` is the latest power event, `null` when none ever arrived. */
 export function isQuiet(last: { state: PowerState; at: number } | null, now: number): boolean {
   if (!last) return false
@@ -73,6 +73,14 @@ declare global {
         fileWith?: (target: OpenTarget) => Promise<void>
         // Shows the file in its folder. Absent on older launchers.
         reveal?: (target: OpenTarget) => Promise<void>
+      }
+      // The launcher pushes the name of a service that exited after boot; `restart()` reboots all four
+      // behind its boot screen and reloads the window, fire-and-forget. Absent on older launchers.
+      services?: {
+        onStopped: (
+          callback: (name: 'database' | 'backend' | 'auto' | 'server') => void,
+        ) => () => void
+        restart: () => void
       }
       // `process.platform`; absent in browser dev and on an older launcher.
       platform?: string

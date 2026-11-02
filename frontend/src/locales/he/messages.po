@@ -717,6 +717,7 @@ msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הו�
 msgid "Can't replace the video while it's being processed or waiting in line"
 msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או המתנה בתור"
 
+#: src/app/ServiceBanner.tsx:85
 #: src/features/downloads/components/AddCoursePanel.tsx:124
 #: src/features/downloads/components/CoursePicker.tsx:125
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
@@ -1206,6 +1207,10 @@ msgstr "מתנתק…"
 #: src/features/settings/SettingsView.tsx:576
 msgid "Disk space"
 msgstr "מקום במחשב"
+
+#: src/app/ServiceBanner.tsx:78
+msgid "Dismiss"
+msgstr "סגור"
 
 #: src/features/settings/SettingsView.tsx:541
 msgid "Do nothing — I'll start runs myself"
@@ -2246,10 +2251,18 @@ msgstr "סקירה"
 msgid "Overview is already running for this course"
 msgstr "יצירת הסקירה כבר מתבצעת בקורס הזה"
 
+#: src/app/ServiceBanner.tsx:63
+msgid "Part of FastStudy isn't responding."
+msgstr "חלק מ-FastStudy לא מגיב."
+
 #: src/services/http.ts:62
 #: src/shared/i18n/serviceErrors.ts:40
 msgid "Part of FastStudy isn't responding. Restart the app."
 msgstr "חלק מ-FastStudy לא מגיב. הפעל מחדש את האפליקציה."
+
+#: src/app/ServiceBanner.tsx:65
+msgid "Part of FastStudy isn't responding. Restart the services."
+msgstr "חלק מ-FastStudy לא מגיב. הפעל מחדש את השירותים."
 
 #: src/features/downloads/components/PasscodePrompt.tsx:65
 msgid "Passcode"
@@ -2464,6 +2477,15 @@ msgstr "חובה"
 msgctxt "section mark"
 msgid "Required"
 msgstr "חובה"
+
+#: src/app/ServiceBanner.tsx:74
+#: src/app/ServiceBanner.tsx:84
+msgid "Restart"
+msgstr "הפעל מחדש"
+
+#: src/app/ServiceBanner.tsx:82
+msgid "Restart FastStudy's services?"
+msgstr "להפעיל מחדש את השירותים של FastStudy?"
 
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Restart now"
@@ -3412,6 +3434,10 @@ msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע �
 #: src/features/settings/components/BrowserPrereqField.tsx:83
 msgid "Without one, FastStudy can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "בלי אחד מהם, FastStudy לא תוכל להוריד הקלטות מאתר הקורס ולא תוכל להוריד הקלטת Zoom. כל השאר פועל כרגיל — הוסף וידאו בעצמך והוא עדיין יהפוך לסיכום. התקן את Chrome דרך הקישור שלמעלה ואז בדוק שוב."
+
+#: src/app/ServiceBanner.tsx:83
+msgid "Work in progress will be stopped."
+msgstr "עבודה שרצה כעת תיעצר."
 
 #: src/shared/sidebar/UpdateRow.tsx:50
 msgid "Work in progress will stop. Restart anyway?"

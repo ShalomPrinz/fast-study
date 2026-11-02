@@ -166,6 +166,13 @@ export function useCourseRunActive(course: string): boolean {
   return useSyncExternalStore(subscribe, () => activeCourses.has(course))
 }
 
+// Whether any section run is still walking; the restart confirmation reads it.
+export function useAnyRunActive(): boolean {
+  if (!useContext(SectionRunsContext))
+    throw new Error('useAnyRunActive must be used inside <SectionRunsProvider>')
+  return useSyncExternalStore(subscribe, () => activeCourses.size > 0)
+}
+
 // Reflects the downloader server's section runs, as `RunnerStatusContext` does the pipeline runner.
 // See docs/BULK.md.
 // `onCaptchaSolved` fires once per snapshot in which any target newly caught its zoom player past a

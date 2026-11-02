@@ -15,7 +15,7 @@ vi.mock('@/features/downloads/services/autoDownloader', async (importOriginal) =
 vi.mock('@/features/downloads/contexts/DownloadsSessionContext', () => ({
   useDownloadsActions: () => ({ reconnectHint: vi.fn() }),
 }))
-vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({ toast: vi.fn() }))
 
 const COURSES = [
   { id: 101, name: 'Algebra', code: '101', url: 'https://m/course/view.php?id=101', past: false },

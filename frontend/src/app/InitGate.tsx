@@ -28,7 +28,7 @@ export default function InitGate({ children }: { children: ReactNode }) {
         setPhase(isInitialized(settings, canStoreApiKeys) ? 'app' : 'wall')
       } catch {
         // A downed store is not an unconfigured install. Dropping a working app into onboarding
-        // over a transient outage is worse than the connection toast the client already shows.
+        // over a transient outage is worse than the service banner the client already shows.
         setPhase('app')
       }
     }

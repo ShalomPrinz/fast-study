@@ -19,10 +19,15 @@ swallow it ([DOWNLOADS.md](DOWNLOADS.md#the-moodle-lock)): a `423` is `file_lock
 same way when `backend/` relays it through a pipeline error and the status is gone.
 
 **Connection errors are handled once, here.** Only a network failure rejects as a `TypeError` (aborts are
-`DOMException` and pass through), so that branch wraps it in `ConnectionError`, toasts it keyed by base
-URL — a downed service shows one toast, not a stack — and rethrows. The toast alone is skipped while the OS sleeps and for 5 s after it wakes
+`DOMException` and pass through), so that branch wraps it in `ConnectionError`, reports it to
+`serviceHealth.ts` and rethrows. The report is skipped while the OS sleeps and for 5 s after it wakes
 (`connectionsQuiet()`, `runtime.ts`): Chromium fails in-flight requests on resume, so those are expected;
-the throw is unchanged. Call sites add no connection handling
+the throw is unchanged. `serviceHealth.ts` is the store behind `app/ServiceBanner`, a sticky, dismissible
+strip atop the content column; it shows on a report or on the launcher's `services.onStopped` push (never
+quieted) and returns after a dismissal on the next one. Where `services.restart` exists (packaged) the
+banner has a Restart button, which asks first when a pipeline run, overview generation, download job or
+section run is live (`useRunnerStatus`, `useAnyJobActive`, `useAnyRunActive`); without the bridge it only says to restart the services.
+Call sites add no connection handling
 of their own; they ignore the throw or check `isConnectionError`. `shared/utils/failure.ts`'s
 `toastFailure` is that check plus the resolved sentence, and is the single funnel for a refused request's
 wording; `failureNode` is the same thing for a call site that shows it in place instead of toasting.
@@ -56,7 +61,7 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **Launch secret** — `secretHeaders()` for requests; `withSecretParam(url)` only for the
   `EventSource`s, which cannot set a header. The header keeps the secret out of access logs. Both add
   nothing in browser dev, where no service enforces a secret.
-- **`open`** — non-optional: the whole bridge's absence is the browser-dev test; its `fileWith` and `reveal`, and the top-level `platform`, are optional (older launcher).
+- **`open`** — non-optional: the whole bridge's absence is the browser-dev test; its `fileWith` and `reveal`, and the top-level `platform`, are optional (older launcher). `services` (`onStopped`, `restart`) feeds `serviceHealth.ts`; absent in dev.
 - **`canStoreApiKeys`**, `defaultDataRoot` and `pickFolder` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
   the OS `locale` ([I18N.md](I18N.md)).
 - **`extension`** — optional `{ path, reveal() }`, the Chrome extension's folder for the Downloads page's Extension tab ([EXTENSION.md](EXTENSION.md)).
@@ -143,7 +148,7 @@ and these encode meaning in it:
 | 503  | `status: blocked`     | `BlockedError` — bot-protection challenge; transient, carries no message |
 
 Any other refusal is the shared `RequestError`, code and params kept. A downed service is still the shared,
-already-toasted `ConnectionError`, so its callers stay silent on it.
+already-reported `ConnectionError`, so its callers stay silent on it.
 `BlockedError` drops the body's `message`, an English log line, and writes its own copy. `PasscodeError` maps `name` to `lecture`
 because `name` collides with `Error.name`. The helper takes a `Client` because the downloader server's
 `/download-item` forwards the same four bodies verbatim.
@@ -157,7 +162,7 @@ because `name` collides with `Error.name`. The helper takes a `Client` because t
 Downloads, jobs and section runs. `downloadItem` and `startSectionRun` return what the page needs — the
 resolved `media`, the `renames`. `subscribeJobs` and `subscribeRuns` each wrap `GET /events` (`job:change`
 / `run:change`, `open` also calling back for resync) — two connections, the price of keeping the two
-reflections independent. `fetchJobs`/`fetchRuns` bypass the shared client, because it toasts every
-`ConnectionError` and a reconnect loop would stack one per attempt; they add the secret header by hand.
+reflections independent. `fetchJobs`/`fetchRuns` bypass the shared client, because it reports every
+`ConnectionError` and a reconnect loop would re-report one per attempt; they add the secret header by hand.
 User actions (`startSectionRun`, `resumeRun`, `cancelRun`) use the client, since a user action against a
-downed server _should_ toast. See [JOBS.md](JOBS.md) and [BULK.md](BULK.md).
+downed server _should_ show the service banner. See [JOBS.md](JOBS.md) and [BULK.md](BULK.md).

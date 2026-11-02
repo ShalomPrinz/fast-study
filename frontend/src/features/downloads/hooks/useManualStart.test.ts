@@ -16,7 +16,7 @@ const { downloadUrl, toast, settings } = vi.hoisted(() => ({
   settings: { moodleSite: 'https://moodle.example.ac.il' as string | null },
 }))
 vi.mock('@/features/downloads/services/downloadServer', () => ({ downloadUrl }))
-vi.mock('@/services/toaster', () => ({ toast, toastConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({ toast }))
 vi.mock('@/shared/contexts/SettingsContext', () => ({
   useSettingsContext: () => ({ settings }),
 }))

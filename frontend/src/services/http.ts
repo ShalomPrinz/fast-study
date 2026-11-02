@@ -1,6 +1,6 @@
 import { t } from '@lingui/core/macro'
 import { secretHeaders } from '@/services/runtime'
-import { toastConnectionError } from '@/services/toaster'
+import { reportConnectionError } from '@/services/serviceHealth'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
 // A request a service refused. It carries the protocol's machine `code` and flat `params` beside
@@ -52,7 +52,7 @@ export async function failureError(res: Response): Promise<RequestError> {
   return httpError(res)
 }
 
-// A request that never reached the server (service down); toasted centrally on construction.
+// A request that never reached the server (service down); reported centrally to the service banner.
 export class ConnectionError extends Error {
   constructor(
     public serviceName: string,
@@ -77,7 +77,7 @@ export interface Client {
   patch<T>(path: string, init?: RequestOptions): Promise<T>
   delete<T>(path: string, init?: RequestOptions): Promise<T>
   // The raw response, for a caller that reads meaning out of a refusal's body; a network failure
-  // still becomes a toasted ConnectionError.
+  // still becomes a reported ConnectionError.
   send(path: string, method: string, init?: RequestOptions): Promise<Response>
   url(path: string): string
 }
@@ -116,7 +116,7 @@ export function createClient(baseUrl: string, serviceName: string): Client {
       // Per the Fetch spec only network failures reject as TypeError; aborts are DOMException.
       if (err instanceof TypeError) {
         const ce = new ConnectionError(serviceName, baseUrl, err)
-        toastConnectionError(ce)
+        reportConnectionError()
         throw ce
       }
       throw err

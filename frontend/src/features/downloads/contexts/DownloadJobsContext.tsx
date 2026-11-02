@@ -283,6 +283,12 @@ export function useCourseDownloading(course: string): boolean {
   return jobActive || runActive
 }
 
+// Whether any download job is still live; the restart confirmation reads it.
+export function useAnyJobActive(): boolean {
+  useProviderGuard()
+  return useSyncExternalStore(subscribe, () => activeCourses.size > 0)
+}
+
 // One job by id, or null while it is not (or no longer) on `/jobs` — a `done` job is evicted after a
 // short bridge. The snapshot's own object, so it changes identity only when a refetch lands.
 export function useJobById(id: string): DownloadJob | null {
