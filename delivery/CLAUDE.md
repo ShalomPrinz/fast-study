@@ -8,6 +8,8 @@ runs at runtime, and no dev command touches it. Owned by `delivery-dev`, togethe
 | ----------------------------------- | ---------------------------------------------------------------------------- |
 | `services.spec` + `entry.py`        | The PyInstaller one-dir bundle holding `backend/` and `database/`, `argv[1]` |
 | `stage.mjs`                         | Assembles `stage/`, the tree electron-builder ships as `resources/`          |
+| `extension-version.mjs`             | Computes the packaged extension's version against the previous Release       |
+| `prune.mjs`                         | What a pruned copy drops, shared by the two above                            |
 | `prime_cache.py`                    | Fills tectonic's LaTeX package cache with everything the app can render      |
 | `kitchen-sink.md` + `probe.png`     | The document the prime renders                                               |
 | `cache-supplement.txt`              | Cache files the sink does not pull, added by name                            |
@@ -20,7 +22,8 @@ runs at runtime, and no dev command touches it. Owned by `delivery-dev`, togethe
 ```bash
 cd backend && uv run --with pyinstaller pyinstaller ../delivery/services.spec   # freeze
 cd backend && uv run python ../delivery/prime_cache.py <out-dir> [--filelist f] # prime
-node delivery/stage.mjs delivery/stage                                          # stage
+node delivery/stage.mjs delivery/stage [<extension-version>]                    # stage
+node delivery/extension-version.mjs <prev-tag> [<recorded>]                     # extension version
 cd delivery/smoke && npm ci && npx playwright test --list                       # parse the suite
 node delivery/boot-timing.mjs [collect|view] [--repo owner/name]               # boot-time chart
 ```

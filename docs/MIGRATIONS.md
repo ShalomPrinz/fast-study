@@ -55,3 +55,14 @@ one-line comment pointing at this file.
 - **Remove when:** no install can still hold an unseeded folder, i.e. upgrading straight from 0.2.15
   or earlier is no longer supported. After removal, an unseeded folder lists no files until
   something is uploaded to it, and even then only that upload.
+
+## Extension version without a recorded asset
+
+- **Code:** `delivery/extension-version.mjs`, the `manifestAt(tag).version` fallback in
+  `extensionVersion`.
+- **Old state:** Releases published before `publish.yml` uploaded `extension-version.txt` carry no
+  record of the extension version they shipped.
+- **What it does:** reads the version from `downloader/extension/manifest.json` at that Release's
+  tag, which is what it shipped unstamped.
+- **Remove when:** the newest non-draft Release carries `extension-version.txt`, which every
+  publish uploads. After removal, a missing asset should fail the build instead.

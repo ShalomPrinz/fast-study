@@ -19,7 +19,8 @@ OV/EV certificate avoids it. The LaTeX cache ships with tectonic's prebuilt form
 Two workflows, neither taking an input.
 
 - **`build.yml`** runs on every push to `main` — a superseded run is cancelled — and on dispatch. It
-  builds with `--publish never` and uploads the installer, its `.blockmap` and `latest.yml` as the
+  builds with `--publish never` and uploads the installer, its `.blockmap`, `latest.yml` and
+  `extension-version.txt` ([the extension version](#the-extension-version)) as the
   `installer` artifact (90 days), plus `installer-previous`, the same staged tree at a lower version
   with its own `latest.yml`, which exists only for the smoke suite's update check and never leaves
   Actions. It fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
@@ -32,7 +33,7 @@ Two workflows, neither taking an input.
   over `github-actions[bot]` commits that touch only `site/img/` — `pages.yml`'s screenshot refresh,
   which no build runs on — to the first other commit, and releases that one. It takes the
   `installer` artifact of `build.yml`'s newest green run for that commit, reads the version off its
-  `latest.yml`, refuses if Release or tag `v<version>` exists, checks all three files are there and
+  `latest.yml`, refuses if Release or tag `v<version>` exists, checks all four files are there and
   creates Release `v<version>`, published and targeted at that commit, with the same run's
   `boot-timing.json` attached when it has one — a notice, not a failure, when it does not. It ends by dispatching
   `pages.yml` to refresh the landing page's version line: a `release: published` trigger cannot, as
@@ -80,6 +81,21 @@ the minor starts a new series. It is injected with `-c.extraMetadata.version` an
 the tag to be `v<version>`, since electron-updater finds the old blockmap by swapping the version in
 its download URL. Two builds before a publish compute the same version, so publishing the second
 refuses on the existing Release; re-dispatch `build.yml` for a fresh one.
+
+### The extension version
+
+Main recopies the extension into Chrome's folder only when the shipped `manifest.json` version
+differs from the copy's ([`electron/docs/EXTENSION.md`](../../electron/docs/EXTENSION.md)), so it
+must change exactly when a shipped extension file does — at most once per release. `build.yml`'s
+`extension` step computes it with `extension-version.mjs` against the newest non-draft Release:
+that Release's version, read from its `extension-version.txt` asset, plus one patch when
+`git diff` from its tag to HEAD touches a file `stage.mjs` ships under `downloader/extension/`
+(the manifest counts only for a change beside its `version`); a committed major.minor above it
+ships as `<major>.<minor>.0`. `stage.mjs` stamps the result into the staged `manifest.json` only,
+and publish.yml uploads `extension-version.txt` beside `latest.yml`. The committed manifest's patch
+is therefore meaningless — only its major.minor is read, as a deliberate bump. A Release without the
+asset falls back to the manifest at its tag ([`docs/MIGRATIONS.md`](../../docs/MIGRATIONS.md)).
+`node delivery/extension-version.mjs <tag> [<recorded>]` prints the version and its reason locally.
 
 ## Error reporting
 
@@ -150,6 +166,7 @@ packages are dropped. It refuses to finish if a `@faststudy/*` dependency is a s
 install as links by default, and a link into `lib/` dangles once the tree leaves the repo — so
 `downloader/.npmrc` sets `install-links`.
 
-It also stages the Chrome extension (`downloader/extension/`, minus its `CLAUDE.md`) as `extension/`
+It also stages the Chrome extension (`downloader/extension/`, minus its `CLAUDE.md`) as `extension/`,
+stamped with [the extension version](#the-extension-version) when one is passed as its second argument,
 and the native host script `electron/bridge/host.js` as `bridge/host.js`, both read by main at launch
 ([`electron/docs/EXTENSION.md`](../../electron/docs/EXTENSION.md)) — about 100KB, no binary.

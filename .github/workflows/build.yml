@@ -73,6 +73,30 @@ jobs:
           echo "previous=$previous" >> "$GITHUB_OUTPUT"
           echo "building $version, with $previous for the update check"
 
+      # The staged extension's manifest version, which Chrome's copy is replaced on: the newest
+      # non-draft Release's, plus one patch when a shipped extension file changed since its tag.
+      # That Release's extension-version.txt records it; delivery/extension-version.mjs is the rule.
+      - name: Read the extension version
+        id: extension
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          latest=$(gh api "repos/$GH_REPO/releases" --paginate --jq '.[] | select(.draft | not) | .tag_name' | { grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -V | tail -n 1)
+          recorded=
+          if [ -n "$latest" ]; then
+            # The checkout is shallow; the diff needs that Release's tree too.
+            git fetch --no-tags --depth=1 origin tag "$latest"
+            assets=$(gh release view "$latest" --json assets --jq '.assets[].name')
+            if grep -qx extension-version.txt <<< "$assets"; then
+              gh release download "$latest" -p extension-version.txt -D "$RUNNER_TEMP/previous-release"
+              recorded=$(tr -d '[:space:]' < "$RUNNER_TEMP/previous-release/extension-version.txt")
+            fi
+          fi
+          version=$(node delivery/extension-version.mjs "$latest" "$recorded")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "shipping extension $version against ${latest:-no previous release}"
+
       # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
       # curl is the one exception and ships with Windows, so it is not here. Nothing spawns
       # ffprobe, so the ffmpeg zip's second binary — 105MB unpacked — stays
@@ -178,7 +202,7 @@ jobs:
           [ "$code" = 0 ] || { echo "::error::the LaTeX cache prime exited $code"; exit 1; }
 
       - name: Assemble the resources tree
-        run: node delivery/stage.mjs "$STAGE"
+        run: node delivery/stage.mjs "$STAGE" "${{ steps.extension.outputs.version }}"
 
       # `dist` lives in electron/package.json with the publish block that writes app-update.yml and
       # latest.yml; --publish never is in the script, so this step can upload nothing.
@@ -192,6 +216,11 @@ jobs:
           dsn=()
           [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
           npm ci && npm run dist -- "-c.extraMetadata.version=${{ steps.version.outputs.version }}" "${dsn[@]}"
+
+      # Rides in the installer artifact so publish.yml records it on the Release, where the next
+      # build's extension version step reads it back.
+      - name: Record the extension version
+        run: printf '%s\n' "${{ steps.extension.outputs.version }}" > electron/dist/extension-version.txt
 
       # The smoke job rewrites app-update.yml to a loopback feed, so this is the only check that the
       # shipped copy points installed apps at this repo's Releases.
@@ -221,6 +250,7 @@ jobs:
             electron/dist/FastStudy-Setup.exe
             electron/dist/FastStudy-Setup.exe.blockmap
             electron/dist/latest.yml
+            electron/dist/extension-version.txt
           if-no-files-found: error
           # The public-repo maximum: publish.yml can release this commit until then, and a dispatch
           # of this workflow on it rebuilds one that expired.

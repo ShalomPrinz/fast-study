@@ -21,7 +21,7 @@ root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 
 | Test                    | The failure only packaging can cause                                                                                                 | Harness flow side                                  |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
-| 1. fresh install        | the per-user NSIS install fails, `resources/` drifts from `BOOT.md`'s tree, the shipped native host breaks | —                                                  |
+| 1. fresh install        | the per-user NSIS install fails, `resources/` drifts from `BOOT.md`'s tree, the shipped extension's version is not the recorded `extension-version.txt`, the shipped native host breaks | —                                                  |
 | 2. DLL imports          | an installed binary imports a DLL a clean PC lacks                                                                                   | —                                                  |
 | 3. boot                 | the launcher spawns out of order, a bundled tool is unusable, `bin/` and the probed tools differ, a service runs without the secret  | —                                                  |
 | 4. first run            | main's native folder dialog over IPC breaks, keys land in `settings.json` unencrypted, a probe reaches the network instead of `unverified` | `first-run-and-data-folder.spec.mjs`               |

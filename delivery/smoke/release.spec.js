@@ -347,6 +347,17 @@ test('1. fresh install', async () => {
       'resources/bin/ does not hold exactly the shipped tools',
     ).toEqual(TOOLS.map((tool) => `${tool}.exe`).sort());
 
+    // The stamped version publish.yml records as extension-version.txt is the one that installed:
+    // the next build bumps from the record, so a drift would skip or repeat Chrome's recopy.
+    const recorded = fs
+      .readFileSync(path.join(paths.candidate().dir, 'extension-version.txt'), 'utf8')
+      .trim();
+    const manifest = path.join(paths.resourcesDir(), 'extension', 'manifest.json');
+    expect(
+      JSON.parse(fs.readFileSync(manifest, 'utf8')).version,
+      "resources/extension/manifest.json's version is not the artifact's extension-version.txt",
+    ).toBe(recorded);
+
     const bundles = fs.readdirSync(path.join(paths.resourcesDir(), 'latex', 'bundles'));
     expect(bundles.length, 'resources/latex/bundles is empty').toBeGreaterThan(0);
     shippedFormats = formatsSnapshot();

@@ -83,7 +83,8 @@ jobs:
           fi
 
           # The file name is fixed so releases/latest/download/FastStudy-Setup.exe stays a stable link.
-          files=(installer/FastStudy-Setup.exe installer/FastStudy-Setup.exe.blockmap installer/latest.yml)
+          # extension-version.txt is what the next build bumps the packaged extension's version from.
+          files=(installer/FastStudy-Setup.exe installer/FastStudy-Setup.exe.blockmap installer/latest.yml installer/extension-version.txt)
           for file in "${files[@]}"; do
             [ -f "$file" ] || { echo "::error::build.yml run $run's installer artifact has no ${file#installer/}"; ls -l installer; exit 1; }
           done
