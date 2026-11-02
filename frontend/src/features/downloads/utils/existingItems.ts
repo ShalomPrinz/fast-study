@@ -58,6 +58,12 @@ export function videoSourceHeld(ref: string, courses: Course[], course: string):
   return allNodes(courses, course).some((l) => l.videoSource === ref)
 }
 
+// Whether a stored material came from this discovery row, whichever lecture or recitation it is filed
+// under — the suggested name drifts to the next free lecture once the first file lands.
+export function materialSourceHeld(ref: string, courses: Course[], course: string): boolean {
+  return allNodes(courses, course).some((l) => l.materials.some((m) => m.source === ref))
+}
+
 // The single "already on disk" rule for the green row, bulk skip and landed check. A video matches its
 // stored source, else the named lecture only while its video has no source; docs/DOWNLOADS.md has the rest.
 export function hasResource(
@@ -71,9 +77,7 @@ export function hasResource(
   if (media === 'material') {
     const { ref } = item
     // A ref-less caller (a manual download) or a source-less material never matches.
-    return (
-      ref !== undefined && materialsOf(name, kind, courses, course).some((m) => m.source === ref)
-    )
+    return ref !== undefined && materialSourceHeld(ref, courses, course)
   }
   if (media === 'assignment') {
     const { ref } = item

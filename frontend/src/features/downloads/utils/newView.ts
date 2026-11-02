@@ -1,6 +1,6 @@
 import type { Course } from '@/types'
 import type { Item, Media } from '../services/autoDownloader'
-import { videoSourceHeld } from './existingItems'
+import { materialSourceHeld, videoSourceHeld } from './existingItems'
 import { groupSections } from './sections'
 
 // The New view lists the four media in this order, one big header each.
@@ -17,10 +17,7 @@ export function recognisedByRef(
   if (!node) return false
   const media = item.resolvedMedia ?? item.media
   const { ref } = item
-  if (media === 'material')
-    return [...node.lectures, ...node.recitations].some((l) =>
-      l.materials.some((m) => m.source === ref),
-    )
+  if (media === 'material') return materialSourceHeld(ref, courses, course)
   if (media === 'assignment')
     return (node.assignments ?? []).some((a) => a.files.some((f) => f.source === ref))
   if (media === 'video') return videoSourceHeld(ref, courses, course)

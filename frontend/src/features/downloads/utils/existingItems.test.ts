@@ -129,19 +129,19 @@ describe('hasResource', () => {
     resolvedMedia,
   })
 
-  it('is true for a material row only when that node holds a material from its own ref', () => {
+  it('is true for a material row when any lecture holds a material from its ref, whatever the name', () => {
     expect(hasResource(row('material'), 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(hasResource(row('material'), 'Lecture 9', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(hasResource(row('material'), 'Lecture 1', 'recitation', courses, 'Algebra')).toBe(true)
     expect(
-      hasResource(row('material', undefined, 'refB'), 'Lecture 2', 'lecture', courses, 'Algebra'),
+      hasResource(row('material', undefined, 'refZ'), 'Lecture 2', 'lecture', courses, 'Algebra'),
     ).toBe(false)
-    expect(
-      hasResource(row('material', undefined, 'refB'), 'Lecture 4', 'lecture', courses, 'Algebra'),
-    ).toBe(true)
-    expect(hasResource(row('material'), 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(false)
   })
 
   it('matches no row against a source-less material, nor a ref-less caller against any', () => {
-    expect(hasResource(row('material'), 'Lecture 5', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(
+      hasResource(row('material', undefined, 'refZ'), 'Lecture 5', 'lecture', courses, 'Algebra'),
+    ).toBe(false)
     expect(hasResource({ media: 'material' }, 'Lecture 5', 'lecture', courses, 'Algebra')).toBe(
       false,
     )
@@ -157,7 +157,9 @@ describe('hasResource', () => {
 
   it('is false for a node that does not exist', () => {
     expect(hasResource(row('video'), 'Lecture 9', 'lecture', courses, 'Algebra')).toBe(false)
-    expect(hasResource(row('material'), 'Lecture 9', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(
+      hasResource(row('material', undefined, 'refZ'), 'Lecture 9', 'lecture', courses, 'Algebra'),
+    ).toBe(false)
   })
 
   it('is false for a video row whose node exists but holds no video.mp4', () => {
