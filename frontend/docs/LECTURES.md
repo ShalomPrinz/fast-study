@@ -121,7 +121,7 @@ meta line of file and attached-lecture counts. Below it, top to bottom:
   (`inputsLocked`), since the run reads them. No state is held locally: the tree refresh over SSE shows every write.
 - **Assignment Solution**: its own full-width row under the split (Materials and Course material beside the Study with AI card), the title, then a muted "N files · M summaries" count (`.assignment-sent-count`, always shown, from `docInputs`) over an `auto-fit minmax(min(100%, 280px), 1fr)` grid of the two doc cards, so they sit as equal halves and stack once narrow (no icon; every card shows its description in every state).
   - Intuition Guide and Full Solution: one `AssignmentDocCard` per doc. `docCardState` (pure) derives `none`
-    (Create, with an ETA from `assignment_{doc}` over `docInputs` bytes, disabled with no input), `generating` (this
+    (Create, no ETA, disabled with no input), `generating` (this
     doc's step or its `_pdf` is the assignment's `in_flight` entry: `ProgressBar`, every button off) or `ready`
     (Ready chip beside the title, Open PDF, Edit to `…/edit/{doc}`, icon Regenerate behind a `ConfirmModal`, the render-warning
     chip). A ready md with no pdf offers Create PDF, which runs `{doc}_pdf`. Any run disables both cards, because the
@@ -133,7 +133,7 @@ meta line of file and attached-lecture counts. Below it, top to bottom:
   (`fetchAssignmentDoc`) into `assignmentClipboardText`: the prompt, then `<assignment course title>` holding one
   `<lecture kind title>` per summary, `<intuition_guide>` and `<solution>` where they exist. Enabled when any of the three exists.
 
-`docInputs` sizes the ETA from the tree alone: the switched-on supported files' on-disk bytes plus the chosen
+`docInputs` sizes the in-progress ETA (`assignment_{doc}` bucket) from the tree alone: the switched-on supported files' on-disk bytes plus the chosen
 `summary.md` sizes. An Office file is sent as extracted text, so this only approximates the bytes Gemini receives.
 The `_pdf` render's ETA uses the `pdf` bucket with no size.
 

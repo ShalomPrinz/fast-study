@@ -56,12 +56,6 @@
   gap: var(--space-3);
 }
 
-.doc-card-eta {
-  font-size: var(--fs-fine);
-  color: var(--text-3);
-  font-variant-numeric: tabular-nums;
-}
-
 .doc-card-error {
   font-size: var(--fs-meta);
   color: var(--danger);

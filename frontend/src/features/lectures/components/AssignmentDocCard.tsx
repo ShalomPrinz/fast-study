@@ -6,7 +6,6 @@ import { cancelRetry, runAssignmentStep } from '@/services/backend'
 import { openAssignmentGenerated } from '@/services/open'
 import { toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
-import { formatDuration } from '@/shared/utils/format'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { docCardState } from '@/features/lectures/utils/assignmentDocs'
@@ -61,15 +60,12 @@ export default function AssignmentDocCard({
   const regenTitle = ((doc: string) => t`Regenerate ${doc}?`)(title)
   const generateLabel = doc === 'intuition' ? t`Create guide` : t`Create solution`
 
-  // The ETA of a running render uses the pdf bucket; an idle card's is its doc's own, over the inputs.
-  const operation =
-    phase === 'none'
+  // The ETA of a running render uses the pdf bucket.
+  const operation = rendering
+    ? 'pdf'
+    : phase === 'generating'
       ? (`assignment_${doc}` as const)
-      : rendering
-        ? 'pdf'
-        : phase === 'generating'
-          ? (`assignment_${doc}` as const)
-          : null
+      : null
   const stats = useTimingStats(operation, rendering ? 0 : inputs.bytes)
   const startedAt = run ? Date.parse(run.startedAt) : NaN
 
@@ -142,9 +138,6 @@ export default function AssignmentDocCard({
                 {generateLabel}
               </button>
             </Tooltip>
-            {phase === 'none' && stats && !('message' in stats) && stats.estimated >= 1 && (
-              <span className="doc-card-eta">~{formatDuration(stats.estimated)}</span>
-            )}
           </>
         )}
         {phase === 'ready' && info && (

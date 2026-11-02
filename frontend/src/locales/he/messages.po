@@ -407,7 +407,7 @@ msgstr "+ הוספת קורס"
 msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 msgstr "<0>אתר האוניברסיטה</0> — גישה לתוכן הקורסים שנבחרו בלבד, והגישה מוגבלת לקריאת תוכן בלבד."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:59
+#: src/features/lectures/components/AssignmentDocCard.tsx:58
 msgid "A complete, step-by-step solution to every question"
 msgstr "פתרון מלא, צעד אחר צעד, לכל שאלה"
 
@@ -717,7 +717,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/CourseUrlPaste.tsx:61
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
-#: src/features/lectures/components/AssignmentDocCard.tsx:208
+#: src/features/lectures/components/AssignmentDocCard.tsx:201
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -1133,15 +1133,15 @@ msgstr "יצירה"
 msgid "Create {input} first"
 msgstr "צור קודם את {input}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:62
+#: src/features/lectures/components/AssignmentDocCard.tsx:61
 msgid "Create guide"
 msgstr "יצירת מדריך"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:158
+#: src/features/lectures/components/AssignmentDocCard.tsx:151
 msgid "Create PDF"
 msgstr "יצירת PDF"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:62
+#: src/features/lectures/components/AssignmentDocCard.tsx:61
 msgid "Create solution"
 msgstr "יצירת פתרון"
 
@@ -1333,7 +1333,7 @@ msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה חדשה."
 
 #: src/features/downloads/components/CourseCheckFailure.tsx:23
-#: src/features/lectures/components/AssignmentDocCard.tsx:174
+#: src/features/lectures/components/AssignmentDocCard.tsx:167
 msgid "Edit"
 msgstr "עריכה"
 
@@ -1552,7 +1552,7 @@ msgstr "מפנה מקום במחשב אחרי שהרצאה הושלמה. התמ�
 msgid "From now on, each lecture's files are removed the same way once it reaches that point."
 msgstr "מעכשיו, הקבצים של כל הרצאה יוסרו באותו אופן ברגע שהיא תגיע לשלב הזה."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:55
+#: src/features/lectures/components/AssignmentDocCard.tsx:54
 #: src/features/runner/utils/assignmentSteps.ts:7
 msgid "Full Solution"
 msgstr "פתרון מלא"
@@ -1574,11 +1574,11 @@ msgstr "‏Gemini לא הצליח לכתוב את המסמך."
 msgid "Gemini gets the transcript and any materials you add, to write the summary."
 msgstr "Gemini מקבל את התמלול ואת כל החומרים שתוסיף, כדי לכתוב את הסיכום."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:113
+#: src/features/lectures/components/AssignmentDocCard.tsx:109
 msgid "Gemini is writing…"
 msgstr "‏Gemini כותב…"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:206
+#: src/features/lectures/components/AssignmentDocCard.tsx:199
 msgid "Gemini will write it again."
 msgstr "‏Gemini יכתוב אותו מחדש."
 
@@ -1660,7 +1660,7 @@ msgstr "האוניברסיטה העברית"
 msgid "Hide past courses"
 msgstr "הסתרת קורסים קודמים"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:58
+#: src/features/lectures/components/AssignmentDocCard.tsx:57
 msgid "Hints and a direction of thought for each question, without solving it"
 msgstr "רמזים וכיוון חשיבה לכל שאלה, בלי לפתור"
 
@@ -1713,7 +1713,7 @@ msgstr "ברשימת הפרויקטים, בחר \"Create project\"."
 msgid "Install Chrome"
 msgstr "התקנת Chrome"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:55
+#: src/features/lectures/components/AssignmentDocCard.tsx:54
 #: src/features/runner/utils/assignmentSteps.ts:6
 msgid "Intuition Guide"
 msgstr "מדריך לאינטואיציה"
@@ -2157,7 +2157,7 @@ msgstr "פתיחת החומר"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
-#: src/features/lectures/components/AssignmentDocCard.tsx:166
+#: src/features/lectures/components/AssignmentDocCard.tsx:159
 #: src/features/lectures/components/PdfHero.tsx:192
 #: src/features/lectures/components/PdfViewer.tsx:106
 #: src/features/lectures/components/PdfViewer.tsx:107
@@ -2336,7 +2336,7 @@ msgstr "יצירה מחדש משלב {stepLabel}"
 msgid "Read the finished lecture"
 msgstr "קריאת ההרצאה המוכנה"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:103
+#: src/features/lectures/components/AssignmentDocCard.tsx:99
 msgid "Ready"
 msgstr "מוכן"
 
@@ -2400,13 +2400,13 @@ msgstr "הקלטות. הורדת הקלטה מתחילה מיד את יצירת 
 msgid "Recordings. Downloading one starts nothing; you run the summary yourself."
 msgstr "הקלטות. הורדת הקלטה לא מפעילה דבר, ואת הסיכום תריץ בעצמך."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:176
-#: src/features/lectures/components/AssignmentDocCard.tsx:179
-#: src/features/lectures/components/AssignmentDocCard.tsx:207
+#: src/features/lectures/components/AssignmentDocCard.tsx:169
+#: src/features/lectures/components/AssignmentDocCard.tsx:172
+#: src/features/lectures/components/AssignmentDocCard.tsx:200
 msgid "Regenerate"
 msgstr "יצירה מחדש"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:61
+#: src/features/lectures/components/AssignmentDocCard.tsx:60
 msgid "Regenerate {doc}?"
 msgstr "ליצור מחדש את {doc}?"
 
@@ -2712,7 +2712,7 @@ msgstr "להתחיל להשתמש ב-FastStudy"
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:83
+#: src/features/lectures/components/AssignmentDocCard.tsx:79
 #: src/features/lectures/DocEditor.tsx:192
 #: src/features/lectures/DocEditor.tsx:251
 #: src/features/lectures/MainView.tsx:186
@@ -2783,7 +2783,7 @@ msgstr "הסיכום מוכן"
 msgid "summary with {name}"
 msgstr "סיכום עם {name}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:133
+#: src/features/lectures/components/AssignmentDocCard.tsx:129
 msgid "Switch on a file or choose course material first"
 msgstr "קודם סמן קובץ או בחר חומר מהקורס"
 
@@ -2954,7 +2954,7 @@ msgstr "החלק של FastStudy שמוריד הקלטות לא מגיב. הפע�
 msgid "The PDF could not be created."
 msgstr "לא ניתן ליצור את ה-PDF."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:124
+#: src/features/lectures/components/AssignmentDocCard.tsx:120
 msgid "The PDF is missing."
 msgstr "ה-PDF חסר."
 
