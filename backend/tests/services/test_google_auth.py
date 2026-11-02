@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
@@ -197,3 +198,27 @@ class TestOpenBrowser:
         google_auth._open_browser("https://x/")
         popen.assert_not_called()
         opened.assert_called_once_with("https://x/")
+
+
+def test_landed_consent_sweeps_only_drive_not_connected_records(monkeypatch):
+    from pipeline import runner
+
+    monkeypatch.setattr(
+        runner,
+        "_errors",
+        {
+            "c||l1||drive": {"code": "drive_not_connected"},
+            "c||l2||summarize": {"code": "gemini_overloaded"},
+        },
+    )
+    monkeypatch.setattr(google_auth, "_write_token", lambda *a: None)
+    flow = MagicMock()
+    redirect = MagicMock(request_uri="http://localhost/?code=x")
+
+    async def go():
+        google_auth.bind_loop(asyncio.get_running_loop())
+        await asyncio.to_thread(google_auth._await_consent, flow, MagicMock(), redirect)
+
+    asyncio.run(go())
+
+    assert list(runner._errors) == ["c||l2||summarize"]

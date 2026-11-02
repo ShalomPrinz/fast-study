@@ -1,6 +1,7 @@
 """Shared OAuth helper for Google APIs: the on-disk credential/token files, plus the
 non-blocking Drive consent flow the settings screen starts."""
 
+import asyncio
 import logging
 import subprocess
 import sys
@@ -179,6 +180,16 @@ def _open_browser(url: str) -> None:
     webbrowser.open(url)
 
 
+_loop: asyncio.AbstractEventLoop | None = None
+
+
+def bind_loop(loop: asyncio.AbstractEventLoop) -> None:
+    """Record the app's event loop, which the consent thread hands its runner sweep to."""
+
+    global _loop
+    _loop = loop
+
+
 def start_consent() -> str:
     """Start the Drive consent flow and return its URL, without waiting for the user. The
     browser is opened here too, so the URL is the UI's 'didn't open?' fallback."""
@@ -238,6 +249,14 @@ def _await_consent(flow, server, redirect_app: _RedirectApp) -> None:
         )
         _write_token("drive", flow.credentials)
         _set_consent_needed(False)
+        from pipeline import runner  # local: runner imports this module
+
+        async def sweep() -> None:
+            runner.clear_drive_not_connected()
+
+        # The runner's error map belongs to the loop; waiting here keeps the finally's notify
+        # behind the sweep, so the refetch it triggers sees the records gone.
+        asyncio.run_coroutine_threadsafe(sweep(), _loop).result(timeout=5)
     except Exception:
         log.exception("Drive consent failed")
     finally:

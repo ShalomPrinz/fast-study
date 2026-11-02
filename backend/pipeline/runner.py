@@ -1096,6 +1096,15 @@ def clear_provider_blocks() -> None:
     _transcribe_block = None
 
 
+def clear_drive_not_connected() -> None:
+    """Drop every `drive_not_connected` record: a landed Drive token is what they were waiting on."""
+
+    for key in [
+        k for k, e in list(_errors.items()) if e["code"] == "drive_not_connected"
+    ]:
+        _errors.pop(key, None)
+
+
 def move_to_front(course: str, lecture: str, kind: str) -> str:
     """Make a queued lecture the runner's next one, keeping its entry and depth. Returns 'moved',
     or 'not_queued' when it is not waiting in the queue (in flight counts as not queued)."""

@@ -524,6 +524,7 @@ async def drive_connect():
     """Start the Google consent flow and answer with its URL, without waiting for the user.
     The backend opens the browser itself, so the URL is the UI's 'didn't open?' fallback."""
 
+    google_auth.bind_loop(asyncio.get_running_loop())
     try:
         auth_url = await asyncio.to_thread(google_auth.start_consent)
     except CodedError as e:
