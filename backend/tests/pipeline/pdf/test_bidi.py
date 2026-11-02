@@ -816,3 +816,66 @@ class TestRawLatexCommands:
     def test_textbf_in_math_untouched(self):
         md = r"$\textbf{x}$ כאן"
         assert wrap_english_phrases(md) == md
+
+
+class TestSoftBreakLatinRun:
+    def test_phrase_across_soft_break_is_one_run(self):
+        assert wrap_english_phrases("ב merge\nsort כאן") == "ב \\LR{merge\nsort} כאן"
+
+    def test_block_start_keeps_lines_apart(self):
+        for text in [
+            "foo\n- bar",
+            "foo\n2. bar",
+            "foo\n\nbar",
+            "foo\n> q",
+            "foo\n| a |",
+            "foo\n# h",
+        ]:
+            out = wrap_english_phrases(text)
+            assert out.count("\\LR{") == 2, out
+
+    def test_heading_does_not_join_next_line(self):
+        assert (
+            wrap_english_phrases("# Title foo\nbar") == "# \\LR{Title foo}\n\\LR{bar}"
+        )
+
+    def test_heading_with_code_before_run_does_not_join(self):
+        assert (
+            wrap_english_phrases("# Title `x` foo\nbar")
+            == "# \\LR{Title} `x` \\LR{foo}\n\\LR{bar}"
+        )
+        assert (
+            wrap_english_phrases("## כותרת $x$ foo\nbar")
+            == "## כותרת $x$ \\LR{foo}\n\\LR{bar}"
+        )
+        assert (
+            wrap_english_phrases("# See [a](http://x) foo\nbar")
+            == "# \\LR{See} [\\LR{a}](http://x) \\LR{foo}\n\\LR{bar}"
+        )
+
+    def test_pipe_table_rows_stay_apart(self):
+        assert (
+            wrap_english_phrases("foo | bar\nbaz | qux")
+            == "\\LR{foo} | \\LR{bar}\n\\LR{baz} | \\LR{qux}"
+        )
+
+    def test_pandoc_keeps_heading_and_table_rows(self):
+        import shutil
+        import subprocess
+
+        import pytest
+
+        if not shutil.which("pandoc"):
+            pytest.skip("pandoc missing")
+
+        def tex(md):
+            return subprocess.run(
+                ["pandoc", "-f", "markdown", "-t", "latex"],
+                input=wrap_english_phrases(md),
+                capture_output=True,
+                text=True,
+            ).stdout
+
+        assert "foo\n" not in tex("# Title `x` foo\nbar").split("\n\n")[0]
+        assert "baz" in tex("foo | bar\n--- | ---\nbaz | qux\n")
+        assert "baz} | " not in tex("a | b\n--- | ---\nbaz | qux\n")

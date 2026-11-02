@@ -35,9 +35,12 @@ _LINK_TARGET_RE = re.compile(r"(\]\([^)\n]*\)|<(?:https?://|www\.)[^>\s]*>)")
 # A number joins a phrase as a CONTINUATION only, never an anchor — so a lone
 # Hebrew-adjacent number ("5 שקלים") stays untouched in the RTL run.
 _NUM = r"[0-9]+(?:[.,][0-9]+)*"
+# A markdown soft line break is a space, so a Latin phrase wraps across it — unless the next line
+# opens a block (heading, quote, table, list, fence, rule, blank line).
+_SOFT_BREAK = r"[ \t]*\n(?![ \t]*(?:[#>|]|[-*+][ \t]|[0-9]+[.)][ \t]|:::|```|~~~|---|===|\n))[ \t]*"
 # Separators kept INSIDE one \LR run, but only when another Latin token follows —
 # a sentence-final period/comma is left for the trailing \RL{} group.
-_SEP = r"(?:[ \t]+-[ \t]+|,[ \t]+|[ \t]+|\.[ \t]+)"
+_SEP = r"(?:[ \t]+-[ \t]+|,[ \t]+|[ \t]+|\.[ \t]+|" + _SOFT_BREAK + r")"
 # A quote may hug a group's tokens, so console.log('hi') stays one run.
 _QUOTED = r"['’\"]?(?:" + _WORD + r"|" + _NUM + r")['’\"]?"
 _GROUP_BODY = r"['’\"]?" + _WORD + r"['’\"]?(?:" + _SEP + _QUOTED + r")*"
@@ -81,6 +84,7 @@ def _emphasis_to_markdown(m: re.Match) -> str:
 
 
 _MULTI_LATIN_RE = re.compile(r"(" + _ITEM + r"(?:" + _SEP + _CONT + r")*)([.,;:!?]*)")
+_HEADING_LINE_RE = re.compile(r"[ \t]{0,3}#{1,6}([ \t]|$)")
 _LEADING_PUNCT_RE = re.compile(r"^([.,;:!?]+)")
 # A run ENDING in `<digit>)` mirrors that paren inside a bare \LR{} — the neutral sits
 # on the run's RTL boundary. Mid-run it is safe: raise(SIGUSR1) needs no help.
@@ -90,8 +94,10 @@ _DIGIT_PAREN_END_RE = re.compile(r"[0-9]\)$")
 def wrap_english_phrases(text: str) -> str:
     """Wrap Latin runs in \\LR{} so they don't reorder inside the RTL paragraph."""
 
-    def replace(m: re.Match) -> str:
-        phrase, punct = m.group(1), m.group(2)
+    # Original text of the current line before the chunk being substituted; chunks start mid-line.
+    line_before = [""]
+
+    def emit(phrase: str, punct: str) -> str:
         # Latin tokens carry LaTeX-special chars (the _ in x86_64 enters math mode unescaped).
         body = _latex_escape(phrase)
         # The language switch turns mirroring off, which \LR alone cannot do.
@@ -103,11 +109,44 @@ def wrap_english_phrases(text: str) -> str:
             result += r"\RL{" + punct + "}"
         return result
 
+    def build(phrase: str, punct: str, prefix: str, suffix: str) -> str:
+        # A heading is one line and a table row never continues: no join across such a line.
+        if "\n" in phrase:
+            head, brk, tail = phrase.partition("\n")
+            if _HEADING_LINE_RE.match(prefix + head) or "|" in prefix:
+                kept = head.rstrip()
+                return (
+                    emit(kept, "")
+                    + head[len(kept) :]
+                    + brk
+                    + build(tail, punct, "", suffix)
+                )
+            if "|" in suffix:
+                head, brk, tail = phrase.rpartition("\n")
+                kept = head.rstrip()
+                return (
+                    build(kept, "", prefix, "")
+                    + head[len(kept) :]
+                    + brk
+                    + emit(tail, punct)
+                )
+        return emit(phrase, punct)
+
+    def replace(m: re.Match) -> str:
+        prefix = line_before[0] + m.string[: m.start()]
+        prefix = prefix[prefix.rfind("\n") + 1 :]
+        rest = m.string[m.end() :]
+        suffix = rest[: rest.find("\n")] if "\n" in rest else rest
+        return build(m.group(1), m.group(2), prefix, suffix)
+
     # Split on math/code spans so _MULTI_LATIN_RE never touches them: odd indices are
     # protected passthrough, even ones get substituted.
     parts = _PROTECTED_RE.split(text)
     out = []
+    pos = 0  # offset of the current chunk in text
     for i, part in enumerate(parts):
+        chunk_start = pos
+        pos += len(part)
         if i % 2 == 1:
             out.append(part)
         else:
@@ -119,9 +158,16 @@ def wrap_english_phrases(text: str) -> str:
                 if m:
                     leading = r"\RL{" + m.group(1) + "}"
                     part = part[m.end() :]
+                    chunk_start += m.end()
             # Odd pieces are link targets, passed through like protected spans.
             pieces = _LINK_TARGET_RE.split(part)
-            for j in range(0, len(pieces), 2):
+            start = chunk_start
+            for j in range(0, len(pieces)):
+                if j % 2:
+                    start += len(pieces[j])
+                    continue
+                line_before[0] = text[text.rfind("\n", 0, start) + 1 : start]
+                start += len(pieces[j])
                 piece = _EMPH_RUN_RE.sub(_emphasis_to_markdown, pieces[j])
                 pieces[j] = _MULTI_LATIN_RE.sub(replace, piece)
             out.append(leading + "".join(pieces))
