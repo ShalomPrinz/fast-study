@@ -63,6 +63,28 @@ checking or downloading, then the outcome ([`UPDATES.md`](UPDATES.md)). It rides
 The page's test ids are a contract held for `delivery/smoke/`: each row's `data-testid="boot-row"` with
 `data-service` and `data-state` (main's raw values), and `boot-error`, `boot-log`, `boot-update` (with `data-phase`), `boot-retry`.
 
+## A service that dies after the boot
+
+A child that exits while still listed died on its own — every kill main sends unlists the child first.
+Main unlists it and, on POSIX, `SIGKILL`s what its process group still holds (chrome under `auto`,
+ffmpeg under `backend`). Windows has no process group and `taskkill /T` walks the tree from a live
+pid only, so a dead child's descendants there run on until they end by themselves; a `taskkill` on the
+dead pid is never sent, since Windows may already have reused it for an unrelated process.
+
+While a boot runs, that exit fails the boot onto the failure view above, whether or not the port line
+had arrived — the app never loads with a service already dead. After the boot, main removes
+`bridge.json` if it was `server`, logs `<name> stopped unexpectedly`, adds the name to the set of
+services stopped since the last successful boot, and pushes it on `faststudy:service-stopped`. The set
+is the snapshot a page loading or reloading after the push reads (`faststudy:services-stopped`); a
+successful boot or restart empties it. Main respawns nothing on its own: the frontend's banner offers
+Restart and the user decides.
+
+Restart (`faststudy:services-restart`) runs the boot again inside the same `booting` guard, so a
+second click or a Try again while it runs is ignored: it shows the launch screen, stops every child, then boots all four —
+all, since each respawn gets a new port and a surviving peer's env var would still name the old one.
+Success navigates back to `app://bundle/`, whose reload re-runs the preload and so reads the new URLs;
+a failure lands on the failure view above. The launch secret is kept: it lives for the process.
+
 ## Why each peer is a plain env var
 
 `database/` calls nobody, `auto/` calls nobody, `backend/` calls `database/`, `server/` calls all

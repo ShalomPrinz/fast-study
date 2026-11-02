@@ -22,7 +22,7 @@ everything on quit.
 | `windowState.js` | The window's size and maximized flag across launches — `window-state.json` under `userData` |
 | `dataFiles.js` | Resolving a data-file target to its path through `database/`, Windows' Open with, and reveal in the file manager |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
-| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, platform, updates, open, folder picker, extension |
+| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, platform, updates, services (stopped, restart), open, folder picker, extension |
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 
@@ -77,7 +77,7 @@ failure.
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
 covering `resolveWithin`'s path containment, the store's tables and refusal rules, the error-reports
 switch's env and its push to each service's `/config` (against local HTTP stubs), the window size's clamp and fallback, and the teardown's
-SIGTERM→SIGKILL escalation against real `sh` process groups, and the native host driven over framed stdin/stdout with its registration and the extension copy. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
+SIGTERM→SIGKILL escalation against real `sh` process groups and its expected-exit rule, and the native host driven over framed stdin/stdout with its registration and the extension copy. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
 `electron` in the module cache before the module under test is required, which is also how the
 unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns a service is in it.
 

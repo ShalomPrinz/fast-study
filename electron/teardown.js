@@ -48,4 +48,11 @@ function reapChildren(children, graceMs, log) {
   );
 }
 
-module.exports = { signalChildren, reapChildren };
+/** What a child's exit means. Unlisted: main's own kill, nothing to do. Listed while booting: the
+ *  boot's failure, onto the launch screen, port or no port. Listed after it: a death the window hears of. */
+function exitKind({ listed, booting }) {
+  if (!listed) return null;
+  return booting ? 'boot' : 'stopped';
+}
+
+module.exports = { signalChildren, reapChildren, exitKind };

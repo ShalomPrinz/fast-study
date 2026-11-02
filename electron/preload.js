@@ -72,6 +72,28 @@ const api = {
     path: config.extensionPath,
     reveal: () => ipcRenderer.invoke('faststudy:extension-reveal'),
   },
+  // The app's services: `onStopped` fires once per child that died after the boot — those dead before
+  // this subscribe included — and returns its unsubscribe; `restart()` reboots all four, then reloads.
+  services: {
+    onStopped: (callback) => {
+      // Listening before the snapshot loses nothing; a name both carry is called back once.
+      const seen = new Set();
+      let live = true;
+      const report = (name) => {
+        if (!live || seen.has(name)) return;
+        seen.add(name);
+        callback(name);
+      };
+      const listener = (_event, name) => report(name);
+      ipcRenderer.on('faststudy:service-stopped', listener);
+      ipcRenderer.invoke('faststudy:services-stopped').then((names) => names.forEach(report));
+      return () => {
+        live = false;
+        ipcRenderer.removeListener('faststudy:service-stopped', listener);
+      };
+    },
+    restart: () => ipcRenderer.send('faststudy:services-restart'),
+  },
   // The launch screen only: a snapshot first, since main's first push can beat the listener.
   boot: {
     snapshot: () => ipcRenderer.invoke('faststudy:boot-state'),

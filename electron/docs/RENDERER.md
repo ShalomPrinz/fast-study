@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, platform, updates, power, open, pickFolder, extension, boot }` through `contextBridge.executeInMainWorld`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, platform, updates, power, services, open, pickFolder, extension, boot }` through `contextBridge.executeInMainWorld`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -45,8 +45,15 @@ result is current ([error reporting](#error-reporting-sentry)).
 `snapshot()`, `subscribe(callback)` (returns its unsubscribe) and `restart()` ([`UPDATES.md`](UPDATES.md)).
 
 `power` is `{ subscribe(callback) }`, returning its unsubscribe: `powerMonitor`'s `'suspend'` and
-`'resume'` pushed on `faststudy:power`, so the frontend can hold the connection toasts Chromium's
+`'resume'` pushed on `faststudy:power`, so the frontend can hold back the service banner Chromium's
 failed in-flight requests would raise across sleep. Push only — a page loaded after waking needs no state.
+
+`services` is `{ onStopped(callback), restart() }`. `onStopped` returns its unsubscribe and calls
+back once per child name (`database`, `backend`, `auto`, `server`) that dies after the boot — never
+for a kill main sent itself. It listens first, then reads main's snapshot of the names already
+stopped and calls back for each, so a death while `app://bundle/` was loading or before a reload is
+not lost; a name both carry is reported once. `restart()` reboots all four behind the launch screen and reloads the app
+([`BOOT.md`](BOOT.md#a-service-that-dies-after-the-boot)).
 
 `extension` is `{ path, reveal() }`: the folder Chrome loads the extension unpacked from (the
 state-root copy packaged, the repo's `downloader/extension` in dev) and opening it in the file manager
@@ -56,7 +63,8 @@ state-root copy packaged, the repo's `downloader/extension` in dev) and opening 
 preload. The frontend ignores it, and the launch screen ignores everything else — while it renders
 `urls` is still empty, since no service has a port yet.
 
-`urls` and `secret` are fetched over a **synchronous** IPC message, because the frontend resolves
+`urls` and `secret` are fetched over a **synchronous** IPC message on every page load, a restart's
+reload included, because the frontend resolves
 them at module scope and the bridge has to be complete before the bundle evaluates. They travel over
 IPC rather than through `additionalArguments` so the launch secret never appears on a command line,
 where every other process on the machine could read it.

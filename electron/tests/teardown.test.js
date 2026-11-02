@@ -69,3 +69,13 @@ test(
 test('an already-exited child is skipped', () => {
   assert.deepEqual(signalChildren([{ pid: 1, exitCode: 0, signalCode: null }]), []);
 });
+
+test('an exit is news only when main did not cause it, and fails the boot while one runs', () => {
+  const { exitKind } = require('../teardown');
+  assert.equal(exitKind({ listed: true, booting: false }), 'stopped');
+  // A quit, teardown or restart unlisted the child before signalling it.
+  assert.equal(exitKind({ listed: false, booting: false }), null);
+  assert.equal(exitKind({ listed: false, booting: true }), null);
+  // Dying mid-boot, before or after its port line, fails the boot onto the launch screen's failure view.
+  assert.equal(exitKind({ listed: true, booting: true }), 'boot');
+});

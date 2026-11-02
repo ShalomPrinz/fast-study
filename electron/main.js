@@ -20,7 +20,7 @@ const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const { reportsOn, sentryEnv, writeSettings } = require('./reports');
 const store = require('./store');
 const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
-const { reapChildren, signalChildren } = require('./teardown');
+const { exitKind, reapChildren, signalChildren } = require('./teardown');
 const windowState = require('./windowState');
 const { dataFilePath, openDataFileWith, revealDataFile } = require('./dataFiles');
 const {
@@ -82,6 +82,10 @@ let lastWindowState = null;
 // The launch screen's whole model: one row per child plus the failure, if the boot hit one.
 let bootState = null;
 let booting = false;
+// Set by a running `boot()`: fails it when a listed child exits, which a reported port can't catch.
+let failBoot = null;
+// The children that died on their own since the last successful boot, for a page that loads after it.
+const stopped = new Set();
 let serviceUrls = {};
 // The main-process SDK, loaded only when a DSN is set; null otherwise, and everything here no-ops.
 let sentry = null;
@@ -321,23 +325,56 @@ function startChild(spec, env) {
     return Promise.reject(spawnFailure(spec, error));
   }
   children.push(child);
+  let reported = false;
   return new Promise((resolve, reject) => {
     readline.createInterface({ input: child.stdout }).on('line', (line) => {
       log(spec.name, line);
       const match = PORT_LINE.exec(line);
       // The service listens before printing, so connecting the instant this arrives is safe.
-      if (match) resolve(Number(match[1]));
+      if (match) {
+        reported = true;
+        resolve(Number(match[1]));
+      }
     });
     readline.createInterface({ input: child.stderr }).on('line', (line) => log(spec.name, line));
     child.on('error', (error) => reject(spawnFailure(spec, error)));
     child.on('exit', (code, signal) => {
       log(spec.name, `exited (${code ?? signal})`);
+      const listed = children.includes(child);
       // Still listed means nobody killed it: a dead `server` must not leave its port in the bridge.
-      if (spec.name === 'server' && children.includes(child)) removeBridge(BRIDGE_FILE);
-      // Ignored once the port has arrived — a resolved promise cannot reject.
-      reject(new Error(`${spec.name} exited (${code ?? signal}) before reporting its port`));
+      if (spec.name === 'server' && listed) removeBridge(BRIDGE_FILE);
+      const kind = exitKind({ listed, booting });
+      if (kind) unlistDead(child);
+      if (kind === 'stopped') serviceStopped(spec.name);
+      const error = new Error(
+        `${spec.name} exited (${code ?? signal}) ${reported ? 'during the boot' : 'before reporting its port'}`,
+      );
+      error.service = spec.name;
+      // Before the port line this rejection alone fails the boot; after it, only `failBoot` can.
+      reject(error);
+      if (kind === 'boot') failBoot?.(error);
     });
   });
+}
+
+/** Unlist a child that died on its own and, on POSIX, SIGKILL what its group still holds (chrome
+ *  under `auto`). Windows has no group, and a dead pid gives `taskkill /T` no tree — docs/BOOT.md. */
+function unlistDead(child) {
+  children.splice(children.indexOf(child), 1);
+  if (process.platform === 'win32') return;
+  try {
+    process.kill(-child.pid, 'SIGKILL');
+  } catch {
+    // The group died with its leader.
+  }
+}
+
+/** A child died on its own after the boot: remember it and tell the window, whose banner offers the
+ *  restart. Remembered, since a page still loading or reloaded later would miss the push. */
+function serviceStopped(name) {
+  stopped.add(name);
+  log('main', `${name} stopped unexpectedly — window told`);
+  mainWindow?.webContents.send('faststudy:service-stopped', name);
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -383,6 +420,13 @@ async function boot() {
   const live = () => {
     if (failed) throw new Error('boot abandoned');
   };
+  // A child that dies once its port is in has no promise left to reject, so it fails the boot here.
+  const died = new Promise((_resolve, reject) => {
+    failBoot = (error) => {
+      failed = true;
+      reject(error);
+    };
+  });
   const up = async (name, env) => {
     const spec = specs.find((candidate) => candidate.name === name);
     live();
@@ -403,18 +447,25 @@ async function boot() {
       throw error;
     }
   };
-  await Promise.all([
-    up('database', {}).then((database) => up('backend', { DATABASE_URL: database })),
-    // Only `auto` gets the token key, so no other service can read the token it protects.
-    up('auto', tokenKeyEnv()),
-  ]);
-  const server = await up('server', {
-    DATABASE_URL: urls.database,
-    BACKEND_URL: urls.backend,
-    AUTODL_URL: urls.autoDownloader,
-  });
-  publishBridge(new URL(server).port);
-  return urls;
+  const start = async () => {
+    await Promise.all([
+      up('database', {}).then((database) => up('backend', { DATABASE_URL: database })),
+      // Only `auto` gets the token key, so no other service can read the token it protects.
+      up('auto', tokenKeyEnv()),
+    ]);
+    return up('server', {
+      DATABASE_URL: urls.database,
+      BACKEND_URL: urls.backend,
+      AUTODL_URL: urls.autoDownloader,
+    });
+  };
+  try {
+    const server = await Promise.race([start(), died]);
+    publishBridge(new URL(server).port);
+    return urls;
+  } finally {
+    failBoot = null;
+  }
 }
 
 /** Write the bridge file for the native host. A failure costs only the extension's connection, so it
@@ -463,12 +514,15 @@ function warmBrowser() {
 }
 
 /** Boot, then swap the launch screen for the app. A failure stays on the launch screen with the
- *  reason on the child that did not come up, and Try again re-runs this from a clean slate. */
-async function runBoot() {
+ *  reason on the child that did not come up, and Try again re-runs this from a clean slate. `before`
+ *  runs inside the `booting` guard, so a restart's kill counts as main's own. */
+async function runBoot(before) {
   if (booting) return;
   booting = true;
   try {
+    await before?.();
     serviceUrls = await boot();
+    stopped.clear();
     // The site root, never `/index.html`, which no route matches. Not awaited, to stay off the boot
     // path; the `app loaded` line is what delivery/smoke times boot by.
     const appUrl = `${APP_ORIGIN}/`;
@@ -503,6 +557,21 @@ async function runBoot() {
   } finally {
     booting = false;
   }
+}
+
+/** The window's Restart: kill all four, show the launch screen, boot again. All four, since a
+ *  respawned peer gets a new port the others' env vars still hold the old one of. */
+function restartServices() {
+  return runBoot(async () => {
+    log('main', 'restart requested');
+    serviceUrls = {};
+    // Nothing reads ready while the kill runs; `boot()` then rebuilds the state from scratch.
+    for (const service of bootState?.services ?? []) service.state = 'pending';
+    mainWindow
+      ?.loadFile(path.join(__dirname, 'boot.html'))
+      .catch((error) => log('main', `launch screen load failed: ${error.message}`));
+    await stopChildren();
+  });
 }
 
 /** SIGTERM every child now — synchronous, for `process.on('exit')`, which cannot wait. Idempotent:
@@ -673,6 +742,8 @@ function createWindow(checks) {
   // The app's update row; a snapshot first, since a push can land before the frontend subscribes.
   onUpdateState((state) => mainWindow?.webContents.send('faststudy:update', state));
   ipcMain.handle('faststudy:update-state', () => updateState());
+  // The same for a dead service: a page that loads after the push reads what it missed here.
+  ipcMain.handle('faststudy:services-stopped', () => [...stopped]);
   // A failed install has already stopped the services: back to the launch screen and boot them again.
   ipcMain.handle('faststudy:update-restart', () =>
     restartToUpdate(
@@ -684,11 +755,12 @@ function createWindow(checks) {
       log,
     ),
   );
-  // Chromium fails in-flight requests across sleep; the frontend holds its connection toasts on these.
+  // Chromium fails in-flight requests across sleep; the frontend holds back its service banner on these.
   for (const event of ['suspend', 'resume']) {
     powerMonitor.on(event, () => mainWindow?.webContents.send('faststudy:power', event));
   }
   ipcMain.on('faststudy:boot-retry', () => runBoot());
+  ipcMain.on('faststudy:services-restart', () => restartServices());
   ipcMain.on('faststudy:boot-quit', () => app.quit());
   // Denied, or the child would inherit the preload and so the secret (docs/RENDERER.md). The log
   // line is how a `target="_blank"` link that skipped `open.ts` shows up at all.
