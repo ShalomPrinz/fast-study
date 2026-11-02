@@ -26,11 +26,6 @@
   margin-bottom: var(--space-5);
 }
 
-/* The edit or add panel, parted from what follows it. */
-.source-panel {
-  margin-bottom: var(--space-6);
-}
-
 /* Why the picked course shows no recordings: loading, the bar on discovery, or no source yet. */
 .downloads-load-note {
   margin: 0 0 var(--space-5);

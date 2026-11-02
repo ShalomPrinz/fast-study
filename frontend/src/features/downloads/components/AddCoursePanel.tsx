@@ -17,7 +17,8 @@ type Mode = 'picking' | 'form'
 // A new course, picked from Moodle (name prefilled, URL fixed) or from a pasted URL. Plain inputs, not
 // InlineEditInput: moving between the name and URL fields must not blur-cancel.
 interface Props {
-  onDone: () => void
+  // The created course's name, or nothing when cancelled.
+  onDone: (created?: string) => void
 }
 
 export default function AddCoursePanel({ onDone }: Props) {
@@ -34,9 +35,9 @@ export default function AddCoursePanel({ onDone }: Props) {
   // A ref, not `checking`/`saving`: a second Enter can land before the render that disables Create.
   const inFlight = useRef(false)
 
-  function reset() {
+  function reset(created?: string) {
     clear()
-    onDone()
+    onDone(created)
   }
 
   function openForm(courseName: string, courseUrl: string) {
@@ -57,7 +58,7 @@ export default function AddCoursePanel({ onDone }: Props) {
       setSaving(true)
       await createCourse(trimmed, source)
       await refreshCourses()
-      reset()
+      reset(trimmed)
     } catch (e) {
       toastFailure(e)
     } finally {
@@ -72,7 +73,7 @@ export default function AddCoursePanel({ onDone }: Props) {
         currentUrl=""
         onChoose={(c) => openForm(c.name, c.url)}
         onPaste={(pasted) => openForm('', pasted)}
-        onCancel={reset}
+        onCancel={() => reset()}
       />
     )
   }
@@ -119,7 +120,7 @@ export default function AddCoursePanel({ onDone }: Props) {
             {checking ? t`Checking…` : t`Create`}
           </button>
         </Tooltip>
-        <button className="btn btn--ghost" onClick={reset}>
+        <button className="btn btn--ghost" onClick={() => reset()}>
           <Trans>Cancel</Trans>
         </button>
       </div>

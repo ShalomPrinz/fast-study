@@ -59,6 +59,7 @@ every answer is overtaken before it arrives and latest-only never settles.
 | `/`                        | empty state       |
 | `/course/:course/overview` | `CourseView`      |
 | `/downloads`               | `DownloadsView`   |
+| `/downloads/add-course`, `/downloads/edit-source/:course` | `DownloadsView`, nested: its panel pages |
 | `/search`                  | `SearchView`      |
 | `/running`                 | `RunnerView`      |
 | `/settings`                | `SettingsView`    |

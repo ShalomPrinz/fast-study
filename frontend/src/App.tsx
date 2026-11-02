@@ -67,7 +67,11 @@ export default function App() {
               <Route path={ROUTES.assignment} element={<AssignmentView />} />
               <Route path={ROUTES.lecture} element={<MainView />} />
             </Route>
-            <Route path={ROUTES.downloads} element={<DownloadsView />} />
+            {/* The panel routes nest so DownloadsView stays mounted: its chosen course, locks and scroll survive. */}
+            <Route path={ROUTES.downloads} element={<DownloadsView />}>
+              <Route path={ROUTES.addCourse} element={null} />
+              <Route path={ROUTES.editSource} element={null} />
+            </Route>
             <Route path={ROUTES.search} element={<SearchView />} />
             <Route path={ROUTES.running} element={<RunnerView />} />
             <Route path={ROUTES.settings} element={<SettingsView />} />

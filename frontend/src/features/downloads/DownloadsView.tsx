@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useLocation, useMatch, useNavigate } from 'react-router-dom'
 import { ResolvedMediaContext } from './contexts/ResolvedMediaContext'
 import ModeToggle from '@/shared/components/ModeToggle'
 import type { ModeConfig } from '@/shared/components/ModeToggle'
@@ -10,7 +10,10 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import AccountStatus from '@/features/downloads/components/AccountStatus'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
-import { ROUTES } from '@/shared/utils/routes'
+import { ROUTES, routeParam } from '@/shared/utils/routes'
+import { editSourceRoute } from '@/shared/utils/url'
+import { addedCoursePick } from '@/features/downloads/utils/addedCourse'
+import { boxCourse } from '@/features/downloads/utils/sourcePanel'
 import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
 import CourseSourceBar from '@/features/downloads/components/CourseSourceBar'
 import EditSourcePanel from '@/features/downloads/components/EditSourcePanel'
@@ -79,11 +82,35 @@ export default function DownloadsView() {
         : null
   // The course picked in the box; the session's `selected` is the one whose recordings are loaded.
   const [chosen, setChosen] = useState(pending ?? selected ?? '')
-  const [panel, setPanel] = useState<'edit' | 'add' | null>(null)
+  // The panels are nested routes, so this view (and its loaded course) stays mounted behind them.
+  const navigate = useNavigate()
+  const { state: locationState } = useLocation()
+  const addMatch = useMatch(ROUTES.addCourse)
+  const editMatch = useMatch(ROUTES.editSource)
+  const editName = editMatch ? routeParam(editMatch.params.course) : null
+  const panel: 'edit' | 'add' | null = addMatch ? 'add' : editMatch ? 'edit' : null
+  const editCourse = editName ? active.find((c) => c.name === editName) : undefined
+  // Panels opened in-app carry this flag, so a close pops to the entry they were opened from and
+  // leaves no duplicate; a panel URL opened cold has no such entry and replaces.
+  const panelState = { fromDownloads: true }
+  // Switching panels replaces and keeps the state, so Cancel still pops to where the first one opened from.
+  const panelNav = panel ? { replace: true, state: locationState } : { state: panelState }
+  function closePanel() {
+    if ((locationState as { fromDownloads?: boolean } | null)?.fromDownloads) navigate(-1)
+    else navigate(ROUTES.downloads, { replace: true })
+  }
+  // The scroller's offset, kept while the panel hides it (display:none drops the browser's own).
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const scrollTop = useRef(0)
+  useLayoutEffect(() => {
+    if (!panel && bodyRef.current) bodyRef.current.scrollTop = scrollTop.current
+  }, [panel])
+  const [addedName, setAddedName] = useState<string | null>(null)
   // A pick made while discovery was barred loads once the bar lifts; held by name so the load sees
   // the course's source URL as it is then.
   const [deferred, setDeferred] = useState<string | null>(null)
-  const chosenCourse = active.find((c) => c.name === chosen)
+  const shown = boxCourse(chosen, editName, !!editCourse)
+  const chosenCourse = active.find((c) => c.name === shown)
   const [tab, selectTab] = useDownloadsTab()
   // Held here rather than in the session, so leaving the page drops every lock.
   const { locks, lock } = useRowLocks()
@@ -123,11 +150,23 @@ export default function DownloadsView() {
     } else void discover(course, { wait })
   }
 
+  // A course just added joins the tree a refresh later, so the pick waits for it.
+  useEffect(() => {
+    if (!addedName) return
+    const pick = addedCoursePick(courses, addedName)
+    if (!pick) return
+    setAddedName(null)
+    setChosen(pick.course.name)
+    if (pick.load) loadCourse(pick.course, false)
+    // Fires once per added name; loadCourse is a fresh closure each render.
+  }, [addedName, courses])
+
   function pickCourse(name: string) {
     const course = active.find((c) => c.name === name)
     setChosen(name)
     // A course with no source opens the picker at once; a Moodle list already open is kept, not refetched.
-    setPanel(course && !course.source_url ? 'edit' : null)
+    if (course && !course.source_url) navigate(editSourceRoute(name), panelNav)
+    else if (panel) closePanel()
     if (!course || (name === selected && !deferred) || name === pending) return
     setDeferred(null)
     if (!course.source_url) return close()
@@ -176,8 +215,8 @@ export default function DownloadsView() {
   }
 
   const loadNote =
-    chosenCourse?.source_url && selected !== chosen
-      ? pending === chosen
+    chosenCourse?.source_url && selected !== shown
+      ? pending === shown
         ? t`Loading…`
         : blockReason
       : null
@@ -218,14 +257,21 @@ export default function DownloadsView() {
           }
           secondaryActions={
             <div className="downloads-header-rows">
-              <DownloadsTabs tab={tab} onSelect={selectTab} />
+              <DownloadsTabs
+                tab={tab}
+                onSelect={(next) => {
+                  scrollTop.current = 0
+                  if (panel) closePanel()
+                  selectTab(next)
+                }}
+              />
               {tab === 'university' && (
                 <CourseSourceBar
                   chosen={chosenCourse?.name ?? ''}
                   names={active.map((c) => c.name)}
                   onPick={pickCourse}
-                  onEdit={() => setPanel('edit')}
-                  onAdd={() => setPanel('add')}
+                  onEdit={() => navigate(editSourceRoute(shown), panelNav)}
+                  onAdd={() => navigate(ROUTES.addCourse, panelNav)}
                   editing={panel === 'edit'}
                   adding={panel === 'add'}
                 />
@@ -235,7 +281,50 @@ export default function DownloadsView() {
         />
 
         {/* Keyed by tab so each one opens at its own top rather than the last tab's scroll offset. */}
-        <div className="page-body" key={tab ?? 'loading'}>
+        {panel && (
+          <div
+            className={`page-body source-panel-page source-panel-page--${panel}`}
+            data-panel={panel}
+          >
+            <div className="page-column">
+              {panel === 'add' ? (
+                <AddCoursePanel
+                  onDone={(created) => {
+                    if (!created) return closePanel()
+                    setAddedName(created)
+                    closePanel()
+                  }}
+                />
+              ) : editCourse ? (
+                <EditSourcePanel
+                  course={editCourse}
+                  loaded={selected === editCourse.name}
+                  loading={pending === editCourse.name}
+                  onLoad={(course) => {
+                    setDeferred(null)
+                    setChosen(course.name)
+                    close()
+                    loadCourse(course, true)
+                  }}
+                  onDone={closePanel}
+                />
+              ) : (
+                loaded && <Navigate to={ROUTES.downloads} replace />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Hidden, not unmounted, behind a panel: the loaded course keeps its state. */}
+        <div
+          className="page-body"
+          key={tab ?? 'loading'}
+          ref={bodyRef}
+          hidden={!!panel}
+          onScroll={(e) => {
+            if (!panel) scrollTop.current = e.currentTarget.scrollTop
+          }}
+        >
           <div className="page-column">
             {tab === null && (
               <div className="downloads-tab-loading">
@@ -266,34 +355,12 @@ export default function DownloadsView() {
                   </p>
                 )}
 
-                {panel && (
-                  <div className="source-panel">
-                    {panel === 'add' ? (
-                      <AddCoursePanel onDone={() => setPanel(null)} />
-                    ) : (
-                      chosenCourse && (
-                        <EditSourcePanel
-                          course={chosenCourse}
-                          loaded={selected === chosenCourse.name}
-                          loading={pending === chosenCourse.name}
-                          onLoad={(course) => {
-                            setDeferred(null)
-                            close()
-                            loadCourse(course, true)
-                          }}
-                          onDone={() => setPanel(null)}
-                        />
-                      )
-                    )}
-                  </div>
-                )}
-
-                {panel === null && chosenCourse && !chosenCourse.source_url && (
+                {chosenCourse && !chosenCourse.source_url && (
                   <p className="downloads-load-note" dir="auto">
                     <Trans>No source URL yet. Use the pencil to choose one.</Trans>
                   </p>
                 )}
-                {panel === null && loadNote && <p className="downloads-load-note">{loadNote}</p>}
+                {loadNote && <p className="downloads-load-note">{loadNote}</p>}
 
                 {selected && (
                   <>

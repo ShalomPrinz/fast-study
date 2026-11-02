@@ -55,6 +55,11 @@ export function courseRoute(course: string): string {
   return path`/course/${course}/overview`
 }
 
+// The Downloads page's edit-source panel route for a course.
+export function editSourceRoute(course: string): string {
+  return path`/downloads/edit-source/${course}`
+}
+
 // Overview prefix, shared by the backend and database services.
 export function courseOverviewBase(course: string): string {
   return path`/courses/${course}/overview`

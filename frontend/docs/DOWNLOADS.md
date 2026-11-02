@@ -36,8 +36,7 @@ cleared one loads nothing). Saving a source on the picked course loads it the sa
 fails leaves the box on the session's loaded course, so the box always names what is shown. An unconfigured
 site is the nudge, not a note (it reads as disconnected too). The body then holds
 the nudge, the `.source-list-failed` danger note when `courseLoadNotice` says the load failed, the
-pencil's `EditSourcePanel` or the add flow's `AddCoursePanel` (one at a time, under the frozen row), and — once a
-course is loaded — the `.recordings-panel`. The 880px measure
+source-less note, the load note and — once a course is loaded — the `.recordings-panel`. The 880px measure
 fits a recording's second line: kind toggle, name input and action side by side.
 
 `ModeToggle` emits its cards and body as siblings, so the panel is a three-column grid: the cards centred
@@ -52,9 +51,22 @@ touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
 
 ## Course sources
 
+The pencil's `EditSourcePanel` and "+ Add course"'s `AddCoursePanel` are their own routes, `/downloads/edit-source/:course`
+and `/downloads/add-course`, nested under `/downloads` so `DownloadsView` stays mounted: the loaded course, row
+edits, locks and the box keep their state. On a panel route the header stays, and the course bar with it on the University tab only; the body is
+only the panel (`.source-panel-page--add|--edit`, opening at the top); the recordings
+body stays mounted but `hidden`, and its scroll offset is saved and restored on return. A panel opened
+in-app carries `state.fromDownloads`; cancel, a tab click, a bar pick, a successful add and the
+browser's back all pop to the entry it was opened from, so no duplicate `/downloads` is left (a cold-opened
+panel URL replaces to `/downloads`). A successful add then picks the new course in the box, loading it when it has a source
+(`addedCoursePick`); an edit's save closes the panel, then reloads as below. While the edit route is
+active its `:course` names the box (`boxCourse`), so a Forward or cold open onto another course's edit
+route never saves under a mismatched box. Picking a course with a source on a panel route closes it; picking
+a source-less one switches to that course's edit route.
+
 A course's source is the course page URL (`…/course/view.php?id=N`) — what picking a course and auto's
 `/list` read. `CoursePicker` sets it: the pencil and a source-less pick (`EditSourcePanel`) and "+ Add course"
-(`AddCoursePanel`) open it under the frozen row. With a saved source the picker leads with the paste input,
+(`AddCoursePanel`) open it on its own route, replacing the body. With a saved source the picker leads with the paste input,
 URL selected, above the list that marks the matching course current; "+ Add course" opens on the list. It fetches auto's `GET /courses?lang=<UI locale>` once per open
 (`useEnrolledCourses`, through the Moodle lock with `{ wait: true }`, one request even across StrictMode's
 remount — the site walls a second call seconds after the first) and lists current courses, then the `past`
