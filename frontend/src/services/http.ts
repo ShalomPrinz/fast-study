@@ -100,6 +100,11 @@ function buildInit(init: RequestOptions | undefined, method: string): RequestIni
   return { ...rest, method, headers: secured, body }
 }
 
+// Mutations answer 204 with no body; res.json() would throw a SyntaxError on it.
+export function hasNoBody(res: Response): boolean {
+  return res.status === 204 || res.headers.get('Content-Length') === '0'
+}
+
 export function createClient(baseUrl: string, serviceName: string): Client {
   const url = (path: string) => `${baseUrl}${path}`
 
@@ -121,8 +126,7 @@ export function createClient(baseUrl: string, serviceName: string): Client {
   const json = async <T>(path: string, method: string, init?: RequestOptions): Promise<T> => {
     const res = await send(path, method, init)
     if (!res.ok) throw await failureError(res)
-    // Mutations answer 204 with no body; res.json() would throw a SyntaxError on it.
-    if (res.status === 204 || res.headers.get('Content-Length') === '0') return undefined as T
+    if (hasNoBody(res)) return undefined as T
     return res.json() as Promise<T>
   }
 

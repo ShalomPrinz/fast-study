@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { isConnectionError, isMoodleBusyError, RequestError } from '@/services/http'
 import {
   completeAuth,
+  checkCourseUrl,
   connectAuth,
   expandItem,
   fetchAuthStatus,
@@ -228,5 +229,14 @@ describe('the busy lock', () => {
     const err = await listRecordings('https://lemida.example/course/1').catch((e) => e)
 
     expect(isMoodleBusyError(err)).toBe(false)
+  })
+})
+
+describe('checkCourseUrl', () => {
+  it('resolves on a 204 with no body', async () => {
+    stubFetch(new Response(null, { status: 204 }))
+    await expect(
+      checkCourseUrl('https://moodle.example/course/view.php?id=1'),
+    ).resolves.toBeUndefined()
   })
 })

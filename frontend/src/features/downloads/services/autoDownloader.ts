@@ -1,5 +1,5 @@
 import type { Client } from '@/services/http'
-import { createClient, failureError, RequestError } from '@/services/http'
+import { createClient, failureError, hasNoBody, RequestError } from '@/services/http'
 import { AUTO_DOWNLOADER_URL, withSecretParam } from '@/services/runtime'
 import type { Kind, ToolReport } from '@/types'
 import { path } from '@/shared/utils/url'
@@ -183,6 +183,7 @@ async function sendReconnectAware<T>(
     }
     throw await failureError(res)
   }
+  if (hasNoBody(res)) return undefined as T
   return res.json() as Promise<T>
 }
 
@@ -214,7 +215,7 @@ export async function fetchEnrolledCourses(lang: string): Promise<EnrolledCourse
 // Vets a pasted course URL before it is saved: strictly a course page the account can open. A refusal
 // throws `course_url_not_course_page`, `course_url_unsupported_site` or `course_not_accessible`.
 export async function checkCourseUrl(courseUrl: string): Promise<void> {
-  await postReconnectAware<{ ok: true }>(autoDownloader, '/courses/check', { courseUrl })
+  await postReconnectAware<void>(autoDownloader, '/courses/check', { courseUrl })
 }
 
 // Resolve one expandable item into its downloadable children.

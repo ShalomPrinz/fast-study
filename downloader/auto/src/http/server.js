@@ -548,7 +548,7 @@ export const handleCourseCheck = gated('/courses/check', async (req, res) => {
     throw e;
   }
   logResult('/courses/check', 'ok');
-  send(res, 200, { ok: true });
+  res.status(204).end();
 });
 
 // Logged once per process: every /list of a refusing site would repeat it.

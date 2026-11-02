@@ -50,6 +50,11 @@ function fakeRes() {
       res.body = body;
       return res;
     },
+    ended: false,
+    end() {
+      res.ended = true;
+      return res;
+    },
     on() {},
   };
   return res;
@@ -225,12 +230,13 @@ for (const [label, url, code] of [
   });
 }
 
-test('POST /courses/check: a readable course is 200 ok after one contents call', async (t) => {
+test('POST /courses/check: a readable course is 204 with no body after one contents call', async (t) => {
   plantToken(t);
   const calls = stubFetch(t, () => json([]));
   const res = await call(t, handleCourseCheck, { courseUrl: COURSE_URL });
-  assert.equal(res.code, 200);
-  assert.deepEqual(res.body, { ok: true });
+  assert.equal(res.code, 204);
+  assert.equal(res.body, null);
+  assert.equal(res.ended, true);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].searchParams.get('wsfunction'), 'core_course_get_contents');
   assert.equal(calls[0].searchParams.get('courseid'), '108106');

@@ -236,7 +236,7 @@ in the same gated request, as on `/list`.
 
 `POST /courses/check {courseUrl}` vets a pasted URL before it is saved. Strictly an http(s)
 `{site}/course/view.php` with an all-digit `id`, else `400 course_url_not_course_page {url}` (off the
-site: `course_url_unsupported_site`); then one `core_course_get_contents` → `{ ok:true }`, or `401`
+site: `course_url_unsupported_site`); then one `core_course_get_contents` → `204` with no body, or `401`
 reconnect, `503` blocked, `422 course_not_accessible`. `/list` keeps its lenient parsing, so a URL the
 user saved anyway still lists.
 
