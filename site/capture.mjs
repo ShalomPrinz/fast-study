@@ -178,8 +178,9 @@ async function journey(page, open, shot, lectureRoute) {
   // A new rule ends the held calls, and the pipeline runs on to Drive.
   await call('POST', `${PROVIDERS}/control`, { reset: true });
   await waitFor('the journey pipeline', () => hasFile(course, lecture, 'drive_url.txt'), 300_000);
-  await call('POST', `${BACKEND}/config`, { auto_run: 'full' });
+  // Auto-run stays off until the files are written, or it would race the dataset's own steps.
   await writeLecture(course, { name: lecture, ...JOURNEY, state: 'done' });
+  await call('POST', `${BACKEND}/config`, { auto_run: 'full' });
 
   await open(lectureRoute(course, lecture));
   await shot('journey-summary');
