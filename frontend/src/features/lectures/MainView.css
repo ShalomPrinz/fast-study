@@ -61,6 +61,7 @@
 
 .lecture-pipeline .pipeline-row-body {
   flex: 1 1 96px;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -133,6 +134,18 @@
   margin-top: var(--space-2);
   color: var(--warn);
   text-align: start;
+}
+
+/* A long material name ellipsizes inside the row so the pill never covers the button; the full text is the tooltip. */
+.chip.material-indicator {
+  max-width: 100%;
+  min-width: 0;
+}
+.material-indicator-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Six semantic states on one chip (the class string is built by materialIndicator()). Each

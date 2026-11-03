@@ -98,7 +98,13 @@ function MaterialIndicator({
   )
   if (!indicator) return null
 
-  return <span className={`chip material-indicator ${indicator.cls}`}>{indicator.text}</span>
+  return (
+    <Tooltip content={indicator.text}>
+      <span className={`chip material-indicator ${indicator.cls}`}>
+        <span className="material-indicator-text">{indicator.text}</span>
+      </span>
+    </Tooltip>
+  )
 }
 
 export default function MainView() {
