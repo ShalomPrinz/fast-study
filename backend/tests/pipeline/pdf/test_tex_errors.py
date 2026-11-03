@@ -59,9 +59,8 @@ class TestParseTexErrors:
         assert errors[0].at == ""
         assert errors[0].message == "LaTeX Error: File `bidi.sty' not found"
 
-    def test_no_bang_lines_yields_nothing(self):
-        log = "pandoc: unrecognized option `--nope'\nTry pandoc --help.\n"
-        assert parse_tex_errors(log) == []
+    def test_log_without_a_bang_line_yields_nothing(self):
+        assert parse_tex_errors("conversion failed\nsee the input above\n") == []
 
     def test_lone_bang_line_is_not_an_error(self):
         assert parse_tex_errors("!\n\n[1] [2]\n") == []
@@ -132,16 +131,14 @@ class TestClassify:
         assert code == "latex_error"
         assert params == tex_error_params(parse_tex_errors(MULTI_ERROR_LOG))
 
-    def test_log_without_bang_line_returns_the_fallback_verbatim(self):
-        # pandoc's own failures (bad markdown, missing template) carry no `! …`,
-        # so the caller's full-log fallback is the only useful message.
-        fallback = "pandoc failed:\nTry pandoc --help."
-        assert classify(
-            "pandoc: unrecognized option `--nope'\n",
+    def test_log_without_a_bang_line_returns_the_fallback_verbatim(self):
+        stderr = "conversion failed\nsee the input above\n"
+        fallback = f"pandoc failed:\n{stderr}"
+        assert classify(stderr, fallback, "pdf_pandoc_failed", detail=stderr) == (
             fallback,
             "pdf_pandoc_failed",
-            detail="Try pandoc --help.",
-        ) == (fallback, "pdf_pandoc_failed", {"detail": "Try pandoc --help."})
+            {"detail": stderr},
+        )
 
     def test_empty_log_returns_the_fallback(self):
         assert classify(

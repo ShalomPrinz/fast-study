@@ -25,6 +25,12 @@ Every tool call goes through `_run_tool`, which turns a `TimeoutExpired` into a 
 
 pandoc is bounded at 60s. The render is bounded at 60s **when the cache is frozen** — `TECTONIC_CACHE_DIR` set, which only the launcher does, and `--only-cached` then forbids any fetch — and at 900s otherwise. A real summary renders in ~3s against a warm cache, so 60s is already wedged; but a dev cache starts empty and the first render fetches the LaTeX bundle, which takes minutes once per machine.
 
+## The LaTeX golden
+
+`tests/pipeline/pdf/test_render_golden.py` runs `golden/summary.md` (every branch of `delivery/kitchen-sink.md` plus the [BIDI.md](BIDI.md) cases: mixed phrases, inline and fenced code, aligned and unaligned tables, the three callouts and an unknown one, inline and display math, lists, footnote, link, image) through the app's own path — `apply_outside_fences(…, preprocess_markdown)` then `build_tex` — and diffs the LaTeX against the committed `golden/summary.tex`. Pandoc only, no tectonic, so it runs in `test.yml` on every push against the pinned pandoc; skipped when pandoc is missing. `FASTSTUDY_BLESS=1 uv run pytest tests/pipeline/pdf/test_render_golden.py` rewrites the golden — review the diff before committing it. The image path stays as written (`probe.png`), so output has no tmp paths or dates.
+
+Also in the suite: an instrumented copy of `text_direction.lua` wraps every top-level handler it finds and logs whether it acted, so a handler the fixture never exercises fails the test; and real pandoc failures (a syntax-broken filter, a missing template) assert `build_tex`'s `pdf_pandoc_failed` code and `detail` param.
+
 ## Outcomes
 
 `-Z continue-on-errors` lets TeX skip past an error and **still emit a PDF** — and still exit **0**. So the outcome is read out of `build.log`, never off the return code, which would drop the warning on exactly the runs it exists for.
