@@ -175,6 +175,14 @@ resources/extension/                the Chrome extension, copied to <state root>
 resources/bridge/host.js            the native host script, run on Electron-as-node by a generated .bat
 ```
 
+## The installed process tree
+
+Main is the `FastStudy.exe` from the install dir that the four services are direct children of.
+No `--type=` does not identify it: `auto` and `server` are themselves `FastStudy.exe` run as Node
+(`ELECTRON_RUN_AS_NODE=1`) without one, as are yt-dlp's JS runtime and the native host. On Windows the pid a launcher reports for the exe it started — Playwright's `app.process().pid`
+among them — can be main's parent rather than main, so find main in the tree as the services'
+shared parent, never by the launched pid.
+
 ## Teardown
 
 Children are spawned in their own process group (POSIX), so the kill reaches the tools they spawned
