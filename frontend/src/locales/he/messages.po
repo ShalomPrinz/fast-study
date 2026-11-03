@@ -2165,10 +2165,6 @@ msgstr "פתיחה במסך מלא"
 msgid "Open lecture"
 msgstr "פתיחת ההרצאה"
 
-#: src/features/lectures/components/MaterialChip.tsx:87
-msgid "Open material"
-msgstr "פתיחת החומר"
-
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/AssignmentDocCard.tsx:159

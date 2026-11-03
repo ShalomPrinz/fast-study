@@ -2165,10 +2165,6 @@ msgstr "Open in full screen"
 msgid "Open lecture"
 msgstr "Open lecture"
 
-#: src/features/lectures/components/MaterialChip.tsx:87
-msgid "Open material"
-msgstr "Open material"
-
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/AssignmentDocCard.tsx:159
