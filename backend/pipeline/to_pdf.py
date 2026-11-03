@@ -56,6 +56,7 @@ LATEX_HEADER = r"""
 \newtcolorbox{calloutwarning}{calloutstyle, colback=calloutWarningTint, colframe=calloutWarningFrame}
 \newtcolorbox{calloutinsight}{calloutstyle, colback=calloutInsightTint, colframe=calloutInsightFrame}
 
+\usepackage{stmaryrd}
 \usepackage{hyperref}
 \usepackage[normalem]{ulem}
 \def\st#1{\sout{#1}}

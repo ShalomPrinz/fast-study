@@ -12,7 +12,7 @@ Tectonic bundles XeTeX, which uses the **e-TeX TeXXeT** bidi model.
 
 Probe with a `\ifx\foo\@undefined NO\else YES\fi` test file before assuming a primitive exists.
 
-**Package order in `LATEX_HEADER` is load-bearing.** bidi (loaded by polyglossia for Hebrew) rejects `graphicx` and `lineno` loaded after it, so `fvextra` and `tcolorbox`, which pull them in, sit at the very top, above polyglossia. `hyperref` is loaded there too, because pandoc 3's template loads it after the header and bidi errors on that. `\st` is redefined onto ulem's `\sout`, since the template's soul drops Hebrew glyphs.
+**Package order in `LATEX_HEADER` is load-bearing.** bidi (loaded by polyglossia for Hebrew) rejects `graphicx` and `lineno` loaded after it, so `fvextra` and `tcolorbox`, which pull them in, sit at the very top, above polyglossia. `hyperref` is loaded there too, because pandoc 3's template loads it after the header and bidi errors on that. `stmaryrd` (for `\llbracket`/`\rrbracket`) loads just before it; order-insensitive. `\st` is redefined onto ulem's `\sout`, since the template's soul drops Hebrew glyphs.
 
 ## The direction filter
 

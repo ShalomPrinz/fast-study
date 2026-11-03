@@ -34,6 +34,8 @@
 
 $$\sum_{i=1}^{n} \frac{x_i - \mu}{\sigma} \le \int_0^\infty e^{-t^2}\,dt \quad \forall x \in \mathbb{R}^n$$
 
+$$\llbracket x \rrbracket$$
+
 $$\begin{pmatrix} a & b \\ c & d \end{pmatrix} \otimes \aleph_0 \Rightarrow \bigcup_{k} A_k$$
 
 $$A\mathbf{x} - x_0 \mathbf{1} \le \mathbf{b}_{\mathbf{i}_{\mathbf{j}}}$$

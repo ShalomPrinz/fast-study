@@ -118,4 +118,5 @@ def test_header_keeps_hyperref_before_bidi_and_strikeout_on_ulem():
 
     header = to_pdf.LATEX_HEADER
     assert header.index("{hyperref}") < header.index("{polyglossia}")
+    assert "\\usepackage{stmaryrd}" in header
     assert "\\def\\st#1{\\sout{#1}}" in header
