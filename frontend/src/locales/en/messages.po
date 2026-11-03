@@ -1163,7 +1163,7 @@ msgstr "Creating…"
 msgid "Current lecture"
 msgstr "Current lecture"
 
-#: src/features/lectures/components/PdfViewer.tsx:78
+#: src/features/lectures/components/PdfViewer.tsx:103
 msgid "Current PDF"
 msgstr "Current PDF"
 
@@ -2004,7 +2004,7 @@ msgstr "no PDF"
 msgid "No PDF for this lecture"
 msgstr "No PDF for this lecture"
 
-#: src/features/lectures/components/PdfViewer.tsx:123
+#: src/features/lectures/components/PdfViewer.tsx:148
 msgid "No PDF yet — use \"Save & update PDF\" to create one."
 msgstr "No PDF yet — use \"Save & update PDF\" to create one."
 
@@ -2173,8 +2173,8 @@ msgstr "Open material"
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/AssignmentDocCard.tsx:159
 #: src/features/lectures/components/PdfHero.tsx:192
-#: src/features/lectures/components/PdfViewer.tsx:106
-#: src/features/lectures/components/PdfViewer.tsx:107
+#: src/features/lectures/components/PdfViewer.tsx:131
+#: src/features/lectures/components/PdfViewer.tsx:132
 #: src/features/lectures/MainView.tsx:466
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
@@ -3499,8 +3499,8 @@ msgstr "Your university's Moodle address"
 msgid "Zoom asked for a captcha, and solving it is only supported on Windows."
 msgstr "Zoom asked for a captcha, and solving it is only supported on Windows."
 
-#: src/features/lectures/components/PdfViewer.tsx:92
-#: src/features/lectures/components/PdfViewer.tsx:95
+#: src/features/lectures/components/PdfViewer.tsx:117
+#: src/features/lectures/components/PdfViewer.tsx:120
 msgid "Zoom in"
 msgstr "Zoom in"
 
@@ -3508,7 +3508,7 @@ msgstr "Zoom in"
 msgid "Zoom is asking for a captcha in a Chrome window. The download continues once you solve it."
 msgstr "Zoom is asking for a captcha in a Chrome window. The download continues once you solve it."
 
-#: src/features/lectures/components/PdfViewer.tsx:82
-#: src/features/lectures/components/PdfViewer.tsx:85
+#: src/features/lectures/components/PdfViewer.tsx:107
+#: src/features/lectures/components/PdfViewer.tsx:110
 msgid "Zoom out"
 msgstr "Zoom out"

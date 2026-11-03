@@ -70,7 +70,9 @@ file through `services/open.ts`, rather than four more identifier props.
 
 Scroll is captured during render, while the old pages are still mounted — when `generating` starts (its
 spinner unmounts the scroll container before the new URL arrives) or when the URL changes — and restored
-from each page's `onRenderSuccess`; with nothing captured it snaps to the right edge for RTL.
+from each page's `onRenderSuccess` — only for as many renders as that change produces (a pending-page
+counter), so later renders never re-apply it. A zoom scales the live offsets by the ratio, or the captured
+position while restores are still pending (a fast second zoom, or a zoom during a URL load), keeping the reading position; with nothing captured it snaps to the right edge for RTL.
 
 ## `MarkdownEditor`
 

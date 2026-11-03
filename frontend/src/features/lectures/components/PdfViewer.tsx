@@ -4,7 +4,11 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { Document, Page, pdfjs } from 'react-pdf'
 import Icon from '@/shared/components/Icon'
 import { secretHeaders } from '@/services/runtime'
-import { shouldCaptureScroll } from '@/features/lectures/utils/pdfScroll'
+import {
+  shouldCaptureScroll,
+  afterPageRender,
+  zoomScrollState,
+} from '@/features/lectures/utils/pdfScroll'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import '@/styles/spinner.css'
@@ -30,6 +34,8 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
   const [scale, setScale] = useState(1.2)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const capturedScrollRef = useRef({ top: 0, left: 0 })
+  // Unknown page count = Infinity until onLoadSuccess clamps it to numPages.
+  const pendingRef = useRef(Infinity)
   const prevViewRef = useRef({ url, generating })
 
   // pdf.js fetches the document over XHR, so the secret rides its own headers. Memoized because
@@ -43,6 +49,7 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
     if (container) {
       capturedScrollRef.current = { top: container.scrollTop, left: container.scrollLeft }
     }
+    pendingRef.current = Infinity
   }
   prevViewRef.current = { url, generating }
 
@@ -51,6 +58,9 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
   const handlePageRendered = () => {
     const container = scrollContainerRef.current
     if (!container) return
+    const step = afterPageRender(pendingRef.current)
+    pendingRef.current = step.pending
+    if (!step.restore) return
     const { top, left } = capturedScrollRef.current
     if (top || left) {
       container.scrollTop = top
@@ -58,6 +68,21 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
     } else {
       container.scrollLeft = container.scrollWidth
     }
+  }
+
+  const zoomTo = (next: number) => {
+    const container = scrollContainerRef.current
+    if (!container || next === scale) return
+    const state = zoomScrollState({
+      pending: pendingRef.current,
+      captured: capturedScrollRef.current,
+      live: { top: container.scrollTop, left: container.scrollLeft },
+      ratio: next / scale,
+      numPages,
+    })
+    capturedScrollRef.current = state.captured
+    pendingRef.current = state.pending
+    setScale(next)
   }
 
   // The indicator names the page under the middle of the viewport. react-pdf owns the page class,
@@ -83,7 +108,7 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
               <button
                 className="pdf-zoom-btn"
                 aria-label={t`Zoom out`}
-                onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}
+                onClick={() => zoomTo(Math.max(scale - 0.2, 0.4))}
               >
                 −
               </button>
@@ -93,7 +118,7 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
               <button
                 className="pdf-zoom-btn"
                 aria-label={t`Zoom in`}
-                onClick={() => setScale((s) => Math.min(s + 0.2, 4))}
+                onClick={() => zoomTo(Math.min(scale + 0.2, 4))}
               >
                 +
               </button>
@@ -127,7 +152,10 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
         <div className="pdf-scroll-container" ref={scrollContainerRef} onScroll={handleScroll}>
           <Document
             file={file}
-            onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+            onLoadSuccess={({ numPages: n }) => {
+              pendingRef.current = Math.min(pendingRef.current, n)
+              setNumPages(n)
+            }}
             loading={
               <div className="pdf-doc-loading">
                 <div className="spinner" />

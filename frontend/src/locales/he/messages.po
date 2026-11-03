@@ -1163,7 +1163,7 @@ msgstr "יוצר…"
 msgid "Current lecture"
 msgstr "ההרצאה הנוכחית"
 
-#: src/features/lectures/components/PdfViewer.tsx:78
+#: src/features/lectures/components/PdfViewer.tsx:103
 msgid "Current PDF"
 msgstr "ה-PDF הנוכחי"
 
@@ -2004,7 +2004,7 @@ msgstr "אין PDF"
 msgid "No PDF for this lecture"
 msgstr "אין PDF להרצאה הזו"
 
-#: src/features/lectures/components/PdfViewer.tsx:123
+#: src/features/lectures/components/PdfViewer.tsx:148
 msgid "No PDF yet — use \"Save & update PDF\" to create one."
 msgstr "אין עדיין PDF — השתמש ב\"שמירה ועדכון PDF\" כדי ליצור אותו."
 
@@ -2173,8 +2173,8 @@ msgstr "פתיחת החומר"
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
 #: src/features/lectures/components/AssignmentDocCard.tsx:159
 #: src/features/lectures/components/PdfHero.tsx:192
-#: src/features/lectures/components/PdfViewer.tsx:106
-#: src/features/lectures/components/PdfViewer.tsx:107
+#: src/features/lectures/components/PdfViewer.tsx:131
+#: src/features/lectures/components/PdfViewer.tsx:132
 #: src/features/lectures/MainView.tsx:466
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
@@ -3499,8 +3499,8 @@ msgstr "כתובת ה-Moodle של האוניברסיטה"
 msgid "Zoom asked for a captcha, and solving it is only supported on Windows."
 msgstr "Zoom ביקש לפתור חידה, ופתרון החידה נתמך רק ב-Windows."
 
-#: src/features/lectures/components/PdfViewer.tsx:92
-#: src/features/lectures/components/PdfViewer.tsx:95
+#: src/features/lectures/components/PdfViewer.tsx:117
+#: src/features/lectures/components/PdfViewer.tsx:120
 msgid "Zoom in"
 msgstr "הגדלה"
 
@@ -3508,7 +3508,7 @@ msgstr "הגדלה"
 msgid "Zoom is asking for a captcha in a Chrome window. The download continues once you solve it."
 msgstr "Zoom מבקש לפתור חידה בחלון Chrome. ההורדה תמשיך אחרי שתפתור אותה."
 
-#: src/features/lectures/components/PdfViewer.tsx:82
-#: src/features/lectures/components/PdfViewer.tsx:85
+#: src/features/lectures/components/PdfViewer.tsx:107
+#: src/features/lectures/components/PdfViewer.tsx:110
 msgid "Zoom out"
 msgstr "הקטנה"
