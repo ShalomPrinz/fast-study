@@ -24,10 +24,20 @@ $$\begin{pmatrix} a & b \\ c & d \end{pmatrix} \otimes \aleph_0 \Rightarrow \big
 
 $$A\mathbf{x} - x_0 \mathbf{1} \le \mathbf{b}_{\mathbf{i}_{\mathbf{j}}}$$
 
+$$\frac{\cancel{a}\,b}{\cancel{a}} = b$$
+
 | עמודה א | עמודה ב | Value |
 | ------- | ------- | ----: |
 | ערך     | ערך שני | 3.14  |
 | שורה    | נוספת   | 42    |
+
++-------+-----+
+| עמודה | ערך |
++=======+=====+
+| מאוחד | א   |
+|       +-----+
+|       | ב   |
++-------+-----+
 
 ```python
 def gradient_descent(x0, alpha=0.01, eps=1e-8):

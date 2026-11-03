@@ -16,10 +16,10 @@ concurrency:
 
 env:
   # Pinned, because each one is a claim the repo has measured. tectonic is the version the shipped
-  # LaTeX cache was primed against; pandoc 3.x crashes text_direction.lua, so the binary and
-  # backend/assets/templates/pandoc_template.tex only ever move together.
+  # LaTeX cache was primed against; pandoc's stock template is backend/assets/templates/ and its Lua
+  # table API is what text_direction.lua reads, so the three only ever move together.
   TECTONIC_VERSION: '0.17.0'
-  PANDOC_VERSION: '2.9.2.1'
+  PANDOC_VERSION: '3.13'
   FFMPEG_VERSION: '9.0.2'
   # Pinned so the bootloader check below compares against the same version's stock wheel.
   PYINSTALLER_VERSION: '6.22.3'

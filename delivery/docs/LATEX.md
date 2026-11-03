@@ -17,10 +17,13 @@ builds that cache; a cold prime is network-bound at roughly 7.5 minutes.
 
 ## `kitchen-sink.md`
 
-Its contents come from enumerating the branches in `backend/assets/templates/pandoc_template.tex`
-and `to_pdf.py`'s `LATEX_HEADER`, not from sampling summaries. Every block pulls in a package, and
-dropping one drops that package from the cache. No summary in the corpus has a callout, table image,
-link or strikeout, so `tcolorbox`, `graphicx` and `ulem` reach the cache only because the sink asks.
+Its contents come from enumerating the branches in `backend/assets/templates/` — pandoc 3.13's
+stock template, its embedded partials (`pandoc --print-default-data-file templates/common.latex`)
+and the local `fonts.latex` — and `to_pdf.py`'s `LATEX_HEADER`, not from sampling summaries. Every
+block pulls in a package, and dropping one drops that package from the cache. No summary in the
+corpus has a callout, image, link, strikeout, `\cancel` or spanning grid table, so `tcolorbox`,
+`graphicx`, `soul`, `cancel` and `multirow` reach the cache only because the sink asks. `svg` is the
+one branch left out: it needs Inkscape, which never ships, and the bidi pass turns images into text.
 Its doubly-nested `\mathbf` line pulls Latin Modern bold math at 10/7/5pt, which body `\mathbf`
 needs; without it a render fails `pdf_missing_font`.
 

@@ -120,9 +120,11 @@ moving one re-opens that measurement, so surface it rather than bump it:
 - **tectonic 0.17.0** — the engine the shipped cache was primed against ([LATEX.md](LATEX.md)) and
   the glyph-for-glyph comparison against xelatex ([`backend/docs/PDF.md`](../../backend/docs/PDF.md))
   was measured on; the render also leans on its unstable `-Z continue-on-errors`.
-- **pandoc 2.9.2.1** — pandoc 3.x crashes `text_direction.lua`
-  ([`backend/docs/BIDI.md`](../../backend/docs/BIDI.md#the-direction-filter)), so the binary and
-  `backend/assets/templates/pandoc_template.tex` only ever move together.
+- **pandoc 3.13** — `backend/assets/templates/` is its stock template plus one partial, and
+  `text_direction.lua` reads its Lua table API (`colspecs`, which 2.9 lacks), so the binary and
+  both move together ([`backend/docs/PDF.md`](../../backend/docs/PDF.md#the-pandoc-pin-and-the-template));
+  a move also re-opens the sink ([LATEX.md](LATEX.md#kitchen-sinkmd)). Its `pandoc.exe` is 239MB
+  unpacked, 134MB more than 2.9.2.1's.
 - **ffmpeg 9.0.2** — pinned only so a build is reproducible; bump it for upstream security fixes.
 - **PyInstaller 6.22.3** — installed from its sdist with the bootloader compiled by MSVC on the
   runner, because Defender quarantines the stock prebuilt one, which malware shares. The sdist
