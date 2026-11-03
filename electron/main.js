@@ -580,7 +580,7 @@ function restartServices() {
 function killChildren() {
   // Here because every exit path and a failed boot pass through it: no service, no bridge file.
   removeBridge(BRIDGE_FILE);
-  return signalChildren(children.splice(0));
+  return signalChildren(children.splice(0), (line) => log('main', line));
 }
 
 /** Stop every child and resolve once each is gone, SIGKILLed if it outlived the grace. */

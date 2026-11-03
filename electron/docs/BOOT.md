@@ -192,7 +192,7 @@ Children are spawned in their own process group (POSIX), so the kill reaches the
 — ffmpeg, chrome, yt-dlp — and not just the service. Quit sends the group `SIGTERM`, then `SIGKILL`
 after a 3s grace (longer than a service's ~2s Sentry flush) to any child still alive, and main waits
 for that before it exits, or the timer would die with it. Windows has no process groups, so it is
-`taskkill /T /F` there. `process.on('exit')` cannot wait, so it only sends the `SIGTERM`. The same
+`taskkill /T /F` there, and a non-zero taskkill exit is logged with its output. `process.on('exit')` cannot wait, so it only sends the `SIGTERM`. The same
 kill removes `bridge.json`, so the native host answers `{ "running": false }` once the services are gone.
 
 The kill runs from `will-quit`, `process.on('exit')`, `SIGINT`/`SIGTERM`, a failed boot before its

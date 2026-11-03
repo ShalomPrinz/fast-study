@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { spawn } = require('node:child_process');
+const childProcess = require('node:child_process');
+const { spawn } = childProcess;
 const { test } = require('node:test');
 
 const { reapChildren, signalChildren } = require('../teardown');
@@ -36,7 +37,9 @@ test(
   async () => {
     const child = spawnGroup('sleep 60');
     const started = Date.now();
-    await reapChildren(signalChildren([child]), 3000, () => assert.fail('no SIGKILL expected'));
+    await reapChildren(signalChildren([child], assert.fail), 3000, () =>
+      assert.fail('no SIGKILL expected'),
+    );
     assert.ok(Date.now() - started < 1000);
     assert.equal(alive(child.pid), false);
   },
@@ -51,7 +54,7 @@ test(
     await new Promise((resolve) => setTimeout(resolve, 200));
     const lines = [];
     const started = Date.now();
-    await reapChildren(signalChildren([child]), 500, (line) => lines.push(line));
+    await reapChildren(signalChildren([child], assert.fail), 500, (line) => lines.push(line));
     assert.ok(Date.now() - started >= 500);
     assert.equal(lines.length, 1);
     assert.equal(
@@ -67,7 +70,25 @@ test(
 );
 
 test('an already-exited child is skipped', () => {
-  assert.deepEqual(signalChildren([{ pid: 1, exitCode: 0, signalCode: null }]), []);
+  assert.deepEqual(signalChildren([{ pid: 1, exitCode: 0, signalCode: null }], assert.fail), []);
+});
+
+test('a refused taskkill is logged with its exit status and output', (t) => {
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  Object.defineProperty(process, 'platform', { value: 'win32' });
+  t.after(() => Object.defineProperty(process, 'platform', platform));
+  const refusal = 'ERROR: The process with PID 42 could not be terminated.';
+  t.mock.method(childProcess, 'spawnSync', () => ({
+    status: 128,
+    stdout: '',
+    stderr: `${refusal}\r\n`,
+  }));
+  const lines = [];
+  assert.deepEqual(
+    signalChildren([{ pid: 42, exitCode: null, signalCode: null }], (l) => lines.push(l)),
+    [],
+  );
+  assert.deepEqual(lines, [`taskkill pid 42 failed (exit 128): ${refusal}`]);
 });
 
 test('an exit is news only when main did not cause it, and fails the boot while one runs', () => {
