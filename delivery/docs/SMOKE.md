@@ -3,7 +3,7 @@
 `smoke/` is `@playwright/test` driving the installed exe through `_electron`, run by `build.yml`'s
 smoke job against the uploaded installer ([RELEASE.md](RELEASE.md#build-test-publish)). One ordered
 file on one worker, since each check builds on the machine state the last one left: install, the
-installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, quit, the tools under a Hebrew temp
+installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, quit, a service restart, the tools under a Hebrew temp
 path, the browser chain, an in-place update. It needs an installed Windows build, so off the runner
 only `npx playwright test --list` works — it is never "passed" from WSL.
 
@@ -15,7 +15,7 @@ the app-harness E2E specs own ([`.claude/harness/README.md`](../../.claude/harne
 status, an error code or a provider's verbatim text (test 5's `lecture-error-message`) is read only as
 evidence of a packaging fact. Two flow checks stay here only because no harness spec covers them yet,
 both in `lib/firstRun.js`: the privacy gate — the wall's first save opens the policy, and Confirm stays
-disabled until `.privacy-body` is scrolled to its end (test 4, and test 14 when the policy opens) — and a canceled folder dialog
+disabled until `.privacy-body` is scrolled to its end (test 4, and test 15 when the policy opens) — and a canceled folder dialog
 keeping the launcher's default (test 4). The boundary is the
 root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 
@@ -32,9 +32,10 @@ root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 | 9. opening a PDF        | `open-pdf` fails through the preload bridge and `shell.openPath`; a real Windows exclusive handle is not reported as `file_locked`   | `locked-file.spec.mjs`                             |
 | 10. yt-dlp download     | yt-dlp cannot find the bundled ffmpeg to merge DASH, the state root's yt-dlp copy is not seeded, `/video-arrived` is never reported  | `download-all.spec.mjs`                            |
 | 11. quit, no orphans    | a frozen process or port outlives the launcher's teardown; settings do not persist across a relaunch                                 | —                                                  |
-| 12. Hebrew temp path    | a bundled tool breaks under a non-ASCII `TEMP`; the frozen services do not write UTF-8 to `launch.log`                               | —                                                  |
-| 13. the browser chain   | the prerequisite misresolves installed Chrome or Edge; the PDF step depends on a browser                                             | —                                                  |
-| 14. an in-place update  | the updater fails to replace `resources/` from a feed, or loses the keys, the yt-dlp copy or the new `.fmt`                          | —                                                  |
+| 12. service restart     | a frozen service or a tool it spawned outlives the restart's teardown, an old port stays held, the reboot runs other than four service processes on new ports | —                                                  |
+| 13. Hebrew temp path    | a bundled tool breaks under a non-ASCII `TEMP`; the frozen services do not write UTF-8 to `launch.log`                               | —                                                  |
+| 14. the browser chain   | the prerequisite misresolves installed Chrome or Edge; the PDF step depends on a browser                                             | —                                                  |
+| 15. an in-place update  | the updater fails to replace `resources/` from a feed, or loses the keys, the yt-dlp copy or the new `.fmt`                          | —                                                  |
 
 A new smoke test adds its row here; a test with no packaging-only failure belongs in the harness or a unit test.
 
@@ -101,7 +102,7 @@ A new smoke test adds its row here; a test with no packaging-only failure belong
 
 ## Boot timing
 
-Two boots are timed, never an extra launch: test 3's (the fresh install's first) and test 14's last
+Two boots are timed, never an extra launch: test 3's (the fresh install's first) and test 15's last
 step (the candidate's first after the update). `lib/bootTiming.js` writes them to
 `test-results/boot-timing.json` — `launch_to_app_ms` (`electron.launch` → main's `app loaded`
 `launch.log` line, the launcher's own mark of `app://bundle` finishing its load; same machine, same

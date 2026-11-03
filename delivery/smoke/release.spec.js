@@ -33,6 +33,8 @@ import {
   productVersion,
   renameAside,
   runToExit,
+  listeners,
+  processTable,
   stopProcesses,
   strayProcesses,
 } from './lib/windows.js';
@@ -102,6 +104,12 @@ const byTestId = (page, id, attributes = {}) =>
 async function start(env) {
   session = await launch(env);
   await waitForApp(session);
+  await bind();
+  return session;
+}
+
+/** Bind the service clients to the bridge the current page reads, which a restart's reload renews. */
+async function bind() {
   const reached = await bridge(session.page);
   services = {
     urls: reached.urls,
@@ -110,7 +118,6 @@ async function start(env) {
     api: backend(reached),
     dl: downloader(reached),
   };
-  return session;
 }
 
 async function stop() {
@@ -203,6 +210,50 @@ function refusesConnection(port) {
     });
     socket.once('error', () => resolve(true));
   });
+}
+
+/** A process as a failure names it: pid, image, command line, and the service port it held, if any. */
+function named(p) {
+  const held = p.service ? ` — ${p.service} on port ${p.port}` : '';
+  return `pid ${p.pid} ${p.name} (${p.commandLine || p.exe || 'no command line'})${held}`;
+}
+
+/** The services main runs: its direct children out of the install dir, minus Electron's own
+ *  `--type=` helpers (renderer, GPU, crashpad) — `services.exe` twice and `FastStudy.exe` as node twice. */
+function serviceChildren(table, mainPid) {
+  const prefix = path.join(paths.installDir(), path.sep).toLowerCase();
+  return table.filter(
+    (p) =>
+      p.ppid === mainPid &&
+      p.exe.toLowerCase().startsWith(prefix) &&
+      !p.commandLine.includes('--type='),
+  );
+}
+
+/** `roots` and every process descended from them in `table`. */
+function withDescendants(table, roots) {
+  const found = [...roots];
+  for (let i = 0; i < found.length; i++) {
+    for (const child of table) {
+      const own = child.ppid === found[i].pid && child.created >= found[i].created;
+      if (own && !found.includes(child)) found.push(child);
+    }
+  }
+  return found;
+}
+
+/** What of `tracked` still runs, plus any process born later under a tracked pid — the tree a
+ *  dead parent's orphans keep naming. A pid Windows reused for a stranger is matched by start time. */
+async function survivorsOf(tracked) {
+  const now = await processTable();
+  const same = (a, b) => a.pid === b.pid && a.created === b.created;
+  const survivors = tracked.filter((t) => now.some((p) => same(p, t)));
+  const orphans = now.filter((p) => {
+    const parent = tracked.find((t) => t.pid === p.ppid);
+    if (!parent || p.created < parent.created || tracked.some((t) => same(t, p))) return false;
+    return !now.some((q) => q.pid === parent.pid && q.created !== parent.created);
+  });
+  return [...survivors, ...orphans];
 }
 
 /** Each existing install dir Playwright's channel resolve looks in, per its fixed Windows paths. */
@@ -672,7 +723,105 @@ test('11. quit, no orphans', async () => {
   });
 });
 
-test('12. the tools run under a Hebrew temp path', async () => {
+test('12. a service restart leaves nothing behind', async () => {
+  if (!session) await start();
+  const { page } = session;
+  const mainPid = session.app.process().pid;
+  const killed = 'database';
+  const before = readyPorts(readLaunchLog());
+  expect(before, `ready lines before the restart: ${JSON.stringify(before)}`).toHaveLength(4);
+
+  // Each service's process is the one listening on its ready port; what it spawned is tracked too.
+  const table = await processTable();
+  const owners = await listeners(before.map(({ port }) => port));
+  const old = before.map(({ service, port }) => {
+    const pid = owners.find((owner) => owner.port === port)?.pid;
+    const found = table.find((p) => p.pid === pid);
+    expect(found, `nothing listens on ${service}'s port ${port} before the restart`).toBeTruthy();
+    return { ...found, service, port };
+  });
+  const children = serviceChildren(table, mainPid);
+  expect(
+    old.map((p) => p.pid).sort(),
+    `the ready ports' owners (${old.map(named).join('; ')}) are not main's service children (${children.map(named).join('; ')})`,
+  ).toEqual(children.map((p) => p.pid).sort());
+  const tracked = withDescendants(table, old);
+
+  // Task Manager's End task: TerminateProcess, which is what Node's kill is on Windows.
+  const victim = old.find((p) => p.service === killed);
+  process.kill(victim.pid, 'SIGKILL');
+  await waitFor(() => readLaunchLog().includes(`[main] ${killed} stopped unexpectedly`), {
+    timeoutMs: 30_000,
+    message: `launch.log never reported ${named(victim)} stopped after a hard kill`,
+  });
+
+  // The bridge's own call; the banner that offers it is the harness's to prove.
+  await page
+    .evaluate(() => window.faststudy.services.restart())
+    .catch((error) => {
+      // The restart navigates to the launch screen, which can beat the evaluate's answer back.
+      if (!/context was destroyed/i.test(error.message)) throw error;
+    });
+  const sinceRestart = () => {
+    const log = readLaunchLog();
+    const at = log.indexOf('[main] restart requested');
+    return at < 0 ? '' : log.slice(at);
+  };
+  const after = await waitFor(
+    () => {
+      const log = sinceRestart();
+      if (log.includes('[main] boot failed')) throw new Error(`the restart's boot failed:\n${log}`);
+      const ready = readyPorts(log);
+      return ready.length === 4 && log.includes('[main] app loaded app://bundle/') ? ready : null;
+    },
+    {
+      timeoutMs: 180_000,
+      message: () =>
+        `the restart did not reboot four services and reload the app; launch.log since it was requested:\n${sinceRestart() || '(no restart requested line)'}`,
+    },
+  );
+  await page.waitForURL((url) => url.protocol === 'app:' && url.host === 'bundle');
+  await bind();
+
+  let left = await survivorsOf(tracked);
+  for (const deadline = Date.now() + 30_000; left.length && Date.now() < deadline;) {
+    await delay(1000);
+    left = await survivorsOf(tracked);
+  }
+  expect(left.map(named), 'processes from before the restart outlived it').toEqual([]);
+  for (const p of old) {
+    expect(await refusesConnection(p.port), `port ${p.port} still answers: ${named(p)}`).toBe(true);
+  }
+
+  const now = await processTable();
+  const running = serviceChildren(now, mainPid);
+  expect(running.map(named), 'main runs other than four service processes').toHaveLength(4);
+  const newOwners = await listeners(after.map(({ port }) => port));
+  for (const { service, port } of after) {
+    const was = old.find((p) => p.service === service);
+    expect(port, `${service} came back on its old port ${port}`).not.toBe(was.port);
+    const pid = newOwners.find((owner) => owner.port === port)?.pid;
+    expect(
+      running.map((p) => p.pid),
+      `${service}'s new port ${port} is held by pid ${pid ?? 'nobody'}, not one of main's service children: ${running.map(named).join('; ')}`,
+    ).toContain(pid);
+  }
+  expect(new Set(newOwners.map(({ pid }) => pid)).size, 'two services share a process').toBe(4);
+
+  // The reloaded page reads the new ports off the bridge, and the app answers on them.
+  expect(
+    Object.values(services.urls)
+      .map((url) => Number(new URL(url).port))
+      .sort(),
+    "the reloaded bridge does not name the restart's ports",
+  ).toEqual(after.map(({ port }) => port).sort());
+  for (const [name, answer] of Object.entries(await healthOf(services.urls))) {
+    expect(answer.status, `${name} /health after the restart`).toBe('ok');
+  }
+  await openLecture(page, COURSE, LECTURE);
+});
+
+test('13. the tools run under a Hebrew temp path', async () => {
   await stop();
   // Hebrew and a space in the dir every service spawns its tools in, as a Windows username can put in %TEMP%.
   const folder = 'טמפ עברי';
@@ -720,7 +869,7 @@ test('12. the tools run under a Hebrew temp path', async () => {
   await stop();
 });
 
-test('13. the browser chain, both ends', async () => {
+test('14. the browser chain, both ends', async () => {
   await stop();
   try {
     await test.step('with Chrome gone the prerequisite resolves Edge', async () => {
@@ -754,7 +903,7 @@ test('13. the browser chain, both ends', async () => {
   }
 });
 
-test('14. an in-place update', async () => {
+test('15. an in-place update', async () => {
   const candidate = paths.candidate();
   const previous = paths.previous();
   await stop();

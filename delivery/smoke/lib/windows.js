@@ -102,6 +102,35 @@ $prefixes = @(${prefixes})
   return Array.isArray(parsed) ? parsed : [parsed];
 }
 
+/** Every live process with its parent and start time; a pid plus `created` names one process even
+ *  after Windows reuses the pid. */
+export async function processTable() {
+  const json = await powershell(`
+@(Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, Name, ExecutablePath, CommandLine,
+  @{ n = 'created'; e = { if ($_.CreationDate) { $_.CreationDate.ToUniversalTime().ToString('o') } } }) | ConvertTo-Json -Compress`);
+  const parsed = json ? JSON.parse(json) : [];
+  return (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
+    pid: row.ProcessId,
+    ppid: row.ParentProcessId,
+    name: row.Name,
+    exe: row.ExecutablePath ?? '',
+    commandLine: row.CommandLine ?? '',
+    created: row.created,
+  }));
+}
+
+/** The pid listening on each of `ports` on any address, as `{ port, pid }`; a free port has no row. */
+export async function listeners(ports) {
+  const json = await powershell(`
+@(Get-NetTCPConnection -State Listen -LocalPort @(${ports.join(', ')}) -ErrorAction SilentlyContinue |
+  Select-Object LocalPort, OwningProcess -Unique) | ConvertTo-Json -Compress`);
+  const parsed = json ? JSON.parse(json) : [];
+  return (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
+    port: row.LocalPort,
+    pid: row.OwningProcess,
+  }));
+}
+
 /** Processes whose image name matches, e.g. the NSIS installer and its uninstall helper. */
 export async function processesNamed(patterns) {
   const json = await powershell(`
