@@ -142,7 +142,7 @@ link_not_a_video`, …) are forwarded verbatim, and an unreachable auto fails th
 autodl_unreachable` whatever the link. The job has no ref; a proxied target whose id auto forgot (a restart) re-resolves once from the
 same url, waiting its turn at the lock, like a row's silent re-resolve ([JOBS.md](JOBS.md)). yt-dlp's generic
 extractor rarely knows a size, so the probe usually reports unknown, and a host's 401/403 lands as
-`download_auth_failed` like any other source.
+`download_auth_failed` like any other source, or `download_refused` when it follows that re-resolve ([JOBS.md](JOBS.md)).
 
 ### The JS runtime
 

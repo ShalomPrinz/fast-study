@@ -189,6 +189,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   download_auth_failed: msg({
     message: 'The download was refused — the session has expired. Reconnect the account.',
   }),
+  download_refused: msg({ message: 'The site refused this file.' }),
   recapture_reconnect_required: msg({
     message: 'The Moodle session expired. Reconnect the account and try again.',
   }),

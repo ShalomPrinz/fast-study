@@ -302,6 +302,7 @@ carry rows despite being `dev`: a launcher/frontend key drift reaches real users
 | `downloaders/runner.js`   | job        | `download_tool_spawn_failed`| `tool`, `detail`           | user  |
 | `downloaders/runner.js`   | job        | `download_tool_failed`      | `tool`, `exit_code`, `detail` | user |
 | `downloaders/runner.js`   | job        | `download_auth_failed`      | `tool`, `exit_code`, `detail` | user |
+| `downloaders/runner.js`   | job        | `download_refused`          | `tool`, `exit_code`, `detail` | user |
 | `downloaders/runner.js`   | job        | `download_failed`           | `tool`, `detail`           | uncertain |
 | `routes/downloadItem.js`  | job        | `recapture_reconnect_required` | —                       | user  |
 | `routes/downloadItem.js`  | job        | `recapture_passcode_required`  | —                       | user  |
@@ -332,7 +333,8 @@ on both channels unchanged, so `database_store_failed` is only the fallback for 
 `downloaders/runner.js` likewise ends a job whose file on auto was refused with auto's own
 `code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_reconnect_required`,
 `moodle_file_unknown`); a body that is not auto's envelope falls back to `download_tool_failed` /
-`download_auth_failed`. A re-resolve that auto answers `503 site_blocked` or `site_captcha_timeout`
+`download_auth_failed`. A 401/403 on the run the silent re-resolve started is `download_refused`, since
+that token is fresh and reconnecting would not help. A re-resolve that auto answers `503 site_blocked` or `site_captcha_timeout`
 likewise ends the job with that code and params, never `recapture_failed`.
 
 The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live only in `progress.js`'s

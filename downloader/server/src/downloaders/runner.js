@@ -38,19 +38,23 @@ function isAuthError(message) {
 
 /**
  * A finished child's failure as `{ auth, message, code, params }`, or null for a clean exit. A
- * refusal from auto (`downloader.refusal`) is its own code; else the exit code and stderr tail.
+ * refusal from auto (`downloader.refusal`) is its own code; else the exit code and stderr tail. An
+ * auth refusal after the re-resolve (`reresolved`) is `download_refused`: the token was fresh.
  */
-export function exitFailure(tool, exitCode, detail, refusal) {
+export function exitFailure(tool, exitCode, detail, refusal, reresolved = false) {
   if (!refusal && exitCode === 0) return null;
   const auth = refusal ? refusal.status === 401 || refusal.status === 403 : isAuthError(detail);
   if (refusal?.code)
     return { auth, message: refusal.error, code: refusal.code, params: refusal.params };
   if (refusal) detail = refusal.error;
   const message = `exited with code ${exitCode}${detail ? `\n${detail}` : ''}`;
+  const authCode = reresolved ? 'download_refused' : 'download_auth_failed';
   return {
     auth,
-    message: auth ? `authentication failed\n${message}` : message,
-    code: auth ? 'download_auth_failed' : 'download_tool_failed',
+    message: auth
+      ? `${reresolved ? 'refused on a fresh token' : 'authentication failed'}\n${message}`
+      : message,
+    code: auth ? authCode : 'download_tool_failed',
     params: { tool, exit_code: exitCode, detail: detail || null },
   };
 }
@@ -61,12 +65,19 @@ const CUT_SHORT = new Set([18, 52, 56]);
 
 /**
  * The one recovery a failed run gets, or null: `{ step: 'rerun'|'reresolve', next }`, `next` being the
- * following run's `{fromCache, reresolve, rerun}`. `rerun` rides through both, so each fires once a job.
+ * following run's `{fromCache, reresolve, rerun, reresolved}`. `rerun` and `reresolved` ride through both, so each fires once a job.
  */
-export function recovery({ fromCache, reresolve, rerun }, url, exitCode, refusal, auth) {
+export function recovery(
+  { fromCache, reresolve, rerun, reresolved = false },
+  url,
+  exitCode,
+  refusal,
+  auth,
+) {
   if (!rerun && onAutodl(url) && CUT_SHORT.has(exitCode) && !refusal)
-    return { step: 'rerun', next: { fromCache, reresolve, rerun: true } };
-  if (auth && fromCache && reresolve) return { step: 'reresolve', next: { rerun } };
+    return { step: 'rerun', next: { fromCache, reresolve, rerun: true, reresolved } };
+  if (auth && fromCache && reresolve)
+    return { step: 'reresolve', next: { rerun, reresolved: true } };
   return null;
 }
 
@@ -77,7 +88,7 @@ function cancelled(jobId, tool, tempDir) {
 }
 
 // Source-agnostic runner (docs/DOWNLOAD.md); every exit path terminates `jobId`. `reresolve`: silent
-// auth recovery (docs/JOBS.md); `save` replaces the upload; `source`: a row's ref, a material's identity.
+// auth recovery (docs/JOBS.md); `reresolved`: this run follows it; `save` replaces the upload; `source`: a row's ref, a material's identity.
 export async function runDownloadJob(
   downloader,
   input,
@@ -89,6 +100,7 @@ export async function runDownloadJob(
     fromCache = false,
     reresolve = null,
     rerun = false,
+    reresolved = false,
     save = null,
     source = null,
     label = `${course}/${lecture}`,
@@ -155,7 +167,13 @@ export async function runDownloadJob(
         return;
       }
       const refusal = downloader.refusal?.(tempDir) ?? null;
-      const failure = exitFailure(downloader.tool, code, code !== 0 ? tail() : '', refusal);
+      const failure = exitFailure(
+        downloader.tool,
+        code,
+        code !== 0 ? tail() : '',
+        refusal,
+        reresolved,
+      );
       if (failure) {
         removeTempDir(tempDir);
 
@@ -163,7 +181,7 @@ export async function runDownloadJob(
         // fromCache so a restarted auto's 401 still reaches the re-resolve. A cached cap's token
         // went stale: re-resolve it fresh and re-run the SAME job with fromCache:false.
         const next = recovery(
-          { fromCache, reresolve, rerun },
+          { fromCache, reresolve, rerun, reresolved },
           input.url,
           code,
           refusal,

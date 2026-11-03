@@ -106,3 +106,39 @@ test('a job cancelled before its spawn never spawns', async () => {
   assert.equal(seen.built, false);
   assert.equal(job(id).startedAt, null);
 });
+
+// A child that exits 22 with a 403 on stderr; `fresh` is the re-resolve's replacement downloader.
+const REFUSED =
+  "console.error('curl: (22) The requested URL returned error: 403'); process.exit(22)";
+
+test('a 403 right after the re-resolve is download_refused', async () => {
+  const { downloader } = fakeDownloader(REFUSED);
+  const { downloader: fresh } = fakeDownloader(REFUSED);
+  const jobId = createJob({ course: 'C', lecture: 'refused', kind: 'video', tool: 'curl' });
+  runDownloadJob(
+    downloader,
+    { url: 'http://example.invalid/v.mp4' },
+    {
+      course: 'C',
+      lecture: 'refused',
+      kind: 'video',
+      jobId,
+      fromCache: true,
+      reresolve: async () => ({
+        downloader: fresh,
+        input: { url: 'http://example.invalid/v.mp4' },
+      }),
+    },
+  );
+  await until(() => job(jobId).status === 'error');
+  assert.equal(job(jobId).code, 'download_refused');
+  assert.equal(job(jobId).params.exit_code, 22);
+  assert.match(job(jobId).params.detail, /403/);
+});
+
+test('a 403 with no re-resolve stays download_auth_failed', async () => {
+  const { downloader } = fakeDownloader(REFUSED);
+  const id = start(downloader, 'noresolve');
+  await until(() => job(id).status === 'error');
+  assert.equal(job(id).code, 'download_auth_failed');
+});

@@ -120,17 +120,18 @@ stem until `done`, then the name actually saved (`Talk (2).mp4`). `operation` (`
 `message` is English and developer-facing; `code`/`params` are what a client renders from (repo-root
 [`docs/ERROR-CODES.md`](../../../docs/ERROR-CODES.md)). All three are `null` on a job that succeeded or was cancelled.
 
-| code                         | params                        | when                                                                                                                                                  |
-| ---------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `download_tool_spawn_failed` | `tool`, `detail`              | the child never started                                                                                                                               |
-| `download_tool_failed`       | `tool`, `exit_code`, `detail` | non-zero exit; `detail` is the stderr tail                                                                                                            |
-| `download_auth_failed`       | `tool`, `exit_code`, `detail` | the same exit, classified by `isAuthError`                                                                                                            |
-| `download_failed`            | `tool`, `detail`              | the probe or command build threw                                                                                                                      |
-| `database_store_failed`      | `detail`                      | the bytes never reached the database                                                                                                                  |
-| the database's own code      | as the database sent them     | the database refused the store (`docs/DATABASE.md`)                                                                                                   |
-| auto's own code              | as auto sent them             | auto refused a file fetch (`site_blocked` with `challengeWindow`, …); a non-envelope body is `download_tool_failed`, a 401/403 `download_auth_failed` |
-| `recapture_*`                | see above                     | the one silent re-resolve failed                                                                                                                      |
-| `general_folder_save_failed` | `folder`, `detail`            | a folder job's move into the folder failed                                                                                                            |
+| code                         | params                        | when                                                                                                                                                                        |
+| ---------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `download_tool_spawn_failed` | `tool`, `detail`              | the child never started                                                                                                                                                     |
+| `download_tool_failed`       | `tool`, `exit_code`, `detail` | non-zero exit; `detail` is the stderr tail                                                                                                                                  |
+| `download_auth_failed`       | `tool`, `exit_code`, `detail` | the same exit, classified by `isAuthError`; never re-resolved (fresh capture, yt-dlp, manual)                                                                               |
+| `download_refused`           | `tool`, `exit_code`, `detail` | the same 401/403 classification, but on the run right after the silent re-resolve fetched a fresh token: the host refuses a fresh token, so the account is not what expired |
+| `download_failed`            | `tool`, `detail`              | the probe or command build threw                                                                                                                                            |
+| `database_store_failed`      | `detail`                      | the bytes never reached the database                                                                                                                                        |
+| the database's own code      | as the database sent them     | the database refused the store (`docs/DATABASE.md`)                                                                                                                         |
+| auto's own code              | as auto sent them             | auto refused a file fetch (`site_blocked` with `challengeWindow`, …); a non-envelope body is `download_tool_failed`, a 401/403 `download_auth_failed`                       |
+| `recapture_*`                | see above                     | the one silent re-resolve failed                                                                                                                                            |
+| `general_folder_save_failed` | `folder`, `detail`            | a folder job's move into the folder failed                                                                                                                                  |
 
 ## Timing samples
 

@@ -247,6 +247,15 @@ test("a job refused by auto ends with auto's code; otherwise with the exit's", (
     exitFailure('curl', 22, 'curl: (22) The requested URL returned error: 403', null).code,
     'download_auth_failed',
   );
+  const refused = exitFailure('curl', 22, 'curl: (22) returned error: 403', null, true);
+  assert.equal(refused.code, 'download_refused');
+  assert.deepEqual(refused.params, {
+    tool: 'curl',
+    exit_code: 22,
+    detail: 'curl: (22) returned error: 403',
+  });
+  assert.equal(refused.auth, true);
+  assert.equal(exitFailure('curl', 6, 'x', null, true).code, 'download_tool_failed');
   assert.equal(
     exitFailure('curl', 6, 'curl: (6) Could not resolve host', null).code,
     'download_tool_failed',
@@ -271,7 +280,7 @@ test('a job gets at most one cut-short re-run and one re-resolve, in either orde
   // cut short → re-run → 401 → re-resolve → cut short again: the third run ends the job.
   const afterRerun = recovery(start, onAuto, 56, null, false).next;
   const afterResolve = recovery(afterRerun, onAuto, 0, null, true);
-  assert.deepEqual(afterResolve, { step: 'reresolve', next: { rerun: true } });
+  assert.deepEqual(afterResolve, { step: 'reresolve', next: { rerun: true, reresolved: true } });
   assert.equal(recovery(afterResolve.next, onAuto, 18, null, false), null);
 
   // 401 → re-resolve → cut short → re-run → 401: no second re-resolve.
@@ -279,6 +288,20 @@ test('a job gets at most one cut-short re-run and one re-resolve, in either orde
   const rerunAfter = recovery(resolved, onAuto, 18, null, false);
   assert.equal(rerunAfter.step, 'rerun');
   assert.equal(recovery(rerunAfter.next, onAuto, 0, null, true), null);
+});
+
+test('a re-run of the fresh-token run still counts as re-resolved', () => {
+  const onAuto = targetUrl('/moodle/file/abc');
+  const start = { fromCache: true, reresolve: () => {}, rerun: false };
+  // cached 401 → re-resolve → fresh run cut short → re-run
+  const fresh = recovery(start, onAuto, 0, null, true).next;
+  const rerun = recovery(fresh, onAuto, 56, null, false);
+  assert.equal(rerun.step, 'rerun');
+  assert.equal(rerun.next.reresolved, true);
+  assert.equal(
+    exitFailure('curl', 22, 'curl: (22) returned error: 403', null, rerun.next.reresolved).code,
+    'download_refused',
+  );
 });
 
 test("auto's captchaSolved crosses to the /download-item answer, and is absent otherwise", () => {
