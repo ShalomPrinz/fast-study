@@ -257,8 +257,11 @@ A `ModeToggle` (`mode-toggle--cards`) splits the segments Videos · Materials ·
 only while it holds a row (`showsMediaSegment`). `MediaNote` captions the chosen card: `mediaNote(media,
 autoRun)` picks the hint, and only the video side's follows AUTO_RUN and links to Settings, since only a
 video download starts a pipeline step. Then `groupSections(items, media)` filters
-by media _before_ grouping by Moodle heading (first-seen order, blank → "Other"), so a section with
+by media _before_ grouping by Moodle heading (first-seen order, blank → "Other"; auto's `section: 'Sidebar'` on BIU sidebar-block videos is its own
+real section, `SIDEBAR_SECTION`), so a section with
 nothing on the active side does not render and "Download all" covers one media only.
+
+`Other` and `Sidebar` are untranslated sentinels in the run key; `sectionTitle()` translates them only at render.
 
 A row auto stamps `likelyRecording: false` (a `url` module with no recording keyword) moves into a
 synthetic **Other links** bucket, placed last — this keeps stray links out of the lecture sections, and

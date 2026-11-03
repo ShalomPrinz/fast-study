@@ -2221,7 +2221,7 @@ msgctxt "section mark"
 msgid "Optional"
 msgstr "Optional"
 
-#: src/features/downloads/utils/sections.ts:22
+#: src/features/downloads/utils/sections.ts:25
 msgid "Other"
 msgstr "Other"
 
@@ -2699,6 +2699,10 @@ msgstr "Show screenshot"
 #: src/features/lectures/MainView.tsx:559
 msgid "Show steps"
 msgstr "Show steps"
+
+#: src/features/downloads/utils/sections.ts:26
+msgid "Sidebar"
+msgstr "Sidebar"
 
 #: src/features/tour/Tour.tsx:80
 msgid "Skip"

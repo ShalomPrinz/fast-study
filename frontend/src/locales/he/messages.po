@@ -2221,7 +2221,7 @@ msgctxt "section mark"
 msgid "Optional"
 msgstr "לא חובה"
 
-#: src/features/downloads/utils/sections.ts:22
+#: src/features/downloads/utils/sections.ts:25
 msgid "Other"
 msgstr "אחר"
 
@@ -2699,6 +2699,10 @@ msgstr "הצג צילום מסך"
 #: src/features/lectures/MainView.tsx:559
 msgid "Show steps"
 msgstr "הצגת השלבים"
+
+#: src/features/downloads/utils/sections.ts:26
+msgid "Sidebar"
+msgstr "סרגל צד"
 
 #: src/features/tour/Tour.tsx:80
 msgid "Skip"

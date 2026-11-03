@@ -68,7 +68,7 @@ test('a row is a video, recitation by its title, with a ref made of the listing 
     title: 'תרגול 2 - אוהד',
     kind: 'recitation',
     strategy: 'biu-video',
-    section: '',
+    section: 'Sidebar',
     courseId: '105515',
     videoId: '252087',
     objectKey: KEY,
