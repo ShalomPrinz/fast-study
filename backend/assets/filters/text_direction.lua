@@ -38,9 +38,12 @@ end
 
 -- Right-align table columns the markdown left unaligned. bidi already reverses the column
 -- ORDER, but pandoc emits `l` for AlignDefault, so cells stay flush left inside an RTL table.
--- An explicit alignment in the markdown is the author's, and is left alone.
+-- An explicit alignment in the markdown is the author's, and is left alone. Widths are reset to
+-- default so a table is content-sized: pandoc 3 turns any source line over 72 columns into
+-- fixed-width wrapped columns, which 2.x never did.
 function Table(el)
   for _, spec in ipairs(el.colspecs) do
+    spec[2] = nil
     if spec[1] == 'AlignDefault' then
       spec[1] = 'AlignRight'
     end

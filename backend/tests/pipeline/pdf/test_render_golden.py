@@ -111,3 +111,11 @@ def test_missing_template_is_a_coded_pandoc_failure(tmp_path, monkeypatch):
     err = caught.value
     assert err.code == "pdf_pandoc_failed"
     assert "nope.tex" in err.params["detail"]
+
+
+def test_header_keeps_hyperref_before_bidi_and_strikeout_on_ulem():
+    """bidi (loaded by polyglossia) errors on a later hyperref; soul's \\st drops Hebrew glyphs."""
+
+    header = to_pdf.LATEX_HEADER
+    assert header.index("{hyperref}") < header.index("{polyglossia}")
+    assert "\\def\\st#1{\\sout{#1}}" in header

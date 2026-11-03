@@ -49,6 +49,10 @@ $$\frac{\cancel{a}\,b}{\cancel{a}} = b$$
 | ---: | :--: | :--- |
 | א    | ב    | ג    |
 
+| שורה ארוכה | הסבר |
+| :--- | :--- |
+| טקסט ארוך מאוד בתא הראשון של הטבלה | טקסט ארוך מאוד בתא השני של הטבלה כדי לחצות שבעים ושתיים עמודות |
+
 +-------+-----+
 | עמודה | ערך |
 +=======+=====+
@@ -64,6 +68,10 @@ def gradient_descent(x0, alpha=0.01, eps=1e-8):
     while abs(grad(x)) > eps:
         x -= alpha * grad(x)
     return x
+```
+
+```pseudocode
+repeat until done: step(x)
 ```
 
 ```
@@ -97,3 +105,9 @@ Term
 H~2~O ו-x^2^ .
 
 ![תרשים](probe.png)
+
+```bash
+arp -n
+rm -d dir
+ls -q -s -g
+```

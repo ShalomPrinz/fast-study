@@ -128,6 +128,9 @@
 \newtcolorbox{calloutwarning}{calloutstyle, colback=calloutWarningTint, colframe=calloutWarningFrame}
 \newtcolorbox{calloutinsight}{calloutstyle, colback=calloutInsightTint, colframe=calloutInsightFrame}
 
+\usepackage{hyperref}
+\usepackage[normalem]{ulem}
+\def\st#1{\sout{#1}}
 \usepackage{polyglossia}
 \setmainlanguage{hebrew}
 \setotherlanguage{english}
@@ -243,20 +246,27 @@
 }
 
 {\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.1111}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.0833}}@{}}
+\begin{longtable}[]{@{}ll@{}}
 \toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedleft
-עמודה
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-ערך
-\end{minipage} \\
+שורה ארוכה & הסבר \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-\multirow{2}{=}{\raggedright\arraybackslash מאוחד} & א \\
+טקסט ארוך מאוד בתא הראשון של הטבלה & טקסט ארוך מאוד בתא השני של הטבלה
+כדי לחצות שבעים ושתיים עמודות \\
+\end{longtable}
+}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}rr@{}}
+\toprule\noalign{}
+עמודה & ערך \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\multirow{2}{*}{\raggedright\arraybackslash מאוחד} & א \\
 & ב \\
 \end{longtable}
 }
@@ -271,6 +281,16 @@
     \ControlFlowTok{while} \BuiltInTok{abs}\NormalTok{(grad(x)) }\OperatorTok{\textgreater{}}\NormalTok{ eps:}
 \NormalTok{        x }\OperatorTok{{-}=}\NormalTok{ alpha }\OperatorTok{*}\NormalTok{ grad(x)}
     \ControlFlowTok{return}\NormalTok{ x}
+\end{Highlighting}
+\end{Shaded}
+
+\end{english}
+
+\begin{english}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{repeat until done: step(x)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -341,5 +361,17 @@ plain fence with no language, so no highlighting macros apply
 \pandocbounded{\includegraphics[keepaspectratio,alt={תרשים}]{probe.png}}
 \caption{תרשים}
 \end{figure}
+
+\begin{english}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{arp} \AttributeTok{{-}n}
+\FunctionTok{rm} \AttributeTok{{-}d}\NormalTok{ dir}
+\FunctionTok{ls} \AttributeTok{{-}q} \AttributeTok{{-}s} \AttributeTok{{-}g}
+\end{Highlighting}
+\end{Shaded}
+
+\end{english}
 
 \end{document}
