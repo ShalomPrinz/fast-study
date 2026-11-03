@@ -39,8 +39,8 @@ needs; without it a render fails `pdf_missing_font`.
 
 The sink alone is not enough, and no document can be written that is. Measured against the sink when
 it primed 457 files, **95 of 126 real summaries fail** — 25 with no PDF, 70 with a silently damaged
-one at exit 0. The current sink primes 466 files (465 under `bundles/` plus the `.fmt`); the
-supplement's 110 take it to 576, 48.5MB.
+one at exit 0. The current sink primes 477 files (476 under `bundles/` plus the `.fmt`); the
+supplement's 114 take it to 591, 49.2MB.
 
 Math goes through the 8-bit TFM path — `lmodern` and `amssymb` under `fontspec[no-math]` — and which
 design size a construct loads depends on where it sits: body, script and scriptscript at 10/7/5pt,
@@ -48,7 +48,8 @@ footnotes and headings at 8 through 14.4pt. Sampling constructs never closed tha
 supplement closes it instead: every size each family's `.fd` maps the 5–14.4pt range to, as both
 `.tfm` and `.pfb`, for OT1 `lmr` (`m/n`, `bx/n`, `m/it`), `lmss` and `lmtt`; OML `lmm` (`m`, `b`);
 OMS `lmsy` (`m`, `b`); OMX `lmex`; and U `msa`, `msb` and `euf`, plus the `.fd`/`.cfg`/`.enc` they
-read, and the 12pt `lmroman12` `.otf` heading text uses. It lists only the names the sink does not
+read, the 12pt `lmroman12` `.otf` heading text uses, and `lmroman5`–`8` bold, which `\text` in heading
+math loads once an earlier `\textenglish{\texttt{…}}` leaves it on TU `lmr`. It lists only the names the sink does not
 already pull. Two failure shapes, both offline-only:
 
 - **A missing `.tfm`** is `! Font ... not loadable` in the log: `pdf_missing_font`, or `latex_error`
@@ -67,7 +68,7 @@ loads a new math family or alphabet, or changes the 10pt base size, re-opens the
 
 ## `tectonic-cache-filelist-linux.txt`
 
-A WSL prime of the **sink alone**, kept so a Windows-primed cache can be diffed against it: 465 lines
+A WSL prime of the **sink alone**, kept so a Windows-primed cache can be diffed against it: 476 lines
 under `bundles/` plus the one `formats/` `.fmt`, whose name is the same on both. `prime_cache.py
---filelist` lists both directories, so it diffs 110 lines heavy by design — the supplement; anything
+--filelist` lists both directories, so it diffs 114 lines heavy by design — the supplement; anything
 beyond those, a renamed `.fmt` included, is real drift.

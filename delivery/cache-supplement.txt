@@ -5,6 +5,12 @@
 lmroman12-regular.otf
 lmroman12-bold.otf
 
+# TU lmr bx/n at a heading's script sizes: \text in heading math after \textenglish{\texttt{...}}.
+lmroman5-bold.otf
+lmroman6-bold.otf
+lmroman7-bold.otf
+lmroman8-bold.otf
+
 # OT1 lmr, m/n: \mathrm and digits.
 rm-lmr9.tfm
 rm-lmr12.tfm
