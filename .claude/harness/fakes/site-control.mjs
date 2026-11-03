@@ -2,7 +2,7 @@
 // question — apart from the server so the unit tests can drive them without a port or TLS.
 import { DEFAULT_DOWNLOAD_MS } from '../lib/env.mjs';
 
-// 'blocked' (bot-protection challenge on every route), 'blocked_ws' (the same challenge on the
+// 'blocked' (bot-protection challenge on every route except a top-level browser navigation), 'blocked_ws' (the same challenge on the
 // web-service API only, so the browser login passes and Node's calls are refused, as for a real
 // user), 'radware' (the challenge for any request without the clearance cookie only a solved
 // browser holds — Radware's real shape) and 'invalidtoken' are the upstream refusals the downloader has typed errors for; the next four are a site it must refuse — `not_moodle` and

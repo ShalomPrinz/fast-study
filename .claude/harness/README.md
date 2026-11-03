@@ -362,7 +362,7 @@ no window to finish and no button to press; the outcome arrives on `/auth/events
 `blocked_ws`, the token is kept unverified and a second window opens on the site root; switch the site
 back to `ok` and press the unverified state's button to verify.
 
-`blocked` and `blocked_ws` challenge every client alike. `radware` is the real shape: any request
+`blocked` challenges everything but a top-level browser navigation (`Sec-Fetch-Mode: navigate`, so `server.php`, the probes, Node and `launch.php` are walled while the site root loads); `blocked_ws` challenges only `/webservice/`, for every client alike. `radware` is the real shape: any request
 without the `harness_clearance` cookie is sent with a 302 to a captcha page on
 `validate.perfdrive.com` (served by the fake, so the shim maps it), and only a browser that solves it
 gets the cookie. Node never does, so Node's calls stay blocked while auto/'s challenge window (its

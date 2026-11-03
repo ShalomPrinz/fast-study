@@ -340,6 +340,13 @@ function json(res, body, status = 200) {
   res.end(payload);
 }
 
+// A top-level page load, as Chrome marks it; fetches and Node's calls never carry these.
+function isBrowserNavigation(req) {
+  return (
+    req.headers['sec-fetch-mode'] === 'navigate' && req.headers['sec-fetch-dest'] === 'document'
+  );
+}
+
 // What Radware serves a client it reads as automated: HTTP 200, text/html, no WS body. The one
 // answer `WsBlockedError` exists for.
 function challenge(res) {
@@ -484,7 +491,14 @@ function serveSite(req, res, url, route, host) {
   }
   if (state.mode === 'radware' && !hasClearance(req)) return toCaptcha(res);
 
-  if (state.mode === 'blocked') return challenge(res);
+  // A top-level browser navigation is served: the real wall for one is the radware 302, and a 200
+  // wall at the root would read as a passed check. Everything else (server.php, probes, Node) is
+  // walled, and so is launch.php, whose navigation must still get the Bot check.
+  if (
+    state.mode === 'blocked' &&
+    (!isBrowserNavigation(req) || route === '/admin/tool/mobile/launch.php')
+  )
+    return challenge(res);
   if (state.mode === 'blocked_ws' && route.startsWith('/webservice/')) return challenge(res);
 
   // The no-login AJAX endpoint the pre-login probe asks; `not_moodle` is a web server with no such
