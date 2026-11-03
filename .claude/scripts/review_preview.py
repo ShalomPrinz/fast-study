@@ -499,9 +499,9 @@ def doc_hygiene(
     return out
 
 
-def split_code(s: str) -> tuple[str, str]:
-    """A Python line cut before any `#` outside quotes, and the triple quote it leaves open, if any."""
-    i, quote = 0, ""
+def split_code(s: str) -> tuple[str, str, int]:
+    """A Python line cut before any `#` outside quotes, the triple quote it leaves open, and its net open brackets."""
+    i, quote, depth = 0, "", 0
     while i < len(s):
         if quote and s[i] == "\\":
             i += 2
@@ -510,19 +510,20 @@ def split_code(s: str) -> tuple[str, str]:
                 (i + len(quote), "") if s.startswith(quote, i) else (i + 1, quote)
             )
         elif s[i] == "#":
-            return s[:i].rstrip(), ""
+            return s[:i].rstrip(), "", depth
         elif s[i] in "'\"":
             quote = s[i] * 3 if s.startswith(s[i] * 3, i) else s[i]
             i += len(quote)
         else:
+            depth += (s[i] in "([{") - (s[i] in ")]}")
             i += 1
-    return s, quote if len(quote) == 3 else ""
+    return s, quote if len(quote) == 3 else "", depth
 
 
 def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
     """Each comment in a file as its first and last line and its non-empty text lines, markers stripped."""
     blocks: list[tuple[int, int, list[str]]] = []
-    start, body, kind, close, code = 0, [], "", "", ""
+    start, body, kind, close, code, depth = 0, [], "", "", "", 0
     python, hashes = rel.endswith(".py"), rel.endswith((".py", ".sh"))
 
     def flush(end: int) -> None:
@@ -534,7 +535,8 @@ def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
     for n, line in enumerate(text.splitlines(), 1):
         s = line.strip()
         if kind == "data":
-            kind = "" if close in s else kind
+            if close in s:
+                kind, depth = "", depth + split_code(s.split(close, 1)[1])[2]
             code = s or code
             continue
         if kind in ("block", "doc"):
@@ -555,10 +557,14 @@ def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
             body.append(s.lstrip(marker).strip())
             continue
         flush(n - 1)
-        # A triple-quoted string is a docstring only as the module's first statement or after a `:` header.
-        if python and s.startswith(('"""', "'''")) and code and not code.endswith(":"):
+        # A triple-quoted string is a docstring only as the module's first statement or after a `:` header,
+        # whose `:` ends a line outside brackets, unlike a dict key's.
+        header = code.endswith(":") and depth == 0
+        if python and s.startswith(('"""', "'''")) and code and not header:
             close, code = s[:3], s
             kind = "" if close in s[3:] else "data"
+            if not kind:
+                depth += split_code(s[3:].split(close, 1)[1])[2]
             continue
         if s.startswith("/*") or (python and s.startswith(('"""', "'''"))):
             close = "*/" if s.startswith("/*") else s[:3]
@@ -570,7 +576,9 @@ def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
         # A string opened mid-line, e.g. `run("""`, is data: skip to its close.
         elif python and (q := split_code(s)[1]):
             close, kind = q, "data"
-        code = code if s.startswith("#!") else split_code(s)[0] or code
+        if not s.startswith("#!"):
+            cut, _, opened = split_code(s)
+            code, depth = cut or code, depth + opened
     flush(len(text.splitlines()))
     return blocks
 

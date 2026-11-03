@@ -173,6 +173,16 @@ def test_triple_quoted_data_strings_are_not_comments(repo: Path) -> None:
     assert "inline one" not in out
 
 
+def test_string_after_a_bracketed_colon_is_data_not_a_docstring(repo: Path) -> None:
+    (repo / "database/fs/tree.py").write_text(
+        'X = {\n    "k":\n        """\n        val one\n        val two\n        """,\n}\n'
+        'def f(\n    a: int = (1),\n) -> None:\n    """Doc after first.\n    Doc after second."""\n'
+    )
+    out = preview(repo)
+    assert "val one" not in out
+    assert "`database/fs/tree.py:11-12` (2 lines): Doc after first." in out
+
+
 def test_quotes_and_trailing_comments_do_not_desync_data_strings(repo: Path) -> None:
     (repo / "database/fs/tree.py").write_text(
         'x = 1  # see """\n# real one\n# real two\n'
