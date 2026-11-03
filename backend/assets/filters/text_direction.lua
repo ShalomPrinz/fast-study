@@ -40,9 +40,9 @@ end
 -- ORDER, but pandoc emits `l` for AlignDefault, so cells stay flush left inside an RTL table.
 -- An explicit alignment in the markdown is the author's, and is left alone.
 function Table(el)
-  for i, align in ipairs(el.aligns) do
-    if align == 'AlignDefault' then
-      el.aligns[i] = 'AlignRight'
+  for _, spec in ipairs(el.colspecs) do
+    if spec[1] == 'AlignDefault' then
+      spec[1] = 'AlignRight'
     end
   end
   return el

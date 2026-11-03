@@ -22,7 +22,7 @@ Probe with a `\ifx\foo\@undefined NO\else YES\fi` test file before assuming a pr
 
 Every `CodeBlock` is wrapped in `\begin{english}`. `\begin{LTR}` is not enough: it is a run-direction switch that fixes token order but NOT **character mirroring** — `(`↔`)`, `{`↔`}`, `<`↔`>` still flip inside fancyvrb's `Verbatim` (what pandoc's `Highlighting` builds on), because mirroring follows the active language's base direction at tokenization time. `\begin{english}` is a polyglossia **language switch**: base direction LTR, mirroring off, Hebrew elsewhere unaffected, pandoc's highlighting intact.
 
-Tried and failed: `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\pardir TLT...}`, `\renewenvironment{Shaded}{}{}`, per-token `\LR{}`, `--listings`. `Shaded` is already empty in pandoc 2.9 — there is no background to remove.
+Tried and failed: `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\pardir TLT...}`, `\renewenvironment{Shaded}{}{}`, per-token `\LR{}`, `--listings`. `Shaded` is already empty in the pinned pandoc — there is no background to remove.
 
 **The mono font must cover Hebrew.** `Verbatim` uses the **global `\ttfamily`**, not `\englishfonttt`, even inside `\begin{english}`, and XeTeX has no per-glyph fallback — a Latin-only mono leaves Hebrew comments as notdef boxes. So one dual-script monospace, **Miriam Mono CLM**, is set globally via `\setmonofont`.
 
@@ -32,11 +32,11 @@ Tried and failed: `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\p
 
 ### Tables
 
-Every `AlignDefault` column becomes `AlignRight`. bidi already reverses column order, but pandoc emits `l` for an unaligned column, leaving cell contents flush left. An explicit alignment (`:---`, `---:`) is the author's and is kept — which is why this is an AST rewrite rather than a global redefinition of `l`.
+Every `AlignDefault` column becomes `AlignRight`. bidi already reverses column order, but pandoc emits `l` for an unaligned column, leaving cell contents flush left. An explicit alignment (`:---`, `---:`) is the author's and is kept — which is why this is an AST rewrite rather than a global redefinition of `l`. The filter edits `el.colspecs[i][1]`: pandoc 2.10 replaced the table AST's `aligns` field with `colspecs`, and the old name is `nil` on 3.x ([PDF.md](PDF.md#the-pandoc-pin-and-the-template)).
 
 ### Callout boxes
 
-`summarize.md` may mark a passage as a fenced div — `::: definition` … `:::` — in a **closed set**: `definition`, `warning`, `insight`. The filter maps each to a `tcolorbox` environment (`callout<class>`) from `LATEX_HEADER` and drops the `Div` node itself. An unmapped class falls through as plain prose, so a hallucinated class degrades instead of failing. `fenced_divs` is on by default in pandoc 2.9.2.1's markdown reader.
+`summarize.md` may mark a passage as a fenced div — `::: definition` … `:::` — in a **closed set**: `definition`, `warning`, `insight`. The filter maps each to a `tcolorbox` environment (`callout<class>`) from `LATEX_HEADER` and drops the `Div` node itself. An unmapped class falls through as plain prose, so a hallucinated class degrades instead of failing. `fenced_divs` is on by default in pandoc's markdown reader.
 
 The boxes are title-less — frame colour identifies the kind, so a short summary doesn't read like a textbook. Tints are near-white for grayscale contrast, and the frames sit at distinct luminances to stay tellable apart in print. `breakable` is a separate tcolorbox library and not available, so a callout must fit on one page. RTL needs nothing special: contents inherit the document's base direction.
 

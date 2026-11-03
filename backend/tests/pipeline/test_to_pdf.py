@@ -19,6 +19,7 @@ from to_pdf import (
     build_tex,
     convert_to_pdf,
 )
+from tools import tool_path
 
 # ---------------------------------------------------------------------------
 # Preprocessing chain order
@@ -63,7 +64,7 @@ class TestMergesCommute:
 
 
 def _pandoc_available():
-    return shutil.which("pandoc") is not None
+    return shutil.which(tool_path("pandoc")) is not None
 
 
 def _run_pandoc_latex(md: str) -> str:
@@ -76,7 +77,7 @@ def _run_pandoc_latex(md: str) -> str:
     try:
         result = subprocess.run(
             [
-                "pandoc",
+                tool_path("pandoc"),
                 md_path,
                 "--to=latex",
                 f"--lua-filter={DIRECTION_FILTER}",
@@ -212,7 +213,7 @@ class TestMonoFontWiring:
 
 
 def _tectonic_available():
-    return shutil.which("tectonic") is not None
+    return shutil.which(tool_path("tectonic")) is not None
 
 
 def _pymupdf_available():
@@ -446,11 +447,24 @@ FONT_LOG = (
 TECTONIC = "tectonic"
 
 
-@pytest.fixture(autouse=True)
-def _no_bin_dir(monkeypatch):
-    """Pin tool resolution to bare names, so an exported FASTSTUDY_BIN_DIR cannot make argv[0]
-    an absolute path the assertions below do not expect."""
+# Classes that run the real tools: they must follow FASTSTUDY_BIN_DIR like the app does.
+_REAL_TOOL_CLASSES = {
+    "TestLuaFilterLtrCodeBlock",
+    "TestLuaFilterTableAlignment",
+    "TestHebrewInCodeBlockRenders",
+    "TestTypedCharactersRender",
+    "TestBidiOrderingRenders",
+    "TestRawLatexPrintsLiterally",
+}
 
+
+@pytest.fixture(autouse=True)
+def _no_bin_dir(request, monkeypatch):
+    """Pin tool resolution to bare names for the mocked tests, so an exported FASTSTUDY_BIN_DIR
+    cannot make argv[0] an absolute path the assertions below do not expect."""
+
+    if request.cls is not None and request.cls.__name__ in _REAL_TOOL_CLASSES:
+        return
     monkeypatch.delenv("FASTSTUDY_BIN_DIR", raising=False)
     monkeypatch.delenv("TECTONIC_CACHE_DIR", raising=False)
 
