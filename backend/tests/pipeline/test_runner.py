@@ -2515,3 +2515,89 @@ def test_a_model_fallback_in_a_step_is_noticed_on_the_pipeline_status(monkeypatc
     assert mine[0]["code"] == "model_fallback"
     assert mine[0]["params"] == {"from": "m1", "to": "m2"}
     assert (mine[0]["lecture"], mine[0]["kind"]) == ("l1", "lecture")
+
+
+# ---- clear_drive_not_connected queues the upload ----
+
+
+def _drive_sweep(monkeypatch, *, enabled=True, has_pdf=True, lectures=("l1",)):
+    from services import settings as _settings
+
+    errors = {f"c||{n}||lecture": {"code": "drive_not_connected"} for n in lectures}
+    errors["c||other||lecture"] = {"code": "gemini_overloaded"}
+    monkeypatch.setattr(runner, "_errors", errors)
+    monkeypatch.setattr(runner, "_queue", [])
+    monkeypatch.setattr(runner, "_in_flight", {})
+    monkeypatch.setattr(runner, "_busy", lambda _k: False)
+    monkeypatch.setattr(_settings, "drive_enabled", lambda: enabled)
+
+    async def files(_c, lecture, _k):
+        if lecture == "boom":
+            raise RuntimeError("db down")
+        return {"summary.pdf": {"exists": has_pdf}}
+
+    monkeypatch.setattr(runner, "_fetch_files", files)
+    ran = []
+
+    async def run_step(course, lecture, kind, step, **_kw):
+        ran.append((course, lecture, kind, step))
+
+    monkeypatch.setattr(runner, "run_step", run_step)
+    return ran
+
+
+def _sweep():
+    async def go():
+        runner.clear_drive_not_connected()
+        for _ in range(5):
+            await asyncio.sleep(0)
+
+    asyncio.run(go())
+
+
+def test_cleared_drive_lecture_runs_only_the_drive_step(monkeypatch):
+    ran = _drive_sweep(monkeypatch)
+    _sweep()
+    assert ran == [("c", "l1", "lecture", "drive")]
+    assert list(runner._errors) == ["c||other||lecture"]
+
+
+def test_one_failing_lecture_does_not_drop_the_rest(monkeypatch):
+    ran = _drive_sweep(monkeypatch, lectures=("boom", "l2"))
+    _sweep()
+    assert ran == [("c", "l2", "lecture", "drive")]
+
+
+def test_drive_disabled_runs_nothing(monkeypatch):
+    ran = _drive_sweep(monkeypatch, enabled=False)
+    _sweep()
+    assert ran == []
+
+
+def test_lecture_without_summary_pdf_is_skipped(monkeypatch):
+    ran = _drive_sweep(monkeypatch, has_pdf=False)
+    _sweep()
+    assert ran == []
+
+
+def test_queued_in_flight_or_busy_lecture_is_skipped(monkeypatch):
+    ran = _drive_sweep(monkeypatch, lectures=("q", "f", "b", "ok"))
+    runner._queue.append(runner.QueueEntry("c", "q", "lecture", "full"))
+    runner._in_flight["c||f||lecture"] = {}
+    monkeypatch.setattr(runner, "_busy", lambda k: k[1] == "b")
+    _sweep()
+    assert ran == [("c", "ok", "lecture", "drive")]
+
+
+def test_audio_depth_queued_lecture_still_gets_its_drive_upload(monkeypatch):
+    ran = _drive_sweep(monkeypatch)
+    runner._queue.append(runner.QueueEntry("c", "l1", "lecture", "audio"))
+    _sweep()
+    assert ran == [("c", "l1", "lecture", "drive")]
+
+
+def test_no_record_runs_nothing(monkeypatch):
+    ran = _drive_sweep(monkeypatch)
+    runner._errors.pop("c||l1||lecture")
+    _sweep()
+    assert ran == []

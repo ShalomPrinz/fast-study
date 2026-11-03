@@ -1097,12 +1097,42 @@ def clear_provider_blocks() -> None:
 
 
 def clear_drive_not_connected() -> None:
-    """Drop every `drive_not_connected` record: a landed Drive token is what they were waiting on."""
+    """Drop every `drive_not_connected` record — a landed Drive token is what they were waiting on —
+    and queue the lectures that held one for their upload."""
 
-    for key in [
-        k for k, e in list(_errors.items()) if e["code"] == "drive_not_connected"
-    ]:
-        _errors.pop(key, None)
+    cleared = [k for k, e in _errors.items() if e["code"] == "drive_not_connected"]
+    for key in cleared:
+        del _errors[key]
+    # Assignments never join the runner queue.
+    cleared = [k for k in cleared if not k.endswith(f"||{ASSIGNMENT_KIND}")]
+    if cleared and settings.drive_enabled():
+        # A task, not awaited: the consent thread waits on this call and the file checks are I/O.
+        asyncio.create_task(_queue_drive_uploads(cleared))
+
+
+async def _queue_drive_uploads(skeys: list[str]) -> None:
+    """Run the lone `drive` step, one lecture at a time, for each whose summary.pdf is still on
+    disk. Skips a lecture queued at depth `full` (its run reaches `drive`), in flight or locked."""
+
+    for skey in skeys:
+        course, lecture, kind = skey.split("||")
+        try:
+            files = await _fetch_files(course, lecture, kind)
+            if not files["summary.pdf"]["exists"]:
+                continue
+            # Nothing awaits between this check and run_step taking the lock.
+            if (
+                any(
+                    q[:3] == (course, lecture, kind) and q.depth == "full"
+                    for q in _queue
+                )
+                or skey in _in_flight
+                or _busy(_lkey(course, lecture, kind))
+            ):
+                continue
+            await run_step(course, lecture, kind, "drive")
+        except Exception:
+            log.exception("drive upload after reconnect failed for %s", skey)
 
 
 def move_to_front(course: str, lecture: str, kind: str) -> str:
