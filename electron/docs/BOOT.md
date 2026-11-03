@@ -177,11 +177,11 @@ resources/bridge/host.js            the native host script, run on Electron-as-n
 
 ## The installed process tree
 
-Main is the `FastStudy.exe` from the install dir that the four services are direct children of.
-No `--type=` does not identify it: `auto` and `server` are themselves `FastStudy.exe` run as Node
-(`ELECTRON_RUN_AS_NODE=1`) without one, as are yt-dlp's JS runtime and the native host. On Windows the pid a launcher reports for the exe it started — Playwright's `app.process().pid`
-among them — can be main's parent rather than main, so find main in the tree as the services'
-shared parent, never by the launched pid.
+Main is the install-dir `FastStudy.exe` that the four services are direct children of. Lacking
+`--type=` does not single it out: `auto` and `server` are also `FastStudy.exe` run as Node
+(`ELECTRON_RUN_AS_NODE=1`) without one, as are yt-dlp's JS runtime and the native host. Under a
+Playwright launch `app.process().pid` is main's parent, not main, so find main as the services'
+shared parent.
 
 ## Teardown
 
