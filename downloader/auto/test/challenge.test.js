@@ -884,6 +884,32 @@ test('a call starting on a captcha already up waits twice at most, counted with 
   assert.ok(calls.every(({ init }) => fromPage(init)));
 });
 
+test('a solve landing mid-hold with the page off the site answers ready, not walled', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  await moodleGate.run({}, () => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  // The reopen after the first wait has none left, so it joins no solve; the user solves during its hold, yet the page ends off the site.
+  const hold = moodleGate.hold;
+  let holds = 0;
+  t.mock.method(moodleGate, 'hold', function (...args) {
+    if (++holds === 2) {
+      ctx.solve(SITE);
+      void ctx.page.goto(SITE);
+    }
+    return hold.apply(this, args);
+  });
+  const calls = stubFetch(t, () => html());
+  const err = moodleGate.run({}, () => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  await tick();
+  ctx.solve(SITE);
+  await until(() => calls.length === 1 && challengeState().captcha);
+  ctx.solve(SITE);
+  const thrown = await err;
+  assert.equal(thrown.code, 'site_blocked');
+  assert.equal(thrown.params.challengeWindow, 'ready');
+});
+
 test('the user closing the window mid-wait answers site_blocked with no challengeWindow', async (t) => {
   onSite(t);
   const profile = fakeProfile(t, { lands: 'captcha' });
@@ -1172,4 +1198,20 @@ test('solving the captcha verifies the unverified token by itself, announced on 
   assert.equal(state.error, undefined);
   assert.equal(auth.loadToken().userid, 7);
   await auth.disconnect();
+});
+
+test('a wall through the window while it sits on the site reports challengeWindow walled', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t);
+  // Node is walled, the window opens ready and resends, the site walls that too while its root loads.
+  const calls = stubFetch(t, () => html());
+  const thrown = await moodleGate
+    .run({}, () => getCourseContents(SITE, 'tok', '1'))
+    .catch((e) => e);
+  assert.equal(thrown.code, 'site_blocked');
+  assert.equal(thrown.params.challengeWindow, 'walled');
+  assert.equal(calls.length, 2);
+  assert.ok(fromPage(calls[1].init));
+  assert.equal(profile.launches.length, 1);
+  assert.deepEqual(shown(), { open: true, captcha: false });
 });

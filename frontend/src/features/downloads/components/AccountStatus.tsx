@@ -244,7 +244,7 @@ export default function AccountStatus() {
 function verifyLabel(panel: AccountPanel | null) {
   if (panel === 'window') return <Trans>I solved the captcha</Trans>
   if (panel === 'closed') return <Trans>Open the captcha again</Trans>
-  if (panel === 'ready') return <Trans>Try again</Trans>
+  if (panel === 'ready' || panel === 'walled') return <Trans>Try again</Trans>
   return <Trans>I confirmed, try again</Trans>
 }
 
@@ -272,6 +272,12 @@ function BlockedPanel({ panel }: { panel: AccountPanel }) {
         {panel === 'ready' && (
           <Trans>
             The window on the university site passed, with no captcha to solve. Press “Try again”.
+          </Trans>
+        )}
+        {panel === 'walled' && (
+          <Trans>
+            The university site is refusing requests right now. Wait a few minutes, then press “Try
+            again”.
           </Trans>
         )}
         {panel === 'own-browser' && (

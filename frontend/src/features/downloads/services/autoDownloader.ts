@@ -44,12 +44,15 @@ export interface AuthStatus {
 type AuthFrame = Omit<AuthStatus, 'tokenSite'> & { storedSite?: string | null }
 
 // What a `site_blocked` says about the challenge window: on screen with a captcha to solve, opened
-// hidden with its clearance still valid, unable to launch (`false`), or none for this path (`null`).
-export type ChallengeWindow = 'captcha' | 'ready' | false | null
+// hidden with its clearance still valid, still walled with nothing to solve (`walled`),
+// unable to launch (`false`), or none for this path (`null`).
+export type ChallengeWindow = 'captcha' | 'ready' | 'walled' | false | null
 
 export function challengeWindowOf(params: ErrorParams | null | undefined): ChallengeWindow {
   const value = params?.challengeWindow
-  return value === 'captcha' || value === 'ready' || value === false ? value : null
+  return value === 'captcha' || value === 'ready' || value === 'walled' || value === false
+    ? value
+    : null
 }
 
 // Which file the item lands on disk as; the destination is derived server-side from `ref`.

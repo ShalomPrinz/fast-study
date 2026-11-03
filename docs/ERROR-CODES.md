@@ -432,7 +432,9 @@ on `site_captcha_timeout` when the captcha stays unsolved for the window's 10-mi
 `site_blocked` with no `challengeWindow` when the user closes the window, while it loads included. `'captcha'` reaches a client
 only from `/site/probe` or a call that wait cannot cover (the window's reopen cap spent). A window that
 opens hidden with its clearance still valid carries the call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
-`/site/probe` or from a call already going through the window whose reload landed on the site. A block
+`/site/probe`, a wall Node met while the clearance holds, or a captcha solved while the window reopened
+with the page off the site: in each, a repeat goes through. A call already going through the window that is still walled while the window sits on
+the site ends on `'walled'`: the site refuses even the cleared browser, so the user can only wait. A block
 from any other path (a pasted link, a link probe) leaves it absent. The videostream handler call is a
 WS call, so its block carries it.
 

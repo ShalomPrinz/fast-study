@@ -12,7 +12,7 @@ const ok: AuthStatus = { connected: true, expired: false, phase: 'connected' }
 const pending: AuthStatus = { connected: false, expired: false, phase: 'pending' }
 const idle: AuthStatus = { connected: false, expired: false, phase: 'idle' }
 const blocked = (
-  challengeWindow?: 'captcha' | 'ready' | false,
+  challengeWindow?: 'captcha' | 'ready' | 'walled' | false,
   challenge?: AuthStatus['challenge'],
 ): AuthStatus => ({
   connected: true,
@@ -37,8 +37,13 @@ describe('accountView', () => {
   it('words the panel by what the challenge window did', () => {
     expect(accountView('idle', blocked('captcha')).panel).toBe('window')
     expect(accountView('idle', blocked(false)).panel).toBe('own-browser')
-    // A check walled inside the window that reloaded onto the site: no captcha to solve, just retry.
+    // A repeat would go through (clearance holds): no captcha to solve, just retry.
     expect(accountView('idle', blocked('ready')).panel).toBe('ready')
+    // Still walled with nothing to solve: wait, never the captcha or window wording.
+    expect(accountView('idle', blocked('walled')).panel).toBe('walled')
+    expect(accountView('idle', blocked('walled', { open: true, captcha: false })).panel).toBe(
+      'walled',
+    )
     expect(accountView('idle', blocked('ready', { open: true, captcha: false })).panel).toBe(
       'ready',
     )

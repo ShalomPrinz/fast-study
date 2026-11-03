@@ -162,7 +162,7 @@ the component, not the never-remounting provider. A `BlockedError` (the site's b
 a burst with a captcha) is deliberately not that path: it says nothing about the token, so it toasts
 `toastBlocked(challengeWindow)` and leaves the chip alone. `challengeWindow` (`challengeWindowOf`) is
 `'captcha'` (solve it in the window, then repeat — only the site probe, or a call that already waited
-out two solves, still answers it), `'ready'` (just repeat), `false` (no browser could open:
+out two solves, still answers it), `'ready'` (just repeat), `'walled'` (the window sits on the site and the call is still refused: wait, no window to show), `false` (no browser could open:
 wait) or `null` (a path the window can't carry: the generic wait). The wording is `site_blocked`'s catalog
 row, a `select` on that param, so a job failure carrying it reads the same; `blockedToastKind` makes the two
 instructions (`'captcha'`, `'ready'`) info toasts and the waits errors, wherever a block is toasted. Nothing retries or resumes by
@@ -178,8 +178,7 @@ state's `site_blocked` `challengeWindow` corrected by the pushed
 verifies by itself once it is solved); a recorded captcha gone from a still-open window that showed it (`captchaSeen`,
 folded over the frames, since a reopening window shows none yet either) is `solved` (auto is verifying, so
 no button); gone from a closed window is `closed` (closed unsolved — never read as passed;
-button "Open the captcha again"); a recorded `'ready'` (a check walled inside the window, which reloaded
-onto the site) is `ready` (no captcha, button "Try again"); `false` is `own-browser` and nothing known is `unknown` (both "I
+button "Open the captcha again"); a recorded `'ready'` (a repeat would go through: a probe passed, a wall met while the clearance holds, or a captcha solved while the window reopened) is `ready` (no captcha, button "Try again"); `'walled'` is `walled` (wait a few minutes, button "Try again"); `false` is `own-browser` and nothing known is `unknown` (both "I
 confirmed, try again"). A refused
 `/auth/complete` toasts from its own rejection (`BlockedError`, `UnsupportedError`; a 401 `reconnect` means
 the token is gone, so "sign in again"), and the outcome also arrives on the stream. The same component

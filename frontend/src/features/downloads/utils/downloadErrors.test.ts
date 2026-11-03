@@ -10,6 +10,7 @@ import { failureOf } from '@/shared/utils/failure'
 import {
   cancelFailure,
   blockedMessage,
+  blockedToastKind,
   expandErrorText,
   manualFailureHeadline,
   toastDownloadError,
@@ -36,7 +37,7 @@ describe('toastDownloadError', () => {
   })
 
   it('words a block by what the challenge window did, as a job failure carrying it reads', () => {
-    const values = ['captcha', 'ready', false, null] as const
+    const values = ['captcha', 'ready', 'walled', false, null] as const
     const messages = values.map((challengeWindow) => blockedMessage(challengeWindow))
     expect(new Set(messages).size).toBe(values.length)
     expect(blockedMessage(null)).toBe(BLOCKED_COPY)
@@ -44,6 +45,13 @@ describe('toastDownloadError', () => {
       const failure = { message: 'x', code: 'site_blocked', params: { challengeWindow } }
       expect(serviceErrorText(failure)).toBe(messages[i])
     })
+  })
+
+  it('words walled as a wait, an error toast, never the captcha or passed wording', () => {
+    expect(blockedMessage('walled')).toBe(
+      'The university site is refusing requests right now. Wait a few minutes and try again.',
+    )
+    expect(blockedToastKind('walled')).toBe('error')
   })
 
   it('toasts a block that is an instruction as info, and a wall nothing gets past as an error', () => {

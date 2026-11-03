@@ -20,7 +20,8 @@ export type AccountChip =
 
 // Which explanation sits beside an unverified chip: a captcha waits, was just solved, was closed unsolved, the
 // window passed with none (just retry), none could open (use your own browser), or nothing is known.
-export type AccountPanel = 'window' | 'solved' | 'closed' | 'ready' | 'own-browser' | 'unknown'
+export type AccountPanel =
+  'window' | 'solved' | 'closed' | 'ready' | 'walled' | 'own-browser' | 'unknown'
 
 export interface AccountView {
   chip: AccountChip
@@ -68,6 +69,7 @@ function unverifiedPanel(status: AuthStatus, seen: boolean): AccountPanel {
     return seen ? 'solved' : 'window'
   }
   if (recorded === 'ready') return 'ready'
+  if (recorded === 'walled') return 'walled'
   return recorded === false ? 'own-browser' : 'unknown'
 }
 

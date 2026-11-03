@@ -39,7 +39,10 @@ async function moodleFetch(
     // A wall through the window itself is resent only after a solve; else the 503 says the state.
     const resend = state === 'solved' || (state === 'ready' && ROUTE.get(res) === 'node');
     if (!resend) {
-      err.params = { ...err.params, challengeWindow: state };
+      // A wall the window itself met while still on the site is the site refusing, not a clearance to earn.
+      const walled =
+        state === 'ready' && ROUTE.get(res) === 'window' && !!challengeRoute(url)?.onSite();
+      err.params = { ...err.params, challengeWindow: walled ? 'walled' : state };
       throw err;
     }
     const reopened = challengeRoute(url);

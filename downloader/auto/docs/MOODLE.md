@@ -157,7 +157,7 @@ are made from inside that browser:
   `params.challengeWindow:false`. `getPublicConfig` opts out
   (`reopen:false`) — its 3xx or HTML may be a real redirect or a non-Moodle server — so it never
   waits and the probe opens the window itself and reports `challengeWindow`, `'captcha'` and
-  `'ready'` included (none when the window closed while it loaded), holding the lock for a press as before any wait. A block while it is up reuses it (Chrome locks the profile, so a second launch would
+  `'ready'` included (none when the window closed while it loaded), holding the lock for a press as before any wait. A call walled _through_ the window while it sits on the site (its root loads fine, `server.php` is walled) is not resent again: it throws `site_blocked` with `params.challengeWindow:'walled'`, the site refusing requests rather than a captcha to solve; no window is raised and no lock taken. A block while it is up reuses it (Chrome locks the profile, so a second launch would
   fail), reloading its root when the page itself was challenged.
 - **The route.** While it is open, `moodleFetch` sends every call on its site — WS calls, the public
   config, the pluginfile preflight and stream — as a `fetch` from the page. The site's own scripts
@@ -175,7 +175,7 @@ are made from inside that browser:
   A call through the page that still meets the wall reloads the root: landing on a captcha it
   waits and resends once more — at most one wait beyond the first per call, so a site that walls
   the solved browser cannot spin — and otherwise throws `site_blocked`, whose 503 says
-  `'captcha'` or `'ready'` (repeat the action). A window closed mid-call, mid-wait or while it loads fails that call as an unrouted `site_blocked`
+  `'captcha'` (the window's page is on the captcha again), `'walled'` (the window sat on the site and still got the wall: the site refuses requests, wait a few minutes) or `'ready'` (the clearance holds, repeat the action). A window closed mid-call, mid-wait or while it loads fails that call as an unrouted `site_blocked`
   (no window reopens; the user's repeat goes out on Node). A page fetch that fails in the network (the page sees only
   `TypeError: Failed to fetch`) answers `site_unreachable` like a Node one: `host` the URL's hostname,
   `detail` only Chrome's `ERR_*` token from that request's `requestfailed` (matched on URL and method), else

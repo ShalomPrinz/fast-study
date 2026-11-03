@@ -233,10 +233,11 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   moodle_reconnect_required: msg({
     message: 'The Moodle session expired. Reconnect the account and try again.',
   }),
-  // `challengeWindow` names the next step: solve the captcha on screen, just repeat, or wait it out.
+  // `challengeWindow` names the next step: solve the captcha on screen, just repeat, or wait it out
+  // (`walled`: the window is up but still refused).
   site_blocked: msg({
     message:
-      '{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}',
+      '{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} walled {The university site is refusing requests right now. Wait a few minutes and try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}',
   }),
   site_captcha_timeout: msg({
     message:
