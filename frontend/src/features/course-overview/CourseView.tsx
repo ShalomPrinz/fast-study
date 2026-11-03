@@ -50,7 +50,12 @@ function CourseOverviewBody() {
       if (st.status !== 'error') continue
       const key = `${course}/${slug}`
       valid.add(key)
-      const failure = { message: st.message ?? '', code: st.code, params: st.params }
+      const failure = {
+        message: st.message ?? '',
+        code: st.code,
+        params: st.params,
+        retry: st.retry,
+      }
       const title = titleBySlug.get(slug) ?? slug
       // The branch's own name leads, so a course generating several says which one failed. A bare
       // failure shows just the translated word and is not reported: nothing diagnostic in it.

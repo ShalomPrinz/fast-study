@@ -88,7 +88,12 @@ function skipReason(st: CourseExtractorState | undefined): string | null {
   if (st?.status !== 'skipped') return null
   if (st.code && SILENT_SKIP_CODES.has(st.code)) return null
   if (isBare(st)) return t`skipped`
-  return serviceErrorText({ message: st.message ?? '', code: st.code, params: st.params })
+  return serviceErrorText({
+    message: st.message ?? '',
+    code: st.code,
+    params: st.params,
+    retry: st.retry,
+  })
 }
 
 // One extractor's derived state; `done` means its last phase output exists.
@@ -109,7 +114,12 @@ export function branchStatus(
       st?.status === 'error'
         ? isBare(st)
           ? t`failed`
-          : serviceErrorText({ message: st.message ?? '', code: st.code, params: st.params })
+          : serviceErrorText({
+              message: st.message ?? '',
+              code: st.code,
+              params: st.params,
+              retry: st.retry,
+            })
         : null,
     // The skip is about this run; a render warning may be left over from an older one.
     warning: skipReason(st) ?? last?.warning ?? null,

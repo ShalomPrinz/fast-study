@@ -11,6 +11,8 @@ export interface ServiceFailure {
   message: string
   code?: string | null
   params?: ErrorParams | null
+  // Set while an automatic retry waits (`RunError`, `CourseExtractorState`); a `RetryLine` shows beside it.
+  retry?: unknown
 }
 
 // What a failure reads as: one translated sentence, and third-party text to print verbatim under
@@ -337,6 +339,23 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
 }
 
+// The per-minute Gemini quota sentence without its "try again" advice, for a failure whose
+// `RetryLine` is already counting down to the retry.
+const QUOTA_RETRYING = msg({ message: "Gemini's rate limit was reached." })
+
+// The row a failure renders: the catalog row, except a per-minute Gemini quota with a waiting retry,
+// where "Try again in a minute" would contradict the countdown.
+export function rowFor(failure: ServiceFailure): MessageDescriptor | null {
+  if (
+    failure.code === 'gemini_quota_exhausted' &&
+    failure.params?.scope !== 'daily' &&
+    failure.retry
+  ) {
+    return QUOTA_RETRYING
+  }
+  return serviceErrorRow(failure.code)
+}
+
 // The headline for a failure with no catalog row; its English prose rides beneath as the detail.
 const FALLBACK = msg({ message: 'Something went wrong.' })
 
@@ -371,7 +390,7 @@ function present(params: ErrorParams): ErrorParams {
 // headline with the service's English prose beneath as the detail, so a failure always says something real.
 export function resolveServiceError(failure: ServiceFailure): ResolvedFailure {
   const params = failure.params ?? {}
-  const row = serviceErrorRow(failure.code)
+  const row = rowFor(failure)
   if (!row) {
     return { headline: i18n._(FALLBACK), detail: failure.message.trim() ? failure.message : null }
   }

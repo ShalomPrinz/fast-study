@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { failureId, resolveServiceError, serviceErrorRow, serviceErrorText } from './serviceErrors'
+import {
+  failureId,
+  resolveServiceError,
+  rowFor,
+  serviceErrorRow,
+  serviceErrorText,
+} from './serviceErrors'
 
 // Codes, never copy: what a row says is the catalogs' business and changes with every translation.
 describe('serviceErrorRow', () => {
@@ -188,5 +194,31 @@ describe('failureId', () => {
 
     expect(failureId(one)).toBe(failureId(same))
     expect(failureId(one)).not.toBe(failureId(other))
+  })
+})
+
+describe('rowFor', () => {
+  const quota = (params: Record<string, string>, retry?: unknown) => ({
+    message: '',
+    code: 'gemini_quota_exhausted',
+    params,
+    retry,
+  })
+  const retry = { attempt: 1, of: 3, at: '2026-01-01T00:00:00Z' }
+
+  it('drops the advice for a per-minute quota with a waiting retry', () => {
+    expect(rowFor(quota({ scope: 'minute' }, retry))).not.toBe(
+      serviceErrorRow('gemini_quota_exhausted'),
+    )
+    expect(rowFor(quota({}, retry))).not.toBe(serviceErrorRow('gemini_quota_exhausted'))
+  })
+
+  it('keeps the catalog row with no retry waiting', () => {
+    expect(rowFor(quota({ scope: 'minute' }))).toBe(serviceErrorRow('gemini_quota_exhausted'))
+    expect(rowFor(quota({ scope: 'minute' }, null))).toBe(serviceErrorRow('gemini_quota_exhausted'))
+  })
+
+  it('keeps the daily row even with a retry', () => {
+    expect(rowFor(quota({ scope: 'daily' }, retry))).toBe(serviceErrorRow('gemini_quota_exhausted'))
   })
 })
