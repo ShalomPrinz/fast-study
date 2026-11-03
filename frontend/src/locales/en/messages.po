@@ -73,7 +73,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {# lecture} other {# lectures}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:451
+#: src/features/lectures/MainView.tsx:457
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
 
@@ -158,7 +158,7 @@ msgid "{0} remaining"
 msgstr "{0} remaining"
 
 #. placeholder {0}: formatDuration(videoDuration)
-#: src/features/lectures/MainView.tsx:448
+#: src/features/lectures/MainView.tsx:454
 msgid "{0} video"
 msgstr "{0} video"
 
@@ -194,11 +194,11 @@ msgstr "{course} · assignment {assignment}"
 msgid "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 msgstr "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 
-#: src/features/lectures/MainView.tsx:637
+#: src/features/lectures/MainView.tsx:643
 msgid "{deleteName} will be deleted."
 msgstr "{deleteName} will be deleted."
 
-#: src/features/lectures/MainView.tsx:529
+#: src/features/lectures/MainView.tsx:535
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
@@ -264,7 +264,7 @@ msgstr "{generated} of {0} generated"
 msgid "{host} could not be reached. Check your internet connection and try again."
 msgstr "{host} could not be reached. Check your internet connection and try again."
 
-#: src/features/lectures/MainView.tsx:265
+#: src/features/lectures/MainView.tsx:271
 msgid "{input} was removed"
 msgstr "{input} was removed"
 
@@ -360,11 +360,11 @@ msgstr "{removed, plural, =0 {No lecture had files to remove.} one {Removed file
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 
-#: src/features/lectures/MainView.tsx:428
+#: src/features/lectures/MainView.tsx:434
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · step {stepNumber} of {stepCount}"
 
-#: src/features/lectures/MainView.tsx:547
+#: src/features/lectures/MainView.tsx:553
 msgid "{stageCount, plural, one {# step} other {# steps}}"
 msgstr "{stageCount, plural, one {# step} other {# steps}}"
 
@@ -658,7 +658,7 @@ msgstr "Auto-run: the whole pipeline"
 msgid "Automatic retry"
 msgstr "Automatic retry"
 
-#: src/features/lectures/MainView.tsx:399
+#: src/features/lectures/MainView.tsx:405
 msgid "Available once the summary is generated."
 msgstr "Available once the summary is generated."
 
@@ -862,7 +862,7 @@ msgstr "Click \"Create API Key\"."
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 
-#: src/features/lectures/MainView.tsx:398
+#: src/features/lectures/MainView.tsx:404
 msgid "Click \"Open chat\" to study this lecture with {provider}."
 msgstr "Click \"Open chat\" to study this lecture with {provider}."
 
@@ -916,7 +916,7 @@ msgstr "Collect"
 msgid "Compile"
 msgstr "Compile"
 
-#: src/features/lectures/MainView.tsx:442
+#: src/features/lectures/MainView.tsx:448
 msgid "Complete"
 msgstr "Complete"
 
@@ -968,7 +968,7 @@ msgstr "Content type"
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
-#: src/features/lectures/MainView.tsx:269
+#: src/features/lectures/MainView.tsx:275
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
@@ -1047,7 +1047,7 @@ msgstr "Could not tell what {url} is — the site didn't answer usefully."
 msgid "Couldn't copy the assignment material. Try again."
 msgstr "Couldn't copy the assignment material. Try again."
 
-#: src/features/lectures/MainView.tsx:403
+#: src/features/lectures/MainView.tsx:409
 msgid "Couldn't copy the summary. Try again."
 msgstr "Couldn't copy the summary. Try again."
 
@@ -1135,7 +1135,7 @@ msgstr "Courses failed to load."
 msgid "Create"
 msgstr "Create"
 
-#: src/features/lectures/MainView.tsx:365
+#: src/features/lectures/MainView.tsx:371
 msgid "Create {input} first"
 msgstr "Create {input} first"
 
@@ -1352,7 +1352,7 @@ msgstr "Edit"
 msgid "Edit source URL"
 msgstr "Edit source URL"
 
-#: src/features/lectures/MainView.tsx:461
+#: src/features/lectures/MainView.tsx:467
 msgid "Edit summary"
 msgstr "Edit summary"
 
@@ -1604,7 +1604,7 @@ msgstr "Generate"
 msgid "Generate Course Overviews"
 msgstr "Generate Course Overviews"
 
-#: src/features/lectures/MainView.tsx:400
+#: src/features/lectures/MainView.tsx:406
 msgid "Generate the summary first"
 msgstr "Generate the summary first"
 
@@ -1691,7 +1691,7 @@ msgstr "I confirmed, try again"
 msgid "I solved the captcha"
 msgstr "I solved the captcha"
 
-#: src/features/lectures/MainView.tsx:408
+#: src/features/lectures/MainView.tsx:414
 msgid "I want to study this lecture in depth, and soon I'll ask you specific questions about it. Its summary is below.\n"
 "\n"
 "To start, reply with a single sentence — \"What do you want to learn first?\" — followed by a numbered list of 4–6 topics from the lecture to choose from."
@@ -1753,7 +1753,7 @@ msgstr "Key verified"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:389
+#: src/features/lectures/MainView.tsx:395
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -1864,7 +1864,7 @@ msgstr "Match whole word"
 #: src/features/downloads/components/NewView.tsx:142
 #: src/features/downloads/DownloadsView.tsx:196
 #: src/features/lectures/AssignmentView.tsx:141
-#: src/features/lectures/MainView.tsx:591
+#: src/features/lectures/MainView.tsx:597
 msgid "Materials"
 msgstr "Materials"
 
@@ -2062,7 +2062,7 @@ msgstr "Not enough data to estimate"
 msgid "Not in course"
 msgstr "Not in course"
 
-#: src/features/lectures/MainView.tsx:377
+#: src/features/lectures/MainView.tsx:383
 msgid "not provided"
 msgstr "not provided"
 
@@ -2152,7 +2152,7 @@ msgstr "Open folder"
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 
-#: src/features/lectures/MainView.tsx:472
+#: src/features/lectures/MainView.tsx:478
 msgid "Open in Drive"
 msgstr "Open in Drive"
 
@@ -2171,7 +2171,7 @@ msgstr "Open lecture"
 #: src/features/lectures/components/PdfHero.tsx:192
 #: src/features/lectures/components/PdfViewer.tsx:131
 #: src/features/lectures/components/PdfViewer.tsx:132
-#: src/features/lectures/MainView.tsx:466
+#: src/features/lectures/MainView.tsx:472
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
 msgstr "Open PDF"
@@ -2280,7 +2280,7 @@ msgstr "Paste the assignment material with Ctrl+V, we already copied it for you.
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "Paste the course page's address (…/course/view.php?id=…)"
 
-#: src/features/lectures/MainView.tsx:401
+#: src/features/lectures/MainView.tsx:407
 msgid "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgstr "Paste the lecture content with Ctrl+V, we already copied it for you."
 
@@ -2302,11 +2302,11 @@ msgstr "PDF rendered with warnings"
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
 
-#: src/features/lectures/MainView.tsx:527
+#: src/features/lectures/MainView.tsx:533
 msgid "Pipeline"
 msgstr "Pipeline"
 
-#: src/features/lectures/MainView.tsx:210
+#: src/features/lectures/MainView.tsx:216
 #: src/features/runner/RunnerView.tsx:254
 msgid "Pipeline already running"
 msgstr "Pipeline already running"
@@ -2440,7 +2440,7 @@ msgstr "Remove {name}"
 msgid "Remove files from every existing lecture?"
 msgstr "Remove files from every existing lecture?"
 
-#: src/features/lectures/MainView.tsx:344
+#: src/features/lectures/MainView.tsx:350
 msgid "Removed"
 msgstr "Removed"
 
@@ -2517,12 +2517,12 @@ msgstr "Retry automatically when Gemini is busy or unreachable"
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "Retrying in {time} (attempt {attempt}/{of})"
 
-#: src/features/lectures/MainView.tsx:348
-#: src/features/lectures/MainView.tsx:351
+#: src/features/lectures/MainView.tsx:354
+#: src/features/lectures/MainView.tsx:357
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
-#: src/features/lectures/MainView.tsx:500
+#: src/features/lectures/MainView.tsx:506
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
@@ -2687,8 +2687,8 @@ msgstr "Show more"
 msgid "Show screenshot"
 msgstr "Show screenshot"
 
-#: src/features/lectures/MainView.tsx:550
-#: src/features/lectures/MainView.tsx:553
+#: src/features/lectures/MainView.tsx:556
+#: src/features/lectures/MainView.tsx:559
 msgid "Show steps"
 msgstr "Show steps"
 
@@ -2708,7 +2708,7 @@ msgstr "skipped"
 msgid "Skipped"
 msgstr "Skipped"
 
-#: src/features/lectures/MainView.tsx:361
+#: src/features/lectures/MainView.tsx:367
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
@@ -2742,7 +2742,7 @@ msgstr "Step {0} of {1}"
 #: src/features/lectures/components/AssignmentDocCard.tsx:79
 #: src/features/lectures/DocEditor.tsx:192
 #: src/features/lectures/DocEditor.tsx:251
-#: src/features/lectures/MainView.tsx:186
+#: src/features/lectures/MainView.tsx:192
 msgid "Step already running"
 msgstr "Step already running"
 
@@ -2770,7 +2770,7 @@ msgstr "Summaries upload to this account's Drive. Connecting opens a Google sign
 msgid "Summarize"
 msgstr "Summarize"
 
-#: src/features/lectures/MainView.tsx:311
+#: src/features/lectures/MainView.tsx:317
 msgid "summarized from materials only"
 msgstr "summarized from materials only"
 
@@ -2786,7 +2786,7 @@ msgstr "Summarizing the transcript failed."
 msgid "Summary"
 msgstr "Summary"
 
-#: src/features/lectures/MainView.tsx:402
+#: src/features/lectures/MainView.tsx:408
 msgid "Summary copied — paste it in the chat with Ctrl+V."
 msgstr "Summary copied — paste it in the chat with Ctrl+V."
 
@@ -2802,7 +2802,7 @@ msgstr "summary did not use any material"
 msgid "Summary model"
 msgstr "Summary model"
 
-#: src/features/lectures/MainView.tsx:543
+#: src/features/lectures/MainView.tsx:549
 msgid "Summary ready"
 msgstr "Summary ready"
 
@@ -2940,7 +2940,7 @@ msgstr "The folder in your Drive that summaries are uploaded into. It is created
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
-#: src/features/lectures/MainView.tsx:621
+#: src/features/lectures/MainView.tsx:627
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
@@ -2969,7 +2969,7 @@ msgstr "The Moodle login timed out. Try connecting again."
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "The Moodle session expired. Reconnect the account and try again."
 
-#: src/features/lectures/MainView.tsx:638
+#: src/features/lectures/MainView.tsx:644
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -3127,7 +3127,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "The Zoom window was closed during the capture. Try the download again."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:622
+#: src/features/lectures/MainView.tsx:628
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
