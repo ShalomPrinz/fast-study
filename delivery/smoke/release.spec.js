@@ -726,7 +726,6 @@ test('11. quit, no orphans', async () => {
 test('12. a service restart leaves nothing behind', async () => {
   if (!session) await start();
   const { page } = session;
-  const mainPid = session.app.process().pid;
   const killed = 'database';
   const before = readyPorts(readLaunchLog());
   expect(before, `ready lines before the restart: ${JSON.stringify(before)}`).toHaveLength(4);
@@ -740,6 +739,23 @@ test('12. a service restart leaves nothing behind', async () => {
     expect(found, `nothing listens on ${service}'s port ${port} before the restart`).toBeTruthy();
     return { ...found, service, port };
   });
+  // Main is the ready ports' owners' one parent, not Playwright's pid, which is main's parent here.
+  const parents = [...new Set(old.map((p) => p.ppid))];
+  const parentsNamed = parents
+    .map((pid) => named(table.find((p) => p.pid === pid) ?? { pid, name: '(exited)' }))
+    .join('; ');
+  expect(
+    parents,
+    `the ready ports' owners (${old.map(named).join('; ')}) do not share one parent: ${parentsNamed}`,
+  ).toHaveLength(1);
+  const main = table.find((p) => p.pid === parents[0]);
+  expect(
+    main &&
+      main.exe.toLowerCase() === paths.appExe().toLowerCase() &&
+      !main.commandLine.includes('--type='),
+    `the ready ports' owners (${old.map(named).join('; ')}) have parent ${parentsNamed}, not ${paths.appExe()} without --type=`,
+  ).toBe(true);
+  const mainPid = main.pid;
   const children = serviceChildren(table, mainPid);
   expect(
     old.map((p) => p.pid).sort(),
