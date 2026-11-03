@@ -84,7 +84,7 @@ export default function MaterialChip({
       <Icon icon="file" />
       <MaterialNameButton
         label={name}
-        hint={name}
+        hint={t`Open ${name}`}
         onOpen={() => openLectureFile(course, lecture, material.name, kind)}
       />
       {tooLarge && (

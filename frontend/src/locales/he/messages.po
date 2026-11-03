@@ -2132,6 +2132,10 @@ msgstr "נשלחים רק פרטים טכניים על שגיאות, אף פעם
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {host}."
 
+#: src/features/lectures/components/MaterialChip.tsx:87
+msgid "Open {name}"
+msgstr "פתיחת {name}"
+
 #: src/features/extension/ExtensionGuide.tsx:144
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר האוניברסיטה) והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."

@@ -2132,6 +2132,10 @@ msgstr "Only technical error details are sent, never your files or keys. It's an
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "Only YouTube playlists can be opened up; {host} cannot."
 
+#: src/features/lectures/components/MaterialChip.tsx:87
+msgid "Open {name}"
+msgstr "Open {name}"
+
 #: src/features/extension/ExtensionGuide.tsx:144
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
