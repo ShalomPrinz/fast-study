@@ -103,6 +103,8 @@ carries them, the read view only reports `…ApiKeySet`, so a stored key never r
 `pickBacking()` is the one place the store's backing is chosen: the preload bridge's
 `window.faststudy.settings` packaged, the database service's `/settings` in browser dev. Same interface,
 no adapter, and both stay permanent so browser-only dev remains a first-class loop.
+A save in one window never reaches an already-open one (`SettingsContext` holds the boot read and its own
+save; the database broadcasts nothing): in browser dev a second tab sees it after a reload. Packaged has one window and one writer.
 
 `saveSettings` is **two phases, in order**: the store first (it is what a fresh boot reads), then each
 changed field to its owner's `POST /config` — backend, database, or the auto-downloader for the university
