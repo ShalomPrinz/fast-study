@@ -789,17 +789,21 @@ test('12. a service restart leaves nothing behind', async () => {
     left = await survivorsOf(tracked);
   }
   expect(left.map(named), 'processes from before the restart outlived it').toEqual([]);
-  for (const p of old) {
-    expect(await refusesConnection(p.port), `port ${p.port} still answers: ${named(p)}`).toBe(true);
-  }
 
   const now = await processTable();
   const running = serviceChildren(now, mainPid);
   expect(running.map(named), 'main runs other than four service processes').toHaveLength(4);
+  // An old port may be closed or reissued by bind(0) to a new service; any other listener leaked.
+  const runningPids = running.map((p) => p.pid);
+  for (const { port, pid } of await listeners(old.map((p) => p.port))) {
+    const holder = now.find((p) => p.pid === pid) ?? { pid, name: '(exited)' };
+    expect(
+      runningPids,
+      `old port ${port} is held by ${named(holder)}, not a new service`,
+    ).toContain(pid);
+  }
   const newOwners = await listeners(after.map(({ port }) => port));
   for (const { service, port } of after) {
-    const was = old.find((p) => p.service === service);
-    expect(port, `${service} came back on its old port ${port}`).not.toBe(was.port);
     const pid = newOwners.find((owner) => owner.port === port)?.pid;
     expect(
       running.map((p) => p.pid),
