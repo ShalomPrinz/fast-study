@@ -61,6 +61,27 @@ class TestOverviewRetry:
 
         asyncio.run(go())
 
+    def test_the_first_ping_after_the_failure_already_carries_the_retry(
+        self, db, monkeypatch
+    ):
+        monkeypatch.setattr(course_analyze, "analyze", _failing())
+        pings = []
+        monkeypatch.setattr(
+            course_runner.db_client,
+            "notify",
+            lambda: pings.append(
+                dict(course_runner._status.get(COURSE, {}).get(SLUG, {}))
+            ),
+        )
+
+        async def go():
+            _generate()
+            await _wait_done()
+            first_error = next(p for p in pings if p.get("status") == "error")
+            assert first_error["retry"]["attempt"] == 1
+
+        asyncio.run(go())
+
     @pytest.mark.parametrize(
         "code,params",
         [

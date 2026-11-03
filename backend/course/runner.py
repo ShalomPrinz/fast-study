@@ -244,6 +244,7 @@ class OverviewRun:
                     stopped = await asyncio.to_thread(self._run_slug_phase, slug, phase)
                     if phase is Phase.ANALYZE:
                         self._schedule_retry(slug)
+                    db_client.notify()  # after the retry is armed, so the first ping carries it
                     if stopped:
                         break  # dead end: stop this slug's chain, the other slugs go on
 
@@ -270,7 +271,6 @@ class OverviewRun:
             ),
         }
         entry["retry"] = field
-        db_client.notify()  # the phase's own ping predates the field
 
     def _fail_pending(self, e: Exception) -> None:
         """Mark this run's still-pending slugs as errored, as a phase failure would."""
@@ -316,7 +316,8 @@ class OverviewRun:
 
     def _run_slug_phase(self, slug: str, phase: Phase) -> bool:
         """Run one (slug, phase) worker and fold its result into the shared entry; returns True
-        if it raised or skipped, since either wrote no output for the next phase to read."""
+        if it raised or skipped, since either wrote no output for the next phase to read. The
+        caller pings SSE."""
 
         entries = _status.setdefault(self.course, {})
         # Fresh dict so a prior phase's message can't linger; `phase` and `started_at` carry over
@@ -344,8 +345,6 @@ class OverviewRun:
                 **carried,
             }
             stop = True
-        finally:
-            db_client.notify()
         return stop
 
     def _phase_worker(self, slug: str, phase: Phase) -> dict:
