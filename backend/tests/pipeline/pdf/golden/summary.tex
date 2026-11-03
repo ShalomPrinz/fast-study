@@ -246,9 +246,15 @@
 }
 
 {\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}ll@{}}
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
 \toprule\noalign{}
-שורה ארוכה & הסבר \\
+\begin{minipage}[b]{\linewidth}\raggedright
+שורה ארוכה
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+הסבר
+\end{minipage} \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
@@ -259,14 +265,20 @@
 }
 
 {\def\LTcaptype{none} % do not increment counter
-\begin{longtable}[]{@{}rr@{}}
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.1111}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.0833}}@{}}
 \toprule\noalign{}
-עמודה & ערך \\
+\begin{minipage}[b]{\linewidth}\raggedleft
+עמודה
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+ערך
+\end{minipage} \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-\multirow{2}{*}{\raggedright\arraybackslash מאוחד} & א \\
+\multirow{2}{=}{\raggedright\arraybackslash מאוחד} & א \\
 & ב \\
 \end{longtable}
 }

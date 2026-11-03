@@ -32,7 +32,7 @@ Tried and failed: `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\p
 
 ### Tables
 
-Every column's width is reset to default (pandoc 3 turns any source line over 72 columns into fixed-width wrapped columns; 2.x never did), and every `AlignDefault` column becomes `AlignRight`. bidi already reverses column order, but pandoc emits `l` for an unaligned column, leaving cell contents flush left. An explicit alignment (`:---`, `---:`) is the author's and is kept — which is why this is an AST rewrite rather than a global redefinition of `l`. The filter edits `el.colspecs[i][1]`: pandoc 2.10 replaced the table AST's `aligns` field with `colspecs`, and the old name is `nil` on 3.x ([PDF.md](PDF.md#the-pandoc-pin-and-the-template)).
+A pipe table with a source line over 72 columns, or any grid table (its `p{}` widths always come from the dash counts), gets pandoc's relative widths and wraps; every `AlignDefault` column becomes `AlignRight`. bidi already reverses column order, but pandoc emits `l` for an unaligned column, leaving cell contents flush left. An explicit alignment (`:---`, `---:`) is the author's and is kept — which is why this is an AST rewrite rather than a global redefinition of `l`. The filter edits `el.colspecs[i][1]`: pandoc 2.10 replaced the table AST's `aligns` field with `colspecs`, and the old name is `nil` on 3.x ([PDF.md](PDF.md#the-pandoc-pin-and-the-template)).
 
 ### Callout boxes
 
