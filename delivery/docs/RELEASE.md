@@ -135,7 +135,7 @@ moving one re-opens that measurement, so surface it rather than bump it:
 
 ## The frozen bundle
 
-`services.spec` builds `services`, one one-dir bundle picked by `argv[1]` through `entry.py`. Its
+`services.spec` builds `services/faststudy-services.exe`, one one-dir bundle picked by `argv[1]` through `entry.py`. Its
 rules are [`delivery/CLAUDE.md`](../CLAUDE.md#the-frozen-bundles-invariants); the spec's own decisions:
 
 - **One Drive discovery document.** Of googleapiclient's 582 the bundle keeps `drive.v3.json`, the

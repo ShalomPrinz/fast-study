@@ -193,7 +193,8 @@ function exe(name) {
  *  `window.faststudy.urls`; cwd branches with the command — see docs/BOOT.md. */
 function childSpecs() {
   const dev = !app.isPackaged;
-  const services = path.join(process.resourcesPath, 'services', exe('services'));
+  // Not `services.exe`: that image name is Windows' SCM, which `taskkill` refuses to end whatever the path.
+  const services = path.join(process.resourcesPath, 'services', exe('faststudy-services'));
   // Packaged, the Node services run on Electron's own binary as node — nothing else ships one.
   const node = (dir, entry) => {
     const staged = path.join(process.resourcesPath, 'downloader', dir);

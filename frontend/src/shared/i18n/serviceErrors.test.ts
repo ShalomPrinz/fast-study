@@ -72,7 +72,7 @@ describe('resolveServiceError', () => {
   })
 
   it('withholds the OS text entirely when the app files were blocked', () => {
-    const prose = "[Errno 22] Invalid argument: 'C:\\FastStudy\\services.exe'"
+    const prose = "[Errno 22] Invalid argument: 'C:\\FastStudy\\faststudy-services.exe'"
     const resolved = resolveServiceError({ message: prose, code: 'app_files_blocked', params: {} })
 
     expect(resolved.detail).toBeNull()

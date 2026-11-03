@@ -31,8 +31,8 @@ node delivery/boot-timing.mjs [collect|view] [--repo owner/name]               #
 Only `.github/workflows/build.yml` on `windows-latest` produces an installer: neither PyInstaller nor
 electron-builder's NSIS target cross-compiles, so WSL can freeze a Linux bundle, prime and stage, but
 never build or run the release. A freeze needs `backend/credentials.json` on disk; a Linux freeze
-is checked by running `services database|backend` with `FASTSTUDY_PORT=0` for the port line and
-`/health`.
+is checked by running `backend/dist/services/faststudy-services database|backend` with
+`FASTSTUDY_PORT=0` for the port line and `/health`.
 
 ## Rules
 

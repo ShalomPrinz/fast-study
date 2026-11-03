@@ -219,7 +219,7 @@ function named(p) {
 }
 
 /** The services main runs: its direct children out of the install dir, minus Electron's own
- *  `--type=` helpers (renderer, GPU, crashpad) — `services.exe` twice and `FastStudy.exe` as node twice. */
+ *  `--type=` helpers (renderer, GPU, crashpad) — `faststudy-services.exe` twice and `FastStudy.exe` as node twice. */
 function serviceChildren(table, mainPid) {
   const prefix = path.join(paths.installDir(), path.sep).toLowerCase();
   return table.filter(
@@ -364,7 +364,7 @@ test('1. fresh install', async () => {
 
   await test.step("resources/ matches electron/docs/BOOT.md's packaged tree", async () => {
     const shipped = [
-      'services/services.exe',
+      'services/faststudy-services.exe',
       // The one Google API discovery document services.spec keeps, under PyInstaller's one-dir
       // contents directory. Missing, Drive upload fails on a user's machine and nowhere earlier.
       'services/_internal/googleapiclient/discovery_cache/documents/drive.v3.json',

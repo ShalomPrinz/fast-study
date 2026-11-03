@@ -89,7 +89,8 @@ exe = EXE(  # noqa: F821
     a.scripts,
     options,
     exclude_binaries=True,
-    name="services",
+    # Never plain `services`: that image name is Windows' Service Control Manager, so taskkill refuses it.
+    name="faststudy-services",
     # Console, not windowed: the launcher reads the FASTSTUDY_PORT line off stdout, and tool spawns (no
     # CREATE_NO_WINDOW) stay hidden only by sharing this console, which windowsHide hides for console exes.
     console=True,

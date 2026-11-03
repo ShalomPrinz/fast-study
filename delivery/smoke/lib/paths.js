@@ -24,7 +24,7 @@ export const appExe = () => path.join(installDir(), `${PRODUCT}.exe`);
 export const uninstallerExe = () => path.join(installDir(), `Uninstall ${PRODUCT}.exe`);
 export const resourcesDir = () => path.join(installDir(), 'resources');
 export const binDir = () => path.join(resourcesDir(), 'bin');
-export const servicesExe = () => path.join(resourcesDir(), 'services', 'services.exe');
+export const servicesExe = () => path.join(resourcesDir(), 'services', 'faststudy-services.exe');
 export const formatsDir = () => path.join(resourcesDir(), 'latex', 'formats');
 export const nativeHost = () => path.join(resourcesDir(), 'bridge', 'host.js');
 export const appUpdateYml = () => path.join(resourcesDir(), 'app-update.yml');

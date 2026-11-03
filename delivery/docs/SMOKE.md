@@ -53,7 +53,7 @@ A new smoke test adds its row here; a test with no packaging-only failure belong
   VC++ redistributable — the runner has those, a user's PC may not. Runtime `LoadLibrary`/ctypes
   loads are not covered.
 - **Offline, enforced by the OS.** Per-program outbound firewall rules block `FastStudy.exe`,
-  `services.exe`, every exe under `resources/bin/` and the state root's yt-dlp copy — never an
+  `faststudy-services.exe`, every exe under `resources/bin/` and the state root's yt-dlp copy — never an
   override variable in production code. The suite first proves a blocked program still reaches
   loopback and nothing else, so a wrong firewall assumption fails under its own name.
 - **No provider is faked or reached.** The provider steps run and must fail on the network, which

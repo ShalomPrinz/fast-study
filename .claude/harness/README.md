@@ -475,7 +475,7 @@ marks, the current arrow, the counts and the overview's current-item buttons) an
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to `main` and on pull
 requests, with real ffmpeg, pandoc and tectonic, installed by the composite action
 [`harness-setup`](../../.github/actions/harness-setup/action.yml) that other workflows reuse. The
-release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a
+release smoke suite stays separate: the shims cannot reach the frozen `faststudy-services.exe` without a
 production override, which [SMOKE.md](../../delivery/docs/SMOKE.md) rules out.
 
 Three rules decide what earns a spec. First, it drives a flow a real user reaches in the shipped app,

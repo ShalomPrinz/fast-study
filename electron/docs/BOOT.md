@@ -52,7 +52,7 @@ failed attempt is carried — and **Quit** ends the app.
 A spawn that fails — whether Node emits `'error'` or throws synchronously, as it does for `UNKNOWN` —
 takes the same path. Packaged on Windows, a binary under `resources/` failing with `ENOENT`,
 `UNKNOWN`, `EPERM` or `EACCES` is almost always antivirus quarantining or still scanning the unsigned
-`services.exe`, so the message names that and the restore-from-Protection-history fix instead of the
+`faststudy-services.exe`, so the message names that and the restore-from-Protection-history fix instead of the
 raw error, which stays in the log. Like the rest of the page it is English and carries no error code:
 nothing would resolve one ([ERROR-CODES.md](../../docs/ERROR-CODES.md)).
 
@@ -147,8 +147,8 @@ One `isPackaged` branch in the child spec table, and nothing else in the file kn
 
 | Child      | Dev                              | Packaged                                     |
 | ---------- | -------------------------------- | -------------------------------------------- |
-| `database` | `uv run python database_main.py` | `resources/services/services database`       |
-| `backend`  | `uv run python backend_main.py`  | `resources/services/services backend`        |
+| `database` | `uv run python database_main.py` | `resources/services/faststudy-services database` |
+| `backend`  | `uv run python backend_main.py`  | `resources/services/faststudy-services backend`  |
 | `auto`     | `node app.js`                    | Electron's own exe, `ELECTRON_RUN_AS_NODE=1` |
 | `server`   | `node src/index.js`              | Electron's own exe, `ELECTRON_RUN_AS_NODE=1` |
 
@@ -164,7 +164,7 @@ ships; it is also yt-dlp's player JS runtime, whose flags live in `server/`
 The packaged tree main assumes, staged by the build as `electron`'s `extraResources`:
 
 ```
-resources/services/services(.exe)   the PyInstaller one-dir bundle, service picked by argv[1]
+resources/services/faststudy-services(.exe)  the PyInstaller one-dir bundle, service picked by argv[1]
 resources/downloader/auto/app.js    the auto-downloader, run on Electron-as-node
 resources/downloader/server/src/index.js  the download server, likewise
 resources/downloader/node_modules/  the workspace's one hoisted node_modules — not `resources/node_modules`, which `app.asar` would resolve into
@@ -174,6 +174,9 @@ resources/latex/                    the primed tectonic cache → TECTONIC_CACHE
 resources/extension/                the Chrome extension, copied to <state root>/extension
 resources/bridge/host.js            the native host script, run on Electron-as-node by a generated .bat
 ```
+
+The bundle is never named `services.exe`: that is the image name of Windows' Service Control Manager,
+and `taskkill` refuses to end any process carrying it, whatever its path.
 
 ## The installed process tree
 

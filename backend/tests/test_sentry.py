@@ -267,7 +267,7 @@ def test_route_error_naming_blocked_executable_answers_app_files_blocked(
 
     @backend_main.app.get("/blocked")
     def blocked():
-        """Fail as a quarantined services.exe does."""
+        """Fail as a quarantined faststudy-services.exe does."""
 
         raise OSError(22, "Invalid argument", sys.executable)
 

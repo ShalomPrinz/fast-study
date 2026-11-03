@@ -37,7 +37,7 @@ cd delivery/smoke && npx playwright test --list                                 
 npm run lint                                                                                     # from the repo root
 ```
 
-- The Linux bundle's `build/services/services database` / `backend` with `FASTSTUDY_PORT=0` must print `FASTSTUDY_PORT=<n>` and answer `/health`. The smoke suite cannot run here, since it needs an installed Windows build.
+- The Linux bundle's `backend/dist/services/faststudy-services database` / `backend` with `FASTSTUDY_PORT=0` must print `FASTSTUDY_PORT=<n>` and answer `/health`. The smoke suite cannot run here, since it needs an installed Windows build.
 - WSL interop is off (`powershell.exe` fails with "Exec format error"), so a `lib/windows.js` helper can only be exercised under a Linux `pwsh` standing in for it on PATH.
 - The dev services, pandoc and tectonic do run locally; start the backend with `GROQ_API_KEY=` and `GEMINI_API_KEY=` exported empty, since `load_dotenv` never overrides a set variable and the worktree `.env` holds real keys.
 - A smoke check, workflow step or packaged-path assumption that only a Windows runner can prove is reported as unproven until the first dispatch — never as working.
