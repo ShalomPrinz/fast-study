@@ -492,6 +492,11 @@ Every browser the harness opens (e2e pages and `hb` sessions) has `fast-study:to
 so the tour overlay never blocks a drive; `tour.spec.mjs` opts out with
 `test.use({ tourDismissed: false })`, and `HB_TOUR=1` does the same for `hb` sessions.
 
+The launcher's `window.faststudy.services` bridge is stubbed only for a spec that opts in with
+`test.use({ launcherBridge: true })` (opt-in because a bridge makes Restart appear on every service banner):
+`page.evaluate(n => window.__fsStop(n), 'backend')` fires every `onStopped` callback, and each `restart()`
+call lands on `window.__fsRestarts` (`service-banner.spec.mjs`).
+
 `e2e/fixtures.mjs` holds what more than one spec needs: the stack's levers (`providers`, `site`, `lock`,
 `reseed`, `reset`), a lecture view's `step` rows and `expectRunComplete` (the folded "Summary ready" row), `treeLecture` over the database's
 `/tree`, `driveFile` walking the fake Drive's folder chain, and `dropFile`, which drops a local file on an
