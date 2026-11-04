@@ -339,20 +339,29 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
 }
 
-// The per-minute Gemini quota sentence without its "try again" advice, for a failure whose
-// `RetryLine` is already counting down to the retry.
-const QUOTA_RETRYING = msg({ message: "Gemini's rate limit was reached." })
+// The transient Gemini rows without their "try again" advice, for a failure whose `RetryLine` is
+// already counting down to the retry. Keyed by the codes `is_transient` retries.
+const RETRYING: Record<string, MessageDescriptor> = {
+  gemini_quota_exhausted: msg({ message: "Gemini's rate limit was reached." }),
+  gemini_overloaded: msg({
+    message:
+      '{model, select, undefined {The Gemini model is under high demand right now.} other {The Gemini model {model} is under high demand right now.}}',
+  }),
+  gemini_timeout: msg({
+    message:
+      '{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped.}}',
+  }),
+  gemini_unreachable: msg({
+    message:
+      '{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the Gemini model {model}. Check your internet connection.}}',
+  }),
+}
 
-// The row a failure renders: the catalog row, except a per-minute Gemini quota with a waiting retry,
-// where "Try again in a minute" would contradict the countdown.
+// The row a failure renders: the catalog row, except a transient Gemini failure with a waiting retry,
+// where "try again" would contradict the countdown. A daily quota never retries, so it keeps its row.
 export function rowFor(failure: ServiceFailure): MessageDescriptor | null {
-  if (
-    failure.code === 'gemini_quota_exhausted' &&
-    failure.params?.scope !== 'daily' &&
-    failure.retry
-  ) {
-    return QUOTA_RETRYING
-  }
+  const retrying = failure.code && RETRYING[failure.code]
+  if (retrying && failure.retry && failure.params?.scope !== 'daily') return retrying
   return serviceErrorRow(failure.code)
 }
 

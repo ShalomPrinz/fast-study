@@ -221,4 +221,28 @@ describe('rowFor', () => {
   it('keeps the daily row even with a retry', () => {
     expect(rowFor(quota({ scope: 'daily' }, retry))).toBe(serviceErrorRow('gemini_quota_exhausted'))
   })
+
+  describe.each(['gemini_overloaded', 'gemini_timeout', 'gemini_unreachable'])('%s', (code) => {
+    const failure = (retry?: unknown, params: Record<string, string> = { seconds: '60' }) => ({
+      message: '',
+      code,
+      params,
+      retry,
+    })
+    const advice = /try again/i
+
+    it('drops the try-again advice, with and without a model, while a retry waits', () => {
+      const row = rowFor(failure(retry))!
+      expect(row).not.toBe(serviceErrorRow(code))
+      expect(row.message).toContain('undefined {')
+      expect(row.message).toContain('other {')
+      expect(row.message).not.toMatch(advice)
+      expect(rowFor(failure(retry, { model: 'gemini-x' }))).toBe(row)
+    })
+
+    it('keeps the catalog row with no retry waiting', () => {
+      expect(rowFor(failure())).toBe(serviceErrorRow(code))
+      expect(rowFor(failure(null, { model: 'gemini-x' }))).toBe(serviceErrorRow(code))
+    })
+  })
 })
