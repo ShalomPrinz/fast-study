@@ -141,11 +141,20 @@ export async function restore(paths) {
 
 // The app has no route that deletes a course or a lecture, so these two are the only direct writes
 // to DATA_ROOT — guarded by the marker, and announced on /notify so an open page refreshes.
-function wipe(dir) {
+function wipe(dir, paths) {
   if (!isScratchData(dir)) throw new Error(`${dir} lost its scratch marker — refusing to wipe it`);
-  for (const entry of fs.readdirSync(dir)) {
-    if (entry !== SCRATCH_MARKER)
-      fs.rmSync(path.join(dir, entry), { recursive: true, force: true });
+  // Rename out first: the open page's refresh could otherwise re-create a manifest inside a half-deleted folder.
+  for (const old of fs.readdirSync(paths.root)) {
+    if (old.startsWith('trash-'))
+      fs.rmSync(path.join(paths.root, old), { recursive: true, force: true });
+  }
+  const trash = fs.mkdtempSync(path.join(paths.root, 'trash-'));
+  try {
+    for (const entry of fs.readdirSync(dir)) {
+      if (entry !== SCRATCH_MARKER) fs.renameSync(path.join(dir, entry), path.join(trash, entry));
+    }
+  } finally {
+    fs.rmSync(trash, { recursive: true, force: true });
   }
 }
 
@@ -176,8 +185,8 @@ export async function removeLecture(course, lecture, kind) {
 /** Restore the baseline, wipe both scratch roots and seed the flow courses. */
 export async function reseed(paths) {
   await restore(paths);
-  wipe(paths.data);
-  wipe(paths.dataEmpty);
+  wipe(paths.data, paths);
+  wipe(paths.dataEmpty, paths);
   const seeded = await seed(paths);
   await call(`${DATABASE}/notify`, { method: 'POST' });
   return seeded;
