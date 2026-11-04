@@ -124,7 +124,7 @@ moving one re-opens that measurement, so surface it rather than bump it:
   `text_direction.lua` reads its Lua table API (`colspecs`, which 2.9 lacks), so the binary and
   both move together ([`backend/docs/PDF.md`](../../backend/docs/PDF.md#the-pandoc-pin-and-the-template));
   a move also re-opens the sink ([LATEX.md](LATEX.md#kitchen-sinkmd)). Its `pandoc.exe` is 239MB
-  unpacked, 134MB more than 2.9.2.1's.
+  unpacked; pinning 3.13 over 2.9 makes the installer 14MB larger.
 - **ffmpeg 9.0.2** — pinned only so a build is reproducible; bump it for upstream security fixes.
 - **PyInstaller 6.22.3** — installed from its sdist with the bootloader compiled by MSVC on the
   runner, because Defender quarantines the stock prebuilt one, which malware shares. The sdist
