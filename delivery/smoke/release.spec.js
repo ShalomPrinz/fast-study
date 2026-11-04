@@ -854,10 +854,8 @@ test('12. a launcher crash leaves no service or tool behind', async () => {
   const crashed = session;
   session = null;
   services = null;
-  // Main is gone, so trace and app handle are only dropped; take the process first, as close disposes it.
-  const proc = crashed.app.process();
+  // Main is gone, so trace and app handle are only dropped.
   await Promise.race([abandon(crashed), delay(30_000)]);
-  proc.kill();
 
   // Services may take their time to go; a surviving one keeps its tools alive, so it is judged first.
   const left = (
