@@ -29,6 +29,8 @@ pandoc is bounded at 60s. The render is bounded at 60s **when the cache is froze
 
 The pin is pandoc 3.13 on every platform, and `assets/templates/pandoc_template.tex` is that version's stock `pandoc -D latex` unchanged. 3.x splits the template into partials that `-D` does not expand; pandoc resolves a partial next to `--template` first and falls back to the one embedded in the binary, so the only partial shipped is `fonts.latex`, carrying the one local edit: `\usepackage[no-math]{fontspec}` in place of `unicode-math`, because the math path is the 8-bit `lmodern`/`amssymb` one ([LATEX.md](../../delivery/docs/LATEX.md)). Every other partial moves with the binary.
 
+`build_tex` passes `--data-dir=<build dir>` (which never has a `templates/`), so a user's own pandoc data dir can't shadow the built-in partials.
+
 Moving the pin means re-diffing `pandoc -D latex` and `--print-default-data-file templates/fonts.latex` against these two files, then the golden below.
 
 **The filter needs pandoc 2.10 or newer.** `Table` in `text_direction.lua` reads the `colspecs`/`head`/`bodies`/`foot` table AST that 2.10 introduced; on older pandoc the table is `aligns`/`widths`/`headers`/`rows`, so any document with a table dies with `Error running filter` / `attempt to index a nil value`. Nothing else in the filter or the preprocessing depends on the version.

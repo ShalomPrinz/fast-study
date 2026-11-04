@@ -572,6 +572,14 @@ class TestInvocation:
         assert "geometry:margin=2.5cm" in cmd
         assert "linestretch=1.3" in cmd
 
+    def test_pandoc_data_dir_is_the_build_dir_so_user_templates_never_apply(self):
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        cmd = fake.pandoc_cmd
+        build = str(Path(cmd[1]).parent)
+        assert f"--data-dir={build}" in cmd
+
     def test_the_engine_runs_once(self):
         # Tectonic reruns TeX to convergence itself, so there is no second pass to drive.
         fake = FakeRun()

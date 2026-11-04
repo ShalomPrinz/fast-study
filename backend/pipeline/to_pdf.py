@@ -270,6 +270,8 @@ def build_tex(markdown: str, build: Path) -> str:
         # Without it pandoc rewrites curly quotes as ``…'', which only Ligatures=TeX fonts curl.
         "--to=latex-smart",
         f"--template={template_path}",
+        # The build dir has no templates/, so a user's pandoc data dir can't override built-in partials.
+        f"--data-dir={build}",
         "-V",
         "geometry:margin=2.5cm",
         "-V",
