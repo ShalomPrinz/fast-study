@@ -83,28 +83,39 @@ function unlessEnded(state) {
   return state;
 }
 
-// On the captcha, a call with no waits left (getPublicConfig has none) is refused unsent.
+// On the captcha, a call with no waits left (getPublicConfig has none) is refused unsent. A page the
+// site moved to the captcha mid-call is the same wall: reopened once and resent (every routed call is a read).
 async function windowFetch(window, url, init, call) {
-  if (!window.onSite()) {
-    if (call.waits >= MAX_WAITS)
-      throw new WsBlockedError('the challenge window is still on the captcha', ROUTED);
-    const state = await reopenOn(window.site, call);
-    if (state === false) throw noBrowser();
-    const now = challengeRoute(url);
-    if (!now) throw windowClosed();
-    window = now;
-  }
   let res;
-  try {
-    res = await window.fetch(url, init, { lost: windowClosed });
-  } catch (err) {
-    if (window.gone(err)) throw windowClosed();
-    throw err;
+  for (let resent = false; ; resent = true) {
+    if (!window.onSite()) {
+      if (call.waits >= MAX_WAITS)
+        throw new WsBlockedError('the challenge window is still on the captcha', ROUTED);
+      const state = await reopenOn(window.site, call);
+      if (state === false) throw noBrowser();
+      const now = challengeRoute(url);
+      if (!now) throw windowClosed();
+      window = now;
+    }
+    try {
+      res = await window.fetch(url, init, { lost: () => lostBody(window) });
+      break;
+    } catch (err) {
+      if (window.gone(err)) throw windowClosed();
+      if (window.onSite()) throw err;
+      if (resent) throw new WsBlockedError('the challenge window left the site', ROUTED);
+    }
   }
   ROUTE.set(res, 'window');
   if (!(await call.wall(res))) await window.passed();
   return res;
 }
+
+// A body slice the page could not hand over: a closed window is block mode over, one moved off the site is a wall.
+const lostBody = (window) =>
+  window.gone() || window.onSite()
+    ? windowClosed()
+    : new WsBlockedError('the challenge window left the site', ROUTED);
 
 // Which transport answered each Response ('node' | 'window'), for the WsError log line.
 const ROUTE = new WeakMap();

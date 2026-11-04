@@ -147,8 +147,15 @@ are made from inside that browser:
   ([GATE.md](GATE.md#holds-that-outlive-the-request)) (`POST /window/show` raises it again, as for zoom's
   [captcha](ZOOM.md#captcha-browserzoomcaptchajs)), and the call waits for the user's solve
   (`waitChallenge`): the page landing back on the site resends it through the window once and it
-  returns normally, so the caller never sees the captcha either. A human is solving it, so this is
-  no retry loop: one resend, no backoff. Unsolved 10 minutes after it went on screen (`captchaMs`, one
+  returns normally, so the caller never sees the captcha either. A page the site moves to the
+  captcha _during_ a page call (Radware's script, about a second after the root loaded) fails that
+  call; it takes this same wait and resend. If the resend's page is moved off the site again the
+  call throws a routed `site_blocked` (a failure on the site rethrows as is). A routed
+  `site_blocked` reaches JSON callers as a 503; on `/moodle/file` mid-stream it only cuts the
+  socket. Resends through the window assume every routed call is a read (the only routed POSTs are
+  `tool_mobile_get_content` and `getPublicConfig`), so a write-shaped call must not be routed
+  without revisiting that. A human is solving it, so this is no retry
+  loop: one resend, no backoff. Unsolved 10 minutes after it went on screen (`captchaMs`, one
   deadline per captcha that no later call or waiter restarts, so a call joining at minute 9 waits
   about one; it also closes the window) the call throws `503 site_captcha_timeout {}` with no `status`;
   the user closing the window mid-wait throws an unrouted `site_blocked` (below). The wait follows
