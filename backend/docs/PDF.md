@@ -33,7 +33,7 @@ The pin is pandoc 3.13 on every platform, and `assets/templates/pandoc_template.
 
 Moving the pin means re-diffing `pandoc -D latex` and `--print-default-data-file templates/fonts.latex` against these two files, then the golden below.
 
-**The filter needs pandoc 2.10 or newer.** `Table` in `text_direction.lua` reads the `colspecs`/`head`/`bodies`/`foot` table AST that 2.10 introduced; on older pandoc the table is `aligns`/`widths`/`headers`/`rows`, so any document with a table dies with `Error running filter` / `attempt to index a nil value`. Nothing else in the filter or the preprocessing depends on the version.
+**The filter needs pandoc 3.13 or newer.** `text_direction.lua` opens with `PANDOC_VERSION:must_be_at_least '3.13'`, so an older pandoc stops with its own version error instead of a nil index inside `Table`.
 
 **A row-spanning cell in a grid table renders flush left.** Pandoc 3.13's LaTeX writer hard-codes `\raggedright` inside `\multirow{N}{=}{…}` and ignores the cell's alignment, so the filter cannot change it.
 

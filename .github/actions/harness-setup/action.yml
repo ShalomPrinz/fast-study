@@ -26,7 +26,7 @@ runs:
         sudo apt-get install -y ffmpeg
       shell: bash
 
-    # The version the backend tests and the shipped build pin: the summary render needs pandoc >= 2.10 (colspecs API).
+    # The version the backend tests and the shipped build pin: the summary filter refuses anything older than 3.13.
     - name: Install pandoc 3.13
       run: |
         curl -fsSL -o pandoc.deb https://github.com/jgm/pandoc/releases/download/3.13/pandoc-3.13-1-amd64.deb

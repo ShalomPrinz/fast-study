@@ -1,3 +1,6 @@
+-- Fail with pandoc's own version error on anything older than the pinned 3.13 instead of a nil index.
+PANDOC_VERSION:must_be_at_least '3.13'
+
 -- Direction fixes pandoc's AST is the only place to make, in an RTL (Hebrew) document.
 -- See backend/docs/PDF.md.
 
