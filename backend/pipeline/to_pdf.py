@@ -38,8 +38,8 @@ DIRECTION_FILTER = resource_path("assets", "filters", "text_direction.lua")
 # Windows. See docs/PDF.md.
 BUILD_FONTS_PATH = "./"
 
-# Preamble pandoc injects via --include-in-header. Package order and the callout box
-# design are load-bearing — see docs/BIDI.md.
+# Preamble pandoc injects via --include-in-header. Package order, the callout box design and the
+# final \selectlanguage (polyglossia 1.53 pass-1 font leak) are load-bearing — see docs/BIDI.md.
 LATEX_HEADER = r"""
 \usepackage{fvextra}
 \fvset{breaklines=true, breakanywhere=true, breakautoindent=true, breaksymbolleft={}, breaksymbolright={}, breakanywheresymbolpre={}}
@@ -70,6 +70,7 @@ LATEX_HEADER = r"""
 \newfontfamily\englishfontsf{NotoSansHebrew-Regular}[Path=FONTS_DIR_PLACEHOLDER, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
 \newfontfamily\englishfonttt{MiriamMonoCLM-Book}[Path=FONTS_DIR_PLACEHOLDER, Extension=.ttf, BoldFont=MiriamMonoCLM-Bold]
 \setmonofont{MiriamMonoCLM-Book}[Path=FONTS_DIR_PLACEHOLDER, Extension=.ttf, BoldFont=MiriamMonoCLM-Bold]
+\selectlanguage{hebrew}
 """
 
 

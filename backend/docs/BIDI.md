@@ -14,6 +14,8 @@ Probe with a `\ifx\foo\@undefined NO\else YES\fi` test file before assuming a pr
 
 **Package order in `LATEX_HEADER` is load-bearing.** bidi (loaded by polyglossia for Hebrew) rejects `graphicx` and `lineno` loaded after it, so `fvextra` and `tcolorbox`, which pull them in, sit at the very top, above polyglossia. `hyperref` is loaded there too, because pandoc 3's template loads it after the header and bidi errors on that. `stmaryrd` (for `\llbracket`/`\rrbracket`) loads just before it; order-insensitive. `\st` is redefined onto ulem's `\sout`, since the template's soul drops Hebrew glyphs.
 
+**`\selectlanguage{hebrew}` is the last line of `LATEX_HEADER`, after every font declaration.** Polyglossia 1.53 sets `\normalfontlatin` at `\begin{document}` while `\normalfont` is still stock NFSS (`lmr`); the Hebrew `\normalfont` is only defined later, in `\AfterEndPreamble`. On pass 1 a `\textenglish`/`\texthebrew` then `\global\let`s `\normalfont` back to `lmr`, so later headings and amsmath's `\textdef@` select Latin Modern shapes (`TU/lmr/bx/n/12`, …) the PDF never draws. Pass 2 replays `\selectlanguage*{hebrew}` from the aux before that hook, so tectonic's last pass looks right, but an offline cache missing those shapes fails on pass 1. The preamble line replays what the aux would; in-body `\selectlanguage` and `\AtBeginDocument` do not work. It sits after the font declarations so the language switch sees the Hebrew families. `tests/pipeline/pdf/test_font_allowlist.py` guards it.
+
 ## The direction filter
 
 `text_direction.lua` holds the AST rewrites that can't happen in the markdown or the header.
