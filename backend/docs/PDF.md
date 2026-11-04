@@ -35,6 +35,8 @@ Moving the pin means re-diffing `pandoc -D latex` and `--print-default-data-file
 
 **The filter needs pandoc 2.10 or newer.** `Table` in `text_direction.lua` reads the `colspecs`/`head`/`bodies`/`foot` table AST that 2.10 introduced; on older pandoc the table is `aligns`/`widths`/`headers`/`rows`, so any document with a table dies with `Error running filter` / `attempt to index a nil value`. Nothing else in the filter or the preprocessing depends on the version.
 
+**A row-spanning cell in a grid table renders flush left.** Pandoc 3.13's LaTeX writer hard-codes `\raggedright` inside `\multirow{N}{=}{…}` and ignores the cell's alignment, so the filter cannot change it.
+
 ## The LaTeX golden
 
 `tests/pipeline/pdf/test_render_golden.py` runs `golden/summary.md` (every branch of `delivery/kitchen-sink.md` plus the [BIDI.md](BIDI.md) cases: mixed phrases, inline and fenced code, aligned and unaligned tables, a long pipe table (wrapped columns), pseudocode and bash fences, the three callouts and an unknown one, inline and display math, lists, footnote, link, image) through the app's own path — `apply_outside_fences(…, preprocess_markdown)` then `build_tex` — and diffs the LaTeX against the committed `golden/summary.tex`. Pandoc only, no tectonic, so it runs in `test.yml` on every push against the pinned pandoc; skipped when pandoc is missing. `FASTSTUDY_BLESS=1 uv run pytest tests/pipeline/pdf/test_render_golden.py` rewrites the golden — review the diff before committing it. The image path stays as written (`probe.png`), so output has no tmp paths or dates.
