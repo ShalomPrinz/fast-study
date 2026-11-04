@@ -16,7 +16,7 @@ request. Model in `src/browser/browserSession.js`.
   the next `open()` launches a fresh browser. A capture cut off mid-way — Playwright's
   `TargetClosedError`, its plain-Error `Target page, context or browser has been closed` (wording in `browserSession.js`), or any failure once the page is closed — answers `503 zoom_browser_closed
   {detail}` with no `status`, a handled refusal that never reaches the backstop or Sentry.
-- **Idle timeout** (~45 min) is a leak-safety valve only; a session re-opens lazily. It is paused while a `withLock` op runs and re-armed when it ends, so it never closes a browser mid-capture. Switching course
+- **Idle timeout** (10 min): an idle parked Chrome costs real memory and CPU, and 10 min still spans the gaps between rows of a batch; a session re-opens lazily. It is paused while a `withLock` op runs and re-armed when it ends, so it never closes a browser mid-capture (a captcha solve included). Switching course
   is just `goto()`. `closeAllSessions()` (on `/close` and `SIGINT`/`SIGTERM`) closes every session and
   stops the managed Xvfb.
 
@@ -33,6 +33,24 @@ Every launch passes `--mute-audio`: recordings autoplay, and nobody is watching.
 `playwright`, `playwright-extra` and the stealth plugin load by dynamic `import()` on first browser
 use, never at startup: they are over a second of auto's boot, more on Windows where Defender scans each file.
 `POST /warmup` starts those loads without awaiting them; the launcher calls it once every service is healthy, so the user's first browser action skips the load.
+
+## Off the taskbar (Windows) (`browser/windowStyle.js`)
+
+Parked at `-32000` alone, the challenge window and the zoom browser still show on the taskbar and in
+Alt+Tab; closing either breaks the call that owns it. Chrome has no flag for that, so on Windows the
+window gets the Win32 **tool-window style** from outside: `WS_EX_TOOLWINDOW (0x80)` set and
+`WS_EX_APPWINDOW (0x40000)` cleared in `GWL_EXSTYLE`, then `ShowWindow(SW_HIDE)` and
+`ShowWindow(SW_SHOWNOACTIVATE)` so the shell rereads it. Plain `SW_HIDE` is rejected: `context.newPage()` showed the
+window again, still on the taskbar, and a CDP raise could not bring a hidden window back
+([Run 4](MOODLE.md#bot-protection-what-was-learned)).
+
+- **Finding the window.** Both launches carry `--faststudy-window=<challenge|zoom>` (`windowMarker`; Chrome ignores unknown switches, and Playwright gives zoom a random profile, so a profile dir would not work). The script takes the `chrome.exe`/`msedge.exe` PIDs whose command line holds it, then their **visible, titled, unowned `Chrome_WidgetWin_1`** top-level windows; Chrome's invisible helper windows of that class must be left alone. It prints `{windows, exstyle}`, exits 3 with no window, and never prints a command line.
+- **The styler.** `windowStyler(name)` → `{ hide(), show() }` (hide = tool style on, show = off), one per browser instance since a relaunched window is unstyled. One change runs at a time; calls made meanwhile collapse to the latest state; the promise never rejects. A failed run (non-zero exit, 15 s timeout) counts as applied and logs one `[window]` line per styler. Off Windows both resolve at once.
+- **Order.** The clear is awaited before any move on screen, so a captcha window has its taskbar button and Alt+Tab entry and a user who clicks away can find it; the re-apply after parking is fire-and-forget, because `wsClient.js` awaits `passed()` on the call path. The challenge window styles right after launch, in parallel with `land()`; zoom styles in `BrowserSession`'s `opened` hook, kept in `zoomCaptcha.js`.
+- **One `powershell.exe` spawn per change** (`toolPath('powershell')`, a system tool never probed on `/tools`; inline script via `-EncodedCommand`). About 0.8 s from Node: PowerShell start ~400 ms, `Add-Type` ~200 ms, CIM lookup ~150 ms, Win32 calls ~30 ms. Changes are rare (about three per block episode). A long-lived PowerShell (a resident process, a stdin protocol, a new orphan kind) and a native FFI module such as koffi (installer size, staging, smoke's DLL-import check) were rejected.
+- **`NO_WINDOW` (`windowsHide`) is mandatory.** Packaged, auto runs inside the GUI-subsystem `FastStudy.exe`, so a bare spawn opens a console window, the very thing this removes; dev runs under console `node.exe`, where it never shows.
+- **Best-effort, no error code:** a failure is logged and never fails a call, like `_bounds`.
+- **Known gaps.** A 1-2 s taskbar blip per launch (the button appears when Chrome creates the window, whatever is awaited); `window.open` popups start on screen at 0,0 unstyled; the foreground on lemida's captcha raise was not confirmed (`POST /window/show` is the user's way forward).
 
 ## Which browser (`browser/browserChannel.js`)
 

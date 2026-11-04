@@ -1,19 +1,24 @@
 // Block mode: while the site's bot manager blocks us, one headed Chrome on a persistent profile is
 // open on the site, and moodleFetch sends Moodle calls through its page — the only client whose
-// clearance the bot manager honours. Closing it ends block mode. See docs/MOODLE.md § Bot protection.
+// clearance the bot manager honours. Closing it ends block mode. On Windows it is also kept off the
+// taskbar while parked (browser/windowStyle.js). See docs/MOODLE.md § Bot protection.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { statePath } from '@faststudy/runtime';
 import { launchPersistentBrowser } from '../browser/browserLaunch.js';
 import { browserClosed } from '../browser/browserSession.js';
 import { resolveUserAgent } from '../browser/browserChannel.js';
+import { windowMarker, windowStyler } from '../browser/windowStyle.js';
 import { moodleGate, enterMoodle } from './gate.js';
 import { pageUnreachable } from '../lib/errors.js';
 
 // Chrome clamps it to about -13107, still far off-screen; the flag beats the profile's saved position.
 const OFF_SCREEN = { left: -32000, top: -32000 };
 const ON_SCREEN = { left: 80, top: 80 };
-const LAUNCH_ARGS = [`--window-position=${OFF_SCREEN.left},${OFF_SCREEN.top}`];
+const LAUNCH_ARGS = [
+  `--window-position=${OFF_SCREEN.left},${OFF_SCREEN.top}`,
+  windowMarker('challenge'),
+];
 // A body crosses from the page in slices this size, base64-encoded.
 const CHUNK = 4 * 1024 * 1024;
 const NULL_BODY = new Set([101, 204, 205, 304]);
@@ -206,6 +211,7 @@ class ChallengeWindow {
     this.waiters = 0;
     this.solve = null;
     this.ended = false;
+    this.style = windowStyler('challenge');
     this.closed = new Promise((resolve) => context.once('close', resolve));
     this.closed.then(() => this._ended());
     // The user solving the captcha lands the page back on the site: the lock is theirs no longer,
@@ -399,6 +405,17 @@ class ChallengeWindow {
     this.touch();
     publish();
     await this._bounds(OFF_SCREEN);
+    this._hide();
+  }
+
+  // Tool style on/off (windowStyle.js); skipped once the window is gone. Hiding is never awaited,
+  // since wsClient awaits passed() on the call path.
+  _hide() {
+    if (!this.ended) void this.style.hide();
+  }
+
+  async _unhide() {
+    if (!this.ended) await this.style.show();
   }
 
   // Load the site root (under the caller's Moodle lock) and show the window only on a captcha.
@@ -436,8 +453,14 @@ class ChallengeWindow {
     }
     this.touch();
     publish();
+    await this._unhide();
     await this._bounds(ON_SCREEN);
     await this.page.bringToFront().catch(() => {});
+    // Solved during the sequence: passed() parked before our move landed, so park again.
+    if (!this.captcha && !this.ended) {
+      await this._bounds(OFF_SCREEN);
+      this._hide();
+    }
     return 'captcha';
   }
 
@@ -499,12 +522,16 @@ class ChallengeWindow {
     publish();
   }
 
-  /** Back on screen and in front; a minimize and restore gets past Windows' foreground lock. */
+  /** Back on screen, in front and on the taskbar; a minimize and restore gets past Windows' foreground lock. */
   async raise() {
+    await this._unhide();
     await this._bounds(ON_SCREEN, { windowState: 'minimized' }, { windowState: 'normal' });
     await this.page.bringToFront().catch(() => {});
     // Solved mid-raise: passed()'s move off-screen may have landed before ours, so park it again.
-    if (!this.captcha) await this._bounds(OFF_SCREEN);
+    if (!this.captcha) {
+      await this._bounds(OFF_SCREEN);
+      this._hide();
+    }
   }
 
   // Window state through CDP, each of `steps` in turn from a normal window (a minimized one takes no
@@ -563,6 +590,7 @@ async function openOnce(site, waiter) {
     const page = context.pages()[0] ?? (await context.newPage());
     const w = new ChallengeWindow(site, context, page);
     win = w;
+    void w.style.hide();
     closing = w.closed;
     publish();
     return await w.land(waiter);
