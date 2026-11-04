@@ -54,6 +54,43 @@ export async function toneVideo() {
   return fs.readFileSync(out);
 }
 
+/** A six-hour tone video, so the backend's audio step keeps the shipped ffmpeg running long enough
+ *  to be found and outlived: ten minutes encoded once, then stream-copied end to end. Answers the bytes. */
+export async function longToneVideo() {
+  fs.mkdirSync(workDir(), { recursive: true });
+  const segment = path.join(workDir(), 'long-segment.mp4');
+  const out = path.join(workDir(), 'long-tone.mp4');
+  for (const args of [
+    [
+      '-y',
+      '-f',
+      'lavfi',
+      '-i',
+      'sine=frequency=440:sample_rate=8000:duration=600',
+      '-f',
+      'lavfi',
+      '-i',
+      'color=c=black:s=16x16:r=1:d=600',
+      '-shortest',
+      '-c:v',
+      'mpeg4',
+      '-c:a',
+      'aac',
+      '-ac',
+      '1',
+      '-b:a',
+      '8k',
+      segment,
+    ],
+    ['-y', '-stream_loop', '35', '-i', segment, '-c', 'copy', out],
+  ]) {
+    const { code, output } = await runToExit(ffmpeg(), args, { timeoutMs: 300_000 });
+    if (code !== 0)
+      throw new Error(`the shipped ffmpeg could not make the long tone video:\n${output}`);
+  }
+  return fs.readFileSync(out);
+}
+
 /** The stream kinds a media file carries, read off the shipped ffmpeg's input dump, e.g. `['video', 'audio']`. */
 export async function streamKinds(file) {
   // No output file, so ffmpeg exits 1 after printing the input's streams; the dump is the answer.

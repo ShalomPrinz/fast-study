@@ -36,6 +36,7 @@ export const pendingInstaller = () =>
 
 export const stateRoot = () => path.join(env('LOCALAPPDATA'), PRODUCT);
 export const launchLog = () => path.join(stateRoot(), 'logs', 'launch.log');
+export const bridgeFile = () => path.join(stateRoot(), 'bridge.json');
 export const ytdlpCopy = () => path.join(stateRoot(), 'bin', 'yt-dlp.exe');
 export const userData = () => path.join(env('APPDATA'), PRODUCT);
 export const settingsFile = () => path.join(userData(), 'settings.json');
