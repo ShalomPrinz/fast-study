@@ -1,13 +1,13 @@
-# The Chrome extension: shipped folder and native host
+# The browser extension: shipped folder and native host
 
-The downloader's Chrome extension ships inside the app and is loaded unpacked by the user. A packaged
+The downloader's extension ships inside the app and is loaded unpacked by the user in Chrome or Edge. A packaged
 server listens on an ephemeral port behind a per-launch secret, so the extension learns both through a
-Chrome native messaging host named `com.faststudy.bridge`. `extension.js` holds all of it; main calls
+native messaging host named `com.faststudy.bridge`. `extension.js` holds all of it; main calls
 it at launch, once `server` is up, and on teardown.
 
 ## The extension folder
 
-`resources/extension/` is the shipped copy, and Chrome loads `<state root>/extension`. A load-unpacked
+`resources/extension/` is the shipped copy, and the browser loads `<state root>/extension`. A load-unpacked
 extension is bound to its folder path, and every update replaces `resources/` wholesale, so the
 copy keeps one path across updates and reinstalls. On each packaged launch, main replaces the copy whole
 when its `manifest.json` `version` differs from the shipped one, or is missing. The new copy is
@@ -39,8 +39,8 @@ the secret by value.
 `bridge/host.js` ships as `resources/bridge/host.js`. It reads one framed request (a 4-byte
 little-endian length, then UTF-8 JSON) and ignores its content. It answers with the bridge file's
 JSON, or `{ "running": false }` when the file is missing or unreadable, then exits. It answers as soon
-as a whole frame arrives, because Chrome keeps stdin open until the host exits. The bridge file's path
-is its `argv[2]`. The host gets no `FASTSTUDY_STATE_DIR`, since Chrome starts it, not main.
+as a whole frame arrives, because the browser keeps stdin open until the host exits. The bridge file's path
+is its `argv[2]`. The host gets no `FASTSTUDY_STATE_DIR`, since the browser starts it, not main.
 
 Registration runs on every packaged Windows launch, writing into `<state root>/native-host/`:
 
@@ -53,11 +53,15 @@ Registration runs on every packaged Windows launch, writing into `<state root>/n
 - `com.faststudy.bridge.json`, the host manifest: `name`, `description`, `path` (the `.bat`), `type:
   "stdio"`, and `allowed_origins: ["chrome-extension://hknnjgdhokbapjodjklfodhobjekjlnn/"]`. The
   trailing slash is required.
-- `reg add HKCU\Software\Google\Chrome\NativeMessagingHosts\com.faststudy.bridge /ve /t REG_SZ /d
-  <manifest path> /f`, run through `child_process` with no native module.
+- `reg add <key> /ve /t REG_SZ /d <manifest path> /f` for each browser's key, both pointing at that one
+  manifest: `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.faststudy.bridge` and
+  `HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.faststudy.bridge`. Edge loads the extension
+  under the same `key`-pinned ID, so the same `chrome-extension://` origin matches. Each write runs
+  through `child_process` with no native module and logs its own line naming the browser, and one
+  failing never skips the other.
 
 Both files are rewritten only when their content changed, because cmd reads a running `.bat` line by
 line. Every step is idempotent, and a failure is one log line that never fails the boot. The
-per-user install means HKCU needs no admin. `assets/installer.nsh`'s `customUnInstall` deletes the
-key on uninstall but not on an update, which runs the old uninstaller first. The state-root files stay
-behind, and with the key gone nothing reads them.
+per-user install means HKCU needs no admin. `assets/installer.nsh`'s `customUnInstall` deletes both
+browsers' keys on uninstall but not on an update, which runs the old uninstaller first. The state-root
+files stay behind, but with no key neither browser finds them.
