@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
-import ExtensionGuide, { EXTENSIONS_URL } from './ExtensionGuide'
+import ExtensionGuide from './ExtensionGuide'
+import { extensionsUrl } from './browsers'
+
+const EXTENSIONS_URL = extensionsUrl('chrome')
 
 function mount() {
   return render(createElement(I18nProvider, { i18n }, createElement(ExtensionGuide)))

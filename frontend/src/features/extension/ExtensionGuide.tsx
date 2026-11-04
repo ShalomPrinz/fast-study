@@ -3,22 +3,21 @@ import ReactDOM from 'react-dom'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { runtimeBridge } from '@/services/runtime'
 import { toast } from '@/services/toaster'
+import ModeToggle from '@/shared/components/ModeToggle'
+import { BROWSER_KEY, extensionsUrl, shotKey, type Browser } from './browsers'
 import '@/styles/button.css'
 import '@/styles/modal.css'
 import './ExtensionGuide.css'
 
-// Chrome's own extensions page; the bridge's `open.external` refuses it, so the user pastes it.
-export const EXTENSIONS_URL = 'chrome://extensions'
-
-// Every PNG dropped into `assets/extension-guide/` is picked up by name; a step whose file is
-// missing renders a placeholder box, so adding or replacing a screenshot changes no code.
-const SHOTS = import.meta.glob<string>('../../assets/extension-guide/*.png', {
+// Every PNG dropped into `assets/extension-guide/<browser>/` is picked up by name; a step whose file
+// is missing renders a placeholder box, so adding or replacing a screenshot changes no code.
+const SHOTS = import.meta.glob<string>('../../assets/extension-guide/*/*.png', {
   eager: true,
   import: 'default',
 })
 
-function shotUrl(name: string): string | undefined {
-  return SHOTS[`../../assets/extension-guide/${name}.png`]
+function shotUrl(browser: Browser, name: string): string | undefined {
+  return SHOTS[`../../assets/extension-guide/${shotKey(browser, name)}`]
 }
 
 // Copies `text` and confirms in place for a moment; a refused clipboard asks for a manual copy.
@@ -73,25 +72,38 @@ interface Step {
   body: ReactNode
 }
 
-function steps(): Step[] {
+function steps(browser: Browser): Step[] {
+  const url = extensionsUrl(browser)
+  const edge = browser === 'edge'
   return [
     {
       shot: '1-open-extensions',
-      title: <Trans>Open Chrome's extensions page</Trans>,
+      title: edge ? (
+        <Trans>Open Edge's extensions page</Trans>
+      ) : (
+        <Trans>Open Chrome's extensions page</Trans>
+      ),
       body: (
         <>
           <p>
-            <Trans>
-              Open Google Chrome, paste this address into the address bar at the top and press
-              Enter:
-            </Trans>
+            {edge ? (
+              <Trans>
+                Open Microsoft Edge, paste this address into the address bar at the top and press
+                Enter:
+              </Trans>
+            ) : (
+              <Trans>
+                Open Google Chrome, paste this address into the address bar at the top and press
+                Enter:
+              </Trans>
+            )}
           </p>
           <div className="extension-folder">
             <code className="extension-path" dir="ltr">
-              {EXTENSIONS_URL}
+              {url}
             </code>
             <div className="extension-actions">
-              <CopyButton text={EXTENSIONS_URL} label={<Trans>Copy address</Trans>} />
+              <CopyButton text={url} label={<Trans>Copy address</Trans>} />
             </div>
           </div>
         </>
@@ -102,10 +114,18 @@ function steps(): Step[] {
       title: <Trans>Turn on Developer mode</Trans>,
       body: (
         <p>
-          <Trans>
-            At the top of the page, turn on the "Developer mode" switch. A row of new buttons
-            appears.
-          </Trans>
+          {edge ? (
+            <Trans>
+              In the side pane of the page, turn on the "Developer mode" switch. If the pane is
+              hidden because the window is narrow, click the ☰ menu at the top corner of the page
+              to show it. A row of new buttons appears.
+            </Trans>
+          ) : (
+            <Trans>
+              At the top of the page, turn on the "Developer mode" switch. A row of new buttons
+              appears.
+            </Trans>
+          )}
         </p>
       ),
     },
@@ -129,10 +149,17 @@ function steps(): Step[] {
       title: <Trans>Pin FastStudy to the toolbar</Trans>,
       body: (
         <p>
-          <Trans>
-            Click the puzzle-piece icon next to the address bar, then click the pin beside
-            FastStudy. Its icon now stays in the toolbar.
-          </Trans>
+          {edge ? (
+            <Trans>
+              Click the Extensions icon (a puzzle piece) next to the address bar, then click the eye
+              icon beside FastStudy ("Show in toolbar"). Its icon now stays in the toolbar.
+            </Trans>
+          ) : (
+            <Trans>
+              Click the puzzle-piece icon next to the address bar, then click the pin beside
+              FastStudy. Its icon now stays in the toolbar.
+            </Trans>
+          )}
         </p>
       ),
     },
@@ -159,16 +186,18 @@ interface Zoomed {
 
 // The screenshot for a step, which enlarges on click, or a blank 16:10 box when its file is missing.
 function Shot({
+  browser,
   name,
   step,
   onZoom,
 }: {
+  browser: Browser
   name: string
   step: number
   onZoom: (z: Zoomed, opener: HTMLElement) => void
 }) {
   const { t } = useLingui()
-  const url = shotUrl(name)
+  const url = shotUrl(browser, name)
   if (!url) return <div className="extension-shot extension-shot--placeholder" aria-hidden="true" />
   const alt = t`Screenshot of step ${step}`
   return (
@@ -203,8 +232,58 @@ function ZoomOverlay({ shot, onClose }: { shot: Zoomed; onClose: () => void }) {
   )
 }
 
-// A one-time walkthrough for loading the shipped Chrome extension unpacked: the Downloads page's
-// Extension tab — see docs/EXTENSION.md.
+// The steps for one browser, with its closing notes; the screenshot zoom is shared across both.
+function BrowserSteps({
+  browser,
+  onZoom,
+}: {
+  browser: Browser
+  onZoom: (z: Zoomed, opener: HTMLElement) => void
+}) {
+  const url = extensionsUrl(browser)
+  return (
+    <>
+      <ol className="extension-steps">
+        {steps(browser).map((s, i) => (
+          <li key={s.shot} className="extension-step">
+            <span className="extension-step-num" aria-hidden="true">
+              {i + 1}
+            </span>
+            <div className="extension-step-body">
+              <h2 className="extension-step-title">{s.title}</h2>
+              {s.body}
+              <Shot browser={browser} name={s.shot} step={i + 1} onZoom={onZoom} />
+            </div>
+          </li>
+        ))}
+      </ol>
+      <aside className="extension-notes">
+        <p>
+          <Trans>
+            Updates arrive with the app: when FastStudy updates, the extension updates itself, so
+            you set it up only once.
+          </Trans>
+        </p>
+        <p>
+          {browser === 'edge' ? (
+            <Trans>
+              If Edge shows FastStudy with an error, open <code dir="ltr">{url}</code> and click
+              "Reload" on the FastStudy card.
+            </Trans>
+          ) : (
+            <Trans>
+              If Chrome shows FastStudy with an error, open <code dir="ltr">{url}</code> and click
+              the reload arrow on the FastStudy card.
+            </Trans>
+          )}
+        </p>
+      </aside>
+    </>
+  )
+}
+
+// A one-time walkthrough for loading the shipped extension unpacked in Chrome or Edge: the
+// Downloads page's Extension tab — see docs/EXTENSION.md.
 export default function ExtensionGuide() {
   const [zoomed, setZoomed] = useState<Zoomed | null>(null)
   // The overlay's Close holds focus and unmounts on close, so focus goes back to the screenshot clicked.
@@ -219,37 +298,21 @@ export default function ExtensionGuide() {
   }, [])
   return (
     <>
-      <p className="extension-intro">
-        <Trans>Click any screenshot to enlarge it.</Trans>
-      </p>
-      <ol className="extension-steps">
-        {steps().map((s, i) => (
-          <li key={s.shot} className="extension-step">
-            <span className="extension-step-num" aria-hidden="true">
-              {i + 1}
-            </span>
-            <div className="extension-step-body">
-              <h2 className="extension-step-title">{s.title}</h2>
-              {s.body}
-              <Shot name={s.shot} step={i + 1} onZoom={zoom} />
-            </div>
-          </li>
-        ))}
-      </ol>
-      <aside className="extension-notes">
-        <p>
-          <Trans>
-            Updates arrive with the app: when FastStudy updates, the extension updates itself, so
-            you set it up only once.
-          </Trans>
-        </p>
-        <p>
-          <Trans>
-            If Chrome shows FastStudy with an error, open <code dir="ltr">{EXTENSIONS_URL}</code>{' '}
-            and click the reload arrow on the FastStudy card.
-          </Trans>
-        </p>
-      </aside>
+      <ModeToggle<Browser>
+        modes={{ chrome: { label: 'Chrome' }, edge: { label: 'Microsoft Edge' } }}
+        storageKey={BROWSER_KEY}
+        className="mode-toggle--light extension-browser-switch"
+        wrap={(toggle) => <div className="extension-browser">{toggle}</div>}
+      >
+        {(browser) => (
+          <>
+            <p className="extension-intro">
+              <Trans>Click any screenshot to enlarge it.</Trans>
+            </p>
+            <BrowserSteps browser={browser} onZoom={zoom} />
+          </>
+        )}
+      </ModeToggle>
       {zoomed && <ZoomOverlay shot={zoomed} onClose={close} />}
     </>
   )
