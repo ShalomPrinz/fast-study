@@ -8,8 +8,8 @@ const LECTURE = 'שיעור 2'; // transcribed, so Summarize is the next step
 
 test.use({ launcherBridge: true });
 test.beforeEach(async () => {
-  await saveSettings({ auto_run: 'off' }); // a reseed's transcribed lecture must not run by itself
   await reseed();
+  await saveSettings({ auto_run: 'off' }); // after reseed (which restores it): a transcribed lecture must not run itself
 });
 test.afterEach(async () => {
   // Releases the held step and waits it out: a manual step shows in `in_flight`, never `runner.running`.
@@ -28,10 +28,20 @@ test.afterEach(async () => {
 });
 
 const stop = (page, name = 'backend') => page.evaluate((n) => globalThis.__fsStop(n), name);
+// The page's own backend /status snapshot, which is what the banner's confirm decision reads.
+const statusSnapshot = (page, ok = () => true) =>
+  page.waitForResponse(async (r) => {
+    if (new URL(r.url()).pathname !== '/status' || !r.ok()) return false;
+    return ok(await r.json().catch(() => null));
+  });
 const restarts = (page) => page.evaluate(() => globalThis.__fsRestarts.length);
 
 test('a stopped service shows the banner and Restart calls the launcher once', async ({ page }) => {
+  const first = statusSnapshot(page);
   await page.goto('/');
+  expect((await (await first).json()).in_flight).toEqual([]);
+  // SnapshotProvider renders the tree and the status together, so a listed course means the banner has it.
+  await expect(page.getByText(COURSE, { exact: true }).first()).toBeVisible();
   const banner = page.getByRole('alert').filter({ has: page.locator('.service-banner-restart') });
   await expect(banner).toHaveCount(0);
   await stop(page);
@@ -47,7 +57,10 @@ test('Restart with a step running asks first: cancel does nothing, confirm resta
   await page.goto(`/${encodeURIComponent(COURSE)}/${encodeURIComponent(LECTURE)}`);
   const row = page.locator('.pipeline-row[data-step="summarize"]');
   await providers({ gemini: { mode: 'slow', ms: 60_000, match: `${COURSE}/${LECTURE}` } });
+  const busy = statusSnapshot(page, (b) => b?.in_flight?.length > 0);
   await row.locator('.btn--ghost').click();
+  await busy;
+  // Rendered from the same context status the banner reads, so the confirm decision sees the step.
   await expect(row).toHaveAttribute('data-status', 'running');
 
   await stop(page);
