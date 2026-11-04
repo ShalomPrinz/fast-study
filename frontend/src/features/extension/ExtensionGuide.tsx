@@ -149,17 +149,10 @@ function steps(browser: Browser): Step[] {
       title: <Trans>Pin FastStudy to the toolbar</Trans>,
       body: (
         <p>
-          {edge ? (
-            <Trans>
-              Click the Extensions icon (a puzzle piece) next to the address bar, then click the eye
-              icon beside FastStudy ("Show in toolbar"). Its icon now stays in the toolbar.
-            </Trans>
-          ) : (
-            <Trans>
-              Click the puzzle-piece icon next to the address bar, then click the pin beside
-              FastStudy. Its icon now stays in the toolbar.
-            </Trans>
-          )}
+          <Trans>
+            Click the puzzle-piece icon next to the address bar, then click the pin beside
+            FastStudy. Its icon now stays in the toolbar.
+          </Trans>
         </p>
       ),
     },

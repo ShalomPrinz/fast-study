@@ -886,15 +886,11 @@ msgstr "Click <0>Get a key</0> and sign in with Google or your email."
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "Click <0>Get a key</0> and sign in with your Google account."
 
-#: src/features/extension/ExtensionGuide.tsx:310
+#: src/features/extension/ExtensionGuide.tsx:303
 msgid "Click any screenshot to enlarge it."
 msgstr "Click any screenshot to enlarge it."
 
-#: src/features/extension/ExtensionGuide.tsx:153
-msgid "Click the Extensions icon (a puzzle piece) next to the address bar, then click the eye icon beside FastStudy (\"Show in toolbar\"). Its icon now stays in the toolbar."
-msgstr "Click the Extensions icon (a puzzle piece) next to the address bar, then click the eye icon beside FastStudy (\"Show in toolbar\"). Its icon now stays in the toolbar."
-
-#: src/features/extension/ExtensionGuide.tsx:158
+#: src/features/extension/ExtensionGuide.tsx:152
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 
@@ -915,7 +911,7 @@ msgstr "Click to mark this recitation as not done"
 msgid "Close"
 msgstr "Close"
 
-#: src/features/extension/ExtensionGuide.tsx:228
+#: src/features/extension/ExtensionGuide.tsx:221
 msgctxt "zoom overlay button"
 msgid "Close"
 msgstr "Close"
@@ -1252,7 +1248,7 @@ msgstr "Done"
 msgid "Download"
 msgstr "Download"
 
-#: src/features/extension/ExtensionGuide.tsx:168
+#: src/features/extension/ExtensionGuide.tsx:161
 msgid "Download a lecture"
 msgstr "Download a lecture"
 
@@ -1727,11 +1723,11 @@ msgstr "I'm working on this assignment and want to understand it in depth, not j
 "\n"
 "To start, reply with a single sentence — \"Which question do you want to work on first?\" — followed by a numbered list of the assignment's questions, each with a one-line description."
 
-#: src/features/extension/ExtensionGuide.tsx:274
+#: src/features/extension/ExtensionGuide.tsx:267
 msgid "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
 msgstr "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
 
-#: src/features/extension/ExtensionGuide.tsx:269
+#: src/features/extension/ExtensionGuide.tsx:262
 msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 msgstr "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 
@@ -2160,7 +2156,7 @@ msgstr "Only YouTube playlists can be opened up; {host} cannot."
 msgid "Open {name}"
 msgstr "Open {name}"
 
-#: src/features/extension/ExtensionGuide.tsx:171
+#: src/features/extension/ExtensionGuide.tsx:164
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 
@@ -2618,7 +2614,7 @@ msgstr "Saving…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:202
+#: src/features/extension/ExtensionGuide.tsx:195
 msgid "Screenshot of step {step}"
 msgstr "Screenshot of step {step}"
 
@@ -3368,7 +3364,7 @@ msgstr "Updated. Restart to update"
 msgid "Updates"
 msgstr "Updates"
 
-#: src/features/extension/ExtensionGuide.tsx:262
+#: src/features/extension/ExtensionGuide.tsx:255
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 

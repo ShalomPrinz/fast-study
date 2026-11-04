@@ -886,15 +886,11 @@ msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם Google או עם 
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם חשבון Google שלך."
 
-#: src/features/extension/ExtensionGuide.tsx:310
+#: src/features/extension/ExtensionGuide.tsx:303
 msgid "Click any screenshot to enlarge it."
 msgstr "לחץ על צילום מסך כדי להגדיל אותו."
 
-#: src/features/extension/ExtensionGuide.tsx:153
-msgid "Click the Extensions icon (a puzzle piece) next to the address bar, then click the eye icon beside FastStudy (\"Show in toolbar\"). Its icon now stays in the toolbar."
-msgstr "לחץ על סמל התוספים (חלק פאזל) שליד שורת הכתובת, ואז על סמל העין שליד FastStudy (\"הצגה בסרגל הכלים\"). הסמל שלה יישאר מעכשיו בסרגל הכלים."
-
-#: src/features/extension/ExtensionGuide.tsx:158
+#: src/features/extension/ExtensionGuide.tsx:152
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "לחץ על סמל חלק הפאזל שליד שורת הכתובת, ואז על הנעץ שליד FastStudy. הסמל שלה יישאר מעכשיו בסרגל הכלים."
 
@@ -915,7 +911,7 @@ msgstr "לחץ כדי לסמן שעוד לא סיימת את התרגול הזה
 msgid "Close"
 msgstr "סגירה"
 
-#: src/features/extension/ExtensionGuide.tsx:228
+#: src/features/extension/ExtensionGuide.tsx:221
 msgctxt "zoom overlay button"
 msgid "Close"
 msgstr "סגור"
@@ -1252,7 +1248,7 @@ msgstr "הושלם"
 msgid "Download"
 msgstr "הורדה"
 
-#: src/features/extension/ExtensionGuide.tsx:168
+#: src/features/extension/ExtensionGuide.tsx:161
 msgid "Download a lecture"
 msgstr "הורדת הרצאה"
 
@@ -1727,11 +1723,11 @@ msgstr "אני עובד על המטלה הזו ורוצה להבין אותה ל
 "\n"
 "כדי להתחיל, ענה במשפט אחד — \"על איזו שאלה תרצה לעבוד קודם?\" — ואחריו רשימה ממוספרת של שאלות המטלה, לכל אחת תיאור בשורה אחת."
 
-#: src/features/extension/ExtensionGuide.tsx:274
+#: src/features/extension/ExtensionGuide.tsx:267
 msgid "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
 msgstr "אם Chrome מציג את FastStudy עם שגיאה, פתח את <0>{url}</0> ולחץ על חץ הטעינה מחדש בכרטיס של FastStudy."
 
-#: src/features/extension/ExtensionGuide.tsx:269
+#: src/features/extension/ExtensionGuide.tsx:262
 msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 msgstr "אם Edge מציג את FastStudy עם שגיאה, פתח את <0>{url}</0> ולחץ על \"טעינה מחדש\" בכרטיס של FastStudy."
 
@@ -2160,7 +2156,7 @@ msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {h
 msgid "Open {name}"
 msgstr "פתיחת {name}"
 
-#: src/features/extension/ExtensionGuide.tsx:171
+#: src/features/extension/ExtensionGuide.tsx:164
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר האוניברסיטה) והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."
 
@@ -2618,7 +2614,7 @@ msgstr "שומר…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "צילום מסך של {name}, שלב {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:202
+#: src/features/extension/ExtensionGuide.tsx:195
 msgid "Screenshot of step {step}"
 msgstr "צילום מסך של שלב {step}"
 
@@ -3368,7 +3364,7 @@ msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את 
 msgid "Updates"
 msgstr "עדכונים"
 
-#: src/features/extension/ExtensionGuide.tsx:262
+#: src/features/extension/ExtensionGuide.tsx:255
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 
