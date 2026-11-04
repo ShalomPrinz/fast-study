@@ -8,10 +8,11 @@ process.env.FASTSTUDY_SECRET = 'launch-secret';
 import express from 'express';
 import { requireSecret } from '@faststudy/runtime';
 import { handleWindowShow } from '../src/http/server.js';
-import { awaitCaptchaSolve, configureZoomCaptcha } from '../src/browser/zoomCaptcha.js';
+import { awaitCaptchaSolve, configureZoomCaptcha, zoomOpened } from '../src/browser/zoomCaptcha.js';
 import { openChallenge } from '../src/moodle/challenge.js';
 import { gated } from './gated.js';
 import { fakeProfile } from './fakeProfile.js';
+import { configureWindowStyle } from '../src/browser/windowStyle.js';
 
 const SITE = 'https://moodle.test';
 const SHARE = 'https://zoom.test/rec/share/abc';
@@ -45,9 +46,18 @@ const show = async (base, headers = HEADERS) => {
 // A zoom page on screen for a captcha until the test solves it; records its window steps.
 async function zoomWait(t, { onStep } = {}) {
   t.after(configureZoomCaptcha({ platform: 'win32', solveMs: 60_000 }));
+  const log = [];
+  t.after(
+    configureWindowStyle({
+      platform: 'win32',
+      run: async (script) => log.push(/\$tool = \$true/.test(script) ? 'style:on' : 'style:off'),
+    }),
+  );
+  zoomOpened();
   let solve;
   const solved = new Promise((r) => (solve = r));
   const page = {
+    log,
     steps: [],
     fronted: 0,
     bringToFront: async () => {
@@ -58,6 +68,7 @@ async function zoomWait(t, { onStep } = {}) {
         send: async (method, params) => {
           if (method === 'Browser.getWindowForTarget') return { windowId: 1 };
           page.steps.push(params.bounds);
+          log.push(`bounds:${JSON.stringify(params.bounds)}`);
           await onStep?.(params.bounds, solve);
           return {};
         },
@@ -76,6 +87,7 @@ async function zoomWait(t, { onStep } = {}) {
   // Past the wait's own move on screen, so a test sees only what the route does.
   await new Promise((r) => setTimeout(r, 10));
   page.steps.length = 0;
+  page.log.length = 0;
   page.fronted = 0;
   return page;
 }
@@ -86,6 +98,8 @@ async function challengeCaptcha(t) {
   const [ctx] = profile.launches;
   ctx.steps.length = 0;
   ctx.fronted = 0;
+  ctx.log = profile.log;
+  profile.log.length = 0;
   return ctx;
 }
 
@@ -172,4 +186,64 @@ test('a challenge solved mid-raise leaves the window off-screen', async (t) => {
   };
   assert.deepEqual(await show(base), { status: 200, body: { raised: ['challenge'] } });
   assert.deepEqual(ctx.steps.at(-1), { left: -32000, top: -32000 });
+});
+
+const PARK = 'bounds:{"left":-32000,"top":-32000}';
+const MINIMIZE = 'bounds:{"windowState":"minimized"}';
+
+// The window waiting on a captcha is already unstyled (the wait cleared it), so a raise runs no
+// further change; it must never set the style before its steps.
+test('the challenge raise never sets the style before its minimize step', async (t) => {
+  const base = await serve(t);
+  const ctx = await challengeCaptcha(t);
+  await show(base);
+  assert.ok(ctx.log.includes(MINIMIZE));
+  assert.ok(!ctx.log.slice(0, ctx.log.indexOf(MINIMIZE)).includes('style:on'));
+});
+
+test('a challenge solved mid-raise ends parked with the style set', async (t) => {
+  const base = await serve(t);
+  const ctx = await challengeCaptcha(t);
+  const open = ctx.newCDPSession;
+  ctx.newCDPSession = async () => {
+    const cdp = await open();
+    const send = cdp.send;
+    cdp.send = async (method, params) => {
+      const out = await send(method, params);
+      if (params?.bounds.windowState === 'minimized') {
+        ctx.solve(SITE);
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      return out;
+    };
+    return cdp;
+  };
+  await show(base);
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(ctx.log.filter((e) => e.startsWith('bounds:{"left"')).at(-1), PARK);
+  assert.ok(ctx.log.lastIndexOf('style:on') > ctx.log.indexOf(PARK));
+});
+
+test('the zoom raise never sets the style before its minimize step', async (t) => {
+  const base = await serve(t);
+  const page = await zoomWait(t);
+  await show(base);
+  assert.ok(page.log.includes(MINIMIZE));
+  assert.ok(!page.log.slice(0, page.log.indexOf(MINIMIZE)).includes('style:on'));
+});
+
+test('a zoom wait ending mid-raise ends parked with the style set', async (t) => {
+  const base = await serve(t);
+  let page;
+  page = await zoomWait(t, {
+    onStep: async (step, solve) => {
+      if (step.windowState !== 'minimized') return;
+      solve();
+      await page.done;
+    },
+  });
+  await show(base);
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal(page.log.filter((e) => e.startsWith('bounds:{"left"')).at(-1), PARK);
+  assert.ok(page.log.lastIndexOf('style:on') > page.log.indexOf(PARK));
 });

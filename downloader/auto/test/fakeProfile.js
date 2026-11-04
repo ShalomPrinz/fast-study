@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { configureChallenge, closeChallenge } from '../src/moodle/challenge.js';
+import { configureWindowStyle } from '../src/browser/windowStyle.js';
 
 export const CAPTCHA_URL = 'https://validate.perfdrive.com/abc/?ssa=1';
 export const CHROME_UA =
@@ -27,9 +28,22 @@ function fakeDocument() {
   return doc;
 }
 
-export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
+// `log` is the ordered record of every window move ('bounds:<json>') and style change ('style:on'/'style:off').
+// `styleFails` makes the styling spawn reject.
+export function fakeProfile(t, { lands = 'site', idleMs, captchaMs, styleFails = false } = {}) {
   const launches = [];
+  const log = [];
   const state = { lands };
+  const restoreStyle = configureWindowStyle({
+    platform: 'win32',
+    run: async (script) => {
+      const kind = /\$tool = \$true/.test(script) ? 'style:on' : 'style:off';
+      log.push(kind);
+      // A test's hook into the style spawn, e.g. the captcha clearing while the window is un-hidden.
+      await state.onStyle?.(kind);
+      if (styleFails) throw new Error('powershell missing');
+    },
+  });
   const launch = async (dir, opts) => {
     fs.mkdirSync(dir, { recursive: true });
     const context = new EventEmitter();
@@ -67,6 +81,7 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
         send: async (method, params) => {
           if (method === 'Browser.getWindowForTarget') return { windowId: 1 };
           context.steps.push(params.bounds);
+          log.push(`bounds:${JSON.stringify(params.bounds)}`);
           if (params.bounds.left !== undefined) context.bounds.push(params.bounds);
           return {};
         },
@@ -95,7 +110,8 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
   t.after(async () => {
     await closeChallenge();
     restore();
+    restoreStyle();
     delete globalThis.document;
   });
-  return { launches, state };
+  return { launches, state, log };
 }

@@ -221,6 +221,21 @@ test('a ranged PDF streams back from the page whole, across several slices', asy
   assert.deepEqual(new Uint8Array(await res.arrayBuffer()), bytes);
 });
 
+test('a captcha that clears while the window is un-hidden leaves it parked and styled', async (t) => {
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  profile.state.onStyle = (kind) => {
+    if (kind !== 'style:off') return;
+    profile.state.onStyle = null;
+    profile.launches[0].solve(SITE);
+  };
+  assert.equal(await moodleGate.run({}, () => openChallenge(SITE)), 'captcha');
+  for (let i = 0; i < 10; i++) await tick();
+  assert.equal(profile.log.filter((l) => l.startsWith('style:')).at(-1), 'style:on');
+  const moves = profile.log.filter((l) => l.startsWith('bounds:') && l.includes('left'));
+  assert.equal(moves.at(-1), `bounds:${JSON.stringify({ left: -32000, top: -32000 })}`);
+  assert.equal(challengeState().captcha, false);
+});
+
 test('a call while the page is on the captcha sends nothing until the solve, then goes out', async (t) => {
   const profile = fakeProfile(t, { lands: 'captcha' });
   await moodleGate.run({}, () => openChallenge(SITE));
@@ -1288,4 +1303,49 @@ test('a wall through the window while it sits on the site reports challengeWindo
   assert.ok(fromPage(calls[1].init));
   assert.equal(profile.launches.length, 1);
   assert.deepEqual(shown(), { open: true, captcha: false });
+});
+
+// ── Off the taskbar (browser/windowStyle.js; the fake spawn logs 'style:on'/'style:off') ───────────
+
+const B = (bounds) => `bounds:${JSON.stringify(bounds)}`;
+
+test('the launch carries the marker, and the first style event is on', async (t) => {
+  const profile = fakeProfile(t);
+  assert.equal(await gated(() => openChallenge(SITE)), 'ready');
+  assert.ok(profile.launches[0].opts.args.includes('--faststudy-window=challenge'));
+  await tick();
+  assert.deepEqual(profile.log, ['style:on']);
+});
+
+test('a captcha clears the style before it goes on screen, and sets it after the solve parks it', async (t) => {
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  assert.equal(await gated(() => openChallenge(SITE)), 'captcha');
+  const [ctx] = profile.launches;
+  assert.deepEqual(profile.log.slice(0, 3), [
+    'style:on',
+    'style:off',
+    B({ windowState: 'normal' }),
+  ]);
+  assert.ok(profile.log.indexOf('style:off') < profile.log.indexOf(B({ left: 80, top: 80 })));
+  profile.log.length = 0;
+  ctx.solve(SITE);
+  await tick();
+  await tick();
+  await tick();
+  const park = profile.log.indexOf(B({ left: -32000, top: -32000 }));
+  assert.ok(park >= 0, 'parked');
+  assert.equal(profile.log.filter((l) => l.startsWith('style:')).at(-1), 'style:on');
+  assert.ok(profile.log.indexOf('style:on') > park, 'style comes back after parking');
+});
+
+test('a styling spawn that rejects never changes the outcome', async (t) => {
+  fakeProfile(t, { lands: 'captcha', styleFails: true });
+  const warn = t.mock.method(console, 'warn', () => {});
+  assert.equal(await gated(() => openChallenge(SITE)), 'captcha');
+  assert.equal(warn.mock.calls.length, 1, 'one warning per styler');
+  assert.match(warn.mock.calls[0].arguments[0], /^\[window\] challenge /);
+  await closeChallenge();
+  const ready = fakeProfile(t, { styleFails: true });
+  assert.ok(ready);
+  assert.equal(await gated(() => openChallenge(SITE)), 'ready');
 });
