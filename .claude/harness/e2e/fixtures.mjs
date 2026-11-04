@@ -130,11 +130,33 @@ export async function dropFile(target, filePath, type) {
     await target.dispatchEvent(event, { dataTransfer: transfer });
 }
 
+// The launcher's `window.faststudy.services` bridge, services only: `__fsStop(name)` fires every
+// `onStopped` callback and `restart()` pushes onto `__fsRestarts`; an init script, so before the bundle.
+function installLauncherBridge() {
+  const subscribers = new Set();
+  globalThis.__fsRestarts = [];
+  globalThis.__fsStop = (name) => subscribers.forEach((cb) => cb(name));
+  globalThis.faststudy = {
+    services: {
+      onStopped(cb) {
+        subscribers.add(cb);
+        return () => subscribers.delete(cb);
+      },
+      restart() {
+        globalThis.__fsRestarts.push(Date.now());
+      },
+    },
+  };
+}
+
 // `tourDismissed: false` (test.use) lets a spec meet the first-run tour; otherwise it is marked dismissed.
 export const test = base.extend({
   tourDismissed: [true, { option: true }],
-  context: async ({ context, tourDismissed }, use) => {
+  // `launcherBridge: true` (test.use) stubs the launcher's services bridge; off, the SPA meets no bridge.
+  launcherBridge: [false, { option: true }],
+  context: async ({ context, tourDismissed, launcherBridge }, use) => {
     if (tourDismissed) await context.addInitScript(dismissTour);
+    if (launcherBridge) await context.addInitScript(installLauncherBridge);
     await use(context);
   },
   browser: [

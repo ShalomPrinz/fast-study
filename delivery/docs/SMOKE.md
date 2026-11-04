@@ -3,7 +3,7 @@
 `smoke/` is `@playwright/test` driving the installed exe through `_electron`, run by `build.yml`'s
 smoke job against the uploaded installer ([RELEASE.md](RELEASE.md#build-test-publish)). One ordered
 file on one worker, since each check builds on the machine state the last one left: install, the
-installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, quit, a service restart, the tools under a Hebrew temp
+installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, quit, a launcher crash, a backend death and restart, the tools under a Hebrew temp
 path, the browser chain, an in-place update. It needs an installed Windows build, so off the runner
 only `npx playwright test --list` works — it is never "passed" from WSL.
 
@@ -15,7 +15,7 @@ the app-harness E2E specs own ([`.claude/harness/README.md`](../../.claude/harne
 status, an error code or a provider's verbatim text (test 5's `lecture-error-message`) is read only as
 evidence of a packaging fact. Two flow checks stay here only because no harness spec covers them yet,
 both in `lib/firstRun.js`: the privacy gate — the wall's first save opens the policy, and Confirm stays
-disabled until `.privacy-body` is scrolled to its end (test 4, and test 15 when the policy opens) — and a canceled folder dialog
+disabled until `.privacy-body` is scrolled to its end (test 4, and test 16 when the policy opens) — and a canceled folder dialog
 keeping the launcher's default (test 4). The boundary is the
 root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 
@@ -32,10 +32,11 @@ root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 | 9. opening a PDF        | `open-pdf` fails through the preload bridge and `shell.openPath`; a real Windows exclusive handle is not reported as `file_locked`   | `locked-file.spec.mjs`                             |
 | 10. yt-dlp download     | yt-dlp cannot find the bundled ffmpeg to merge DASH, the state root's yt-dlp copy is not seeded, `/video-arrived` is never reported  | `download-all.spec.mjs`                            |
 | 11. quit, no orphans    | a frozen process or port outlives the launcher's teardown; settings do not persist across a relaunch                                 | —                                                  |
-| 12. service restart     | a frozen service or a tool it spawned outlives the restart's teardown, an old port is held by anything but a new service, the reboot runs other than four service processes | —                                                  |
-| 13. Hebrew temp path    | a bundled tool breaks under a non-ASCII `TEMP`; the frozen services do not write UTF-8 to `launch.log`                               | —                                                  |
-| 14. the browser chain   | the prerequisite misresolves installed Chrome or Edge; the PDF step depends on a browser                                             | —                                                  |
-| 15. an in-place update  | the updater fails to replace `resources/` from a feed, or loses the keys, the yt-dlp copy or the new `.fmt`                          | —                                                  |
+| 12. launcher crash      | a `taskkill /F` of main alone (no `/T`) leaves a frozen service, a Node service, or an `ffmpeg`/`pandoc`/`tectonic` the backend's job holds running | —                                                  |
+| 13. backend death       | the frozen backend's ctypes Job Object call fails on real Windows, so a killed backend leaves its `ffmpeg` running; a tool or service outlives the restart's teardown, an old port is held by anything but a new service, the reboot runs other than four service processes, `bridge.json` keeps the old `server` port | `service-banner.spec.mjs`                          |
+| 14. Hebrew temp path    | a bundled tool breaks under a non-ASCII `TEMP`; the frozen services do not write UTF-8 to `launch.log`                               | —                                                  |
+| 15. the browser chain   | the prerequisite misresolves installed Chrome or Edge; the PDF step depends on a browser                                             | —                                                  |
+| 16. an in-place update  | the updater fails to replace `resources/` from a feed, or loses the keys, the yt-dlp copy or the new `.fmt`                          | —                                                  |
 
 A new smoke test adds its row here; a test with no packaging-only failure belongs in the harness or a unit test.
 
@@ -88,6 +89,12 @@ A new smoke test adds its row here; a test with no packaging-only failure belong
   the first poll. Forensics print the raw observed value even where the comparison normalizes it:
   rcedit stamps a four-component ProductVersion, and the `0.1.0.0` a tidied line would hide is what
   names the defect.
+- **A kill lands mid-`ffmpeg`.** Tests 12 and 13 start the audio step on a six-hour tone and kill
+  only once its `ffmpeg` runs under the backend; an `audio.mp3` afterwards means it ended first, which
+  fails the check as vacuous. The job's tools seen before the kill, by pid and start time, must be
+  gone within 5 s of it — before test 12 drops the app or test 13 restarts — since an orphan exits by
+  itself once its encode ends; only the services get a 30 s teardown. Only `faststudy-services.exe`, the Node services and the backend job's
+  tools are asserted — `yt-dlp`, `curl` and Chromium outliving a dead Node service is an accepted gap.
 - **The launch secret is enforced**: every service answers 401 without it.
 - **The native host answers without the app**: test 1 sends the shipped `bridge/host.js`, on
   `FastStudy.exe` as node, one framed `{}` with stdin left open and a missing bridge file, and expects
@@ -102,7 +109,7 @@ A new smoke test adds its row here; a test with no packaging-only failure belong
 
 ## Boot timing
 
-Two boots are timed, never an extra launch: test 3's (the fresh install's first) and test 15's last
+Two boots are timed, never an extra launch: test 3's (the fresh install's first) and test 16's last
 step (the candidate's first after the update). `lib/bootTiming.js` writes them to
 `test-results/boot-timing.json` — `launch_to_app_ms` (`electron.launch` → main's `app loaded`
 `launch.log` line, the launcher's own mark of `app://bundle` finishing its load; same machine, same
@@ -114,5 +121,5 @@ value it cannot read is `null` with a warning, never a failure.
 ## Unproven until a Windows run
 
 Each assumption only the runner can prove — the silent per-user install, Playwright attaching to the
-packaged exe, the loopback exemption, a renamed browser dir reading as uninstalled, the blocked yt-dlp copy reaching a loopback server, an unsigned
+packaged exe, the loopback exemption, a renamed browser dir reading as uninstalled, libuv's kill-on-close job taking main's services with it and the backend's own job taking its tools, the blocked yt-dlp copy reaching a loopback server, an unsigned
 update from a generic feed replacing `resources/` wholesale — fails with a message naming it.

@@ -100,9 +100,13 @@ export function backend({ urls, secret }) {
     config: async (fields) => (await at('POST', '/config', { json: fields })).json(),
     /** Start one step and wait for that run to end; answers the error entry it left, or null. */
     async runStep(course, name, step, { timeoutMs = 300_000 } = {}) {
+      await this.startStep(course, name, step);
+      return this.waitForRunEnd(course, name, step, timeoutMs);
+    },
+    /** Start one step without waiting for it to end. */
+    async startStep(course, name, step) {
       const started = await (await at('POST', `${lecture(course, name)}/run/${step}`)).json();
       expect(started, `run/${step} did not start`).toEqual({ status: 'started' });
-      return this.waitForRunEnd(course, name, step, timeoutMs);
     },
     /** A started step marks itself in flight before its first await, so it is already visible to
      *  the next request; the run is over once it is gone. */

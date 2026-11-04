@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { canOpenWith, canReveal, openLectureFile } from './open'
+import { canOpenWith, canReveal, openExternalUrl, openLectureFile } from './open'
 
 const toast = vi.hoisted(() => vi.fn())
 vi.mock('./toaster', () => ({ toast }))
@@ -51,5 +51,37 @@ describe('openLectureFile failure', () => {
     rejecting(new Error('no app'))
     await openLectureFile('c', 'l', 'a.pdf')
     expect(toast).toHaveBeenCalledWith('error', 'Could not open the file: no app')
+  })
+})
+
+describe('a bridge without open (partial stub)', () => {
+  const stub = () => {
+    const windowOpen = vi.fn()
+    vi.stubGlobal('window', { faststudy: { services: {} }, open: windowOpen })
+    return windowOpen
+  }
+
+  it('opens through window.open like no bridge', async () => {
+    const windowOpen = stub()
+    await openLectureFile('c', 'l', 'a.pdf')
+    await openExternalUrl('https://example.com')
+    expect(windowOpen).toHaveBeenCalledTimes(2)
+  })
+
+  it('offers neither open-with nor reveal, without throwing', () => {
+    stub()
+    expect(canOpenWith()).toBe(false)
+    expect(canReveal()).toBe(false)
+  })
+})
+
+describe('a full bridge', () => {
+  it('routes openers to bridge.open.file, not window.open', async () => {
+    const file = vi.fn().mockResolvedValue(undefined)
+    const windowOpen = vi.fn()
+    vi.stubGlobal('window', { faststudy: { open: { file, external: vi.fn() } }, open: windowOpen })
+    await openLectureFile('c', 'l', 'a.pdf')
+    expect(file).toHaveBeenCalledWith({ course: 'c', lecture: 'l', name: 'a.pdf', kind: undefined })
+    expect(windowOpen).not.toHaveBeenCalled()
   })
 })
