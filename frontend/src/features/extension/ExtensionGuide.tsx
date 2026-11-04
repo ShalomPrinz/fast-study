@@ -111,7 +111,11 @@ function steps(browser: Browser): Step[] {
     },
     {
       shot: '2-developer-mode',
-      title: <Trans>Turn on Developer mode</Trans>,
+      title: edge ? (
+        <Trans context="edge">Turn on Developer mode</Trans>
+      ) : (
+        <Trans>Turn on Developer mode</Trans>
+      ),
       body: (
         <p>
           {edge ? (
@@ -135,10 +139,17 @@ function steps(browser: Browser): Step[] {
       body: (
         <>
           <p>
-            <Trans>
-              Click "Load unpacked". In the window that opens, paste the folder path below into the
-              address bar at the top, press Enter, then click "Select Folder".
-            </Trans>
+            {edge ? (
+              <Trans context="edge">
+                Click "Load unpacked". In the window that opens, paste the folder path below into
+                the address bar at the top, press Enter, then click "Select Folder".
+              </Trans>
+            ) : (
+              <Trans>
+                Click "Load unpacked". In the window that opens, paste the folder path below into
+                the address bar at the top, press Enter, then click "Select Folder".
+              </Trans>
+            )}
           </p>
           <FolderBlock />
         </>

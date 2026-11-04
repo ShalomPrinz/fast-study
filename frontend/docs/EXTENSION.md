@@ -4,7 +4,7 @@ The Downloads page's Extension tab (`features/extension/ExtensionGuide`, [DOWNLO
 §Layout) walks the user once through loading the shipped extension unpacked in Chrome or Edge: open the extensions page, Developer mode, Load
 unpacked, pin, use. A Chrome / Microsoft Edge switch (`ModeToggle`, `.extension-browser-switch`, default Chrome,
 remembered in `localStorage` under `BROWSER_KEY`) picks the step text, address and closing note; same
-folder and extension ID in both; steps 3, 4 and 5 share their text (each browser has its own screenshots). Per-browser decisions are in `browsers.ts`.
+folder and extension ID in both; steps 4 and 5 share their text (each browser has its own screenshots); the step 2 title and step 3 body have an `edge` msgid context because Hebrew Edge words "Developer mode" and "Load unpacked" differently. Per-browser decisions are in `browsers.ts`.
 
 - **Copy, not open** — `open.external` refuses `chrome://` and `edge://`, so step 1 copies the address instead.
 - **The folder** — step 3 shows `window.faststudy.extension.path` with Copy and Open folder (`reveal()`).

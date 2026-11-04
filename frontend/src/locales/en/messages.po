@@ -618,7 +618,7 @@ msgstr "Assignments"
 msgid "Assignments you marked done"
 msgstr "Assignments you marked done"
 
-#: src/features/extension/ExtensionGuide.tsx:124
+#: src/features/extension/ExtensionGuide.tsx:128
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 msgstr "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 
@@ -870,7 +870,12 @@ msgstr "Click \"Create API key\"."
 msgid "Click \"Create API Key\"."
 msgstr "Click \"Create API Key\"."
 
-#: src/features/extension/ExtensionGuide.tsx:138
+#: src/features/extension/ExtensionGuide.tsx:148
+msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
+msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
+
+#: src/features/extension/ExtensionGuide.tsx:143
+msgctxt "edge"
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 
@@ -886,11 +891,11 @@ msgstr "Click <0>Get a key</0> and sign in with Google or your email."
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "Click <0>Get a key</0> and sign in with your Google account."
 
-#: src/features/extension/ExtensionGuide.tsx:303
+#: src/features/extension/ExtensionGuide.tsx:314
 msgid "Click any screenshot to enlarge it."
 msgstr "Click any screenshot to enlarge it."
 
-#: src/features/extension/ExtensionGuide.tsx:152
+#: src/features/extension/ExtensionGuide.tsx:163
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 
@@ -911,7 +916,7 @@ msgstr "Click to mark this recitation as not done"
 msgid "Close"
 msgstr "Close"
 
-#: src/features/extension/ExtensionGuide.tsx:221
+#: src/features/extension/ExtensionGuide.tsx:232
 msgctxt "zoom overlay button"
 msgid "Close"
 msgstr "Close"
@@ -1248,7 +1253,7 @@ msgstr "Done"
 msgid "Download"
 msgstr "Download"
 
-#: src/features/extension/ExtensionGuide.tsx:161
+#: src/features/extension/ExtensionGuide.tsx:172
 msgid "Download a lecture"
 msgstr "Download a lecture"
 
@@ -1723,11 +1728,11 @@ msgstr "I'm working on this assignment and want to understand it in depth, not j
 "\n"
 "To start, reply with a single sentence — \"Which question do you want to work on first?\" — followed by a numbered list of the assignment's questions, each with a one-line description."
 
-#: src/features/extension/ExtensionGuide.tsx:267
+#: src/features/extension/ExtensionGuide.tsx:278
 msgid "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
 msgstr "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
 
-#: src/features/extension/ExtensionGuide.tsx:262
+#: src/features/extension/ExtensionGuide.tsx:273
 msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 msgstr "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 
@@ -1739,7 +1744,7 @@ msgstr "In course"
 msgid "In the project list, choose \"Create project\"."
 msgstr "In the project list, choose \"Create project\"."
 
-#: src/features/extension/ExtensionGuide.tsx:118
+#: src/features/extension/ExtensionGuide.tsx:122
 msgid "In the side pane of the page, turn on the \"Developer mode\" switch. If the pane is hidden because the window is narrow, click the ☰ menu at the top corner of the page to show it. A row of new buttons appears."
 msgstr "In the side pane of the page, turn on the \"Developer mode\" switch. If the pane is hidden because the window is narrow, click the ☰ menu at the top corner of the page to show it. A row of new buttons appears."
 
@@ -1852,7 +1857,7 @@ msgstr "Let's set things up"
 msgid "Load new version"
 msgstr "Load new version"
 
-#: src/features/extension/ExtensionGuide.tsx:134
+#: src/features/extension/ExtensionGuide.tsx:138
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
@@ -2156,7 +2161,7 @@ msgstr "Only YouTube playlists can be opened up; {host} cannot."
 msgid "Open {name}"
 msgstr "Open {name}"
 
-#: src/features/extension/ExtensionGuide.tsx:164
+#: src/features/extension/ExtensionGuide.tsx:175
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 
@@ -2334,7 +2339,7 @@ msgstr "PDF is older than this summary"
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
-#: src/features/extension/ExtensionGuide.tsx:149
+#: src/features/extension/ExtensionGuide.tsx:160
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
 
@@ -2614,7 +2619,7 @@ msgstr "Saving…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:195
+#: src/features/extension/ExtensionGuide.tsx:206
 msgid "Screenshot of step {step}"
 msgstr "Screenshot of step {step}"
 
@@ -3293,7 +3298,12 @@ msgstr "Transcript"
 msgid "Try again"
 msgstr "Try again"
 
-#: src/features/extension/ExtensionGuide.tsx:114
+#: src/features/extension/ExtensionGuide.tsx:117
+msgid "Turn on Developer mode"
+msgstr "Turn on Developer mode"
+
+#: src/features/extension/ExtensionGuide.tsx:115
+msgctxt "edge"
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
 
@@ -3364,7 +3374,7 @@ msgstr "Updated. Restart to update"
 msgid "Updates"
 msgstr "Updates"
 
-#: src/features/extension/ExtensionGuide.tsx:255
+#: src/features/extension/ExtensionGuide.tsx:266
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 
