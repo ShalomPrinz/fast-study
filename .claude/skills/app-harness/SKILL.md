@@ -78,4 +78,5 @@ node .claude/harness/setup.mjs --harness $HARNESS_DIR --down
 ```
 
 This stops every service, fake and browser session of that stack and no other.
+Run it as its own Bash call, and report only after it returns.
 
