@@ -61,7 +61,7 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **Launch secret** — `secretHeaders()` for requests; `withSecretParam(url)` only for the
   `EventSource`s, which cannot set a header. The header keeps the secret out of access logs. Both add
   nothing in browser dev, where no service enforces a secret.
-- **`open`** — a bridge without `open.file` (or `open.external`) counts as no bridge, which is the browser-dev test and the harness's `services`-only stub; its `fileWith` and `reveal`, and the top-level `platform`, are optional (older launcher). `services` (`onStopped`, `restart`) feeds `serviceHealth.ts`; absent in dev.
+- **`open`** — a bridge without `open` (or without `open.file` / `open.external`) counts as no bridge, which is the browser-dev test and the harness's `services`-only stub; its `fileWith` and `reveal`, and the top-level `platform`, are optional (older launcher). `services` (`onStopped`, `restart`) feeds `serviceHealth.ts`; absent in dev.
 - **`canStoreApiKeys`**, `defaultDataRoot` and `pickFolder` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
   the OS `locale` ([I18N.md](I18N.md)).
 - **`extension`** — optional `{ path, reveal() }`, the Chrome extension's folder for the Downloads page's Extension tab ([EXTENSION.md](EXTENSION.md)).

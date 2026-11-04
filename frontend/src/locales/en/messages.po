@@ -1043,7 +1043,7 @@ msgid "Could not open the file: it no longer exists."
 msgstr "Could not open the file: it no longer exists."
 
 #. placeholder {0}: (e as Error).message
-#: src/services/open.ts:93
+#: src/services/open.ts:91
 msgid "Could not open the link: {0}"
 msgstr "Could not open the link: {0}"
 

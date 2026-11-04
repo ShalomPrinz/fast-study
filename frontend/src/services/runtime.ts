@@ -63,10 +63,9 @@ declare global {
       power?: { subscribe: (callback: (state: PowerState) => void) => () => void }
       // The folder Chrome loads the extension unpacked from; `reveal()` opens it and always resolves.
       extension?: { path: string; reveal: () => Promise<void> }
-      // Always set by the launcher; `open.ts` still treats a bridge without it as none (the harness stub). Identifiers only — `database/`
-      // resolves the path; a `target` without `lecture` is a course-level `overview/` file. Each call
-      // resolves `void` and rejects with an `Error` whose `message` is the exact failure text.
-      open: {
+      // Absent means no bridge for opening (browser dev, the harness stub). Identifiers only: `database/` resolves the path,
+      // a `target` without `lecture` is an `overview/` file; calls resolve `void`, reject with an `Error` of the exact failure text.
+      open?: {
         file: (target: OpenTarget) => Promise<void>
         external: (url: string | undefined) => Promise<void>
         // Windows only ("Open with…"); rejects `unsupported` elsewhere. Absent on older launchers.

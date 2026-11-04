@@ -1,7 +1,7 @@
 import { t } from '@lingui/core/macro'
 import type { Kind } from '@/types'
 import { assignmentFileUrl, assignmentGeneratedUrl, materialUrl, overviewFileUrl } from './database'
-import { runtimeBridge } from './runtime'
+import { runtimeBridge, type OpenTarget } from './runtime'
 import { toast } from './toaster'
 
 // Opens files and links outside the app: through the bridge when packaged, since a new window cannot
@@ -21,6 +21,16 @@ async function openFile(call: Promise<void>): Promise<void> {
   }
 }
 
+/** The bridge opens the target packaged; browser dev opens `browserUrl` in a new tab. */
+async function openTarget(target: OpenTarget, browserUrl: string): Promise<void> {
+  const file = runtimeBridge()?.open?.file
+  if (!file) {
+    window.open(browserUrl, '_blank')
+    return
+  }
+  await openFile(file(target))
+}
+
 /** One of a lecture's files — `summary.pdf` or a material alike. `materialUrl` builds the same
  *  route as `fileUrl` and takes a runtime name, which covers both. */
 export async function openLectureFile(
@@ -29,12 +39,7 @@ export async function openLectureFile(
   name: string,
   kind?: Kind,
 ): Promise<void> {
-  const file = runtimeBridge()?.open?.file
-  if (!file) {
-    window.open(materialUrl(course, lecture, name, kind), '_blank')
-    return
-  }
-  await openFile(file({ course, lecture, name, kind }))
+  await openTarget({ course, lecture, name, kind }, materialUrl(course, lecture, name, kind))
 }
 
 /** Whether the launcher can offer "Open with…": the bridge has it and the OS is Windows. */
@@ -49,12 +54,10 @@ export async function openAssignmentGenerated(
   assignment: string,
   name: string,
 ): Promise<void> {
-  const file = runtimeBridge()?.open?.file
-  if (!file) {
-    window.open(assignmentGeneratedUrl(course, assignment, name), '_blank')
-    return
-  }
-  await openFile(file({ course, assignment, generated: name }))
+  await openTarget(
+    { course, assignment, generated: name },
+    assignmentGeneratedUrl(course, assignment, name),
+  )
 }
 
 /** The OS's "Open with…" picker for a lecture file; no browser fallback, so callers gate on `canOpenWith`. */
@@ -71,12 +74,7 @@ export async function openLectureFileWith(
 
 /** A generated file under a course's `overview/`. */
 export async function openOverviewFile(course: string, name: string): Promise<void> {
-  const file = runtimeBridge()?.open?.file
-  if (!file) {
-    window.open(overviewFileUrl(course, name), '_blank')
-    return
-  }
-  await openFile(file({ course, name }))
+  await openTarget({ course, name }, overviewFileUrl(course, name))
 }
 
 /** An http(s) link; the bridge refuses and reports anything else. Call from `onClick` with
@@ -100,12 +98,7 @@ export async function openAssignmentFile(
   assignment: string,
   name: string,
 ): Promise<void> {
-  const file = runtimeBridge()?.open?.file
-  if (!file) {
-    window.open(assignmentFileUrl(course, assignment, name), '_blank')
-    return
-  }
-  await openFile(file({ course, assignment, name }))
+  await openTarget({ course, assignment, name }, assignmentFileUrl(course, assignment, name))
 }
 
 /** The OS's "Open with…" picker for an assignment file; callers gate on `canOpenWith`. */
