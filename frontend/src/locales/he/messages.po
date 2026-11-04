@@ -138,7 +138,7 @@ msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:371
+#: src/features/downloads/DownloadsView.tsx:383
 msgid "{0} found"
 msgstr "נמצאו {0}"
 
@@ -412,7 +412,7 @@ msgstr "{total, plural, one {בקורס הזה יש פריט # שלא סימנת
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
-#: src/features/downloads/DownloadsView.tsx:245
+#: src/features/downloads/DownloadsView.tsx:248
 msgid "{withSource} courses with a source"
 msgstr "{withSource} קורסים עם מקור"
 
@@ -464,7 +464,7 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 msgstr "בקורס של הרצאות בלבד התרגולים מופיעים בין ההרצאות, וכל מה שתוסיף אליו יישמר כהרצאה. שום דבר שכבר נשמר לא זז."
 
-#: src/features/downloads/DownloadsView.tsx:248
+#: src/features/downloads/DownloadsView.tsx:251
 msgid "A one-time setup of about three minutes."
 msgstr "הגדרה חד־פעמית של כשלוש דקות."
 
@@ -609,7 +609,7 @@ msgid "Assignment Solution"
 msgstr "פתרון המטלה"
 
 #: src/features/downloads/components/NewView.tsx:143
-#: src/features/downloads/DownloadsView.tsx:198
+#: src/features/downloads/DownloadsView.tsx:201
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:37
 msgid "Assignments"
 msgstr "מטלות"
@@ -618,7 +618,7 @@ msgstr "מטלות"
 msgid "Assignments you marked done"
 msgstr "מטלות שסיימת"
 
-#: src/features/extension/ExtensionGuide.tsx:128
+#: src/features/extension/ExtensionGuide.tsx:127
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 msgstr "בראש הדף, הפעל את המתג \"מצב פיתוח\". תופיע שורה של כפתורים חדשים."
 
@@ -838,11 +838,15 @@ msgstr "בחר מתי להסיר את הוידאו"
 msgid "Choose when to remove the video and audio"
 msgstr "בחר מתי להסיר את הוידאו והשמע"
 
+#: src/features/extension/BrowserSwitch.tsx:18
+msgid "Choose your browser:"
+msgstr "בחר את הדפדפן שלך:"
+
 #: src/features/settings/components/MoodleAccountField.tsx:38
 msgid "Choose your university above to connect its account."
 msgstr "בחר את האוניברסיטה שלך למעלה כדי לחבר את החשבון שלה."
 
-#: src/features/downloads/DownloadsView.tsx:345
+#: src/features/downloads/DownloadsView.tsx:357
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי להוריד מ-Moodle."
 
@@ -870,11 +874,11 @@ msgstr "לחץ על \"Create API key\"."
 msgid "Click \"Create API Key\"."
 msgstr "לחץ על \"Create API Key\"."
 
-#: src/features/extension/ExtensionGuide.tsx:148
+#: src/features/extension/ExtensionGuide.tsx:147
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "לחץ על \"טעינת פריט Unpacked\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
 
-#: src/features/extension/ExtensionGuide.tsx:143
+#: src/features/extension/ExtensionGuide.tsx:142
 msgctxt "edge"
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "לחץ על \"טען הרחבה שהועלתה\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
@@ -891,11 +895,11 @@ msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם Google או עם 
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם חשבון Google שלך."
 
-#: src/features/extension/ExtensionGuide.tsx:314
+#: src/features/extension/ExtensionGuide.tsx:305
 msgid "Click any screenshot to enlarge it."
 msgstr "לחץ על צילום מסך כדי להגדיל אותו."
 
-#: src/features/extension/ExtensionGuide.tsx:163
+#: src/features/extension/ExtensionGuide.tsx:162
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "לחץ על סמל חלק הפאזל שליד שורת הכתובת, ואז על הנעץ שליד FastStudy. הסמל שלה יישאר מעכשיו בסרגל הכלים."
 
@@ -911,12 +915,12 @@ msgstr "לחץ כדי לסמן שעוד לא סיימת את ההרצאה הזו
 msgid "Click to mark this recitation as not done"
 msgstr "לחץ כדי לסמן שעוד לא סיימת את התרגול הזה"
 
-#: src/features/downloads/DownloadsView.tsx:375
+#: src/features/downloads/DownloadsView.tsx:387
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
 msgid "Close"
 msgstr "סגירה"
 
-#: src/features/extension/ExtensionGuide.tsx:232
+#: src/features/extension/ExtensionGuide.tsx:231
 msgctxt "zoom overlay button"
 msgid "Close"
 msgstr "סגור"
@@ -961,7 +965,7 @@ msgid "Connect Google Drive now?"
 msgstr "לחבר את Google Drive עכשיו?"
 
 #: src/features/downloads/components/CoursePicker.tsx:80
-#: src/features/downloads/DownloadsView.tsx:79
+#: src/features/downloads/DownloadsView.tsx:81
 msgid "Connect your university account first"
 msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
 
@@ -990,7 +994,7 @@ msgid "Continue transcription"
 msgstr "המשך תמלול"
 
 #: src/app/ErrorBoundary.tsx:37
-#: src/features/extension/ExtensionGuide.tsx:39
+#: src/features/extension/ExtensionGuide.tsx:38
 msgid "Copied!"
 msgstr "הועתק!"
 
@@ -998,7 +1002,7 @@ msgstr "הועתק!"
 msgid "Copies the chosen summaries and the generated guides, then opens {provider}."
 msgstr "מעתיק את הסיכומים שנבחרו ואת המדריכים שנוצרו, ופותח את {provider}."
 
-#: src/features/extension/ExtensionGuide.tsx:106
+#: src/features/extension/ExtensionGuide.tsx:105
 msgid "Copy address"
 msgstr "העתקת הכתובת"
 
@@ -1006,7 +1010,7 @@ msgstr "העתקת הכתובת"
 msgid "Copy details"
 msgstr "העתקת פרטים"
 
-#: src/features/extension/ExtensionGuide.tsx:60
+#: src/features/extension/ExtensionGuide.tsx:59
 msgid "Copy path"
 msgstr "העתקת הנתיב"
 
@@ -1014,7 +1018,7 @@ msgstr "העתקת הנתיב"
 msgid "Could not convert the summary for printing."
 msgstr "לא ניתן להמיר את הסיכום להדפסה."
 
-#: src/features/extension/ExtensionGuide.tsx:31
+#: src/features/extension/ExtensionGuide.tsx:30
 msgid "Could not copy. Select the text and copy it by hand."
 msgstr "לא הצלחנו להעתיק. סמן את הטקסט והעתק אותו ידנית."
 
@@ -1141,7 +1145,7 @@ msgid "Courses"
 msgstr "קורסים"
 
 #: src/App.tsx:39
-#: src/features/downloads/DownloadsView.tsx:354
+#: src/features/downloads/DownloadsView.tsx:366
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:238
 #: src/shared/utils/notFound.ts:35
@@ -1253,7 +1257,7 @@ msgstr "הושלם"
 msgid "Download"
 msgstr "הורדה"
 
-#: src/features/extension/ExtensionGuide.tsx:172
+#: src/features/extension/ExtensionGuide.tsx:171
 msgid "Download a lecture"
 msgstr "הורדת הרצאה"
 
@@ -1270,7 +1274,7 @@ msgstr "הורדת הכול"
 msgid "Download all {leaves}"
 msgstr "הורדת הכול ({leaves})"
 
-#: src/features/downloads/DownloadsView.tsx:251
+#: src/features/downloads/DownloadsView.tsx:254
 msgid "Download any open video on the internet"
 msgstr "הורד כל וידאו שפתוח לצפייה באינטרנט"
 
@@ -1322,7 +1326,7 @@ msgstr "מוריד עדכון…"
 msgid "Downloading…"
 msgstr "מוריד…"
 
-#: src/features/downloads/DownloadsView.tsx:228
+#: src/features/downloads/DownloadsView.tsx:231
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "הורדות"
@@ -1728,11 +1732,11 @@ msgstr "אני עובד על המטלה הזו ורוצה להבין אותה ל
 "\n"
 "כדי להתחיל, ענה במשפט אחד — \"על איזו שאלה תרצה לעבוד קודם?\" — ואחריו רשימה ממוספרת של שאלות המטלה, לכל אחת תיאור בשורה אחת."
 
-#: src/features/extension/ExtensionGuide.tsx:278
+#: src/features/extension/ExtensionGuide.tsx:277
 msgid "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
 msgstr "אם Chrome מציג את FastStudy עם שגיאה, פתח את <0>{url}</0> ולחץ על חץ הטעינה מחדש בכרטיס של FastStudy."
 
-#: src/features/extension/ExtensionGuide.tsx:273
+#: src/features/extension/ExtensionGuide.tsx:272
 msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 msgstr "אם Edge מציג את FastStudy עם שגיאה, פתח את <0>{url}</0> ולחץ על \"טעינה מחדש\" בכרטיס של FastStudy."
 
@@ -1744,7 +1748,7 @@ msgstr "כבר בקורס"
 msgid "In the project list, choose \"Create project\"."
 msgstr "ברשימת הפרויקטים, בחר \"Create project\"."
 
-#: src/features/extension/ExtensionGuide.tsx:122
+#: src/features/extension/ExtensionGuide.tsx:121
 msgid "In the side pane of the page, turn on the \"Developer mode\" switch. If the pane is hidden because the window is narrow, click the ☰ menu at the top corner of the page to show it. A row of new buttons appears."
 msgstr "בחלונית הצד של הדף, הפעל את המתג \"מצב מפתח\". אם החלונית מוסתרת כי החלון צר, לחץ על תפריט ☰ בפינת הדף העליונה כדי להציג אותה. תופיע שורה של כפתורים חדשים."
 
@@ -1857,7 +1861,7 @@ msgstr "בוא נגדיר כמה דברים"
 msgid "Load new version"
 msgstr "טעינת הגרסה החדשה"
 
-#: src/features/extension/ExtensionGuide.tsx:138
+#: src/features/extension/ExtensionGuide.tsx:137
 msgid "Load the FastStudy folder"
 msgstr "טעינת התיקייה של FastStudy"
 
@@ -1869,11 +1873,11 @@ msgstr "טוען סיכומים…"
 msgid "Loading your courses…"
 msgstr "טוען את הקורסים שלך…"
 
-#: src/features/downloads/DownloadsView.tsx:254
+#: src/features/downloads/DownloadsView.tsx:257
 msgid "Loading your data…"
 msgstr "טוען את הנתונים שלך…"
 
-#: src/features/downloads/DownloadsView.tsx:220
+#: src/features/downloads/DownloadsView.tsx:223
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
 msgstr "טוען…"
@@ -1891,7 +1895,7 @@ msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
 #: src/features/downloads/components/NewView.tsx:142
-#: src/features/downloads/DownloadsView.tsx:196
+#: src/features/downloads/DownloadsView.tsx:199
 #: src/features/lectures/AssignmentView.tsx:141
 #: src/features/lectures/MainView.tsx:597
 msgid "Materials"
@@ -1945,7 +1949,7 @@ msgstr "לא"
 msgid "No archived courses"
 msgstr "אין קורסים בארכיון"
 
-#: src/features/downloads/DownloadsView.tsx:213
+#: src/features/downloads/DownloadsView.tsx:216
 msgid "No assignments found."
 msgstr "לא נמצאו מטלות."
 
@@ -1977,7 +1981,7 @@ msgstr "אין קורסים נוכחיים."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקיית נתונים. בחר אחת בהגדרות."
 
-#: src/features/downloads/DownloadsView.tsx:214
+#: src/features/downloads/DownloadsView.tsx:217
 msgid "No files of unknown type found."
 msgstr "לא נמצאו קבצים מסוג לא ידוע."
 
@@ -2017,7 +2021,7 @@ msgstr "לא נמצא חומר"
 msgid "no material will be sent"
 msgstr "אף חומר לא יישלח"
 
-#: src/features/downloads/DownloadsView.tsx:212
+#: src/features/downloads/DownloadsView.tsx:215
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
@@ -2045,11 +2049,11 @@ msgstr "אין תרגולים"
 msgid "No recitations yet"
 msgstr "אין עדיין תרגולים"
 
-#: src/features/downloads/DownloadsView.tsx:211
+#: src/features/downloads/DownloadsView.tsx:214
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/features/downloads/DownloadsView.tsx:360
+#: src/features/downloads/DownloadsView.tsx:372
 msgid "No source URL yet. Use the pencil to choose one."
 msgstr "אין עדיין כתובת מקור. בחרו אותה בעזרת העיפרון."
 
@@ -2161,7 +2165,7 @@ msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {h
 msgid "Open {name}"
 msgstr "פתיחת {name}"
 
-#: src/features/extension/ExtensionGuide.tsx:175
+#: src/features/extension/ExtensionGuide.tsx:174
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר האוניברסיטה) והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."
 
@@ -2169,11 +2173,11 @@ msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר הא�
 msgid "Open chat"
 msgstr "פתיחת צ'אט"
 
-#: src/features/extension/ExtensionGuide.tsx:84
+#: src/features/extension/ExtensionGuide.tsx:83
 msgid "Open Chrome's extensions page"
 msgstr "פתיחת דף התוספים של Chrome"
 
-#: src/features/extension/ExtensionGuide.tsx:82
+#: src/features/extension/ExtensionGuide.tsx:81
 msgid "Open Edge's extensions page"
 msgstr "פתיחת דף התוספים של Edge"
 
@@ -2181,11 +2185,11 @@ msgstr "פתיחת דף התוספים של Edge"
 msgid "Open file"
 msgstr "פתיחת הקובץ"
 
-#: src/features/extension/ExtensionGuide.tsx:62
+#: src/features/extension/ExtensionGuide.tsx:61
 msgid "Open folder"
 msgstr "פתיחת התיקייה"
 
-#: src/features/extension/ExtensionGuide.tsx:95
+#: src/features/extension/ExtensionGuide.tsx:94
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת הכתובת שבראש החלון והקש Enter:"
 
@@ -2202,7 +2206,7 @@ msgstr "פתיחה במסך מלא"
 msgid "Open lecture"
 msgstr "פתיחת ההרצאה"
 
-#: src/features/extension/ExtensionGuide.tsx:90
+#: src/features/extension/ExtensionGuide.tsx:89
 msgid "Open Microsoft Edge, paste this address into the address bar at the top and press Enter:"
 msgstr "פתח את Microsoft Edge, הדבק את הכתובת הזו בשורת הכתובת שבראש החלון והקש Enter:"
 
@@ -2339,7 +2343,7 @@ msgstr "ה-PDF ישן יותר מהסיכום הזה"
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
-#: src/features/extension/ExtensionGuide.tsx:160
+#: src/features/extension/ExtensionGuide.tsx:159
 msgid "Pin FastStudy to the toolbar"
 msgstr "הצמדת FastStudy לסרגל הכלים"
 
@@ -2443,7 +2447,7 @@ msgstr "תרגולים שסיימת"
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
-#: src/features/downloads/DownloadsView.tsx:369
+#: src/features/downloads/DownloadsView.tsx:381
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
@@ -2619,7 +2623,7 @@ msgstr "שומר…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "צילום מסך של {name}, שלב {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:206
+#: src/features/extension/ExtensionGuide.tsx:205
 msgid "Screenshot of step {step}"
 msgstr "צילום מסך של שלב {step}"
 
@@ -2981,7 +2985,7 @@ msgstr "הקבצים לא הוסרו. כדי לנסות שוב, לחץ על \"ה
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא נוצרת אם אינה קיימת."
 
-#: src/features/extension/ExtensionGuide.tsx:50
+#: src/features/extension/ExtensionGuide.tsx:49
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
@@ -3298,11 +3302,11 @@ msgstr "תמלול"
 msgid "Try again"
 msgstr "לנסות שוב"
 
-#: src/features/extension/ExtensionGuide.tsx:117
+#: src/features/extension/ExtensionGuide.tsx:116
 msgid "Turn on Developer mode"
 msgstr "הפעלת מצב פיתוח"
 
-#: src/features/extension/ExtensionGuide.tsx:115
+#: src/features/extension/ExtensionGuide.tsx:114
 msgctxt "edge"
 msgid "Turn on Developer mode"
 msgstr "הפעלת מצב מפתח"
@@ -3354,7 +3358,7 @@ msgid "University saved"
 msgstr "האוניברסיטה נשמרה"
 
 #: src/features/downloads/components/NewView.tsx:144
-#: src/features/downloads/DownloadsView.tsx:202
+#: src/features/downloads/DownloadsView.tsx:205
 msgid "Unknown"
 msgstr "לא ידוע"
 
@@ -3374,7 +3378,7 @@ msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את 
 msgid "Updates"
 msgstr "עדכונים"
 
-#: src/features/extension/ExtensionGuide.tsx:266
+#: src/features/extension/ExtensionGuide.tsx:265
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 
@@ -3425,7 +3429,7 @@ msgid "Video link"
 msgstr "קישור לווידאו"
 
 #: src/features/downloads/components/NewView.tsx:141
-#: src/features/downloads/DownloadsView.tsx:195
+#: src/features/downloads/DownloadsView.tsx:198
 msgid "Videos"
 msgstr "וידאו"
 

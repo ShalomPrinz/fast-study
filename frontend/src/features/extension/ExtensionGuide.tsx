@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { runtimeBridge } from '@/services/runtime'
 import { toast } from '@/services/toaster'
-import ModeToggle from '@/shared/components/ModeToggle'
-import { BROWSER_KEY, extensionsUrl, shotKey, type Browser } from './browsers'
+import { extensionsUrl, shotKey, type Browser } from './browsers'
 import '@/styles/button.css'
 import '@/styles/modal.css'
 import './ExtensionGuide.css'
@@ -286,9 +285,9 @@ function BrowserSteps({
   )
 }
 
-// A one-time walkthrough for loading the shipped extension unpacked in Chrome or Edge: the
-// Downloads page's Extension tab — see docs/EXTENSION.md.
-export default function ExtensionGuide() {
+// A one-time walkthrough for loading the shipped extension unpacked in the chosen browser: the
+// Downloads page's Extension tab (its header holds the browser switch) — see docs/EXTENSION.md.
+export default function ExtensionGuide({ browser }: { browser: Browser }) {
   const [zoomed, setZoomed] = useState<Zoomed | null>(null)
   // The overlay's Close holds focus and unmounts on close, so focus goes back to the screenshot clicked.
   const opener = useRef<HTMLElement | null>(null)
@@ -302,21 +301,10 @@ export default function ExtensionGuide() {
   }, [])
   return (
     <>
-      <ModeToggle<Browser>
-        modes={{ chrome: { label: 'Chrome' }, edge: { label: 'Microsoft Edge' } }}
-        storageKey={BROWSER_KEY}
-        className="mode-toggle--light extension-browser-switch"
-        wrap={(toggle) => <div className="extension-browser">{toggle}</div>}
-      >
-        {(browser) => (
-          <>
-            <p className="extension-intro">
-              <Trans>Click any screenshot to enlarge it.</Trans>
-            </p>
-            <BrowserSteps browser={browser} onZoom={zoom} />
-          </>
-        )}
-      </ModeToggle>
+      <p className="extension-intro">
+        <Trans>Click any screenshot to enlarge it.</Trans>
+      </p>
+      <BrowserSteps browser={browser} onZoom={zoom} />
       {zoomed && <ZoomOverlay shot={zoomed} onClose={close} />}
     </>
   )

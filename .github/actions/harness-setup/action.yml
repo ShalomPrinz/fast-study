@@ -5,6 +5,9 @@ inputs:
   tectonic-version:
     description: Tectonic release to install (delivery ships this one).
     default: '0.17.0'
+  ffmpeg-version:
+    description: ffmpeg release branch to install; keep it on the major.minor build.yml ships.
+    default: '9.0'
 
 runs:
   using: composite
@@ -20,11 +23,16 @@ runs:
           frontend/package-lock.json
           downloader/package-lock.json
 
-    # The runner's apt mirror can stall mid-download; time out and retry rather than hang to the job timeout.
+    # BtbN's static linux64 build of the input's branch; its `latest` release rolls with that branch's head, unpinned.
     - name: Install ffmpeg
+      env:
+        FFMPEG_VERSION: ${{ inputs.ffmpeg-version }}
       run: |
-        sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::Retries=3 update
-        sudo apt-get -o Acquire::http::Timeout=30 -o Acquire::Retries=3 install -y ffmpeg
+        mkdir -p "$RUNNER_TEMP/ffmpeg"
+        curl -fsSL -o "$RUNNER_TEMP/ffmpeg.tar.xz" "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n$FFMPEG_VERSION-latest-linux64-gpl-$FFMPEG_VERSION.tar.xz"
+        tar -xJf "$RUNNER_TEMP/ffmpeg.tar.xz" --strip-components=2 -C "$RUNNER_TEMP/ffmpeg" --wildcards '*/bin/ffmpeg'
+        echo "$RUNNER_TEMP/ffmpeg" >> "$GITHUB_PATH"
+        "$RUNNER_TEMP/ffmpeg/ffmpeg" -version | head -1
       shell: bash
 
     # The version the backend tests and the shipped build pin: the summary filter refuses anything older than 3.13.

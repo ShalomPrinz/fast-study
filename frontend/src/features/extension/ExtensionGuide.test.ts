@@ -10,7 +10,9 @@ import { extensionsUrl } from './browsers'
 const EXTENSIONS_URL = extensionsUrl('chrome')
 
 function mount() {
-  return render(createElement(I18nProvider, { i18n }, createElement(ExtensionGuide)))
+  return render(
+    createElement(I18nProvider, { i18n }, createElement(ExtensionGuide, { browser: 'chrome' })),
+  )
 }
 
 function stubClipboard() {

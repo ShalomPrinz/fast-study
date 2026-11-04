@@ -24,6 +24,8 @@ one-shot read finishing or failing — it is mounted on every tab, so that read 
 body is a spinner and no tab is selected. That default is then fixed for the app session, so a later
 sign-out or a return to the page never moves it.
 
+The Extension tab's header row, also under the tabs, holds the browser switch (`BrowserSwitch`, only while Extension is chosen); see [EXTENSION.md](EXTENSION.md).
+
 The University tab's frozen row sits in the header under the tabs (`CourseSourceBar`, only while University
 is chosen): the course box, a pencil ("Edit source URL"; always shown, disabled with a "Choose a course first" hint until a course is picked) and "+ Add course", centred as a group, text and controls at 1.2x size, the box a fixed narrower width. The box
 is the shared `Combobox` in pick-only mode (`onPick`; typed text filters and reverts to the picked name on blur,
