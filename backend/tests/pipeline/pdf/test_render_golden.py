@@ -1,8 +1,5 @@
-"""The LaTeX golden: the pandoc half of the render, pinned.
-
-Runs the fixture through the app's own path (`apply_outside_fences` + `build_tex`) with real
-pandoc and compares against `golden/summary.tex`. `FASTSTUDY_BLESS=1` rewrites the golden.
-"""
+"""The pandoc half of the render, pinned: fixture through `apply_outside_fences` + `build_tex`
+with real pandoc vs `golden/summary.tex`; `FASTSTUDY_BLESS=1` rewrites the golden."""
 
 import difflib
 import os
@@ -57,9 +54,8 @@ def _handlers() -> list[str]:
 
 
 def test_fixture_reaches_every_filter_handler(tmp_path, monkeypatch):
-    """Instrumented run: a copy of the filter has each handler wrapped to log whether it
-    returned something (acted). A handler added to the filter is wrapped automatically, so a
-    fixture that never exercises it fails here."""
+    """A filter copy wraps each handler to log whether it acted (returned non-nil); a new handler is wrapped
+    automatically, so a fixture that never exercises it fails here."""
 
     handlers = _handlers()
     assert {"CodeBlock", "Div", "Table"} <= set(handlers)

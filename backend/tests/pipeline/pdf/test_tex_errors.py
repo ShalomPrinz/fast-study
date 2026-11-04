@@ -6,10 +6,8 @@ from pipeline.pdf.tex_errors import (
 )
 
 # ---------------------------------------------------------------------------
-# TeX log classification
-#
-# pandoc relays hundreds of lines of font/package chatter around a handful of
-# real `! …` errors. These cover the parse + the one-line message built from it.
+# TeX log classification: pandoc relays hundreds of lines of font/package chatter around a
+# few real `! …` errors; these cover the parse and the one-line message built from it.
 # ---------------------------------------------------------------------------
 
 
