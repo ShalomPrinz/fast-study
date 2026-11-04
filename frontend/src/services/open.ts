@@ -29,18 +29,18 @@ export async function openLectureFile(
   name: string,
   kind?: Kind,
 ): Promise<void> {
-  const bridge = runtimeBridge()
-  if (!bridge) {
+  const file = runtimeBridge()?.open?.file
+  if (!file) {
     window.open(materialUrl(course, lecture, name, kind), '_blank')
     return
   }
-  await openFile(bridge.open.file({ course, lecture, name, kind }))
+  await openFile(file({ course, lecture, name, kind }))
 }
 
 /** Whether the launcher can offer "Open with…": the bridge has it and the OS is Windows. */
 export function canOpenWith(): boolean {
   const bridge = runtimeBridge()
-  return !!bridge?.open.fileWith && bridge.platform === 'win32'
+  return !!bridge?.open?.fileWith && bridge.platform === 'win32'
 }
 
 /** One generated file of an assignment (`intuition.pdf`): the OS default app packaged, a new tab in browser dev. */
@@ -49,12 +49,12 @@ export async function openAssignmentGenerated(
   assignment: string,
   name: string,
 ): Promise<void> {
-  const bridge = runtimeBridge()
-  if (!bridge) {
+  const file = runtimeBridge()?.open?.file
+  if (!file) {
     window.open(assignmentGeneratedUrl(course, assignment, name), '_blank')
     return
   }
-  await openFile(bridge.open.file({ course, assignment, generated: name }))
+  await openFile(file({ course, assignment, generated: name }))
 }
 
 /** The OS's "Open with…" picker for a lecture file; no browser fallback, so callers gate on `canOpenWith`. */
@@ -64,31 +64,31 @@ export async function openLectureFileWith(
   name: string,
   kind?: Kind,
 ): Promise<void> {
-  const fileWith = runtimeBridge()?.open.fileWith
+  const fileWith = runtimeBridge()?.open?.fileWith
   if (!fileWith) return
   await openFile(fileWith({ course, lecture, name, kind }))
 }
 
 /** A generated file under a course's `overview/`. */
 export async function openOverviewFile(course: string, name: string): Promise<void> {
-  const bridge = runtimeBridge()
-  if (!bridge) {
+  const file = runtimeBridge()?.open?.file
+  if (!file) {
     window.open(overviewFileUrl(course, name), '_blank')
     return
   }
-  await openFile(bridge.open.file({ course, name }))
+  await openFile(file({ course, name }))
 }
 
 /** An http(s) link; the bridge refuses and reports anything else. Call from `onClick` with
  *  `preventDefault()` — the packaged shell denies `window.open`, so `target="_blank"` does nothing. */
 export async function openExternalUrl(url: string | undefined): Promise<void> {
-  const bridge = runtimeBridge()
-  if (!bridge) {
+  const external = runtimeBridge()?.open?.external
+  if (!external) {
     window.open(url, '_blank')
     return
   }
   try {
-    await bridge.open.external(url)
+    await external(url)
   } catch (e) {
     toast('error', t`Could not open the link: ${(e as Error).message}`)
   }
@@ -100,12 +100,12 @@ export async function openAssignmentFile(
   assignment: string,
   name: string,
 ): Promise<void> {
-  const bridge = runtimeBridge()
-  if (!bridge) {
+  const file = runtimeBridge()?.open?.file
+  if (!file) {
     window.open(assignmentFileUrl(course, assignment, name), '_blank')
     return
   }
-  await openFile(bridge.open.file({ course, assignment, name }))
+  await openFile(file({ course, assignment, name }))
 }
 
 /** The OS's "Open with…" picker for an assignment file; callers gate on `canOpenWith`. */
@@ -114,14 +114,14 @@ export async function openAssignmentFileWith(
   assignment: string,
   name: string,
 ): Promise<void> {
-  const fileWith = runtimeBridge()?.open.fileWith
+  const fileWith = runtimeBridge()?.open?.fileWith
   if (!fileWith) return
   await openFile(fileWith({ course, assignment, name }))
 }
 
 /** Whether the launcher can show a file in its folder; browser dev and older launchers cannot. */
 export function canReveal(): boolean {
-  return !!runtimeBridge()?.open.reveal
+  return !!runtimeBridge()?.open?.reveal
 }
 
 /** Shows an assignment file in the OS file manager; callers gate on `canReveal`. */
@@ -130,7 +130,7 @@ export async function revealAssignmentFile(
   assignment: string,
   name: string,
 ): Promise<void> {
-  const reveal = runtimeBridge()?.open.reveal
+  const reveal = runtimeBridge()?.open?.reveal
   if (!reveal) return
   await openFile(reveal({ course, assignment, name }))
 }
