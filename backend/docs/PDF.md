@@ -39,6 +39,10 @@ Moving the pin means re-diffing `pandoc -D latex` and `--print-default-data-file
 
 Also in the suite: an instrumented copy of `text_direction.lua` wraps every top-level handler it finds and logs whether it acted, so a handler the fixture never exercises fails the test; and real pandoc failures (a syntax-broken filter, a missing template) assert `build_tex`'s `pdf_pandoc_failed` code and `detail` param.
 
+## The font allowlist
+
+`tests/pipeline/pdf/test_font_allowlist.py` compiles the golden fixture from a fresh build dir (so pass 1 runs), logs every NFSS shape TeX selects on pass 1 only (later passes write nothing), and fails on any outside the allowlist: `NotoSansHebrew-Regular(*)`, `MiriamMonoCLM-Book(*)` (fontspec's `(0)`/`(1)` suffixes) and exactly `TU/lmr/m/n/10`, which loads at `\begin{document}` and is never drawn. The allowlist (in the test only) is the only text-font shapes pass 1 may select; math fonts never go through `\selectfont`, so the guard does not see them. When a font is added to `LATEX_HEADER` (or a package starts drawing another), extend the allowlist in the test. It needs tectonic and the dev cache (`TECTONIC_CACHE_DIR` unset); skipped when tectonic is missing. Mechanism of the leak it catches: [BIDI.md](BIDI.md).
+
 ## Outcomes
 
 `-Z continue-on-errors` lets TeX skip past an error and **still emit a PDF** — and still exit **0**. So the outcome is read out of `build.log`, never off the return code, which would drop the warning on exactly the runs it exists for.
