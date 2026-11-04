@@ -194,9 +194,8 @@ class TestApplyOutsideFences:
         assert "BEFORE" in result
 
     def test_full_pipeline_does_not_mangle_python_block(self):
-        # Regression for the actual bug: \LR{...}, \texttt{...}, dash/math
-        # normalization all leaked into fenced code. Compose the real pipeline
-        # exactly as convert_to_pdf does.
+        # Regression: \LR{...}, \texttt{...}, dash/math normalization leaked into fenced code.
+        # Composes the pipeline exactly as convert_to_pdf does.
         md = (
             "מימוש בסיסי של שרת UDP ב-Python נראה כך:\n"
             "```python\n"

@@ -25,6 +25,28 @@ Every tool call goes through `_run_tool`, which turns a `TimeoutExpired` into a 
 
 pandoc is bounded at 60s. The render is bounded at 60s **when the cache is frozen** — `TECTONIC_CACHE_DIR` set, which only the launcher does, and `--only-cached` then forbids any fetch — and at 900s otherwise. A real summary renders in ~3s against a warm cache, so 60s is already wedged; but a dev cache starts empty and the first render fetches the LaTeX bundle, which takes minutes once per machine.
 
+## The pandoc pin and the template
+
+The pin is pandoc 3.13 on every platform, and `assets/templates/pandoc_template.tex` is that version's stock `pandoc -D latex` unchanged. 3.x splits the template into partials that `-D` does not expand; pandoc resolves a partial next to `--template` first and falls back to the one embedded in the binary, so the only partial shipped is `fonts.latex`, carrying the one local edit: `\usepackage[no-math]{fontspec}` in place of `unicode-math`, because the math path is the 8-bit `lmodern`/`amssymb` one ([LATEX.md](../../delivery/docs/LATEX.md)). Every other partial moves with the binary.
+
+`build_tex` passes `--data-dir=<build dir>` (which never has a `templates/`), so a user's own pandoc data dir can't shadow the built-in partials.
+
+Moving the pin means re-diffing `pandoc -D latex` and `--print-default-data-file templates/fonts.latex` against these two files, then the golden below.
+
+**The filter needs pandoc 3.13 or newer.** `text_direction.lua` opens with `PANDOC_VERSION:must_be_at_least '3.13'`, so an older pandoc stops with its own version error instead of a nil index inside `Table`.
+
+**A row-spanning cell in a grid table renders flush left.** Pandoc 3.13's LaTeX writer hard-codes `\raggedright` inside `\multirow{N}{=}{…}` and ignores the cell's alignment, so the filter cannot change it.
+
+## The LaTeX golden
+
+`tests/pipeline/pdf/test_render_golden.py` runs `golden/summary.md` (every branch of `delivery/kitchen-sink.md` plus the [BIDI.md](BIDI.md) cases: mixed phrases, inline and fenced code, aligned and unaligned tables, a long pipe table (wrapped columns), pseudocode and bash fences, the three callouts and an unknown one, inline and display math, lists, footnote, link, image) through the app's own path — `apply_outside_fences(…, preprocess_markdown)` then `build_tex` — and diffs the LaTeX against the committed `golden/summary.tex`. Pandoc only, no tectonic, so it runs in `test.yml` on every push against the pinned pandoc; skipped when pandoc is missing. `FASTSTUDY_BLESS=1 uv run pytest tests/pipeline/pdf/test_render_golden.py` rewrites the golden — review the diff before committing it. The image path stays as written (`probe.png`), so output has no tmp paths or dates.
+
+Also in the suite: an instrumented copy of `text_direction.lua` wraps every top-level handler it finds and logs whether it acted, so a handler the fixture never exercises fails the test; and real pandoc failures (a syntax-broken filter, a missing template) assert `build_tex`'s `pdf_pandoc_failed` code and `detail` param.
+
+## The font allowlist
+
+`tests/pipeline/pdf/test_font_allowlist.py` compiles the golden fixture from a fresh build dir (so pass 1 runs), logs every NFSS shape TeX selects on pass 1 only (later passes write nothing), and fails on any outside the allowlist: `NotoSansHebrew-Regular(*)`, `MiriamMonoCLM-Book(*)` (fontspec's `(0)`/`(1)` suffixes) and exactly `TU/lmr/m/n/10`, which loads at `\begin{document}` and is never drawn. The allowlist (in the test only) is the only text-font shapes pass 1 may select; math fonts never go through `\selectfont`, so the guard does not see them. When a font is added to `LATEX_HEADER` (or a package starts drawing another), extend the allowlist in the test. It needs tectonic and the dev cache (`TECTONIC_CACHE_DIR` unset); skipped when tectonic is missing. Mechanism of the leak it catches: [BIDI.md](BIDI.md).
+
 ## Outcomes
 
 `-Z continue-on-errors` lets TeX skip past an error and **still emit a PDF** — and still exit **0**. So the outcome is read out of `build.log`, never off the return code, which would drop the warning on exactly the runs it exists for.

@@ -26,7 +26,7 @@ Lectures live at `{DATA_ROOT}/{course}/{lecture}/`, recitations at
 
 - [uv](https://docs.astral.sh/uv/) (fetches Python 3.12) and Node.js 22
 - `ffmpeg` — `sudo apt install ffmpeg`
-- `pandoc` **2.9.2.1** — `sudo apt install pandoc`; 3.x breaks the render, see [pinned tool versions](delivery/docs/RELEASE.md#pinned-tool-versions)
+- `pandoc` **3.13** — the [release's `.deb`/tarball](https://github.com/jgm/pandoc/releases/tag/3.13), not `apt` (distro builds lag); other versions change the render, see [pinned tool versions](delivery/docs/RELEASE.md#pinned-tool-versions)
 - [`tectonic`](https://github.com/tectonic-typesetting/tectonic/releases) on your PATH — a self-contained XeTeX; the first render fetches its packages once, later renders are offline
 - `yt-dlp` — only for YouTube sources
 - Chrome or Edge — for `downloader/auto/`, plus `Xvfb` on Linux for Zoom capture

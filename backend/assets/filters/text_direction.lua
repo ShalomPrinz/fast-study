@@ -1,3 +1,6 @@
+-- Fail with pandoc's own version error on anything older than the pinned 3.13 instead of a nil index.
+PANDOC_VERSION:must_be_at_least '3.13'
+
 -- Direction fixes pandoc's AST is the only place to make, in an RTL (Hebrew) document.
 -- See backend/docs/PDF.md.
 
@@ -36,14 +39,15 @@ function Div(el)
   end
 end
 
--- Right-align table columns the markdown left unaligned. bidi already reverses the column
--- ORDER, but pandoc emits `l` for AlignDefault, so cells stay flush left inside an RTL table.
--- An explicit alignment in the markdown is the author's, and is left alone.
+-- Right-align unaligned table columns: pandoc emits `l` for AlignDefault, so cells sit flush left
+-- in an RTL table. An explicit alignment is the author's and is kept.
 function Table(el)
-  for i, align in ipairs(el.aligns) do
-    if align == 'AlignDefault' then
-      el.aligns[i] = 'AlignRight'
+  local changed = false
+  for _, spec in ipairs(el.colspecs) do
+    if spec[1] == 'AlignDefault' then
+      spec[1] = 'AlignRight'
+      changed = true
     end
   end
-  return el
+  if changed then return el end
 end

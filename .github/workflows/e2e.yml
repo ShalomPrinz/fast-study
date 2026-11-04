@@ -2,8 +2,6 @@ name: E2E
 
 on:
   push:
-    branches: [main]
-  pull_request:
 
 jobs:
   # The app-harness Playwright specs against one live offline stack: real ffmpeg, pandoc and

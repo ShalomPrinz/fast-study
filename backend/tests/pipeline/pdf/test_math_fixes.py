@@ -17,9 +17,8 @@ from pipeline.pdf.math_fixes import (
 
 class TestCloseUnbalancedDisplayMath:
     def test_lone_closing_dollar_is_doubled(self):
-        # Regression: a block opened with $$ and closed with a single $ leaves a
-        # stray delimiter that pairs with the NEXT $$, so every later math span
-        # is mis-paired and its body escapes the protected region.
+        # Regression: a $$ block closed with a single $ leaves a stray delimiter that pairs with
+        # the NEXT $$, mis-pairing later math spans so their body escapes the protected region.
         text = r"$$W \sim \mathcal{N}\left(0, \frac{2}{n}\right)$"
         assert close_unbalanced_display_math(text) == text + "$"
 
@@ -119,9 +118,8 @@ class TestUnwrapMathCode:
         assert unwrap_math_code(text) == r"$a$ ו-$b$"
 
     def test_literal_dollar_code_spans_not_fused_across_backticks(self):
-        # Regression: two separate inline-code spans each holding a literal `$`
-        # were fused into one fake `$...$` math span swallowing the Hebrew
-        # between them, producing \(\LR{\textenglish{\texttt{...}}}\) -> "Missing $ inserted".
+        # Regression: two inline-code spans each holding a literal `$` fused into one fake math
+        # span swallowing the Hebrew between them -> "Missing $ inserted".
         text = "הסימן `$` לפני שמו. ללא הסימן `$`,"
         assert unwrap_math_code(text) == text
 
@@ -133,9 +131,8 @@ class TestUnwrapMathCode:
 
 class TestDemoteMathIdentifier:
     def test_underscore_identifier_demoted_to_code(self):
-        # Regression: $_exit$ makes the leading _ a subscript operator, so it
-        # renders as a subscript "e" + "xit". It is a syscall name — route it
-        # through inline code so it renders literally.
+        # Regression: $_exit$ renders the leading _ as a subscript ("e" + "xit"); it is a
+        # syscall name, so route it through inline code.
         assert demote_math_identifier("ש-$_exit$ היא") == "ש-`_exit` היא"
 
     def test_capitalized_identifier_demoted(self):
@@ -270,9 +267,8 @@ class TestNormalizeMathTextSpaces:
         assert normalize_math_text_spaces(text) == text
 
     def test_reach_extends_to_a_bare_text_macro_in_prose(self):
-        # Documents reach, not intent: the regex is region-wide, so a \text{} written
-        # outside any $…$ is rewritten identically. Harmless — the chain only feeds it
-        # prose regions, where a literal \text{} is not a real input.
+        # Documents reach, not intent: the regex is region-wide, so \text{} outside any $…$ is
+        # rewritten too. Harmless: the chain feeds it prose, where a literal \text{} is not a real input.
         assert (
             normalize_math_text_spaces(r"טקסט \text{ prose } כאן")
             == r"טקסט \ \text{prose}\  כאן"

@@ -111,6 +111,15 @@ msbm7.pfb
 msbm8.pfb
 msbm9.pfb
 
+# U stmry: stmaryrd's symbol font, loaded at the first math in every size; \llbracket among it.
+stmary9.tfm
+stmary5.pfb
+stmary6.pfb
+stmary7.pfb
+stmary8.pfb
+stmary9.pfb
+stmary10.pfb
+
 # U euf: \mathfrak. eufm/eufb 6, 8 and 9 have no .pfb in the bundle; ueuf.fd maps them to 5/7/10.
 ueuf.fd
 mt-euf.cfg

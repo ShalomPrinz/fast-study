@@ -1,0 +1,401 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{cancel}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage[no-math]{fontspec}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage{setspace}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\newenvironment{Shaded}{}{}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.49,0.56,0.16}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.53,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.73,0.13,0.13}{\textit{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.50,0.00}{\textbf{#1}}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.40,0.40,0.40}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.74,0.48,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.73,0.40,0.53}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.10,0.09,0.49}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{caption}
+\captionsetup[table]{skip=6pt}
+\newcounter{none} % for unnumbered tables
+\usepackage{multirow}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\ifLuaTeX
+  \usepackage{luacolor}
+  \usepackage[soul]{lua-ul}
+\else
+  \usepackage{soul}
+\fi
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\usepackage{fvextra}
+\fvset{breaklines=true, breakanywhere=true, breakautoindent=true, breaksymbolleft={}, breaksymbolright={}, breakanywheresymbolpre={}}
+
+\usepackage{tcolorbox}
+\definecolor{calloutDefinitionTint}{HTML}{EDF3F9}
+\definecolor{calloutDefinitionFrame}{HTML}{1F4E79}
+\definecolor{calloutWarningTint}{HTML}{FBF2E3}
+\definecolor{calloutWarningFrame}{HTML}{B8860B}
+\definecolor{calloutInsightTint}{HTML}{EBF4F0}
+\definecolor{calloutInsightFrame}{HTML}{2E7D6B}
+\tcbset{calloutstyle/.style={boxrule=0.7pt, arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt, before skip=8pt, after skip=8pt}}
+\newtcolorbox{calloutdefinition}{calloutstyle, colback=calloutDefinitionTint, colframe=calloutDefinitionFrame}
+\newtcolorbox{calloutwarning}{calloutstyle, colback=calloutWarningTint, colframe=calloutWarningFrame}
+\newtcolorbox{calloutinsight}{calloutstyle, colback=calloutInsightTint, colframe=calloutInsightFrame}
+
+\usepackage{stmaryrd}
+\usepackage{hyperref}
+\usepackage[normalem]{ulem}
+\def\st#1{\sout{#1}}
+\usepackage{polyglossia}
+\setmainlanguage{hebrew}
+\setotherlanguage{english}
+\newfontfamily\hebrewfont{NotoSansHebrew-Regular}[Script=Hebrew, Path=./, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\hebrewfontsf{NotoSansHebrew-Regular}[Script=Hebrew, Path=./, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\hebrewfonttt{NotoSansHebrew-Regular}[Script=Hebrew, Path=./, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\englishfont{NotoSansHebrew-Regular}[Path=./, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\englishfontsf{NotoSansHebrew-Regular}[Path=./, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\englishfonttt{MiriamMonoCLM-Book}[Path=./, Extension=.ttf, BoldFont=MiriamMonoCLM-Bold]
+\setmonofont{MiriamMonoCLM-Book}[Path=./, Extension=.ttf, BoldFont=MiriamMonoCLM-Bold]
+\selectlanguage{hebrew}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\author{}
+\date{}
+
+\begin{document}
+
+\setstretch{1.3}
+\section{סיכום: למידת
+מכונה}\label{ux5e1ux5d9ux5dbux5d5ux5dd-ux5dcux5deux5d9ux5d3ux5ea-ux5deux5dbux5d5ux5e0ux5d4}
+
+טקסט עברי רגיל עם \textbf{מודגש}, \emph{נטוי}, \st{מחוק}
+ו-\LR{\textenglish{\texttt{קוד בשורה}}}\RL{,} ומונח באנגלית:
+\LR{gradient descent}\RL{.}
+
+\subsection{ביטויים
+מעורבים}\label{ux5d1ux5d9ux5d8ux5d5ux5d9ux5d9ux5dd-ux5deux5e2ux5d5ux5e8ux5d1ux5d9ux5dd}
+
+ביצוע \LR{Pull Request} על \LR{Visual Studio Code}\RL{,} ואז
+\LR{3-way merge} של הענף. הגודל הוא \LR{4KB}
+ו-\LR{\textenglish{0.5ms (Software 1.0)}}\RL{,} כמו
+\LR{console.log('hi')} ו-\LR{arr[i]}\RL{.}
+
+הכתובת \LR{https://example.com/a?b=1\&c=2} היא קישור גולמי, והנתיב
+\LR{/index.html} הוא קובץ. גם \textbf{\LR{Bayes' Rule}} מודגש, וגם
+\emph{\LR{Tukey's}} נטוי.
+
+הרשימה \LR{\textenglish{\texttt{98, 183, 37}}} והקוד
+\LR{\textenglish{\texttt{awk '\{print \$1\}'}}} נשארים משמאל לימין, וכך
+גם \LR{\textenglish{\texttt{a ` b}}}\RL{.}
+
+\subsection{כותרת
+משנה}\label{ux5dbux5d5ux5eaux5e8ux5ea-ux5deux5e9ux5e0ux5d4}
+
+\begin{calloutdefinition}
+
+הגדרה: פונקציה קמורה היא פונקציה שכל מיתר שלה נמצא מעל הגרף.
+
+\end{calloutdefinition}
+
+\begin{calloutwarning}
+
+אזהרה: שיטה זו לא מתכנסת עבור \(\alpha\) גדול מדי.
+
+\end{calloutwarning}
+
+\begin{calloutinsight}
+
+תובנה: אפשר לראות את זה כהטלה אורתוגונלית של \(x\) על
+\LR{Hilbert Space}\RL{.}
+
+\end{calloutinsight}
+
+מחלקה לא מוכרת נופלת חזרה לטקסט רגיל.
+
+נוסחה בשורה \(e^{i\pi} + 1 = 0\)\RL{,} וגם
+\LR{\textenglish{\texttt{\_exit}}} כמזהה, ו-\(\text{\LR{Hello world}}\)
+עם \(\text{\RL{שלב אחד}}\) ו-\(\text{\RL{\ensuremath{240} תאים}}\) וגם
+ה-\LR{$init$ \textenglish{(PID 1)}}\RL{.}
+
+נוסחה מוצגת:
+
+\[\sum_{i=1}^{n} \frac{x_i - \mu}{\sigma} \le \int_0^\infty e^{-t^2}\,dt \quad \forall x \in \mathbb{R}^n\]
+
+\[\llbracket x \rrbracket\]
+
+\[\begin{pmatrix} a & b \\ c & d \end{pmatrix} \otimes \aleph_0 \Rightarrow \bigcup_{k} A_k\]
+
+\[A\mathbf{x} - x_0 \mathbf{1} \le \mathbf{b}_{\mathbf{i}_{\mathbf{j}}}\]
+
+\[\frac{\cancel{a}\,b}{\cancel{a}} = b\]
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}rrr@{}}
+\toprule\noalign{}
+עמודה א & עמודה ב & \LR{Value} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+ערך & ערך שני & 3.14 \\
+שורה & נוספת & 42 \\
+\end{longtable}
+}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}rcl@{}}
+\toprule\noalign{}
+ימין & מרכז & שמאל \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+א & ב & ג \\
+\end{longtable}
+}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+שורה ארוכה
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+הסבר
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+טקסט ארוך מאוד בתא הראשון של הטבלה & טקסט ארוך מאוד בתא השני של הטבלה
+כדי לחצות שבעים ושתיים עמודות \\
+\end{longtable}
+}
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.1111}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.0833}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedleft
+עמודה
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+ערך
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\multirow{2}{=}{\raggedright\arraybackslash מאוחד} & א \\
+& ב \\
+\end{longtable}
+}
+
+\begin{english}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{def}\NormalTok{ gradient\_descent(x0, alpha}\OperatorTok{=}\FloatTok{0.01}\NormalTok{, eps}\OperatorTok{=}\FloatTok{1e{-}8}\NormalTok{):}
+    \CommentTok{"""A very long line intended to exceed the text width so that fvextra breaklines has something real to break, with symbols like \textless{}=\textgreater{} and ||."""}
+\NormalTok{    x }\OperatorTok{=}\NormalTok{ x0}
+    \ControlFlowTok{while} \BuiltInTok{abs}\NormalTok{(grad(x)) }\OperatorTok{\textgreater{}}\NormalTok{ eps:}
+\NormalTok{        x }\OperatorTok{{-}=}\NormalTok{ alpha }\OperatorTok{*}\NormalTok{ grad(x)}
+    \ControlFlowTok{return}\NormalTok{ x}
+\end{Highlighting}
+\end{Shaded}
+
+\end{english}
+
+\begin{english}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{repeat until done: step(x)}
+\end{Highlighting}
+\end{Shaded}
+
+\end{english}
+
+\begin{english}
+
+\begin{verbatim}
+plain fence with no language, so no highlighting macros apply
+\end{verbatim}
+
+\end{english}
+
+\begin{english}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{app}\OperatorTok{.}\FunctionTok{get}\NormalTok{(}\StringTok{\textquotesingle{}/\textquotesingle{}}\OperatorTok{,}\NormalTok{ (req}\OperatorTok{,}\NormalTok{ res) }\KeywordTok{=\textgreater{}}\NormalTok{ \{ res}\OperatorTok{.}\FunctionTok{send}\NormalTok{(}\StringTok{"hi"}\NormalTok{) \})}
+\end{Highlighting}
+\end{Shaded}
+
+\end{english}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  פריט ממוספר
+
+  \begin{itemize}
+  \tightlist
+  \item
+    תת-פריט
+  \item
+    עוד אחד
+  \end{itemize}
+\item
+  פריט שני
+\end{enumerate}
+
+סעיפים:
+
+\begin{itemize}
+\tightlist
+\item
+  ראשון עם \LR{Git}
+\item
+  שני
+\end{itemize}
+
+\begin{quote}
+ציטוט מוסגר עם הערת שוליים.\footnote{זו הערת השוליים.}
+\end{quote}
+
+קישור ל\href{https://example.com}{אתר} וכתובת גולמית
+\url{https://example.com/very/long/path/that/should/wrap}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\LR{Term}
+
+: הגדרה של המונח
+
+\LR{H}\textsubscript{2}\LR{O} ו-\LR{x}\textsuperscript{2} .
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={תרשים}]{probe.png}}
+\caption{תרשים}
+\end{figure}
+
+\begin{english}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ExtensionTok{arp} \AttributeTok{{-}n}
+\FunctionTok{rm} \AttributeTok{{-}d}\NormalTok{ dir}
+\FunctionTok{ls} \AttributeTok{{-}q} \AttributeTok{{-}s} \AttributeTok{{-}g}
+\end{Highlighting}
+\end{Shaded}
+
+\end{english}
+
+הפקודה \LR{\textenglish{\texttt{grep -r foo}}} מופיעה כאן, ובאנגלית:
+\LR{Bayes rule}\RL{.}
+
+\subsubsection{\texorpdfstring{אלגוריתם
+\(W\text{-}A^*\)}{אלגוריתם W\textbackslash text\{-\}A\^{}*}}\label{ux5d0ux5dcux5d2ux5d5ux5e8ux5d9ux5eaux5dd-wtext-a}
+
+טקסט אחרי הכותרת.
+
+\end{document}

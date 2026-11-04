@@ -17,10 +17,13 @@ builds that cache; a cold prime is network-bound at roughly 7.5 minutes.
 
 ## `kitchen-sink.md`
 
-Its contents come from enumerating the branches in `backend/assets/templates/pandoc_template.tex`
-and `to_pdf.py`'s `LATEX_HEADER`, not from sampling summaries. Every block pulls in a package, and
-dropping one drops that package from the cache. No summary in the corpus has a callout, table image,
-link or strikeout, so `tcolorbox`, `graphicx` and `ulem` reach the cache only because the sink asks.
+Its contents come from enumerating the branches in `backend/assets/templates/` — pandoc 3.13's
+stock template, its embedded partials (`pandoc --print-default-data-file templates/common.latex`)
+and the local `fonts.latex` — and `to_pdf.py`'s `LATEX_HEADER`, not from sampling summaries. Every
+block pulls in a package, and dropping one drops that package from the cache. No summary in the
+corpus has a callout, image, link, strikeout, `\cancel` or spanning grid table, so `tcolorbox`,
+`graphicx`, `soul`, `cancel` and `multirow` reach the cache only because the sink asks. `svg` is the
+one branch left out: it needs Inkscape, which never ships, and the bidi pass turns images into text.
 Its doubly-nested `\mathbf` line pulls Latin Modern bold math at 10/7/5pt, which body `\mathbf`
 needs; without it a render fails `pdf_missing_font`.
 
@@ -36,17 +39,19 @@ needs; without it a render fails `pdf_missing_font`.
 
 The sink alone is not enough, and no document can be written that is. Measured against the sink when
 it primed 457 files, **95 of 126 real summaries fail** — 25 with no PDF, 70 with a silently damaged
-one at exit 0. The current sink primes 466 files (465 under `bundles/` plus the `.fmt`); the
-supplement's 110 take it to 576, 48.5MB.
+one at exit 0. The current sink primes 484 files (483 under `bundles/` plus the `.fmt`); the
+supplement's 117 take it to 601, 48.9MB.
 
 Math goes through the 8-bit TFM path — `lmodern` and `amssymb` under `fontspec[no-math]` — and which
 design size a construct loads depends on where it sits: body, script and scriptscript at 10/7/5pt,
 footnotes and headings at 8 through 14.4pt. Sampling constructs never closed that set, so the
 supplement closes it instead: every size each family's `.fd` maps the 5–14.4pt range to, as both
 `.tfm` and `.pfb`, for OT1 `lmr` (`m/n`, `bx/n`, `m/it`), `lmss` and `lmtt`; OML `lmm` (`m`, `b`);
-OMS `lmsy` (`m`, `b`); OMX `lmex`; and U `msa`, `msb` and `euf`, plus the `.fd`/`.cfg`/`.enc` they
-read, and the 12pt `lmroman12` `.otf` heading text uses. It lists only the names the sink does not
-already pull. Two failure shapes, both offline-only:
+OMS `lmsy` (`m`, `b`); OMX `lmex`; and U `msa`, `msb`, `euf` and `stmry`, plus the `.fd`/`.cfg`/`.enc`
+they read, and the 12pt `lmroman12` `.otf` heading text uses. `stmry` loads at the first math in
+every size whether or not a glyph is drawn, so the sink pulls most of its `.tfm`s but none of its
+`.pfb`s. The supplement lists only the names the sink does not already pull. Two failure shapes,
+both offline-only:
 
 - **A missing `.tfm`** is `! Font ... not loadable` in the log: `pdf_missing_font`, or `latex_error`
   once a later error masks it.
@@ -64,7 +69,7 @@ loads a new math family or alphabet, or changes the 10pt base size, re-opens the
 
 ## `tectonic-cache-filelist-linux.txt`
 
-A WSL prime of the **sink alone**, kept so a Windows-primed cache can be diffed against it: 465 lines
+A WSL prime of the **sink alone**, kept so a Windows-primed cache can be diffed against it: 483 lines
 under `bundles/` plus the one `formats/` `.fmt`, whose name is the same on both. `prime_cache.py
---filelist` lists both directories, so it diffs 110 lines heavy by design — the supplement; anything
+--filelist` lists both directories, so it diffs 117 lines heavy by design — the supplement; anything
 beyond those, a renamed `.fmt` included, is real drift.

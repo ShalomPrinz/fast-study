@@ -19,6 +19,7 @@ from to_pdf import (
     build_tex,
     convert_to_pdf,
 )
+from tools import tool_path
 
 # ---------------------------------------------------------------------------
 # Preprocessing chain order
@@ -63,7 +64,7 @@ class TestMergesCommute:
 
 
 def _pandoc_available():
-    return shutil.which("pandoc") is not None
+    return shutil.which(tool_path("pandoc")) is not None
 
 
 def _run_pandoc_latex(md: str) -> str:
@@ -76,7 +77,7 @@ def _run_pandoc_latex(md: str) -> str:
     try:
         result = subprocess.run(
             [
-                "pandoc",
+                tool_path("pandoc"),
                 md_path,
                 "--to=latex",
                 f"--lua-filter={DIRECTION_FILTER}",
@@ -212,7 +213,7 @@ class TestMonoFontWiring:
 
 
 def _tectonic_available():
-    return shutil.which("tectonic") is not None
+    return shutil.which(tool_path("tectonic")) is not None
 
 
 def _pymupdf_available():
@@ -446,10 +447,10 @@ FONT_LOG = (
 TECTONIC = "tectonic"
 
 
-@pytest.fixture(autouse=True)
-def _no_bin_dir(monkeypatch):
-    """Pin tool resolution to bare names, so an exported FASTSTUDY_BIN_DIR cannot make argv[0]
-    an absolute path the assertions below do not expect."""
+@pytest.fixture
+def no_bin_dir(monkeypatch):
+    """Strip the env so FakeRun tests see bare tool names; real-tool tests don't request it
+    and follow the env."""
 
     monkeypatch.delenv("FASTSTUDY_BIN_DIR", raising=False)
     monkeypatch.delenv("TECTONIC_CACHE_DIR", raising=False)
@@ -470,6 +471,9 @@ class FakeRun:
         tex_text="\\documentclass{article}\\begin{document}x\\end{document}",
         hangs=(),
     ):
+        assert not {"FASTSTUDY_BIN_DIR", "TECTONIC_CACHE_DIR"} & os.environ.keys(), (
+            "request the no_bin_dir fixture"
+        )
         self.pandoc_rc = pandoc_rc
         self.tectonic_rc = tectonic_rc
         self.tectonic_stderrs = list(tectonic_stderrs)
@@ -532,6 +536,7 @@ def _render(fake: FakeRun, md: str = "שלום world\n"):
             yield str(md_path)
 
 
+@pytest.mark.usefixtures("no_bin_dir")
 class TestInvocation:
     def test_pandoc_writes_tex_not_pdf_and_drops_pdf_engine(self):
         fake = FakeRun()
@@ -557,6 +562,14 @@ class TestInvocation:
         assert cmd.count("-V") == 2
         assert "geometry:margin=2.5cm" in cmd
         assert "linestretch=1.3" in cmd
+
+    def test_pandoc_data_dir_is_the_build_dir_so_user_templates_never_apply(self):
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        cmd = fake.pandoc_cmd
+        build = str(Path(cmd[1]).parent)
+        assert f"--data-dir={build}" in cmd
 
     def test_the_engine_runs_once(self):
         # Tectonic reruns TeX to convergence itself, so there is no second pass to drive.
@@ -587,8 +600,8 @@ class TestInvocation:
     def test_a_frozen_cache_forbids_fetching(self, monkeypatch, tmp_path):
         # The launcher sets TECTONIC_CACHE_DIR at the shipped, complete cache; a gap in it must
         # fail loudly rather than hang on a network the user may not have.
-        monkeypatch.setenv("TECTONIC_CACHE_DIR", str(tmp_path))
         fake = FakeRun()
+        monkeypatch.setenv("TECTONIC_CACHE_DIR", str(tmp_path))
         with _render(fake) as md_path:
             convert_to_pdf(md_path)
         assert "--only-cached" in fake.tectonic_cmds[0]
@@ -624,6 +637,7 @@ class TestInvocation:
         assert not Path(build_dir).exists()
 
 
+@pytest.mark.usefixtures("no_bin_dir")
 class TestBuildTexSeam:
     """build_tex is the shared pandoc pass — convert_to_pdf and the build-time cache primer
     both go through it, so it must take its markdown verbatim."""
@@ -671,6 +685,7 @@ class TestBuildTexSeam:
                     build_tex("x\n", Path(d))
 
 
+@pytest.mark.usefixtures("no_bin_dir")
 class TestRenderRecovery:
     def test_an_error_in_the_log_warns_even_though_the_engine_exited_zero(self):
         # -Z continue-on-errors makes a run that errored still exit 0, so judging by the return
@@ -786,6 +801,7 @@ MISSING_CHAR_LOG = (
 )
 
 
+@pytest.mark.usefixtures("no_bin_dir")
 class TestMissingCharactersWarn:
     """A glyph the loaded font lacks is drawn as an empty box while the run exits 0, so only the
     log says the page shows the wrong content."""
@@ -818,6 +834,7 @@ class TestMissingCharactersWarn:
         assert "U+2264" in warning
 
 
+@pytest.mark.usefixtures("no_bin_dir")
 class TestMissingFontIsFatal:
     """A font the engine cannot load is dropped glyph by glyph: the run exits 0 and writes a
     plausible PDF with characters silently absent. It is the one damage a reader cannot see —
@@ -862,6 +879,7 @@ class TestMissingFontIsFatal:
         assert warning is not None
 
 
+@pytest.mark.usefixtures("no_bin_dir")
 class TestFormatBuildRace:
     """Two concurrent first-ever renders each build the format into a temp file and rename it
     onto the final name; on Windows the loser hits the winner's open handle. The rename is
@@ -895,6 +913,7 @@ class TestFormatBuildRace:
         assert len(fake.tectonic_cmds) == 2
 
 
+@pytest.mark.usefixtures("no_bin_dir")
 class TestToolTimeout:
     """A wedged tool would hold the caller's per-lecture lock forever, so it is bounded and
     surfaces as an ordinary render failure."""
@@ -919,8 +938,8 @@ class TestToolTimeout:
 
     def test_a_frozen_cache_bounds_the_render_tightly(self, monkeypatch, tmp_path):
         # It renders against a complete cache and can never fetch, so a minute is already wedged.
-        monkeypatch.setenv("TECTONIC_CACHE_DIR", str(tmp_path))
         fake = FakeRun()
+        monkeypatch.setenv("TECTONIC_CACHE_DIR", str(tmp_path))
         timeouts = []
 
         def spy(cmd, **kwargs):

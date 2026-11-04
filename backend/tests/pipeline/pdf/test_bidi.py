@@ -97,9 +97,8 @@ class TestWrapEnglishPhrases:
     # --- Trailing hyphen/slash binds to following text, not the LTR run ---
 
     def test_trailing_hyphen_before_hebrew_excluded(self):
-        # Regression: a hyphen between Latin and Hebrew used to be swallowed
-        # into \LR{NP-}, so at render time it jumped to the left of NP and
-        # collided with the preceding hyphen ("-NPשלמות"). It must stay outside.
+        # Regression: a Latin-Hebrew hyphen was swallowed into \LR{NP-} and jumped left of NP
+        # ("-NPשלמות"). It must stay outside.
         result = wrap_english_phrases("NP-שלמות")
         assert r"\LR{NP}" in result
         assert r"\LR{NP-}" not in result
@@ -218,9 +217,8 @@ class TestWrapEnglishPhrases:
         assert r"\LR{times}" not in result
 
     def test_multiline_display_math_not_wrapped(self):
-        # Regression: line-by-line splitting used to leak Latin tokens inside
-        # multi-line $$...$$ blocks, producing \LR{W} inside math mode →
-        # LaTeX "Missing $ inserted" via pandoc.
+        # Regression: line-by-line splitting leaked Latin tokens inside multi-line $$...$$,
+        # giving \LR{W} in math mode -> LaTeX "Missing $ inserted".
         block = (
             "טקסט\n"
             "$$\n"
@@ -242,9 +240,8 @@ class TestWrapEnglishPhrases:
         assert r"\LR{times}" not in result
 
     def test_dollar_code_spans_protected_as_code_not_math(self):
-        # Regression: the protection regex paired `$` across two code spans,
-        # protecting the Hebrew between them as a fake math span. The backtick
-        # code spans must survive so force_ltr_inline_code can escape them.
+        # Regression: the protection regex paired `$` across two code spans, protecting the Hebrew
+        # between them as fake math. The code spans must survive for force_ltr_inline_code.
         result = wrap_english_phrases("הסימן `$` לפני שמו. ללא הסימן `$` סוף")
         assert "`$`" in result
         assert r"\LR{$" not in result
@@ -557,13 +554,11 @@ class TestForceLtrInlineCode:
         assert "$a$" in result and "$b$" in result
 
     def test_double_backtick_span_is_code_to_both_helpers(self):
-        # The two helpers must agree on what a code span is: when the protected-span
-        # pattern called this prose and this one called it code, wrap_english_phrases
-        # wrapped the body and force_ltr_inline_code then swallowed its own \LR{}.
+        # The two helpers must agree on what a code span is: when the protected-span pattern said
+        # prose and force_ltr_inline_code said code, the body got wrapped and its own \LR{} swallowed.
         result = force_ltr_inline_code(wrap_english_phrases("מלל `` code `` מלל"))
-        # Both delimiters are consumed and the padding spaces dropped, exactly as pandoc
-        # would have read the span — leftover backticks would make it re-parse as code
-        # and print the \LR{} literally.
+        # Delimiters consumed and padding spaces dropped, as pandoc reads the span; leftover
+        # backticks would re-parse as code and print the \LR{} literally.
         assert result == r"מלל \LR{\textenglish{\texttt{code}}} מלל"
         assert r"\textbackslash{}LR" not in result
 
