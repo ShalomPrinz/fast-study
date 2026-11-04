@@ -49,8 +49,9 @@ supplement closes it instead: every size each family's `.fd` maps the 5–14.4pt
 `.tfm` and `.pfb`, for OT1 `lmr` (`m/n`, `bx/n`, `m/it`), `lmss` and `lmtt`; OML `lmm` (`m`, `b`);
 OMS `lmsy` (`m`, `b`); OMX `lmex`; and U `msa`, `msb`, `euf` and `stmry`, plus the `.fd`/`.cfg`/`.enc`
 they read, and the 12pt `lmroman12` `.otf` heading text uses. `stmry` loads at the first math in
-every size whether or not a glyph is drawn, so the sink pulls its `.tfm`s but not its `.pfb`s. It
-lists only the names the sink does not already pull. Two failure shapes, both offline-only:
+every size whether or not a glyph is drawn, so the sink pulls most of its `.tfm`s but none of its
+`.pfb`s. The supplement lists only the names the sink does not already pull. Two failure shapes,
+both offline-only:
 
 - **A missing `.tfm`** is `! Font ... not loadable` in the log: `pdf_missing_font`, or `latex_error`
   once a later error masks it.
