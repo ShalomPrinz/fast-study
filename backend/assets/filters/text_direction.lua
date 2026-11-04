@@ -42,10 +42,12 @@ end
 -- Right-align unaligned table columns: pandoc emits `l` for AlignDefault, so cells sit flush left
 -- in an RTL table. An explicit alignment is the author's and is kept.
 function Table(el)
+  local changed = false
   for _, spec in ipairs(el.colspecs) do
     if spec[1] == 'AlignDefault' then
       spec[1] = 'AlignRight'
+      changed = true
     end
   end
-  return el
+  if changed then return el end
 end
