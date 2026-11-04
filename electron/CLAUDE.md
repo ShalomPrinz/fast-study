@@ -17,8 +17,8 @@ everything on quit.
 | `teardown.js` | Stopping the children — SIGTERM, then SIGKILL after the grace (POSIX)           |
 | `updater.js`  | The update check — electron-updater against GitHub Releases; the app's update state and Restart now |
 | `updatePhases.js` | Mapping updater events to the phases the launch screen shows (pure, tested)   |
-| `extension.js` | The Chrome extension's shipped copy, the bridge file, the native host's registration |
-| `bridge/host.js` | The native host Chrome runs — staged to `resources/bridge/`, not in the asar |
+| `extension.js` | The browser extension's shipped copy, the bridge file, the native host's registration |
+| `bridge/host.js` | The native host Chrome or Edge runs — staged to `resources/bridge/`, not in the asar |
 | `windowState.js` | The window's size and maximized flag across launches — `window-state.json` under `userData` |
 | `dataFiles.js` | Resolving a data-file target to its path through `database/`, Windows' Open with, and reveal in the file manager |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
@@ -146,5 +146,5 @@ the `build` block in `package.json`.
 - **`assets/installer.nsh` (`nsis.include`) recreates a missing Start menu shortcut on every install
   and update**, since a one-click reinstall keeps shortcuts and never recreates a lost one; the
   Desktop shortcut keeps electron-builder's behavior, so a user's deliberate deletion stands. Its
-  `customUnInstall` deletes the native host's HKCU key on uninstall, not on update
+  `customUnInstall` deletes the native host's Chrome and Edge HKCU keys on uninstall, not on update
   ([`EXTENSION.md`](docs/EXTENSION.md)).

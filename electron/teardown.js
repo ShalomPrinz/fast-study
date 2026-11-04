@@ -1,14 +1,23 @@
-const { spawnSync } = require('node:child_process');
+const childProcess = require('node:child_process');
 
 /** Ask every child to stop, synchronously so an exit handler can call it. Returns the POSIX children
  *  still to reap; Windows returns none, since `taskkill /F` has already forced the whole tree. */
-function signalChildren(children) {
+function signalChildren(children, log) {
   const signalled = [];
   for (const child of children) {
     if (child.exitCode !== null || child.signalCode !== null || !child.pid) continue;
     try {
       if (process.platform === 'win32') {
-        spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']);
+        const result = childProcess.spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+          encoding: 'utf8',
+        });
+        // Logged only: a refusal (e.g. a protected image name) leaves the tree running, unseen otherwise.
+        if (result.status !== 0) {
+          const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
+          log(
+            `taskkill pid ${child.pid} failed (exit ${result.status ?? result.error?.message}): ${output}`,
+          );
+        }
       } else {
         // Negative pid: the child's whole process group, which is why they are spawned detached.
         process.kill(-child.pid, 'SIGTERM');

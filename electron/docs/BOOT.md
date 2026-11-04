@@ -52,7 +52,7 @@ failed attempt is carried — and **Quit** ends the app.
 A spawn that fails — whether Node emits `'error'` or throws synchronously, as it does for `UNKNOWN` —
 takes the same path. Packaged on Windows, a binary under `resources/` failing with `ENOENT`,
 `UNKNOWN`, `EPERM` or `EACCES` is almost always antivirus quarantining or still scanning the unsigned
-`services.exe`, so the message names that and the restore-from-Protection-history fix instead of the
+`faststudy-services.exe`, so the message names that and the restore-from-Protection-history fix instead of the
 raw error, which stays in the log. Like the rest of the page it is English and carries no error code:
 nothing would resolve one ([ERROR-CODES.md](../../docs/ERROR-CODES.md)).
 
@@ -147,8 +147,8 @@ One `isPackaged` branch in the child spec table, and nothing else in the file kn
 
 | Child      | Dev                              | Packaged                                     |
 | ---------- | -------------------------------- | -------------------------------------------- |
-| `database` | `uv run python database_main.py` | `resources/services/services database`       |
-| `backend`  | `uv run python backend_main.py`  | `resources/services/services backend`        |
+| `database` | `uv run python database_main.py` | `resources/services/faststudy-services database` |
+| `backend`  | `uv run python backend_main.py`  | `resources/services/faststudy-services backend`  |
 | `auto`     | `node app.js`                    | Electron's own exe, `ELECTRON_RUN_AS_NODE=1` |
 | `server`   | `node src/index.js`              | Electron's own exe, `ELECTRON_RUN_AS_NODE=1` |
 
@@ -164,7 +164,7 @@ ships; it is also yt-dlp's player JS runtime, whose flags live in `server/`
 The packaged tree main assumes, staged by the build as `electron`'s `extraResources`:
 
 ```
-resources/services/services(.exe)   the PyInstaller one-dir bundle, service picked by argv[1]
+resources/services/faststudy-services(.exe)  the PyInstaller one-dir bundle, service picked by argv[1]
 resources/downloader/auto/app.js    the auto-downloader, run on Electron-as-node
 resources/downloader/server/src/index.js  the download server, likewise
 resources/downloader/node_modules/  the workspace's one hoisted node_modules — not `resources/node_modules`, which `app.asar` would resolve into
@@ -175,13 +175,24 @@ resources/extension/                the Chrome extension, copied to <state root>
 resources/bridge/host.js            the native host script, run on Electron-as-node by a generated .bat
 ```
 
+The bundle is never named `services.exe`: that is the image name of Windows' Service Control Manager,
+and `taskkill` refuses to end any process carrying it, whatever its path.
+
+## The installed process tree
+
+Main is the install-dir `FastStudy.exe` that the four services are direct children of. Lacking
+`--type=` does not single it out: `auto` and `server` are also `FastStudy.exe` run as Node
+(`ELECTRON_RUN_AS_NODE=1`) without one, as are yt-dlp's JS runtime and the native host. Under a
+Playwright launch `app.process().pid` is main's parent, not main, so find main as the services'
+shared parent.
+
 ## Teardown
 
 Children are spawned in their own process group (POSIX), so the kill reaches the tools they spawned
 — ffmpeg, chrome, yt-dlp — and not just the service. Quit sends the group `SIGTERM`, then `SIGKILL`
 after a 3s grace (longer than a service's ~2s Sentry flush) to any child still alive, and main waits
 for that before it exits, or the timer would die with it. Windows has no process groups, so it is
-`taskkill /T /F` there. `process.on('exit')` cannot wait, so it only sends the `SIGTERM`. The same
+`taskkill /T /F` there, and a non-zero taskkill exit is logged with its output. `process.on('exit')` cannot wait, so it only sends the `SIGTERM`. The same
 kill removes `bridge.json`, so the native host answers `{ "running": false }` once the services are gone.
 
 The kill runs from `will-quit`, `process.on('exit')`, `SIGINT`/`SIGTERM`, a failed boot before its

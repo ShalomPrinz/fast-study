@@ -4,6 +4,9 @@ import type { Item, Media } from '../services/autoDownloader'
 // Items whose Moodle heading is blank still need a home.
 export const OTHER_SECTION = 'Other'
 
+// BIU's sidebar-block videos, which auto sends under this exact heading — a sentinel like Other.
+export const SIDEBAR_SECTION = 'Sidebar'
+
 // The synthetic bucket holding every row the keyword hint says is not a lecture recording. Not a
 // Moodle heading — a real one spelled the same is a different section, told apart by `synthetic`.
 export const OTHER_LINKS_SECTION = 'Other Links'
@@ -19,7 +22,9 @@ export interface Section {
 // A section heading for display. The sentinel is a run key, so it is translated here at render time
 // and never at its definition — translating it there would make every run key locale-dependent.
 export function sectionTitle(title: string): string {
-  return title === OTHER_SECTION ? t`Other` : title
+  if (title === OTHER_SECTION) return t`Other`
+  if (title === SIDEBAR_SECTION) return t`Sidebar`
+  return title
 }
 
 const MEDIA: readonly string[] = ['video', 'material', 'assignment', 'unknown'] satisfies Media[]

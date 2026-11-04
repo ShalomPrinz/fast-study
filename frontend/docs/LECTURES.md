@@ -195,7 +195,7 @@ muted "Retrying in m:ss (attempt n/N)" plus a "Cancel retry" button (`cancelRetr
 locally from `at` with no polling. `/running` lists `waitingRetries(errors)` (lectures and recitations, soonest first)
 at the end of "Queued" with the line under the row, and `notQueued` skips them; the failed step's lecture row and an
 assignment doc card show the line under the error. The line leaves when the next status drops `retry`
-(fire, cancel, supersede); after the last failure the plain error stays. While `retry` is set, `rowFor` (`shared/i18n/serviceErrors.ts`) swaps a per-minute `gemini_quota_exhausted` to a sentence without "Try again in a minute", which the countdown would contradict; without `retry` the advice stays.
+(fire, cancel, supersede); after the last failure the plain error stays. While `retry` is set, `rowFor` (`shared/i18n/serviceErrors.ts`) swaps each transient Gemini code (`gemini_overloaded`, `gemini_timeout`, `gemini_unreachable`, per-minute `gemini_quota_exhausted`) to a sentence without its "try again" advice, which the countdown would contradict; without `retry`, and for a daily quota, the advice stays.
 
 Error toasts go through `useReportOnce`, which dedupes `(key, failureId)` across refreshes; `prune` lets a
 key fire again if the error recurs. A run that fails within milliseconds (a locked file) can clear and re-set

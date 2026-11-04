@@ -71,6 +71,8 @@ Nothing a run shows is real provider behaviour: transcripts, summaries and downl
 The Playwright e2e specs run against your stack with `HARNESS_DIR=$HARNESS_DIR npm run test:e2e`, in the foreground with `timeout: 1200000`; never background it.
 The suite reseeds the stack (wipes scratch data, resets settings, locks and fakes), so run it on a stack whose state you don't need.
 
+A spec that needs the launcher's service bridge sets `test.use({ launcherBridge: true })`: it stubs `window.faststudy.services`, `window.__fsStop(name)` fires a service stop and `window.__fsRestarts` lists the `restart()` calls.
+
 ## Tear down
 
 ```bash
@@ -78,4 +80,5 @@ node .claude/harness/setup.mjs --harness $HARNESS_DIR --down
 ```
 
 This stops every service, fake and browser session of that stack and no other.
+Run it as its own Bash call, and report only after it returns.
 

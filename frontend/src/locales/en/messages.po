@@ -288,13 +288,25 @@ msgstr "{materialCount, plural, one {# material} other {# materials}}"
 msgid "{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the Gemini model {model}. Check your internet connection and try again.}}"
 msgstr "{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the Gemini model {model}. Check your internet connection and try again.}}"
 
+#: src/shared/i18n/serviceErrors.ts:354
+msgid "{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the Gemini model {model}. Check your internet connection.}}"
+msgstr "{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the Gemini model {model}. Check your internet connection.}}"
+
 #: src/shared/i18n/serviceErrors.ts:91
 msgid "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}"
 msgstr "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}"
 
+#: src/shared/i18n/serviceErrors.ts:350
+msgid "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped.}}"
+msgstr "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped.}}"
+
 #: src/shared/i18n/serviceErrors.ts:87
 msgid "{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The Gemini model {model} is under high demand right now. This is usually temporary, so try again later.}}"
 msgstr "{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The Gemini model {model} is under high demand right now. This is usually temporary, so try again later.}}"
+
+#: src/shared/i18n/serviceErrors.ts:346
+msgid "{model, select, undefined {The Gemini model is under high demand right now.} other {The Gemini model {model} is under high demand right now.}}"
+msgstr "{model, select, undefined {The Gemini model is under high demand right now.} other {The Gemini model {model} is under high demand right now.}}"
 
 #: src/shared/i18n/serviceErrors.ts:111
 msgid "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
@@ -606,7 +618,7 @@ msgstr "Assignments"
 msgid "Assignments you marked done"
 msgstr "Assignments you marked done"
 
-#: src/features/extension/ExtensionGuide.tsx:105
+#: src/features/extension/ExtensionGuide.tsx:128
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 msgstr "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 
@@ -858,7 +870,12 @@ msgstr "Click \"Create API key\"."
 msgid "Click \"Create API Key\"."
 msgstr "Click \"Create API Key\"."
 
-#: src/features/extension/ExtensionGuide.tsx:118
+#: src/features/extension/ExtensionGuide.tsx:148
+msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
+msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
+
+#: src/features/extension/ExtensionGuide.tsx:143
+msgctxt "edge"
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 
@@ -874,11 +891,11 @@ msgstr "Click <0>Get a key</0> and sign in with Google or your email."
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "Click <0>Get a key</0> and sign in with your Google account."
 
-#: src/features/extension/ExtensionGuide.tsx:223
+#: src/features/extension/ExtensionGuide.tsx:314
 msgid "Click any screenshot to enlarge it."
 msgstr "Click any screenshot to enlarge it."
 
-#: src/features/extension/ExtensionGuide.tsx:132
+#: src/features/extension/ExtensionGuide.tsx:163
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 
@@ -899,7 +916,7 @@ msgstr "Click to mark this recitation as not done"
 msgid "Close"
 msgstr "Close"
 
-#: src/features/extension/ExtensionGuide.tsx:199
+#: src/features/extension/ExtensionGuide.tsx:232
 msgctxt "zoom overlay button"
 msgid "Close"
 msgstr "Close"
@@ -973,7 +990,7 @@ msgid "Continue transcription"
 msgstr "Continue transcription"
 
 #: src/app/ErrorBoundary.tsx:37
-#: src/features/extension/ExtensionGuide.tsx:40
+#: src/features/extension/ExtensionGuide.tsx:39
 msgid "Copied!"
 msgstr "Copied!"
 
@@ -981,7 +998,7 @@ msgstr "Copied!"
 msgid "Copies the chosen summaries and the generated guides, then opens {provider}."
 msgstr "Copies the chosen summaries and the generated guides, then opens {provider}."
 
-#: src/features/extension/ExtensionGuide.tsx:94
+#: src/features/extension/ExtensionGuide.tsx:106
 msgid "Copy address"
 msgstr "Copy address"
 
@@ -989,7 +1006,7 @@ msgstr "Copy address"
 msgid "Copy details"
 msgstr "Copy details"
 
-#: src/features/extension/ExtensionGuide.tsx:61
+#: src/features/extension/ExtensionGuide.tsx:60
 msgid "Copy path"
 msgstr "Copy path"
 
@@ -997,7 +1014,7 @@ msgstr "Copy path"
 msgid "Could not convert the summary for printing."
 msgstr "Could not convert the summary for printing."
 
-#: src/features/extension/ExtensionGuide.tsx:32
+#: src/features/extension/ExtensionGuide.tsx:31
 msgid "Could not copy. Select the text and copy it by hand."
 msgstr "Could not copy. Select the text and copy it by hand."
 
@@ -1027,7 +1044,7 @@ msgid "Could not open the file: it no longer exists."
 msgstr "Could not open the file: it no longer exists."
 
 #. placeholder {0}: (e as Error).message
-#: src/services/open.ts:93
+#: src/services/open.ts:91
 msgid "Could not open the link: {0}"
 msgstr "Could not open the link: {0}"
 
@@ -1236,7 +1253,7 @@ msgstr "Done"
 msgid "Download"
 msgstr "Download"
 
-#: src/features/extension/ExtensionGuide.tsx:141
+#: src/features/extension/ExtensionGuide.tsx:172
 msgid "Download a lecture"
 msgstr "Download a lecture"
 
@@ -1596,7 +1613,7 @@ msgstr "Gemini will write it again."
 msgid "Gemini's daily quota is used up. It resets at midnight Pacific time."
 msgstr "Gemini's daily quota is used up. It resets at midnight Pacific time."
 
-#: src/shared/i18n/serviceErrors.ts:344
+#: src/shared/i18n/serviceErrors.ts:345
 msgid "Gemini's rate limit was reached."
 msgstr "Gemini's rate limit was reached."
 
@@ -1711,9 +1728,13 @@ msgstr "I'm working on this assignment and want to understand it in depth, not j
 "\n"
 "To start, reply with a single sentence — \"Which question do you want to work on first?\" — followed by a numbered list of the assignment's questions, each with a one-line description."
 
-#: src/features/extension/ExtensionGuide.tsx:247
-msgid "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
-msgstr "If Chrome shows FastStudy with an error, open <0>{EXTENSIONS_URL}</0> and click the reload arrow on the FastStudy card."
+#: src/features/extension/ExtensionGuide.tsx:278
+msgid "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
+msgstr "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
+
+#: src/features/extension/ExtensionGuide.tsx:273
+msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
+msgstr "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 
 #: src/features/downloads/components/RecordingRow.tsx:308
 msgid "In course"
@@ -1722,6 +1743,10 @@ msgstr "In course"
 #: src/features/settings/components/ApiKeyField.tsx:59
 msgid "In the project list, choose \"Create project\"."
 msgstr "In the project list, choose \"Create project\"."
+
+#: src/features/extension/ExtensionGuide.tsx:122
+msgid "In the side pane of the page, turn on the \"Developer mode\" switch. If the pane is hidden because the window is narrow, click the ☰ menu at the top corner of the page to show it. A row of new buttons appears."
+msgstr "In the side pane of the page, turn on the \"Developer mode\" switch. If the pane is hidden because the window is narrow, click the ☰ menu at the top corner of the page to show it. A row of new buttons appears."
 
 #: src/features/settings/components/BrowserPrereqField.tsx:66
 msgid "Install Chrome"
@@ -1832,7 +1857,7 @@ msgstr "Let's set things up"
 msgid "Load new version"
 msgstr "Load new version"
 
-#: src/features/extension/ExtensionGuide.tsx:114
+#: src/features/extension/ExtensionGuide.tsx:138
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
@@ -2136,7 +2161,7 @@ msgstr "Only YouTube playlists can be opened up; {host} cannot."
 msgid "Open {name}"
 msgstr "Open {name}"
 
-#: src/features/extension/ExtensionGuide.tsx:144
+#: src/features/extension/ExtensionGuide.tsx:175
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 
@@ -2144,19 +2169,23 @@ msgstr "Open a lecture on the course site and press play. Click the FastStudy ic
 msgid "Open chat"
 msgstr "Open chat"
 
-#: src/features/extension/ExtensionGuide.tsx:80
+#: src/features/extension/ExtensionGuide.tsx:84
 msgid "Open Chrome's extensions page"
 msgstr "Open Chrome's extensions page"
+
+#: src/features/extension/ExtensionGuide.tsx:82
+msgid "Open Edge's extensions page"
+msgstr "Open Edge's extensions page"
 
 #: src/features/lectures/AssignmentView.tsx:163
 msgid "Open file"
 msgstr "Open file"
 
-#: src/features/extension/ExtensionGuide.tsx:63
+#: src/features/extension/ExtensionGuide.tsx:62
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/features/extension/ExtensionGuide.tsx:84
+#: src/features/extension/ExtensionGuide.tsx:95
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 
@@ -2172,6 +2201,10 @@ msgstr "Open in full screen"
 #: src/features/runner/RunnerView.tsx:140
 msgid "Open lecture"
 msgstr "Open lecture"
+
+#: src/features/extension/ExtensionGuide.tsx:90
+msgid "Open Microsoft Edge, paste this address into the address bar at the top and press Enter:"
+msgstr "Open Microsoft Edge, paste this address into the address bar at the top and press Enter:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:111
 #: src/features/course-overview/components/ExtractorHeader.tsx:114
@@ -2221,7 +2254,7 @@ msgctxt "section mark"
 msgid "Optional"
 msgstr "Optional"
 
-#: src/features/downloads/utils/sections.ts:22
+#: src/features/downloads/utils/sections.ts:25
 msgid "Other"
 msgstr "Other"
 
@@ -2306,7 +2339,7 @@ msgstr "PDF is older than this summary"
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
-#: src/features/extension/ExtensionGuide.tsx:129
+#: src/features/extension/ExtensionGuide.tsx:160
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
 
@@ -2586,7 +2619,7 @@ msgstr "Saving…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:173
+#: src/features/extension/ExtensionGuide.tsx:206
 msgid "Screenshot of step {step}"
 msgstr "Screenshot of step {step}"
 
@@ -2700,6 +2733,10 @@ msgstr "Show screenshot"
 msgid "Show steps"
 msgstr "Show steps"
 
+#: src/features/downloads/utils/sections.ts:26
+msgid "Sidebar"
+msgstr "Sidebar"
+
 #: src/features/tour/Tour.tsx:80
 msgid "Skip"
 msgstr "Skip"
@@ -2725,7 +2762,7 @@ msgid "Something went wrong"
 msgstr "Something went wrong"
 
 #: src/shared/i18n/serviceErrors.ts:41
-#: src/shared/i18n/serviceErrors.ts:360
+#: src/shared/i18n/serviceErrors.ts:369
 msgid "Something went wrong."
 msgstr "Something went wrong."
 
@@ -2944,7 +2981,7 @@ msgstr "The files weren't removed. Press Apply under “Disk space” to try aga
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 
-#: src/features/extension/ExtensionGuide.tsx:51
+#: src/features/extension/ExtensionGuide.tsx:50
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
@@ -3261,7 +3298,12 @@ msgstr "Transcript"
 msgid "Try again"
 msgstr "Try again"
 
-#: src/features/extension/ExtensionGuide.tsx:102
+#: src/features/extension/ExtensionGuide.tsx:117
+msgid "Turn on Developer mode"
+msgstr "Turn on Developer mode"
+
+#: src/features/extension/ExtensionGuide.tsx:115
+msgctxt "edge"
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
 
@@ -3332,7 +3374,7 @@ msgstr "Updated. Restart to update"
 msgid "Updates"
 msgstr "Updates"
 
-#: src/features/extension/ExtensionGuide.tsx:241
+#: src/features/extension/ExtensionGuide.tsx:266
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 

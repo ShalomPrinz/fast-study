@@ -21,7 +21,7 @@ then each activity routes to the first extractor in `core/registry.js` whose `ca
 
 - BIU's sidebar video block is a third source: `/list` adds the block's entries as synthetic `modType:'biu-video'`
   activities (`mapBlockVideos`), see [MOODLE.md](MOODLE.md#the-biu-video-block). `title` is the entry's `name`, `kind` comes from `classifyKind`,
-  `modifiedAt` is `timecreated` × 1000, and `section` is the one constant `BLOCK_VIDEO_SECTION` (`''`, so the frontend's "Other" group).
+  `modifiedAt` is `timecreated` × 1000, and `section` is the one constant `BLOCK_VIDEO_SECTION` (the sentinel `'Sidebar'`, which the frontend translates into its own group).
 
 WS names are HTML (Moodle wraps subsection headings in `<span class="course-mod_subsection">`), so
 both parsers flatten them through `stripTags` (`lib/html.js`) before they become titles or headings.
@@ -87,7 +87,7 @@ The frontend never sees the mechanism. `/list` and `/list/expand` return
   or timestamp), so a later `/list` yields the same string: the database stores a row's ref as its
   material's `source`, which the frontend matches by string equality. Adding a field to a material's
   Recording, or a volatile one to any, unmatches every material already downloaded.
-- `section` — the Moodle section heading, `''` when unnamed; display metadata the frontend groups by.
+- `section` — the Moodle section heading, `''` when unnamed, or the sentinel `'Sidebar'` for BIU block videos; display metadata the frontend groups by.
 - `modifiedAt` — Moodle's last-modified time of the file/link, unix ms: a file's own `timemodified`
   (per file for a multi-file `resource`), else the module's `contents[0].timemodified`, else
   `contentsinfo.lastmodified`. Absent for zoom-summary rows and `/list/expand` children, never

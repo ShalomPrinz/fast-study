@@ -24,7 +24,7 @@ export const appExe = () => path.join(installDir(), `${PRODUCT}.exe`);
 export const uninstallerExe = () => path.join(installDir(), `Uninstall ${PRODUCT}.exe`);
 export const resourcesDir = () => path.join(installDir(), 'resources');
 export const binDir = () => path.join(resourcesDir(), 'bin');
-export const servicesExe = () => path.join(resourcesDir(), 'services', 'services.exe');
+export const servicesExe = () => path.join(resourcesDir(), 'services', 'faststudy-services.exe');
 export const formatsDir = () => path.join(resourcesDir(), 'latex', 'formats');
 export const nativeHost = () => path.join(resourcesDir(), 'bridge', 'host.js');
 export const appUpdateYml = () => path.join(resourcesDir(), 'app-update.yml');
@@ -36,6 +36,7 @@ export const pendingInstaller = () =>
 
 export const stateRoot = () => path.join(env('LOCALAPPDATA'), PRODUCT);
 export const launchLog = () => path.join(stateRoot(), 'logs', 'launch.log');
+export const bridgeFile = () => path.join(stateRoot(), 'bridge.json');
 export const ytdlpCopy = () => path.join(stateRoot(), 'bin', 'yt-dlp.exe');
 export const userData = () => path.join(env('APPDATA'), PRODUCT);
 export const settingsFile = () => path.join(userData(), 'settings.json');

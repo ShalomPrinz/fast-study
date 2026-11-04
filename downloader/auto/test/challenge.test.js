@@ -654,6 +654,80 @@ test('a page that navigated away and dropped the body fails the stream as site_b
   assert.equal(err.routed, false);
 });
 
+// Radware's script moves the page to the captcha while the first page call runs.
+function movedOffSiteMidCall(profile, ctx, fnName, times = 1) {
+  const evaluate = ctx.page.evaluate;
+  let moved = 0;
+  ctx.page.evaluate = async (fn, arg) => {
+    if (fn.name !== fnName || moved >= times) return evaluate(fn, arg);
+    moved++;
+    profile.state.lands = 'captcha';
+    await ctx.page.goto(SITE);
+    throw new Error(
+      'page.evaluate: Execution context was destroyed, most likely because of a navigation',
+    );
+  };
+}
+
+test('a page moved to the captcha mid-call waits for the solve and resends through the window', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  movedOffSiteMidCall(profile, ctx, 'pageFetch');
+  const calls = stubFetch(t, () => json([{ id: 7 }]));
+  const call = gated(() => getCourseContents(SITE, 'tok', '1'));
+  await until(() => challengeState().captcha);
+  assert.equal(calls.length, 0);
+  ctx.solve(SITE);
+  assert.deepEqual(await call, [{ id: 7 }]);
+  assert.equal(calls.length, 1);
+  assert.ok(fromPage(calls[0].init));
+});
+
+test('a page moved off the site again during the resend fails as a routed block', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  movedOffSiteMidCall(profile, ctx, 'pageFetch', 2);
+  stubFetch(t, () => json([{ id: 7 }]));
+  const call = gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  await until(() => challengeState().captcha);
+  ctx.solve(SITE);
+  const err = await call;
+  assert.ok(err instanceof WsBlockedError);
+  assert.equal(err.routed, true);
+});
+
+test('a page moved to the captcha mid-call with no waits left is refused unsent as a routed block', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  movedOffSiteMidCall(profile, ctx, 'pageFetch');
+  const calls = stubFetch(t, () => json({}));
+  const err = await gated(() => getPublicConfig(SITE)).catch((e) => e);
+  assert.ok(err instanceof WsBlockedError);
+  assert.equal(err.routed, true);
+  assert.equal(calls.length, 0);
+});
+
+test('a page moved off the site mid-body fails the stream as a routed block, window still open', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  const evaluate = ctx.page.evaluate;
+  ctx.page.evaluate = async (fn, arg) => {
+    if (fn.name !== 'pageChunk') return evaluate(fn, arg);
+    profile.state.lands = 'captcha';
+    await ctx.page.goto(SITE);
+    return null;
+  };
+  stubFetch(t, () => new Response('%PDF-1', { headers: { 'content-type': 'application/pdf' } }));
+  const res = await gated(() => openPluginfile(`${SITE}/pluginfile.php/1/a.pdf?token=t`));
+  const err = await res.arrayBuffer().catch((e) => e);
+  assert.ok(err instanceof WsBlockedError);
+  assert.equal(err.routed, true);
+});
+
 // ── A wall on Node retries through the window ───────────────────────────────
 
 function onSite(t) {

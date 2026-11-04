@@ -8,7 +8,7 @@ import { chromium, expect, test } from '@playwright/test';
 import { abandon, bridge, launch, quit, readLaunchLog, readyPorts, waitForApp } from './lib/app.js';
 import { recordBoot } from './lib/bootTiming.js';
 import { completeInitWall, PLACEHOLDER_KEYS } from './lib/firstRun.js';
-import { dashFixture, streamKinds, toneVideo } from './lib/media.js';
+import { dashFixture, longToneVideo, streamKinds, toneVideo } from './lib/media.js';
 import { serveFiles } from './lib/fileServer.js';
 import { proveOfflineEnforcement } from './lib/offline.js';
 import * as paths from './lib/paths.js';
@@ -33,6 +33,8 @@ import {
   productVersion,
   renameAside,
   runToExit,
+  listeners,
+  processTable,
   stopProcesses,
   strayProcesses,
 } from './lib/windows.js';
@@ -46,6 +48,7 @@ const LIVE_LECTURE = 'Live Update Lecture';
 const SECOND_LECTURE = 'No Browser Lecture';
 const TEMP_LECTURE = 'Hebrew Temp Lecture';
 const DOWNLOADED_LECTURE = 'Downloaded Lecture';
+const LONG_LECTURE = 'Long Tone Lecture';
 const UPDATE_COURSE = 'Update Course';
 // A line of fixtures/summary.md: Hebrew only, so a missing Hebrew font cannot drop it unnoticed.
 const PDF_PHRASE = 'רדיוס ההתכנסות נתון על ידי נוסחת קושי הדמר';
@@ -80,6 +83,9 @@ const ASSUMPTION = {
   updater:
     'electron-updater installs an unsigned build over an unsigned build from a generic provider',
   wholesale: 'an electron-updater install preserves nothing in the install directory',
+  launcherJob:
+    "libuv's kill-on-close job takes main's spawned services with it when main is terminated",
+  backendJob: "the frozen backend's own kill-on-close job takes its tools with it when it dies",
 };
 const failed = (assumption) => `assumption failed: ${assumption}`;
 
@@ -88,6 +94,7 @@ test.describe.configure({ mode: 'serial' });
 let session = null;
 let services = null;
 let toneBytes = null;
+let longVideoPut = false;
 const asides = [];
 
 const byTestId = (page, id, attributes = {}) =>
@@ -102,6 +109,12 @@ const byTestId = (page, id, attributes = {}) =>
 async function start(env) {
   session = await launch(env);
   await waitForApp(session);
+  await bind();
+  return session;
+}
+
+/** Bind the service clients to the bridge the current page reads, which a restart's reload renews. */
+async function bind() {
   const reached = await bridge(session.page);
   services = {
     urls: reached.urls,
@@ -110,7 +123,6 @@ async function start(env) {
     api: backend(reached),
     dl: downloader(reached),
   };
-  return session;
 }
 
 async function stop() {
@@ -203,6 +215,153 @@ function refusesConnection(port) {
     });
     socket.once('error', () => resolve(true));
   });
+}
+
+/** A process as a failure names it: pid, image, command line, and the service port it held, if any. */
+function named(p) {
+  const held = p.service ? ` — ${p.service} on port ${p.port}` : '';
+  return `pid ${p.pid} ${p.name} (${p.commandLine || p.exe || 'no command line'})${held}`;
+}
+
+/** The services main runs: its direct children out of the install dir, minus Electron's own
+ *  `--type=` helpers (renderer, GPU, crashpad) — `faststudy-services.exe` twice and `FastStudy.exe` as node twice. */
+function serviceChildren(table, mainPid) {
+  const prefix = path.join(paths.installDir(), path.sep).toLowerCase();
+  return table.filter(
+    (p) =>
+      p.ppid === mainPid &&
+      p.exe.toLowerCase().startsWith(prefix) &&
+      !p.commandLine.includes('--type='),
+  );
+}
+
+/** `roots` and every process descended from them in `table`. */
+function withDescendants(table, roots) {
+  const found = [...roots];
+  for (let i = 0; i < found.length; i++) {
+    for (const child of table) {
+      const own = child.ppid === found[i].pid && child.created >= found[i].created;
+      if (own && !found.includes(child)) found.push(child);
+    }
+  }
+  return found;
+}
+
+/** The four services as their ready ports' owners, each `{ ...process, service, port }`, and main
+ *  as their one parent — proven to be the installed exe without `--type=` and to have no other service child. */
+async function serviceTree() {
+  const ready = readyPorts(readLaunchLog());
+  expect(ready, `ready lines: ${JSON.stringify(ready)}`).toHaveLength(4);
+  const table = await processTable();
+  const owners = await listeners(ready.map(({ port }) => port));
+  const old = ready.map(({ service, port }) => {
+    const pid = owners.find((owner) => owner.port === port)?.pid;
+    const found = table.find((p) => p.pid === pid);
+    expect(found, `nothing listens on ${service}'s port ${port}`).toBeTruthy();
+    return { ...found, service, port };
+  });
+  // Main is the ready ports' owners' one parent, not Playwright's pid, which is main's parent here.
+  const parents = [...new Set(old.map((p) => p.ppid))];
+  const parentsNamed = parents
+    .map((pid) => named(table.find((p) => p.pid === pid) ?? { pid, name: '(exited)' }))
+    .join('; ');
+  expect(
+    parents,
+    `the ready ports' owners (${old.map(named).join('; ')}) do not share one parent: ${parentsNamed}`,
+  ).toHaveLength(1);
+  const main = table.find((p) => p.pid === parents[0]);
+  expect(
+    main &&
+      main.exe.toLowerCase() === paths.appExe().toLowerCase() &&
+      !main.commandLine.includes('--type='),
+    `the ready ports' owners (${old.map(named).join('; ')}) have parent ${parentsNamed}, not ${paths.appExe()} without --type=`,
+  ).toBe(true);
+  const children = serviceChildren(table, main.pid);
+  expect(
+    old.map((p) => p.pid).sort(),
+    `the ready ports' owners (${old.map(named).join('; ')}) are not main's service children (${children.map(named).join('; ')})`,
+  ).toEqual(children.map((p) => p.pid).sort());
+  return { old, main };
+}
+
+const JOB_TOOLS = ['ffmpeg', 'pandoc', 'tectonic'];
+
+/** A bundled tool the backend's job holds, by image path under `resources/bin/`. */
+function isJobTool(p) {
+  return JOB_TOOLS.some(
+    (tool) => p.exe.toLowerCase() === path.join(paths.binDir(), `${tool}.exe`).toLowerCase(),
+  );
+}
+
+/** Start the audio step on the six-hour tone and wait until its ffmpeg runs under `backendProcess`.
+ *  Answers that ffmpeg and the process table it was found in. */
+async function longAudioRunning(backendProcess) {
+  const { db, api } = services;
+  if (!longVideoPut) {
+    await db.putVideo(COURSE, LONG_LECTURE, await longToneVideo());
+    longVideoPut = true;
+  }
+  await api.startStep(COURSE, LONG_LECTURE, 'audio');
+  return waitFor(
+    async () => {
+      const table = await processTable();
+      const ffmpeg = table.find(
+        (p) =>
+          p.ppid === backendProcess.pid &&
+          p.created >= backendProcess.created &&
+          p.exe.toLowerCase() === path.join(paths.binDir(), 'ffmpeg.exe').toLowerCase() &&
+          p.commandLine.includes('-vn'),
+      );
+      return ffmpeg ? { ffmpeg, table } : null;
+    },
+    {
+      timeoutMs: 60_000,
+      intervalMs: 500,
+      message: `the audio step on ${LONG_LECTURE} never ran ffmpeg under ${named(backendProcess)}`,
+    },
+  );
+}
+
+/** A step that finished uploads its output, so an `audio.mp3` means ffmpeg ended before the kill. */
+async function expectAudioUnfinished() {
+  expect(
+    await services.db.exists(COURSE, LONG_LECTURE, 'audio.mp3'),
+    `the audio step on ${LONG_LECTURE} finished before the kill, so this check proved nothing; lengthen longToneVideo`,
+  ).toBe(false);
+}
+
+/** KILL_ON_JOB_CLOSE ends a job's tools the moment its owner dies, while an orphan runs on until its
+ *  encode ends — tens of seconds on the long tone — so a tool is judged within seconds, never waited out. */
+const JOB_TOOL_GRACE_MS = 5_000;
+
+/** The job tools among `tracked` (pid and start time, from before the kill) still running
+ *  `JOB_TOOL_GRACE_MS` after it. Called right after the kill, before anything else can wait. */
+async function jobToolsAfterKill(tracked) {
+  return (await survivorsAfter(tracked.filter(isJobTool), JOB_TOOL_GRACE_MS)).filter(isJobTool);
+}
+
+/** `survivorsOf(tracked)` until it is empty or `graceMs` has passed. */
+async function survivorsAfter(tracked, graceMs) {
+  let left = await survivorsOf(tracked);
+  for (const deadline = Date.now() + graceMs; left.length && Date.now() < deadline;) {
+    await delay(1000);
+    left = await survivorsOf(tracked);
+  }
+  return left;
+}
+
+/** What of `tracked` still runs, plus any process born later under a tracked pid — the tree a
+ *  dead parent's orphans keep naming. A pid Windows reused for a stranger is matched by start time. */
+async function survivorsOf(tracked) {
+  const now = await processTable();
+  const same = (a, b) => a.pid === b.pid && a.created === b.created;
+  const survivors = tracked.filter((t) => now.some((p) => same(p, t)));
+  const orphans = now.filter((p) => {
+    const parent = tracked.find((t) => t.pid === p.ppid);
+    if (!parent || p.created < parent.created || tracked.some((t) => same(t, p))) return false;
+    return !now.some((q) => q.pid === parent.pid && q.created !== parent.created);
+  });
+  return [...survivors, ...orphans];
 }
 
 /** Each existing install dir Playwright's channel resolve looks in, per its fixed Windows paths. */
@@ -313,7 +472,7 @@ test('1. fresh install', async () => {
 
   await test.step("resources/ matches electron/docs/BOOT.md's packaged tree", async () => {
     const shipped = [
-      'services/services.exe',
+      'services/faststudy-services.exe',
       // The one Google API discovery document services.spec keeps, under PyInstaller's one-dir
       // contents directory. Missing, Drive upload fails on a user's machine and nowhere earlier.
       'services/_internal/googleapiclient/discovery_cache/documents/drive.v3.json',
@@ -672,7 +831,172 @@ test('11. quit, no orphans', async () => {
   });
 });
 
-test('12. the tools run under a Hebrew temp path', async () => {
+test('12. a launcher crash leaves no service or tool behind', async () => {
+  if (!session) await start();
+  const { old, main } = await serviceTree();
+  const backendProcess = old.find((p) => p.service === 'backend');
+  const { ffmpeg, table } = await longAudioRunning(backendProcess);
+
+  // What a crashed launcher must not leave: the frozen services, the Node services (FastStudy.exe
+  // as node) and the tools the backend's job holds. yt-dlp, curl and Chromium are an accepted gap.
+  const covered = (p) =>
+    p.exe.toLowerCase() === paths.servicesExe().toLowerCase() ||
+    (p.exe.toLowerCase() === paths.appExe().toLowerCase() && !p.commandLine.includes('--type=')) ||
+    isJobTool(p);
+  const tracked = withDescendants(table, old).filter(covered);
+
+  // No /T: a crash takes main alone, so whatever dies with it dies of a job, not a tree walk.
+  const { code, output } = await runToExit('taskkill', ['/F', '/PID', String(main.pid)], {
+    timeoutMs: 30_000,
+  });
+  expect(code, `taskkill /F /PID ${main.pid} exited ${code}: ${output}`).toBe(0);
+  const tools = await jobToolsAfterKill(tracked);
+  const crashed = session;
+  session = null;
+  services = null;
+  // Main is gone, so the trace and the app handle can only be dropped; never let that hang the suite.
+  await Promise.race([abandon(crashed), delay(30_000)]);
+  crashed.app.process().kill();
+
+  // Services may take their time to go; a surviving one keeps its tools alive, so it is judged first.
+  const left = (
+    await survivorsAfter(
+      tracked.filter((p) => !isJobTool(p)),
+      30_000,
+    )
+  ).filter(covered);
+  expect(
+    left.filter((p) => !isJobTool(p)).map(named),
+    `${failed(ASSUMPTION.launcherJob)}: services outlived main`,
+  ).toEqual([]);
+  expect(
+    [...tools, ...left].map(named),
+    `${failed(ASSUMPTION.backendJob)}: a tool outlived the crash by ${JOB_TOOL_GRACE_MS} ms (${named(ffmpeg)} was running)`,
+  ).toEqual([]);
+  for (const { service, port } of old) {
+    expect(await refusesConnection(port), `${service} still holds port ${port}`).toBe(true);
+  }
+
+  await test.step('a relaunch boots after the crash', async () => {
+    await start();
+    await expectAudioUnfinished();
+  });
+});
+
+test('13. a backend death leaves no tool behind, and the restart works', async () => {
+  if (!session) await start();
+  const { page } = session;
+  const killed = 'backend';
+  const { old, main } = await serviceTree();
+  const mainPid = main.pid;
+  const victim = old.find((p) => p.service === killed);
+  // Killed mid-extraction, so the restart proves what the backend's own job does with its ffmpeg.
+  const { ffmpeg, table } = await longAudioRunning(victim);
+  // Each service's process is the one listening on its ready port; what it spawned is tracked too.
+  const tracked = withDescendants(table, old);
+
+  // Task Manager's End task: TerminateProcess, which is what Node's kill is on Windows.
+  process.kill(victim.pid, 'SIGKILL');
+  expect(
+    (await jobToolsAfterKill(tracked)).map(named),
+    `${failed(ASSUMPTION.backendJob)}: a tool outlived the killed backend by ${JOB_TOOL_GRACE_MS} ms (${named(ffmpeg)} was running)`,
+  ).toEqual([]);
+  await waitFor(() => readLaunchLog().includes(`[main] ${killed} stopped unexpectedly`), {
+    timeoutMs: 30_000,
+    message: `launch.log never reported ${named(victim)} stopped after a hard kill`,
+  });
+
+  // The bridge's own call; the banner that offers it is the harness's to prove.
+  await page
+    .evaluate(() => window.faststudy.services.restart())
+    .catch((error) => {
+      // The restart navigates to the launch screen, which can beat the evaluate's answer back.
+      if (!/context was destroyed/i.test(error.message)) throw error;
+    });
+  const sinceRestart = () => {
+    const log = readLaunchLog();
+    const at = log.indexOf('[main] restart requested');
+    return at < 0 ? '' : log.slice(at);
+  };
+  const after = await waitFor(
+    () => {
+      const log = sinceRestart();
+      if (log.includes('[main] boot failed')) throw new Error(`the restart's boot failed:\n${log}`);
+      const ready = readyPorts(log);
+      return ready.length === 4 && log.includes('[main] app loaded app://bundle/') ? ready : null;
+    },
+    {
+      timeoutMs: 180_000,
+      message: () =>
+        `the restart did not reboot four services and reload the app; launch.log since it was requested:\n${sinceRestart() || '(no restart requested line)'}`,
+    },
+  );
+  await page.waitForURL((url) => url.protocol === 'app:' && url.host === 'bundle');
+  await bind();
+
+  const left = await survivorsAfter(tracked, 30_000);
+  expect(left.map(named), 'processes from before the restart outlived it').toEqual([]);
+  await expectAudioUnfinished();
+
+  const now = await processTable();
+  const running = serviceChildren(now, mainPid);
+  expect(running.map(named), 'main runs other than four service processes').toHaveLength(4);
+  // An old port may be closed or reissued by bind(0) to a new service; any other listener leaked.
+  const runningPids = running.map((p) => p.pid);
+  for (const { port, pid } of await listeners(old.map((p) => p.port))) {
+    const holder = now.find((p) => p.pid === pid) ?? { pid, name: '(exited)' };
+    expect(
+      runningPids,
+      `old port ${port} is held by ${named(holder)}, not a new service`,
+    ).toContain(pid);
+  }
+  const newOwners = await listeners(after.map(({ port }) => port));
+  for (const { service, port } of after) {
+    const pid = newOwners.find((owner) => owner.port === port)?.pid;
+    expect(
+      running.map((p) => p.pid),
+      `${service}'s new port ${port} is held by pid ${pid ?? 'nobody'}, not one of main's service children: ${running.map(named).join('; ')}`,
+    ).toContain(pid);
+  }
+  expect(new Set(newOwners.map(({ pid }) => pid)).size, 'two services share a process').toBe(4);
+
+  // The reloaded page reads the new ports off the bridge, and the app answers on them.
+  expect(
+    Object.values(services.urls)
+      .map((url) => Number(new URL(url).port))
+      .sort(),
+    "the reloaded bridge does not name the restart's ports",
+  ).toEqual(after.map(({ port }) => port).sort());
+  for (const [name, answer] of Object.entries(await healthOf(services.urls))) {
+    expect(answer.status, `${name} /health after the restart`).toBe('ok');
+  }
+  // The native host reads the server's port off bridge.json, which the restart must rewrite.
+  const serverPort = after.find(({ service }) => service === 'server').port;
+  await waitFor(
+    () => {
+      try {
+        return JSON.parse(fs.readFileSync(paths.bridgeFile(), 'utf8')).port === serverPort;
+      } catch {
+        return false;
+      }
+    },
+    {
+      timeoutMs: 30_000,
+      message: () => {
+        let held;
+        try {
+          held = `port ${JSON.parse(fs.readFileSync(paths.bridgeFile(), 'utf8')).port}`;
+        } catch (error) {
+          held = error.message;
+        }
+        return `${paths.bridgeFile()} does not name the restart's server port ${serverPort}: ${held}`;
+      },
+    },
+  );
+  await openLecture(page, COURSE, LECTURE);
+});
+
+test('14. the tools run under a Hebrew temp path', async () => {
   await stop();
   // Hebrew and a space in the dir every service spawns its tools in, as a Windows username can put in %TEMP%.
   const folder = 'טמפ עברי';
@@ -720,7 +1044,7 @@ test('12. the tools run under a Hebrew temp path', async () => {
   await stop();
 });
 
-test('13. the browser chain, both ends', async () => {
+test('15. the browser chain, both ends', async () => {
   await stop();
   try {
     await test.step('with Chrome gone the prerequisite resolves Edge', async () => {
@@ -754,7 +1078,7 @@ test('13. the browser chain, both ends', async () => {
   }
 });
 
-test('14. an in-place update', async () => {
+test('16. an in-place update', async () => {
   const candidate = paths.candidate();
   const previous = paths.previous();
   await stop();

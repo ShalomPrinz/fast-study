@@ -1,4 +1,4 @@
-"""Frozen entry point for `services.exe`, picking a Python service by argv[1]; dev never runs it."""
+"""Frozen entry point for `faststudy-services.exe`, picking a Python service by argv[1]; dev never runs it."""
 
 import sys
 

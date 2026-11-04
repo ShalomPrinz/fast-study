@@ -164,7 +164,7 @@ jobs:
           curl -fsSL -o "$RUNNER_TEMP/pyinstaller.whl" "$wheel"
           stock=$(7z e -so "$RUNNER_TEMP/pyinstaller.whl" PyInstaller/bootloader/Windows-64bit-intel/run.exe | sha256sum | cut -d' ' -f1)
           echo "bootloader run.exe: ours $ours, stock $stock"
-          [ "$ours" != "$stock" ] || { echo "::error::services.exe would carry PyInstaller's stock bootloader"; exit 1; }
+          [ "$ours" != "$stock" ] || { echo "::error::faststudy-services.exe would carry PyInstaller's stock bootloader"; exit 1; }
 
       # With the token, vite uploads hidden source maps to release faststudy@<version> and deletes
       # them; without it (a fork) no plugin loads and no DSN is baked, so the renderer reports nothing.

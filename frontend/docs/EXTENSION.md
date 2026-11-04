@@ -1,19 +1,21 @@
-# Chrome extension guide
+# Browser extension guide
 
 The Downloads page's Extension tab (`features/extension/ExtensionGuide`, [DOWNLOADS.md](DOWNLOADS.md)
-§Layout) walks the user once through loading the shipped Chrome extension unpacked: open
-`chrome://extensions`, Developer mode, Load unpacked, pin, use.
+§Layout) walks the user once through loading the shipped extension unpacked in Chrome or Edge: open the extensions page, Developer mode, Load
+unpacked, pin, use. A Chrome / Microsoft Edge switch (`ModeToggle`, `.extension-browser-switch`, default Chrome,
+remembered in `localStorage` under `BROWSER_KEY`) picks the step text, address and closing note; same
+folder and extension ID in both; steps 4 and 5 share their text (each browser has its own screenshots); the step 2 title and step 3 body have an `edge` msgid context because Hebrew Edge words "Developer mode" and "Load unpacked" differently. Per-browser decisions are in `browsers.ts`.
 
-- **Copy, not open** — `open.external` refuses `chrome://`, so step 1 copies the address instead.
+- **Copy, not open** — `open.external` refuses `chrome://` and `edge://`, so step 1 copies the address instead.
 - **The folder** — step 3 shows `window.faststudy.extension.path` with Copy and Open folder (`reveal()`).
   With no `extension` on the bridge (browser dev, an older launcher) both hide behind
   `.extension-note--no-bridge`; the steps still render. How the folder is kept is
   [electron/docs/EXTENSION.md](../../electron/docs/EXTENSION.md).
-- **Screenshots** — `import.meta.glob` picks up `src/assets/extension-guide/<step>.png` by name
+- **Screenshots** — `import.meta.glob` picks up `src/assets/extension-guide/<chrome|edge>/<step>.png` by name
   (`1-open-extensions`, `2-developer-mode`, `3-load-unpacked`, `4-pin`, `5-use`), so adding or
   replacing one changes no code; a missing file renders `.extension-shot--placeholder`, a 16:10 box at
   column width. Each image keeps its own aspect ratio: shrunk to the step column (up to ~840px), never
-  upscaled, never cropped. Capture from a Hebrew Chrome at 1x; a wider capture shows smaller text, so a
+  upscaled, never cropped. Capture from a Hebrew Chrome (or Edge, for `edge/`) at 1x; a wider capture shows smaller text, so a
   small UI (a menu) is cropped tight and then shows at its own pixel size.
 - **Zoom** — a note above step 1 says so; clicking a screenshot opens it over a `.modal-overlay` dimmed
   darker than other modals, fit with a labelled Close pill below it (never upscaled, clear of the

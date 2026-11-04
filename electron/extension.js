@@ -5,7 +5,11 @@ const { execFile } = require('node:child_process');
 // The extension pins this ID with the `key` in its manifest (downloader/extension/CLAUDE.md).
 const EXTENSION_ID = 'hknnjgdhokbapjodjklfodhobjekjlnn';
 const HOST_NAME = 'com.faststudy.bridge';
-const REG_KEY = `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\${HOST_NAME}`;
+// Each browser looks the host up under its own HKCU key; both point at the one manifest.
+const REG_KEYS = {
+  Chrome: `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\${HOST_NAME}`,
+  Edge: `HKCU\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\${HOST_NAME}`,
+};
 // Rewritten to a variable reference in the generated .bat, so a non-ASCII user name never has to
 // survive cmd's codepage — env values expand as UTF-16 inside cmd, file bytes do not.
 const PREFIX_VARS = ['LOCALAPPDATA', 'APPDATA', 'USERPROFILE'];
@@ -38,7 +42,7 @@ function batchPath(target, env) {
   return `"${variable ? `%${variable}%` : ''}${rest}"`;
 }
 
-/** The host .bat Chrome runs: FastStudy.exe as node on the host script, handed the bridge file.
+/** The host .bat the browser runs: FastStudy.exe as node on the host script, handed the bridge file.
  *  `@echo off` first, since anything cmd echoes would corrupt the framed stdout. */
 function hostBatch({ exe, script, bridgeFile, env }) {
   const command = [exe, script, bridgeFile].map((part) => batchPath(part, env)).join(' ');
@@ -57,7 +61,8 @@ function writeIfChanged(file, content) {
 }
 
 /** Register the native host for this launch: the .bat and host manifest under `<state>/native-host`,
- *  then the HKCU key Chrome looks it up by. Idempotent; every failure is logged, never thrown. */
+ *  then the HKCU key Chrome and Edge each look it up by. Idempotent; every failure is logged, never
+ *  thrown, and one key's failure never skips the other. */
 function registerHost({
   stateDir,
   exe,
@@ -86,18 +91,20 @@ function registerHost({
     log('main', `native host not registered: ${error.message}`);
     return;
   }
-  run(
-    'reg',
-    ['add', REG_KEY, '/ve', '/t', 'REG_SZ', '/d', manifest, '/f'],
-    { windowsHide: true },
-    (error) =>
-      log(
-        'main',
-        error
-          ? `native host registry write failed: ${error.message}`
-          : `native host registered: ${manifest}`,
-      ),
-  );
+  for (const [browser, key] of Object.entries(REG_KEYS)) {
+    run(
+      'reg',
+      ['add', key, '/ve', '/t', 'REG_SZ', '/d', manifest, '/f'],
+      { windowsHide: true },
+      (error) =>
+        log(
+          'main',
+          error
+            ? `native host registry write failed (${browser}): ${error.message}`
+            : `native host registered (${browser}): ${manifest}`,
+        ),
+    );
+  }
 }
 
 /** Write the bridge file whole — tmp then rename, so the host never reads half of it. It holds the
@@ -144,7 +151,7 @@ function syncExtension(source, target) {
 }
 
 module.exports = {
-  REG_KEY,
+  REG_KEYS,
   batchPath,
   hostBatch,
   manifestVersion,

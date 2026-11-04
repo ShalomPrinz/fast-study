@@ -63,9 +63,9 @@ function mapModules(sections, courseId) {
   return activities;
 }
 
-// The `section` every block video is listed under: '' lands in the frontend's "Other" group, so
-// auto authors no wording. Change this one constant to name the group.
-const BLOCK_VIDEO_SECTION = '';
+// The `section` every block video is listed under: a stable English sentinel the frontend translates
+// into its own group; auto authors no wording.
+const BLOCK_VIDEO_SECTION = 'Sidebar';
 
 // One activity per video of BIU's sidebar block; an entry without a usable `filename` is skipped.
 function mapBlockVideos(entries, courseId) {

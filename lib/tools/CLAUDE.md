@@ -37,7 +37,7 @@ the Python half is here with one consumer.
   The launcher's own `windowsHide` on the service spawn silences a console-subsystem service's
   children, which share its hidden console, but Windows ignores it for a GUI-subsystem one. Packaged,
   the Node services run as `FastStudy.exe` (GUI) with no console, so each console tool they spawn
-  opens its own window unless the tool's spawn carries the flag. JS only: `services.exe` is built
+  opens its own window unless the tool's spawn carries the flag. JS only: `faststudy-services.exe` is built
   `console=True`, so the Python side needs no counterpart until `delivery/services.spec` switches to
   a windowed exe. Dev runs under `node.exe` (console) and never shows the difference.
 - **`check_tools` / `checkTools` never raise.** A missing tool disables one feature (no PDF, no

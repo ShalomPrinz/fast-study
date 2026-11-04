@@ -6,6 +6,7 @@ import type { Item, Media, ResolvedMedia } from '../services/autoDownloader'
 import type { Section } from './sections'
 import {
   OTHER_SECTION,
+  SIDEBAR_SECTION,
   OTHER_LINKS_SECTION,
   courseRunId,
   groupSections,
@@ -203,6 +204,13 @@ describe('sectionTitle', () => {
     expect(sectionTitle(OTHER_SECTION)).toBe('אחר')
   })
 
+  it('translates the Sidebar sentinel', () => {
+    expect(sectionTitle(SIDEBAR_SECTION)).toBe('Sidebar')
+    i18n.loadAndActivate({ locale: 'he', messages: he })
+    expect(sectionTitle(SIDEBAR_SECTION)).toBe('סרגל צד')
+    expect(parseSectionId(sectionId('Algebra', 'video', SIDEBAR_SECTION))?.title).toBe('Sidebar')
+  })
+
   it('leaves the run key locale-independent', () => {
     const id = sectionId('Algebra', 'video', OTHER_SECTION)
     i18n.loadAndActivate({ locale: 'he', messages: he })
@@ -238,6 +246,19 @@ describe('showsMediaSegment', () => {
   it('always shows Videos and Materials', () => {
     expect(showsMediaSegment('video', 0)).toBe(true)
     expect(showsMediaSegment('material', 0)).toBe(true)
+  })
+})
+
+describe('groupSections with the Sidebar sentinel', () => {
+  it('keeps it a real, non-synthetic section of its own', () => {
+    const items = [item('a', 'Week 1'), item('b', SIDEBAR_SECTION), item('c', '')]
+    const sections = groupSections(items, 'video')
+    expect(refs(sections)).toEqual([
+      ['Week 1', ['a']],
+      [SIDEBAR_SECTION, ['b']],
+      [OTHER_SECTION, ['c']],
+    ])
+    expect(sections.every((s) => !s.synthetic)).toBe(true)
   })
 })
 

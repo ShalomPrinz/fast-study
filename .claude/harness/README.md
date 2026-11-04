@@ -474,7 +474,7 @@ marks, the current arrow, the counts and the overview's current-item buttons) an
 `setup.mjs --harness DIR` started (run it in the foreground with `timeout: 600000`); the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to every branch, with real ffmpeg, pandoc and tectonic, installed by the composite action
 [`harness-setup`](../../.github/actions/harness-setup/action.yml) that other workflows reuse. The
-release smoke suite stays separate: the shims cannot reach the frozen `services.exe` without a
+release smoke suite stays separate: the shims cannot reach the frozen `faststudy-services.exe` without a
 production override, which [SMOKE.md](../../delivery/docs/SMOKE.md) rules out.
 
 Three rules decide what earns a spec. First, it drives a flow a real user reaches in the shipped app,
@@ -490,6 +490,11 @@ real Windows lock, the launcher's boot and the updater belong to the release smo
 Every browser the harness opens (e2e pages and `hb` sessions) has `fast-study:tour-dismissed` preset
 so the tour overlay never blocks a drive; `tour.spec.mjs` opts out with
 `test.use({ tourDismissed: false })`, and `HB_TOUR=1` does the same for `hb` sessions.
+
+The launcher's `window.faststudy.services` bridge is stubbed only for a spec that opts in with
+`test.use({ launcherBridge: true })` (opt-in because a bridge makes Restart appear on every service banner):
+`page.evaluate(n => window.__fsStop(n), 'backend')` fires every `onStopped` callback, and each `restart()`
+call lands on `window.__fsRestarts` (`service-banner.spec.mjs`).
 
 `e2e/fixtures.mjs` holds what more than one spec needs: the stack's levers (`providers`, `site`, `lock`,
 `reseed`, `reset`), a lecture view's `step` rows and `expectRunComplete` (the folded "Summary ready" row), `treeLecture` over the database's

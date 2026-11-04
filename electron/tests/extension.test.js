@@ -6,7 +6,7 @@ const { spawn } = require('node:child_process');
 const { afterEach, test } = require('node:test');
 
 const {
-  REG_KEY,
+  REG_KEYS,
   batchPath,
   hostBatch,
   registerHost,
@@ -131,31 +131,58 @@ test('registerHost writes the .bat and host manifest, then sets the registry def
   });
   assert.match(fs.readFileSync(manifest.path, 'utf8'), /^@echo off\r\n/);
   assert.deepEqual(calls, [
-    ['reg', 'add', REG_KEY, '/ve', '/t', 'REG_SZ', '/d', manifestFile, '/f'],
+    ['reg', 'add', REG_KEYS.Chrome, '/ve', '/t', 'REG_SZ', '/d', manifestFile, '/f'],
+    ['reg', 'add', REG_KEYS.Edge, '/ve', '/t', 'REG_SZ', '/d', manifestFile, '/f'],
   ]);
-  assert.equal(
-    REG_KEY,
-    'HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.faststudy.bridge',
-  );
+  assert.deepEqual(REG_KEYS, {
+    Chrome: 'HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.faststudy.bridge',
+    Edge: 'HKCU\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.faststudy.bridge',
+  });
+  assert.deepEqual(lines, [
+    `native host registered (Chrome): ${manifestFile}`,
+    `native host registered (Edge): ${manifestFile}`,
+  ]);
   // Idempotent: a second launch rewrites nothing that did not change.
   const before = fs.statSync(manifest.path).mtimeMs;
   registerHost(options);
   assert.equal(fs.statSync(manifest.path).mtimeMs, before);
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 4);
 });
 
-test('registerHost logs a failed registry write and does not throw', () => {
-  const lines = [];
-  registerHost({
-    stateDir: tempDir(),
-    exe: 'e',
-    script: 's',
-    bridgeFile: 'b',
-    log: (_source, line) => lines.push(line),
-    env: {},
-    run: (_command, _args, _options, done) => done(new Error('reg is not here')),
-  });
-  assert.deepEqual(lines, ['native host registry write failed: reg is not here']);
+test('registerHost logs a failed registry write per key, and one failing still writes the other', () => {
+  const stateDir = tempDir();
+  const manifestFile = path.join(stateDir, 'native-host', 'com.faststudy.bridge.json');
+  const run = (failing) => {
+    const lines = [];
+    const keys = [];
+    registerHost({
+      stateDir,
+      exe: 'e',
+      script: 's',
+      bridgeFile: 'b',
+      log: (_source, line) => lines.push(line),
+      env: {},
+      run: (_command, args, _options, done) => {
+        keys.push(args[1]);
+        done(args[1] === failing ? new Error('reg is not here') : null);
+      },
+    });
+    return { lines, keys };
+  };
+  for (const [browser, other] of [
+    ['Chrome', 'Edge'],
+    ['Edge', 'Chrome'],
+  ]) {
+    const { lines, keys } = run(REG_KEYS[browser]);
+    assert.deepEqual(keys, [REG_KEYS.Chrome, REG_KEYS.Edge]);
+    assert.deepEqual(
+      lines.toSorted(),
+      [
+        `native host registered (${other}): ${manifestFile}`,
+        `native host registry write failed (${browser}): reg is not here`,
+      ].toSorted(),
+    );
+  }
 });
 
 const writeExtension = (dir, version, files = {}) => {
