@@ -11,3 +11,23 @@ export function shotKey(browser: Browser, step: string): string {
 }
 
 export const BROWSER_KEY = 'fastStudyExtensionBrowser'
+
+export const BROWSERS: readonly Browser[] = ['chrome', 'edge']
+
+// The remembered choice; anything unknown (or no storage) is Chrome.
+export function readBrowser(): Browser {
+  try {
+    const stored = localStorage.getItem(BROWSER_KEY)
+    return BROWSERS.find((b) => b === stored) ?? 'chrome'
+  } catch {
+    return 'chrome'
+  }
+}
+
+export function saveBrowser(browser: Browser): void {
+  try {
+    localStorage.setItem(BROWSER_KEY, browser)
+  } catch {
+    // Storage blocked: the choice just isn't remembered.
+  }
+}

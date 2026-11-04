@@ -30,6 +30,8 @@ import SectionGroup from '@/features/downloads/components/SectionGroup'
 import PausedRunsBanner from '@/features/downloads/components/PausedRunsBanner'
 import DownloadsTabs from '@/features/downloads/components/DownloadsTabs'
 import ExtensionGuide from '@/features/extension/ExtensionGuide'
+import BrowserSwitch from '@/features/extension/BrowserSwitch'
+import { readBrowser, saveBrowser, type Browser } from '@/features/extension/browsers'
 import { useDownloadsTab } from '@/features/downloads/hooks/useDownloadsTab'
 import type { Scope } from '@/features/downloads/utils/scope'
 import { MEDIA_KEY, readScope, writeScope } from '@/features/downloads/utils/scope'
@@ -112,6 +114,7 @@ export default function DownloadsView() {
   const shown = boxCourse(chosen, editName, !!editCourse)
   const chosenCourse = active.find((c) => c.name === shown)
   const [tab, selectTab] = useDownloadsTab()
+  const [browser, setBrowser] = useState<Browser>(readBrowser)
   // Held here rather than in the session, so leaving the page drops every lock.
   const { locks, lock } = useRowLocks()
   // Mirrored into a ref so `read` keeps the dispatch bag's identity stable across keystrokes.
@@ -265,6 +268,15 @@ export default function DownloadsView() {
                   selectTab(next)
                 }}
               />
+              {tab === 'extension' && (
+                <BrowserSwitch
+                  browser={browser}
+                  onSelect={(b) => {
+                    setBrowser(b)
+                    saveBrowser(b)
+                  }}
+                />
+              )}
               {tab === 'university' && (
                 <CourseSourceBar
                   chosen={chosenCourse?.name ?? ''}
@@ -334,7 +346,7 @@ export default function DownloadsView() {
             {tab === 'extension' && (
               <>
                 <FolderJobList />
-                <ExtensionGuide />
+                <ExtensionGuide browser={browser} />
               </>
             )}
             {tab === 'manual' && <ManualDownload />}

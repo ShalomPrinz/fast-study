@@ -1,0 +1,11 @@
+.browser-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.browser-switch-label {
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+}

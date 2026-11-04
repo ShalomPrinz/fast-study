@@ -176,12 +176,3 @@
   color: var(--accent-ink);
   font-weight: 500;
 }
-
-.extension-browser {
-  margin-bottom: var(--space-5);
-}
-
-.extension-browser .extension-browser-switch {
-  display: inline-flex;
-  margin: 0;
-}

@@ -138,7 +138,7 @@ msgid "{0} API key"
 msgstr "{0} API key"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:371
+#: src/features/downloads/DownloadsView.tsx:383
 msgid "{0} found"
 msgstr "{0} found"
 
@@ -412,7 +412,7 @@ msgstr "{total, plural, one {This course has # item you haven't marked. Skip all
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} no longer exists. Check the course page for a new link."
 
-#: src/features/downloads/DownloadsView.tsx:245
+#: src/features/downloads/DownloadsView.tsx:248
 msgid "{withSource} courses with a source"
 msgstr "{withSource} courses with a source"
 
@@ -464,7 +464,7 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 msgstr "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 
-#: src/features/downloads/DownloadsView.tsx:248
+#: src/features/downloads/DownloadsView.tsx:251
 msgid "A one-time setup of about three minutes."
 msgstr "A one-time setup of about three minutes."
 
@@ -609,7 +609,7 @@ msgid "Assignment Solution"
 msgstr "Assignment Solution"
 
 #: src/features/downloads/components/NewView.tsx:143
-#: src/features/downloads/DownloadsView.tsx:198
+#: src/features/downloads/DownloadsView.tsx:201
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:37
 msgid "Assignments"
 msgstr "Assignments"
@@ -618,7 +618,7 @@ msgstr "Assignments"
 msgid "Assignments you marked done"
 msgstr "Assignments you marked done"
 
-#: src/features/extension/ExtensionGuide.tsx:128
+#: src/features/extension/ExtensionGuide.tsx:127
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 msgstr "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 
@@ -838,11 +838,15 @@ msgstr "Choose when to remove the video"
 msgid "Choose when to remove the video and audio"
 msgstr "Choose when to remove the video and audio"
 
+#: src/features/extension/BrowserSwitch.tsx:18
+msgid "Choose your browser:"
+msgstr "Choose your browser:"
+
 #: src/features/settings/components/MoodleAccountField.tsx:38
 msgid "Choose your university above to connect its account."
 msgstr "Choose your university above to connect its account."
 
-#: src/features/downloads/DownloadsView.tsx:345
+#: src/features/downloads/DownloadsView.tsx:357
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
@@ -870,11 +874,11 @@ msgstr "Click \"Create API key\"."
 msgid "Click \"Create API Key\"."
 msgstr "Click \"Create API Key\"."
 
-#: src/features/extension/ExtensionGuide.tsx:148
+#: src/features/extension/ExtensionGuide.tsx:147
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 
-#: src/features/extension/ExtensionGuide.tsx:143
+#: src/features/extension/ExtensionGuide.tsx:142
 msgctxt "edge"
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
@@ -891,11 +895,11 @@ msgstr "Click <0>Get a key</0> and sign in with Google or your email."
 msgid "Click <0>Get a key</0> and sign in with your Google account."
 msgstr "Click <0>Get a key</0> and sign in with your Google account."
 
-#: src/features/extension/ExtensionGuide.tsx:314
+#: src/features/extension/ExtensionGuide.tsx:305
 msgid "Click any screenshot to enlarge it."
 msgstr "Click any screenshot to enlarge it."
 
-#: src/features/extension/ExtensionGuide.tsx:163
+#: src/features/extension/ExtensionGuide.tsx:162
 msgid "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 msgstr "Click the puzzle-piece icon next to the address bar, then click the pin beside FastStudy. Its icon now stays in the toolbar."
 
@@ -911,12 +915,12 @@ msgstr "Click to mark this lecture as not done"
 msgid "Click to mark this recitation as not done"
 msgstr "Click to mark this recitation as not done"
 
-#: src/features/downloads/DownloadsView.tsx:375
+#: src/features/downloads/DownloadsView.tsx:387
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
 msgid "Close"
 msgstr "Close"
 
-#: src/features/extension/ExtensionGuide.tsx:232
+#: src/features/extension/ExtensionGuide.tsx:231
 msgctxt "zoom overlay button"
 msgid "Close"
 msgstr "Close"
@@ -961,7 +965,7 @@ msgid "Connect Google Drive now?"
 msgstr "Connect Google Drive now?"
 
 #: src/features/downloads/components/CoursePicker.tsx:80
-#: src/features/downloads/DownloadsView.tsx:79
+#: src/features/downloads/DownloadsView.tsx:81
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
 
@@ -990,7 +994,7 @@ msgid "Continue transcription"
 msgstr "Continue transcription"
 
 #: src/app/ErrorBoundary.tsx:37
-#: src/features/extension/ExtensionGuide.tsx:39
+#: src/features/extension/ExtensionGuide.tsx:38
 msgid "Copied!"
 msgstr "Copied!"
 
@@ -998,7 +1002,7 @@ msgstr "Copied!"
 msgid "Copies the chosen summaries and the generated guides, then opens {provider}."
 msgstr "Copies the chosen summaries and the generated guides, then opens {provider}."
 
-#: src/features/extension/ExtensionGuide.tsx:106
+#: src/features/extension/ExtensionGuide.tsx:105
 msgid "Copy address"
 msgstr "Copy address"
 
@@ -1006,7 +1010,7 @@ msgstr "Copy address"
 msgid "Copy details"
 msgstr "Copy details"
 
-#: src/features/extension/ExtensionGuide.tsx:60
+#: src/features/extension/ExtensionGuide.tsx:59
 msgid "Copy path"
 msgstr "Copy path"
 
@@ -1014,7 +1018,7 @@ msgstr "Copy path"
 msgid "Could not convert the summary for printing."
 msgstr "Could not convert the summary for printing."
 
-#: src/features/extension/ExtensionGuide.tsx:31
+#: src/features/extension/ExtensionGuide.tsx:30
 msgid "Could not copy. Select the text and copy it by hand."
 msgstr "Could not copy. Select the text and copy it by hand."
 
@@ -1141,7 +1145,7 @@ msgid "Courses"
 msgstr "Courses"
 
 #: src/App.tsx:39
-#: src/features/downloads/DownloadsView.tsx:354
+#: src/features/downloads/DownloadsView.tsx:366
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:238
 #: src/shared/utils/notFound.ts:35
@@ -1253,7 +1257,7 @@ msgstr "Done"
 msgid "Download"
 msgstr "Download"
 
-#: src/features/extension/ExtensionGuide.tsx:172
+#: src/features/extension/ExtensionGuide.tsx:171
 msgid "Download a lecture"
 msgstr "Download a lecture"
 
@@ -1270,7 +1274,7 @@ msgstr "Download all"
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
-#: src/features/downloads/DownloadsView.tsx:251
+#: src/features/downloads/DownloadsView.tsx:254
 msgid "Download any open video on the internet"
 msgstr "Download any open video on the internet"
 
@@ -1322,7 +1326,7 @@ msgstr "Downloading update…"
 msgid "Downloading…"
 msgstr "Downloading…"
 
-#: src/features/downloads/DownloadsView.tsx:228
+#: src/features/downloads/DownloadsView.tsx:231
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "Downloads"
@@ -1728,11 +1732,11 @@ msgstr "I'm working on this assignment and want to understand it in depth, not j
 "\n"
 "To start, reply with a single sentence — \"Which question do you want to work on first?\" — followed by a numbered list of the assignment's questions, each with a one-line description."
 
-#: src/features/extension/ExtensionGuide.tsx:278
+#: src/features/extension/ExtensionGuide.tsx:277
 msgid "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
 msgstr "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the reload arrow on the FastStudy card."
 
-#: src/features/extension/ExtensionGuide.tsx:273
+#: src/features/extension/ExtensionGuide.tsx:272
 msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 msgstr "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 
@@ -1744,7 +1748,7 @@ msgstr "In course"
 msgid "In the project list, choose \"Create project\"."
 msgstr "In the project list, choose \"Create project\"."
 
-#: src/features/extension/ExtensionGuide.tsx:122
+#: src/features/extension/ExtensionGuide.tsx:121
 msgid "In the side pane of the page, turn on the \"Developer mode\" switch. If the pane is hidden because the window is narrow, click the ☰ menu at the top corner of the page to show it. A row of new buttons appears."
 msgstr "In the side pane of the page, turn on the \"Developer mode\" switch. If the pane is hidden because the window is narrow, click the ☰ menu at the top corner of the page to show it. A row of new buttons appears."
 
@@ -1857,7 +1861,7 @@ msgstr "Let's set things up"
 msgid "Load new version"
 msgstr "Load new version"
 
-#: src/features/extension/ExtensionGuide.tsx:138
+#: src/features/extension/ExtensionGuide.tsx:137
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
@@ -1869,11 +1873,11 @@ msgstr "Loading summaries…"
 msgid "Loading your courses…"
 msgstr "Loading your courses…"
 
-#: src/features/downloads/DownloadsView.tsx:254
+#: src/features/downloads/DownloadsView.tsx:257
 msgid "Loading your data…"
 msgstr "Loading your data…"
 
-#: src/features/downloads/DownloadsView.tsx:220
+#: src/features/downloads/DownloadsView.tsx:223
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
 msgstr "Loading…"
@@ -1891,7 +1895,7 @@ msgid "Match whole word"
 msgstr "Match whole word"
 
 #: src/features/downloads/components/NewView.tsx:142
-#: src/features/downloads/DownloadsView.tsx:196
+#: src/features/downloads/DownloadsView.tsx:199
 #: src/features/lectures/AssignmentView.tsx:141
 #: src/features/lectures/MainView.tsx:597
 msgid "Materials"
@@ -1945,7 +1949,7 @@ msgstr "No"
 msgid "No archived courses"
 msgstr "No archived courses"
 
-#: src/features/downloads/DownloadsView.tsx:213
+#: src/features/downloads/DownloadsView.tsx:216
 msgid "No assignments found."
 msgstr "No assignments found."
 
@@ -1977,7 +1981,7 @@ msgstr "No current courses."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "No data folder is set. Choose one in Settings."
 
-#: src/features/downloads/DownloadsView.tsx:214
+#: src/features/downloads/DownloadsView.tsx:217
 msgid "No files of unknown type found."
 msgstr "No files of unknown type found."
 
@@ -2017,7 +2021,7 @@ msgstr "no material found"
 msgid "no material will be sent"
 msgstr "no material will be sent"
 
-#: src/features/downloads/DownloadsView.tsx:212
+#: src/features/downloads/DownloadsView.tsx:215
 msgid "No materials found."
 msgstr "No materials found."
 
@@ -2045,11 +2049,11 @@ msgstr "No Recitations"
 msgid "No recitations yet"
 msgstr "No recitations yet"
 
-#: src/features/downloads/DownloadsView.tsx:211
+#: src/features/downloads/DownloadsView.tsx:214
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/DownloadsView.tsx:360
+#: src/features/downloads/DownloadsView.tsx:372
 msgid "No source URL yet. Use the pencil to choose one."
 msgstr "No source URL yet. Use the pencil to choose one."
 
@@ -2161,7 +2165,7 @@ msgstr "Only YouTube playlists can be opened up; {host} cannot."
 msgid "Open {name}"
 msgstr "Open {name}"
 
-#: src/features/extension/ExtensionGuide.tsx:175
+#: src/features/extension/ExtensionGuide.tsx:174
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 
@@ -2169,11 +2173,11 @@ msgstr "Open a lecture on the course site and press play. Click the FastStudy ic
 msgid "Open chat"
 msgstr "Open chat"
 
-#: src/features/extension/ExtensionGuide.tsx:84
+#: src/features/extension/ExtensionGuide.tsx:83
 msgid "Open Chrome's extensions page"
 msgstr "Open Chrome's extensions page"
 
-#: src/features/extension/ExtensionGuide.tsx:82
+#: src/features/extension/ExtensionGuide.tsx:81
 msgid "Open Edge's extensions page"
 msgstr "Open Edge's extensions page"
 
@@ -2181,11 +2185,11 @@ msgstr "Open Edge's extensions page"
 msgid "Open file"
 msgstr "Open file"
 
-#: src/features/extension/ExtensionGuide.tsx:62
+#: src/features/extension/ExtensionGuide.tsx:61
 msgid "Open folder"
 msgstr "Open folder"
 
-#: src/features/extension/ExtensionGuide.tsx:95
+#: src/features/extension/ExtensionGuide.tsx:94
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 
@@ -2202,7 +2206,7 @@ msgstr "Open in full screen"
 msgid "Open lecture"
 msgstr "Open lecture"
 
-#: src/features/extension/ExtensionGuide.tsx:90
+#: src/features/extension/ExtensionGuide.tsx:89
 msgid "Open Microsoft Edge, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Microsoft Edge, paste this address into the address bar at the top and press Enter:"
 
@@ -2339,7 +2343,7 @@ msgstr "PDF is older than this summary"
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
-#: src/features/extension/ExtensionGuide.tsx:160
+#: src/features/extension/ExtensionGuide.tsx:159
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
 
@@ -2443,7 +2447,7 @@ msgstr "Recitations you marked done"
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: src/features/downloads/DownloadsView.tsx:369
+#: src/features/downloads/DownloadsView.tsx:381
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
 
@@ -2619,7 +2623,7 @@ msgstr "Saving…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
-#: src/features/extension/ExtensionGuide.tsx:206
+#: src/features/extension/ExtensionGuide.tsx:205
 msgid "Screenshot of step {step}"
 msgstr "Screenshot of step {step}"
 
@@ -2981,7 +2985,7 @@ msgstr "The files weren't removed. Press Apply under “Disk space” to try aga
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 
-#: src/features/extension/ExtensionGuide.tsx:50
+#: src/features/extension/ExtensionGuide.tsx:49
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
@@ -3298,11 +3302,11 @@ msgstr "Transcript"
 msgid "Try again"
 msgstr "Try again"
 
-#: src/features/extension/ExtensionGuide.tsx:117
+#: src/features/extension/ExtensionGuide.tsx:116
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
 
-#: src/features/extension/ExtensionGuide.tsx:115
+#: src/features/extension/ExtensionGuide.tsx:114
 msgctxt "edge"
 msgid "Turn on Developer mode"
 msgstr "Turn on Developer mode"
@@ -3354,7 +3358,7 @@ msgid "University saved"
 msgstr "University saved"
 
 #: src/features/downloads/components/NewView.tsx:144
-#: src/features/downloads/DownloadsView.tsx:202
+#: src/features/downloads/DownloadsView.tsx:205
 msgid "Unknown"
 msgstr "Unknown"
 
@@ -3374,7 +3378,7 @@ msgstr "Updated. Restart to update"
 msgid "Updates"
 msgstr "Updates"
 
-#: src/features/extension/ExtensionGuide.tsx:266
+#: src/features/extension/ExtensionGuide.tsx:265
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 
@@ -3425,7 +3429,7 @@ msgid "Video link"
 msgstr "Video link"
 
 #: src/features/downloads/components/NewView.tsx:141
-#: src/features/downloads/DownloadsView.tsx:195
+#: src/features/downloads/DownloadsView.tsx:198
 msgid "Videos"
 msgstr "Videos"
 
