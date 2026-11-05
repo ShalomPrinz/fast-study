@@ -17,29 +17,34 @@ function wallShaped(res) {
 // browser cannot spin.
 const MAX_WAITS = 2;
 
-// Time-to-response-head per attempt; a body after the head is never cut. Tests shorten it.
-const deps = { headMs: 60_000 };
+// headMs: time to the response head per attempt. stallMs: longest gap in a window body (curl's
+// --speed-time 120, downloader/server/src/services/autodl.js). Tests shorten both.
+const deps = { headMs: 60_000, stallMs: 120_000 };
 
-/** Tests shorten the head timeout; → a function restoring the previous one. */
+/** Tests shorten the head and stall timeouts; → a function restoring the previous one. */
 export function configureWsClient(overrides) {
   const prev = { ...deps };
   Object.assign(deps, overrides);
   return () => Object.assign(deps, prev);
 }
 
-// Runs one attempt `run(init)` whose signal also fires a TimeoutError if no response head arrives in
-// headMs; cleared at the head, so a body read later and the caller's captcha wait are not bounded by it.
+// Runs one attempt `run(init)` whose signal also fires a TimeoutError if no head arrives in headMs
+// (cleared then). A plain controller, not AbortSignal.any, so the caller listener is removed per attempt.
 async function withHeadTimeout(init, run) {
   const ctl = new AbortController();
   const timer = setTimeout(
     () => ctl.abort(new DOMException(`no response within ${deps.headMs / 1000}s`, 'TimeoutError')),
     deps.headMs,
   );
-  const signal = init.signal ? AbortSignal.any([init.signal, ctl.signal]) : ctl.signal;
+  const caller = init.signal;
+  const forward = () => ctl.abort(caller.reason);
+  if (caller?.aborted) forward();
+  else caller?.addEventListener('abort', forward, { once: true });
   try {
-    return await run({ ...init, signal });
+    return await run({ ...init, signal: ctl.signal });
   } finally {
     clearTimeout(timer);
+    caller?.removeEventListener('abort', forward);
   }
 }
 
@@ -48,12 +53,17 @@ async function withHeadTimeout(init, run) {
 async function moodleFetch(
   url,
   init,
-  { route = true, reopen = route, label = '', wall = wallShaped } = {},
+  { route = true, reopen = route, label = '', wall = wallShaped, stream = false } = {},
 ) {
   await enterMoodle(String(url).split('?')[0]);
   // The request's own signal: a caller that hung up stops waiting on a captcha. `wall` says whether
   // an answer is the bot wall; an endpoint whose real reply is text/html passes its own.
-  const call = { signal: init.signal ?? moodleGate.signal(), waits: reopen ? 0 : MAX_WAITS, wall };
+  const call = {
+    signal: init.signal ?? moodleGate.signal(),
+    waits: reopen ? 0 : MAX_WAITS,
+    wall,
+    stream,
+  };
   const window = route ? challengeRoute(url) : null;
   let res = window ? await windowFetch(window, url, init, call) : await nodeFetch(url, init);
   const site = currentSite();
@@ -124,9 +134,14 @@ async function windowFetch(window, url, init, call) {
       window = now;
     }
     try {
-      res = await withHeadTimeout(init, (i) =>
-        window.fetch(url, i, { lost: () => lostBody(window) }),
-      );
+      // The page times the head and any body stall itself; a call with no file body to stream also gets
+      // a Node-side backstop for a page that never answers (a file open stays unbounded there).
+      res = await window.fetch(url, init, {
+        lost: () => lostBody(window),
+        headMs: deps.headMs,
+        stallMs: deps.stallMs,
+        backstopMs: call.stream ? 0 : deps.headMs + deps.stallMs,
+      });
       break;
     } catch (err) {
       if (window.gone(err)) throw windowClosed();
@@ -515,7 +530,7 @@ export async function assertPluginfileReadable(url) {
 export async function openPluginfile(url, { range, signal } = {}) {
   const headers = { 'User-Agent': APP_USER_AGENT };
   if (range) headers.Range = range;
-  const res = await moodleFetch(url, { headers, signal }, { label: 'pluginfile: ' });
+  const res = await moodleFetch(url, { headers, signal }, { label: 'pluginfile: ', stream: true });
   const fault = await pluginfileFault(res, url);
   if (fault) {
     await res.body?.cancel().catch(() => {});

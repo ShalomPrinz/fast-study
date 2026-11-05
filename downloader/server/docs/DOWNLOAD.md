@@ -65,10 +65,10 @@ curl dumps auto's headers to `response-headers.txt` and keeps its JSON body in t
 the runner ends the job with auto's own `code`/`params` (`readAutodlRefusal`). A fetch from auto cut
 short with no refusal (curl exit 18, 52 or 56) is re-run once in a fresh temp dir (`recovery`).
 Auto gets only `--connect-timeout 10` (it is localhost): a stall limit would kill a call waiting in
-the Moodle gate queue (a captcha up to 10 min), which has no timeout by design. Mid-body stalls are
-bounded inside auto/: on its Node route by undici's default 300 s body timeout, on its challenge-window
-route (where `openPluginfile` goes when routing is on) by auto's own 60 s per-call timeout, which
-covers the whole call since the page buffers the body. Then by that one re-run.
+the Moodle gate queue (a captcha up to 10 min), which has no timeout by design. A mid-body stall is
+bounded on auto's Node route by undici's default 300 s body timeout, and on its challenge-window route
+by auto's in-page stall check (no body bytes for 120 s, matching the `--speed-time 120` used for other
+URLs), which ends the call as `503 site_unreachable`. Then by that one re-run.
 
 ## HLS (`.m3u8` and `.panobf2` captures)
 

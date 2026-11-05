@@ -73,9 +73,9 @@ export function challengeRoute(url) {
   return win && originOf(String(url)) === win.origin ? win : null;
 }
 
-// Runs in the page; Node pulls the kept body in slices. Sent through a hidden about:blank iframe's
-// native fetch, since the site's scripts replace the page's (docs/MOODLE.md § Bot protection).
-async function pageFetch({ url, method, headers, body }) {
+// Runs in the page; Node pulls the kept body in slices, through a hidden iframe's native fetch (the
+// site's scripts replace the page's). `headMs` bounds the wait for the head, `stallMs` any gap in the body.
+async function pageFetch({ url, method, headers, body, headMs, stallMs }) {
   let frame = document.getElementById('__fastStudyFetch');
   if (!frame?.contentWindow) {
     frame = document.createElement('iframe');
@@ -84,16 +84,58 @@ async function pageFetch({ url, method, headers, body }) {
     frame.style.display = 'none';
     document.documentElement.appendChild(frame);
   }
-  const r = await frame.contentWindow.fetch(url, {
-    method,
-    headers,
-    body,
-    redirect: 'manual',
-    credentials: 'include',
-    cache: 'no-store',
-  });
+  const ctl = new AbortController();
+  let timedOut = false;
+  const timer = headMs
+    ? setTimeout(() => {
+        timedOut = true;
+        ctl.abort();
+      }, headMs)
+    : null;
+  let r;
+  try {
+    r = await frame.contentWindow.fetch(url, {
+      method,
+      headers,
+      body,
+      signal: ctl.signal,
+      redirect: 'manual',
+      credentials: 'include',
+      cache: 'no-store',
+    });
+  } catch (err) {
+    if (timedOut) return { timedOut: true };
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
   if (r.type === 'opaqueredirect') return { status: 302, headers: [], id: null, size: 0 };
-  const buf = new Uint8Array(await r.arrayBuffer());
+  let stalled = false;
+  let stallTimer;
+  const chunks = [];
+  try {
+    const reader = r.body?.getReader();
+    for (;;) {
+      if (stallMs) {
+        clearTimeout(stallTimer);
+        stallTimer = setTimeout(() => {
+          stalled = true;
+          ctl.abort();
+        }, stallMs);
+      }
+      const { done, value } = reader ? await reader.read() : { done: true };
+      if (done) break;
+      chunks.push(value);
+    }
+  } catch (err) {
+    if (stalled) return { timedOut: true };
+    throw err;
+  } finally {
+    clearTimeout(stallTimer);
+  }
+  // One copy at peak: the Blob takes the chunks (emptied here) before the single buffer is read.
+  const blob = new Blob(chunks.splice(0));
+  const buf = new Uint8Array(await blob.arrayBuffer());
   const id = `${Date.now()}-${Math.random()}`;
   (globalThis.__fastStudyBodies ??= new Map()).set(id, buf);
   return { status: r.status, headers: [...r.headers], id, size: buf.length };
@@ -193,7 +235,12 @@ class ChallengeWindow {
   async fetch(
     url,
     init = {},
-    { lost = () => new Error('the challenge window lost the body') } = {},
+    {
+      lost = () => new Error('the challenge window lost the body'),
+      headMs = 0,
+      stallMs = 0,
+      backstopMs = 0,
+    } = {},
   ) {
     const method = init.method ?? 'GET';
     const href = new URL(String(url)).href;
@@ -207,9 +254,20 @@ class ChallengeWindow {
     try {
       head = await this._evaluate(
         pageFetch,
-        { url: String(url), method, headers: pageHeaders(init.headers), body: pageBody(init.body) },
+        {
+          url: String(url),
+          method,
+          headers: pageHeaders(init.headers),
+          body: pageBody(init.body),
+          headMs,
+          stallMs,
+        },
         init.signal,
+        backstopMs,
       );
+      if (head.timedOut) {
+        throw new DOMException('no response or no body bytes in time', 'TimeoutError');
+      }
     } catch (err) {
       // A closed window fails its fetches too; that stays the caller's gone() case.
       if (this.gone(err)) throw err;
@@ -231,12 +289,25 @@ class ChallengeWindow {
   }
 
   // One page call, counted as activity from start to end so the idle close never cuts it off.
-  async _evaluate(fn, arg, signal) {
+  // `backstopMs` rejects a call whose page never answers (a hung renderer) with a TimeoutError.
+  async _evaluate(fn, arg, signal, backstopMs = 0) {
     this.busy++;
     this.touch();
     const call = this.page.evaluate(fn, arg);
+    let backstop;
     try {
-      return await abortable(call, signal);
+      const raced = backstopMs
+        ? Promise.race([
+            call,
+            new Promise((_, reject) => {
+              backstop = setTimeout(
+                () => reject(new DOMException('the page did not answer', 'TimeoutError')),
+                backstopMs,
+              );
+            }),
+          ])
+        : call;
+      return await abortable(raced, signal);
     } catch (err) {
       // Abandoned: if the page call still finishes with a stored body nobody will receive, drop it.
       call.then(
@@ -245,6 +316,7 @@ class ChallengeWindow {
       );
       throw err;
     } finally {
+      clearTimeout(backstop);
       this.busy--;
       this.touch();
     }
