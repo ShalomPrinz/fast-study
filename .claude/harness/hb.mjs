@@ -420,6 +420,11 @@ function help() {
   for (const { usage, summary } of Object.values(COMMANDS)) {
     console.log(`  ${usage.padEnd(width)}  ${summary}`);
   }
+  console.log(`
+  set changes the stack's settings for every agent on it, not just you.
+  kill <service> and setup.mjs --restart <service> take: database, backend, downloader-auto,
+  downloader-server, frontend, fake-providers, fake-site, browser-<tag> (hb url names differ).
+  Full reference: .claude/harness/README.md`);
 }
 
 async function main() {

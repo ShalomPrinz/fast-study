@@ -197,7 +197,10 @@ an empty root, and posts blank keys to the backend. The database keeps serving i
 the auto-downloader its site and token, which a real first boot would not have — so `unwall` puts
 the same site back without a reconnect.
 
-A new helper is one entry in `COMMANDS` in `hb.mjs`, with its logic in `lib/`.
+A new helper is one entry in `COMMANDS` in `hb.mjs`, with its logic in `lib/`. A helper for a fake's
+setting earns one only when the job takes more than one `/control` call or a wait between steps, as
+`hb moodle-busy` does; a single setting stays a `curl`. `hb help` also prints the usage rules an agent
+needs beyond the list (`set` is global, the service names `kill`/`--restart` take).
 
 ## Browser sessions — `browser.mjs`
 

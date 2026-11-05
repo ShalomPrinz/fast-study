@@ -4,12 +4,13 @@ description: Run the real app — all four services and the SPA, every third par
 ---
 
 The harness lives in `.claude/harness/`; its [README](../../harness/README.md) is the full reference —
-what is faked and how, every `hb` helper, every fake mode, the seeded courses, the blind spots. This
-skill is the short path through it.
+what is faked and how, the `hb` helpers, every fake mode, the seeded courses, the blind spots. This
+skill is the short path through it. Run `node .claude/harness/hb.mjs help` once at the start: it is the
+complete command list, and an `hb` command comes before any curl or script against a service.
 
 ## Start your own stack
 
-One stack per agent, never shared: pick a harness root nobody else uses, under your scratchpad.
+One stack per agent: pick a harness root nobody else uses, under your scratchpad. Share one only when your brief hands you its root; settings are global on it.
 
 ```bash
 node .claude/harness/setup.mjs --harness <scratchpad>/harness --browsers main
@@ -60,11 +61,8 @@ failure with `curl -s $(hb url providers)/control …` or `$(hb url site)/contro
 rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture`. The site's
 `radware` mode walls Moodle until a captcha is solved with `{"solve":true}`; `{"revoke":true}` makes
 the next call meet a fresh captcha, with no reseed. Restart one service after a code change with
-`node .claude/harness/setup.mjs --harness $HARNESS_DIR --restart <service>`. Put the baseline back
+`node .claude/harness/setup.mjs --harness $HARNESS_DIR --restart <service>` (names in `hb help`). Put the baseline back
 with `hb reseed`. A Gemini auto retry only waits and shows its countdown; `hb retry fire [key]` runs it now.
-
-A helper for a fake's setting earns a new `hb` subcommand only when the job takes more than one
-`/control` call or a wait between steps, as `hb moodle-busy` does; a single setting stays a `curl`.
 
 Nothing a run shows is real provider behaviour: transcripts, summaries and downloads are fixtures.
 
