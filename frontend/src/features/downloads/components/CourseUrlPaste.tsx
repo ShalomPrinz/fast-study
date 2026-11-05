@@ -9,12 +9,14 @@ import './CourseUrlPaste.css'
 
 interface Props {
   initial: string
+  // A save is pending: the input is read-only and Save is off, Cancel stays.
+  disabled?: boolean
   onSave: (url: string) => void
   onCancel: () => void
 }
 
 // A pasted course URL, checked before it is saved; an empty one saves at once, which clears the source.
-export default function CourseUrlPaste({ initial, onSave, onCancel }: Props) {
+export default function CourseUrlPaste({ initial, disabled, onSave, onCancel }: Props) {
   const { t } = useLingui()
   const [value, setValue] = useState(initial)
   const { checking, failure, check, clear } = useCourseUrlCheck()
@@ -27,6 +29,7 @@ export default function CourseUrlPaste({ initial, onSave, onCancel }: Props) {
 
   async function commit() {
     const url = value.trim()
+    if (disabled) return
     if (!needsCheck(url, false) || (await check(url))) onSave(url)
   }
 
@@ -42,6 +45,7 @@ export default function CourseUrlPaste({ initial, onSave, onCancel }: Props) {
           ref={input}
           className="source-row-input course-url-paste-input"
           value={value}
+          readOnly={disabled}
           onChange={(e) => {
             setValue(e.target.value)
             clear()
@@ -54,7 +58,11 @@ export default function CourseUrlPaste({ initial, onSave, onCancel }: Props) {
           aria-label={t`Course URL`}
           dir="auto"
         />
-        <button className="btn btn--ghost" onClick={() => void commit()} disabled={checking}>
+        <button
+          className="btn btn--ghost"
+          onClick={() => void commit()}
+          disabled={checking || disabled}
+        >
           {checking ? t`Checking…` : t`Save`}
         </button>
         <button className="btn btn--ghost" onClick={onCancel}>
@@ -64,6 +72,7 @@ export default function CourseUrlPaste({ initial, onSave, onCancel }: Props) {
       {failure && (
         <CourseCheckFailure
           failure={failure}
+          disabled={disabled}
           onSaveAnyway={() => onSave(value.trim())}
           onEdit={edit}
         />

@@ -88,7 +88,7 @@ msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
 #. placeholder {0}: past.length
-#: src/features/downloads/components/CoursePicker.tsx:108
+#: src/features/downloads/components/CoursePicker.tsx:128
 msgid "{0, plural, one {Show # past course} other {Show # past courses}}"
 msgstr "{0, plural, one {Show # past course} other {Show # past courses}}"
 
@@ -523,7 +523,7 @@ msgstr "All"
 msgid "All caught up — every lecture is finished."
 msgstr "All caught up — every lecture is finished."
 
-#: src/features/lectures/DocEditor.tsx:367
+#: src/features/lectures/DocEditor.tsx:388
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "All edits will be discarded and the original AI summary restored."
 
@@ -551,7 +551,7 @@ msgstr "All types are displayed"
 msgid "Already generated."
 msgstr "Already generated."
 
-#: src/features/lectures/DocEditor.tsx:267
+#: src/features/lectures/DocEditor.tsx:283
 msgid "Already up to date"
 msgstr "Already up to date"
 
@@ -679,7 +679,7 @@ msgstr "Available once the summary is generated."
 msgid "Available once you choose course material or generate a guide."
 msgstr "Available once you choose course material or generate a guide."
 
-#: src/features/lectures/DocEditor.tsx:233
+#: src/features/lectures/DocEditor.tsx:249
 #: src/features/tour/Tour.tsx:87
 msgid "Back"
 msgstr "Back"
@@ -731,8 +731,8 @@ msgstr "Can't replace the video while it's being processed or waiting in line"
 
 #: src/app/ServiceBanner.tsx:85
 #: src/features/downloads/components/AddCoursePanel.tsx:124
-#: src/features/downloads/components/CoursePicker.tsx:125
-#: src/features/downloads/components/CourseUrlPaste.tsx:61
+#: src/features/downloads/components/CoursePicker.tsx:149
+#: src/features/downloads/components/CourseUrlPaste.tsx:69
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
 #: src/features/lectures/components/AssignmentDocCard.tsx:201
@@ -788,7 +788,7 @@ msgid "checking Drive…"
 msgstr "checking Drive…"
 
 #: src/features/downloads/components/AddCoursePanel.tsx:120
-#: src/features/downloads/components/CourseUrlPaste.tsx:58
+#: src/features/downloads/components/CourseUrlPaste.tsx:66
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:88
@@ -850,7 +850,7 @@ msgstr "Choose your university above to connect its account."
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
-#: src/features/downloads/components/CoursePicker.tsx:78
+#: src/features/downloads/components/CoursePicker.tsx:98
 msgid "Choose your university in Settings first"
 msgstr "Choose your university in Settings first"
 
@@ -964,7 +964,7 @@ msgstr "Connect anyway?"
 msgid "Connect Google Drive now?"
 msgstr "Connect Google Drive now?"
 
-#: src/features/downloads/components/CoursePicker.tsx:80
+#: src/features/downloads/components/CoursePicker.tsx:100
 #: src/features/downloads/DownloadsView.tsx:81
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
@@ -1094,7 +1094,7 @@ msgstr "Couldn't load recordings for \"{name}\". Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/lectures/DocEditor.tsx:351
+#: src/features/lectures/DocEditor.tsx:371
 msgid "Couldn't load the summary"
 msgstr "Couldn't load the summary"
 
@@ -1144,7 +1144,7 @@ msgstr "Course overview"
 msgid "Course structure"
 msgstr "Course structure"
 
-#: src/features/downloads/components/CourseUrlPaste.tsx:54
+#: src/features/downloads/components/CourseUrlPaste.tsx:58
 msgid "Course URL"
 msgstr "Course URL"
 
@@ -1214,7 +1214,7 @@ msgstr "Decline"
 msgid "Delete {name}"
 msgstr "Delete {name}"
 
-#: src/features/lectures/DocEditor.tsx:250
+#: src/features/lectures/DocEditor.tsx:266
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
@@ -1371,7 +1371,7 @@ msgstr "Each service handles the data under its own privacy policy, and your API
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "Each time it starts, FastStudy checks GitHub for a new version."
 
-#: src/features/downloads/components/CourseCheckFailure.tsx:23
+#: src/features/downloads/components/CourseCheckFailure.tsx:28
 #: src/features/lectures/components/AssignmentDocCard.tsx:167
 msgid "Edit"
 msgstr "Edit"
@@ -1481,19 +1481,19 @@ msgstr "failed"
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
-#: src/features/lectures/DocEditor.tsx:209
+#: src/features/lectures/DocEditor.tsx:225
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
-#: src/features/lectures/DocEditor.tsx:183
+#: src/features/lectures/DocEditor.tsx:199
 msgid "Failed to restore the original summary"
 msgstr "Failed to restore the original summary"
 
-#: src/features/lectures/DocEditor.tsx:166
+#: src/features/lectures/DocEditor.tsx:182
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
-#: src/features/downloads/components/EditSourcePanel.tsx:102
+#: src/features/downloads/components/EditSourcePanel.tsx:105
 msgid "Failed to save the course's source URL"
 msgstr "Failed to save the course's source URL"
 
@@ -1703,7 +1703,7 @@ msgstr "Groq's rate limit was reached. Try again in a few minutes."
 msgid "Hebrew University"
 msgstr "Hebrew University"
 
-#: src/features/downloads/components/CoursePicker.tsx:106
+#: src/features/downloads/components/CoursePicker.tsx:126
 msgid "Hide past courses"
 msgstr "Hide past courses"
 
@@ -1785,7 +1785,7 @@ msgstr "just this lecture"
 msgid "Keep a copy in Google Drive"
 msgstr "Keep a copy in Google Drive"
 
-#: src/features/lectures/DocEditor.tsx:306
+#: src/features/lectures/DocEditor.tsx:322
 msgid "Keep my edits"
 msgstr "Keep my edits"
 
@@ -1869,7 +1869,7 @@ msgstr "Lectures you marked done"
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
-#: src/features/lectures/DocEditor.tsx:303
+#: src/features/lectures/DocEditor.tsx:319
 msgid "Load new version"
 msgstr "Load new version"
 
@@ -1881,7 +1881,7 @@ msgstr "Load the FastStudy folder"
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
-#: src/features/downloads/components/CoursePicker.tsx:87
+#: src/features/downloads/components/CoursePicker.tsx:107
 msgid "Loading your courses…"
 msgstr "Loading your courses…"
 
@@ -1985,7 +1985,7 @@ msgstr "No Chrome window is waiting on a captcha anymore."
 msgid "No courses yet."
 msgstr "No courses yet."
 
-#: src/features/downloads/components/CoursePicker.tsx:96
+#: src/features/downloads/components/CoursePicker.tsx:116
 msgid "No current courses."
 msgstr "No current courses."
 
@@ -2037,7 +2037,7 @@ msgstr "no material will be sent"
 msgid "No materials found."
 msgstr "No materials found."
 
-#: src/features/lectures/DocEditor.tsx:250
+#: src/features/lectures/DocEditor.tsx:266
 msgid "No original saved"
 msgstr "No original saved"
 
@@ -2321,7 +2321,7 @@ msgstr "Part of FastStudy isn't responding. Restart the services."
 msgid "Passcode"
 msgstr "Passcode"
 
-#: src/features/downloads/components/CoursePicker.tsx:122
+#: src/features/downloads/components/CoursePicker.tsx:146
 msgid "Paste a URL instead"
 msgstr "Paste a URL instead"
 
@@ -2333,7 +2333,7 @@ msgstr "Paste a video link first"
 msgid "Paste the assignment material with Ctrl+V, we already copied it for you."
 msgstr "Paste the assignment material with Ctrl+V, we already copied it for you."
 
-#: src/features/downloads/components/CourseUrlPaste.tsx:53
+#: src/features/downloads/components/CourseUrlPaste.tsx:57
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "Paste the course page's address (…/course/view.php?id=…)"
 
@@ -2347,11 +2347,11 @@ msgstr "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgid "PDF"
 msgstr "PDF"
 
-#: src/features/lectures/DocEditor.tsx:244
+#: src/features/lectures/DocEditor.tsx:260
 msgid "PDF is older than this summary"
 msgstr "PDF is older than this summary"
 
-#: src/features/lectures/DocEditor.tsx:245
+#: src/features/lectures/DocEditor.tsx:261
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
@@ -2548,7 +2548,7 @@ msgstr "Restart now"
 msgid "Restore"
 msgstr "Restore"
 
-#: src/features/lectures/DocEditor.tsx:256
+#: src/features/lectures/DocEditor.tsx:272
 msgid "Restore original"
 msgstr "Restore original"
 
@@ -2556,7 +2556,7 @@ msgstr "Restore original"
 msgid "Results"
 msgstr "Results"
 
-#: src/features/lectures/DocEditor.tsx:344
+#: src/features/lectures/DocEditor.tsx:364
 #: src/features/settings/SettingsView.tsx:184
 msgid "Retry"
 msgstr "Retry"
@@ -2603,16 +2603,16 @@ msgstr "Running · lecture {0} of {1}"
 msgid "Running pipelines"
 msgstr "Running pipelines"
 
-#: src/features/downloads/components/CourseUrlPaste.tsx:58
+#: src/features/downloads/components/CourseUrlPaste.tsx:66
 #: src/features/settings/SettingsView.tsx:355
 msgid "Save"
 msgstr "Save"
 
-#: src/features/lectures/DocEditor.tsx:282
+#: src/features/lectures/DocEditor.tsx:298
 msgid "Save & update PDF"
 msgstr "Save & update PDF"
 
-#: src/features/downloads/components/CourseCheckFailure.tsx:20
+#: src/features/downloads/components/CourseCheckFailure.tsx:25
 msgid "Save anyway"
 msgstr "Save anyway"
 
@@ -2628,7 +2628,7 @@ msgstr "Save to choose the courses."
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/downloads/components/EditSourcePanel.tsx:94
+#: src/features/downloads/components/EditSourcePanel.tsx:97
 #: src/features/settings/InitWall.tsx:336
 msgid "Saving…"
 msgstr "Saving…"
@@ -2803,8 +2803,8 @@ msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:79
-#: src/features/lectures/DocEditor.tsx:204
-#: src/features/lectures/DocEditor.tsx:263
+#: src/features/lectures/DocEditor.tsx:220
+#: src/features/lectures/DocEditor.tsx:279
 #: src/features/lectures/MainView.tsx:192
 msgid "Step already running"
 msgstr "Step already running"
@@ -3124,7 +3124,7 @@ msgstr "The site refused the download. This link needs a login, so it can't be d
 msgid "The site refused this file."
 msgstr "The site refused this file."
 
-#: src/features/lectures/DocEditor.tsx:265
+#: src/features/lectures/DocEditor.tsx:281
 msgid "The summary is empty"
 msgstr "The summary is empty"
 
@@ -3222,7 +3222,7 @@ msgstr "Third-party services"
 msgid "This applies only to work that starts on its own: a video you drop in or a video that finishes downloading. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in or a video that finishes downloading. Runs you start yourself are not affected."
 
-#: src/features/lectures/DocEditor.tsx:368
+#: src/features/lectures/DocEditor.tsx:389
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
@@ -3288,7 +3288,7 @@ msgstr "This recording type can't be downloaded."
 msgid "This source can't be downloaded automatically."
 msgstr "This source can't be downloaded automatically."
 
-#: src/features/lectures/DocEditor.tsx:291
+#: src/features/lectures/DocEditor.tsx:307
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 
@@ -3376,7 +3376,7 @@ msgstr "University saved"
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/features/lectures/DocEditor.tsx:333
+#: src/features/lectures/DocEditor.tsx:349
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -3396,7 +3396,7 @@ msgstr "Updates"
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 
-#: src/features/lectures/DocEditor.tsx:282
+#: src/features/lectures/DocEditor.tsx:298
 msgid "Updating PDF…"
 msgstr "Updating PDF…"
 

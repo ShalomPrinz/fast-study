@@ -88,7 +88,7 @@ msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {תוצאה אחת} two {# תוצאות} other {# תוצאות}}"
 
 #. placeholder {0}: past.length
-#: src/features/downloads/components/CoursePicker.tsx:108
+#: src/features/downloads/components/CoursePicker.tsx:128
 msgid "{0, plural, one {Show # past course} other {Show # past courses}}"
 msgstr "{0, plural, one {הצגת קורס קודם אחד} two {הצגת # קורסים קודמים} other {הצגת # קורסים קודמים}}"
 
@@ -523,7 +523,7 @@ msgstr "הכול"
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
-#: src/features/lectures/DocEditor.tsx:367
+#: src/features/lectures/DocEditor.tsx:388
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-AI ישוחזר."
 
@@ -551,7 +551,7 @@ msgstr "כל הסוגים מופיעים"
 msgid "Already generated."
 msgstr "כבר נוצר."
 
-#: src/features/lectures/DocEditor.tsx:267
+#: src/features/lectures/DocEditor.tsx:283
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
@@ -679,7 +679,7 @@ msgstr "זמין אחרי יצירת הסיכום."
 msgid "Available once you choose course material or generate a guide."
 msgstr "זמין אחרי שתבחר חומר מהקורס או תיצור מדריך."
 
-#: src/features/lectures/DocEditor.tsx:233
+#: src/features/lectures/DocEditor.tsx:249
 #: src/features/tour/Tour.tsx:87
 msgid "Back"
 msgstr "חזרה"
@@ -731,8 +731,8 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 
 #: src/app/ServiceBanner.tsx:85
 #: src/features/downloads/components/AddCoursePanel.tsx:124
-#: src/features/downloads/components/CoursePicker.tsx:125
-#: src/features/downloads/components/CourseUrlPaste.tsx:61
+#: src/features/downloads/components/CoursePicker.tsx:149
+#: src/features/downloads/components/CourseUrlPaste.tsx:69
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
 #: src/features/lectures/components/AssignmentDocCard.tsx:201
@@ -788,7 +788,7 @@ msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
 #: src/features/downloads/components/AddCoursePanel.tsx:120
-#: src/features/downloads/components/CourseUrlPaste.tsx:58
+#: src/features/downloads/components/CourseUrlPaste.tsx:66
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:88
@@ -850,7 +850,7 @@ msgstr "בחר את האוניברסיטה שלך למעלה כדי לחבר א�
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי להוריד מ-Moodle."
 
-#: src/features/downloads/components/CoursePicker.tsx:78
+#: src/features/downloads/components/CoursePicker.tsx:98
 msgid "Choose your university in Settings first"
 msgstr "יש לבחור תחילה אוניברסיטה בהגדרות"
 
@@ -964,7 +964,7 @@ msgstr "להתחבר בכל זאת?"
 msgid "Connect Google Drive now?"
 msgstr "לחבר את Google Drive עכשיו?"
 
-#: src/features/downloads/components/CoursePicker.tsx:80
+#: src/features/downloads/components/CoursePicker.tsx:100
 #: src/features/downloads/DownloadsView.tsx:81
 msgid "Connect your university account first"
 msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
@@ -1094,7 +1094,7 @@ msgstr "לא ניתן לטעון את ההקלטות של \"{name}\". נסה ש�
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/lectures/DocEditor.tsx:351
+#: src/features/lectures/DocEditor.tsx:371
 msgid "Couldn't load the summary"
 msgstr "לא הצלחנו לטעון את הסיכום"
 
@@ -1144,7 +1144,7 @@ msgstr "סקירת קורס"
 msgid "Course structure"
 msgstr "מבנה הקורסים"
 
-#: src/features/downloads/components/CourseUrlPaste.tsx:54
+#: src/features/downloads/components/CourseUrlPaste.tsx:58
 msgid "Course URL"
 msgstr "כתובת הקורס"
 
@@ -1214,7 +1214,7 @@ msgstr "סירוב"
 msgid "Delete {name}"
 msgstr "מחיקת {name}"
 
-#: src/features/lectures/DocEditor.tsx:250
+#: src/features/lectures/DocEditor.tsx:266
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
@@ -1371,7 +1371,7 @@ msgstr "כל שירות מטפל במידע לפי מדיניות הפרטיות
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה חדשה."
 
-#: src/features/downloads/components/CourseCheckFailure.tsx:23
+#: src/features/downloads/components/CourseCheckFailure.tsx:28
 #: src/features/lectures/components/AssignmentDocCard.tsx:167
 msgid "Edit"
 msgstr "עריכה"
@@ -1481,19 +1481,19 @@ msgstr "נכשל"
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
-#: src/features/lectures/DocEditor.tsx:209
+#: src/features/lectures/DocEditor.tsx:225
 msgid "Failed to generate PDF"
 msgstr "יצירת ה-PDF נכשלה"
 
-#: src/features/lectures/DocEditor.tsx:183
+#: src/features/lectures/DocEditor.tsx:199
 msgid "Failed to restore the original summary"
 msgstr "שחזור הסיכום המקורי נכשל"
 
-#: src/features/lectures/DocEditor.tsx:166
+#: src/features/lectures/DocEditor.tsx:182
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
-#: src/features/downloads/components/EditSourcePanel.tsx:102
+#: src/features/downloads/components/EditSourcePanel.tsx:105
 msgid "Failed to save the course's source URL"
 msgstr "שמירת כתובת המקור של הקורס נכשלה"
 
@@ -1703,7 +1703,7 @@ msgstr "יותר מדי בקשות ל-Groq. נסה שוב בעוד כמה דקו
 msgid "Hebrew University"
 msgstr "האוניברסיטה העברית"
 
-#: src/features/downloads/components/CoursePicker.tsx:106
+#: src/features/downloads/components/CoursePicker.tsx:126
 msgid "Hide past courses"
 msgstr "הסתרת קורסים קודמים"
 
@@ -1785,7 +1785,7 @@ msgstr "רק להרצאה הזו"
 msgid "Keep a copy in Google Drive"
 msgstr "עותק ב-Google Drive"
 
-#: src/features/lectures/DocEditor.tsx:306
+#: src/features/lectures/DocEditor.tsx:322
 msgid "Keep my edits"
 msgstr "שמירה על השינויים שלי"
 
@@ -1869,7 +1869,7 @@ msgstr "הרצאות שסיימת"
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
-#: src/features/lectures/DocEditor.tsx:303
+#: src/features/lectures/DocEditor.tsx:319
 msgid "Load new version"
 msgstr "טעינת הגרסה החדשה"
 
@@ -1881,7 +1881,7 @@ msgstr "טעינת התיקייה של FastStudy"
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
-#: src/features/downloads/components/CoursePicker.tsx:87
+#: src/features/downloads/components/CoursePicker.tsx:107
 msgid "Loading your courses…"
 msgstr "טוען את הקורסים שלך…"
 
@@ -1985,7 +1985,7 @@ msgstr "כבר אין חלון Chrome שמחכה לפתרון חידה."
 msgid "No courses yet."
 msgstr "עדיין אין קורסים."
 
-#: src/features/downloads/components/CoursePicker.tsx:96
+#: src/features/downloads/components/CoursePicker.tsx:116
 msgid "No current courses."
 msgstr "אין קורסים נוכחיים."
 
@@ -2037,7 +2037,7 @@ msgstr "אף חומר לא יישלח"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/DocEditor.tsx:250
+#: src/features/lectures/DocEditor.tsx:266
 msgid "No original saved"
 msgstr "אין גרסה מקורית שמורה"
 
@@ -2321,7 +2321,7 @@ msgstr "חלק מ-FastStudy לא מגיב. הפעל מחדש את השירותי
 msgid "Passcode"
 msgstr "קוד גישה"
 
-#: src/features/downloads/components/CoursePicker.tsx:122
+#: src/features/downloads/components/CoursePicker.tsx:146
 msgid "Paste a URL instead"
 msgstr "הדבקת כתובת במקום"
 
@@ -2333,7 +2333,7 @@ msgstr "הדבק קודם קישור לוידאו"
 msgid "Paste the assignment material with Ctrl+V, we already copied it for you."
 msgstr "הדבק את חומר המטלה עם Ctrl+V בחלון שייפתח, העתקנו כבר מה שצריך בשבילך."
 
-#: src/features/downloads/components/CourseUrlPaste.tsx:53
+#: src/features/downloads/components/CourseUrlPaste.tsx:57
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "הדבק את כתובת עמוד הקורס (…/course/view.php?id=…)"
 
@@ -2347,11 +2347,11 @@ msgstr "הדבק את תוכן ההרצאה עם Ctrl+V בחלון שייפתח,
 msgid "PDF"
 msgstr "PDF"
 
-#: src/features/lectures/DocEditor.tsx:244
+#: src/features/lectures/DocEditor.tsx:260
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/DocEditor.tsx:245
+#: src/features/lectures/DocEditor.tsx:261
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -2548,7 +2548,7 @@ msgstr "הפעלה מחדש"
 msgid "Restore"
 msgstr "שחזור"
 
-#: src/features/lectures/DocEditor.tsx:256
+#: src/features/lectures/DocEditor.tsx:272
 msgid "Restore original"
 msgstr "שחזור המקור"
 
@@ -2556,7 +2556,7 @@ msgstr "שחזור המקור"
 msgid "Results"
 msgstr "תוצאות"
 
-#: src/features/lectures/DocEditor.tsx:344
+#: src/features/lectures/DocEditor.tsx:364
 #: src/features/settings/SettingsView.tsx:184
 msgid "Retry"
 msgstr "ניסיון חוזר"
@@ -2603,16 +2603,16 @@ msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
 
-#: src/features/downloads/components/CourseUrlPaste.tsx:58
+#: src/features/downloads/components/CourseUrlPaste.tsx:66
 #: src/features/settings/SettingsView.tsx:355
 msgid "Save"
 msgstr "שמירה"
 
-#: src/features/lectures/DocEditor.tsx:282
+#: src/features/lectures/DocEditor.tsx:298
 msgid "Save & update PDF"
 msgstr "שמירה ועדכון PDF"
 
-#: src/features/downloads/components/CourseCheckFailure.tsx:20
+#: src/features/downloads/components/CourseCheckFailure.tsx:25
 msgid "Save anyway"
 msgstr "שמירה בכל זאת"
 
@@ -2628,7 +2628,7 @@ msgstr "שמור כדי לבחור את הקורסים."
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/downloads/components/EditSourcePanel.tsx:94
+#: src/features/downloads/components/EditSourcePanel.tsx:97
 #: src/features/settings/InitWall.tsx:336
 msgid "Saving…"
 msgstr "שומר…"
@@ -2803,8 +2803,8 @@ msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:79
-#: src/features/lectures/DocEditor.tsx:204
-#: src/features/lectures/DocEditor.tsx:263
+#: src/features/lectures/DocEditor.tsx:220
+#: src/features/lectures/DocEditor.tsx:279
 #: src/features/lectures/MainView.tsx:192
 msgid "Step already running"
 msgstr "השלב כבר רץ"
@@ -3124,7 +3124,7 @@ msgstr "האתר סירב להורדה. הקישור הזה דורש התחבר�
 msgid "The site refused this file."
 msgstr "האתר סירב לקובץ הזה."
 
-#: src/features/lectures/DocEditor.tsx:265
+#: src/features/lectures/DocEditor.tsx:281
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
@@ -3222,7 +3222,7 @@ msgstr "שירותי צד שלישי"
 msgid "This applies only to work that starts on its own: a video you drop in or a video that finishes downloading. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת או וידאו שסיים לרדת. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
-#: src/features/lectures/DocEditor.tsx:368
+#: src/features/lectures/DocEditor.tsx:389
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
 
@@ -3288,7 +3288,7 @@ msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 msgid "This source can't be downloaded automatically."
 msgstr "לא ניתן להוריד את המקור הזה אוטומטית."
 
-#: src/features/lectures/DocEditor.tsx:291
+#: src/features/lectures/DocEditor.tsx:307
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש. טען את הגרסה החדשה, או השאר את השינויים שלך ושמור אותם במקומה."
 
@@ -3376,7 +3376,7 @@ msgstr "האוניברסיטה נשמרה"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/DocEditor.tsx:333
+#: src/features/lectures/DocEditor.tsx:349
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
@@ -3396,7 +3396,7 @@ msgstr "עדכונים"
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 
-#: src/features/lectures/DocEditor.tsx:282
+#: src/features/lectures/DocEditor.tsx:298
 msgid "Updating PDF…"
 msgstr "מעדכן PDF…"
 
