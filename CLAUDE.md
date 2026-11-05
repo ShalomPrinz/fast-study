@@ -163,6 +163,10 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 - Verify empirically — start the service, curl it, kill it, quote the exact output — rather than asserting it works. For anything a user would see, run it on the `app-harness` skill's private offline stack ([`.claude/harness/`](.claude/harness/README.md)).
 - WSL interop is off, so no `.exe` runs from this shell — but the user has a Windows machine with PowerShell and Claude Code. When something needs verifying on Windows, ask them to run it there: give exact PowerShell commands or a self-contained prompt for that Claude Code, rather than leaving the Windows behavior unproven. That Claude Code is allowed to access this repo too, so when a check needs the code on the Windows side, tell the user it should work from the repo.
 
+## Cloud sessions
+
+In a cloud session (`CLAUDE_CODE_REMOTE=true`), [`docs/CLOUD.md`](docs/CLOUD.md) overrides the matching rules here, pushing included.
+
 ## Test boundaries
 
 Each fact is tested once, at the cheapest layer that can prove it — broad tests are slow and brittle, so a fact proven twice is paid for twice and fails twice:
