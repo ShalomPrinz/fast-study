@@ -240,12 +240,13 @@ def _await_consent(flow, server, redirect_app: _RedirectApp) -> None:
         if not redirect_app.request_uri:
             log.warning("Drive consent timed out with no redirect")
             return
-        # oauthlib refuses a plain-http authorization response, so the loopback URL is
-        # relabelled https for the exchange alone — what run_local_server does too.
+        # Loopback URL relabelled https for the exchange, as run_local_server does (oauthlib rejects http).
+        # Explicit timeout: requests_oauthlib defaults to none, and a stall would pin `pending`.
         flow.fetch_token(
             authorization_response=redirect_app.request_uri.replace(
                 "http://", "https://", 1
-            )
+            ),
+            timeout=30,
         )
         _write_token("drive", flow.credentials)
         _set_consent_needed(False)

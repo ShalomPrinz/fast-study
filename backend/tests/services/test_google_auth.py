@@ -222,3 +222,13 @@ def test_landed_consent_sweeps_only_drive_not_connected_records(monkeypatch):
     asyncio.run(go())
 
     assert list(runner._errors) == ["c||l2||summarize"]
+
+
+def test_token_exchange_is_bounded_and_a_failure_ends_pending(monkeypatch):
+    flow = MagicMock()
+    flow.fetch_token.side_effect = TimeoutError("stalled")
+    monkeypatch.setattr(google_auth, "_pending_url", "https://auth/")
+    redirect = MagicMock(request_uri="http://localhost/?code=x")
+    google_auth._await_consent(flow, MagicMock(), redirect)
+    assert flow.fetch_token.call_args.kwargs["timeout"] == 30
+    assert google_auth.drive_status()["pending"] is False
