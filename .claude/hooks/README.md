@@ -5,7 +5,8 @@ run at the end of every turn and every subagent, plus `extract.sh` on `SubagentS
 to keep the repo's stated invariants — "new code lands lint-clean", "never hand-format", "zero missing
 translations" — true without anyone remembering them. A fifth,
 `checkpoint.py`, is wired to `PostToolUse` — see [the context checkpoint](#the-context-checkpoint). A sixth, `waits.py`, is wired to
-`PreToolUse` — see [foreground waits](#foreground-waits).
+`PreToolUse` — see [foreground waits](#foreground-waits). A seventh, `cloud-install.sh`, is wired to
+`SessionStart` and acts only in cloud sessions — see [`docs/CLOUD.md`](../../docs/CLOUD.md).
 
 | Script | Does | Blocks the turn |
 | ------ | ---- | --------------- |
@@ -49,13 +50,13 @@ covers the same files the sweep does, so no file drifts until the next sweep rew
 inherits the marker — see [`../skills/worktree/setup.sh`](../skills/worktree/setup.sh).
 
 **Pinned formatter versions.** Prettier runs only from the repo's `node_modules/.bin`, pinned by the
-lockfile. A global prettier of another version formats some files differently. In a cloud container
-with no install, it reformatted files the session never touched. Without the repo's copy, the hook
+lockfile. A global prettier of another version formats some files differently, and once rewrote
+files a cloud session never touched. Without the repo's copy, as when a cloud install failed, the hook
 skips prettier, says so in its message, and writes no baseline marker. Each turn therefore
 repeats the ruff sweep, which takes about a second and changes nothing. Ruff is pinned the same way
 (`ruff@<version>` in `format.sh`, `lint.sh` and the root `lint` script). A bump changes all three
 together, plus [`format.yml`](../../.github/workflows/format.yml). That workflow runs both checks on
-pushes to `claude/*`, so a cloud branch that skipped prettier is caught before it merges.
+pushes to `claude/*`, so a cloud branch formatted without the pinned versions is caught before it merges.
 
 **`lint.sh` also enforces the frontend CSS layout** — three greps asserting `main.tsx` imports no
 stylesheet but `styles/tokens.css`, that `tokens.css` holds no class selector, and that a root
