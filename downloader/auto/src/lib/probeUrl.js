@@ -7,7 +7,7 @@ import { onMoodleHost } from '../moodle/site.js';
 
 // Node's fetch has no default timeout, and `server/` walks a section queue through /resolve one
 // row at a time — a hung host would stall the whole bulk run. Generous for a slow CDN.
-const PROBE_TIMEOUT_MS = 15_000;
+export const PROBE_TIMEOUT_MS = 15_000;
 
 /**
  * The cache key for a URL: everything but the fragment, which no server ever sees.

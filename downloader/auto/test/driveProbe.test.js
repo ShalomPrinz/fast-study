@@ -9,6 +9,7 @@ import {
   probeDriveFile,
 } from '../src/extractors/GoogleDriveExtractor.js';
 import { filenameFromDisposition } from '../src/lib/fileMedia.js';
+import { unreachable } from '../src/lib/errors.js';
 import { getProbedMedia } from '../src/core/probeCache.js';
 
 const ID = '1AbCdEf-GhIjKlMnOpQrStUvWxYz';
@@ -126,4 +127,48 @@ test('a forced probe ignores a cached unshared verdict', async (t) => {
   assert.equal(probe.filename, 'Lecture 1.mp4');
   assert.equal(probe.media, 'video');
   assert.equal(getProbedMedia(id), 'video');
+});
+
+// A fetch that hangs until its signal fires; the real 15s is stood in for by firing it by hand.
+test('a hung Drive fetch carries the probe timeout and maps to site_unreachable', async (t) => {
+  const real = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = real;
+  });
+  let signal;
+  globalThis.fetch = (_url, init) =>
+    new Promise((_, reject) => {
+      signal = init?.signal;
+      assert.ok(signal instanceof AbortSignal);
+      reject(new DOMException('The operation was aborted due to timeout', 'TimeoutError'));
+    });
+  const err = await probeDriveFile('https://drive.google.com/file/d/hung-id/view').catch((e) => e);
+  assert.equal(unreachable(err)?.code, 'site_unreachable');
+  assert.equal(unreachable(err).params.host, 'drive.google.com');
+  assert.equal(getProbedMedia('hung-id'), undefined);
+});
+
+test('a mid-body failure is site_unreachable and not cached as unshared', async (t) => {
+  const id = 'dropped-id';
+  const url = `https://drive.google.com/file/d/${id}/view`;
+  const real = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = real;
+  });
+  let n = 0;
+  globalThis.fetch = async () => {
+    n++;
+    const body = new ReadableStream({
+      pull() {
+        throw new TypeError('terminated');
+      },
+    });
+    return new Response(body, { headers: { 'content-type': 'text/html' } });
+  };
+  const err = await probeDriveFile(url).catch((e) => e);
+  assert.equal(unreachable(err)?.code, 'site_unreachable');
+  assert.equal(getProbedMedia(id), undefined);
+  const before = n;
+  await probeDriveFile(url).catch(() => {});
+  assert.ok(n > before); // fetched again, not answered from cache
 });
