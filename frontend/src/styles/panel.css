@@ -66,6 +66,20 @@
   color: var(--text);
 }
 
+.empty-state-action {
+  margin-top: var(--space-3);
+}
+
+/* Resting gray fill so the ghost button reads as a button on the card (as NotFoundPanel's Home does). */
+.empty-state-action .btn.btn--ghost {
+  background: var(--line-soft);
+}
+
+.empty-state-action .btn.btn--ghost:hover {
+  background: var(--line);
+  color: var(--text);
+}
+
 /* The same card reporting a failure; compound so it beats .empty-state's border in any load order. */
 .empty-state.empty-state--error {
   border-color: var(--danger);

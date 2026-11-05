@@ -50,6 +50,12 @@ file only once the run holds the lecture, so a refresh before that still shows i
 `generating` is that local cycle or the runner reporting this lecture's `pdf` step (`pdfGenerating`), so a
 reload mid-render keeps the spinner and the disabled Save; other steps in flight do not count.
 
+## A failed load
+
+A failed first read keeps `loading` true, so every edit gate holds, and the pane shows an `EmptyCard` error
+(`.edit-load-error`) with a Retry button instead of the spinner or an empty buffer. The next `summary.md` mtime
+change retries by itself; connection errors are toasted centrally.
+
 ## Changes from elsewhere
 
 Another window's save, a restore or a re-summarize changes `summary.md`'s mtime on the SSE-refreshed tree,

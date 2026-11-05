@@ -8,6 +8,7 @@ import { failureOf } from '@/shared/utils/failure'
 import ServiceError, { serviceErrorNode } from '@/shared/components/ServiceError'
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import ConfirmModal from '@/shared/components/ConfirmModal'
+import EmptyCard from '@/shared/components/EmptyCard'
 import Icon from '@/shared/components/Icon'
 import Tooltip from '@/shared/components/Tooltip'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
@@ -39,6 +40,8 @@ export default function DocEditor({ source }: { source: DocSource }) {
   const [savedContent, setSavedContent] = useState('')
   const [hasOriginal, setHasOriginal] = useState(false)
   const [loading, setLoading] = useState(true)
+  // The first read failed; `loading` stays true so every edit gate holds, and the pane shows this instead of the spinner.
+  const [loadError, setLoadError] = useState<ServiceFailure | null>(null)
   // The save cycle this view started; `generating` below also covers a render still running after a reload.
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<ServiceFailure | null>(null)
@@ -91,12 +94,21 @@ export default function DocEditor({ source }: { source: DocSource }) {
 
   // Another window's save or a re-summarize reaches us as a new summary.md mtime on the SSE-refreshed tree.
   useEffect(() => {
-    if (!loading) syncFromDisk()
+    if (loadError) void loadContent()
+    else if (!loading) syncFromDisk()
   }, [mdMtime, loading])
 
   async function loadContent() {
     setLoading(true)
-    const data = await latest(source.fetch())
+    setLoadError(null)
+    let data
+    try {
+      data = await latest(source.fetch())
+    } catch (e) {
+      // Connection errors are toasted centrally; the pane carries the failure until a retry or the next mtime change.
+      setLoadError(failureOf(e))
+      return
+    }
     if (!data) return
     setContent(data.content)
     setSavedContent(data.content)
@@ -322,7 +334,25 @@ export default function DocEditor({ source }: { source: DocSource }) {
               </span>
             )}
           </div>
-          {loading ? (
+          {loadError ? (
+            <div className="edit-loading edit-load-error">
+              <EmptyCard
+                icon="warning"
+                error
+                action={
+                  <button className="btn btn--ghost" onClick={() => void loadContent()}>
+                    <Trans>Retry</Trans>
+                  </button>
+                }
+              >
+                {loadError.code ? (
+                  <ServiceError failure={loadError} />
+                ) : (
+                  <Trans>Couldn't load the summary</Trans>
+                )}
+              </EmptyCard>
+            </div>
+          ) : loading ? (
             <div className="edit-loading">
               <div className="spinner" />
             </div>
