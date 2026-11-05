@@ -1,6 +1,14 @@
 import Tooltip from '@/shared/components/Tooltip'
 import { Trans, useLingui } from '@lingui/react/macro'
 import type { TimingStats } from '@/types'
+import { useState } from 'react'
+import { serviceErrorNode } from '@/shared/components/ServiceError'
+import { toast } from '@/services/toaster'
+import { useSettingsContext } from '@/shared/contexts/SettingsContext'
+import { restartJob } from '@/features/downloads/services/downloadServer'
+import { followRestartedJob } from '@/features/downloads/contexts/ManualDownloadsContext'
+import { restartFailure } from '@/features/downloads/utils/downloadErrors'
+import { stallLatched, stallWho } from '@/features/downloads/utils/stallNote'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ProgressBar from '@/shared/components/ProgressBar'
 import type { JobProgress, JobState } from '@/features/downloads/contexts/DownloadJobsContext'
@@ -19,12 +27,18 @@ export function JobProgressBar({
   job,
   showTitle,
   retry,
+  stallNote = true,
 }: {
   // Only what a bar shows, so a folder job — no course, no kind — renders one too.
-  job: Pick<JobState, 'title' | 'status' | 'startedAt' | 'expectedBytes' | 'operation'>
+  job: Pick<
+    JobState,
+    'id' | 'title' | 'status' | 'startedAt' | 'expectedBytes' | 'operation' | 'stalled' | 'source'
+  >
   showTitle: boolean
   // `locked` is why the button is disabled while the Moodle lock is busy, undefined when it is free.
   retry?: { onRetry: () => void; busy: boolean; locked?: string }
+  // False where the bar is too narrow for the note (the sidebar placeholder).
+  stallNote?: boolean
 }) {
   const { t } = useLingui()
   const sized = job.expectedBytes != null
@@ -78,6 +92,58 @@ export function JobProgressBar({
         stats={job.startedAt == null ? null : sized ? stats : NO_ESTIMATE}
         startedAt={job.startedAt ?? 0}
       />
+      {stallNote && stallLatched(job) && (
+        <StallNote id={job.id} title={job.title} source={job.source} />
+      )}
+    </div>
+  )
+}
+
+// A single running download that stopped receiving bytes: who is slow, and a Restart that starts it
+// over. The new id supersedes this one, so a manual card is pointed at it; rows follow by target.
+function StallNote({
+  id,
+  title,
+  source,
+}: {
+  id: string
+  title: string
+  source: JobState['source']
+}) {
+  const { t } = useLingui()
+  const { settings } = useSettingsContext()
+  const [busy, setBusy] = useState(false)
+  const who = stallWho(source, settings?.moodleSite)
+  const text =
+    who === 'lemida'
+      ? t`Lemida is responding slowly. Restart could help.`
+      : who === 'university'
+        ? t`University is responding slowly. Restart could help.`
+        : t`Server is responding slowly. Restart could help.`
+  async function restart() {
+    setBusy(true)
+    try {
+      followRestartedJob(id, await restartJob(id))
+    } catch (err) {
+      const failure = restartFailure(err)
+      if (failure) toast('error', serviceErrorNode(failure, title))
+    }
+    setBusy(false)
+  }
+  return (
+    <div className="recording-stall-note">
+      <span>{text}</span>
+      <button
+        className="btn btn--ghost recording-job-btn"
+        onClick={() => void restart()}
+        disabled={busy}
+      >
+        {busy ? (
+          <span className="recording-spinner" />
+        ) : (
+          t({ message: 'Restart', context: 'download' })
+        )}
+      </button>
     </div>
   )
 }

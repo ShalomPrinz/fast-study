@@ -112,3 +112,6 @@ export function cancelFailure(err: unknown): ServiceFailure | null {
   const failure = failureOf(err)
   return failure.code === 'job_unknown' ? null : failure
 }
+
+// A failed restart worth telling the user: the same two silent cases as a cancel.
+export const restartFailure = cancelFailure

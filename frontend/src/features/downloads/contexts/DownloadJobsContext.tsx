@@ -8,7 +8,7 @@ import {
 } from 'react'
 import type { ReactNode } from 'react'
 import type { DownloadOperation, Kind } from '@/types'
-import type { DownloadJob, FolderJob, JobsSnapshot } from '../services/downloadServer'
+import type { DownloadJob, FolderJob, JobSource, JobsSnapshot } from '../services/downloadServer'
 import { fetchJobs, subscribeJobs } from '../services/downloadServer'
 import { toastJobError } from '../utils/downloadErrors'
 import { isManualJob } from './ManualDownloadsContext'
@@ -25,6 +25,8 @@ export interface JobState {
   startedAt: number | null
   expectedBytes: number | null
   operation: DownloadOperation | null
+  stalled: boolean
+  source: JobSource
 }
 
 // A discovery row's job: adds the `ref` a per-job retry needs to re-issue `/download-item`
@@ -50,6 +52,8 @@ export function jobState(j: DownloadJob): JobState {
     startedAt: j.startedAt,
     expectedBytes: j.expectedBytes,
     operation: j.operation,
+    stalled: j.stalled,
+    source: j.source,
   }
 }
 
@@ -200,7 +204,9 @@ function sameShown(a: DownloadJob, b: DownloadJob): boolean {
     a.status === b.status &&
     a.startedAt === b.startedAt &&
     a.expectedBytes === b.expectedBytes &&
-    a.operation === b.operation
+    a.operation === b.operation &&
+    a.stalled === b.stalled &&
+    a.source === b.source
   )
 }
 

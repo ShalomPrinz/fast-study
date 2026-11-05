@@ -27,6 +27,8 @@ function job(over: Partial<DownloadJob> & Pick<DownloadJob, 'id'>): DownloadJob 
     ref: 'r1',
     expectedBytes: null,
     startedAt: null,
+    stalled: false,
+    source: 'other',
     message: null,
     ...over,
   }
@@ -84,6 +86,8 @@ describe('groupJobsByRef', () => {
       startedAt: null,
       expectedBytes: null,
       operation: null,
+      stalled: false,
+      source: 'other',
     })
     expect(jobsForRef(byRef, 'Algo', 'r2')?.[0].status).toBe('done')
     expect(jobsForRef(byRef, 'Algo', 'r3')?.[0].status).toBe('error')
@@ -258,6 +262,8 @@ function folderJob(over: Partial<FolderJob> & Pick<FolderJob, 'id'>): FolderJob 
     operation: 'download:curl',
     expectedBytes: null,
     startedAt: null,
+    stalled: false,
+    source: 'other',
     message: null,
     ...over,
   }
@@ -308,6 +314,29 @@ describe('splitJobs', () => {
     expect(folderJobs).toMatchObject([{ id: 'f', folder: '/d', fileName: 'Talk' }])
     expect(folderJobs[0]).not.toHaveProperty('course')
     expect(coursesWithActiveJobs(jobs)).toEqual(new Set(['Algo']))
+  })
+})
+
+describe('stalled and source', () => {
+  it('carries both onto app jobs, folder jobs and the display state', () => {
+    const { jobs, folderJobs } = splitJobs([
+      { ...job({ id: 'a', stalled: true, source: 'moodle' }) },
+      {
+        ...job({ id: 'f', stalled: true, source: 'other' }),
+        dest: 'folder',
+        folder: '/d',
+        fileName: 'Talk',
+      } as WireJob,
+    ])
+    expect(jobs[0]).toMatchObject({ stalled: true, source: 'moodle' })
+    expect(folderJobs[0]).toMatchObject({ stalled: true, source: 'other' })
+    expect(jobState(jobs[0])).toMatchObject({ stalled: true, source: 'moodle' })
+  })
+
+  it('breaks a course bucket identity when the flag flips', () => {
+    const first = groupJobsByCourse([job({ id: 'a' })], new Map())
+    const second = groupJobsByCourse([job({ id: 'a', stalled: true })], first)
+    expect(second.get('Algo')).not.toBe(first.get('Algo'))
   })
 })
 

@@ -69,6 +69,18 @@ re-triggers just that clip; a done clip confirms overwrite first), and the main 
 non-clickable status label so it can never overwrite the whole row. A lone job retries from the main
 button.
 
+## Stalled downloads
+
+`/jobs` carries `stalled` (running, no new bytes for 30 s; false again when bytes flow) and `source`
+(`moodle` | `other`) on every job, riding the usual ping. While `stalled`, `JobProgressBar` adds a note and a
+**Restart** under the bar (single jobs only; the server never stalls a section-run job, and the sidebar
+placeholder passes `stallNote={false}`). The wording comes from `stallWho(source, savedSite)`: Lemida for `moodle` on the BIU
+preset, "University" for `moodle` elsewhere, "Server" for `other`. Once shown, the note latches for that job id (a module-level set in `stallNote.ts`, so it survives re-renders and remounts but not a reload) and ends only when the job leaves `running`; a restart's new id starts without it until it stalls itself. No byte count is shown. Restart calls
+`POST /jobs/:id/restart` and starts over from zero; the new id supersedes the old one, which leaves `/jobs`
+at once, so a row (same target) and a folder job (same folder + name) follow with no gap, and a manual card is
+re-pointed with `followRestartedJob`. A refusal toasts through the usual path (`job_not_restartable`);
+`job_unknown` stays silent like a cancel.
+
 `RecordingRow` integrates the display and owns the overwrite confirm; `useRecordingDownload` is the
 download effect only; `RecordingJobList` is presentational.
 

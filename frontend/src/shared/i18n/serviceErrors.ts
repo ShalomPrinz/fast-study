@@ -205,6 +205,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message: "Couldn't work out where to download this from. Try again.",
   }),
   job_unknown: msg({ message: 'That download has already finished.' }),
+  job_not_restartable: msg({ message: 'That download can no longer be restarted.' }),
   folder_picker_unavailable: msg({
     message: 'Open the FastStudy app to choose a folder.',
   }),

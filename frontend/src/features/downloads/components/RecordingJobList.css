@@ -56,3 +56,13 @@
   min-width: 96px;
   padding: var(--space-1) var(--space-4);
 }
+
+/* The stalled-download note beneath a bar: the sentence and its Restart button on one line. */
+.recording-stall-note {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--fs-fine);
+  color: var(--text-3);
+}

@@ -69,6 +69,8 @@ function job(over: Partial<DownloadJob> & Pick<DownloadJob, 'id'>): DownloadJob 
     ref: 'r1',
     expectedBytes: null,
     startedAt: null,
+    stalled: false,
+    source: 'other',
     message: null,
     ...over,
   }

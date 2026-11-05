@@ -54,6 +54,8 @@ export async function downloadUrl(
   })
 }
 
+export type JobSource = 'moodle' | 'other'
+
 // Which downloader ran it — the backend keeps a timing bucket per tool. Null before the child
 // spawns and the real one is known.
 export type DownloadTool = 'curl' | 'yt-dlp' | null
@@ -71,6 +73,10 @@ export interface DownloadJob {
   ref: string | null
   expectedBytes: number | null
   startedAt: number | null
+  // Running with no new bytes for 30 s; false again when bytes flow, and always false on a section-run job.
+  stalled: boolean
+  // `moodle` for a university-list pick or a link resolved through the Moodle site; picks the stall wording.
+  source: JobSource
   // The protocol's failure fields on a terminal `error` job; null on `cancelled`, a status, not a failure (repo-root docs/ERROR-CODES.md).
   message: string | null
   code?: string | null
@@ -88,6 +94,8 @@ export interface FolderJob {
   operation: DownloadOperation | null
   expectedBytes: number | null
   startedAt: number | null
+  stalled: boolean
+  source: JobSource
   message: string | null
   code?: string | null
   params?: ErrorParams | null
@@ -135,7 +143,8 @@ export function splitJobs(wire: WireJob[]): Omit<JobsSnapshot, 'boot'> {
 }
 
 function folderJob(j: DownloadJob, folder: string, fileName: string): FolderJob {
-  const { id, status, tool, operation, expectedBytes, startedAt, message, code, params } = j
+  const { id, status, tool, operation, expectedBytes, startedAt, stalled, source } = j
+  const { message, code, params } = j
   return {
     id,
     status,
@@ -145,6 +154,8 @@ function folderJob(j: DownloadJob, folder: string, fileName: string): FolderJob 
     operation,
     expectedBytes,
     startedAt,
+    stalled,
+    source,
     message,
     code,
     params,
@@ -155,6 +166,15 @@ function folderJob(j: DownloadJob, folder: string, fileName: string): FolderJob 
 // 404 `job_unknown` when it already left `/jobs`.
 export async function cancelJob(id: string): Promise<void> {
   await downloadServer.post<void>(`/jobs/${encodeURIComponent(id)}/cancel`)
+}
+
+// Starts a job over from zero and returns the new id, which supersedes this one: the old id leaves
+// `/jobs` at once. 409 `job_not_restartable` when it already finished; 404 `job_unknown`.
+export async function restartJob(id: string): Promise<string> {
+  const { jobId } = await downloadServer.post<{ jobId: string }>(
+    `/jobs/${encodeURIComponent(id)}/restart`,
+  )
+  return jobId
 }
 
 // Saves the folder general-mode downloads land in; a 400 is `general_folder_missing`,

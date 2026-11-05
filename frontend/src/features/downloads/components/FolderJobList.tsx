@@ -113,7 +113,10 @@ function FolderJobRow({ job }: { job: FolderJob }) {
         <div className="recording-progress-list">
           <JobProgressBar
             job={{
+              id: job.id,
               title: job.fileName,
+              stalled: job.stalled,
+              source: job.source,
               status: 'running',
               startedAt: job.startedAt,
               expectedBytes: job.expectedBytes,

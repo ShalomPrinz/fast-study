@@ -6,7 +6,6 @@ import '@/styles/sidebar-tree.css'
 
 // A not-yet-existing lecture: its download's name and ETA bar. Not clickable, as its page would 404.
 export default function PlaceholderLectureItem({ job }: { job: DownloadJob }) {
-  const state = jobState(job)
   return (
     <li>
       <div
@@ -23,7 +22,7 @@ export default function PlaceholderLectureItem({ job }: { job: DownloadJob }) {
           <span className="lecture-name" dir="auto">
             {job.lecture}
           </span>
-          <JobProgressBar job={state} showTitle={false} />
+          <JobProgressBar job={jobState(job)} showTitle={false} stallNote={false} />
         </span>
       </div>
     </li>

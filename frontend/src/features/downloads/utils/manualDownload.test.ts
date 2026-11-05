@@ -21,6 +21,8 @@ function job(status: DownloadJob['status']): DownloadJob {
     ref: null,
     expectedBytes: null,
     startedAt: null,
+    stalled: false,
+    source: 'other',
     message: null,
   }
 }

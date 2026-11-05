@@ -37,6 +37,11 @@ export function retargetManualEntry(key: number, jobId: string, target: StoredTa
   publish(entries.map((e) => (e.key === key ? { ...e, jobId, target } : e)))
 }
 
+// A restarted job's new id replaces the old one on its entry, so the card keeps following it.
+export function followRestartedJob(oldId: string, newId: string) {
+  publish(entries.map((e) => (e.jobId === oldId ? { ...e, jobId: newId } : e)))
+}
+
 // Whether a job id belongs to the manual form — its failures read differently (a refused link is
 // not an expired account).
 export function isManualJob(id: string): boolean {
