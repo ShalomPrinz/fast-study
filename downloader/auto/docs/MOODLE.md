@@ -116,6 +116,8 @@ function, `errorcode`, the route (`node`/`window`) and `debuginfo` when Moodle s
 tokens blanked: it can echo a rejected param), and its message ends `(<errorcode>)` because Sentry
 sees the message, never `params`, and Moodle's own text is localized.
 
+**Time limits.** `moodleFetch` gives each attempt (the Node fetch, and each `window.fetch` inside `windowFetch`, a resend after a solve included) 60s to the response head. Then it aborts with a `TimeoutError` carrying `host`, which every route answers as `503 site_unreachable`; a hung window call also drops the page call's `busy` count, so the idle close and the gate lock are released. The timer is cleared at the head and never touches the caller's signal, so it does not cover the captcha wait (`captchaMs`, 10 min) or a streamed body after the head (a window call buffers its body inside the page call, so there the limit spans the whole body); a page call abandoned this way, or by a caller abort, drops its stored body if it finishes late). `getPublicConfig`'s own 10s wins where set. Tests shorten it with `configureWsClient({headMs})`.
+
 **Bot protection.** A site may sit behind a bot manager; BIU's `lemida.biu.ac.il` is behind Radware
 Bot Manager, and the rest of this paragraph is its behaviour ([evidence below](#bot-protection-what-was-learned)).
 When it decides a client is automated — a burst of calls is enough — `server.php` stops speaking the

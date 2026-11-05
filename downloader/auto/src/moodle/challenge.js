@@ -234,8 +234,16 @@ class ChallengeWindow {
   async _evaluate(fn, arg, signal) {
     this.busy++;
     this.touch();
+    const call = this.page.evaluate(fn, arg);
     try {
-      return await abortable(this.page.evaluate(fn, arg), signal);
+      return await abortable(call, signal);
+    } catch (err) {
+      // Abandoned: if the page call still finishes with a stored body nobody will receive, drop it.
+      call.then(
+        (head) => head?.id && this.page.evaluate(pageDrop, head.id).catch(() => {}),
+        () => {},
+      );
+      throw err;
     } finally {
       this.busy--;
       this.touch();

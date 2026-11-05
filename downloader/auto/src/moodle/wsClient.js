@@ -17,6 +17,32 @@ function wallShaped(res) {
 // browser cannot spin.
 const MAX_WAITS = 2;
 
+// Time-to-response-head per attempt; a body after the head is never cut. Tests shorten it.
+const deps = { headMs: 60_000 };
+
+/** Tests shorten the head timeout; → a function restoring the previous one. */
+export function configureWsClient(overrides) {
+  const prev = { ...deps };
+  Object.assign(deps, overrides);
+  return () => Object.assign(deps, prev);
+}
+
+// Runs one attempt `run(init)` whose signal also fires a TimeoutError if no response head arrives in
+// headMs; cleared at the head, so a body read later and the caller's captcha wait are not bounded by it.
+async function withHeadTimeout(init, run) {
+  const ctl = new AbortController();
+  const timer = setTimeout(
+    () => ctl.abort(new DOMException(`no response within ${deps.headMs / 1000}s`, 'TimeoutError')),
+    deps.headMs,
+  );
+  const signal = init.signal ? AbortSignal.any([init.signal, ctl.signal]) : ctl.signal;
+  try {
+    return await run({ ...init, signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Every Moodle request: the gate, then Node's fetch or the challenge window's page; a wall reopens
 // the window and resends through it (docs/MOODLE.md § Bot protection; `route`/`reopen` there).
 async function moodleFetch(
@@ -61,7 +87,7 @@ async function reopenOn(site, call) {
 }
 
 async function nodeFetch(url, init) {
-  const res = await fetchUpstream(url, init);
+  const res = await withHeadTimeout(init, (i) => fetchUpstream(url, i));
   ROUTE.set(res, 'node');
   return res;
 }
@@ -98,7 +124,9 @@ async function windowFetch(window, url, init, call) {
       window = now;
     }
     try {
-      res = await window.fetch(url, init, { lost: () => lostBody(window) });
+      res = await withHeadTimeout(init, (i) =>
+        window.fetch(url, i, { lost: () => lostBody(window) }),
+      );
       break;
     } catch (err) {
       if (window.gone(err)) throw windowClosed();

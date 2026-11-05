@@ -10,7 +10,12 @@ import {
   invalidToken,
   WsError,
   WsBlockedError,
+  configureWsClient,
+  openPluginfile,
 } from '../src/moodle/wsClient.js';
+import { unreachable } from '../src/lib/errors.js';
+import { openChallenge, challengeRoute } from '../src/moodle/challenge.js';
+import { fakeProfile } from './fakeProfile.js';
 import { gated } from './gated.js';
 
 // Minimal Response stand-in: callWs only reads status, content-type and json().
@@ -164,4 +169,90 @@ test('a WS fault without debuginfo logs no debuginfo', async (t) => {
   await gated(() => getCourseContents(SITE, 'tok', '1')).catch(() => {});
   const [line] = warn.mock.calls[0].arguments;
   assert.equal(line, 'moodle core_course_get_contents: invalidtoken via node');
+});
+
+// Head timeout (docs/MOODLE.md § Time limits): shortened so no test waits 60s.
+const hangs = (_url, init) =>
+  new Promise((_, reject) =>
+    init.signal?.addEventListener('abort', () => reject(init.signal.reason)),
+  );
+
+test('a Node fetch with no response head rejects as site_unreachable and frees the lock', async (t) => {
+  t.after(configureWsClient({ headMs: 20 }));
+  const real = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = real;
+  });
+  globalThis.fetch = hangs;
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.equal(unreachable(err)?.code, 'site_unreachable');
+  assert.equal(unreachable(err).params.host, 'moodle.test');
+  await gated(async () => {}); // the gate is takeable again
+});
+
+test('a hung window page call rejects as site_unreachable and drops busy', async (t) => {
+  t.after(configureWsClient({ headMs: 20 }));
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  profile.launches[0].page.evaluate = () => new Promise(() => {});
+  const win = challengeRoute(SITE);
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.equal(unreachable(err)?.code, 'site_unreachable');
+  assert.equal(win.busy, 0);
+});
+
+test('an abandoned window call whose page call finishes late has its stored body dropped', async (t) => {
+  t.after(configureWsClient({ headMs: 20 }));
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const page = profile.launches[0].page;
+  const dropped = [];
+  let finish;
+  page.evaluate = (fn, arg) => {
+    if (fn.name === 'pageDrop') return Promise.resolve(dropped.push(arg));
+    return new Promise((r) => (finish = r));
+  };
+  const win = challengeRoute(SITE);
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.equal(unreachable(err)?.code, 'site_unreachable');
+  finish({ status: 200, headers: [], id: 'late', size: 5 });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(dropped, ['late']);
+  assert.equal(win.busy, 0);
+});
+
+test('a captcha wait longer than the head timeout is not cut by it', async (t) => {
+  t.after(configureWsClient({ headMs: 20 }));
+  const profile = fakeProfile(t, { lands: 'captcha', captchaMs: 10_000 });
+  await gated(() => openChallenge(SITE));
+  const ctx = profile.launches[0];
+  ctx.page.evaluate = async (fn) =>
+    fn.name === 'pageFetch'
+      ? { status: 200, headers: [['content-type', 'application/json']], id: 'b', size: 2 }
+      : Buffer.from('[]').toString('base64');
+  const call = gated(() => getCourseContents(SITE, 'tok', '1'));
+  await new Promise((r) => setTimeout(r, 100)); // five head timeouts
+  ctx.solve(SITE);
+  assert.deepEqual(await call, []);
+});
+
+test('a body read after the head is not cut by the head timeout', async (t) => {
+  t.after(configureWsClient({ headMs: 20 }));
+  const real = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = real;
+  });
+  globalThis.fetch = async (_url, init) => {
+    const body = new ReadableStream({
+      async start(ctl) {
+        await new Promise((r) => setTimeout(r, 80));
+        if (init.signal?.aborted) return ctl.error(init.signal.reason);
+        ctl.enqueue(new TextEncoder().encode('lecture'));
+        ctl.close();
+      },
+    });
+    return new Response(body, { headers: { 'content-type': 'video/mp4' } });
+  };
+  const res = await gated(() => openPluginfile(`${SITE}/pluginfile.php/1/mod/f/1/a.mp4?token=t`));
+  assert.equal(await res.text(), 'lecture');
 });

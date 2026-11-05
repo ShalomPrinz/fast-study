@@ -447,7 +447,7 @@ to an upstream host that failed in the network (a connect timeout, a DNS miss or
 through the challenge window's page. It answers `/list`,
 `/courses`, `/courses/check` and `/resolve` (Moodle WS and Google Drive). `host` is that request's hostname,
 and `detail` is undici's cause verbatim, or through the page only Chrome's `ERR_*` code (`null` when
-none was reported); a timeout's `detail` is its own message on either route. It is not reported to Sentry, since an unreachable site is not a bug.
+none was reported); a timeout's `detail` is its own message on either route. A Moodle WS or window call with no response within 60 s times out this way (on Node the bound ends at the response head, so a streamed file body is not under it; the captcha wait never is). It is not reported to Sentry, since an unreachable site is not a bug.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`
