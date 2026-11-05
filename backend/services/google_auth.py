@@ -13,6 +13,7 @@ from wsgiref.simple_server import WSGIRequestHandler, make_server
 from wsgiref.util import request_uri
 
 import runtime
+from google.auth.exceptions import TransportError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -50,6 +51,17 @@ class DriveNotConnected(CodedError):
 
     def __init__(self, message: str):
         super().__init__(message, "drive_not_connected")
+
+
+class DriveUnreachable(CodedError):
+    """The token refresh could not reach Google — offline, not a revoked grant."""
+
+    def __init__(self, detail: str):
+        super().__init__(
+            "Could not reach Google to refresh the Drive token",
+            "drive_unreachable",
+            detail=detail,
+        )
 
 
 def _token_path(scope_key: ScopeKey) -> Path:
@@ -115,6 +127,10 @@ def get_credentials(scope_key: ScopeKey) -> Credentials:
             try:
                 creds.refresh(Request())
                 _write_token(scope_key, creds)
+            except TransportError as e:
+                # Offline says nothing about the grant, so consent_needed stays as it was.
+                log.warning("Drive token refresh unreachable: %s", e)
+                raise DriveUnreachable(str(e)) from e
             except Exception as e:
                 log.warning("Drive token refresh failed: %s", e)
                 creds = None

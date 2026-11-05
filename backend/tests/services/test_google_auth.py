@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
 import pytest
+from google.auth.exceptions import RefreshError, TransportError
 from google.oauth2.credentials import Credentials
 from services import google_auth
 from services.errors import CodedError
@@ -222,6 +223,28 @@ def test_landed_consent_sweeps_only_drive_not_connected_records(monkeypatch):
     asyncio.run(go())
 
     assert list(runner._errors) == ["c||l2||summarize"]
+
+
+def _expired_token(monkeypatch, error):
+    _token_file(expires_in=timedelta(hours=-1))
+    monkeypatch.setattr(Credentials, "refresh", MagicMock(side_effect=error))
+
+
+def test_offline_refresh_is_drive_unreachable_and_leaves_consent_flag(monkeypatch):
+    _expired_token(monkeypatch, TransportError("connection refused"))
+    with pytest.raises(google_auth.DriveUnreachable) as e:
+        google_auth.get_credentials("drive")
+    assert e.value.code == "drive_unreachable"
+    assert e.value.params == {"detail": "connection refused"}
+    assert google_auth.drive_status()["consent_needed"] is False
+
+
+def test_revoked_refresh_is_drive_not_connected_and_sets_consent_flag(monkeypatch):
+    _expired_token(monkeypatch, RefreshError("invalid_grant"))
+    with pytest.raises(google_auth.DriveNotConnected) as e:
+        google_auth.get_credentials("drive")
+    assert e.value.code == "drive_not_connected"
+    assert google_auth.drive_status()["consent_needed"] is True
 
 
 def test_token_exchange_is_bounded_and_a_failure_ends_pending(monkeypatch):

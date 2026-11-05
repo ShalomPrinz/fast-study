@@ -156,6 +156,7 @@ failures it was given, so a refusal the user can act on is caught by the route i
 | `pipeline/to_pdf.py`                    | `internal_missing_input`    | `file`                          | dev   |
 | `pipeline/upload_to_drive.py`           | `drive_upload_failed`       | `detail`                        | user  |
 | `services/google_auth.py`               | `drive_not_connected`       | —                               | user  |
+| `services/google_auth.py`               | `drive_unreachable`         | `detail`                        | user  |
 | `pipeline/upload_to_drive.py`           | `drive_folder_not_configured`| —                              | user  |
 | `services/google_auth.py`               | `internal_unknown_scope`    | `scope`                         | dev   |
 | `pipeline/runner.py` fold               | `unknown_error`             | —                               | dev   |
@@ -190,6 +191,9 @@ connection); `detail` is the transport's own text. It can also end an assignment
 `model_fallback` is not a failure but a notice: with `GEMINI_AUTO_FALLBACK` on, a 503 retried on the
 next model raises it in the `notices` list of `GET /status` and of the overview status, `from`/`to`
 naming the models. It toasts once per `id` and never lands in `errors`.
+`drive_unreachable` is a Drive token refresh that never reached Google (a `TransportError`: offline,
+DNS, refused connection); `detail` is the transport's own text. Unlike `drive_not_connected` it leaves
+`consent_needed` alone, since being offline says nothing about the grant, and it is not auto-retried.
 
 ### `backend/` — course overview
 
