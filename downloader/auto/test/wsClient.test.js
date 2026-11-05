@@ -255,21 +255,12 @@ test('an abandoned window call whose page call finishes late has its stored body
   assert.equal(win.busy, 0);
 });
 
-test('an attempt removes its listener from the caller signal', async (t) => {
-  const listeners = new Set();
-  const signal = Object.assign(new EventTarget(), { aborted: false, reason: undefined });
-  const add = signal.addEventListener.bind(signal);
-  const remove = signal.removeEventListener.bind(signal);
-  signal.addEventListener = (type, fn, o) => (listeners.add(fn), add(type, fn, o));
-  signal.removeEventListener = (type, fn, o) => (listeners.delete(fn), remove(type, fn, o));
-  stubGlobalFetch(t, async () => new Response('x', { headers: { 'content-type': 'video/mp4' } }));
-  for (let i = 0; i < 3; i++) {
-    const res = await gated(() =>
-      openPluginfile(`${SITE}/pluginfile.php/1/mod/f/1/a.mp4?token=t`, { signal }),
-    );
-    await res.text();
-  }
-  assert.equal(listeners.size, 0);
+test('the caller signal still aborts a Node body read after the head', async (t) => {
+  stubGlobalFetch(t, trickle(500, 1));
+  const ctl = new AbortController();
+  const res = await gated(() => openPluginfile(PLUGIN, { signal: ctl.signal }));
+  setTimeout(() => ctl.abort(new Error('hung up')), 10);
+  await assert.rejects(res.text(), /hung up/);
 });
 
 test('a captcha wait longer than the head timeout is not cut by it', async (t) => {
@@ -349,16 +340,72 @@ test('a window body trickling slower than the stall window in total is not cut',
   assert.equal(challengeRoute(SITE).busy, 0);
 });
 
-test('a WS call whose page never answers rejects via the backstop and drops busy', async (t) => {
+test('a WS call whose page never answers closes the window before it frees busy', async (t) => {
   t.after(configureWsClient({ headMs: 20, stallMs: 20 }));
   const profile = fakeProfile(t);
   await gated(() => openChallenge(SITE));
-  profile.launches[0].page.evaluate = () => new Promise(() => {});
+  const ctx = profile.launches[0];
+  ctx.page.evaluate = () => new Promise(() => {});
   const win = challengeRoute(SITE);
   const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
-  assert.equal(unreachable(err)?.code, 'site_unreachable');
-  assert.equal(unreachable(err).params.host, 'moodle.test');
+  assert.equal(ctx.closed, true);
+  assert.equal(err.name, 'TimeoutError');
+  assert.equal(err.host, new URL(SITE).hostname);
+  assert.equal(blocked(err), false);
   assert.equal(win.busy, 0);
+});
+
+test('a backstop close that rejects the pending evaluate first is still site_unreachable', async (t) => {
+  t.after(configureWsClient({ headMs: 20, stallMs: 20 }));
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const ctx = profile.launches[0];
+  const close = ctx.close.bind(ctx);
+  let rejectCall;
+  ctx.page.evaluate = () => new Promise((_, reject) => (rejectCall = reject));
+  ctx.close = async () => {
+    rejectCall(new Error('page.evaluate: Target page, context or browser has been closed'));
+    return close();
+  };
+  const win = challengeRoute(SITE);
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.equal(ctx.closed, true);
+  assert.equal(err.name, 'TimeoutError');
+  assert.equal(err.host, new URL(SITE).hostname);
+  assert.equal(blocked(err), false);
+  assert.equal(win.busy, 0);
+});
+
+test('a page call that resolves after the backstop fired is discarded as site_unreachable', async (t) => {
+  t.after(configureWsClient({ headMs: 20, stallMs: 20 }));
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const ctx = profile.launches[0];
+  const close = ctx.close.bind(ctx);
+  let resolveCall;
+  ctx.page.evaluate = () => new Promise((resolve) => (resolveCall = resolve));
+  ctx.close = async () => {
+    resolveCall({ status: 200, headers: {}, size: 2, id: 1 });
+    return close();
+  };
+  const win = challengeRoute(SITE);
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.equal(err.name, 'TimeoutError');
+  assert.equal(err.host, new URL(SITE).hostname);
+  assert.equal(win.busy, 0);
+});
+
+test('the pluginfile preflight has no backstop', async (t) => {
+  t.after(configureWsClient({ headMs: 20, stallMs: 20 }));
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  let finish;
+  profile.launches[0].page.evaluate = () => new Promise((r) => (finish = r));
+  const check = gated(() => assertPluginfileReadable(PLUGIN));
+  await new Promise((r) => setTimeout(r, 120));
+  assert.equal(profile.launches[0].closed, false);
+  finish({ status: 206, headers: [['content-range', 'bytes 0-0/5']], id: null, size: 0 });
+  assert.equal(await check, 5);
 });
 
 test('a file open is not under the backstop', async (t) => {

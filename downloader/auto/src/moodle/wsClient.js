@@ -28,23 +28,20 @@ export function configureWsClient(overrides) {
   return () => Object.assign(deps, prev);
 }
 
-// Runs one attempt `run(init)` whose signal also fires a TimeoutError if no head arrives in headMs
-// (cleared then). A plain controller, not AbortSignal.any, so the caller listener is removed per attempt.
+// Runs one attempt `run(init)` that also aborts with a TimeoutError if no head arrives in headMs;
+// the timer ends with the head, so only the caller's signal reaches the body read.
 async function withHeadTimeout(init, run) {
-  const ctl = new AbortController();
+  const headCtl = new AbortController();
   const timer = setTimeout(
-    () => ctl.abort(new DOMException(`no response within ${deps.headMs / 1000}s`, 'TimeoutError')),
+    () =>
+      headCtl.abort(new DOMException(`no response within ${deps.headMs / 1000}s`, 'TimeoutError')),
     deps.headMs,
   );
-  const caller = init.signal;
-  const forward = () => ctl.abort(caller.reason);
-  if (caller?.aborted) forward();
-  else caller?.addEventListener('abort', forward, { once: true });
+  const signal = init.signal ? AbortSignal.any([init.signal, headCtl.signal]) : headCtl.signal;
   try {
-    return await run({ ...init, signal: ctl.signal });
+    return await run({ ...init, signal });
   } finally {
     clearTimeout(timer);
-    caller?.removeEventListener('abort', forward);
   }
 }
 
@@ -135,7 +132,7 @@ async function windowFetch(window, url, init, call) {
     }
     try {
       // The page times the head and any body stall itself; a call with no file body to stream also gets
-      // a Node-side backstop for a page that never answers (a file open stays unbounded there).
+      // a Node-side backstop for a page that never answers (a file open or preflight stays unbounded there).
       res = await window.fetch(url, init, {
         lost: () => lostBody(window),
         headMs: deps.headMs,
@@ -144,6 +141,7 @@ async function windowFetch(window, url, init, call) {
       });
       break;
     } catch (err) {
+      if (err?.backstop) throw err; // a hung page, not a closed window: site_unreachable
       if (window.gone(err)) throw windowClosed();
       if (window.onSite()) throw err;
       if (resent) throw new WsBlockedError('the challenge window left the site', ROUTED);
@@ -517,7 +515,7 @@ export async function assertPluginfileReadable(url) {
   const res = await moodleFetch(
     url,
     { headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT } },
-    { label: 'pluginfile: ' },
+    { label: 'pluginfile: ', stream: true },
   );
   const fault = await pluginfileFault(res, url);
   await res.body?.cancel().catch(() => {});
