@@ -4,9 +4,10 @@ import * as Sentry from '@sentry/node';
 import express from 'express';
 import cors from 'cors';
 import { ALLOWED_ORIGINS, AUTODL_PORT } from './src/lib/config.js';
-import { UnsupportedError, failureOf } from './src/lib/errors.js';
+import { UnsupportedError, failureOf, networkTags } from './src/lib/errors.js';
 import { serve, requireSecret } from '@faststudy/runtime';
 import { checkTools } from '@faststudy/tools';
+import { startProxyDetection } from './src/lib/proxy.js';
 import { closeAllSessions } from './src/browser/browserSession.js';
 import { closeChallenge } from './src/moodle/challenge.js';
 import {
@@ -77,6 +78,13 @@ app.post('/close', handleClose);
 app.head('/moodle/file/:id', handleMoodleFileHead);
 app.get('/moodle/file/:id', handleMoodleFile);
 
+// Tags a network failure's event (proxy, route) before Sentry captures it; adds no capture of its own.
+app.use((err, req, res, next) => {
+  const tags = networkTags(err);
+  if (tags) Sentry.getIsolationScope().setTags(tags);
+  next(err);
+});
+
 // Captures a 5xx-bound error, then hands it on unchanged to the backstop below; a no-op without a DSN.
 Sentry.setupExpressErrorHandler(app);
 
@@ -96,6 +104,8 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
     Promise.allSettled([closeAllSessions(), closeChallenge()]).finally(() => process.exit(0));
   });
 }
+
+startProxyDetection();
 
 toolProbe.then((status) => {
   // A probe answers 'ok' or a {code, state, params} record; the boot line wants its state.

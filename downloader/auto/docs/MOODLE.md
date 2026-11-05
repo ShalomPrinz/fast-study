@@ -476,3 +476,7 @@ An uncommitted attempt that routed every WS call through a Chrome page parked on
   pipeline ever wants them over Whisper.
 - **Whether `context.newPage()` flashes a visible window** in headed persistent Chrome is unverified on
   Windows. Open it off-screen explicitly if users see one.
+
+## Troubleshooting: split routes behind a proxy
+
+Chromium (the challenge window, the zoom browser) follows the OS/env proxy; Node `fetch` (`fetchUpstream`, `wsClient`'s `nodeFetch`, `probeUrl.js`, the core HEAD) does not. On a proxy-only network Node-route calls fail `503 site_unreachable` while window-route calls succeed. `site_unreachable` carries `proxy` (`env` or `system`) when `src/lib/proxy.js` finds one: `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY` in env, else on Windows `reg query` of the per-user Internet Settings key (`ProxyEnable=1` or an `AutoConfigURL`; `reg.exe` ships with Windows), read once by an async `execFile` at boot (stderr discarded; a failure or timeout means no system proxy, not retried). Until it settles the answer is env-only, so no request ever blocks on it. Routing is unchanged.
