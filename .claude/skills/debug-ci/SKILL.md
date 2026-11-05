@@ -18,7 +18,8 @@ python3 <repo-root>/.claude/skills/debug-ci/ci.py runs [--workflow W] [--limit N
 One line per recent run: id, workflow, status/conclusion, branch, event, age, sha, subject. `*` marks
 a run whose head contains REF (default `HEAD`), so a rebased-then-pushed commit still counts; `?`
 means that sha is not fetched locally. It says so plainly when no listed run built REF. `--workflow`
-is a case-insensitive substring of the workflow name (`CI`, `Build and smoke-test`, `Publish`).
+is a case-insensitive substring of the workflow name (`CI`, `Build and smoke-test`, `Smoke-test a build`,
+`Publish`); `smoke` matches both smoke workflows.
 
 ### `run` — one run, by state
 

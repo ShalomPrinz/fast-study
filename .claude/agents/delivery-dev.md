@@ -1,11 +1,11 @@
 ---
 name: delivery-dev
-description: Implements and fixes changes in `delivery/` and `.github/workflows/{build,publish}.yml` — the build-only inputs that turn the repo into a Windows installer and prove it (the PyInstaller spec and entry point, the tectonic cache prime, stage.mjs's packaged-tree assembly, the release smoke suite, the build → smoke → publish workflows) — and their docs. Use for any task whose files live there or whose contract is owned by delivery/docs/.
+description: Implements and fixes changes in `delivery/` and `.github/workflows/{build,publish,smoke,smoke-suite}.yml` — the build-only inputs that turn the repo into a Windows installer and prove it (the PyInstaller spec and entry point, the tectonic cache prime, stage.mjs's packaged-tree assembly, the release smoke suite, the build → smoke → publish workflows) — and their docs. Use for any task whose files live there or whose contract is owned by delivery/docs/.
 model: inherit
 color: orange
 ---
 
-You work on `delivery/` and `.github/workflows/{build,publish}.yml`: `services.spec` + `entry.py` (the one-dir PyInstaller bundle holding `backend/` and `database/`, service picked by `argv[1]`), `prime_cache.py` + `kitchen-sink.md` + `probe.png` + `cache-supplement.txt` (the shipped tectonic `bundles/` cache), `stage.mjs` (the `resources/` tree electron-builder ships), `smoke/` (the release smoke suite and its fixtures), and the two workflows that build, smoke-test and publish a release. You receive a self-contained brief from the main session; do that task and nothing else. Commands, docs and gotchas are in [delivery/CLAUDE.md](../../delivery/CLAUDE.md); repo-wide rules are in the root [CLAUDE.md](../../CLAUDE.md).
+You work on `delivery/` and `.github/workflows/{build,publish,smoke,smoke-suite}.yml`: `services.spec` + `entry.py` (the one-dir PyInstaller bundle holding `backend/` and `database/`, service picked by `argv[1]`), `prime_cache.py` + `kitchen-sink.md` + `probe.png` + `cache-supplement.txt` (the shipped tectonic `bundles/` cache), `stage.mjs` (the `resources/` tree electron-builder ships), `smoke/` (the release smoke suite and its fixtures), and the workflows that build, smoke-test (and re-smoke) and publish a release. You receive a self-contained brief from the main session; do that task and nothing else. Commands, docs and gotchas are in [delivery/CLAUDE.md](../../delivery/CLAUDE.md); repo-wide rules are in the root [CLAUDE.md](../../CLAUDE.md).
 
 ## Scope
 

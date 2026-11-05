@@ -1,0 +1,99 @@
+name: Smoke suite
+
+# The release smoke job, once: build.yml calls it on its own run's installer, smoke.yml on an
+# earlier build.yml run's, after its guard has proven that run built the same app.
+on:
+  workflow_call:
+    inputs:
+      run-id:
+        description: The build.yml run whose installers to test; empty tests the calling run's.
+        type: string
+        default: ''
+
+jobs:
+  # A fresh runner, so the install is a first install. It installs and tests the uploaded artifact,
+  # which is byte for byte what publish.yml releases — and only a run this job passed counts as green.
+  smoke:
+    runs-on: windows-latest
+    timeout-minutes: 150
+    # actions: read is for the cross-run download only; a caller must grant it as well.
+    permissions:
+      actions: read
+      contents: read
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # A token makes download-artifact read run-id's artifacts; without one it reads this run's.
+      - uses: actions/download-artifact@v4
+        with:
+          name: installer
+          path: ${{ runner.temp }}/installer
+          run-id: ${{ inputs.run-id || github.run_id }}
+          github-token: ${{ inputs.run-id != '' && github.token || '' }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: installer-previous
+          path: ${{ runner.temp }}/installer-previous
+          run-id: ${{ inputs.run-id || github.run_id }}
+          github-token: ${{ inputs.run-id != '' && github.token || '' }}
+
+      # The suite's own dependencies, locked in delivery/smoke; none of it reaches resources/.
+      - name: Install the smoke suite
+        working-directory: delivery/smoke
+        run: npm ci --no-audit --no-fund
+
+      - name: Run the smoke suite
+        working-directory: delivery/smoke
+        env:
+          SMOKE_CANDIDATE_DIR: ${{ runner.temp }}/installer
+          SMOKE_PREVIOUS_DIR: ${{ runner.temp }}/installer-previous
+        run: npx playwright test
+
+      # A smoke-only run's file would name this run and commit, not the installer's build, so it is dropped.
+      - name: Drop a smoke-only run's boot timing
+        if: ${{ !cancelled() && inputs.run-id != '' }}
+        run: rm -f delivery/smoke/test-results/boot-timing.json
+
+      # The two boots the suite timed; publish.yml attaches it to the Release. Uploaded whatever the
+      # outcome, so a failed run's partial timings are readable too; kept as long as the installer.
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && inputs.run-id == '' }}
+        with:
+          name: boot-timing
+          path: delivery/smoke/test-results/boot-timing.json
+          if-no-files-found: ignore
+          retention-days: 90
+
+      # The suite copies each launch's launch.log as it quits; this catches the one a crash left.
+      - name: Collect the state root's logs
+        if: failure()
+        shell: pwsh
+        run: Copy-Item "$env:LOCALAPPDATA\FastStudy\logs" delivery/smoke/test-results/state-logs -Recurse -ErrorAction SilentlyContinue
+
+      # Two artifacts, because the traces are ~11MB of the ~11MB and the text is what gets read.
+      # Everything but the traces, so a new diagnostic file rides along without a pattern change.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-logs
+          path: |
+            delivery/smoke/test-results/
+            !delivery/smoke/test-results/traces/**
+
+      # Screenshots and DOM snapshots for a failed UI assertion; absent when the failure preceded
+      # the first launch, which is a normal outcome and not worth an annotation.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-traces
+          path: delivery/smoke/test-results/traces/
+          if-no-files-found: ignore

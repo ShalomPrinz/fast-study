@@ -18,7 +18,8 @@ OV/EV certificate avoids it. The LaTeX cache ships with tectonic's prebuilt form
 
 ## Build, test, publish
 
-Two workflows, neither taking an input.
+Two workflows, neither taking an input, and a third that only re-tests
+([re-running smoke](#re-running-smoke)).
 
 - **`build.yml`** runs on every push to `main` or a `claude/**` branch — so a cloud session, which
   can push only its own branch and has no `gh`, still gets a full build and smoke run — and on
@@ -28,7 +29,8 @@ Two workflows, neither taking an input.
   `installer` artifact (90 days), plus `installer-previous`, the same staged tree at a lower version
   with its own `latest.yml`, which exists only for the smoke suite's update check and never leaves
   Actions. It fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
-  smoke job rewrites that file, so it cannot check it. The smoke job installs the artifact on a fresh runner and runs
+  smoke job rewrites that file, so it cannot check it. The smoke job — `smoke-suite.yml`, called as
+  `smoke / smoke` — installs the artifact on a fresh runner and runs
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
   the outcome `boot-timing` (90 days). The run is
@@ -52,6 +54,20 @@ Nothing reaches installed copies until `publish.yml` runs; `latest.yml` is what 
 the launcher's side is [`electron/docs/UPDATES.md`](../../electron/docs/UPDATES.md). An expired
 `installer` artifact makes `publish.yml` fail naming the commit; dispatching `build.yml` on it builds
 and smoke-tests a fresh one.
+
+### Re-running smoke
+
+`smoke.yml`, dispatch only, runs `smoke-suite.yml` at the dispatched ref against the installers of
+the `build.yml` run named by its required `run-id`, so a fix to `smoke/` is retried without the
+~8 minute build. A guard job first refuses, naming the fix, a run that is not `build.yml`'s, whose
+`build` job did not succeed (the run itself may have failed in smoke), or whose `installer` or
+`installer-previous` has expired — and any run whose commit's tree differs from the ref's outside
+`delivery/smoke/`, listing the differing paths. Tree equality, not ancestry: nothing under
+`delivery/smoke/` reaches the installer, so only then is the old installer the app this ref builds;
+any other change means dispatching `build.yml` instead. A green `smoke.yml` run publishes nothing:
+`publish.yml` reads `build.yml` runs only, so a release still needs a green `build.yml` run for its
+commit. It uploads no `boot-timing`, since its file would name its own run and commit rather than
+the installer's build.
 
 `.claude/skills/debug-ci/` reads both smoke artifacts by name and inner layout from outside
 `delivery/`; nothing here fails when a rename breaks it, so change it in the same pass.

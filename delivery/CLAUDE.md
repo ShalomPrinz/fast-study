@@ -2,7 +2,8 @@
 
 Build-time inputs that turn the repo into a Windows installer and prove it. Nothing here ships or
 runs at runtime, and no dev command touches it. Owned by `delivery-dev`, together with
-`.github/workflows/{build,publish}.yml`.
+`.github/workflows/{build,publish,smoke,smoke-suite}.yml`: `smoke-suite.yml` is the smoke job both
+`build.yml` and the dispatch-only `smoke.yml` call, the latter on an earlier run's installers.
 
 | File                                | What it is                                                                   |
 | ----------------------------------- | ---------------------------------------------------------------------------- |

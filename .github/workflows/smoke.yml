@@ -1,0 +1,84 @@
+name: Smoke-test a build
+
+# Manual only: re-runs the smoke suite at the dispatched ref against an earlier build.yml run's
+# installers, so a fix to delivery/smoke/ is retried without a rebuild. It never makes a run green
+# for publish.yml, which reads build.yml runs only — delivery/docs/RELEASE.md#re-running-smoke.
+on:
+  workflow_dispatch:
+    inputs:
+      run-id:
+        description: The build.yml run whose installers to test (its id, from the run's URL)
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Refuses any run whose installer is not the app this ref's code would build.
+  guard:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ inputs.run-id }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the build run
+        run: |
+          if ! [[ $RUN_ID =~ ^[0-9]+$ ]]; then
+            echo "::error::run-id '$RUN_ID' is not a run id; pass the number from a build.yml run's URL"
+            exit 1
+          fi
+          run=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID") || {
+            echo "::error::no run $RUN_ID in $GH_REPO; pass the id of a build.yml run"
+            exit 1
+          }
+          path=$(jq -r .path <<< "$run")
+          if [ "${path%%@*}" != .github/workflows/build.yml ]; then
+            echo "::error::run $RUN_ID is a run of $path, not build.yml; pass the id of a build.yml run"
+            exit 1
+          fi
+          # The build job alone, since the run that needs a retry usually failed in smoke.
+          build=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.name == "build")][0].conclusion // empty')
+          if [ "$build" != success ]; then
+            echo "::error::run $RUN_ID's build job is ${build:-missing}, not success; dispatch build.yml on this ref instead"
+            exit 1
+          fi
+          live=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/artifacts" --jq '[.artifacts[] | select(.expired | not) | .name]')
+          for name in installer installer-previous; do
+            if ! jq -e --arg n "$name" 'index($n) != null' <<< "$live" > /dev/null; then
+              echo "::error::run $RUN_ID has no unexpired $name artifact; dispatch build.yml on this ref instead"
+              exit 1
+            fi
+          done
+          echo "HEAD_SHA=$(jq -r .head_sha <<< "$run")" >> "$GITHUB_ENV"
+
+      # Same app means the same tree outside delivery/smoke/, nothing of which reaches the installer.
+      - name: Check the installer was built from this ref's app
+        run: |
+          if ! git fetch --no-tags --depth=1 origin "$HEAD_SHA"; then
+            echo "::error::cannot fetch run $RUN_ID's commit $HEAD_SHA; dispatch build.yml on this ref instead"
+            exit 1
+          fi
+          if ! git diff --quiet "$HEAD_SHA" "$GITHUB_SHA" -- . ':!delivery/smoke'; then
+            echo "::error::run $RUN_ID built $HEAD_SHA, which differs from $GITHUB_SHA outside delivery/smoke/; dispatch build.yml on this ref instead"
+            git diff --name-only "$HEAD_SHA" "$GITHUB_SHA" -- . ':!delivery/smoke'
+            exit 1
+          fi
+          echo "run $RUN_ID built $HEAD_SHA, the same app as $GITHUB_SHA"
+
+  smoke:
+    needs: guard
+    permissions:
+      actions: read
+      contents: read
+    uses: ./.github/workflows/smoke-suite.yml
+    with:
+      run-id: ${{ inputs.run-id }}
