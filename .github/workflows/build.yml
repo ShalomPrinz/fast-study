@@ -1,12 +1,11 @@
 name: Build and smoke-test
 
-# Every push to main, plus a dispatch to rebuild a commit whose artifact expired or whose version
-# was taken. Builds the installer once and runs the release smoke suite against exactly those bytes
-# on a fresh runner; nothing here publishes — publish.yml takes the `installer` artifact of this
-# workflow's green run for its commit.
+# Every push to main or a claude/** branch, plus a dispatch to rebuild a commit.
+# Builds the installer once and smoke-tests those exact bytes on a fresh runner; it never publishes.
+# publish.yml takes the newest green run's `installer` for the release commit, whatever its branch.
 on:
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
   workflow_dispatch:
 
 # Only the newest push on a ref builds; a superseded run is cancelled rather than queued.
@@ -182,14 +181,14 @@ jobs:
           echo "bootloader run.exe: ours $ours, stock $stock"
           [ "$ours" != "$stock" ] || { echo "::error::faststudy-services.exe would carry PyInstaller's stock bootloader"; exit 1; }
 
-      # With the token, vite uploads hidden source maps to release faststudy@<version> and deletes
-      # them; without it (a fork) no plugin loads and no DSN is baked, so the renderer reports nothing.
+      # With the token, vite uploads hidden source maps to faststudy@<version>, then deletes them.
+      # Only main gets the token: a branch computes the version main's next build will use.
       # Built once: the previous-version installer reuses this bundle, so there is one upload.
       - name: Build the frontend
         working-directory: frontend
         env:
           FASTSTUDY_VERSION: ${{ steps.version.outputs.version }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           VITE_SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
         run: npm ci && npm run build

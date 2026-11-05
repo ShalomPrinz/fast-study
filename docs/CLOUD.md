@@ -12,6 +12,8 @@ not pushed is lost when the session ends. The rules below override the matching 
 - Push every commit to that branch: `git push -u origin claude/<task-slug>`. Commits still follow the
   [`git-commit`](../.claude/skills/git-commit/SKILL.md) skill, `reviewer` included.
 - Never push to `main`, never force-push, and never push any other branch.
+- Each push to that branch runs `build.yml` (build + smoke). With no `gh`, read the results from the public
+  API (`curl -s "https://api.github.com/repos/ShalomPrinz/fast-study/actions/runs?branch=<branch>"`); logs need auth.
 
 ## Screenshots
 

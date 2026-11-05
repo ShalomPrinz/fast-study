@@ -20,7 +20,9 @@ OV/EV certificate avoids it. The LaTeX cache ships with tectonic's prebuilt form
 
 Two workflows, neither taking an input.
 
-- **`build.yml`** runs on every push to `main` — a superseded run is cancelled — and on dispatch. It
+- **`build.yml`** runs on every push to `main` or a `claude/**` branch — so a cloud session, which
+  can push only its own branch and has no `gh`, still gets a full build and smoke run — and on
+  dispatch; a superseded run on the same ref is cancelled. It
   builds with `--publish never` and uploads the installer, its `.blockmap`, `latest.yml` and
   `extension-version.txt` ([the extension version](#the-extension-version)) as the
   `installer` artifact (90 days), plus `installer-previous`, the same staged tree at a lower version
@@ -30,7 +32,10 @@ Two workflows, neither taking an input.
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
   the outcome `boot-timing` (90 days). The run is
-  green only when both jobs pass. It writes nothing to Releases.
+  green only when both jobs pass. It writes nothing to Releases. A branch run cannot reach a
+  Release on its own: publish.yml looks runs up by commit, not branch, so a branch run's artifact is
+  released only when its commit becomes the release commit and it is that commit's newest green run. Its bytes then differ from main's in
+  one way: built without `SENTRY_AUTH_TOKEN`, its renderer carries no uploaded source maps.
 - **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It first walks back
   over `github-actions[bot]` commits that touch only `site/img/` — `pages.yml`'s screenshot refresh,
   which no build runs on — to the first other commit, and releases that one. It takes the
@@ -110,7 +115,9 @@ Two optional secrets; a fork or a build without them still produces an installer
 - **`SENTRY_AUTH_TOKEN`** (an org token, so org and region route themselves; `vars.SENTRY_ORG` is
   optional) makes the frontend build upload hidden source maps to `faststudy@<version>`, with
   `FASTSTUDY_VERSION` set from the computed version. The frontend builds once, so the
-  previous-version installer reuses the same bundle and there is one upload per run.
+  previous-version installer reuses the same bundle and there is one upload per run. Only `main`'s
+  runs get the token: a branch computes the version `main`'s next build will, so its maps would
+  land in that release; without it vite loads no plugin and emits no maps, and the DSN is still baked.
 
 The smoke run's installs carry the DSN, but the per-program firewall blocks every event they send.
 
