@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {
   assertPluginfileReadable,
   getCourseContents,
+  getVideoBlockEntries,
   blocked,
   invalidToken,
   WsError,
@@ -393,6 +394,65 @@ test('a page call that resolves after the backstop fired is discarded as site_un
   assert.equal(err.name, 'TimeoutError');
   assert.equal(err.host, new URL(SITE).hostname);
   assert.equal(win.busy, 0);
+});
+
+test('a body pull that never answers closes the window and is site_unreachable', async (t) => {
+  t.after(configureWsClient({ headMs: 20, stallMs: 20 }));
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const ctx = profile.launches[0];
+  ctx.page.evaluate = (fn) =>
+    fn.name === 'pageChunk'
+      ? new Promise(() => {})
+      : Promise.resolve({
+          status: 200,
+          headers: [['content-type', 'application/json']],
+          size: 2,
+          id: 1,
+        });
+  const win = challengeRoute(SITE);
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.equal(ctx.closed, true);
+  assert.equal(err.name, 'TimeoutError');
+  assert.equal(err.host, new URL(SITE).hostname);
+  assert.equal(blocked(err), false);
+  assert.equal(win.busy, 0);
+});
+
+test('a hung body pull in the video-list wall check is site_unreachable, not a wall', async (t) => {
+  t.after(configureWsClient({ headMs: 20, stallMs: 20 }));
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const ctx = profile.launches[0];
+  ctx.page.evaluate = (fn) =>
+    fn.name === 'pageChunk'
+      ? new Promise(() => {})
+      : Promise.resolve({
+          status: 200,
+          headers: [['content-type', 'application/json']],
+          size: 2,
+          id: 1,
+        });
+  const win = challengeRoute(SITE);
+  const err = await gated(() => getVideoBlockEntries(SITE, '1')).catch((e) => e);
+  assert.equal(ctx.closed, true);
+  assert.equal(err.name, 'TimeoutError');
+  assert.equal(err.host, new URL(SITE).hostname);
+  assert.equal(blocked(err), false);
+  assert.equal(win.busy, 0);
+});
+
+test('aborting the preflight signal frees a hung page call', async (t) => {
+  t.after(configureWsClient({ headMs: 20, stallMs: 20 }));
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  profile.launches[0].page.evaluate = () => new Promise(() => {});
+  const gone = new AbortController();
+  const check = gated(() => assertPluginfileReadable(PLUGIN, gone.signal)).catch((e) => e);
+  await new Promise((r) => setTimeout(r, 20));
+  gone.abort();
+  assert.equal((await check).name, 'AbortError');
+  assert.equal(challengeRoute(SITE).busy, 0);
 });
 
 test('the pluginfile preflight has no backstop', async (t) => {

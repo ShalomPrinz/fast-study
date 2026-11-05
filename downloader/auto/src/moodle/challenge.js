@@ -285,7 +285,10 @@ class ChallengeWindow {
     }
     if (NULL_BODY.has(head.status)) return new Response(null, { status: head.status, headers });
     headers.set('content-length', String(head.size));
-    return new Response(this._body(head, init.signal, lost), { status: head.status, headers });
+    return new Response(this._body(head, init.signal, lost, backstopMs, new URL(href).hostname), {
+      status: head.status,
+      headers,
+    });
   }
 
   // One page call, counted as activity from start to end so the idle close never cuts it off.
@@ -336,7 +339,8 @@ class ChallengeWindow {
     }
   }
 
-  _body({ id, size }, signal, lost) {
+  // A backstop hit on a pull errors the body with the tagged TimeoutError, never `lost()`.
+  _body({ id, size }, signal, lost, backstopMs, host) {
     if (!id || size === 0) {
       if (id) this.page.evaluate(pageDrop, id).catch(() => {});
       return '';
@@ -355,9 +359,16 @@ class ChallengeWindow {
       pull: async (ctl) => {
         try {
           signal?.throwIfAborted();
-          const b64 = await this._evaluate(pageChunk, { id, offset, length: CHUNK }).catch(
-            () => null,
-          );
+          const b64 = await this._evaluate(
+            pageChunk,
+            { id, offset, length: CHUNK },
+            undefined,
+            backstopMs,
+          ).catch((e) => {
+            if (!e?.backstop) return null;
+            e.host = host;
+            throw e;
+          });
           if (b64 == null) throw lost();
           const bytes = Buffer.from(b64, 'base64');
           offset += bytes.length;

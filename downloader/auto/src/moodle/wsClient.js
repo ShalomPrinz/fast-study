@@ -132,7 +132,7 @@ async function windowFetch(window, url, init, call) {
     }
     try {
       // The page times the head and any body stall itself; a call with no file body to stream also gets
-      // a Node-side backstop for a page that never answers (a file open or preflight stays unbounded there).
+      // a Node-side backstop for a page that never answers (a file open or preflight stays unbounded there, freed by its caller's signal).
       res = await window.fetch(url, init, {
         lost: () => lostBody(window),
         headMs: deps.headMs,
@@ -188,7 +188,8 @@ async function videoListWall(res) {
   try {
     JSON.parse(await res.clone().text());
     return false;
-  } catch {
+  } catch (e) {
+    if (e?.backstop) throw e; // a hung pull, not a non-JSON body
     return true;
   }
 }
@@ -511,10 +512,10 @@ function totalSize(res) {
 
 // Preflight a tokened pluginfile URL — the last point to report a dead token or a challenge before
 // server/ fetches it. → the file's size in bytes, or null when the answer did not say.
-export async function assertPluginfileReadable(url) {
+export async function assertPluginfileReadable(url, signal) {
   const res = await moodleFetch(
     url,
-    { headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT } },
+    { headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT }, signal },
     { label: 'pluginfile: ', stream: true },
   );
   const fault = await pluginfileFault(res, url);
