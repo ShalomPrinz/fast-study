@@ -42,7 +42,7 @@ async function requestFinal(url, headers, method, extraHeaders) {
 export async function probeContentLength(url, headers) {
   const head = await requestFinal(url, headers, 'HEAD');
   if (head) {
-    head.body?.cancel();
+    head.body?.cancel().catch(() => {});
     const len = head.headers.get('content-length');
     if (head.status < 400 && len) return +len;
   }
@@ -52,7 +52,7 @@ export async function probeContentLength(url, headers) {
   if (ranged) {
     // Cancel rather than drain: a server that ignores Range answers 200 with the whole
     // file, and the probe must not pull a multi-GB body just to read one header.
-    ranged.body?.cancel();
+    ranged.body?.cancel().catch(() => {});
     const cr = ranged.headers.get('content-range');
     const m = cr && cr.match(/\/(\d+)\s*$/);
     if (m) return +m[1];
