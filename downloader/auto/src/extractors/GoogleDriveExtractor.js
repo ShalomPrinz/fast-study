@@ -73,7 +73,7 @@ async function bodyText(res) {
   } catch (err) {
     const host = new URL(res.url || driveDownloadUrl('')).hostname;
     if (err?.name === 'TimeoutError') throw Object.assign(err, { host });
-    if (err instanceof TypeError)
+    if (err instanceof TypeError && /^(terminated|fetch failed)$/.test(err.message))
       throw Object.assign(new TypeError('fetch failed', { cause: err }), { host });
     return '';
   }
