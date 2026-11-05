@@ -375,7 +375,7 @@ failure (OS reason, `unsupported`, other statuses, a bad URL) carries no `code`.
 | `http/server.js` `sendReconnect`| `moodle_reconnect_required`   | —                        | user  |
 | `moodle/wsClient.js`            | `site_blocked`                | `detail`, `challengeWindow`? | user  |
 | `moodle/wsClient.js`            | `site_captcha_timeout`        | —                        | user  |
-| `lib/errors.js` `unreachable`   | `site_unreachable`            | `host`, `detail`         | user  |
+| `lib/errors.js` `unreachable`   | `site_unreachable`            | `host`, `detail`, `proxy`? | user  |
 | `http/server.js` `sendPasscode` | `zoom_passcode_required`      | `reason`, `course`, `name` | user |
 | `browser/browserChannel.js`     | `browser_missing`             | `detail`                 | user  |
 | `core/registry.js`              | `course_url_unsupported_site` | `url`, `site`            | user  |
@@ -447,7 +447,7 @@ to an upstream host that failed in the network (a connect timeout, a DNS miss or
 through the challenge window's page. It answers `/list`,
 `/courses`, `/courses/check` and `/resolve` (Moodle WS and Google Drive). `host` is that request's hostname,
 and `detail` is undici's cause verbatim, or through the page only Chrome's `ERR_*` code (`null` when
-none was reported); a timeout's `detail` is its own message on either route. A Moodle WS or window call with no response head within 60 s times out this way, and so does a challenge-window body that delivers no bytes for 120 s; a window call other than a streamed file open is also cut at 180 s in total, even while bytes arrive, and so is one whose page never answers. A streamed file open that keeps moving is never cut. The captcha wait is not under any of these. It is not reported to Sentry, since an unreachable site is not a bug.
+none was reported); a timeout's `detail` is its own message on either route. A Moodle WS or window call with no response head within 60 s times out this way, and so does a challenge-window body that delivers no bytes for 120 s; a window call other than a file open or its preflight also gets 180 s for each page step (the head call and each body pull), even while bytes arrive, and one whose page never answers is cut there too, closing the window. A streamed file open that keeps moving is never cut. The captcha wait is not under any of these. `proxy` is `env` (an `HTTP_PROXY`, `HTTPS_PROXY` or `ALL_PROXY`, either case, is set) or `system` (Windows per-user Internet Settings has `ProxyEnable=1` or an `AutoConfigURL`), and absent when none is detected; it flags the split route, where the challenge window follows the proxy and Node `fetch` does not. It is not reported to Sentry, since an unreachable site is not a bug.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`

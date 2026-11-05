@@ -1,3 +1,5 @@
+import { proxyKind } from './proxy.js';
+
 /**
  * A failure carrying the machine `code` and flat `params` the HTTP layer answers with, so the code
  * survives the throw up to the route that catches it (repo-root `docs/ERROR-CODES.md`).
@@ -49,7 +51,7 @@ export function failureOf(err) {
 
 // undici's bare `TypeError: fetch failed` (the socket error rides as its `cause`) or an
 // AbortSignal.timeout firing — never a caller's own abort, which is an AbortError.
-function networkFailure(err) {
+export function networkFailure(err) {
   return (
     (err instanceof TypeError && err.message === 'fetch failed') || err?.name === 'TimeoutError'
   );
@@ -61,7 +63,10 @@ export async function fetchUpstream(url, init) {
   try {
     return await fetch(url, init);
   } catch (err) {
-    if (networkFailure(err)) err.host = new URL(String(url)).hostname;
+    if (networkFailure(err)) {
+      err.host = new URL(String(url)).hostname;
+      err.route = 'node';
+    }
     throw err;
   }
 }
@@ -71,6 +76,7 @@ export async function fetchUpstream(url, init) {
 export function pageUnreachable(url, errorText) {
   const err = new TypeError('fetch failed');
   err.host = new URL(String(url)).hostname;
+  err.route = 'window';
   err.detail = /\bERR_[A-Z0-9_]+\b/.exec(errorText ?? '')?.[0] ?? null;
   return err;
 }
@@ -85,9 +91,17 @@ export function unreachable(err) {
     .filter(Boolean)
     .join('; ');
   const detail = 'detail' in err ? err.detail : err.cause?.message || inner || err.message;
+  const proxy = proxyKind();
   return new CodedError(
     'site_unreachable',
-    { host: err.host, detail },
+    { host: err.host, detail, ...(proxy && { proxy }) },
     detail ? `${err.host} could not be reached: ${detail}` : `${err.host} could not be reached`,
   );
+}
+
+// Sentry tags for a network failure that already reached an event: whether a proxy is configured and
+// which route failed (Node `fetch` ignores the proxy, the challenge window follows it). Else null.
+export function networkTags(err) {
+  if (!networkFailure(err)) return null;
+  return { proxy: proxyKind() ?? 'none', route: err.route ?? 'node' };
 }

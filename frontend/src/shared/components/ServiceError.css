@@ -8,6 +8,11 @@
   font-weight: 600;
 }
 
+.service-error-hint {
+  display: block;
+  margin-top: var(--space-1);
+}
+
 /* Third-party text is English inside an RTL page: pinned LTR and isolated, so it cannot reorder
    the Hebrew sentence above it. Its own line, since it is detail rather than the verdict. */
 .service-error-detail {

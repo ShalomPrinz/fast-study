@@ -20,6 +20,8 @@ export interface ServiceFailure {
 export interface ResolvedFailure {
   headline: string
   detail: string | null
+  // A translated second sentence under the headline, for a param that only some failures carry.
+  hint: string | null
 }
 
 // Every code with a sentence of its own, keyed exactly as the services spell it. A code absent
@@ -380,6 +382,16 @@ export function serviceErrorRow(code: string | null | undefined): MessageDescrip
   return (code && MESSAGES[code]) || null
 }
 
+// Codes whose optional param adds a sentence of its own under the headline.
+const HINTS: Record<string, (params: ErrorParams) => MessageDescriptor | null> = {
+  site_unreachable: (params) => (params.proxy ? PROXY_HINT : null),
+}
+
+const PROXY_HINT = msg({
+  message:
+    'A proxy is set on this computer, and the app may not reach the site through it. Try another network or turn the proxy off.',
+})
+
 // Third-party text to print verbatim: the reserved `detail` param, or, for `latex_error`, the TeX
 // engine's own words, which arrive as named values rather than under `detail`.
 function detailOf(code: string, params: ErrorParams): string | null {
@@ -403,20 +415,26 @@ export function resolveServiceError(failure: ServiceFailure): ResolvedFailure {
   const params = failure.params ?? {}
   const row = rowFor(failure)
   if (!row) {
-    return { headline: i18n._(FALLBACK), detail: failure.message.trim() ? failure.message : null }
+    return {
+      headline: i18n._(FALLBACK),
+      detail: failure.message.trim() ? failure.message : null,
+      hint: null,
+    }
   }
+  const hintRow = HINTS[failure.code as string]?.(params)
   // The id/values form, not `_(descriptor)`: the descriptor carries no values of its own, and the
   // ones it does carry would win over the failure's (`@lingui/core`'s `_`).
   return {
     headline: i18n._(row.id, present(params), { message: row.message }),
     detail: detailOf(failure.code as string, params),
+    hint: hintRow ? i18n._(hintRow) : null,
   }
 }
 
 // One-string form, for an attribute that cannot hold markup (a `title` tooltip).
 export function serviceErrorText(failure: ServiceFailure): string {
-  const { headline, detail } = resolveServiceError(failure)
-  return detail ? `${headline}\n${detail}` : headline
+  const { headline, detail, hint } = resolveServiceError(failure)
+  return [headline, hint, detail].filter(Boolean).join('\n')
 }
 
 // What identifies a failure for "report it once" dedupe: the facts, not their wording, so a locale

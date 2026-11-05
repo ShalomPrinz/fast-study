@@ -12,3 +12,28 @@ not pushed is lost when the session ends. The rules below override the matching 
 - Push every commit to that branch: `git push -u origin claude/<task-slug>`. Commits still follow the
   [`git-commit`](../.claude/skills/git-commit/SKILL.md) skill, `reviewer` included.
 - Never push to `main`, never force-push, and never push any other branch.
+
+## Screenshots
+
+The container's scratchpad is not on the user's machine, so a screenshot left there is never seen.
+Send each screenshot to the user with `SendUserFile`, full window as always, and never commit it.
+
+## Environment
+
+Three settings prepare a container; none of them acts locally.
+
+- **Setup script**: [`.claude/cloud/setup.sh`](../.claude/cloud/setup.sh), pasted into the cloud
+  environment's "Setup script" at claude.ai/code. It installs tectonic and warms its LaTeX bundle,
+  and the snapshot caches both for about a week. Paste it again whenever the file changes.
+- **Network access**: Custom, with the defaults kept, plus `relay.fullyjustified.net` and
+  `data1b.fullyjustified.net`, which serve tectonic's bundle. Without them every PDF step fails.
+- **SessionStart hook**: [`.claude/hooks/cloud-install.sh`](../.claude/hooks/cloud-install.sh) runs
+  `npm ci` at the root, in `frontend/` and in `downloader/`, and `uv sync` in `backend/` and
+  `database/`. It skips an `npm ci` whose lockfile is unchanged. A failed install is named in the
+  session's first context; it does not stop the session.
+
+## Formatting
+
+The hook installs the lockfile's prettier, so formatting matches a local session. If that install
+failed, the format hook skips prettier and says so; never run another prettier in its place. The
+`Format` workflow checks every push to `claude/*` as a backstop.

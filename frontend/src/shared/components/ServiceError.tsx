@@ -21,7 +21,7 @@ export default function ServiceError({
   useLingui()
   const resolved = resolveServiceError(failure)
   const headline = override ?? resolved.headline
-  const { detail } = resolved
+  const { detail, hint } = resolved
   // One span, not a fragment: a toast (or `.settings-status`) is a flex row that would split the parts into columns.
   return (
     <span>
@@ -31,6 +31,7 @@ export default function ServiceError({
         </strong>
       )}
       <span className="service-error-headline">{headline}</span>
+      {hint && <span className="service-error-hint">{hint}</span>}
       {detail && <span className="service-error-detail">{detail}</span>}
     </span>
   )

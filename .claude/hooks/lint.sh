@@ -37,7 +37,7 @@ failures=""
 
 # ruff config lives in the root ruff.toml (pyflakes-level only, no style).
 if [ ${#py[@]} -gt 0 ]; then
-  if ! out="$(uvx ruff check --quiet --output-format concise "${py[@]}" 2>&1)"; then
+  if ! out="$(uvx ruff@0.17.3 check --quiet --output-format concise "${py[@]}" 2>&1)"; then
     failures+="[ruff]"$'\n'"$(printf '%s\n' "$out" | head -30)"$'\n\n'
   fi
 fi

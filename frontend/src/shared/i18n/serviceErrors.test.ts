@@ -246,3 +246,18 @@ describe('rowFor', () => {
     })
   })
 })
+
+describe('site_unreachable proxy hint', () => {
+  const base = { message: 'x', code: 'site_unreachable' }
+  it('adds a hint line when proxy is present, for both values', () => {
+    for (const proxy of ['env', 'system']) {
+      const { hint, headline } = resolveServiceError({ ...base, params: { host: 'h', proxy } })
+      expect(hint).toBeTruthy()
+      expect(headline).not.toBe(hint)
+    }
+  })
+  it('adds none when proxy is absent or null', () => {
+    expect(resolveServiceError({ ...base, params: { host: 'h' } }).hint).toBeNull()
+    expect(resolveServiceError({ ...base, params: { host: 'h', proxy: null } }).hint).toBeNull()
+  })
+})
