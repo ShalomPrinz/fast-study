@@ -46,7 +46,10 @@ download 403s; replaying the browser's exact captured headers reuses the live se
 `content-length` before replay (and in the size probe). A captured request is often a ranged segment
 fetch, and replaying its `Range:` saves a partial body missing the MP4 header at offset 0 — unplayable.
 
-Flags: `-L --fail --compressed --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors`.
+Flags: `-L --fail --compressed --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors
+--connect-timeout 30 --speed-limit 1 --speed-time 120`. The last three are stall detection only
+(under 1 B/s for 2 min, so a slow but moving download is never cut); the resulting exit 28 retries,
+then ends as `download_tool_failed` with curl's text. There is no `--max-time` and no runner watchdog.
 `--retry-all-errors` covers CDNs that close TLS without `close_notify` mid-stream (OpenSSL 3 →
 `SSL_read: unexpected eof`). `--silent` because the server renders progress; `--show-error` still writes a failure reason for the
 stderr tail. `fetch` is the same curl with no header replay.
@@ -61,6 +64,11 @@ typed answer a re-send cannot fix, and each re-send would queue on its gate and 
 curl dumps auto's headers to `response-headers.txt` and keeps its JSON body in the output file, and
 the runner ends the job with auto's own `code`/`params` (`readAutodlRefusal`). A fetch from auto cut
 short with no refusal (curl exit 18, 52 or 56) is re-run once in a fresh temp dir (`recovery`).
+Auto gets only `--connect-timeout 10` (it is localhost): a stall limit would kill a call waiting in
+the Moodle gate queue (a captcha up to 10 min), which has no timeout by design. Mid-body stalls are
+bounded inside auto/: on its Node route by undici's default 300 s body timeout, on its challenge-window
+route (where `openPluginfile` goes when routing is on) by auto's own 60 s per-call timeout, which
+covers the whole call since the page buffers the body. Then by that one re-run.
 
 ## HLS (`.m3u8` and `.panobf2` captures)
 
