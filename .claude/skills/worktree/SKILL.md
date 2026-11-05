@@ -53,8 +53,11 @@ locally for the user to review and merge.
 Only when the user asks, and only after the branch's PR is merged:
 
 ```
-cd <repo-root> && bash <repo-root>/.claude/skills/worktree/teardown.sh <slug>
+cd <repo-root> && bash <repo-root>/.claude/skills/worktree/teardown.sh <slug> [pr_number]
 ```
+
+Pass `pr_number` when the PR's head branch is not named `<slug>` (one pushed from a cloud session); the
+script then checks that PR and deletes its head branch on origin.
 
 It removes the worktree, both branches, and the `additionalDirectories` entry, and refuses if the
 worktree has uncommitted changes or the local tip differs from the merged PR's. `cd` first — the

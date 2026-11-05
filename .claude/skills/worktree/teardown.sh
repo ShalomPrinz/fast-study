@@ -4,8 +4,10 @@
 set -euo pipefail
 
 slug="${1:-}"
-if [[ ! "$slug" =~ ^[a-z0-9]+(_[a-z0-9]+)*$ ]]; then
-    echo "usage: teardown.sh <snake_case_slug>" >&2
+# The PR number is for a PR whose head branch is not named <slug>, e.g. one pushed from a cloud session.
+pr="${2:-}"
+if [[ ! "$slug" =~ ^[a-z0-9]+(_[a-z0-9]+)*$ || ! "$pr" =~ ^[0-9]*$ ]]; then
+    echo "usage: teardown.sh <snake_case_slug> [pr_number]" >&2
     exit 1
 fi
 
@@ -23,8 +25,15 @@ if [[ -d "$wt" ]]; then
 fi
 
 # Squash merges keep the branch's commits off main, so ask GitHub instead of `git branch --merged`.
-merged_tip="$(gh pr list --head "$slug" --base main --state merged --json commits --jq '.[0].commits[-1].oid // empty')"
-[[ -n "$merged_tip" ]] || { echo "refusing: no merged PR from $slug into main" >&2; exit 1; }
+if [[ -n "$pr" ]]; then
+    read -r merged_tip remote_branch < <(gh pr view "$pr" --json state,baseRefName,headRefName,isCrossRepository,commits \
+        --jq 'if .state == "MERGED" and .baseRefName == "main" and (.isCrossRepository | not) then "\(.commits[-1].oid) \(.headRefName)" else "" end') || true
+    [[ -n "${merged_tip:-}" ]] || { echo "refusing: PR #$pr is not merged into main" >&2; exit 1; }
+else
+    remote_branch="$slug"
+    merged_tip="$(gh pr list --head "$slug" --base main --state merged --json commits --jq '.[0].commits[-1].oid // empty')"
+    [[ -n "$merged_tip" ]] || { echo "refusing: no merged PR from $slug into main" >&2; exit 1; }
+fi
 # A tip past the merged one means commits landed after the merge and would be lost.
 local_tip="$(git rev-parse "refs/heads/$slug")"
 [[ "$local_tip" == "$merged_tip" ]] || {
@@ -33,10 +42,10 @@ local_tip="$(git rev-parse "refs/heads/$slug")"
 }
 
 echo "==> remote branch"
-if git ls-remote --exit-code --heads origin "$slug" > /dev/null; then
-    git push origin --delete "$slug"
+if git ls-remote --exit-code --heads origin "$remote_branch" > /dev/null; then
+    git push origin --delete "$remote_branch"
 else
-    echo "origin/$slug already gone"
+    echo "origin/$remote_branch already gone"
 fi
 
 echo "==> worktree $wt"
