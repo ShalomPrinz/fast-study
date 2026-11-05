@@ -194,3 +194,19 @@ test('a kill that throws also reboots', async (t) => {
   assert.deepEqual(result, { error: 'kill failed' });
   assert.equal(recovered, true);
 });
+
+test('a failed auto-download does not surface as an unhandled rejection', async (t) => {
+  const { fake, startUpdater, log } = load(t);
+  const unhandled = [];
+  const onUnhandled = (reason) => unhandled.push(reason);
+  process.on('unhandledRejection', onUnhandled);
+  t.after(() => process.off('unhandledRejection', onUnhandled));
+  fake.next = () =>
+    Promise.resolve({
+      downloadPromise: Promise.reject(new Error('net::ERR_NETWORK_IO_SUSPENDED')),
+    });
+  startUpdater(log);
+  await flush();
+  await flush();
+  assert.deepEqual(unhandled, []);
+});

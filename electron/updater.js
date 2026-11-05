@@ -75,7 +75,9 @@ function startUpdater(log, onPhase) {
     if (checking) return;
     checking = true;
     try {
-      await autoUpdater.checkForUpdates();
+      const result = await autoUpdater.checkForUpdates();
+      // A failed download already reached the `error` listener; this only drops its duplicate rejection.
+      result?.downloadPromise?.catch(() => {});
     } catch (error) {
       // Offline is the ordinary case: an unhandled rejection here would crash a machine merely offline.
       log('updater', `check failed: ${error.message}`);

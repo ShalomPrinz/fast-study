@@ -23,7 +23,7 @@ starts the updater, so it stays `null`, and `packaged: false` tells the frontend
 The recheck timer is `unref`'d, skips a tick while a check is still running or an update is downloading (a mid-download check
 only blanks the window's row; the timer keeps running so a failed download is retried), and stops for good on
 `update-downloaded` (another check could replace the pending installer). A failed recheck is logged
-and dropped, and once the first recheck runs the launch screen's phases freeze.
+and dropped, as is a failed download: the `error` listener logs it and its `downloadPromise` rejection is caught, and once the first recheck runs the launch screen's phases freeze.
 
 The one visible surface is the launch screen's failure view: a failed boot may be a bad install the
 next release fixes, so `runBoot()`'s failure path calls `startUpdater(log, onPhase)` and publishes the
