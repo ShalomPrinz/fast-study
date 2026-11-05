@@ -12,7 +12,9 @@ import {
   harnessPaths,
   isScratchData,
   readPorts,
+  withLoopbackNoProxy,
 } from '../lib/env.mjs';
+import { OFFLINE_ARGS } from '../lib/browser.mjs';
 import {
   down,
   kill,
@@ -66,6 +68,14 @@ describe('env', () => {
     assert.deepEqual(readPorts(paths), {});
     fs.writeFileSync(paths.ports, JSON.stringify({ database: 1234 }));
     assert.deepEqual(readPorts(paths), { database: 1234 });
+  });
+
+  test('loopback stays out of an env proxy, and the browser takes no proxy at all', () => {
+    const env = withLoopbackNoProxy({ NO_PROXY: 'corp.local' });
+    assert.equal(env.NO_PROXY, 'corp.local,127.0.0.1,localhost');
+    assert.equal(env.no_proxy, env.NO_PROXY);
+    assert.equal(withLoopbackNoProxy({}).NO_PROXY, '127.0.0.1,localhost');
+    assert.ok(OFFLINE_ARGS.includes('--no-proxy-server'));
   });
 
   test('isScratchData needs the marker', () => {

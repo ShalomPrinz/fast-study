@@ -113,7 +113,9 @@ async function noRealKeyInTheServices(paths) {
 
 async function settingsWritesMissTheRealEnv(paths) {
   const realEnv = path.join(REPO_ROOT, '.env');
-  const before = fs.statSync(realEnv).mtimeMs; // stat only: the real .env is never read here
+  // stat only, and only when there is one (a cloud container has none): the real .env is never read here
+  const mtime = () => (fs.existsSync(realEnv) ? fs.statSync(realEnv).mtimeMs : null);
+  const before = mtime();
   const model = await backendGeminiModel();
   await json(`${DATABASE}/settings`, 'PUT', { gemini_model: model });
   const written = fs.readFileSync(paths.env, 'utf8');
@@ -121,7 +123,7 @@ async function settingsWritesMissTheRealEnv(paths) {
   if (!new RegExp(`GEMINI_MODEL=['"]?${model.replaceAll('.', '\\.')}`).test(written)) {
     throw new Error(`a settings save did not land in ${paths.env}`);
   }
-  if (fs.statSync(realEnv).mtimeMs !== before) {
+  if (mtime() !== before) {
     throw new Error('a settings save rewrote the repo-root .env — stop and fix the shim');
   }
   return `settings writes land in ${paths.env}, repo .env untouched`;

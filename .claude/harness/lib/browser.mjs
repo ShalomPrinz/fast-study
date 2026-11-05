@@ -46,7 +46,9 @@ export function installedChromium() {
 }
 
 // The browser is outside both shims, so it is offlined here: any name but loopback fails.
+// --no-proxy-server: every name is loopback or mapped to it, and an env proxy would be handed the name, not the mapping.
 export const OFFLINE_ARGS = [
+  '--no-proxy-server',
   '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
 ];
 

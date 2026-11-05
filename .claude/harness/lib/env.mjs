@@ -54,6 +54,12 @@ export const BANNER =
   'harness: every provider, Google API, lecture site and download binary here is FAKE, ' +
   'and DATA_ROOT is a scratch tree. Nothing in this run reflects real data or a real service.';
 
+/** NO_PROXY/no_proxy with loopback added, so a container's HTTPS_PROXY never carries a harness call. */
+export function withLoopbackNoProxy(env) {
+  const list = [env.NO_PROXY, env.no_proxy, '127.0.0.1', 'localhost'].filter(Boolean).join(',');
+  return { NO_PROXY: list, no_proxy: list };
+}
+
 /** Every path the harness owns, derived from one root. Creates nothing. */
 export function harnessPaths(root) {
   const at = (...parts) => path.join(root, ...parts);
@@ -95,6 +101,7 @@ function baseEnv(paths) {
   return {
     ...process.env,
     ...FAKE_KEYS,
+    ...withLoopbackNoProxy(process.env),
     DATA_ROOT: paths.data,
     FASTSTUDY_STATE_DIR: paths.state,
     HARNESS_DIR: paths.root,

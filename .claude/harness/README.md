@@ -295,6 +295,9 @@ After each click the mouse leaves the page, so a tooltip or toast opened under t
 covers the next target. An unexpected native dialog is logged and dismissed — the app uses none.
 Chromium runs with every host name but loopback unresolvable, so the page is as offline as the
 services; a link off the machine fails as `failed … ERR_NAME_NOT_RESOLVED` in the log.
+Every harness Chromium also takes `--no-proxy-server`, the Node shim drops `HTTP(S)_PROXY`/`ALL_PROXY` from each service, and
+the services get loopback appended to `NO_PROXY`: a container's proxy would be handed the faked host's name, not its loopback mapping,
+so no `NO_PROXY=*` is needed.
 
 The browser also runs in a network namespace of its own (`unshare -rn`), so a host network change
 (Wi-Fi roam, DHCP renew, a Windows adapter under mirrored WSL) never aborts its requests with
@@ -412,7 +415,7 @@ process and a Node process are both refused off loopback, the Python refusal log
 the fake site still serves a redirected `https://lemida.biu.ac.il`, and auto/'s `POST /site/probe`
 reads it as `supported` with the seeded token connected; both services log the harness
 keys (the repo `.env` lost the `load_dotenv` race); a settings save lands in the scratch `.env` and
-leaves the real one untouched; Connect through auto/'s real login and browser saves the fake
+leaves the real one untouched (a tree with no repo `.env` passes); Connect through auto/'s real login and browser saves the fake
 token by itself, `missing_function` refuses it with `moodle_site_unsupported`, and no browser escapes;
 Groq's `429`, `500`, `empty` and `slow`, Gemini's those and `invalidkey`, a targeted rule and a
 draining one, and the site's `blocked`, `invalidtoken`, `missing_function`, `downloads_disabled`,

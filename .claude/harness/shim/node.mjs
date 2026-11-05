@@ -10,6 +10,11 @@ import path from 'node:path';
 const HARNESS = process.env.HARNESS_DIR;
 
 if (HARNESS) {
+  // Everything a service reaches is loopback or a host the socket patch redirects to loopback; a proxy
+  // from the container env (Playwright's request API honours it) would be handed the real name instead.
+  for (const name of Object.keys(process.env)) {
+    if (/^(https?|all)_proxy$/i.test(name)) delete process.env[name];
+  }
   const SITE = new URL(process.env.HARNESS_SITE);
   const SITE_TLS = new URL(process.env.HARNESS_SITE_TLS);
   const LOG = path.join(HARNESS, 'logs', 'network.log');
@@ -122,6 +127,7 @@ if (HARNESS) {
       executablePath: installedChromium(),
       args: [
         ...(options.args ?? []),
+        '--no-proxy-server',
         `--host-resolver-rules=${rules}`,
         '--ignore-certificate-errors',
       ],
