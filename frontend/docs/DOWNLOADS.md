@@ -238,7 +238,7 @@ coded refusal, or a generic "couldn't load" line. Each discovery takes a ticket;
 another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
 the exception — an expired session is true whichever discovery found it.
 
-Saving a new source URL on the picked course closes the panel and, unless the URL was cleared,
+Saving a new source URL on the picked course keeps the panel open, with a "Saving…" note, until the write resolves; a failure shows `.edit-source-error` above the picker and keeps the typed URL. Cancel closes it at any time, and so does leaving it any other way (tab, another course, Back; the panel is keyed by course); a save already in flight still lands (the tree is refreshed, nothing reloads). On success it closes the panel and, unless the URL was cleared,
 rediscovers from the new one (`sourceChangeAction`, called from `EditSourcePanel`) with
 `{ wait: true }`, since nobody pressed it; a cleared URL closes what was loaded or loading but keeps
 the course in the box with that note; a failed reload leaves the panel closed with discovery's usual toast. Other courses' edits touch nothing.

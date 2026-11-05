@@ -138,7 +138,7 @@ msgid "{0} API key"
 msgstr "{0} API key"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:383
+#: src/features/downloads/DownloadsView.tsx:384
 msgid "{0} found"
 msgstr "{0} found"
 
@@ -846,7 +846,7 @@ msgstr "Choose your browser:"
 msgid "Choose your university above to connect its account."
 msgstr "Choose your university above to connect its account."
 
-#: src/features/downloads/DownloadsView.tsx:357
+#: src/features/downloads/DownloadsView.tsx:358
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
@@ -915,7 +915,7 @@ msgstr "Click to mark this lecture as not done"
 msgid "Click to mark this recitation as not done"
 msgstr "Click to mark this recitation as not done"
 
-#: src/features/downloads/DownloadsView.tsx:387
+#: src/features/downloads/DownloadsView.tsx:388
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
 msgid "Close"
 msgstr "Close"
@@ -1153,7 +1153,7 @@ msgid "Courses"
 msgstr "Courses"
 
 #: src/App.tsx:39
-#: src/features/downloads/DownloadsView.tsx:366
+#: src/features/downloads/DownloadsView.tsx:367
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:238
 #: src/shared/utils/notFound.ts:35
@@ -1492,6 +1492,10 @@ msgstr "Failed to restore the original summary"
 #: src/features/lectures/DocEditor.tsx:166
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
+
+#: src/features/downloads/components/EditSourcePanel.tsx:102
+msgid "Failed to save the course's source URL"
+msgstr "Failed to save the course's source URL"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:131
 msgid "FastStudy asks only for the <0><1>{DRIVE_SCOPE}</1></0> permission, which gives it access only to the specific Google Drive files you use with this app — in practice, the summary PDFs it uploads."
@@ -2061,7 +2065,7 @@ msgstr "No recitations yet"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/DownloadsView.tsx:372
+#: src/features/downloads/DownloadsView.tsx:373
 msgid "No source URL yet. Use the pencil to choose one."
 msgstr "No source URL yet. Use the pencil to choose one."
 
@@ -2455,7 +2459,7 @@ msgstr "Recitations you marked done"
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: src/features/downloads/DownloadsView.tsx:381
+#: src/features/downloads/DownloadsView.tsx:382
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
 
@@ -2624,7 +2628,7 @@ msgstr "Save to choose the courses."
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/downloads/components/EditSourcePanel.tsx:86
+#: src/features/downloads/components/EditSourcePanel.tsx:94
 #: src/features/settings/InitWall.tsx:336
 msgid "Saving…"
 msgstr "Saving…"
