@@ -309,6 +309,7 @@ export default function DownloadsView() {
                 />
               ) : editCourse ? (
                 <EditSourcePanel
+                  key={editCourse.name}
                   course={editCourse}
                   loaded={selected === editCourse.name}
                   loading={pending === editCourse.name}

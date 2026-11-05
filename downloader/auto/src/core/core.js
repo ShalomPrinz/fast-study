@@ -221,7 +221,7 @@ function cachedTargets(course, name, kind) {
  * a path on auto that streams it (`GET /moodle/file/:id`), never the tokened URL. See docs/GATE.md.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, wstoken: string,
- *           ref?: string|null, forceCapture?: boolean }} args
+ *           ref?: string|null, forceCapture?: boolean, signal?: AbortSignal }} args
  *   wstoken is the caller's Moodle WS token — required; pluginfile authenticates by it.
  *   ref is the discovery-row id that spawned this download, stamped onto the cached cap.
  *   forceCapture = bypass the replay cache and re-resolve the url fresh.
@@ -235,6 +235,7 @@ export async function resolveMoodleFile({
   wstoken,
   ref,
   forceCapture = false,
+  signal,
 }) {
   // Several files share one lecture/assignment name, so the fileurl tells them apart in the cache.
   const key = `${name}\u001f${recording.fileurl}`;
@@ -242,7 +243,7 @@ export async function resolveMoodleFile({
   let cap = forceCapture ? null : getCap(course, key, kind, media)?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
-    const size = await assertPluginfileReadable(pluginfileUrl(recording.fileurl, wstoken));
+    const size = await assertPluginfileReadable(pluginfileUrl(recording.fileurl, wstoken), signal);
     cap = proxyCap({ fileurl: recording.fileurl, size });
     cacheCap(course, key, kind, media, cap, ref);
   }

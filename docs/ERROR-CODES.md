@@ -156,6 +156,7 @@ failures it was given, so a refusal the user can act on is caught by the route i
 | `pipeline/to_pdf.py`                    | `internal_missing_input`    | `file`                          | dev   |
 | `pipeline/upload_to_drive.py`           | `drive_upload_failed`       | `detail`                        | user  |
 | `services/google_auth.py`               | `drive_not_connected`       | —                               | user  |
+| `services/google_auth.py`               | `drive_unreachable`         | `detail`                        | user  |
 | `pipeline/upload_to_drive.py`           | `drive_folder_not_configured`| —                              | user  |
 | `services/google_auth.py`               | `internal_unknown_scope`    | `scope`                         | dev   |
 | `pipeline/runner.py` fold               | `unknown_error`             | —                               | dev   |
@@ -190,6 +191,9 @@ connection); `detail` is the transport's own text. It can also end an assignment
 `model_fallback` is not a failure but a notice: with `GEMINI_AUTO_FALLBACK` on, a 503 retried on the
 next model raises it in the `notices` list of `GET /status` and of the overview status, `from`/`to`
 naming the models. It toasts once per `id` and never lands in `errors`.
+`drive_unreachable` is a Drive token refresh that never reached Google (a `TransportError`: offline,
+DNS, refused connection); `detail` is the transport's own text. Unlike `drive_not_connected` it leaves
+`consent_needed` alone, since being offline says nothing about the grant, and it is not auto-retried.
 
 ### `backend/` — course overview
 
@@ -443,7 +447,7 @@ to an upstream host that failed in the network (a connect timeout, a DNS miss or
 through the challenge window's page. It answers `/list`,
 `/courses`, `/courses/check` and `/resolve` (Moodle WS and Google Drive). `host` is that request's hostname,
 and `detail` is undici's cause verbatim, or through the page only Chrome's `ERR_*` code (`null` when
-none was reported); a timeout's `detail` is its own message on either route. `proxy` is `env` (an `HTTP_PROXY`, `HTTPS_PROXY` or `ALL_PROXY`, either case, is set) or `system` (Windows per-user Internet Settings has `ProxyEnable=1` or an `AutoConfigURL`), and absent when none is detected; it flags the split route, where the challenge window follows the proxy and Node `fetch` does not. It is not reported to Sentry, since an unreachable site is not a bug.
+none was reported); a timeout's `detail` is its own message on either route. A Moodle WS or window call with no response head within 60 s times out this way, and so does a challenge-window body that delivers no bytes for 120 s; a window call other than a file open or its preflight also gets 180 s for each page step (the head call and each body pull), even while bytes arrive, and one whose page never answers is cut there too, closing the window. A streamed file open that keeps moving is never cut. The captcha wait is not under any of these. `proxy` is `env` (an `HTTP_PROXY`, `HTTPS_PROXY` or `ALL_PROXY`, either case, is set) or `system` (Windows per-user Internet Settings has `ProxyEnable=1` or an `AutoConfigURL`), and absent when none is detected; it flags the split route, where the challenge window follows the proxy and Node `fetch` does not. It is not reported to Sentry, since an unreachable site is not a bug.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`

@@ -54,7 +54,7 @@ async function fetchPlaylist(url, headers, origin) {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) {
-      res.body?.cancel();
+      res.body?.cancel().catch(() => {});
       return { error: `HTTP ${res.status}` };
     }
     const text =

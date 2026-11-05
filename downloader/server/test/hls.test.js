@@ -412,3 +412,24 @@ test('parse: byte-ranged fMP4 media lists the one shared file once', () => {
   assert.deepEqual(p.resourceUrls, [`${PANO}/2106800/fragmented.panobf1`]);
   assert.equal(p.durationSeconds, 4959);
 });
+
+test('classifyCaptures: a non-ok playlist whose body.cancel() rejects is no unhandled rejection', async (t) => {
+  const unhandled = [];
+  const onUnhandled = (e) => unhandled.push(e);
+  process.on('unhandledRejection', onUnhandled);
+  const realFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = realFetch;
+    process.off('unhandledRejection', onUnhandled);
+  });
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 500,
+    headers: new Headers(),
+    body: { cancel: () => Promise.reject(new Error('stream errored')) },
+  });
+  const out = await classifyCaptures([{ url: 'http://cdn.test/a.m3u8', headers: [] }]);
+  assert.equal(out.failed.length, 1);
+  await new Promise((r) => setImmediate(r));
+  assert.deepEqual(unhandled, []);
+});

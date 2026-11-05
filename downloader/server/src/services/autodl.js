@@ -35,15 +35,28 @@ export const RESPONSE_FILE = 'response-headers.txt';
 // The temp-dir files that are not the download, which a byte count leaves out.
 export const AUTODL_FILES = new Set([HEADER_FILE, RESPONSE_FILE]);
 
-// curl's failure and retry flags for `url`; auto's take none, so its refusal stays typed
-// (docs/DOWNLOAD.md). Writes autodlHeaders to a file in `tempDir` for auto.
+// curl's failure, retry and stall flags for `url`; auto's get only a connect timeout (loopback), no retry or stall
+// flag, so its refusal stays typed and a gate-queue wait is not mistaken for a stall (docs/DOWNLOAD.md). Writes autodlHeaders to a file in `tempDir` for auto.
 export function curlTransferArgs(url, tempDir) {
   const headers = Object.entries(autodlHeaders(url));
   if (!headers.length)
-    return ['--fail', '--retry', '3', '--retry-delay', '2', '--retry-all-errors'];
+    return [
+      '--fail',
+      '--retry',
+      '3',
+      '--retry-delay',
+      '2',
+      '--retry-all-errors',
+      '--connect-timeout',
+      '30',
+      '--speed-limit',
+      '1',
+      '--speed-time',
+      '120',
+    ];
   const lines = headers.map(([name, value]) => `${name}: ${value}\n`).join('');
   fs.writeFileSync(path.join(tempDir, HEADER_FILE), lines, { mode: 0o600 });
-  return ['-H', `@${HEADER_FILE}`, '--dump-header', RESPONSE_FILE];
+  return ['-H', `@${HEADER_FILE}`, '--dump-header', RESPONSE_FILE, '--connect-timeout', '10'];
 }
 
 /** The final HTTP status in a curl header dump (the last of a -L chain); null with none. */

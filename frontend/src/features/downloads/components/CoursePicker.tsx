@@ -16,6 +16,10 @@ interface Props {
   resetKey?: string
   // The source already saved, marked in the list and prefilled in the paste input.
   currentUrl: string
+  // A URL to show in the paste input instead of `currentUrl` (a failed save's), the list still marking `currentUrl`.
+  draftUrl?: string
+  // A save is pending: choosing, pasting and saving are off, Cancel stays.
+  disabled?: boolean
   onChoose: (course: EnrolledCourse) => void
   // A pasted URL that passed its check, was saved anyway, or is empty (clearing).
   onPaste: (url: string) => void
@@ -24,7 +28,15 @@ interface Props {
 
 // Picks a course's source from the enrolled courses (past ones behind a toggle) or a pasted URL; with no
 // list to offer (not connected, or the site's list closed) it opens straight on the paste input.
-export default function CoursePicker({ resetKey, currentUrl, onChoose, onPaste, onCancel }: Props) {
+export default function CoursePicker({
+  resetKey,
+  currentUrl,
+  draftUrl,
+  disabled,
+  onChoose,
+  onPaste,
+  onCancel,
+}: Props) {
   const { status } = useAuthStatus()
   const disconnected = status?.connected === false
   // Its names are in the locale at open, so the language stays put while it is open.
@@ -52,6 +64,7 @@ export default function CoursePicker({ resetKey, currentUrl, onChoose, onPaste, 
             .filter(Boolean)
             .join(' ')}
           aria-current={c.url === currentUrl || undefined}
+          disabled={disabled}
           onClick={() => onChoose(c)}
         >
           {/* Each isolated, so the code chip leads on the page's start edge and a name in either script
@@ -65,10 +78,17 @@ export default function CoursePicker({ resetKey, currentUrl, onChoose, onPaste, 
 
   // With a source already saved the paste input leads, URL selected, above the list that marks it
   // current; otherwise it is the fallback after the list.
+  const shownUrl = draftUrl ?? currentUrl
   const paste = (
-    <CourseUrlPaste key={resetKey} initial={currentUrl} onSave={onPaste} onCancel={onCancel} />
+    <CourseUrlPaste
+      key={`${resetKey}|${draftUrl ?? ''}`}
+      initial={shownUrl}
+      disabled={disabled}
+      onSave={onPaste}
+      onCancel={onCancel}
+    />
   )
-  const pasteFirst = currentUrl !== ''
+  const pasteFirst = shownUrl !== '' || draftUrl !== undefined
 
   return (
     <div className={`course-picker course-picker--${view}`}>
@@ -118,7 +138,11 @@ export default function CoursePicker({ resetKey, currentUrl, onChoose, onPaste, 
         paste
       ) : (
         <div className="course-picker-actions">
-          <button className="btn btn--ghost course-picker-paste" onClick={() => setPasting(true)}>
+          <button
+            className="btn btn--ghost course-picker-paste"
+            disabled={disabled}
+            onClick={() => setPasting(true)}
+          >
             <Trans>Paste a URL instead</Trans>
           </button>
           <button className="btn btn--ghost" onClick={onCancel}>

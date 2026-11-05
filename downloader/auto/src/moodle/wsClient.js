@@ -17,17 +17,50 @@ function wallShaped(res) {
 // browser cannot spin.
 const MAX_WAITS = 2;
 
+// headMs: time to the response head per attempt. stallMs: longest gap in a window body (curl's
+// --speed-time 120, downloader/server/src/services/autodl.js). Tests shorten both.
+const deps = { headMs: 60_000, stallMs: 120_000 };
+
+/** Tests shorten the head and stall timeouts; → a function restoring the previous one. */
+export function configureWsClient(overrides) {
+  const prev = { ...deps };
+  Object.assign(deps, overrides);
+  return () => Object.assign(deps, prev);
+}
+
+// Runs one attempt `run(init)` that also aborts with a TimeoutError if no head arrives in headMs;
+// the timer ends with the head, so only the caller's signal reaches the body read.
+async function withHeadTimeout(init, run) {
+  const headCtl = new AbortController();
+  const timer = setTimeout(
+    () =>
+      headCtl.abort(new DOMException(`no response within ${deps.headMs / 1000}s`, 'TimeoutError')),
+    deps.headMs,
+  );
+  const signal = init.signal ? AbortSignal.any([init.signal, headCtl.signal]) : headCtl.signal;
+  try {
+    return await run({ ...init, signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Every Moodle request: the gate, then Node's fetch or the challenge window's page; a wall reopens
 // the window and resends through it (docs/MOODLE.md § Bot protection; `route`/`reopen` there).
 async function moodleFetch(
   url,
   init,
-  { route = true, reopen = route, label = '', wall = wallShaped } = {},
+  { route = true, reopen = route, label = '', wall = wallShaped, stream = false } = {},
 ) {
   await enterMoodle(String(url).split('?')[0]);
   // The request's own signal: a caller that hung up stops waiting on a captcha. `wall` says whether
   // an answer is the bot wall; an endpoint whose real reply is text/html passes its own.
-  const call = { signal: init.signal ?? moodleGate.signal(), waits: reopen ? 0 : MAX_WAITS, wall };
+  const call = {
+    signal: init.signal ?? moodleGate.signal(),
+    waits: reopen ? 0 : MAX_WAITS,
+    wall,
+    stream,
+  };
   const window = route ? challengeRoute(url) : null;
   let res = window ? await windowFetch(window, url, init, call) : await nodeFetch(url, init);
   const site = currentSite();
@@ -61,7 +94,7 @@ async function reopenOn(site, call) {
 }
 
 async function nodeFetch(url, init) {
-  const res = await fetchUpstream(url, init);
+  const res = await withHeadTimeout(init, (i) => fetchUpstream(url, i));
   ROUTE.set(res, 'node');
   return res;
 }
@@ -98,9 +131,17 @@ async function windowFetch(window, url, init, call) {
       window = now;
     }
     try {
-      res = await window.fetch(url, init, { lost: () => lostBody(window) });
+      // The page times the head and any body stall itself; a call with no file body to stream also gets
+      // a Node-side backstop for a page that never answers (a file open or preflight stays unbounded there, freed by its caller's signal).
+      res = await window.fetch(url, init, {
+        lost: () => lostBody(window),
+        headMs: deps.headMs,
+        stallMs: deps.stallMs,
+        backstopMs: call.stream ? 0 : deps.headMs + deps.stallMs,
+      });
       break;
     } catch (err) {
+      if (err?.backstop) throw err; // a hung page, not a closed window: site_unreachable
       if (window.gone(err)) throw windowClosed();
       if (window.onSite()) throw err;
       if (resent) throw new WsBlockedError('the challenge window left the site', ROUTED);
@@ -147,7 +188,8 @@ async function videoListWall(res) {
   try {
     JSON.parse(await res.clone().text());
     return false;
-  } catch {
+  } catch (e) {
+    if (e?.backstop) throw e; // a hung pull, not a non-JSON body
     return true;
   }
 }
@@ -470,11 +512,11 @@ function totalSize(res) {
 
 // Preflight a tokened pluginfile URL — the last point to report a dead token or a challenge before
 // server/ fetches it. → the file's size in bytes, or null when the answer did not say.
-export async function assertPluginfileReadable(url) {
+export async function assertPluginfileReadable(url, signal) {
   const res = await moodleFetch(
     url,
-    { headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT } },
-    { label: 'pluginfile: ' },
+    { headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT }, signal },
+    { label: 'pluginfile: ', stream: true },
   );
   const fault = await pluginfileFault(res, url);
   await res.body?.cancel().catch(() => {});
@@ -487,7 +529,7 @@ export async function assertPluginfileReadable(url) {
 export async function openPluginfile(url, { range, signal } = {}) {
   const headers = { 'User-Agent': APP_USER_AGENT };
   if (range) headers.Range = range;
-  const res = await moodleFetch(url, { headers, signal }, { label: 'pluginfile: ' });
+  const res = await moodleFetch(url, { headers, signal }, { label: 'pluginfile: ', stream: true });
   const fault = await pluginfileFault(res, url);
   if (fault) {
     await res.body?.cancel().catch(() => {});

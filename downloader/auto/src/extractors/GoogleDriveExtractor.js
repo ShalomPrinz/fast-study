@@ -2,6 +2,7 @@ import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError, fetchUpstream } from '../lib/errors.js';
 import { cacheProbe, getProbe } from '../core/probeCache.js';
+import { PROBE_TIMEOUT_MS } from '../lib/probeUrl.js';
 import { NAMED_FILE, classifyFilename, filenameFromDisposition } from '../lib/fileMedia.js';
 
 // Hosts that serve Google Drive file links. Anything else isn't Drive.
@@ -64,21 +65,38 @@ export function filenameFromHtml(html) {
   return null;
 }
 
+// A mid-body network failure or the probe's timeout must surface as site_unreachable, not read as
+// an empty page (→ "unshared"); undici's body error ("terminated") is reshaped as a fetch failure.
+async function bodyText(res) {
+  try {
+    return await res.text();
+  } catch (err) {
+    const host = new URL(res.url || driveDownloadUrl('')).hostname;
+    if (err?.name === 'TimeoutError') throw Object.assign(err, { host });
+    if (err instanceof TypeError && /^(terminated|fetch failed)$/.test(err.message))
+      throw Object.assign(new TypeError('fetch failed', { cause: err }), { host });
+    return '';
+  }
+}
+
 // The file's real name without an API key: direct-download's Content-Disposition, else the large-
-// file confirm interstitial, else `/view`'s <title>.
+// file confirm interstitial, else `/view`'s <title>. Each fetch is bounded by PROBE_TIMEOUT_MS.
 async function fetchDriveFilename(fileId) {
-  const res = await fetchUpstream(driveDownloadUrl(fileId));
+  const res = await fetchUpstream(driveDownloadUrl(fileId), {
+    signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+  });
   const fromHeader = filenameFromDisposition(res.headers.get('content-disposition'));
   if (fromHeader) {
     await res.body?.cancel().catch(() => {});
     return fromHeader;
   }
-  const fromHtml = filenameFromHtml(await res.text().catch(() => ''));
+  const fromHtml = filenameFromHtml(await bodyText(res));
   if (fromHtml) return fromHtml;
   const view = await fetchUpstream(
     `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`,
+    { signal: AbortSignal.timeout(PROBE_TIMEOUT_MS) },
   );
-  return filenameFromHtml(await view.text().catch(() => ''));
+  return filenameFromHtml(await bodyText(view));
 }
 
 // One wording for the no-filename verdict, so a cache hit 422s as accurately as a fresh probe.

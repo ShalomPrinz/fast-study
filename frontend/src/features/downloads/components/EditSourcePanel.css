@@ -1,0 +1,20 @@
+.edit-source-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.edit-source-saving {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+/* A refused save, in the same danger tone as a refused course URL. */
+.edit-source-error {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-meta);
+}

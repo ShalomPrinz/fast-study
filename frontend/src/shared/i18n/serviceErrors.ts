@@ -120,6 +120,8 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   // Gemini's own error text rides in `detail`.
   assignment_generation_failed: msg({ message: "Gemini couldn't write this document." }),
   drive_upload_failed: msg({ message: 'Uploading to Google Drive failed.' }),
+  // A token refresh that never reached Google; the transport's own text rides in `detail`.
+  drive_unreachable: msg({ message: "Couldn't reach Google Drive." }),
   drive_not_connected: msg({ message: 'Google Drive is not connected. Connect it in Settings.' }),
   drive_folder_not_configured: msg({
     message: 'No Google Drive folder is set. Choose one in Settings.',

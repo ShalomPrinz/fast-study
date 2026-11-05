@@ -12,6 +12,7 @@ log = logging.getLogger("errors")
 CONDITION_CODES = frozenset(
     {
         "drive_not_connected",
+        "drive_unreachable",
         "gemini_overloaded",
         "gemini_quota_exhausted",
         "gemini_quota_blocked",

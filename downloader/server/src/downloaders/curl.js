@@ -5,7 +5,7 @@ import { uploadVideo } from '../services/database.js';
 import { curlTransferArgs, autodlHeaderList, readAutodlRefusal } from '../services/autodl.js';
 
 // Replay the captured headers (minus SKIP_HEADERS) so short-lived tokens + Referer/Origin checks
-// pass. See docs/DOWNLOAD.md for SKIP_HEADERS and the per-host retry flags.
+// pass. See docs/DOWNLOAD.md for SKIP_HEADERS and the per-host retry and stall flags.
 // A capture auto proxies (one off the Moodle host) carries no captured headers here — auto keeps
 // them — only auto's own secret and wait marker, from a file.
 function buildCurlArgs(url, headers, tempDir) {

@@ -4,7 +4,7 @@ import { uploadMaterial, uploadAssignmentFile } from '../services/database.js';
 import { curlTransferArgs, autodlHeaderList, readAutodlRefusal } from '../services/autodl.js';
 
 // No captured-header replay: the URL authenticates by its own query-string token, or is a file on
-// auto. curlTransferArgs picks the failure and retry flags per host.
+// auto. curlTransferArgs picks the failure, retry and stall flags per host.
 function buildFetchArgs(url, tempDir) {
   return [
     ...curlTransferArgs(url, tempDir),

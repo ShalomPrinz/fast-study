@@ -163,10 +163,15 @@ for (const [label, downloader] of [
     for (const flag of ['--fail', '--retry', '--retry-all-errors'])
       assert.equal(onAuto.args.includes(flag), false, flag);
     assert.equal(onAuto.args.includes('--dump-header'), true);
+    assert.equal(onAuto.args.join(' ').includes('--connect-timeout 10'), true);
+    for (const flag of ['--speed-limit', '--speed-time'])
+      assert.equal(onAuto.args.includes(flag), false, flag);
     const other = downloader.buildCommand({ url: 'https://cdn.test/a.mp4', headers: [] }, dir);
     for (const flag of ['--fail', '--retry', '--retry-all-errors'])
       assert.equal(other.args.includes(flag), true, flag);
     assert.equal(other.args.includes('--dump-header'), false);
+    assert.equal(other.args.join(' ').includes('--connect-timeout 30'), true);
+    assert.equal(other.args.join(' ').includes('--speed-limit 1 --speed-time 120'), true);
   });
 
   test(`${label} sends any other URL none of auto's headers`, (t) => {

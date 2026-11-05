@@ -210,7 +210,7 @@ function gated(route, handler) {
     });
     const wait = req.headers?.[WAIT_HEADER.toLowerCase()] === '1';
     try {
-      await moodleGate.run({ wait, signal: gone.signal }, () => handler(req, res));
+      await moodleGate.run({ wait, signal: gone.signal }, () => handler(req, res, gone.signal));
     } catch (e) {
       if (e instanceof MoodleBusyError && !res.headersSent) {
         logResult(route, 'busy (429)');
@@ -647,9 +647,9 @@ export const handleListExpand = gated('/list/expand', async (req, res) => {
 
 // Symmetric with /list/expand: an unsupported ref on the resolve path surfaces as
 // 422, not a 500, and a host it could not reach as 503. Other errors rethrow to the centralized handler.
-export const handleResolve = gated('/resolve', async (req, res) => {
+export const handleResolve = gated('/resolve', async (req, res, signal) => {
   try {
-    await resolveItem(req, res);
+    await resolveItem(req, res, signal);
   } catch (e) {
     if (e instanceof UnsupportedError) {
       logResult('/resolve', `unsupported (422): ${e.message}`);
@@ -708,7 +708,7 @@ async function resolvePasted(res, { url, course, name, kind }) {
   send(res, 200, { media: 'video', targets });
 }
 
-async function resolveItem(req, res) {
+async function resolveItem(req, res, signal) {
   const { ref, url, course, name, kind = 'lecture', only, forceCapture } = req.body;
   // No ref but a url: a link pasted into the manual form (docs/GATE.md § Files).
   if (ref === undefined && url !== undefined) {
@@ -753,6 +753,7 @@ async function resolveItem(req, res) {
         wstoken: stored.wstoken,
         ref: rowRef,
         forceCapture: opts.forceCapture,
+        signal,
       });
     } catch (e) {
       if (invalidToken(e)) {

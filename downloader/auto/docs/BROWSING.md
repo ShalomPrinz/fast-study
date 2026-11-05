@@ -146,6 +146,7 @@ The name comes from `Content-Disposition` on `uc?export=download&id=<ID>` (one r
 file's confirm interstitial and `/file/d/<ID>/view`'s `<title>` are the fallbacks. A file not shared
 "anyone with the link" (or removed) yields no name and is a `422` (`drive_not_shared {url}`) naming
 the sharing cause and the URL.
+Both fetches time out after 15s (`PROBE_TIMEOUT_MS`, shared with the link probe) and a network failure while reading a page body is thrown, not read as an empty page; either is `503 site_unreachable` and is never cached, so a dropped probe is not remembered as unshared.
 Every verdict, the unshared one included (`reason:'unshared'`), is memoized per **file id** in
 `core/probeCache.js`; `forceCapture` re-probes — the way back in once the owner shares it.
 

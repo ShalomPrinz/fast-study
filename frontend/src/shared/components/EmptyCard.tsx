@@ -6,10 +6,13 @@ import '@/styles/panel.css'
 export default function EmptyCard({
   icon,
   error = false,
+  action,
   children,
 }: {
   icon: IconName
   error?: boolean
+  // A button under the title (retry, home).
+  action?: ReactNode
   children: ReactNode
 }) {
   return (
@@ -18,6 +21,7 @@ export default function EmptyCard({
         <Icon icon={icon} />
       </span>
       <p className="empty-state-title">{children}</p>
+      {action && <div className="empty-state-action">{action}</div>}
     </div>
   )
 }

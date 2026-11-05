@@ -5,6 +5,8 @@ time. A request holds the lock while it runs and for **3 seconds after it ends**
 so the site sees a slow, human-paced trickle instead of the bursts a bot manager flags
 ([MOODLE.md](MOODLE.md)). One module owns it: `src/moodle/gate.js`.
 
+A Moodle request cannot hold the lock unbounded: each attempt gives up after 60s without a response head (`site_unreachable`, lock released as for any failure; [MOODLE.md](MOODLE.md#time-limits)). A body that stops arriving is bounded too: on the Node route by undici's body timeout, on the window route by a 120s in-page stall check, and every other window call has a 180s Node-side backstop that closes the window against a hung renderer. Only a captcha wait (10 min), a streamed file body still moving, and a hung (not crashed) renderer during a window file open or preflight (a known gap, [MOODLE.md](MOODLE.md#time-limits): freed only by the caller hanging up) hold longer.
+
 ## Tickets
 
 Every route that can reach Moodle (`/list`, `/courses`, `/courses/check`, `/list/expand`, `/resolve`, `/site/probe`,

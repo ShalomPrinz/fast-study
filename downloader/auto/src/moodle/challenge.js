@@ -73,9 +73,9 @@ export function challengeRoute(url) {
   return win && originOf(String(url)) === win.origin ? win : null;
 }
 
-// Runs in the page; Node pulls the kept body in slices. Sent through a hidden about:blank iframe's
-// native fetch, since the site's scripts replace the page's (docs/MOODLE.md § Bot protection).
-async function pageFetch({ url, method, headers, body }) {
+// Runs in the page; Node pulls the kept body in slices, through a hidden iframe's native fetch (the
+// site's scripts replace the page's). `headMs` bounds the wait for the head, `stallMs` any gap in the body.
+async function pageFetch({ url, method, headers, body, headMs, stallMs }) {
   let frame = document.getElementById('__fastStudyFetch');
   if (!frame?.contentWindow) {
     frame = document.createElement('iframe');
@@ -84,28 +84,69 @@ async function pageFetch({ url, method, headers, body }) {
     frame.style.display = 'none';
     document.documentElement.appendChild(frame);
   }
-  const r = await frame.contentWindow.fetch(url, {
-    method,
-    headers,
-    body,
-    redirect: 'manual',
-    credentials: 'include',
-    cache: 'no-store',
-  });
+  const ctl = new AbortController();
+  let timedOut = false;
+  const timer = headMs
+    ? setTimeout(() => {
+        timedOut = true;
+        ctl.abort();
+      }, headMs)
+    : null;
+  let r;
+  try {
+    r = await frame.contentWindow.fetch(url, {
+      method,
+      headers,
+      body,
+      signal: ctl.signal,
+      redirect: 'manual',
+      credentials: 'include',
+      cache: 'no-store',
+    });
+  } catch (err) {
+    if (timedOut) return { timedOut: true };
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
   if (r.type === 'opaqueredirect') return { status: 302, headers: [], id: null, size: 0 };
-  const buf = new Uint8Array(await r.arrayBuffer());
+  let stalled = false;
+  let stallTimer;
+  const chunks = [];
+  try {
+    const reader = r.body?.getReader();
+    for (;;) {
+      if (stallMs) {
+        clearTimeout(stallTimer);
+        stallTimer = setTimeout(() => {
+          stalled = true;
+          ctl.abort();
+        }, stallMs);
+      }
+      const { done, value } = reader ? await reader.read() : { done: true };
+      if (done) break;
+      chunks.push(value);
+    }
+  } catch (err) {
+    if (stalled) return { timedOut: true };
+    throw err;
+  } finally {
+    clearTimeout(stallTimer);
+  }
+  // One copy at peak: the Blob takes the chunks (emptied here); pageChunk reads slices from it.
+  const blob = new Blob(chunks.splice(0));
   const id = `${Date.now()}-${Math.random()}`;
-  (globalThis.__fastStudyBodies ??= new Map()).set(id, buf);
-  return { status: r.status, headers: [...r.headers], id, size: buf.length };
+  (globalThis.__fastStudyBodies ??= new Map()).set(id, blob);
+  return { status: r.status, headers: [...r.headers], id, size: blob.size };
 }
 
 // Runs in the page: one base64 slice of a kept body, dropping it after the last one.
-function pageChunk({ id, offset, length }) {
+async function pageChunk({ id, offset, length }) {
   const bodies = globalThis.__fastStudyBodies;
-  const buf = bodies?.get(id);
-  if (!buf) return null;
-  const part = buf.subarray(offset, offset + length);
-  if (offset + length >= buf.length) bodies.delete(id);
+  const blob = bodies?.get(id);
+  if (!blob) return null;
+  if (offset + length >= blob.size) bodies.delete(id);
+  const part = new Uint8Array(await blob.slice(offset, offset + length).arrayBuffer());
   let s = '';
   for (let i = 0; i < part.length; i += 0x8000) {
     s += String.fromCharCode.apply(null, part.subarray(i, i + 0x8000));
@@ -193,7 +234,12 @@ class ChallengeWindow {
   async fetch(
     url,
     init = {},
-    { lost = () => new Error('the challenge window lost the body') } = {},
+    {
+      lost = () => new Error('the challenge window lost the body'),
+      headMs = 0,
+      stallMs = 0,
+      backstopMs = 0,
+    } = {},
   ) {
     const method = init.method ?? 'GET';
     const href = new URL(String(url)).href;
@@ -207,12 +253,24 @@ class ChallengeWindow {
     try {
       head = await this._evaluate(
         pageFetch,
-        { url: String(url), method, headers: pageHeaders(init.headers), body: pageBody(init.body) },
+        {
+          url: String(url),
+          method,
+          headers: pageHeaders(init.headers),
+          body: pageBody(init.body),
+          headMs,
+          stallMs,
+        },
         init.signal,
+        backstopMs,
       );
+      if (head.timedOut) {
+        throw new DOMException('no response or no body bytes in time', 'TimeoutError');
+      }
     } catch (err) {
-      // A closed window fails its fetches too; that stays the caller's gone() case.
-      if (this.gone(err)) throw err;
+      // A closed window fails its fetches too; that stays the caller's gone() case, except our own backstop close.
+      if (err?.backstop) err.host = new URL(href).hostname;
+      else if (this.gone(err)) throw err;
       if (/TypeError: Failed to fetch/.test(err?.message)) throw pageUnreachable(href, errorText);
       // A caller's AbortSignal.timeout: stamped as fetchUpstream does, so it maps to site_unreachable.
       if (err?.name === 'TimeoutError') err.host = new URL(href).hostname;
@@ -227,22 +285,62 @@ class ChallengeWindow {
     }
     if (NULL_BODY.has(head.status)) return new Response(null, { status: head.status, headers });
     headers.set('content-length', String(head.size));
-    return new Response(this._body(head, init.signal, lost), { status: head.status, headers });
+    return new Response(this._body(head, init.signal, lost, backstopMs, new URL(href).hostname), {
+      status: head.status,
+      headers,
+    });
   }
 
   // One page call, counted as activity from start to end so the idle close never cuts it off.
-  async _evaluate(fn, arg, signal) {
+  // `backstopMs` closes the window on a call whose page never answers (a hung renderer), which kills
+  // its in-page fetch, then rejects with a TimeoutError; the gate lock frees only after that.
+  async _evaluate(fn, arg, signal, backstopMs = 0) {
     this.busy++;
     this.touch();
+    const call = this.page.evaluate(fn, arg);
+    let backstop;
+    let closing; // set once the backstop fires: the window's close, awaited before the lock frees
     try {
-      return await abortable(this.page.evaluate(fn, arg), signal);
+      const raced = backstopMs
+        ? Promise.race([
+            call,
+            new Promise((_, reject) => {
+              backstop = setTimeout(() => {
+                closing = this.context.close().catch(() => {});
+                closing.then(() => reject(backstopError()));
+              }, backstopMs);
+            }),
+          ])
+        : call;
+      const out = await abortable(raced, signal);
+      if (closing) {
+        // A call that resolves after the backstop fired is over a closing page: discard it.
+        await closing;
+        throw backstopError();
+      }
+      return out;
+    } catch (e) {
+      // Playwright rejects the pending call with a closed-target error before close() resolves.
+      let err = e;
+      if (closing) {
+        await closing;
+        err = backstopError();
+      }
+      // Abandoned: if the page call still finishes with a stored body nobody will receive, drop it.
+      call.then(
+        (head) => head?.id && this.page.evaluate(pageDrop, head.id).catch(() => {}),
+        () => {},
+      );
+      throw err;
     } finally {
+      clearTimeout(backstop);
       this.busy--;
       this.touch();
     }
   }
 
-  _body({ id, size }, signal, lost) {
+  // A backstop hit on a pull errors the body with the tagged TimeoutError, never `lost()`.
+  _body({ id, size }, signal, lost, backstopMs, host) {
     if (!id || size === 0) {
       if (id) this.page.evaluate(pageDrop, id).catch(() => {});
       return '';
@@ -261,9 +359,16 @@ class ChallengeWindow {
       pull: async (ctl) => {
         try {
           signal?.throwIfAborted();
-          const b64 = await this._evaluate(pageChunk, { id, offset, length: CHUNK }).catch(
-            () => null,
-          );
+          const b64 = await this._evaluate(
+            pageChunk,
+            { id, offset, length: CHUNK },
+            undefined,
+            backstopMs,
+          ).catch((e) => {
+            if (!e?.backstop) return null;
+            e.host = host;
+            throw e;
+          });
           if (b64 == null) throw lost();
           const bytes = Buffer.from(b64, 'base64');
           offset += bytes.length;
@@ -526,4 +631,10 @@ export async function closeChallenge({ forget = false } = {}) {
   await closeWindow();
   if (!forget) return;
   fs.rmSync(profileDir(), { recursive: true, force: true });
+}
+
+function backstopError() {
+  const err = new DOMException('the page did not answer', 'TimeoutError');
+  err.backstop = true;
+  return err;
 }
