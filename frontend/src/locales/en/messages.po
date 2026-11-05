@@ -1102,6 +1102,10 @@ msgstr "Couldn't load the summary"
 msgid "Couldn't load your settings. Part of FastStudy isn't responding."
 msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 
+#: src/shared/i18n/serviceErrors.ts:122
+msgid "Couldn't reach Google Drive."
+msgstr "Couldn't reach Google Drive."
+
 #: src/features/settings/SettingsView.tsx:138
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."

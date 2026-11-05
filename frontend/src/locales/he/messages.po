@@ -1102,6 +1102,10 @@ msgstr "לא הצלחנו לטעון את הסיכום"
 msgid "Couldn't load your settings. Part of FastStudy isn't responding."
 msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastStudy לא מגיב."
 
+#: src/shared/i18n/serviceErrors.ts:122
+msgid "Couldn't reach Google Drive."
+msgstr "לא הצלחנו להתחבר ל-Google Drive."
+
 #: src/features/settings/SettingsView.tsx:138
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
