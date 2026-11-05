@@ -53,8 +53,8 @@ reload mid-render keeps the spinner and the disabled Save; other steps in flight
 ## A failed load
 
 A failed load (first read or a restore's reload) keeps `loading` true, so every edit gate holds, and the pane shows an `EmptyCard` error
-(`.edit-load-error`) with a Retry button instead of the spinner or an empty buffer. The next `summary.md` mtime
-change retries by itself; connection errors are toasted centrally.
+(`.edit-load-error`) with a Retry button instead of the spinner or an empty buffer. The next tree refresh (any SSE notify, mtime change or not)
+retries by itself; a retry (automatic or Retry, which is disabled while it runs) keeps the card up until it succeeds, so unrelated notifies never flash the spinner. Connection errors are toasted centrally.
 
 ## Changes from elsewhere
 

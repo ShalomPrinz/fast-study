@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
+import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
 import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
@@ -41,7 +42,11 @@ export default function DocEditor({ source }: { source: DocSource }) {
   const [hasOriginal, setHasOriginal] = useState(false)
   const [loading, setLoading] = useState(true)
   // The first read failed; `loading` stays true so every edit gate holds, and the pane shows this instead of the spinner.
-  const [loadError, setLoadError] = useState<ServiceFailure | null>(null)
+  const [loadError, setLoadError] = useState<{ failure: ServiceFailure; report: boolean } | null>(
+    null,
+  )
+  // A retry of a failed load is in flight: the card stays up (no spinner flash) and Retry is off.
+  const [retrying, setRetrying] = useState(false)
   // The save cycle this view started; `generating` below also covers a render still running after a reload.
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<ServiceFailure | null>(null)
@@ -63,6 +68,8 @@ export default function DocEditor({ source }: { source: DocSource }) {
   const savingRef = useRef(false)
   const rereadOwedRef = useRef(false)
   const mdMtime = pdfState?.mdMtime ?? null
+  // A new array on every applied tree refresh, i.e. on every SSE notify.
+  const { courses } = useCourseTreeContext()
 
   // Runs on every refresh; the ref limits it to the generate this view started, whose missing PDF
   // is the run's own delete — see docs/EDITOR.md.
@@ -92,24 +99,33 @@ export default function DocEditor({ source }: { source: DocSource }) {
     loadContent()
   }, [source.id])
 
+  // A failed load retries on the next tree refresh, so a service that came back recovers without a click.
+  useEffect(() => {
+    if (loadError) void loadContent(true)
+  }, [courses])
+
   // Another window's save or a re-summarize reaches us as a new summary.md mtime on the SSE-refreshed tree.
   useEffect(() => {
-    if (loadError) void loadContent()
-    else if (!loading) syncFromDisk()
+    if (!loading) syncFromDisk()
   }, [mdMtime, loading])
 
-  async function loadContent() {
+  // A retry keeps the error card up until it succeeds; a fresh load (new document, restore) clears it.
+  async function loadContent(retry = false) {
     setLoading(true)
-    setLoadError(null)
+    if (retry) setRetrying(true)
+    else setLoadError(null)
     let data
     try {
       data = await latest(source.fetch())
     } catch (e) {
-      // Connection errors are toasted centrally; the pane carries the failure until a retry or the next mtime change.
-      setLoadError(failureOf(e))
+      // Connection errors are toasted centrally; the pane carries the failure until a retry or the next notify.
+      setLoadError({ failure: failureOf(e), report: !isConnectionError(e) })
+      setRetrying(false)
       return
     }
     if (!data) return
+    setLoadError(null)
+    setRetrying(false)
     setContent(data.content)
     setSavedContent(data.content)
     setHasOriginal(data.hasOriginal)
@@ -340,15 +356,20 @@ export default function DocEditor({ source }: { source: DocSource }) {
                 icon="warning"
                 error
                 action={
-                  <button className="btn btn--ghost" onClick={() => void loadContent()}>
+                  <button
+                    className="btn btn--ghost"
+                    disabled={retrying}
+                    onClick={() => void loadContent(true)}
+                  >
                     <Trans>Retry</Trans>
                   </button>
                 }
               >
-                {loadError.code ? (
-                  <ServiceError failure={loadError} />
-                ) : (
-                  <Trans>Couldn't load the summary</Trans>
+                {serviceErrorNode(
+                  loadError.failure,
+                  undefined,
+                  loadError.failure.code ? undefined : t`Couldn't load the summary`,
+                  loadError.report,
                 )}
               </EmptyCard>
             </div>
