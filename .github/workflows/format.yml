@@ -1,0 +1,28 @@
+name: Format
+
+# Cloud sessions run without the repo's prettier, so their pushes land unformatted; this catches it before merge.
+on:
+  push:
+    branches: ['claude/**']
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install the lockfile-pinned prettier
+        run: npm ci --ignore-scripts
+
+      - name: Prettier
+        run: npx --no-install prettier --check .
+
+      # Same pin as .claude/hooks/format.sh.
+      - name: Ruff
+        run: uvx ruff@0.17.3 format --check .

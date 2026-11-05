@@ -48,6 +48,15 @@ later edit to a never-formatted file would arrive as a whole-file reformat diff.
 covers the same files the sweep does, so no file drifts until the next sweep rewrites it. A new worktree
 inherits the marker — see [`../skills/worktree/setup.sh`](../skills/worktree/setup.sh).
 
+**Pinned formatter versions.** Prettier runs only from the repo's `node_modules/.bin`, pinned by the
+lockfile. A global prettier of another version formats some files differently. In a cloud container
+with no install, it reformatted files the session never touched. Without the repo's copy, the hook
+skips prettier, says so in its message, and writes no baseline marker. Each turn therefore
+repeats the ruff sweep, which takes about a second and changes nothing. Ruff is pinned the same way
+(`ruff@<version>` in `format.sh`, `lint.sh` and the root `lint` script). A bump changes all three
+together, plus [`format.yml`](../../.github/workflows/format.yml). That workflow runs both checks on
+pushes to `claude/*`, so a cloud branch that skipped prettier is caught before it merges.
+
 **`lint.sh` also enforces the frontend CSS layout** — three greps asserting `main.tsx` imports no
 stylesheet but `styles/tokens.css`, that `tokens.css` holds no class selector, and that a root
 `index.css` hasn't come back. The rule and its rationale live in

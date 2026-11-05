@@ -28,20 +28,28 @@ skip() {
   exit 0
 }
 
+RUFF="ruff@0.17.3"   # pinned so a ruff release can't reformat the repo; bump with lint.sh and package.json
+# Only the repo's lockfile-pinned prettier: a global one formats differently — see README.md.
+PRETTIER="node_modules/.bin/prettier"
+note=""
+[ -x "$PRETTIER" ] || note=", prettier skipped: not installed (npm ci)"
+
 run_ruff() {   # "$@" = paths
-  uvx ruff format "$@" >/dev/null 2>&1
-  uvx ruff check --select I --fix --quiet "$@" >/dev/null 2>&1
+  uvx "$RUFF" format "$@" >/dev/null 2>&1
+  uvx "$RUFF" check --select I --fix --quiet "$@" >/dev/null 2>&1
 }
 run_prettier() {
-  npx prettier --write --ignore-unknown --no-error-on-unmatched-pattern "$@" >/dev/null 2>&1
+  [ -x "$PRETTIER" ] || return 0
+  "$PRETTIER" --write --ignore-unknown --no-error-on-unmatched-pattern "$@" >/dev/null 2>&1
 }
 
-# One-time whole-repo sweep the first time this runs in a tree — see README.md.
+# One-time whole-repo sweep the first time this runs in a tree — see README.md. Without the repo's
+# prettier the sweep is incomplete, so the marker waits for a run that has it.
 if [ ! -f "$marker" ]; then
   run_ruff .
   run_prettier .
-  date -Iseconds > "$marker"
-  report "format ✓"
+  [ -x "$PRETTIER" ] && date -Iseconds > "$marker"
+  report "format ✓$note"
 fi
 
 mapfile -d '' -t changed < <(
@@ -65,4 +73,4 @@ done
 [ ${#py[@]}  -gt 0 ] && run_ruff "${py[@]}"
 [ ${#web[@]} -gt 0 ] && run_prettier "${web[@]}"
 
-report "format ✓"
+report "format ✓$note"
