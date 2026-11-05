@@ -6,7 +6,7 @@ description: Run the real app — all four services and the SPA, every third par
 The harness lives in `.claude/harness/`; its [README](../../harness/README.md) is the full reference —
 what is faked and how, the `hb` helpers, every fake mode, the seeded courses, the blind spots. This
 skill is the short path through it. Run `node .claude/harness/hb.mjs help` once at the start: it is the
-complete command list, and an `hb` command comes before any curl or script against a service.
+complete command list, and use an `hb` command wherever one exists, not a curl or script against a service.
 
 ## Start your own stack
 
