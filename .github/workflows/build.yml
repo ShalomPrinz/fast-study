@@ -1,12 +1,11 @@
 name: Build and smoke-test
 
-# Every push to main, plus a dispatch to rebuild a commit whose artifact expired or whose version
-# was taken. Builds the installer once and runs the release smoke suite against exactly those bytes
-# on a fresh runner; nothing here publishes — publish.yml takes the `installer` artifact of this
-# workflow's green run for its commit.
+# Every push to main or a claude/** branch, plus a dispatch to rebuild a commit.
+# Builds the installer once and smoke-tests those exact bytes on a fresh runner; it never publishes.
+# publish.yml takes main's newest green run's `installer` for the release commit.
 on:
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
   workflow_dispatch:
 
 # Only the newest push on a ref builds; a superseded run is cancelled rather than queued.
@@ -42,6 +41,58 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
+      # curl is the one exception and ships with Windows, so it is not here.
+      # The prime's two come first so it starts ahead of the GitHub API steps.
+      # The msvc tectonic build, never gnu: the gnu binary imports six MinGW DLLs its own zip does
+      # not contain.
+      - name: Download tectonic and pandoc
+        run: |
+          mkdir -p "$STAGE/bin" downloads
+          base=https://github.com
+          curl -fsSL -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
+          curl -fsSL -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
+          for zip in tectonic pandoc; do 7z x -y -o"downloads/$zip" "downloads/$zip.zip" > /dev/null; done
+          cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
+          cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
+
+      # Exact key over every prime input, no restore-keys — delivery/docs/LATEX.md#across-runs.
+      - name: Restore the LaTeX cache
+        id: latex-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.STAGE }}/latex
+          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
+
+      # Network-bound, ~7.5 minutes cold; over a restored cache a top-up, run anyway as the strict proof.
+      # tectonic fetches each LaTeX package on first use and the shipped app renders --only-cached,
+      # so anything missing here is an unfixable failed render on a user's machine. It runs in the
+      # background beside the CPU-bound freeze and frontend build, writing its exit code to a file
+      # last, since a later step's shell cannot `wait` on it.
+      # The foreground sync keeps the freeze's own `uv run` off a .venv still being built.
+      - name: Start the LaTeX cache prime
+        working-directory: backend
+        env:
+          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
+          CACHE_HIT: ${{ steps.latex-cache.outputs.cache-hit }}
+        run: |
+          echo "LaTeX cache hit: ${CACHE_HIT:-false}, $(find "../$STAGE/latex" -type f 2>/dev/null | wc -l) files restored"
+          uv sync
+          nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
+          echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
+
+      # Nothing spawns ffprobe, so the ffmpeg zip's second binary — 105MB unpacked — stays behind.
+      - name: Download ffmpeg and yt-dlp
+        run: |
+          base=https://github.com
+          curl -fsSL -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
+          # Unpinned on purpose: yt-dlp rots as YouTube changes signatures, so a build ships the
+          # newest one and the app self-updates from there.
+          curl -fsSL -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+          7z x -y -o"downloads/ffmpeg" "downloads/ffmpeg.zip" > /dev/null
+          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
+          ls -l "$STAGE/bin"
 
       # The tag, the installer's file name and what app.getVersion() reports; the update check's
       # second installer needs any version below it, so this refuses a version with nothing below.
@@ -97,42 +148,6 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "shipping extension $version against ${latest:-no previous release}"
 
-      # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
-      # curl is the one exception and ships with Windows, so it is not here. Nothing spawns
-      # ffprobe, so the ffmpeg zip's second binary — 105MB unpacked — stays
-      # behind.
-      # The msvc tectonic build, never gnu: the gnu binary imports six MinGW DLLs its own zip does
-      # not contain.
-      - name: Download the bundled binaries
-        run: |
-          mkdir -p "$STAGE/bin" downloads
-          base=https://github.com
-          curl -fsSL -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
-          curl -fsSL -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
-          curl -fsSL -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
-          # Unpinned on purpose: yt-dlp rots as YouTube changes signatures, so a build ships the
-          # newest one and the app self-updates from there.
-          curl -fsSL -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
-          for zip in tectonic pandoc ffmpeg; do 7z x -y -o"downloads/$zip" "downloads/$zip.zip" > /dev/null; done
-          cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
-          cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
-          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
-          ls -l "$STAGE/bin"
-
-      # Network-bound, ~7.5 minutes. tectonic fetches each LaTeX package on first use and the
-      # shipped app renders --only-cached, so anything missing here is an unfixable failed render
-      # on a user's machine. It runs in the background beside the CPU-bound freeze and frontend
-      # build, writing its exit code to a file last, since a later step's shell cannot `wait` on it.
-      # The foreground sync keeps the freeze's own `uv run` off a .venv still being built.
-      - name: Start the LaTeX cache prime
-        working-directory: backend
-        env:
-          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
-        run: |
-          uv sync
-          nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
-          echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
-
       # The one build input that is not committed: it is gitignored so the client secret never
       # faces GitHub's secret scanning. Required — an installer without it cannot connect Drive.
       - name: Write credentials.json
@@ -166,14 +181,14 @@ jobs:
           echo "bootloader run.exe: ours $ours, stock $stock"
           [ "$ours" != "$stock" ] || { echo "::error::faststudy-services.exe would carry PyInstaller's stock bootloader"; exit 1; }
 
-      # With the token, vite uploads hidden source maps to release faststudy@<version> and deletes
-      # them; without it (a fork) no plugin loads and no DSN is baked, so the renderer reports nothing.
+      # With the token, vite uploads hidden source maps to faststudy@<version>, then deletes them.
+      # Only main gets the token: a branch computes the version main's next build will use.
       # Built once: the previous-version installer reuses this bundle, so there is one upload.
       - name: Build the frontend
         working-directory: frontend
         env:
           FASTSTUDY_VERSION: ${{ steps.version.outputs.version }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           VITE_SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
         run: npm ci && npm run build
@@ -200,6 +215,14 @@ jobs:
           [ -f "$done" ] || { echo "::error::the LaTeX cache prime did not finish within 40 minutes"; exit 1; }
           code=$(cat "$done")
           [ "$code" = 0 ] || { echo "::error::the LaTeX cache prime exited $code"; exit 1; }
+
+      # Right after a passed wait, so a failed or partial prime is never saved; a hit's key already exists.
+      - name: Save the LaTeX cache
+        if: steps.latex-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.STAGE }}/latex
+          key: ${{ steps.latex-cache.outputs.cache-primary-key }}
 
       - name: Assemble the resources tree
         run: node delivery/stage.mjs "$STAGE" "${{ steps.extension.outputs.version }}"
@@ -265,78 +288,10 @@ jobs:
             electron/dist/previous/latest.yml
           if-no-files-found: error
 
-  # A fresh runner, so the install is a first install. It installs and tests the uploaded artifact,
-  # which is byte for byte what publish.yml releases — and only a run this job passed counts as green.
+  # The smoke job, in smoke-suite.yml so smoke.yml can re-run it on this run's installers.
   smoke:
     needs: build
-    runs-on: windows-latest
-    timeout-minutes: 150
     permissions:
+      actions: read
       contents: read
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: installer
-          path: ${{ runner.temp }}/installer
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: installer-previous
-          path: ${{ runner.temp }}/installer-previous
-
-      # The suite's own dependencies, locked in delivery/smoke; none of it reaches resources/.
-      - name: Install the smoke suite
-        working-directory: delivery/smoke
-        run: npm ci --no-audit --no-fund
-
-      - name: Run the smoke suite
-        working-directory: delivery/smoke
-        env:
-          SMOKE_CANDIDATE_DIR: ${{ runner.temp }}/installer
-          SMOKE_PREVIOUS_DIR: ${{ runner.temp }}/installer-previous
-        run: npx playwright test
-
-      # The two boots the suite timed; publish.yml attaches it to the Release. Uploaded whatever the
-      # outcome, so a failed run's partial timings are readable too; kept as long as the installer.
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: boot-timing
-          path: delivery/smoke/test-results/boot-timing.json
-          if-no-files-found: ignore
-          retention-days: 90
-
-      # The suite copies each launch's launch.log as it quits; this catches the one a crash left.
-      - name: Collect the state root's logs
-        if: failure()
-        shell: pwsh
-        run: Copy-Item "$env:LOCALAPPDATA\FastStudy\logs" delivery/smoke/test-results/state-logs -Recurse -ErrorAction SilentlyContinue
-
-      # Two artifacts, because the traces are ~11MB of the ~11MB and the text is what gets read.
-      # Everything but the traces, so a new diagnostic file rides along without a pattern change.
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: smoke-logs
-          path: |
-            delivery/smoke/test-results/
-            !delivery/smoke/test-results/traces/**
-
-      # Screenshots and DOM snapshots for a failed UI assertion; absent when the failure preceded
-      # the first launch, which is a normal outcome and not worth an annotation.
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: smoke-traces
-          path: delivery/smoke/test-results/traces/
-          if-no-files-found: ignore
+    uses: ./.github/workflows/smoke-suite.yml

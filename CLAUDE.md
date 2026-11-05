@@ -116,7 +116,7 @@ A service agent reports in 300 words or fewer: files changed, docs updated and w
 
 `reviewer` is the exception: read-only, owning nothing, it reviews a task's uncommitted diff before the main session commits it.
 
-`lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
+`lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish,smoke,smoke-suite}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
 
 `site-dev` owns `site/` and `.github/workflows/pages.yml` under the same rule: the page describes what `electron/`, `delivery/` and the services own, so a claim or a name that needs changing there is reported, not edited.
 

@@ -4,8 +4,10 @@
 
 One unsigned per-user NSIS `.exe`, built by `.github/workflows/build.yml` on `windows-latest` in
 under 10 minutes — most of it the LaTeX prime, the freeze and the two installer builds — before the
-smoke job. The prime is network-bound, so it runs in the background beside the freeze and the frontend
-build, and a wait step collects its log and exit code before staging. The installer's own
+smoke job. The prime is network-bound, so it starts first — tectonic and pandoc download ahead of the
+GitHub API version steps — and runs in the background beside the freeze and the frontend build; a
+wait step collects its log and exit code before staging. It tops up a cache restored by exact key
+and always runs; only a passed wait saves it ([LATEX.md](LATEX.md#across-runs)). The installer's own
 configuration (one-click, per-user, the install directory) is electron's:
 [`electron/CLAUDE.md`](../../electron/CLAUDE.md#packaging).
 
@@ -16,23 +18,29 @@ OV/EV certificate avoids it. The LaTeX cache ships with tectonic's prebuilt form
 
 ## Build, test, publish
 
-Two workflows, neither taking an input.
+Two workflows, neither taking an input, and a third that only re-tests
+([re-running smoke](#re-running-smoke)).
 
-- **`build.yml`** runs on every push to `main` — a superseded run is cancelled — and on dispatch. It
+- **`build.yml`** runs on every push to `main` or a `claude/**` branch — so a cloud session, which
+  can push only its own branch and has no `gh`, still gets a full build and smoke run — and on
+  dispatch; a superseded run on the same ref is cancelled. It
   builds with `--publish never` and uploads the installer, its `.blockmap`, `latest.yml` and
   `extension-version.txt` ([the extension version](#the-extension-version)) as the
   `installer` artifact (90 days), plus `installer-previous`, the same staged tree at a lower version
   with its own `latest.yml`, which exists only for the smoke suite's update check and never leaves
   Actions. It fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
-  smoke job rewrites that file, so it cannot check it. The smoke job installs the artifact on a fresh runner and runs
+  smoke job rewrites that file, so it cannot check it. The smoke job — `smoke-suite.yml`, called as
+  `smoke / smoke` — installs the artifact on a fresh runner and runs
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
   the outcome `boot-timing` (90 days). The run is
-  green only when both jobs pass. It writes nothing to Releases.
+  green only when both jobs pass. It writes nothing to Releases. A branch run's artifact never
+  reaches a Release: publish.yml takes only `main`'s runs, so a commit fast-forwarded from a branch
+  releases once `main`'s own `build.yml` run of it is green.
 - **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It first walks back
   over `github-actions[bot]` commits that touch only `site/img/` — `pages.yml`'s screenshot refresh,
   which no build runs on — to the first other commit, and releases that one. It takes the
-  `installer` artifact of `build.yml`'s newest green run for that commit, reads the version off its
+  `installer` artifact of `build.yml`'s newest green `main` run for that commit, reads the version off its
   `latest.yml`, refuses if Release or tag `v<version>` exists, checks all four files are there and
   creates Release `v<version>`, published and targeted at that commit, with the same run's
   `boot-timing.json` attached when it has one — a notice, not a failure, when it does not. It ends by dispatching
@@ -45,6 +53,20 @@ Nothing reaches installed copies until `publish.yml` runs; `latest.yml` is what 
 the launcher's side is [`electron/docs/UPDATES.md`](../../electron/docs/UPDATES.md). An expired
 `installer` artifact makes `publish.yml` fail naming the commit; dispatching `build.yml` on it builds
 and smoke-tests a fresh one.
+
+### Re-running smoke
+
+`smoke.yml`, dispatch only, runs `smoke-suite.yml` at the dispatched ref against the installers of
+the `build.yml` run named by its required `run-id`, so a fix to `smoke/` is retried without the
+~8 minute build. A guard job first refuses, naming the fix, a run that is not `build.yml`'s, whose
+`build` job did not succeed (the run itself may have failed in smoke), or whose `installer` or
+`installer-previous` has expired — and any run whose commit's tree differs from the ref's outside
+`delivery/smoke/`, listing the differing paths. Tree equality, not ancestry: nothing under
+`delivery/smoke/` reaches the installer, so only then is the old installer the app this ref builds;
+any other change means dispatching `build.yml` instead. A green `smoke.yml` run publishes nothing:
+`publish.yml` reads `build.yml` runs only, so a release still needs a green `main` `build.yml` run for
+its commit. It uploads no `boot-timing`, since its file would name its own run and commit rather than
+the installer's build.
 
 `.claude/skills/debug-ci/` reads both smoke artifacts by name and inner layout from outside
 `delivery/`; nothing here fails when a rename breaks it, so change it in the same pass.
@@ -108,7 +130,9 @@ Two optional secrets; a fork or a build without them still produces an installer
 - **`SENTRY_AUTH_TOKEN`** (an org token, so org and region route themselves; `vars.SENTRY_ORG` is
   optional) makes the frontend build upload hidden source maps to `faststudy@<version>`, with
   `FASTSTUDY_VERSION` set from the computed version. The frontend builds once, so the
-  previous-version installer reuses the same bundle and there is one upload per run.
+  previous-version installer reuses the same bundle and there is one upload per run. Only `main`'s
+  runs get the token: a branch computes the version `main`'s next build will, so its maps would
+  land in that release; without it vite loads no plugin and emits no maps, and the DSN is still baked.
 
 The smoke run's installs carry the DSN, but the per-program firewall blocks every event they send.
 

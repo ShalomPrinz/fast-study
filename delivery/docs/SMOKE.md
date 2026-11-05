@@ -1,7 +1,8 @@
 # The release smoke suite
 
-`smoke/` is `@playwright/test` driving the installed exe through `_electron`, run by `build.yml`'s
-smoke job against the uploaded installer ([RELEASE.md](RELEASE.md#build-test-publish)). One ordered
+`smoke/` is `@playwright/test` driving the installed exe through `_electron`, run by `smoke-suite.yml`
+against the uploaded installer — as `build.yml`'s smoke job, or by `smoke.yml` against an earlier run's
+([RELEASE.md](RELEASE.md#build-test-publish)). One ordered
 file on one worker, since each check builds on the machine state the last one left: install, the
 installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, quit, a launcher crash, a backend death and restart, the tools under a Hebrew temp
 path, the browser chain, an in-place update. It needs an installed Windows build, so off the runner
@@ -107,6 +108,14 @@ A new smoke test adds its row here; a test with no packaging-only failure belong
   a layout-dependent control works in both branches — test 9 clicks `lecture-actions-menu` only if present.
 - **Launched with `--lang=en-US`**, so a failure screenshot is readable.
 
+## Re-running against an existing build
+
+`gh workflow run smoke.yml --ref <ref> -f run-id=<build.yml run id>`, or Actions → "Smoke-test a
+build" → "Run workflow", runs the suite at `<ref>` on that run's installers — valid only when the two
+commits differ at most under `delivery/smoke/`, which its guard checks
+([RELEASE.md](RELEASE.md#re-running-smoke)). GitHub lists a dispatch-only workflow, and accepts its
+dispatch, only once the file is on the default branch.
+
 ## Boot timing
 
 Two boots are timed, never an extra launch: test 3's (the fresh install's first) and test 16's last
@@ -114,7 +123,7 @@ step (the candidate's first after the update). `lib/bootTiming.js` writes them t
 `test-results/boot-timing.json` — `launch_to_app_ms` (`electron.launch` → main's `app loaded`
 `launch.log` line, the launcher's own mark of `app://bundle` finishing its load; same machine, same
 clock), `log_to_app_ms` (main's first `launch.log` line → that line) and each service's `ready_ms`
-from that first line, plus version, commit and run ids. Numbers only, since it
+from that first line, plus version, commit and run ids. A `smoke.yml` run uploads none ([RELEASE.md](RELEASE.md#re-running-smoke)). Numbers only, since it
 becomes a public Release asset ([RELEASE.md](RELEASE.md#boot-timing)). Report only: no threshold, and a
 value it cannot read is `null` with a warning, never a failure.
 
