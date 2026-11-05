@@ -13,6 +13,11 @@ not pushed is lost when the session ends. The rules below override the matching 
   [`git-commit`](../.claude/skills/git-commit/SKILL.md) skill, `reviewer` included.
 - Never push to `main`, never force-push, and never push any other branch.
 
+## Screenshots
+
+The container's scratchpad is not on the user's machine, so a screenshot left there is never seen.
+Send each screenshot to the user with `SendUserFile`, full window as always, and never commit it.
+
 ## Formatting
 
 The container has no install of the repo's prettier, so the format hook formats only Python and
