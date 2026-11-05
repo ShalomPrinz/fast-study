@@ -313,6 +313,8 @@ carry rows despite being `dev`: a launcher/frontend key drift reaches real users
 | `routes/downloadItem.js`  | job        | `recapture_unsupported`     | `detail`                   | user  |
 | `routes/downloadItem.js`  | job        | `recapture_failed`          | `detail`                   | user  |
 | `routes/jobs.js`          | http       | `job_unknown`               | —                          | user  |
+| `routes/jobs.js`          | http       | `job_not_restartable`       | —                          | user  |
+| `routes/jobs.js`          | http       | `job_in_run`                | —                          | developer |
 | `routes/generalFolder.js` | http       | `folder_picker_unavailable` | —                          | user  |
 | `generalFolder.js`        | http       | `general_folder_missing`    | `folder`                   | user  |
 | `generalFolder.js`        | http       | `general_folder_not_writable` | `folder`, `detail`       | user  |
@@ -325,6 +327,10 @@ can say which URLs are Moodle's.
 
 A section run's target carries a `code` only as auto's `site_captcha_timeout` (no params): on the row
 whose resolve timed out on the captcha, and on each later `moodle` row the run then fails unsent.
+
+`POST /jobs/:id/restart` answers `job_unknown` (404) for an id already superseded by a restart,
+`job_not_restartable` (409) when a late click lands after the job finished or began storing, and
+`job_in_run` (409) for a section-run job, which the SPA never offers a restart for.
 
 The `general_folder_*` codes are a general-video download into the user's chosen folder: `missing` and
 `not_writable` answer `POST /general-folder` (400) and the three download routes (409); `save_failed`

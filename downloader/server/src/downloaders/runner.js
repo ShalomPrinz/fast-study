@@ -13,7 +13,14 @@ import {
 } from '../progress.js';
 import { recordDownloadTiming } from '../services/timing.js';
 import { onAutodl } from '../services/autodl.js';
-import { setExpectedBytes, startJob, freezeJobBytes, finishJob, jobSignal } from '../jobs.js';
+import {
+  setExpectedBytes,
+  startJob,
+  freezeJobBytes,
+  finishJob,
+  jobSignal,
+  markStoring,
+} from '../jobs.js';
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'fast-study-dl-'));
@@ -107,6 +114,7 @@ export async function runDownloadJob(
   },
 ) {
   const signal = jobSignal(jobId);
+  if (!signal) return; // a restart dropped the job during the retry wait: nothing to run against
   const tempDir = makeTempDir();
   try {
     // Leading blank line is a TTY-only spacer for the in-place render. Under concurrently
@@ -233,6 +241,7 @@ export async function runDownloadJob(
       }
       // Timing sample only after a clean exit — a truncated download is not a valid duration
       recordDownloadTiming(downloader.tool, finalBytes || bytes, (Date.now() - spawnedAt) / 1000);
+      markStoring(jobId);
       // Not done at exit 0 — the bytes are still in a temp dir nobody else can see.
       // The job turns `done` only once the database has them.
       const uploadError = save

@@ -182,6 +182,7 @@ export async function drive(run, from, trigger = downloadItem, skip = addSkipped
           name: target.name,
           kind: target.kind,
           wait: true,
+          inRun: true,
           signal: run.stop.signal,
         });
         body = res.body;

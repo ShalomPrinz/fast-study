@@ -39,6 +39,23 @@ re-resolve, that waiting `/resolve` is abandoned. A cancelled job's temp dir —
 removed, and nothing is uploaded or timed. A job already uploading is past the signal: the upload
 finishes and the job ends `done` or `error`.
 
+## Stall and restart
+
+A running job is `stalled` when its measured bytes have not grown for `STALL_MS` (30 s), counted from
+`startedAt`, so a host that never sends a first byte stalls too. A 5 s timer (`checkStalls`) judges only
+the transfer: the flag is `false` once the child has exited (the upload to the database), once the
+measured bytes reach the probed size (yt-dlp's merge), on every non-running job, and on jobs of a
+section run ([RUNS.md](RUNS.md), which has its own pace). It clears when bytes grow, and a
+`job:change` ping goes out only when a flag changes. A re-run of the same job restarts the clock.
+
+`POST /jobs/:id/restart` starts a running or queued single job over from zero, with no resume: it
+aborts the child, or the retry / re-resolve wait between attempts (the runner removes the partial temp dir and a pending retry never spawns: its job is gone), drops the old job from `/jobs` at once
+and launches the stored request again (same url, headers, ref, course/lecture/kind or folder/file
+name) as a **new** job. Answer `{ jobId }`, the id to track; the old id is gone, so its runner's late
+terminal call finds nothing. Refused with `{ error, code, params: {} }`: `404 job_unknown`; `409
+job_in_run` (the job belongs to a section run); `409 job_not_restartable` (terminal, or already storing into the
+database). A job's `restart` closure lives off the wire beside its `fromCache`.
+
 ## Silent auth recovery
 
 `/download-item` resolves a row through auto/ before creating anything, so each job knows whether
@@ -109,7 +126,10 @@ on a restart, so a client whose tracked job is missing from `jobs` fails it only
 from the one it last saw — a job merely evicted after its `DONE_BRIDGE_MS` bridge keeps the same `boot`.
 Each job is
 `{ id, status, course, lecture, kind, tool, ref, dest, folder, fileName, operation, expectedBytes,
-startedAt, message, code, params }`. `dest` is `'app'` or `'folder'`; an app job's `folder`/`fileName`
+startedAt, stalled, source, message, code, params }`. `stalled` is above. `source` is `'moodle'` for every `/download-item` job (anything picked from the university course
+list, wherever the file is hosted: a Lemida recording sits on Oracle Cloud) and for a `/download-url`
+pasted link auto proxies from the Moodle site (the target is a url on auto); else `'other'` — `/download`,
+`/download-youtube` and any other pasted link. A restart keeps it. `dest` is `'app'` or `'folder'`; an app job's `folder`/`fileName`
 are `null`, a folder job's `course`/`lecture`/`kind` are. A folder job's `fileName` is the requested
 stem until `done`, then the name actually saved (`Talk (2).mp4`). `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `tool` via
 `services/timing.js`. `ref` (or `null`) is the discovery row that spawned the job; jobs sharing a

@@ -20,24 +20,47 @@ const router = Router();
  * @param {{ course: string, lecture: string, kind: string, ref?: string|null,
  *           fromCache?: boolean, reresolve?: (() => Promise<object>)|null }} meta
  *   reresolve refreshes a stale cached cap so the SAME job re-runs; null when there is no ref.
- *   ref, a discovery row's, rides to a material upload as its `source`.
+ *   ref, a discovery row's, rides to a material upload as its `source`. `moodle`: the job reads `source: 'moodle'` (a
+ *   course-list pick, or a pasted link auto proxies from the Moodle site); `inRun`: a section run owns the job.
  */
 export function startJob(
   downloader,
   input,
-  { course, lecture, kind, ref = null, fromCache = false, reresolve = null },
-) {
-  const jobId = createJob({ course, lecture, kind, tool: downloader.tool, ref, fromCache });
-  runDownloadJob(downloader, input, {
+  {
     course,
     lecture,
     kind,
-    jobId,
-    fromCache,
-    reresolve,
-    source: ref,
-  });
-  return jobId;
+    ref = null,
+    fromCache = false,
+    reresolve = null,
+    moodle = false,
+    inRun = false,
+  },
+) {
+  const launch = () => {
+    const jobId = createJob({
+      course,
+      lecture,
+      kind,
+      tool: downloader.tool,
+      ref,
+      fromCache,
+      source: moodle ? 'moodle' : 'other',
+      inRun,
+      restart: launch,
+    });
+    runDownloadJob(downloader, input, {
+      course,
+      lecture,
+      kind,
+      jobId,
+      fromCache,
+      reresolve,
+      source: ref,
+    });
+    return jobId;
+  };
+  return launch();
 }
 
 // Both names in the spelling the database stores, or null when either can't become one — so a job
@@ -68,8 +91,18 @@ function startFolderJob(res, downloader, input, fileName) {
   const target = folderTarget(fileName);
   if (target.body) return res.status(target.status).json(target.body);
   const { folder, stem } = target;
-  const jobId = createJob({ tool: downloader.tool, dest: 'folder', folder, fileName: stem });
-  runDownloadJob(downloader, input, { jobId, save: folderSaver(folder, stem), label: stem });
+  const launch = () => {
+    const jobId = createJob({
+      tool: downloader.tool,
+      dest: 'folder',
+      folder,
+      fileName: stem,
+      restart: launch,
+    });
+    runDownloadJob(downloader, input, { jobId, save: folderSaver(folder, stem), label: stem });
+    return jobId;
+  };
+  const jobId = launch();
   res.json({ status: 'Downloading in background...', jobId, folder, fileName: stem });
 }
 

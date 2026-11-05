@@ -28,6 +28,7 @@ test.after(() => {
 
 process.env.AUTODL_URL = `http://127.0.0.1:${auto.address().port}`;
 const { downloadUrl } = await import('../src/routes/downloadItem.js');
+const { downloadItem } = await import('../src/routes/downloadItem.js');
 const { listJobs } = await import('../src/jobs.js');
 
 const json = (status, body) => (req, res) => {
@@ -65,6 +66,7 @@ test('an off-site answer is a yt-dlp job, and the click is never marked to wait'
   assert.equal(status, 200);
   assert.equal(body.target, 'C/L1');
   assert.equal(jobOf(body.jobId).tool, 'yt-dlp');
+  assert.equal(jobOf(body.jobId).source, 'other', 'an off-site pasted link is not university');
   assert.deepEqual(seen[0], {
     method: 'POST',
     path: '/resolve',
@@ -93,6 +95,7 @@ test("a Moodle link's proxied answer is a curl job on auto, whose fetch queues",
   const job = jobOf(body.jobId);
   assert.equal(job.tool, 'curl');
   assert.equal(job.ref, null);
+  assert.equal(job.source, 'moodle');
   // The job's own request to auto is not the click: it carries the wait marker.
   for (let i = 0; i < 100 && !seen.some((s) => s.method === 'GET'); i++)
     await new Promise((r) => setTimeout(r, 20));
@@ -151,4 +154,21 @@ test('an unreachable auto fails the click closed, whatever the link', async () =
   });
   assert.equal(status, 502);
   assert.equal(body.code, 'autodl_unreachable');
+});
+
+test('a course-list pick is a moodle job even when the target is hosted off-site', async () => {
+  answer = autoWith(
+    json(200, {
+      media: 'video',
+      targets: [{ name: 'L6', tool: 'ytdlp', url: DEAD, fromCache: false }],
+    }),
+  );
+  const { status, body } = await downloadItem({
+    ref: 'r6',
+    course: 'C',
+    name: 'L6',
+    kind: 'lecture',
+  });
+  assert.equal(status, 200);
+  assert.equal(jobOf(body.jobIds[0]).source, 'moodle');
 });

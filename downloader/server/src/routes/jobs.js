@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { BOOT_ID, cancelJob, hasJob, listJobs } from '../jobs.js';
+import { BOOT_ID, cancelJob, hasJob, listJobs, restartJob } from '../jobs.js';
 import { subscribe } from '../events.js';
 
 const router = Router();
@@ -15,6 +15,19 @@ router.post('/jobs/:id/cancel', (req, res) => {
     return res.status(404).json({ error: 'unknown job', code: 'job_unknown', params: {} });
   cancelJob(req.params.id);
   res.json({});
+});
+
+// Start one running or queued single job over from zero. `{jobId}` is a NEW id that supersedes the
+// old one, which leaves `/jobs` at once (docs/JOBS.md).
+router.post('/jobs/:id/restart', (req, res) => {
+  const { id, code } = restartJob(req.params.id);
+  if (id) return res.json({ jobId: id });
+  const refusal = {
+    job_unknown: [404, 'unknown job'],
+    job_in_run: [409, 'job belongs to a section run'],
+    job_not_restartable: [409, 'job is not restartable'],
+  }[code];
+  res.status(refusal[0]).json({ error: refusal[1], code, params: {} });
 });
 
 // `/jobs` is how a consumer resyncs after subscribing late or reconnecting (docs/JOBS.md).

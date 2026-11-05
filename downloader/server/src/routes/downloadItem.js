@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { downloaders } from '../downloaders/index.js';
 import { fetchAssignment } from '../downloaders/fetch.js';
 import { invalidRequest, storedName, validateKind } from '../validate.js';
-import { resolve, resolved, targetUrl } from '../services/autodl.js';
+import { onAutodl, resolve, resolved, targetUrl } from '../services/autodl.js';
 import { startJob } from './download.js';
 
 const router = Router();
@@ -103,6 +103,7 @@ export async function downloadItem({
   forceCapture = false,
   wait = false,
   signal,
+  inRun = false,
 }) {
   const course = storedName(rawCourse);
   const name = storedName(rawName);
@@ -140,6 +141,8 @@ export async function downloadItem({
       ref,
       fromCache: targets[i].fromCache === true,
       reresolve: makeReresolve({ ref, course, name: targets[i].name, kind }),
+      moodle: true,
+      inRun,
     }),
   );
   return { status: 200, body: itemAnswer(body, jobIds, renames) };
@@ -187,6 +190,7 @@ export async function downloadUrl({ url, course, lecture, kind }) {
     kind,
     fromCache: target.fromCache === true,
     reresolve: makeReresolve({ url, course, name: lecture, kind }),
+    moodle: onAutodl(run.input.url),
   });
   return {
     status: 200,

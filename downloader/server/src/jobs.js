@@ -13,6 +13,11 @@ export const BOOT_ID = randomUUID();
 // the frontend row green — the tree, not the job, owns the durable "downloaded" state.
 export const DONE_BRIDGE_MS = 60 * 1000;
 
+// No new bytes for this long on a running transfer marks a job `stalled` (docs/JOBS.md).
+export const STALL_MS = 30 * 1000;
+const STALL_CHECK_MS = 5 * 1000;
+let stallTimer = null;
+
 // Created SYNCHRONOUSLY by the route, before the size probe, so a resync with the new id finds it.
 // A folder job has no course/lecture/kind; `fileName` is the requested stem until saved (docs/JOBS.md).
 export function createJob({
@@ -25,6 +30,9 @@ export function createJob({
   dest = 'app',
   folder = null,
   fileName = null,
+  source = 'other',
+  inRun = false,
+  restart = null,
 }) {
   // A retry supersedes any terminal predecessor for this target so `/jobs` holds at most
   // one job per target.
@@ -43,6 +51,14 @@ export function createJob({
     fileName,
     // Off the wire: the supersede key, which must not move when `fileName` becomes the saved name.
     requested: fileName,
+    source,
+    // Off the wire: a section-run job is never restartable alone; `restart` re-launches this request from zero.
+    inRun,
+    restart,
+    stalled: false,
+    lastBytes: 0,
+    progressAt: null,
+    storing: false,
     status: 'queued',
     expectedBytes: null,
     startedAt: null,
@@ -72,7 +88,55 @@ export function startJob(id, entry) {
   job.status = 'running';
   job.entry = entry;
   job.startedAt = Date.now();
+  job.lastBytes = 0;
+  job.progressAt = job.startedAt;
+  job.stalled = false;
+  stallTimer ??= setInterval(checkStalls, STALL_CHECK_MS).unref();
   broadcastJobs();
+}
+
+// Flags a running transfer whose measured bytes have not grown for STALL_MS, counted from the spawn
+// so a host that never sends a byte stalls too. Only the transfer is judged: after the child exits
+// the entry is gone, and a total at or past the probed size is yt-dlp's merge. One ping per change.
+export function checkStalls(now = Date.now()) {
+  let changed = false;
+  for (const job of jobs.values()) {
+    let stalled = false;
+    if (job.status === 'running' && job.entry && !job.inRun) {
+      const bytes = liveBytes(job);
+      if (bytes !== job.lastBytes) {
+        if (bytes > job.lastBytes) job.progressAt = now;
+        job.lastBytes = bytes;
+      }
+      const merging = job.expectedBytes && bytes >= job.expectedBytes;
+      if (merging) job.progressAt = now;
+      stalled = !merging && now - job.progressAt >= STALL_MS;
+    }
+    if (stalled !== job.stalled) {
+      job.stalled = stalled;
+      changed = true;
+    }
+  }
+  if (changed) broadcastJobs();
+}
+
+// The child exited clean and the bytes are going to the database: past the point a restart can abort.
+export function markStoring(id) {
+  const job = jobs.get(id);
+  if (job) job.storing = true;
+}
+
+// Start a running or queued single job over from zero (also one between attempts, in a retry or
+// re-resolve wait): abort the child or the wait (the runner removes the partial temp dir), drop the old job, and launch the same request as a NEW job. The old id leaves
+// `/jobs` at once, so its runner's late terminal call finds nothing. Returns `{id}` or `{code}`.
+export function restartJob(id) {
+  const job = jobs.get(id);
+  if (!job) return { code: 'job_unknown' };
+  if (job.inRun) return { code: 'job_in_run' };
+  if (terminal(job) || job.storing || !job.restart) return { code: 'job_not_restartable' };
+  job.abort.abort();
+  jobs.delete(id);
+  return { id: job.restart() };
 }
 
 // The name a folder job's file was saved under, set just before it turns `done`.
@@ -104,6 +168,7 @@ export function freezeJobBytes(id) {
   if (!job) return 0;
   job.receivedBytes = liveBytes(job);
   job.entry = null;
+  job.stalled = false;
   return job.receivedBytes;
 }
 
@@ -119,6 +184,7 @@ export function finishJob(id, status, message = null, code = null, params = null
   if (terminal(job)) return;
   freezeJobBytes(id);
   job.status = status;
+  job.stalled = false;
   job.message = message;
   job.code = code;
   job.params = params;
@@ -151,7 +217,7 @@ function liveBytes(job) {
 
 function snapshot(job) {
   const { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt } = job;
-  const { message, code, params, dest, folder, fileName } = job;
+  const { message, code, params, dest, folder, fileName, source, stalled } = job;
   return {
     id,
     status,
@@ -166,6 +232,8 @@ function snapshot(job) {
     operation: operationForTool(tool),
     expectedBytes,
     startedAt,
+    stalled,
+    source,
     message,
     code,
     params,
