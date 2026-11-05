@@ -34,14 +34,13 @@ Two workflows, neither taking an input, and a third that only re-tests
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
   the outcome `boot-timing` (90 days). The run is
-  green only when both jobs pass. It writes nothing to Releases. A branch run cannot reach a
-  Release on its own: publish.yml looks runs up by commit, not branch, so a branch run's artifact is
-  released only when its commit becomes the release commit and it is that commit's newest green run. Its bytes then differ from main's in
-  one way: built without `SENTRY_AUTH_TOKEN`, its renderer carries no uploaded source maps.
+  green only when both jobs pass. It writes nothing to Releases. A branch run's artifact never
+  reaches a Release: publish.yml takes only `main`'s runs, so a commit fast-forwarded from a branch
+  releases once `main`'s own `build.yml` run of it is green.
 - **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It first walks back
   over `github-actions[bot]` commits that touch only `site/img/` — `pages.yml`'s screenshot refresh,
   which no build runs on — to the first other commit, and releases that one. It takes the
-  `installer` artifact of `build.yml`'s newest green run for that commit, reads the version off its
+  `installer` artifact of `build.yml`'s newest green `main` run for that commit, reads the version off its
   `latest.yml`, refuses if Release or tag `v<version>` exists, checks all four files are there and
   creates Release `v<version>`, published and targeted at that commit, with the same run's
   `boot-timing.json` attached when it has one — a notice, not a failure, when it does not. It ends by dispatching
@@ -65,8 +64,8 @@ the `build.yml` run named by its required `run-id`, so a fix to `smoke/` is retr
 `delivery/smoke/`, listing the differing paths. Tree equality, not ancestry: nothing under
 `delivery/smoke/` reaches the installer, so only then is the old installer the app this ref builds;
 any other change means dispatching `build.yml` instead. A green `smoke.yml` run publishes nothing:
-`publish.yml` reads `build.yml` runs only, so a release still needs a green `build.yml` run for its
-commit. It uploads no `boot-timing`, since its file would name its own run and commit rather than
+`publish.yml` reads `build.yml` runs only, so a release still needs a green `main` `build.yml` run for
+its commit. It uploads no `boot-timing`, since its file would name its own run and commit rather than
 the installer's build.
 
 `.claude/skills/debug-ci/` reads both smoke artifacts by name and inner layout from outside

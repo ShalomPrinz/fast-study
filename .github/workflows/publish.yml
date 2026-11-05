@@ -1,7 +1,7 @@
 name: Publish
 
-# Manual only, no input, and it builds nothing: it releases the `installer` artifact of build.yml's
-# green run for the dispatched commit, or the one below pages.yml's screenshot commits — the bytes
+# Manual only, no input, and it builds nothing: it releases the `installer` artifact of main's green
+# build.yml run for the dispatched commit, or the one below pages.yml's screenshot commits — the bytes
 # the smoke job tested — as Release v<version>, the version build.yml computed and wrote into its
 # latest.yml. That is the moment every installed copy's updater can see it.
 on:
@@ -50,13 +50,14 @@ jobs:
           TARGET_SHA: ${{ steps.target.outputs.sha }}
         run: |
           # A run's conclusion is success only when every job passed, smoke included.
-          run=$(gh run list --workflow build.yml --commit "$TARGET_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          # Only main's runs: a claude/** branch run of the same commit is built without SENTRY_AUTH_TOKEN.
+          run=$(gh run list --workflow build.yml --branch main --commit "$TARGET_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
           if [ -z "$run" ]; then
-            echo "::error::no successful build.yml run for $TARGET_SHA; dispatch build.yml on this commit, then publish again"
+            echo "::error::no successful main build.yml run for $TARGET_SHA; dispatch build.yml on main at this commit, then publish again"
             exit 1
           fi
           if ! gh api "repos/$GH_REPO/actions/runs/$run/artifacts" --jq '.artifacts[] | select(.name == "installer" and (.expired | not)) | .id' | grep -q .; then
-            echo "::error::the installer artifact of build.yml run $run for $TARGET_SHA has expired; dispatch build.yml on this commit, then publish again"
+            echo "::error::the installer artifact of build.yml run $run for $TARGET_SHA has expired; dispatch build.yml on main at this commit, then publish again"
             exit 1
           fi
           gh run download "$run" -n installer -D installer
@@ -70,7 +71,7 @@ jobs:
           fi
           tag="v$version"
           if view=$(gh release view "$tag" --json isDraft 2> view.err); then
-            echo "::error::a Release $tag already exists (draft: $(jq -r .isDraft <<< "$view")); dispatch build.yml on this commit to build a fresh version, then publish again"
+            echo "::error::a Release $tag already exists (draft: $(jq -r .isDraft <<< "$view")); dispatch build.yml on main at this commit to build a fresh version, then publish again"
             exit 1
           elif ! grep -q "release not found" view.err; then
             cat view.err

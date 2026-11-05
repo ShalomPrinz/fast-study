@@ -2,7 +2,7 @@ name: Build and smoke-test
 
 # Every push to main or a claude/** branch, plus a dispatch to rebuild a commit.
 # Builds the installer once and smoke-tests those exact bytes on a fresh runner; it never publishes.
-# publish.yml takes the newest green run's `installer` for the release commit, whatever its branch.
+# publish.yml takes main's newest green run's `installer` for the release commit.
 on:
   push:
     branches: [main, 'claude/**']
