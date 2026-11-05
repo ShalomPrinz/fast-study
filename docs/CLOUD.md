@@ -6,11 +6,14 @@ not pushed is lost when the session ends. The rules below override the matching 
 
 ## Branch and push
 
-- Work on a branch named `claude/<task-slug>`, where the slug is a short kebab-case name for the task.
-  If the session starts on another branch, create this one from the current `HEAD` with
-  `git switch -c claude/<task-slug>`. That is the only branch command allowed.
+- Work on a branch named `claude/<task-slug>`, taking the branch or slug the task's prompt names, or
+  else a short kebab-case name for the task. The branch the session starts on never counts, even one
+  already named `claude/...`, unless the prompt names exactly that branch: create this one from the
+  current `HEAD` with `git switch -c claude/<task-slug>`. That is the only branch command allowed.
 - Push every commit to that branch: `git push -u origin claude/<task-slug>`. Commits still follow the
   [`git-commit`](../.claude/skills/git-commit/SKILL.md) skill, `reviewer` included.
+- If a push would cancel a workflow run still in progress on the branch, wait for that run to finish,
+  then push.
 - Never push to `main`, never force-push, and never push any other branch.
 - Each push to that branch runs `build.yml` (build + smoke). With no `gh`, read the results from the public
   API (`curl -s "https://api.github.com/repos/ShalomPrinz/fast-study/actions/runs?branch=<branch>"`); logs need auth.
