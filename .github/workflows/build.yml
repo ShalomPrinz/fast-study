@@ -43,6 +43,58 @@ jobs:
         with:
           node-version: 22
 
+      # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
+      # curl is the one exception and ships with Windows, so it is not here.
+      # The prime's two come first so it starts ahead of the GitHub API steps.
+      # The msvc tectonic build, never gnu: the gnu binary imports six MinGW DLLs its own zip does
+      # not contain.
+      - name: Download tectonic and pandoc
+        run: |
+          mkdir -p "$STAGE/bin" downloads
+          base=https://github.com
+          curl -fsSL -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
+          curl -fsSL -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
+          for zip in tectonic pandoc; do 7z x -y -o"downloads/$zip" "downloads/$zip.zip" > /dev/null; done
+          cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
+          cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
+
+      # Exact key over every prime input, no restore-keys — delivery/docs/LATEX.md#across-runs.
+      - name: Restore the LaTeX cache
+        id: latex-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.STAGE }}/latex
+          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
+
+      # Network-bound, ~7.5 minutes cold; over a restored cache a top-up, run anyway as the strict proof.
+      # tectonic fetches each LaTeX package on first use and the shipped app renders --only-cached,
+      # so anything missing here is an unfixable failed render on a user's machine. It runs in the
+      # background beside the CPU-bound freeze and frontend build, writing its exit code to a file
+      # last, since a later step's shell cannot `wait` on it.
+      # The foreground sync keeps the freeze's own `uv run` off a .venv still being built.
+      - name: Start the LaTeX cache prime
+        working-directory: backend
+        env:
+          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
+          CACHE_HIT: ${{ steps.latex-cache.outputs.cache-hit }}
+        run: |
+          echo "LaTeX cache hit: ${CACHE_HIT:-false}, $(find "../$STAGE/latex" -type f 2>/dev/null | wc -l) files restored"
+          uv sync
+          nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
+          echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
+
+      # Nothing spawns ffprobe, so the ffmpeg zip's second binary — 105MB unpacked — stays behind.
+      - name: Download ffmpeg and yt-dlp
+        run: |
+          base=https://github.com
+          curl -fsSL -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
+          # Unpinned on purpose: yt-dlp rots as YouTube changes signatures, so a build ships the
+          # newest one and the app self-updates from there.
+          curl -fsSL -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+          7z x -y -o"downloads/ffmpeg" "downloads/ffmpeg.zip" > /dev/null
+          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
+          ls -l "$STAGE/bin"
+
       # The tag, the installer's file name and what app.getVersion() reports; the update check's
       # second installer needs any version below it, so this refuses a version with nothing below.
       # Major and minor come from electron/package.json, whose patch is ignored: the patch is one
@@ -96,42 +148,6 @@ jobs:
           version=$(node delivery/extension-version.mjs "$latest" "$recorded")
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "shipping extension $version against ${latest:-no previous release}"
-
-      # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
-      # curl is the one exception and ships with Windows, so it is not here. Nothing spawns
-      # ffprobe, so the ffmpeg zip's second binary — 105MB unpacked — stays
-      # behind.
-      # The msvc tectonic build, never gnu: the gnu binary imports six MinGW DLLs its own zip does
-      # not contain.
-      - name: Download the bundled binaries
-        run: |
-          mkdir -p "$STAGE/bin" downloads
-          base=https://github.com
-          curl -fsSL -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
-          curl -fsSL -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
-          curl -fsSL -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
-          # Unpinned on purpose: yt-dlp rots as YouTube changes signatures, so a build ships the
-          # newest one and the app self-updates from there.
-          curl -fsSL -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
-          for zip in tectonic pandoc ffmpeg; do 7z x -y -o"downloads/$zip" "downloads/$zip.zip" > /dev/null; done
-          cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
-          cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
-          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
-          ls -l "$STAGE/bin"
-
-      # Network-bound, ~7.5 minutes. tectonic fetches each LaTeX package on first use and the
-      # shipped app renders --only-cached, so anything missing here is an unfixable failed render
-      # on a user's machine. It runs in the background beside the CPU-bound freeze and frontend
-      # build, writing its exit code to a file last, since a later step's shell cannot `wait` on it.
-      # The foreground sync keeps the freeze's own `uv run` off a .venv still being built.
-      - name: Start the LaTeX cache prime
-        working-directory: backend
-        env:
-          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
-        run: |
-          uv sync
-          nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
-          echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
 
       # The one build input that is not committed: it is gitignored so the client secret never
       # faces GitHub's secret scanning. Required — an installer without it cannot connect Drive.
@@ -200,6 +216,14 @@ jobs:
           [ -f "$done" ] || { echo "::error::the LaTeX cache prime did not finish within 40 minutes"; exit 1; }
           code=$(cat "$done")
           [ "$code" = 0 ] || { echo "::error::the LaTeX cache prime exited $code"; exit 1; }
+
+      # Right after a passed wait, so a failed or partial prime is never saved; a hit's key already exists.
+      - name: Save the LaTeX cache
+        if: steps.latex-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.STAGE }}/latex
+          key: ${{ steps.latex-cache.outputs.cache-primary-key }}
 
       - name: Assemble the resources tree
         run: node delivery/stage.mjs "$STAGE" "${{ steps.extension.outputs.version }}"

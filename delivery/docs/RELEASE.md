@@ -4,8 +4,10 @@
 
 One unsigned per-user NSIS `.exe`, built by `.github/workflows/build.yml` on `windows-latest` in
 under 10 minutes — most of it the LaTeX prime, the freeze and the two installer builds — before the
-smoke job. The prime is network-bound, so it runs in the background beside the freeze and the frontend
-build, and a wait step collects its log and exit code before staging. The installer's own
+smoke job. The prime is network-bound, so it starts first — tectonic and pandoc download ahead of the
+GitHub API version steps — and runs in the background beside the freeze and the frontend build; a
+wait step collects its log and exit code before staging. It tops up a cache restored by exact key
+and always runs; only a passed wait saves it ([LATEX.md](LATEX.md#across-runs)). The installer's own
 configuration (one-click, per-user, the install directory) is electron's:
 [`electron/CLAUDE.md`](../../electron/CLAUDE.md#packaging).
 

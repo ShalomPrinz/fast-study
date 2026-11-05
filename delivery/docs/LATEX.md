@@ -15,6 +15,26 @@ builds that cache; a cold prime is network-bound at roughly 7.5 minutes.
   `formats/<hash>-latex-33.fmt`, so the app's `--only-cached` renders load it rather than build one;
   smoke test 6 fails if a render adds or rewrites a file there.
 
+### Across runs
+
+`build.yml` restores the primed directory from an Actions cache before the prime and saves it with a
+separate `actions/cache/save` step right after the wait step passes, so a failed or partial prime is
+never saved and a later failure or a cancelled run does not lose a good one.
+
+- **The key is exact**: `latex-<os>-tectonic<TECTONIC_VERSION>-pandoc<PANDOC_VERSION>-<hash>`, the
+  hash over `prime_cache.py`, the sink, `probe.png`, the supplement, `backend/pipeline/to_pdf.py`
+  (`LATEX_HEADER`) and `backend/assets/{templates,filters,fonts}/`. There are no `restore-keys`: the
+  prime only adds files, so a partial match would carry files no input pulls any more into every
+  installer from then on.
+- **The prime runs on a hit too.** Restored, it is a top-up of reused files, but its strict render
+  is still the proof the shipped cache renders the sink; skipping it would ship a cache that fails
+  offline whenever an input changed without changing the key. What a hit's top-up adds is not
+  saved, since a key's cache is immutable — it is refetched on every run until the key moves.
+- **Scope and eviction are GitHub's**: a run reads its own branch's caches and `main`'s, and a
+  cache saved on another branch is visible only to that branch, so the first `main` run after
+  merging a key change misses. A cache unused for 7 days, or the oldest once the repo passes 10GB,
+  is evicted; either way that run primes cold.
+
 ## `kitchen-sink.md`
 
 Its contents come from enumerating the branches in `backend/assets/templates/` — pandoc 3.13's
