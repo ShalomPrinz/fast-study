@@ -77,6 +77,13 @@ the first is edit state read through the summary endpoint, the second is progres
 inlined as `transcribePartial` — but the video wipe takes both, since each describes the old video.
 Materials are outside it too: they are a numbered family (below), not a fixed name.
 
+## Figures
+
+`figures/` (`FIGURES_DIR`) inside a lecture or recitation dir holds the summary's cropped graphs,
+`fig<N>.<pdf|png|jpg|jpeg|gif>`, linked from `summary.md` by relative path. It is a derived artifact:
+the video wipe removes it, nothing in the tree lists it, and `fs/figures.py` owns the name rule,
+natural-order listing and clear. Routes: [API.md](API.md#summary-figures).
+
 ## Materials
 
 A lecture can hold any number of attached files of any extension, named `material.<ext>` (index 1),

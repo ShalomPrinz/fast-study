@@ -252,6 +252,7 @@ for the code whichever view chooses to show it.
 | `database_main.py`    | `file_read_failed`              | `file`, `detail`  | user      |
 | `database_main.py`, `fs/crud.py` | `file_delete_failed` | `file`, `detail`  | user      |
 | `database_main.py`, `fs/paths.py` | `file_not_found` | `file`            | user      |
+| `fs/figures.py`       | `figure_name_invalid`           | `name`            | dev       |
 | `database_main.py`    | `summary_io_failed`             | `detail`          | uncertain |
 | `database_main.py`    | `overview_read_failed`          | `detail`          | uncertain |
 | `database_main.py`    | `settings_store_io_failed`      | `detail`          | uncertain |

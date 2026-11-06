@@ -22,6 +22,7 @@ BOOL_FIELDS = {
     "drive_enabled": "DRIVE_ENABLED",
     "gemini_auto_fallback": "GEMINI_AUTO_FALLBACK",
     "auto_retry": "AUTO_RETRY",
+    "summary_figures": "SUMMARY_FIGURES",
 }
 INT_FIELDS = {
     "auto_retry_count": "AUTO_RETRY_COUNT",

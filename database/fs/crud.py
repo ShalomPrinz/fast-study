@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+from .figures import figure_files, wipe_figures
 from .material_meta import forget_meta
 from .paths import (
     ARCHIVED_MARKER,
@@ -197,7 +198,8 @@ def write_video(
     ]
     # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
     # half-wiped with the new video never written.
-    check_none_locked(wipe)
+    figures = figure_files(d)
+    check_none_locked([*wipe, *figures])
     for p in wipe:
         if p.exists():
             try:
@@ -205,6 +207,8 @@ def write_video(
             except PermissionError as e:
                 reject_if_locked(e, p.name)
                 raise
+    # Figures were cropped from the old video's slides-summary, so they go with it (already probed above).
+    wipe_figures(d, probed=True)
     (d / "video.mp4").write_bytes(data)
     if source:
         write_video_source(d, source)

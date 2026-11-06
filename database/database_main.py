@@ -13,7 +13,7 @@ from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fs import assignments, crud, materials, overview, paths, tree
+from fs import assignments, crud, figures, materials, overview, paths, tree
 from fs import sources as skips
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
@@ -458,6 +458,53 @@ def head_file(course: str, lecture: str, name: str, kind: str = Query("lecture")
     if not p.exists():
         return Response(status_code=404)
     return Response(status_code=200)
+
+
+@app.put("/courses/{course}/lectures/{lecture}/figures/{name}")
+async def put_figure(
+    course: str, lecture: str, name: str, request: Request, kind: str = Query("lecture")
+):
+    """Write one summary figure (fig<N>.<ext>) from a raw body; neutral, and 404 if the lecture is missing."""
+
+    try:
+        figures.write_figure(course, lecture, name, kind, await request.body())
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": name})
+
+
+@app.get("/courses/{course}/lectures/{lecture}/figures/{name}")
+def get_figure(course: str, lecture: str, name: str, kind: str = Query("lecture")):
+    """Stream one summary figure with its media type."""
+
+    try:
+        p = figures.figure_path(course, lecture, name, kind)
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed", {"file": name})
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": name})
+    return FileResponse(str(p), media_type=mimetypes.guess_type(name)[0])
+
+
+@app.get("/courses/{course}/lectures/{lecture}/figures")
+def list_figures(course: str, lecture: str, kind: str = Query("lecture")):
+    """List the summary figure names in natural order; [] for a missing lecture or folder."""
+
+    try:
+        return {"figures": figures.list_figures(course, lecture, kind)}
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed", {"file": "figures"})
+
+
+@app.delete("/courses/{course}/lectures/{lecture}/figures")
+def delete_figures(course: str, lecture: str, kind: str = Query("lecture")):
+    """Clear every summary figure of a lecture (idempotent); 404 if the lecture is missing."""
+
+    try:
+        figures.clear_figures(course, lecture, kind)
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_delete_failed", {"file": "figures"})
 
 
 @app.get("/courses/{course}/lectures/{lecture}/summary")
