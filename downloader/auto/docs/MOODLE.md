@@ -456,7 +456,7 @@ profile's saved position, while without it Chrome pulls a saved off-screen windo
 strip, hence the flag on every launch. A closed window reopened on the profile needs no new captcha
 while the clearance lasts.
 
-**Run 4: the tool-window style (2026-11)** (Chrome 156.0.8078.80, Windows; a helper script using `Add-Type` P/Invoke, finding the window by profile dir: the PIDs of `chrome.exe` from `Get-CimInstance Win32_Process`, then their visible, titled `Chrome_WidgetWin_1` top-levels through `EnumWindows`). Taskbar presence was read from the taskbar's buttons through UI Automation; Alt+Tab presence from Windows' rule (visible, not cloaked, not owned, not a tool window). A future check reuses this method.
+**Run 4: the tool-window style (2026-11)** (Chrome 156.0.8078.80, Windows; a helper script using `Add-Type` P/Invoke, finding the window by profile dir: the PIDs of `chrome.exe` from `Get-CimInstance Win32_Process`, then their visible, titled `Chrome_WidgetWin_1` top-levels through `EnumWindows`). Taskbar presence was read from the taskbar's buttons through UI Automation; Alt+Tab presence from Windows' rule (visible, not cloaked, not owned, not a tool window). A future check reuses this method, except that on Windows 11 the UIA taskbar counts proved unreliable (Run 5), so check the taskbar by eye.
 
 _Stage 1, neutral sites (example.com, Wikipedia, httpbin; fresh profile)._
 
@@ -470,8 +470,15 @@ _Stage 2, lemida behind Radware (a copy of the real profile, deleted afterwards)
 
 - Radware accepts a tool-styled window: 3 of 3 page fetches of `/webservice/rest/server.php?moodlewsrestformat=json` passed (200 `application/json` `invalidtoken`); one only after a captcha, solved in 33 s through the flow clear style, raise, solve, park, re-apply.
 - The page never undid the style: ex-style `0x00200080` after landing, after the fetches and at the end; off the taskbar and out of Alt+Tab throughout.
-- Foreground, the code's order (style clear, CDP normal, on screen, minimized, normal, then `bringToFront`; first show and raise alike): `raiseChallenge()` and `raiseZoomCaptcha()` took the foreground 2 of 2 times after the user clicked into another app (2026-11-06, Chrome 157.0.8103.38, Windows 26200). A first show that only called `bringToFront` did not take it there (2 of 2 misses).
 - Idle cost, lemida against `about:blank` on the same profile: +467 MB working set (939 vs 472 MB), +342 MB private bytes, +23.4% of one core (steady 24% mean, 27.5% peak over 10 min), zero network requests, so page script, probably Radware's. This is why the challenge window keeps its 60 s idle close.
+
+**Run 5: the shipped styling, live (2026-11-06)** (Chrome 157.0.8103.38, Windows 11 26200; the real modules against a local fake site, run as `FastStudy.exe` with `ELECTRON_RUN_AS_NODE`; two runs)
+
+- The marker lookup found both windows. `0x80` was set on every park and cleared on every show, and Alt+Tab was right throughout.
+- Hebrew `TEMP`: `Add-Type` exited 1, because csc got `?` in the path. The in-memory script compiles and reaches its window lookup (exit 3, no window running) with an ASCII or a Hebrew `TEMP`. A spawn takes 486-652 ms from Node.
+- Foreground (counts taken with another app in front, after the user had clicked into it, the case the foreground lock is about): a first show with only `bringToFront` missed it 2 of 2 times. With the raise's sequence (style clear, CDP normal, on screen, minimized, normal, then `bringToFront`), the first show took it 2 of 2 times, and raises 4 of 4.
+- `windowsHide` holds: no console window appeared under the GUI-subsystem parent, and no stray `powershell.exe` was left after the idle close.
+- Taskbar: on Windows 11, the UIA button counts contradict the style, so only a check by eye is reliable. For what the eye saw, see [SESSIONS.md](SESSIONS.md#off-the-taskbar-windows-browserwindowstylejs) "Known gaps".
 
 **History.** On 2026-09-07 the app worked again some time after the user solved a captcha in a WSL
 browser; nothing committed then touched the WS transport, so the block most likely expired by itself.
