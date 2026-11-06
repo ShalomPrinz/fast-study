@@ -9,19 +9,35 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    env:
+      # Keep in step with build.yml's TECTONIC_VERSION, the version the shipped LaTeX cache was primed against.
+      TECTONIC_VERSION: '0.17.0'
     steps:
       - uses: actions/checkout@v4
 
       - uses: astral-sh/setup-uv@v5
 
-      # pandoc drives the render tests (the LaTeX golden and the text_direction.lua
-      # cases); without it they skip. Pin to the shipped 3.13 — pandoc's LaTeX
-      # output differs across versions, so the golden is only valid for one.
+      # pandoc and tectonic drive the render tests (the LaTeX golden, the text_direction.lua cases, the font allowlist and the Hebrew code-block render); without them they skip.
+      # Pin pandoc to the shipped 3.13: its LaTeX output differs across versions, so the golden is only valid for one.
       - name: Install pandoc 3.13
         run: |
           curl -fsSL -o pandoc.deb https://github.com/jgm/pandoc/releases/download/3.13/pandoc-3.13-1-amd64.deb
           sudo dpkg -i pandoc.deb
           pandoc --version | head -1
+
+      - name: Install tectonic
+        run: |
+          mkdir -p "$RUNNER_TEMP/tectonic"
+          curl -fsSL "https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-unknown-linux-musl.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/tectonic"
+          echo "$RUNNER_TEMP/tectonic" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/tectonic/tectonic" --version
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/Tectonic
+          key: tectonic-backend-${{ env.TECTONIC_VERSION }}-${{ hashFiles('backend/pipeline/to_pdf.py') }}
+          restore-keys: tectonic-backend-${{ env.TECTONIC_VERSION }}-
 
       # uv reads .python-version + pyproject.toml; fetches Python 3.12 and builds
       # the venv with the test extra.
@@ -29,7 +45,7 @@ jobs:
         run: uv sync --extra test
 
       - name: Run tests
-        run: uv run pytest tests/ -q
+        run: uv run pytest tests/ -q -rs
 
   database-tests:
     runs-on: ubuntu-latest
