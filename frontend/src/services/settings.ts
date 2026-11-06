@@ -51,6 +51,8 @@ export interface Settings {
   geminiModel: string | null
   // Unset means off: a busy model fails the call instead of retrying on the next one.
   geminiAutoFallback: boolean | null
+  // Unset means off: the summary carries no figures cropped from the lecture's slides.
+  summaryFigures: boolean | null
   // Unset reads as the backend's defaults: on, 3 retries, 10 minutes apart (`AUTO_RETRY_DEFAULTS`).
   autoRetry: boolean | null
   autoRetryCount: number | null
@@ -85,6 +87,7 @@ export interface SettingsPatch {
   groqApiKey?: string
   geminiModel?: string
   geminiAutoFallback?: boolean
+  summaryFigures?: boolean
   autoRetry?: boolean
   autoRetryCount?: number
   autoRetryMinutes?: number
@@ -108,6 +111,7 @@ const WIRE: Record<SettingsField, string> = {
   groqApiKey: 'groq_api_key',
   geminiModel: 'gemini_model',
   geminiAutoFallback: 'gemini_auto_fallback',
+  summaryFigures: 'summary_figures',
   autoRetry: 'auto_retry',
   autoRetryCount: 'auto_retry_count',
   autoRetryMinutes: 'auto_retry_minutes',
@@ -132,6 +136,7 @@ const BACKEND_FIELDS: SettingsField[] = [
   'groqApiKey',
   'geminiModel',
   'geminiAutoFallback',
+  'summaryFigures',
   'autoRetry',
   'autoRetryCount',
   'autoRetryMinutes',
@@ -150,6 +155,7 @@ interface RawSettings {
   groq_api_key_set: boolean | null
   gemini_model: string | null
   gemini_auto_fallback?: boolean | null
+  summary_figures?: boolean | null
   auto_retry?: boolean | null
   auto_retry_count?: number | null
   auto_retry_minutes?: number | null
@@ -170,6 +176,7 @@ function normalize(raw: RawSettings): Settings {
     groqApiKeySet: raw.groq_api_key_set ?? false,
     geminiModel: raw.gemini_model,
     geminiAutoFallback: raw.gemini_auto_fallback ?? null,
+    summaryFigures: raw.summary_figures ?? null,
     autoRetry: raw.auto_retry ?? null,
     autoRetryCount: raw.auto_retry_count ?? null,
     autoRetryMinutes: raw.auto_retry_minutes ?? null,
