@@ -143,6 +143,8 @@ export interface BulkRunState {
   notStarted: number
   // Rows failed on an unsolved captcha; counted while queueing too, as the summary only says "failed".
   captchaTimedOut: number
+  // Rows whose resolve hit a persistent Moodle 5xx; the run went on without them.
+  upstreamFailed: number
 }
 
 export function bulkRunState(
@@ -161,6 +163,7 @@ export function bulkRunState(
     stalled: queueing ? 0 : unverifiedCount(targets, courses, course, jobsByRef),
     notStarted: queueing ? 0 : notStartedCount(targets),
     captchaTimedOut: captchaTimeoutCount(targets),
+    upstreamFailed: upstreamErrorCount(targets),
   }
 }
 
@@ -207,4 +210,9 @@ export function bulkGate(args: {
 // later Moodle row, which the run never sent. See docs/BULK.md.
 export function captchaTimeoutCount(targets: readonly RunTarget[]): number {
   return targets.filter((t) => t.code === 'site_captcha_timeout').length
+}
+
+// Targets whose resolve hit a persistent Moodle 5xx (`moodle_upstream_error`); they are `queue-failed`, so no other note counts them.
+export function upstreamErrorCount(targets: readonly RunTarget[]): number {
+  return targets.filter((t) => t.code === 'moodle_upstream_error').length
 }

@@ -162,7 +162,7 @@ msgstr "{0} remaining"
 msgid "{0} video"
 msgstr "{0} video"
 
-#: src/features/downloads/components/BulkRunNotes.tsx:56
+#: src/features/downloads/components/BulkRunNotes.tsx:60
 msgid "{captchaTimedOut, plural, one {# recording wasn't downloaded: {unsolvedBecause}} other {# recordings weren't downloaded: {unsolvedBecause}}}"
 msgstr "{captchaTimedOut, plural, one {# recording wasn't downloaded: {unsolvedBecause}} other {# recordings weren't downloaded: {unsolvedBecause}}}"
 
@@ -316,7 +316,7 @@ msgstr "{more_count, plural, =0 {Something in the summary stopped the PDF from b
 msgid "{name} was used"
 msgstr "{name} was used"
 
-#: src/features/downloads/components/BulkRunNotes.tsx:67
+#: src/features/downloads/components/BulkRunNotes.tsx:80
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 
@@ -380,7 +380,7 @@ msgstr "{stage} · step {stepNumber} of {stepCount}"
 msgid "{stageCount, plural, one {# step} other {# steps}}"
 msgstr "{stageCount, plural, one {# step} other {# steps}}"
 
-#: src/features/downloads/components/BulkRunNotes.tsx:76
+#: src/features/downloads/components/BulkRunNotes.tsx:89
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 
@@ -407,6 +407,10 @@ msgstr "{tool} is missing, so the parts of FastStudy that need it will fail. Rei
 #: src/features/downloads/components/NewView.tsx:155
 msgid "{total, plural, one {This course has # item you haven't marked. Skip all old content?} other {This course has # items you haven't marked. Skip all old content?}}"
 msgstr "{total, plural, one {This course has # item you haven't marked. Skip all old content?} other {This course has # items you haven't marked. Skip all old content?}}"
+
+#: src/features/downloads/components/BulkRunNotes.tsx:69
+msgid "{upstreamFailed, plural, one {# recording wasn't downloaded: {upstreamBecause}} other {# recordings weren't downloaded: {upstreamBecause}}}"
+msgstr "{upstreamFailed, plural, one {# recording wasn't downloaded: {upstreamBecause}} other {# recordings weren't downloaded: {upstreamBecause}}}"
 
 #: src/shared/i18n/serviceErrors.ts:292
 msgid "{url} no longer exists. Check the course page for a new link."
@@ -712,7 +716,7 @@ msgstr "Browser for downloading recordings"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "Building the PDF took too long and was stopped after {seconds} seconds."
 
-#: src/features/downloads/utils/downloadErrors.ts:48
+#: src/features/downloads/utils/downloadErrors.ts:53
 msgid "Can't download {name} while it's being processed or waiting in line"
 msgstr "Can't download {name} while it's being processed or waiting in line"
 
@@ -1081,12 +1085,12 @@ msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
 #: src/features/downloads/components/FolderJobList.tsx:135
-#: src/features/downloads/utils/downloadErrors.ts:67
-#: src/features/downloads/utils/downloadErrors.ts:86
+#: src/features/downloads/utils/downloadErrors.ts:72
+#: src/features/downloads/utils/downloadErrors.ts:91
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "Couldn't download \"{name}\". Try again."
 
-#: src/features/downloads/utils/downloadErrors.ts:78
+#: src/features/downloads/utils/downloadErrors.ts:83
 msgid "Couldn't load entries. Try again."
 msgstr "Couldn't load entries. Try again."
 
@@ -3077,15 +3081,15 @@ msgstr "The PDF is older than an earlier step's output. Re-generate it."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "The PDF is older than the summary. Re-generate it."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:45
+#: src/features/downloads/components/BulkRunNotes.tsx:48
 msgid "the run stopped early. Download them again to pick them up."
 msgstr "the run stopped early. Download them again to pick them up."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:48
+#: src/features/downloads/components/BulkRunNotes.tsx:51
 msgid "the run stopped early. Run the playlist again to pick them up."
 msgstr "the run stopped early. Run the playlist again to pick them up."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:47
+#: src/features/downloads/components/BulkRunNotes.tsx:50
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "the run stopped early. Run the section again to pick them up."
 
@@ -3093,15 +3097,15 @@ msgstr "the run stopped early. Run the section again to pick them up."
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:40
+#: src/features/downloads/components/BulkRunNotes.tsx:43
 msgid "the run was cancelled. Download them again to pick them up."
 msgstr "the run was cancelled. Download them again to pick them up."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:43
+#: src/features/downloads/components/BulkRunNotes.tsx:46
 msgid "the run was cancelled. Run the playlist again to pick them up."
 msgstr "the run was cancelled. Run the playlist again to pick them up."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:42
+#: src/features/downloads/components/BulkRunNotes.tsx:45
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
@@ -3137,7 +3141,7 @@ msgstr "The sidebar takes you between your lectures, the running pipelines, Down
 msgid "The site doesn't say what these files are. Only videos can be downloaded from here, known only after download."
 msgstr "The site doesn't say what these files are. Only videos can be downloaded from here, known only after download."
 
-#: src/features/downloads/utils/downloadErrors.ts:98
+#: src/features/downloads/utils/downloadErrors.ts:103
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."
 msgstr "The site refused the download. This link needs a login, so it can't be downloaded here."
 
@@ -3153,15 +3157,15 @@ msgstr "The summary is empty"
 msgid "The university is checking the connection."
 msgstr "The university is checking the connection."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:34
+#: src/features/downloads/components/BulkRunNotes.tsx:37
 msgid "the university session expired. Reconnect, then download them again."
 msgstr "the university session expired. Reconnect, then download them again."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:37
+#: src/features/downloads/components/BulkRunNotes.tsx:40
 msgid "the university session expired. Reconnect, then run the playlist again."
 msgstr "the university session expired. Reconnect, then run the playlist again."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:36
+#: src/features/downloads/components/BulkRunNotes.tsx:39
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "the university session expired. Reconnect, then run the section again."
 
@@ -3173,7 +3177,7 @@ msgstr "The university site had a temporary server error. Try again in a moment.
 msgid "The university site is asking for a captcha in a Chrome window. Solve it there to continue."
 msgstr "The university site is asking for a captcha in a Chrome window. Solve it there to continue."
 
-#: src/features/downloads/utils/downloadErrors.ts:43
+#: src/features/downloads/utils/downloadErrors.ts:48
 #: src/shared/i18n/serviceErrors.ts:259
 msgid "The university site is busy with another request. Try again in a moment."
 msgstr "The university site is busy with another request. Try again in a moment."

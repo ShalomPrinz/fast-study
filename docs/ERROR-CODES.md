@@ -325,8 +325,9 @@ the Moodle site can answer auto's `moodle_busy`, `link_not_a_video`, `link_dead`
 `link_probe_inconclusive`; `autodl_unreachable` reaches `/download-url` for any URL, since only auto
 can say which URLs are Moodle's.
 
-A section run's target carries a `code` only as auto's `site_captcha_timeout` (no params): on the row
-whose resolve timed out on the captcha, and on each later `moodle` row the run then fails unsent.
+A section run's target carries a `code` (no params) only as auto's `site_captcha_timeout` — on the row
+whose resolve timed out on the captcha, and on each later `moodle` row the run then fails unsent — or
+as `moodle_upstream_error`, on that row alone while the run goes on.
 
 `POST /jobs/:id/restart` answers `job_unknown` (404) for an id already superseded by a restart,
 `job_not_restartable` (409) when a late click lands after the job finished or began storing, and

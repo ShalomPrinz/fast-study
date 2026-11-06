@@ -162,7 +162,7 @@ msgstr "נותרו {0}"
 msgid "{0} video"
 msgstr "וידאו באורך {0}"
 
-#: src/features/downloads/components/BulkRunNotes.tsx:56
+#: src/features/downloads/components/BulkRunNotes.tsx:60
 msgid "{captchaTimedOut, plural, one {# recording wasn't downloaded: {unsolvedBecause}} other {# recordings weren't downloaded: {unsolvedBecause}}}"
 msgstr "{captchaTimedOut, plural, one {הקלטה אחת לא הורדה: {unsolvedBecause}} two {# הקלטות לא הורדו: {unsolvedBecause}} other {# הקלטות לא הורדו: {unsolvedBecause}}}"
 
@@ -316,7 +316,7 @@ msgstr "{more_count, plural, =0 {משהו בסיכום מנע את בניית ה
 msgid "{name} was used"
 msgstr "סוכם עם {name}"
 
-#: src/features/downloads/components/BulkRunNotes.tsx:67
+#: src/features/downloads/components/BulkRunNotes.tsx:80
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {ההורדה של הקלטה אחת לא התחילה — {stoppedBecause}} two {ההורדה של # הקלטות לא התחילה — {stoppedBecause}} other {ההורדה של # הקלטות לא התחילה — {stoppedBecause}}}"
 
@@ -380,7 +380,7 @@ msgstr "{stage} · שלב {stepNumber} מתוך {stepCount}"
 msgid "{stageCount, plural, one {# step} other {# steps}}"
 msgstr "{stageCount, plural, one {שלב אחד} two {# שלבים} other {# שלבים}}"
 
-#: src/features/downloads/components/BulkRunNotes.tsx:76
+#: src/features/downloads/components/BulkRunNotes.tsx:89
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.}}"
 
@@ -407,6 +407,10 @@ msgstr "הכלי {tool} חסר, ולכן חלקים ב-FastStudy שזקוקים 
 #: src/features/downloads/components/NewView.tsx:155
 msgid "{total, plural, one {This course has # item you haven't marked. Skip all old content?} other {This course has # items you haven't marked. Skip all old content?}}"
 msgstr "{total, plural, one {בקורס הזה יש פריט # שלא סימנת. לדלג על כל התוכן הישן?} other {בקורס הזה יש # פריטים שלא סימנת. לדלג על כל התוכן הישן?}}"
+
+#: src/features/downloads/components/BulkRunNotes.tsx:69
+msgid "{upstreamFailed, plural, one {# recording wasn't downloaded: {upstreamBecause}} other {# recordings weren't downloaded: {upstreamBecause}}}"
+msgstr "{upstreamFailed, plural, one {הקלטה אחת לא הורדה: {upstreamBecause}} two {# הקלטות לא הורדו: {upstreamBecause}} other {# הקלטות לא הורדו: {upstreamBecause}}}"
 
 #: src/shared/i18n/serviceErrors.ts:292
 msgid "{url} no longer exists. Check the course page for a new link."
@@ -712,7 +716,7 @@ msgstr "דפדפן להורדת הקלטות"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "בניית ה-PDF נמשכה יותר מדי זמן ונעצרה אחרי {seconds} שניות."
 
-#: src/features/downloads/utils/downloadErrors.ts:48
+#: src/features/downloads/utils/downloadErrors.ts:53
 msgid "Can't download {name} while it's being processed or waiting in line"
 msgstr "אי אפשר להוריד את {name} בזמן עיבוד או המתנה בתור"
 
@@ -1081,12 +1085,12 @@ msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "לא ניתן להוריד את \"{lecture}\". נסה שוב."
 
 #: src/features/downloads/components/FolderJobList.tsx:135
-#: src/features/downloads/utils/downloadErrors.ts:67
-#: src/features/downloads/utils/downloadErrors.ts:86
+#: src/features/downloads/utils/downloadErrors.ts:72
+#: src/features/downloads/utils/downloadErrors.ts:91
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 
-#: src/features/downloads/utils/downloadErrors.ts:78
+#: src/features/downloads/utils/downloadErrors.ts:83
 msgid "Couldn't load entries. Try again."
 msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 
@@ -3077,15 +3081,15 @@ msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור 
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:45
+#: src/features/downloads/components/BulkRunNotes.tsx:48
 msgid "the run stopped early. Download them again to pick them up."
 msgstr "ההרצה נעצרה מוקדם. הורד אותם שוב כדי להשלים אותם."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:48
+#: src/features/downloads/components/BulkRunNotes.tsx:51
 msgid "the run stopped early. Run the playlist again to pick them up."
 msgstr "תהליך ההורדה נעצר מוקדם. הרץ את הפלייליסט שוב כדי להשלים אותן."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:47
+#: src/features/downloads/components/BulkRunNotes.tsx:50
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -3093,15 +3097,15 @@ msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה ש
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:40
+#: src/features/downloads/components/BulkRunNotes.tsx:43
 msgid "the run was cancelled. Download them again to pick them up."
 msgstr "ההרצה בוטלה. הורד אותם שוב כדי להשלים אותם."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:43
+#: src/features/downloads/components/BulkRunNotes.tsx:46
 msgid "the run was cancelled. Run the playlist again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את הפלייליסט שוב כדי להשלים אותן."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:42
+#: src/features/downloads/components/BulkRunNotes.tsx:45
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -3137,7 +3141,7 @@ msgstr "סרגל הצד מעביר אותך בין ההרצאות, ההרצאו�
 msgid "The site doesn't say what these files are. Only videos can be downloaded from here, known only after download."
 msgstr "האתר לא מציין מה הקבצים האלה. מכאן אפשר להוריד רק וידאו, ורק אחרי ההורדה מתברר מה כל קובץ."
 
-#: src/features/downloads/utils/downloadErrors.ts:98
+#: src/features/downloads/utils/downloadErrors.ts:103
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."
 msgstr "האתר סירב להורדה. הקישור הזה דורש התחברות, ולכן אי אפשר להוריד אותו כאן."
 
@@ -3153,15 +3157,15 @@ msgstr "הסיכום ריק"
 msgid "The university is checking the connection."
 msgstr "האוניברסיטה בודקת את החיבור."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:34
+#: src/features/downloads/components/BulkRunNotes.tsx:37
 msgid "the university session expired. Reconnect, then download them again."
 msgstr "תוקף החיבור פג. התחבר מחדש והורד אותם שוב."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:37
+#: src/features/downloads/components/BulkRunNotes.tsx:40
 msgid "the university session expired. Reconnect, then run the playlist again."
 msgstr "תוקף החיבור לאוניברסיטה פג. התחבר מחדש והרץ את הפלייליסט שוב."
 
-#: src/features/downloads/components/BulkRunNotes.tsx:36
+#: src/features/downloads/components/BulkRunNotes.tsx:39
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "תוקף החיבור לאוניברסיטה פג. התחבר מחדש והרץ את היחידה שוב."
 
@@ -3173,7 +3177,7 @@ msgstr "אתר האוניברסיטה נתקל בשגיאת שרת זמנית. �
 msgid "The university site is asking for a captcha in a Chrome window. Solve it there to continue."
 msgstr "אתר האוניברסיטה מבקש לפתור חידה בחלון Chrome. פתור אותה שם כדי להמשיך."
 
-#: src/features/downloads/utils/downloadErrors.ts:43
+#: src/features/downloads/utils/downloadErrors.ts:48
 #: src/shared/i18n/serviceErrors.ts:259
 msgid "The university site is busy with another request. Try again in a moment."
 msgstr "אתר האוניברסיטה עסוק בבקשה אחרת. נסה שוב בעוד רגע."

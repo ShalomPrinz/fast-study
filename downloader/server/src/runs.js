@@ -46,6 +46,8 @@ export const AUTO_SKIP_CODES = new Set([
 
 // A row whose resolve ended with Moodle's captcha unsolved for 10 minutes (auto MOODLE.md).
 const CAPTCHA_TIMEOUT = 'site_captcha_timeout';
+// A row whose Moodle 5xx outlasted auto's one resend: this row's verdict only, it never cascades.
+const UPSTREAM_ERROR = 'moodle_upstream_error';
 
 // Registering replaces any previous run for this section outright — one run per section is what
 // keeps a run re-findable and removes any need for time-based eviction.
@@ -191,6 +193,7 @@ export async function drive(run, from, trigger = downloadItem, skip = addSkipped
           target.code = CAPTCHA_TIMEOUT;
           run.captchaTimedOut = true;
         }
+        if (res.status === 503 && body?.code === UPSTREAM_ERROR) target.code = UPSTREAM_ERROR;
         if (outcome.disposition === 'queued') adoptJobs(run, body?.jobIds);
       } catch {
         /* keep the queue-failed default */

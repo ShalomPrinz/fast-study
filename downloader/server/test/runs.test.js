@@ -165,6 +165,34 @@ test('a captcha left unsolved fails the Moodle rows after it unsent; the others 
   assert.equal(run.status, 'done');
 });
 
+test('a Moodle upstream error marks its row only; the run goes on and the next row runs', async () => {
+  const row = (name) => ({ ...target(name), moodle: true });
+  const run = createRun({
+    sectionId: 'c:video:upstream',
+    course: 'c',
+    targets: [row('a'), row('b')],
+  });
+  const sent = [];
+  await drive(run, 0, async ({ name }) => {
+    sent.push(name);
+    if (name === 'a')
+      return {
+        status: 503,
+        body: { error: 'gateway', code: 'moodle_upstream_error', params: { detail: 'HTTP 502' } },
+      };
+    return { status: 200, body: { media: 'video', jobIds: [] } };
+  });
+  assert.deepEqual(sent, ['a', 'b']);
+  assert.deepEqual(
+    run.targets.map((t) => [t.name, t.disposition, t.code]),
+    [
+      ['a', 'queue-failed', 'moodle_upstream_error'],
+      ['b', 'queued', undefined],
+    ],
+  );
+  assert.equal(run.status, 'done');
+});
+
 test('a resume after an unsolved captcha sends the Moodle rows still pending', async () => {
   const row = (name, moodle) => ({ ...target(name), ...(moodle && { moodle: true }) });
   const run = createRun({

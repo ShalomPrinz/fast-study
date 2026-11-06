@@ -7,6 +7,7 @@ import {
   bulkGate,
   bulkRunState,
   captchaTimeoutCount,
+  upstreamErrorCount,
   collidingNames,
   anyRunBusy,
   runBusy,
@@ -391,6 +392,7 @@ describe('bulkRunState', () => {
       stalled: 0,
       notStarted: 0,
       captchaTimedOut: 0,
+      upstreamFailed: 0,
     })
   })
 
@@ -486,5 +488,30 @@ describe('captchaTimeoutCount', () => {
     ]
     expect(captchaTimeoutCount(targets)).toBe(2)
     expect(captchaTimeoutCount([target()])).toBe(0)
+  })
+})
+
+describe('upstreamErrorCount', () => {
+  it('counts only targets the run failed on a Moodle 5xx', () => {
+    const targets = [
+      target({ ref: 'r1', disposition: 'queue-failed', code: 'moodle_upstream_error' }),
+      target({ ref: 'r2', disposition: 'queue-failed', code: 'site_captcha_timeout' }),
+      target({ ref: 'r3', disposition: 'queue-failed' }),
+    ]
+    expect(upstreamErrorCount(targets)).toBe(1)
+    expect(upstreamErrorCount([target()])).toBe(0)
+  })
+
+  it('is not counted as stalled or not started', () => {
+    const state = bulkRunState(
+      run({
+        status: 'done',
+        targets: [target({ disposition: 'queue-failed', code: 'moodle_upstream_error' })],
+      }),
+      tree([]),
+      'Algebra',
+      NO_JOBS,
+    )
+    expect(state).toMatchObject({ upstreamFailed: 1, stalled: 0, notStarted: 0 })
   })
 })

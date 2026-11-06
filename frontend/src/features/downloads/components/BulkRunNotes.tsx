@@ -5,7 +5,10 @@ import {
   dismissPasscode,
   usePasscodeDismissed,
 } from '@/features/downloads/contexts/SectionRunsContext'
-import { captchaTimeoutReason } from '@/features/downloads/utils/downloadErrors'
+import {
+  captchaTimeoutReason,
+  upstreamErrorReason,
+} from '@/features/downloads/utils/downloadErrors'
 import type { GroupScope } from '@/features/downloads/utils/sections'
 import { GROUP_SELECTOR } from '@/features/downloads/utils/sections'
 import PasscodePrompt from './PasscodePrompt'
@@ -24,7 +27,7 @@ export default function BulkRunNotes({ bulk, scope }: Props) {
   const { run, state, passcode } = bulk
   const paused = run?.status === 'paused' ? run.paused : null
   const dismissed = usePasscodeDismissed(run?.id ?? null)
-  const { stalled, notStarted, captchaTimedOut } = state
+  const { stalled, notStarted, captchaTimedOut, upstreamFailed } = state
   const section = scope === 'section'
   const course = scope === 'course'
   const playlist = scope === 'playlist'
@@ -48,6 +51,7 @@ export default function BulkRunNotes({ bulk, scope }: Props) {
             : t`the run stopped early. Run the playlist again to pick them up.`
 
   const unsolvedBecause = captchaTimeoutReason()
+  const upstreamBecause = upstreamErrorReason()
 
   return (
     <>
@@ -56,6 +60,15 @@ export default function BulkRunNotes({ bulk, scope }: Props) {
           {plural(captchaTimedOut, {
             one: `# recording wasn't downloaded: ${unsolvedBecause}`,
             other: `# recordings weren't downloaded: ${unsolvedBecause}`,
+          })}
+        </div>
+      )}
+
+      {upstreamFailed > 0 && (
+        <div className={`bulk-run-note ${GROUP_SELECTOR[scope]}-stalled`}>
+          {plural(upstreamFailed, {
+            one: `# recording wasn't downloaded: ${upstreamBecause}`,
+            other: `# recordings weren't downloaded: ${upstreamBecause}`,
           })}
         </div>
       )}

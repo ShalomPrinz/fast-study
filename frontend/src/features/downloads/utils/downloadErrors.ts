@@ -38,6 +38,11 @@ export function captchaTimeoutReason(): string {
   return resolveServiceError({ message: '', code: 'site_captcha_timeout' }).headline
 }
 
+// `moodle_upstream_error`'s catalog sentence, for a run's rows that carry it as their `code`.
+export function upstreamErrorReason(): string {
+  return resolveServiceError({ message: '', code: 'moodle_upstream_error' }).headline
+}
+
 // Why a Moodle button is disabled: another request holds the lock, which frees by itself.
 export function moodleBusyMessage(): string {
   return t`The university site is busy with another request. Try again in a moment.`

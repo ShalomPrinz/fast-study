@@ -236,8 +236,9 @@ export interface RunTarget {
   disposition: 'pending' | 'queued' | 'skipped' | 'unsupported' | 'queue-failed'
   // The discovery Item's `moodle`, sent so a captcha timeout fails the run's later Moodle rows unsent.
   moodle?: boolean
-  // On a `queue-failed` row only: the captcha went unsolved, on this row or an earlier Moodle one.
-  code?: 'site_captcha_timeout'
+  // On a `queue-failed` row only. `site_captcha_timeout`: the captcha went unsolved, on this row or an earlier Moodle one.
+  // `moodle_upstream_error`: the site kept answering 5xx for this row alone; the run goes on.
+  code?: 'site_captcha_timeout' | 'moodle_upstream_error'
   // Set once this row's own zoom capture waited on the captcha and caught the player; never false.
   captchaSolved?: true
 }
