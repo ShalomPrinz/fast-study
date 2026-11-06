@@ -190,6 +190,21 @@ const BLOCKED = {
   params: { detail: 'radware', challengeWindow: 'captcha' },
 };
 
+test('a Moodle 5xx refusal from /moodle/file ends the job with auto code and params', () => {
+  const body = {
+    error: 'gateway',
+    code: 'moodle_upstream_error',
+    params: { detail: 'HTTP 502, text/html' },
+  };
+  const refusal = autodlRefusal(503, JSON.stringify(body));
+  assert.deepEqual(exitFailure('fetch', 0, '', refusal), {
+    auth: false,
+    message: 'gateway',
+    code: 'moodle_upstream_error',
+    params: body.params,
+  });
+});
+
 test('the final status of a header dump is the last of a redirect chain', () => {
   assert.equal(
     finalStatus('HTTP/1.1 302 Found\r\nLocation: /x\r\n\r\nHTTP/1.1 503 Service Unavailable\r\n'),

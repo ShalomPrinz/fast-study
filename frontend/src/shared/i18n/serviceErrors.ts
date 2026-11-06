@@ -246,6 +246,9 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       '{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} walled {The university site is refusing requests right now. Wait a few minutes and try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}',
   }),
+  moodle_upstream_error: msg({
+    message: 'The university site had a temporary server error. Try again in a moment.',
+  }),
   site_captcha_timeout: msg({
     message:
       "The captcha on the university site wasn't solved within 10 minutes. Solve it when its window opens, then try again.",

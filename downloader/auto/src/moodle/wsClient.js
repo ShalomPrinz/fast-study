@@ -5,8 +5,12 @@ import { enterMoodle, moodleGate } from './gate.js';
 import { challengeRoute, openChallenge, waitChallenge } from './challenge.js';
 import { currentSite, underSite } from './site.js';
 
+// A server fault: the wall is a 3xx or a 200, never a 5xx (docs/MOODLE.md § Bot protection).
+const serverFault = (res) => res.status >= 500 && res.status < 600;
+
 // An answer shaped like the bot wall: a redirect, or a page where a WS body or a file was due.
 function wallShaped(res) {
+  if (serverFault(res)) return false;
   return (
     (res.status >= 300 && res.status < 400) ||
     (res.headers.get('content-type') ?? '').includes('text/html')
@@ -45,9 +49,40 @@ async function withHeadTimeout(init, run) {
   }
 }
 
-// Every Moodle request: the gate, then Node's fetch or the challenge window's page; a wall reopens
+// Every Moodle request: `routedFetch`, plus one resend of a 5xx after the gate's cooldown, still
+// holding the lock; a 5xx again is `moodle_upstream_error` (docs/MOODLE.md § Bot protection).
+async function moodleFetch(url, init, opts = {}) {
+  const res = await routedFetch(url, init, opts);
+  if (!serverFault(res)) return res;
+  await discard(res);
+  await sleepUnlessAborted(moodleGate.cooldownMs, init.signal ?? moodleGate.signal());
+  const again = await routedFetch(url, init, opts);
+  if (!serverFault(again)) return again;
+  await discard(again);
+  const type = again.headers.get('content-type') || 'no content-type';
+  throw new MoodleUpstreamError(`${opts.label ?? ''}HTTP ${again.status}, ${type}`);
+}
+
+// Waits `ms`, ending early with the signal's reason when it aborts.
+function sleepUnlessAborted(ms, signal) {
+  signal?.throwIfAborted();
+  if (!(ms > 0)) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal.reason);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+// One send: the gate, then Node's fetch or the challenge window's page; a wall reopens
 // the window and resends through it (docs/MOODLE.md § Bot protection; `route`/`reopen` there).
-async function moodleFetch(
+async function routedFetch(
   url,
   init,
   { route = true, reopen = route, label = '', wall = wallShaped, stream = false } = {},
@@ -244,6 +279,18 @@ export class WsBlockedError extends CodedError {
 }
 
 const ROUTED = { routed: true };
+
+/** Moodle answered a 5xx twice, one cooldown apart: a server fault, not the wall and not the token. */
+export class MoodleUpstreamError extends CodedError {
+  constructor(detail) {
+    super(
+      'moodle_upstream_error',
+      { detail },
+      `the Moodle site answered with a server error (${detail}); try again in a moment`,
+    );
+    this.name = 'MoodleUpstreamError';
+  }
+}
 
 /** A captcha a routed call waited on, unsolved within captchaMs: not a block, so never `blocked()`. */
 export class SiteCaptchaTimeoutError extends CodedError {
@@ -462,11 +509,16 @@ export function getVideostreamContent(site, token, { courseid, cmid, userid }) {
 export async function getVideoBlockEntries(site, courseId) {
   const url = new URL(`${site}/blocks/video/ajax/get_video_data_biu.php`);
   url.searchParams.set('course', `course-${courseId}`);
+  // A Moodle 5xx (after moodleFetch's one resend) is "no block rows", not a failed /list.
   const res = await moodleFetch(
     url,
     { headers: { 'User-Agent': APP_USER_AGENT } },
     { wall: videoListWall, label: 'video block: ' },
-  );
+  ).catch((err) => {
+    if (err instanceof MoodleUpstreamError) return null;
+    throw err;
+  });
+  if (!res) return [];
   if (res.status !== 200) {
     await discard(res);
     return [];

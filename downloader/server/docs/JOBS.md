@@ -76,7 +76,7 @@ exits 0 on a refusal, is classified by the 401/403 status curl dumped instead (`
   That failure is built in `routes/downloadItem.js`, because what auto's statuses mean is the
   resolver edge's knowledge, not the source-agnostic runner's: 401 → `recapture_reconnect_required`,
   409 → `recapture_passcode_required`, 422 → `recapture_unsupported {detail}`, a 503 → auto's own
-  `site_blocked {detail, challengeWindow?}` or `site_captcha_timeout {}`, anything else (a 2xx
+  `site_blocked {detail, challengeWindow?}`, `site_captcha_timeout {}` or `moodle_upstream_error {detail}`, anything else (a 2xx
   with no usable target included) → `recapture_failed {detail}`.
 - **otherwise** → finalized as-is; a fresh-capture auth failure reads "authentication failed", and a
   refusal from auto/ keeps auto's own `code`/`params`.
@@ -149,7 +149,7 @@ stem until `done`, then the name actually saved (`Talk (2).mp4`). `operation` (`
 | `download_failed`            | `tool`, `detail`              | the probe or command build threw                                                                                                                                            |
 | `database_store_failed`      | `detail`                      | the bytes never reached the database                                                                                                                                        |
 | the database's own code      | as the database sent them     | the database refused the store (`docs/DATABASE.md`)                                                                                                                         |
-| auto's own code              | as auto sent them             | auto refused a file fetch (`site_blocked` with `challengeWindow`, …); a non-envelope body is `download_tool_failed`, a 401/403 `download_auth_failed`                       |
+| auto's own code              | as auto sent them             | auto refused a file fetch (`site_blocked` with `challengeWindow`, `moodle_upstream_error`, …); a non-envelope body is `download_tool_failed`, a 401/403 `download_auth_failed`                       |
 | `recapture_*`                | see above                     | the one silent re-resolve failed                                                                                                                                            |
 | `general_folder_save_failed` | `folder`, `detail`            | a folder job's move into the folder failed                                                                                                                                  |
 

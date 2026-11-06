@@ -341,10 +341,10 @@ on both channels unchanged, so `database_store_failed` is only the fallback for 
 — a network error on the job path, or a non-JSON body. `/upload-pdf` keeps answering 502 either way.
 
 `downloaders/runner.js` likewise ends a job whose file on auto was refused with auto's own
-`code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_reconnect_required`,
+`code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_upstream_error`, `moodle_reconnect_required`,
 `moodle_file_unknown`); a body that is not auto's envelope falls back to `download_tool_failed` /
 `download_auth_failed`. A 401/403 on the run the silent re-resolve started is `download_refused`, since
-that token is fresh and reconnecting would not help. A re-resolve that auto answers `503 site_blocked` or `site_captcha_timeout`
+that token is fresh and reconnecting would not help. A re-resolve that auto answers `503 site_blocked`, `site_captcha_timeout` or `moodle_upstream_error`
 likewise ends the job with that code and params, never `recapture_failed`.
 
 The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live only in `progress.js`'s
@@ -381,6 +381,7 @@ failure (OS reason, `unsupported`, other statuses, a bad URL) carries no `code`.
 | `http/server.js` `sendReconnect`| `moodle_reconnect_required`   | —                        | user  |
 | `moodle/wsClient.js`            | `site_blocked`                | `detail`, `challengeWindow`? | user  |
 | `moodle/wsClient.js`            | `site_captcha_timeout`        | —                        | user  |
+| `moodle/wsClient.js` `moodleFetch` | `moodle_upstream_error`   | `detail`                 | user  |
 | `lib/errors.js` `unreachable`   | `site_unreachable`            | `host`, `detail`, `proxy`? | user  |
 | `http/server.js` `sendPasscode` | `zoom_passcode_required`      | `reason`, `course`, `name` | user |
 | `browser/browserChannel.js`     | `browser_missing`             | `detail`                 | user  |

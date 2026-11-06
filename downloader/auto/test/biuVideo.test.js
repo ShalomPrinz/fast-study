@@ -208,3 +208,9 @@ test('a ref with an unusable key is a 400 and sends nothing', async (t) => {
   assert.equal(res.code, 400);
   assert.equal(calls.length, 0);
 });
+
+test('a 5xx twice from the video block adds no rows and no error', async (t) => {
+  const calls = stubFetch(t, () => asHtml('<html>Bad Gateway</html>', 502));
+  assert.deepEqual(await list(), []);
+  assert.equal(calls.length, 2);
+});

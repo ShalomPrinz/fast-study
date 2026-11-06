@@ -42,7 +42,7 @@ call came back as a Moodle exception envelope) or `maintenance` (retry later). `
 _every_ root to have answered without Moodle JSON — a `404`/`405`/`410` page, or JSON of another
 shape. A bot wall (a `200` HTML page, a `403`), a timeout or a network failure on any
 root makes that unprovable, so the answer is `unverified` with `params.detail` `site_blocked`,
-`timeout` or `network`: a challenge must never read as "not Moodle". A `site_blocked` answer turns
+`timeout` or `network` (a root answering 5xx twice reads `network`): a challenge must never read as "not Moodle". A `site_blocked` answer turns
 block mode on for that root and carries `params.challengeWindow` as a 503 does ([below](#the-rest-api)). A non-Moodle server that answers
 every path with a `200` HTML page therefore also reads `unverified`, and the post-login check is its
 backstop.
@@ -127,6 +127,8 @@ content-type _before_ parsing and throws `WsBlockedError` (`blocked(err)`); pars
 only `SyntaxError: Unexpected token '<'`. Every route maps it to `503 {status:'blocked'}`, code
 `site_blocked` with the shape it served as `detail` — no retry, no throttling, never marking the token
 expired. This is also why no change is ever verified by a live request to any university's site.
+
+**A 5xx is not the wall.** The wall is a 3xx or a 200, never a 5xx, so `wallShaped` ignores any 500-599 whatever its body (a gateway's HTML error page included) and it never opens the window or sets block mode. `moodleFetch` instead resends a 5xx once, for every Moodle call: the request keeps its gate lock, sleeps `moodleGate.cooldownMs` (abortable by the request's signal), cancels the first body and resends on the same route. A second 5xx throws `MoodleUpstreamError` (`moodle_upstream_error {detail:'HTTP 502, text/html'}`, `503` without `status`); it never marks the token expired.
 
 **Block mode** (`src/moodle/challenge.js`). The clearance a human earns by solving the captcha belongs
 to the browser that solved it and cannot be copied to Node, so during a block the only calls that pass
