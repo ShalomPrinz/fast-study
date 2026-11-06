@@ -69,7 +69,7 @@ async function zoomWait(t, { onStep } = {}) {
           if (method === 'Browser.getWindowForTarget') return { windowId: 1 };
           page.steps.push(params.bounds);
           log.push(`bounds:${JSON.stringify(params.bounds)}`);
-          await onStep?.(params.bounds, solve);
+          if (page.armed) await onStep?.(params.bounds, solve);
           return {};
         },
         detach: async () => {},
@@ -89,6 +89,7 @@ async function zoomWait(t, { onStep } = {}) {
   page.steps.length = 0;
   page.log.length = 0;
   page.fronted = 0;
+  page.armed = true;
   return page;
 }
 

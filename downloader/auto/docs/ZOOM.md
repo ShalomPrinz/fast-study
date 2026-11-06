@@ -71,9 +71,9 @@ window gives up early.
   reads false, and the capture carries on; its `/resolve` 200 carries `captchaSolved: true`, on that
   one answer only, so a resolve queued behind the wait never claims it. Unsolved after 10 minutes
   is `503 zoom_captcha_timeout {url}`; a window the user closes is `zoom_browser_closed`.
-  `zoomCaptcha` clears however it ends. Windows' foreground lock can still leave it behind the
-  user's work, so `POST /window/show` raises it again: on screen, minimized, restored, then
-  `bringToFront` — the minimize and restore is what gets past the lock.
+  `zoomCaptcha` clears however it ends. The first show and `POST /window/show` run the same
+  sequence: on screen, minimize, restore, then `bringToFront` — Windows' foreground lock leaves a
+  bare `bringToFront` behind the user's work, and the minimize and restore gets past it.
 - **Linux** — Xvfb has no screen to show it on, so a visible captcha frame answers `503
   zoom_captcha_unsupported {url}` at once, and no player answers `zoom_no_media_request {url}`.
 

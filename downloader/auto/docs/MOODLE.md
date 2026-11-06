@@ -144,9 +144,9 @@ are made from inside that browser:
   captcha on its first launch with this one. Landing on the site means the profile's
   clearance still holds: it stays off-screen and `moodleFetch` resends the same call through it once
   (the wall means Moodle never processed it; bodies are strings or forms, so they send twice), so
-  the caller never sees the block. Landing anywhere else is the captcha: the window moves on screen
-  (CDP `Browser.setWindowBounds`), comes to the front and holds the Moodle lock
-  ([GATE.md](GATE.md#holds-that-outlive-the-request)) (`POST /window/show` raises it again, as for zoom's
+  the caller never sees the block. Landing anywhere else is the captcha: the window moves on screen, minimizes and restores
+  (CDP `Browser.setWindowBounds`; the minimize and restore gets past Windows' foreground lock), comes to the front and holds the Moodle lock
+  ([GATE.md](GATE.md#holds-that-outlive-the-request)) (`POST /window/show` runs the same sequence, as for zoom's
   [captcha](ZOOM.md#captcha-browserzoomcaptchajs)), and the call waits for the user's solve
   (`waitChallenge`): the page landing back on the site resends it through the window once and it
   returns normally, so the caller never sees the captcha either. A page the site moves to the
@@ -470,7 +470,7 @@ _Stage 2, lemida behind Radware (a copy of the real profile, deleted afterwards)
 
 - Radware accepts a tool-styled window: 3 of 3 page fetches of `/webservice/rest/server.php?moodlewsrestformat=json` passed (200 `application/json` `invalidtoken`); one only after a captcha, solved in 33 s through the flow clear style, raise, solve, park, re-apply.
 - The page never undid the style: ex-style `0x00200080` after landing, after the fetches and at the end; off the taskbar and out of Alt+Tab throughout.
-- Foreground on this raise was not confirmed (taskbar button yes, readback `foreground: false`): a known risk.
+- Foreground, the code's order (style clear, CDP normal, on screen, minimized, normal, then `bringToFront`; first show and raise alike): `raiseChallenge()` and `raiseZoomCaptcha()` took the foreground 2 of 2 times after the user clicked into another app (2026-11-06, Chrome 157.0.8103.38, Windows 26200). A first show that only called `bringToFront` did not take it there (2 of 2 misses).
 - Idle cost, lemida against `about:blank` on the same profile: +467 MB working set (939 vs 472 MB), +342 MB private bytes, +23.4% of one core (steady 24% mean, 27.5% peak over 10 min), zero network requests, so page script, probably Radware's. This is why the challenge window keeps its 60 s idle close.
 
 **History.** On 2026-09-07 the app worked again some time after the user solved a captcha in a WSL

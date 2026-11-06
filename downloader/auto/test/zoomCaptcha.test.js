@@ -44,6 +44,7 @@ function captchaPage({ afterGate = 'captcha', frame = false, gate = true, player
     selectors: [],
     sniffs: [],
     moves: [],
+    states: [],
     fronted: 0,
     set(change) {
       Object.assign(page, change);
@@ -66,6 +67,7 @@ function captchaPage({ afterGate = 'captcha', frame = false, gate = true, player
       newCDPSession: async () => ({
         send: async (method, params) => {
           if (method === 'Browser.getWindowForTarget') return { windowId: 1 };
+          if (params.bounds.windowState) page.states.push(params.bounds.windowState);
           if (params.bounds.left !== undefined) page.moves.push(params.bounds.left);
           return {};
         },
@@ -359,7 +361,10 @@ function styleLog(t, page) {
       },
     }),
   );
+  const front = page.bringToFront;
+  page.bringToFront = async () => (log.push('front'), front());
   page.moves.push = (left) => log.push(`move:${left}`);
+  page.states.push = (state) => log.push(`state:${state}`);
   return log;
 }
 
@@ -375,7 +380,18 @@ test('a captcha clears the style before the window is shown and sets it once par
   page.solve();
   await done;
   await new Promise((r) => setTimeout(r, 10));
-  assert.deepEqual(log, ['style:on', 'style:off', 'move:80', 'move:-32000', 'style:on']);
+  assert.deepEqual(log, [
+    'style:on',
+    'style:off',
+    'state:normal',
+    'move:80',
+    'state:minimized',
+    'state:normal',
+    'front',
+    'state:normal',
+    'move:-32000',
+    'style:on',
+  ]);
 });
 
 test('a relaunched browser gets a fresh styler, so its first hide runs again', async (t) => {

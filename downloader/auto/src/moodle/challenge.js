@@ -453,9 +453,7 @@ class ChallengeWindow {
     }
     this.touch();
     publish();
-    await this._unhide();
-    await this._bounds(ON_SCREEN);
-    await this.page.bringToFront().catch(() => {});
+    await this._show();
     // Solved during the sequence: passed() parked before our move landed, so park again.
     if (!this.captcha && !this.ended) {
       await this._bounds(OFF_SCREEN);
@@ -522,11 +520,16 @@ class ChallengeWindow {
     publish();
   }
 
-  /** Back on screen, in front and on the taskbar; a minimize and restore gets past Windows' foreground lock. */
-  async raise() {
+  // On screen and in front: the minimize and restore gets past Windows' foreground lock, which a bare bringToFront does not.
+  async _show() {
     await this._unhide();
     await this._bounds(ON_SCREEN, { windowState: 'minimized' }, { windowState: 'normal' });
     await this.page.bringToFront().catch(() => {});
+  }
+
+  /** Back on screen, in front and on the taskbar. */
+  async raise() {
+    await this._show();
     // Solved mid-raise: passed()'s move off-screen may have landed before ours, so park it again.
     if (!this.captcha) {
       await this._bounds(OFF_SCREEN);

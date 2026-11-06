@@ -1321,12 +1321,15 @@ test('a captcha clears the style before it goes on screen, and sets it after the
   const profile = fakeProfile(t, { lands: 'captcha' });
   assert.equal(await gated(() => openChallenge(SITE)), 'captcha');
   const [ctx] = profile.launches;
-  assert.deepEqual(profile.log.slice(0, 3), [
+  assert.deepEqual(profile.log.slice(0, 7), [
     'style:on',
     'style:off',
     B({ windowState: 'normal' }),
+    B({ left: 80, top: 80 }),
+    B({ windowState: 'minimized' }),
+    B({ windowState: 'normal' }),
+    'front',
   ]);
-  assert.ok(profile.log.indexOf('style:off') < profile.log.indexOf(B({ left: 80, top: 80 })));
   profile.log.length = 0;
   ctx.solve(SITE);
   await tick();
@@ -1336,6 +1339,32 @@ test('a captcha clears the style before it goes on screen, and sets it after the
   assert.ok(park >= 0, 'parked');
   assert.equal(profile.log.filter((l) => l.startsWith('style:')).at(-1), 'style:on');
   assert.ok(profile.log.indexOf('style:on') > park, 'style comes back after parking');
+});
+
+test('a solve landing mid first show ends parked, then sets the style', async (t) => {
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  profile.state.onGoto = (ctx) => {
+    const open = ctx.newCDPSession;
+    ctx.newCDPSession = async () => {
+      const cdp = await open();
+      const send = cdp.send;
+      cdp.send = async (method, params) => {
+        const out = await send(method, params);
+        if (params?.bounds?.windowState === 'minimized') {
+          ctx.solve(SITE);
+          await tick();
+        }
+        return out;
+      };
+      return cdp;
+    };
+  };
+  await gated(() => openChallenge(SITE));
+  for (let i = 0; i < 5; i++) await tick();
+  const moves = profile.log.filter((l) => l.startsWith('bounds:') && l.includes('left'));
+  assert.equal(moves.at(-1), B({ left: -32000, top: -32000 }));
+  assert.equal(profile.log.filter((l) => l.startsWith('style:')).at(-1), 'style:on');
+  assert.equal(profile.log.at(-1), moves.at(-1), 'nothing moves it after the final park');
 });
 
 test('a styling spawn that rejects never changes the outcome', async (t) => {

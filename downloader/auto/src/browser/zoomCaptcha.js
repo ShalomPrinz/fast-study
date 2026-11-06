@@ -119,9 +119,7 @@ export async function awaitCaptchaSolve(page, url, passGate) {
   waiting = page;
   setShown(true);
   try {
-    await styler?.show();
-    await bounds(page, ON_SCREEN);
-    await page.bringToFront().catch(() => {});
+    await showWindow(page, styler);
     if (!(await solved(page, deadline, passGate))) {
       throw new CodedError(
         'zoom_captcha_timeout',
@@ -162,17 +160,19 @@ async function solved(page, deadline, passGate) {
   }
 }
 
-/**
- * Raise the window waiting on a captcha in front of the user's work: a minimize and restore gets past
- * Windows' foreground lock, which a bare bringToFront does not. → false when no captcha waits.
- */
+// On screen and in front: the minimize and restore gets past Windows' foreground lock, which a bare bringToFront does not.
+async function showWindow(page, styler) {
+  await styler?.show();
+  await bounds(page, ON_SCREEN, MINIMIZED, NORMAL);
+  await page.bringToFront().catch(() => {});
+}
+
+/** Raise the window waiting on a captcha in front of the user's work. → false when no captcha waits. */
 export async function raiseZoomCaptcha() {
   const page = waiting;
   if (!page) return false;
   const styler = style;
-  await styler?.show();
-  await bounds(page, ON_SCREEN, MINIMIZED, NORMAL);
-  await page.bringToFront().catch(() => {});
+  await showWindow(page, styler);
   // The wait ended mid-raise: its move off-screen may have landed before ours, so park it again.
   if (waiting !== page && process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') {
     await bounds(page, OFF_SCREEN);

@@ -63,6 +63,7 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs, styleFails =
       },
       bringToFront: async () => {
         context.fronted++;
+        log.push('front');
       },
     });
     Object.assign(context, {
