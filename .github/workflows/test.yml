@@ -5,7 +5,7 @@ on:
 
 jobs:
   backend-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
@@ -48,7 +48,7 @@ jobs:
         run: uv run pytest tests/ -q -rs
 
   database-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: database
@@ -70,7 +70,7 @@ jobs:
         run: uv run pytest tests/ -q
 
   frontend-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -90,7 +90,7 @@ jobs:
         run: npm test
 
   downloader-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       # Both suites are unit tests over the extractors and the express routes; neither launches a
       # browser, so skip playwright's browser download rather than pay for it on every run.
@@ -121,7 +121,7 @@ jobs:
         working-directory: downloader/auto
 
   electron-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: electron
@@ -147,7 +147,7 @@ jobs:
   # The repo's internal tooling: the shared lib packages, which fail as a unit because a break in any
   # of them is live in four services at once, then the app harness's unit tests.
   internal-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       # No .python-version under lib/ either — see database-tests.
       UV_PYTHON: '3.12'

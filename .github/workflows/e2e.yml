@@ -7,7 +7,7 @@ jobs:
   # The app-harness Playwright specs against one live offline stack: real ffmpeg, pandoc and
   # tectonic, every third party faked.
   harness-e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       UV_PYTHON: '3.12'

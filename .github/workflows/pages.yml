@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   capture:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     # Pushes the recaptured images; the job-level block replaces the workflow's, so it names only what it needs.
     permissions:
@@ -119,7 +119,7 @@ jobs:
     # A broken capture must not block the version stamp; its own job still shows red.
     needs: capture
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

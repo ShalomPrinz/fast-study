@@ -18,7 +18,7 @@ concurrency:
 jobs:
   # Refuses any run whose installer is not the app this ref's code would build.
   guard:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       contents: read
