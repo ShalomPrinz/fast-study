@@ -32,7 +32,7 @@ The one platform-dependent part of `launchZoomBrowser()`.
 
 **Windows** — no Xvfb, so the window is parked off-screen (`--window-position=-32000,-32000`);
 otherwise a batch of N lectures steals focus N times. `FASTSTUDY_ZOOM_VISIBLE=1` keeps it on-screen.
-It also carries the Win32 tool-window style, so it stays off the taskbar and out of Alt+Tab ([SESSIONS.md](SESSIONS.md#off-the-taskbar-windows-browserwindowstylejs)), cleared and re-applied around a captcha. It comes on screen only for a captcha ([below](#captcha-browserzoomcaptchajs)). The session closes an idle browser after 10 min.
+It also carries the Win32 tool-window style, so it stays out of Alt+Tab, though a fresh launch can keep its taskbar button until the next captcha ([SESSIONS.md](SESSIONS.md#off-the-taskbar-windows-browserwindowstylejs), "A taskbar button can outlive the style"), cleared and re-applied around a captcha. It comes on screen only for a captcha ([below](#captcha-browserzoomcaptchajs)). The session closes an idle browser after 10 min.
 
 **Linux** — a managed Xvfb virtual display, which under WSL also keeps the hardware D3D12 renderer
 (`/dev/dxg` is reached independent of the X display). Spawned lazily on the first zoom launch,
