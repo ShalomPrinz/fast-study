@@ -455,6 +455,7 @@ class ConfigUpdate(BaseModel):
     auto_retry: bool | None = None
     auto_retry_count: int | None = None
     auto_retry_minutes: int | None = None
+    summary_figures: bool | None = None
     error_reports: bool | None = None
 
 

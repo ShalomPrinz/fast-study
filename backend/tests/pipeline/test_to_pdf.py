@@ -637,6 +637,61 @@ class TestInvocation:
         assert not Path(build_dir).exists()
 
 
+class _SnapshotRun(FakeRun):
+    """A FakeRun that also records what pandoc was handed: its input markdown and staged figures."""
+
+    def __call__(self, cmd, *args, cwd=None, **kwargs):
+        if cmd[0] == "pandoc":
+            d = Path(cwd)
+            self.input_md = (d / "input.md").read_text(encoding="utf-8")
+            self.staged = (
+                sorted(p.name for p in (d / "figures").iterdir())
+                if (d / "figures").is_dir()
+                else None
+            )
+        return super().__call__(cmd, *args, cwd=cwd, **kwargs)
+
+
+@pytest.mark.usefixtures("no_bin_dir")
+class TestFigures:
+    MD = "פסקה.\n\n![איור](figures/fig1.pdf)\n\n![נעלם](figures/fig2.pdf)\n\n![x](http://e/x.png)\n"
+
+    def _convert(self, fake, with_figure=True):
+        with _render(fake, self.MD) as md_path:
+            figures = Path(md_path).parent / "figures"
+            if with_figure:
+                figures.mkdir()
+                (figures / "fig1.pdf").write_bytes(b"%PDF-1.4 fig")
+                (figures / "fig9.pdf").write_bytes(b"%PDF-1.4 unlinked")
+            convert_to_pdf(md_path)
+            # The figures folder beside the markdown is never written to or removed.
+            assert figures.exists() == with_figure
+
+    def test_figures_beside_the_markdown_are_staged_in_the_build_dir(self):
+        fake = _SnapshotRun()
+        self._convert(fake)
+        assert fake.staged == ["fig1.pdf", "fig9.pdf"]
+        assert "figures" in fake.build_files
+
+    def test_the_image_filter_runs_before_the_direction_filter(self):
+        # Dropping unstaged images is the filter's job (test_drop_missing_images.py); here only the wiring.
+        fake = _SnapshotRun()
+        self._convert(fake)
+        filters = [a for a in fake.pandoc_cmd if a.startswith("--lua-filter=")]
+        assert filters == [
+            f"--lua-filter={to_pdf.IMAGE_FILTER}",
+            f"--lua-filter={to_pdf.DIRECTION_FILTER}",
+        ]
+
+    def test_the_header_caps_figures_at_the_line_width_and_forty_percent_of_the_text_height(
+        self,
+    ):
+        assert (
+            r"\setkeys{Gin}{width=\linewidth,height=0.4\textheight,keepaspectratio}"
+            in LATEX_HEADER
+        )
+
+
 @pytest.mark.usefixtures("no_bin_dir")
 class TestBuildTexSeam:
     """build_tex is the shared pandoc pass — convert_to_pdf and the build-time cache primer

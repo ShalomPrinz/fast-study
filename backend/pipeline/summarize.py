@@ -6,6 +6,12 @@ from services.resources import resource_path
 from timing import timed_pipeline
 
 from pipeline.material_types import gemini_mime
+from pipeline.summary_figures import (
+    FigureSources,
+    figures_prompt,
+    picture_label,
+    resolve_figures,
+)
 
 PROMPT_FILE = resource_path("assets", "instructions", "summarize.md")
 MATERIALS_PROMPT_FILE = resource_path(
@@ -36,13 +42,14 @@ INSTRUCTIONS_MARKER = "--- INSTRUCTIONS ---"
 
 def _generate(
     prompt: str,
-    groups: list[tuple[str, list[tuple[Path, str]]]],
+    groups: list[tuple[str, list[tuple]]],
     *,
     code: str = "summarization_failed",
     inline: list[tuple[str, list[str]]] | None = None,
 ) -> str:
-    """Upload each (marker, [(path, mime)]) group under its marker, add any inline text groups, then the
-    prompt last; uploads are always deleted. `code` names an unexpected failure."""
+    """Upload each (marker, [(path, mime[, label])]) group under its marker, a label going before its
+    file as a text part, add any inline text groups, then the prompt last; uploads are always
+    deleted. `code` names an unexpected failure."""
 
     client = LLMClient()
     uploaded = []
@@ -50,7 +57,8 @@ def _generate(
         contents: list = []
         for marker, files in groups:
             contents.append(marker)
-            for path, mime_type in files:
+            for path, mime_type, *label in files:
+                contents += label
                 handle = client.upload_file(path, mime_type)
                 uploaded.append(handle)
                 contents.append(handle)
@@ -68,27 +76,67 @@ def _generate(
             client.delete_file(handle.name)
 
 
+def _figure_parts(parts: list[tuple[Path, str]], figures: FigureSources) -> list[tuple]:
+    """The material parts with each file's name as a label, then every PPTX picture as its own
+    labelled image part — what Gemini needs to name a source in a link."""
+
+    labelled: list[tuple] = []
+    for path, mime in parts:
+        label = figures.labels.get(path.name)
+        labelled.append((path, mime, label) if label else (path, mime))
+    pictures = [
+        (pic.path, pic.mime, picture_label(pic)) for pic in figures.pictures.values()
+    ]
+    return labelled + pictures
+
+
+def _finish(summary: str, figures: FigureSources | None) -> str:
+    """The summary with its figure links resolved; `figures.files` then holds what to store."""
+
+    return (
+        resolve_figures(summary, figures)
+        if figures is not None and summary
+        else summary
+    )
+
+
 @timed_pipeline("summarize")
-def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -> str:
-    """Summarize a transcript (plus any number of material files) with Gemini."""
+def summarize(
+    transcript_path: Path,
+    material_paths: list[Path] | None = None,
+    figures: FigureSources | None = None,
+) -> str:
+    """Summarize a transcript (plus any number of material files) with Gemini. With `figures`, its
+    slides' graphs are linked, boxed and cropped into `figures.files` inside this timed call."""
 
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
     groups = [(TRANSCRIPT_MARKER, [(transcript_path, "text/plain")])]
     if material_paths:
-        groups.append(
-            (SUPPLEMENTARY_MARKER, [(p, gemini_mime(p.name)) for p in material_paths])
-        )
-        prompt += PDF_INSTRUCTION_SUFFIX
-    return _generate(prompt + LENGTH_BUDGET_SUFFIX, groups)
+        parts = [(p, gemini_mime(p.name)) for p in material_paths]
+        if figures is not None and figures.has_sources():
+            parts = _figure_parts(parts, figures)
+            prompt += PDF_INSTRUCTION_SUFFIX + figures_prompt()
+        else:
+            prompt += PDF_INSTRUCTION_SUFFIX
+        groups.append((SUPPLEMENTARY_MARKER, parts))
+    return _finish(_generate(prompt + LENGTH_BUDGET_SUFFIX, groups), figures)
 
 
 @timed_pipeline("summarize_materials")
-def summarize_materials(material_paths: list[Path]) -> str:
+def summarize_materials(
+    material_paths: list[Path], figures: FigureSources | None = None
+) -> str:
     """Summarize a lecture from its material files alone, for one that has no recording."""
 
-    prompt = MATERIALS_PROMPT_FILE.read_text(encoding="utf-8") + LENGTH_BUDGET_SUFFIX
+    prompt = MATERIALS_PROMPT_FILE.read_text(encoding="utf-8")
     parts = [(p, gemini_mime(p.name)) for p in material_paths]
-    return _generate(prompt, [(LECTURE_MATERIALS_MARKER, parts)])
+    if figures is not None and figures.has_sources():
+        parts = _figure_parts(parts, figures)
+        prompt += figures_prompt()
+    summary = _generate(
+        prompt + LENGTH_BUDGET_SUFFIX, [(LECTURE_MATERIALS_MARKER, parts)]
+    )
+    return _finish(summary, figures)
 
 
 def generate_assignment_doc(

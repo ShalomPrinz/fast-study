@@ -36,6 +36,7 @@ from pipeline.summarize import (
     summarize,
     summarize_materials,
 )
+from pipeline.summary_figures import FigureSources
 from pipeline.to_pdf import PdfRenderError, convert_to_pdf
 from pipeline.transcribe import (
     PARTIAL_META,
@@ -48,6 +49,8 @@ from pipeline.upload_to_drive import upload_to_drive
 log = logging.getLogger("runner")
 
 RECITATIONS_DIR = "Recitations"
+# The kinds whose summary may carry the slides' graphs; an assignment's documents never do.
+FIGURE_KINDS = ("lecture", "recitation")
 STEP_ORDER = ["audio", "transcribe", "summarize", "pdf", "drive"]
 STEP_OUTPUT = {
     "audio": "audio.mp3",
@@ -576,8 +579,35 @@ def _download_materials(
     return sent
 
 
+def _figure_sources(kind: str) -> FigureSources | None:
+    """An empty source bag when this summary should carry the slides' graphs, else None."""
+
+    if settings.summary_figures() and kind in FIGURE_KINDS:
+        return FigureSources()
+    return None
+
+
+def _store_figures(
+    course: str, lecture: str, kind: str, files: dict[str, bytes]
+) -> None:
+    """Write the new summary's figures, each best-effort: a failed write is logged and skipped, its
+    link vanishing at render. The old ones were cleared before the summary was written."""
+
+    for name, data in files.items():
+        try:
+            db_client.put_figure(course, lecture, kind, name, data)
+        except Exception as e:
+            log.warning(
+                "%s/%s (%s): could not store %s: %s", course, lecture, kind, name, e
+            )
+
+
 def _summarize_from_materials(
-    course: str, lecture: str, kind: str, entries: list[dict]
+    course: str,
+    lecture: str,
+    kind: str,
+    entries: list[dict],
+    figures: FigureSources | None = None,
 ) -> tuple[str, list[str]]:
     """Summarize a materials-only lecture from its attached files alone; every one empty is a
     step error. Returns the summary and the names sent."""
@@ -587,7 +617,13 @@ def _summarize_from_materials(
         if not sent:
             raise CodedError("every attached material is empty", "materials_empty")
         log.info("Summarize: no transcript — %d materials only", len(sent))
-        return summarize_materials([p for _, p in sent]), [n for n, _ in sent]
+        paths = [p for _, p in sent]
+        if figures is None:
+            return summarize_materials(paths), [n for n, _ in sent]
+        figures.add_materials(
+            sent, {e["name"]: _display_name(e) for e in entries}, Path(tmp)
+        )
+        return summarize_materials(paths, figures), [n for n, _ in sent]
 
 
 def _summarize_source(course: str, lecture: str, kind: str) -> list[dict] | None:
@@ -631,9 +667,12 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                 "transcript.txt",
                 "transcribe",
             )
+        figures = _figure_sources(kind)
         if entries:
             _check_sizes(entries)
-            summary, used = _summarize_from_materials(course, lecture, kind, entries)
+            summary, used = _summarize_from_materials(
+                course, lecture, kind, entries, figures
+            )
             recorded = [e["name"] for e in entries]
             # A video that landed mid-summarize supersedes the materials: write nothing and fail,
             # so the run stops and the video path (transcribe) is what runs next.
@@ -664,12 +703,27 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                     if sent
                     else "no materials found — transcript only",
                 )
-                summary = summarize(transcript, [p for _, p in sent])
+                paths = [p for _, p in sent]
+                if figures is None:
+                    summary = summarize(transcript, paths)
+                else:
+                    figures.add_materials(
+                        sent,
+                        {e["name"]: _display_name(e) for e in selected},
+                        transcript.parent,
+                    )
+                    summary = summarize(transcript, paths, figures)
                 used = [n for n, _ in sent]
                 recorded = [e["name"] for e in selected]
         # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
+        # Clear the old figures first (also with the setting off): a failed clear then fails the step
+        # having written nothing, so the pdf step never renders old figN files under new links.
+        if kind in FIGURE_KINDS:
+            db_client.delete_figures(course, lecture, kind)
         db_client.put_summary(course, lecture, kind, summary, fresh=True)
+        if kind in FIGURE_KINDS and figures is not None:
+            _store_figures(course, lecture, kind, figures.files)
         _record_used_materials(course, lecture, kind, recorded)
         return {"status": "done", "usedMaterial": bool(used)}
     except GeminiRateLimitError as e:
@@ -686,6 +740,19 @@ def _drop_marker(course: str, lecture: str, kind: str, name: str) -> None:
         db_client.delete_file(course, lecture, kind, name)
     except Exception:
         log.exception("failed to delete %s", name)
+
+
+def _download_figures(course: str, lecture: str, kind: str, dest: Path) -> None:
+    """Fetch the summary's figures into `dest/figures/`, beside the markdown that links them."""
+
+    names = db_client.list_figures(course, lecture, kind)
+    if not names:
+        return
+    (dest / "figures").mkdir()
+    for name in names:
+        (dest / "figures" / name).write_bytes(
+            db_client.get_figure(course, lecture, kind, name)
+        )
 
 
 def _exec_pdf(course: str, lecture: str, kind: str, *, fresh: bool = False) -> dict:
@@ -709,6 +776,7 @@ def _exec_pdf(course: str, lecture: str, kind: str, *, fresh: bool = False) -> d
             md = db_client.get_summary(course, lecture, kind)
             _require_nonempty("summary.md", md.encode("utf-8"))
             md_path.write_text(md, encoding="utf-8")
+            _download_figures(course, lecture, kind, md_path.parent)
             _, warning = convert_to_pdf(str(md_path))
         # After the workspace uploaded the PDF, so a warning never exists without it.
         # A clean render clears any stale warning (delete_file is a no-op when missing).

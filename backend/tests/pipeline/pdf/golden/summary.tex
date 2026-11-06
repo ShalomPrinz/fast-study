@@ -128,6 +128,10 @@
 \newtcolorbox{calloutwarning}{calloutstyle, colback=calloutWarningTint, colframe=calloutWarningFrame}
 \newtcolorbox{calloutinsight}{calloutstyle, colback=calloutInsightTint, colframe=calloutInsightFrame}
 
+\makeatletter
+\AtBeginDocument{\@ifpackageloaded{graphicx}{\setkeys{Gin}{width=\linewidth,height=0.4\textheight,keepaspectratio}}{}}
+\makeatother
+
 \usepackage{stmaryrd}
 \usepackage{hyperref}
 \usepackage[normalem]{ulem}

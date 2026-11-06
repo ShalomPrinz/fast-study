@@ -16,6 +16,8 @@ dependencies = [
     "faststudy-tools",
     "sentry-sdk[fastapi]>=2",
     "faststudy-sentry",
+    "pypdfium2>=4",
+    "pillow>=10",
 ]
 
 [tool.uv.sources]

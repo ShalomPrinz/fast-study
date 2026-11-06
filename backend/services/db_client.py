@@ -164,6 +164,47 @@ def put_summary_materials(
     _raise_for_status(r)
 
 
+def _figures_url(course: str, lecture: str) -> str:
+    return f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/figures"
+
+
+def put_figure(course: str, lecture: str, kind: str, name: str, data: bytes) -> None:
+    """Write one summary figure (`fig<N>.<ext>`); the database refuses any other name."""
+
+    r = _request(
+        "PUT",
+        f"{_figures_url(course, lecture)}/{_q(name)}",
+        params={"kind": kind},
+        data=data,
+    )
+    _raise_for_status(r)
+
+
+def list_figures(course: str, lecture: str, kind: str) -> list[str]:
+    """The figure names in natural order, [] when there are none."""
+
+    r = _request("GET", _figures_url(course, lecture), params={"kind": kind})
+    _raise_for_status(r)
+    return r.json().get("figures", [])
+
+
+def get_figure(course: str, lecture: str, kind: str, name: str) -> bytes:
+    """Fetch one figure's bytes. Raises if missing."""
+
+    r = _request(
+        "GET", f"{_figures_url(course, lecture)}/{_q(name)}", params={"kind": kind}
+    )
+    _raise_for_status(r)
+    return r.content
+
+
+def delete_figures(course: str, lecture: str, kind: str) -> None:
+    """Clear every figure; idempotent. Raises `file_locked` when one is open elsewhere."""
+
+    r = _request("DELETE", _figures_url(course, lecture), params={"kind": kind})
+    _raise_for_status(r)
+
+
 def _overview_url(course: str, name: str) -> str:
     return f"{DATABASE_URL}/courses/{_q(course)}/overview/files/{_q(name)}"
 

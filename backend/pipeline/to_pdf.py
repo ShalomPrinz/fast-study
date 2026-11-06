@@ -33,6 +33,7 @@ FONTS_DIR = resource_path("assets", "fonts")
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 HEBREW_FONT_BOLD = FONTS_DIR / "NotoSansHebrew-Bold.ttf"
 DIRECTION_FILTER = resource_path("assets", "filters", "text_direction.lua")
+IMAGE_FILTER = resource_path("assets", "filters", "drop_missing_images.lua")
 
 # Fonts are copied into the build dir and referenced relatively — an absolute path breaks on
 # Windows. See docs/PDF.md.
@@ -55,6 +56,10 @@ LATEX_HEADER = r"""
 \newtcolorbox{calloutdefinition}{calloutstyle, colback=calloutDefinitionTint, colframe=calloutDefinitionFrame}
 \newtcolorbox{calloutwarning}{calloutstyle, colback=calloutWarningTint, colframe=calloutWarningFrame}
 \newtcolorbox{calloutinsight}{calloutstyle, colback=calloutInsightTint, colframe=calloutInsightFrame}
+
+\makeatletter
+\AtBeginDocument{\@ifpackageloaded{graphicx}{\setkeys{Gin}{width=\linewidth,height=0.4\textheight,keepaspectratio}}{}}
+\makeatother
 
 \usepackage{stmaryrd}
 \usepackage{hyperref}
@@ -89,6 +94,7 @@ class PdfRenderError(CodedError):
         self.tex_source = tex_source
 
 
+FIGURES_DIR = "figures"
 BUILD_STEM = "build"  # the engine names its outputs after the .tex stem
 _LOG_TAIL_CHARS = 2000
 
@@ -242,6 +248,7 @@ def build_tex(markdown: str, build: Path) -> str:
     for label, asset in (
         ("Font", HEBREW_FONT),
         ("Font", HEBREW_FONT_BOLD),
+        ("Lua filter", IMAGE_FILTER),
         ("Lua filter", DIRECTION_FILTER),
     ):
         if not asset.exists():
@@ -277,6 +284,7 @@ def build_tex(markdown: str, build: Path) -> str:
         "-V",
         "linestretch=1.3",
         f"--include-in-header={header_path}",
+        f"--lua-filter={IMAGE_FILTER}",
         f"--lua-filter={DIRECTION_FILTER}",
         "--standalone",
     ]
@@ -312,13 +320,25 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
 
     output_path = input_path.with_suffix(".pdf")
 
-    raw_md = input_path.read_text(encoding="utf-8")
-    fixed_md = apply_outside_fences(raw_md, preprocess_markdown)
+    # A `figures/` folder beside the markdown holds the images it links; only those can render.
+    figures_src = input_path.parent / FIGURES_DIR
+    staged = (
+        sorted(p for p in figures_src.iterdir() if p.is_file())
+        if figures_src.is_dir()
+        else []
+    )
+    fixed_md = apply_outside_fences(
+        input_path.read_text(encoding="utf-8"), preprocess_markdown
+    )
 
     # Everything the build touches lives in one tempdir: pandoc's inputs, the fonts, the generated
     # .tex, and the engine's aux files (it writes them beside the .tex, i.e. into the cwd).
     with tempfile.TemporaryDirectory() as build_dir:
         build = Path(build_dir)
+        if staged:
+            (build / FIGURES_DIR).mkdir()
+            for p in staged:
+                shutil.copy2(p, build / FIGURES_DIR / p.name)
         tex_source = build_tex(fixed_md, build)
 
         run = _render(build, tex_source)
