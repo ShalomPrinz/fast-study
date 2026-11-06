@@ -28,6 +28,7 @@ const CHOICES = {
 const BOOL_FIELDS = {
   drive_enabled: 'DRIVE_ENABLED',
   gemini_auto_fallback: 'GEMINI_AUTO_FALLBACK',
+  summary_figures: 'SUMMARY_FIGURES',
   auto_retry: 'AUTO_RETRY',
 };
 // Integers with their env var and inclusive range, mirroring backend/services/settings.py's clamp;
@@ -55,6 +56,7 @@ const FIELDS = {
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
   geminiAutoFallback: 'gemini_auto_fallback',
+  summaryFigures: 'summary_figures',
   autoRetry: 'auto_retry',
   autoRetryCount: 'auto_retry_count',
   autoRetryMinutes: 'auto_retry_minutes',
@@ -143,6 +145,7 @@ function read() {
     geminiModel: text(stored.gemini_model),
     driveEnabled: bool(stored.drive_enabled),
     geminiAutoFallback: bool(stored.gemini_auto_fallback),
+    summaryFigures: bool(stored.summary_figures),
     autoRetry: bool(stored.auto_retry),
     autoRetryCount: int('auto_retry_count', stored.auto_retry_count),
     autoRetryMinutes: int('auto_retry_minutes', stored.auto_retry_minutes),

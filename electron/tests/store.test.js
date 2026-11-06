@@ -25,6 +25,7 @@ const full = {
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
   geminiAutoFallback: true,
+  summaryFigures: true,
   autoRetry: true,
   autoRetryCount: 4,
   autoRetryMinutes: 15,
@@ -105,6 +106,14 @@ test('geminiAutoFallback round-trips and reaches the backend env', () => {
     store.write({ geminiAutoFallback: 'true' }),
     /geminiAutoFallback must be a boolean/,
   );
+});
+
+test('summaryFigures round-trips and reaches the backend env', () => {
+  assert.equal(store.write({ summaryFigures: true }).summaryFigures, true);
+  assert.deepEqual(store.serviceEnv(), { SUMMARY_FIGURES: 'true' });
+  assert.equal(store.write({ summaryFigures: false }).summaryFigures, false);
+  assert.deepEqual(store.serviceEnv(), { SUMMARY_FIGURES: 'false' });
+  assertRefused(store.write({ summaryFigures: 'true' }), /summaryFigures must be a boolean/);
 });
 
 test('an out-of-range integer in the file stays out of the env', () => {
@@ -239,6 +248,7 @@ test('echoing a read back blanks nothing', () => {
     geminiModel: written.geminiModel,
     driveEnabled: written.driveEnabled,
     geminiAutoFallback: written.geminiAutoFallback,
+    summaryFigures: written.summaryFigures,
     autoRetry: written.autoRetry,
     autoRetryCount: written.autoRetryCount,
     autoRetryMinutes: written.autoRetryMinutes,
@@ -283,6 +293,7 @@ const unset = {
   geminiModel: null,
   driveEnabled: null,
   geminiAutoFallback: null,
+  summaryFigures: null,
   autoRetry: null,
   autoRetryCount: null,
   autoRetryMinutes: null,
@@ -349,6 +360,7 @@ test('serviceEnv maps every field onto its service env var', () => {
     COURSE_STRUCTURE: 'lectures_some',
     DRIVE_ENABLED: 'true',
     GEMINI_AUTO_FALLBACK: 'true',
+    SUMMARY_FIGURES: 'true',
     AUTO_RETRY: 'true',
     AUTO_RETRY_COUNT: '4',
     AUTO_RETRY_MINUTES: '15',
