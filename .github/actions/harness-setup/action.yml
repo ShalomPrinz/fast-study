@@ -12,9 +12,9 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: astral-sh/setup-uv@v5
+    - uses: astral-sh/setup-uv@v7
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v5
       with:
         node-version: 22
         cache: npm
@@ -55,7 +55,7 @@ runs:
         "$RUNNER_TEMP/tectonic/tectonic" --version
       shell: bash
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: ~/.cache/Tectonic
         key: tectonic-${{ inputs.tectonic-version }}-${{ hashFiles('backend/pipeline/to_pdf.py') }}
@@ -99,7 +99,7 @@ runs:
       run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       shell: bash
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       with:
         path: ~/.cache/ms-playwright
         key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}

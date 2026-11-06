@@ -25,21 +25,21 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
       # A token makes download-artifact read run-id's artifacts; without one it reads this run's.
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: installer
           path: ${{ runner.temp }}/installer
           run-id: ${{ inputs.run-id || github.run_id }}
           github-token: ${{ inputs.run-id != '' && github.token || '' }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: installer-previous
           path: ${{ runner.temp }}/installer-previous
@@ -65,7 +65,7 @@ jobs:
 
       # The two boots the suite timed; publish.yml attaches it to the Release. Uploaded whatever the
       # outcome, so a failed run's partial timings are readable too; kept as long as the installer.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: ${{ !cancelled() && inputs.run-id == '' }}
         with:
           name: boot-timing
@@ -81,7 +81,7 @@ jobs:
 
       # Two artifacts, because the traces are ~11MB of the ~11MB and the text is what gets read.
       # Everything but the traces, so a new diagnostic file rides along without a pattern change.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: smoke-logs
@@ -91,7 +91,7 @@ jobs:
 
       # Screenshots and DOM snapshots for a failed UI assertion; absent when the failure preceded
       # the first launch, which is a normal outcome and not worth an annotation.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: smoke-traces

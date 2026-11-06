@@ -34,11 +34,11 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -60,7 +60,7 @@ jobs:
       # Exact key over every prime input, no restore-keys — delivery/docs/LATEX.md#across-runs.
       - name: Restore the LaTeX cache
         id: latex-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.STAGE }}/latex
           key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
@@ -219,7 +219,7 @@ jobs:
       # Right after a passed wait, so a failed or partial prime is never saved; a hit's key already exists.
       - name: Save the LaTeX cache
         if: steps.latex-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ env.STAGE }}/latex
           key: ${{ steps.latex-cache.outputs.cache-primary-key }}
@@ -266,7 +266,7 @@ jobs:
           [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
           npm run dist -- "-c.extraMetadata.version=${{ steps.version.outputs.previous }}" -c.directories.output=dist/previous "${dsn[@]}"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: installer
           path: |
@@ -279,7 +279,7 @@ jobs:
           # of this workflow on it rebuilds one that expired.
           retention-days: 90
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: installer-previous
           # Two files in one dir upload flat, so the smoke suite reads its latest.yml as it does the candidate's.

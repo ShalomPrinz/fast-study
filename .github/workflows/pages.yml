@@ -31,7 +31,7 @@ jobs:
       UV_PYTHON: '3.12'
     steps:
       # main's tip, not the triggering sha: the push below must fast-forward or rebase onto it.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
           fetch-depth: 0
@@ -100,13 +100,13 @@ jobs:
           echo "could not push the screenshots" >&2
           exit 1
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: success() && steps.check.outputs.run == 'true'
         with:
           name: site-screenshots
           path: site/img/*.jpg
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: site-capture
@@ -125,11 +125,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       # main's tip, so the images capture just pushed ship, not the triggering sha's.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
       - name: Stage and stamp the version line
         env:
@@ -145,9 +145,9 @@ jobs:
             bash site/stamp.sh _site
           fi
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

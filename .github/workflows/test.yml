@@ -13,9 +13,9 @@ jobs:
       # Keep in step with build.yml's TECTONIC_VERSION, the version the shipped LaTeX cache was primed against.
       TECTONIC_VERSION: '0.17.0'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
       # pandoc and tectonic drive the render tests (the LaTeX golden, the text_direction.lua cases, the font allowlist and the Hebrew code-block render); without them they skip.
       # Pin pandoc to the shipped 3.13: its LaTeX output differs across versions, so the golden is only valid for one.
@@ -33,7 +33,7 @@ jobs:
           echo "$RUNNER_TEMP/tectonic" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/tectonic/tectonic" --version
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/Tectonic
           key: tectonic-backend-${{ env.TECTONIC_VERSION }}-${{ hashFiles('backend/pipeline/to_pdf.py') }}
@@ -57,9 +57,9 @@ jobs:
       # runner image bump silently moves the version the suite runs on.
       UV_PYTHON: '3.12'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
       # Needs the whole repo checked out, not just database/: two of its dependencies are editable
       # path deps on ../lib/*/py.
@@ -75,9 +75,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -96,9 +96,9 @@ jobs:
       # browser, so skip playwright's browser download rather than pay for it on every run.
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -130,9 +130,9 @@ jobs:
       # resolvable — never the ~100MB platform binary electron's postinstall would fetch.
       ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -152,11 +152,11 @@ jobs:
       # No .python-version under lib/ either — see database-tests.
       UV_PYTHON: '3.12'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm

@@ -16,7 +16,7 @@ jobs:
       - name: Set the harness root
         run: echo "HARNESS_DIR=$RUNNER_TEMP/harness" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Toolchain, caches, npm deps and Chromium; UV_PYTHON above feeds its uv.
       - uses: ./.github/actions/harness-setup
@@ -37,7 +37,7 @@ jobs:
         if: always()
         run: node .claude/harness/setup.mjs --harness "$HARNESS_DIR" --down
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: harness-e2e
