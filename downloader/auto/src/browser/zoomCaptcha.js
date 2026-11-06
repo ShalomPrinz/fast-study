@@ -3,6 +3,7 @@
 // See docs/ZOOM.md § Captcha.
 import { EventEmitter } from 'node:events';
 import { CodedError } from '../lib/errors.js';
+import { windowStyler } from './windowStyle.js';
 
 const OFF_SCREEN = { left: -32000, top: -32000 };
 const ON_SCREEN = { left: 80, top: 80 };
@@ -27,6 +28,8 @@ const CAPTCHA = visible(
 const deps = { platform: process.platform, detectMs: 30_000, solveMs: 10 * 60_000 };
 
 let shown = false;
+// The tool-style handle of the open zoom browser's window; null when not parked (FASTSTUDY_ZOOM_VISIBLE=1).
+let style = null;
 // The page on screen for a captcha solve, so POST /window/show can raise it again.
 let waiting = null;
 
@@ -43,6 +46,12 @@ export function configureZoomCaptcha(overrides) {
   const prev = { ...deps };
   Object.assign(deps, overrides);
   return () => Object.assign(deps, prev);
+}
+
+/** A zoom browser's page now exists: give its window a fresh styler and hide it from the taskbar. */
+export function zoomOpened() {
+  style = process.env.FASTSTUDY_ZOOM_VISIBLE === '1' ? null : windowStyler('zoom');
+  void style?.hide();
 }
 
 /** The solve budget, so the caller can keep its .mp4 sniff armed across it. */
@@ -106,11 +115,11 @@ export function noMediaRequest(url) {
  */
 export async function awaitCaptchaSolve(page, url, passGate) {
   const deadline = Date.now() + deps.solveMs;
+  const styler = style;
   waiting = page;
   setShown(true);
   try {
-    await bounds(page, ON_SCREEN);
-    await page.bringToFront().catch(() => {});
+    await showWindow(page, styler);
     if (!(await solved(page, deadline, passGate))) {
       throw new CodedError(
         'zoom_captcha_timeout',
@@ -123,7 +132,10 @@ export async function awaitCaptchaSolve(page, url, passGate) {
     if (waiting === page) waiting = null;
     setShown(false);
     // FASTSTUDY_ZOOM_VISIBLE=1 keeps the window on screen for watching (zoomBrowser.js).
-    if (process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') await bounds(page, OFF_SCREEN);
+    if (process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') {
+      await bounds(page, OFF_SCREEN);
+      void styler?.hide();
+    }
   }
 }
 
@@ -148,18 +160,24 @@ async function solved(page, deadline, passGate) {
   }
 }
 
-/**
- * Raise the window waiting on a captcha in front of the user's work: a minimize and restore gets past
- * Windows' foreground lock, which a bare bringToFront does not. → false when no captcha waits.
- */
+// On screen and in front: the minimize and restore gets past Windows' foreground lock, which a bare bringToFront does not.
+async function showWindow(page, styler) {
+  await styler?.show();
+  await bounds(page, ON_SCREEN, MINIMIZED, NORMAL);
+  await page.bringToFront().catch(() => {});
+}
+
+/** Raise the window waiting on a captcha in front of the user's work. → false when no captcha waits. */
 export async function raiseZoomCaptcha() {
   const page = waiting;
   if (!page) return false;
-  await bounds(page, ON_SCREEN, MINIMIZED, NORMAL);
-  await page.bringToFront().catch(() => {});
+  const styler = style;
+  await showWindow(page, styler);
   // The wait ended mid-raise: its move off-screen may have landed before ours, so park it again.
-  if (waiting !== page && process.env.FASTSTUDY_ZOOM_VISIBLE !== '1')
+  if (waiting !== page && process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') {
     await bounds(page, OFF_SCREEN);
+    void styler?.hide();
+  }
   return true;
 }
 

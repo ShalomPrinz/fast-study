@@ -1,16 +1,22 @@
 import { launchZoomBrowser, stopXvfb } from './zoomBrowser.js';
+import { zoomOpened } from './zoomCaptcha.js';
 
-// Leak-safety valve only — a browser is meant to stay open; it re-opens lazily next call.
-const IDLE_TIMEOUT_MS = 45 * 60 * 1000;
+// An idle parked browser costs memory and CPU, so it closes and re-opens lazily next call; the timer
+// is paused under withLock, so a capture (a captcha solve included) is never cut off.
+const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 
 /**
  * A persistent browser+context+page with its launcher INJECTED (per browser profile),
  * kept open across requests. Page ops are serialized by withLock. See docs/SESSIONS.md.
  */
 export class BrowserSession {
-  /** @param {() => Promise<import('playwright').Browser>} launch  profile-specific launcher */
-  constructor(launch) {
+  /**
+   * @param {() => Promise<import('playwright').Browser>} launch  profile-specific launcher
+   * @param {{ opened?: () => void }} [hooks]  `opened` runs once per launched browser, after its page exists
+   */
+  constructor(launch, { opened } = {}) {
     this._launch = launch;
+    this._opened = opened;
     this.browser = null;
     this.context = null;
     this.page = null;
@@ -51,6 +57,7 @@ export class BrowserSession {
       this.browser = browser;
       this.context = context;
       this.page = page;
+      this._opened?.();
     } catch (err) {
       await browser.close().catch(() => {});
       throw err;
@@ -151,9 +158,14 @@ export function configureSessions(overrides) {
   };
 }
 
+// Per-profile hook run once the browser's page exists (zoom styles its fresh window).
+const OPENED = { zoom: zoomOpened };
+
 export function getSession(profile) {
   if (!LAUNCHERS[profile]) throw new Error(`no browser profile '${profile}'`);
-  if (!sessions.has(profile)) sessions.set(profile, new BrowserSession(LAUNCHERS[profile]));
+  if (!sessions.has(profile)) {
+    sessions.set(profile, new BrowserSession(LAUNCHERS[profile], { opened: OPENED[profile] }));
+  }
   return sessions.get(profile);
 }
 

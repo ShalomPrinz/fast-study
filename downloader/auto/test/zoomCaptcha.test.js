@@ -8,7 +8,9 @@ import {
   configureZoomCaptcha,
   zoomCaptchaEvents,
   zoomCaptchaState,
+  zoomOpened,
 } from '../src/browser/zoomCaptcha.js';
+import { configureWindowStyle } from '../src/browser/windowStyle.js';
 import { configureSessions } from '../src/browser/browserSession.js';
 import { handleResolve } from '../src/http/server.js';
 import { encodeRef } from '../src/lib/ref.js';
@@ -42,6 +44,7 @@ function captchaPage({ afterGate = 'captcha', frame = false, gate = true, player
     selectors: [],
     sniffs: [],
     moves: [],
+    states: [],
     fronted: 0,
     set(change) {
       Object.assign(page, change);
@@ -64,6 +67,7 @@ function captchaPage({ afterGate = 'captcha', frame = false, gate = true, player
       newCDPSession: async () => ({
         send: async (method, params) => {
           if (method === 'Browser.getWindowForTarget') return { windowId: 1 };
+          if (params.bounds.windowState) page.states.push(params.bounds.windowState);
           if (params.bounds.left !== undefined) page.moves.push(params.bounds.left);
           return {};
         },
@@ -342,4 +346,79 @@ test('/resolve says captchaSolved:true only for the capture that waited on scree
   await handleResolve({ body: resolveBody, headers: {} }, clean);
   assert.equal(clean.code, 200);
   assert.equal('captchaSolved' in clean.body, false);
+});
+
+// ── Off the taskbar (browser/windowStyle.js) ────────────────────────────────────────────────────
+
+// An ordered log of the fake styling spawn ('style:on'/'style:off') and the page's moves ('move:<left>').
+function styleLog(t, page) {
+  const log = [];
+  t.after(
+    configureWindowStyle({
+      platform: 'win32',
+      run: async (script) => {
+        log.push(/\$tool = \$true/.test(script) ? 'style:on' : 'style:off');
+      },
+    }),
+  );
+  const front = page.bringToFront;
+  page.bringToFront = async () => (log.push('front'), front());
+  page.moves.push = (left) => log.push(`move:${left}`);
+  page.states.push = (state) => log.push(`state:${state}`);
+  return log;
+}
+
+test('a captcha clears the style before the window is shown and sets it once parked', async (t) => {
+  t.after(configureZoomCaptcha({ platform: 'win32', detectMs: 50, solveMs: 5000 }));
+  const page = captchaPage({ gate: false, frame: true });
+  const log = styleLog(t, page);
+  sessionOn(t, page);
+
+  const res = fakeRes();
+  const done = handleResolve({ body: resolveBody, headers: {} }, res);
+  await new Promise((r) => setTimeout(r, 150));
+  page.solve();
+  await done;
+  await new Promise((r) => setTimeout(r, 10));
+  assert.deepEqual(log, [
+    'style:on',
+    'style:off',
+    'state:normal',
+    'move:80',
+    'state:minimized',
+    'state:normal',
+    'front',
+    'state:normal',
+    'move:-32000',
+    'style:on',
+  ]);
+});
+
+test('a relaunched browser gets a fresh styler, so its first hide runs again', async (t) => {
+  t.after(configureZoomCaptcha({ platform: 'win32' }));
+  const page = captchaPage({ gate: false });
+  const log = styleLog(t, page);
+  zoomOpened();
+  zoomOpened();
+  await new Promise((r) => setTimeout(r, 10));
+  assert.deepEqual(log, ['style:on', 'style:on']);
+});
+
+test('FASTSTUDY_ZOOM_VISIBLE=1 styles nothing', async (t) => {
+  t.after(configureZoomCaptcha({ platform: 'win32', detectMs: 50, solveMs: 5000 }));
+  process.env.FASTSTUDY_ZOOM_VISIBLE = '1';
+  t.after(() => delete process.env.FASTSTUDY_ZOOM_VISIBLE);
+  const page = captchaPage({ gate: false, frame: true });
+  const log = styleLog(t, page);
+  sessionOn(t, page);
+
+  const res = fakeRes();
+  const done = handleResolve({ body: resolveBody, headers: {} }, res);
+  await new Promise((r) => setTimeout(r, 150));
+  page.solve();
+  await done;
+  assert.deepEqual(
+    log.filter((e) => e.startsWith('style')),
+    [],
+  );
 });

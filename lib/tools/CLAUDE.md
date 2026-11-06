@@ -19,9 +19,13 @@ the Python half is here with one consumer.
 
 ## Nuances
 
-- **`curl` is deliberately not bundled.** Windows 10+ ships `curl.exe`, so `toolPath('curl')` returns
-  the bare name even when a bin dir is set. It is the one `toolPath` exception to "never PATH" and it
-  is encoded in `SYSTEM_TOOLS` / `_SYSTEM_TOOLS` rather than left to each caller to remember.
+- **System tools are deliberately not bundled.** Windows ships `curl.exe` and `powershell.exe`, so
+  `toolPath('curl')` / `toolPath('powershell')` return the bare name even when a bin dir is set. They
+  are the exceptions to "never PATH", encoded in `SYSTEM_TOOLS` / `_SYSTEM_TOOLS` rather than left to
+  each caller to remember.
+- **`powershell` is JS only.** Its one caller is `downloader/auto`'s window styling; it joins
+  `_SYSTEM_TOOLS` when a Python caller appears. It is never probed on `/tools`: a missing PowerShell
+  costs only cosmetics, so it must never toast.
 - **`reg.exe` bypasses `toolPath` and the `/tools` probe.** `downloader/auto` spawns
   `%SystemRoot%\System32\reg.exe` on Windows only to read the system proxy for a `site_unreachable`
   hint; it ships with Windows, and a failure only drops the hint, so no feature needs probing.
@@ -90,5 +94,5 @@ even where it had no coverage before.
 Both write their fake binaries to whatever path `tool_path` resolves, rather than composing a
 filename by hand, so the exe-suffix rule is exercised on whichever platform the suite runs on.
 
-`NO_WINDOW` and the yt-dlp state-copy branch are JS-only, so only the JS suite covers them. It pins
-the option's value, not its effect: Node ignores `windowsHide` off Windows, where CI runs.
+`NO_WINDOW`, the yt-dlp state-copy branch and `powershell`'s system-tool entry are JS-only, so only
+the JS suite covers them. For `NO_WINDOW` it pins the option's value, not its effect: Node ignores `windowsHide` off Windows, where CI runs.
