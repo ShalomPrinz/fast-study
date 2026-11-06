@@ -7,63 +7,58 @@ import { toolPath, NO_WINDOW } from '@faststudy/tools';
 /** The switch both launches carry, so the helper finds the window by command line. */
 export const windowMarker = (name) => `--faststudy-window=${name}`;
 
-// $tool = $true sets WS_EX_TOOLWINDOW and clears WS_EX_APPWINDOW; $false clears the tool bit only.
-// A changed style is followed by SW_HIDE, SW_SHOWNOACTIVATE so the shell rereads it. Chrome's
-// invisible helper windows of the same class are skipped: visible, titled, unowned only.
-const CSHARP = `using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
-public static class FsWin {
-  public delegate bool EnumProc(IntPtr h, IntPtr p);
-  [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc f, IntPtr p);
-  [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
-  [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
-  [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr h, StringBuilder s, int n);
-  [DllImport("user32.dll")] static extern int GetWindowTextLength(IntPtr h);
-  [DllImport("user32.dll")] static extern IntPtr GetWindow(IntPtr h, uint cmd);
-  [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int cmd);
-  [DllImport("user32.dll", EntryPoint="GetWindowLongPtrW")] static extern IntPtr GetLongPtr(IntPtr h, int i);
-  [DllImport("user32.dll", EntryPoint="SetWindowLongPtrW")] static extern IntPtr SetLongPtr(IntPtr h, int i, IntPtr v);
-  [DllImport("user32.dll", EntryPoint="GetWindowLongW")] static extern int GetLong(IntPtr h, int i);
-  [DllImport("user32.dll", EntryPoint="SetWindowLongW")] static extern int SetLong(IntPtr h, int i, int v);
-  const int GWL_EXSTYLE = -20;
-  const long TOOL = 0x80;
-  const long APP = 0x40000;
-  public static int Count;
-  static long Get(IntPtr h) { return IntPtr.Size == 8 ? GetLongPtr(h, GWL_EXSTYLE).ToInt64() : GetLong(h, GWL_EXSTYLE); }
-  static void Set(IntPtr h, long v) { if (IntPtr.Size == 8) SetLongPtr(h, GWL_EXSTYLE, new IntPtr(v)); else SetLong(h, GWL_EXSTYLE, (int)v); }
-  public static string Apply(uint[] pids, bool tool) {
-    var want = new HashSet<uint>(pids);
-    var styles = new List<string>();
-    EnumWindows(delegate(IntPtr h, IntPtr p) {
-      uint pid; GetWindowThreadProcessId(h, out pid);
-      if (!want.Contains(pid) || !IsWindowVisible(h)) return true;
-      var cls = new StringBuilder(64); GetClassName(h, cls, 64);
-      if (cls.ToString() != "Chrome_WidgetWin_1" || GetWindowTextLength(h) == 0 || GetWindow(h, 4) != IntPtr.Zero) return true;
-      long ex = Get(h);
-      long next = tool ? ((ex | TOOL) & ~APP) : (ex & ~TOOL);
-      if (next != ex) { Set(h, next); ShowWindow(h, 0); ShowWindow(h, 4); }
-      Count++;
-      styles.Add("\\"0x" + next.ToString("x8") + "\\"");
-      return true;
-    }, IntPtr.Zero);
-    return "{\\"windows\\":" + Count + ",\\"exstyle\\":[" + string.Join(",", styles.ToArray()) + "]}";
-  }
-}`;
-
 /** The PowerShell text that sets (`tool` true) or clears the tool style on the windows carrying `marker`. */
 export function styleScript(marker, tool) {
   const literal = String(marker).replaceAll("'", "''");
   return `$ErrorActionPreference = 'Stop'
 $marker = '${literal}'
 $tool = $${tool ? 'true' : 'false'}
-Add-Type -TypeDefinition @'
-${CSHARP}
-'@
+$asm = [AppDomain]::CurrentDomain.DefineDynamicAssembly((New-Object Reflection.AssemblyName 'FsWin'), [Reflection.Emit.AssemblyBuilderAccess]::Run)
+$tb = $asm.DefineDynamicModule('FsWin').DefineType('FsWin', 'Public,Class')
+function Def($name, $entry, $ret, [Type[]]$params) {
+  $mb = $tb.DefinePInvokeMethod($name, 'user32.dll', $entry, 'Public,Static,PinvokeImpl', 'Standard', $ret, $params, 'Winapi', 'Unicode')
+  $mb.SetImplementationFlags($mb.GetMethodImplementationFlags() -bor [Reflection.MethodImplAttributes]::PreserveSig)
+}
+Def 'FindWindowEx' 'FindWindowExW' ([IntPtr]) @([IntPtr], [IntPtr], [string], [string])
+Def 'GetWindowThreadProcessId' 'GetWindowThreadProcessId' ([uint32]) @([IntPtr], [uint32].MakeByRefType())
+Def 'IsWindowVisible' 'IsWindowVisible' ([bool]) @([IntPtr])
+Def 'GetWindowTextLength' 'GetWindowTextLengthW' ([int]) @([IntPtr])
+Def 'GetWindow' 'GetWindow' ([IntPtr]) @([IntPtr], [uint32])
+Def 'ShowWindow' 'ShowWindow' ([bool]) @([IntPtr], [int])
+Def 'GetLongPtr' 'GetWindowLongPtrW' ([IntPtr]) @([IntPtr], [int])
+Def 'SetLongPtr' 'SetWindowLongPtrW' ([IntPtr]) @([IntPtr], [int], [IntPtr])
+Def 'GetLong' 'GetWindowLongW' ([int]) @([IntPtr], [int])
+Def 'SetLong' 'SetWindowLongW' ([int]) @([IntPtr], [int], [int])
+$u = $tb.CreateType()
 $pids = @(Get-CimInstance Win32_Process -Filter "Name='chrome.exe' OR Name='msedge.exe'" | Where-Object { $_.CommandLine -like "*$marker*" } | ForEach-Object { [uint32]$_.ProcessId })
-[FsWin]::Apply($pids, $tool)
-if ([FsWin]::Count -eq 0) { exit ${NO_WINDOW_EXIT} }
+$wide = [IntPtr]::Size -eq 8
+$count = 0
+$styles = @()
+$h = [IntPtr]::Zero
+$found = @()
+while ($true) {
+  # [NullString]::Value is a real null; a PS $null would become "" and match only untitled windows
+  $h = $u::FindWindowEx([IntPtr]::Zero, $h, 'Chrome_WidgetWin_1', [NullString]::Value)
+  if ($h -eq [IntPtr]::Zero) { break }
+  $owner = [uint32]0
+  [void]$u::GetWindowThreadProcessId($h, [ref]$owner)
+  if ($pids -notcontains $owner -or -not $u::IsWindowVisible($h)) { continue }
+  if ($u::GetWindowTextLength($h) -eq 0 -or $u::GetWindow($h, 4) -ne [IntPtr]::Zero) { continue }
+  $found += $h
+}
+foreach ($h in $found) {
+  if ($wide) { $ex = $u::GetLongPtr($h, -20).ToInt64() } else { $ex = [int64]$u::GetLong($h, -20) }
+  if ($tool) { $next = ($ex -bor 0x80) -band (-bnot 0x40000) } else { $next = $ex -band (-bnot 0x80) }
+  if ($next -ne $ex) {
+    if ($wide) { [void]$u::SetLongPtr($h, -20, [IntPtr]$next) } else { [void]$u::SetLong($h, -20, [int]$next) }
+    [void]$u::ShowWindow($h, 0)
+    [void]$u::ShowWindow($h, 4)
+  }
+  $count++
+  $styles += '"0x' + $next.ToString('x8') + '"'
+}
+Write-Output ('{"windows":' + $count + ',"exstyle":[' + ($styles -join ',') + ']}')
+if ($count -eq 0) { exit ${NO_WINDOW_EXIT} }
 `;
 }
 

@@ -127,9 +127,20 @@ test('the script embeds the marker, both style bits and the hide/show pair, and 
   assert.match(styleScript(marker, false), /\$tool = \$false/);
   assert.match(on, /0x80\b/);
   assert.match(on, /0x40000\b/);
-  assert.match(on, /ShowWindow\(h, 0\);\s*ShowWindow\(h, 4\)/);
+  assert.match(on, /ShowWindow\(\$h, 0\)[\s\S]*ShowWindow\(\$h, 4\)/);
+  assert.match(on, /DefinePInvokeMethod/);
+  assert.match(on, /FindWindowEx/);
+  assert.match(on, /\[NullString\]::Value/);
+  assert.match(on, /PreserveSig/);
   assert.equal(on.match(/CommandLine/g).length, 1, 'only the filter reads it');
   assert.match(on, /\$_\.CommandLine -like/);
+});
+
+test('the script never compiles C#, which would write into %TEMP%', () => {
+  for (const tool of [true, false]) {
+    const script = styleScript('--faststudy-window=zoom', tool);
+    assert.doesNotMatch(script, /Add-Type|TypeDefinition/);
+  }
 });
 
 test('the real spawn is toolPath("powershell") with windowsHide pinned true', () => {
