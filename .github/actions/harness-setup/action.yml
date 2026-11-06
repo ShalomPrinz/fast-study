@@ -57,7 +57,7 @@ runs:
 
     - uses: actions/cache@v5
       with:
-        path: ~/.cache/Tectonic
+        path: ~/.cache/tectonic
         key: tectonic-${{ inputs.tectonic-version }}-${{ hashFiles('backend/pipeline/to_pdf.py') }}
         restore-keys: tectonic-${{ inputs.tectonic-version }}-
 
