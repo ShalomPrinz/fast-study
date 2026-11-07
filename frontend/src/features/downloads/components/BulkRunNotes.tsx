@@ -67,8 +67,8 @@ export default function BulkRunNotes({ bulk, scope }: Props) {
       {upstreamFailed > 0 && (
         <div className={`bulk-run-note ${GROUP_SELECTOR[scope]}-stalled`}>
           {plural(upstreamFailed, {
-            one: `# recording wasn't downloaded: ${upstreamBecause}`,
-            other: `# recordings weren't downloaded: ${upstreamBecause}`,
+            one: `# download failed: ${upstreamBecause}`,
+            other: `# downloads failed: ${upstreamBecause}`,
           })}
         </div>
       )}

@@ -409,8 +409,8 @@ msgid "{total, plural, one {This course has # item you haven't marked. Skip all 
 msgstr "{total, plural, one {בקורס הזה יש פריט # שלא סימנת. לדלג על כל התוכן הישן?} other {בקורס הזה יש # פריטים שלא סימנת. לדלג על כל התוכן הישן?}}"
 
 #: src/features/downloads/components/BulkRunNotes.tsx:69
-msgid "{upstreamFailed, plural, one {# recording wasn't downloaded: {upstreamBecause}} other {# recordings weren't downloaded: {upstreamBecause}}}"
-msgstr "{upstreamFailed, plural, one {הקלטה אחת לא הורדה: {upstreamBecause}} two {# הקלטות לא הורדו: {upstreamBecause}} other {# הקלטות לא הורדו: {upstreamBecause}}}"
+msgid "{upstreamFailed, plural, one {# download failed: {upstreamBecause}} other {# downloads failed: {upstreamBecause}}}"
+msgstr "{upstreamFailed, plural, one {הורדה אחת נכשלה: {upstreamBecause}} two {# הורדות נכשלו: {upstreamBecause}} other {# הורדות נכשלו: {upstreamBecause}}}"
 
 #: src/shared/i18n/serviceErrors.ts:292
 msgid "{url} no longer exists. Check the course page for a new link."

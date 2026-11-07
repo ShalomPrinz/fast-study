@@ -104,7 +104,7 @@ Warning lines cover what the summary cannot; the first shows at once, the other 
   that code's catalog sentence. Shown while the run still walks its non-Moodle rows too, since those
   targets are already final.
 - **Moodle server error** (`upstreamErrorCount`): targets carrying `code: 'moodle_upstream_error'`, with
-  that code's catalog sentence; `queue-failed`, so no other line counts them.
+  that code's catalog sentence, worded "download(s) failed" since material rows hit it too; `queue-failed`, so no other line counts them.
 - **Unverified** (`unverifiedCount`): `queued`, no jobs, not in the tree — the lecture was deleted or
   renamed, the name desynced, or the tree fetch failed (it publishes an empty tree). No action, since
   none is fixable from here.

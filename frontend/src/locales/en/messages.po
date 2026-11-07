@@ -409,8 +409,8 @@ msgid "{total, plural, one {This course has # item you haven't marked. Skip all 
 msgstr "{total, plural, one {This course has # item you haven't marked. Skip all old content?} other {This course has # items you haven't marked. Skip all old content?}}"
 
 #: src/features/downloads/components/BulkRunNotes.tsx:69
-msgid "{upstreamFailed, plural, one {# recording wasn't downloaded: {upstreamBecause}} other {# recordings weren't downloaded: {upstreamBecause}}}"
-msgstr "{upstreamFailed, plural, one {# recording wasn't downloaded: {upstreamBecause}} other {# recordings weren't downloaded: {upstreamBecause}}}"
+msgid "{upstreamFailed, plural, one {# download failed: {upstreamBecause}} other {# downloads failed: {upstreamBecause}}}"
+msgstr "{upstreamFailed, plural, one {# download failed: {upstreamBecause}} other {# downloads failed: {upstreamBecause}}}"
 
 #: src/shared/i18n/serviceErrors.ts:292
 msgid "{url} no longer exists. Check the course page for a new link."
