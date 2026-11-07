@@ -1,6 +1,5 @@
-// Windows only: keeps a parked Chrome window off the taskbar and out of Alt+Tab with the Win32
-// tool-window style, applied from outside by one powershell.exe spawn per change. Best-effort, never
-// fails a call. See docs/SESSIONS.md § Off the taskbar (Windows).
+// Windows only, best-effort: the Win32 tool-window style keeps a parked Chrome off the taskbar and Alt+Tab.
+// See docs/SESSIONS.md § Off the taskbar (Windows).
 import { execFile } from 'node:child_process';
 import path from 'node:path';
 import { NO_WINDOW } from '@faststudy/tools';
@@ -8,6 +7,7 @@ import { NO_WINDOW } from '@faststudy/tools';
 /** The switch both launches carry, so the helper finds the window by command line. */
 export const windowMarker = (name) => `--faststudy-window=${name}`;
 
+// The FindWindowEx title arg is [NullString]::Value: a PS $null becomes "" and would match only untitled windows.
 /** The PowerShell text that sets (`tool` true) or clears the tool style on the windows carrying `marker`. */
 export function styleScript(marker, tool) {
   const literal = String(marker).replaceAll("'", "''");
@@ -38,7 +38,6 @@ $styles = @()
 $h = [IntPtr]::Zero
 $found = @()
 while ($true) {
-  # [NullString]::Value is a real null; a PS $null would become "" and match only untitled windows
   $h = $u::FindWindowEx([IntPtr]::Zero, $h, 'Chrome_WidgetWin_1', [NullString]::Value)
   if ($h -eq [IntPtr]::Zero) { break }
   $owner = [uint32]0
@@ -109,11 +108,7 @@ export function configureWindowStyle(overrides) {
   return () => Object.assign(deps, prev);
 }
 
-/**
- * `{ hide(), show() }` for one browser instance's window (a new window is unstyled, so a relaunch
- * needs a fresh styler): hide sets the tool style, show clears it. Each promise resolves once the
- * wanted state is applied or a later call superseded it, and never rejects.
- */
+/** `{ hide(), show() }` setting/clearing the tool style on one browser instance (a relaunch needs a fresh one); never rejects. */
 export function windowStyler(name) {
   const marker = windowMarker(name);
   let applied = false;

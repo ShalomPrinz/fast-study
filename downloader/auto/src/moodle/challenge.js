@@ -1,7 +1,5 @@
-// Block mode: while the site's bot manager blocks us, one headed Chrome on a persistent profile is
-// open on the site, and moodleFetch sends Moodle calls through its page — the only client whose
-// clearance the bot manager honours. Closing it ends block mode. On Windows it is also kept off the
-// taskbar while parked (browser/windowStyle.js). See docs/MOODLE.md § Bot protection.
+// Block mode: one headed Chrome on a persistent profile carries Moodle calls, the only client whose clearance
+// the bot manager honours; closing it ends block mode (off the taskbar on Windows). See docs/MOODLE.md § Bot protection.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { statePath } from '@faststudy/runtime';
