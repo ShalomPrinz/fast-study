@@ -607,12 +607,12 @@ With `SUMMARY_FIGURES` on, the fake Gemini answers a summary call carrying `FILE
 
 ## Inspecting a PDF
 
-The box has no `pdftotext` or `pdftoppm`. PyMuPDF is a backend dependency, so read text and render
-pages through the backend's environment:
+The box has no `pdftotext` or `pdftoppm`. PyMuPDF is a backend test extra and pypdfium2 a runtime dependency (CI syncs only the latter); read text and render
+pages through the backend's environment, adding `--extra test` for `fitz`:
 
 ```bash
-cd backend && uv run python -c "import fitz, sys; d = fitz.open(sys.argv[1]); print(d[0].get_text())" FILE.pdf
-cd backend && uv run python -c "import fitz, sys; fitz.open(sys.argv[1])[0].get_pixmap(dpi=110).save(sys.argv[2])" FILE.pdf page1.png
+cd backend && uv run --extra test python -c "import fitz, sys; d = fitz.open(sys.argv[1]); print(d[0].get_text())" FILE.pdf
+cd backend && uv run --extra test python -c "import fitz, sys; fitz.open(sys.argv[1])[0].get_pixmap(dpi=110).save(sys.argv[2])" FILE.pdf page1.png
 ```
 
 Open the PNG to check the Hebrew RTL layout by eye; `get_text()` returns the logical order.

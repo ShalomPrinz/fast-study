@@ -85,10 +85,11 @@ test('figures reach the editor PDF pane, and deleting a figure line removes it f
   expect(await summary()).not.toContain('figures/fig2.pdf');
 });
 
-/** The summary.pdf's figure captions (`איור N`) and embedded graphics, read through the backend's PyMuPDF. */
+/** The summary.pdf's figure captions (`איור N`), counted through the backend's pypdfium2. */
 async function pdfText() {
   const { execFileSync } = await import('node:child_process');
   const res = await fetch(`${lecture()}/files/summary.pdf`);
+  if (!res.ok) throw new Error(`GET summary.pdf answered ${res.status}`);
   const file = path.join(harness.evidence, 'summary-figures.pdf');
   fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
   const out = execFileSync(
@@ -99,7 +100,7 @@ async function pdfText() {
       path.resolve(import.meta.dirname, '../../../backend'),
       'python',
       '-c',
-      'import fitz,sys,re;d=fitz.open(sys.argv[1]);print(len(re.findall("איור|רויא", "".join(p.get_text() for p in d))))',
+      'import pypdfium2 as p,sys,re;d=p.PdfDocument(sys.argv[1]);print(len(re.findall("איור|רויא", "".join(x.get_textpage().get_text_range() for x in d))))',
       file,
     ],
     { encoding: 'utf8' },
