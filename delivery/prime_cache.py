@@ -21,8 +21,9 @@ from tools import tool_path
 
 SINK = _DELIVERY / "kitchen-sink.md"
 SUPPLEMENT = _DELIVERY / "cache-supplement.txt"
-# The sink's one image. graphicx loads only if the file is really beside the .tex.
-IMAGE = _DELIVERY / "probe.png"
+# The sink's figures, a PNG and a one-page PDF cropped the way summary figures are: graphicx loads,
+# and drop_missing_images.lua keeps an image, only if the file is really beside the .tex.
+IMAGES = (_DELIVERY / "probe.png", _DELIVERY / "probe.pdf")
 
 # A cold prime fetches every package over the network one at a time, which is minutes.
 _RENDER_TIMEOUT_SECONDS = 1800
@@ -95,9 +96,8 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory() as build_dir:
         build = Path(build_dir)
-        shutil.copy2(IMAGE, build / IMAGE.name)
-        # Raw, not preprocessed: the bidi pass rewrites the sink's markdown image into text, and
-        # graphicx would never be pulled.
+        for image in IMAGES:
+            shutil.copy2(image, build / image.name)
         build_tex(SINK.read_text(encoding="utf-8"), build)
         _render(build)
 

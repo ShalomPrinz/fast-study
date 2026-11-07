@@ -173,6 +173,10 @@ rules are [`delivery/CLAUDE.md`](../CLAUDE.md#the-frozen-bundles-invariants); th
 - **No Sentry hidden imports.** `sentry_sdk` loads its integrations by import string, but
   pyinstaller-hooks-contrib's `hook-sentry_sdk` collects the default and auto-enabling ones
   (`fastapi`, `starlette`, `logging` among them).
+- **No native-library collection for figures.** hooks-contrib's `hook-pypdfium2`/`hook-pypdfium2_raw`
+  collect pdfium (about 11MB with Pillow, on Linux) and the `version.json` read at import; PyInstaller's
+  `hook-PIL.Image` collects the lazily imported `*ImagePlugin`s. The backend imports both at boot,
+  so a lost library fails smoke test 3, not a user's first figure.
 - **UTF-8 mode** (`X utf8=1`): piped stdio on Windows otherwise takes the ANSI codepage, and a Hebrew
   log line reaches `launch.log` escaped or not at all.
 - **`console=True`**: the launcher reads the port line off stdout, and tool spawns stay hidden by

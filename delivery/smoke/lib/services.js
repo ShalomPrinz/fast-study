@@ -59,6 +59,8 @@ export function database({ urls, secret }) {
     putVideo: (course, name, bytes) => at('PUT', `${lecture(course, name)}/video`, { bytes }),
     putFile: (course, name, file, bytes) =>
       at('PUT', `${lecture(course, name)}/files/${q(file)}`, { bytes }),
+    putFigure: (course, name, figure, bytes) =>
+      at('PUT', `${lecture(course, name)}/figures/${q(figure)}`, { bytes }),
     putSummary: (course, name, text) =>
       at('PUT', `${lecture(course, name)}/summary`, { bytes: Buffer.from(text, 'utf8') }),
     async exists(course, name, file) {

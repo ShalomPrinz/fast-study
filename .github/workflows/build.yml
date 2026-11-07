@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.STAGE }}/latex
-          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
+          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/probe.pdf', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
 
       # Network-bound, ~7.5 minutes cold; over a restored cache a top-up, run anyway as the strict proof.
       # tectonic fetches each LaTeX package on first use and the shipped app renders --only-cached,

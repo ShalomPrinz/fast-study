@@ -12,7 +12,7 @@ runs at runtime, and no dev command touches it. Owned by `delivery-dev`, togethe
 | `extension-version.mjs`             | Computes the packaged extension's version against the previous Release       |
 | `prune.mjs`                         | What a pruned copy drops, shared by the two above                            |
 | `prime_cache.py`                    | Fills tectonic's LaTeX package cache with everything the app can render      |
-| `kitchen-sink.md` + `probe.png`     | The document the prime renders                                               |
+| `kitchen-sink.md` + `probe.{png,pdf}` | The document the prime renders and its two figures                         |
 | `cache-supplement.txt`              | Cache files the sink does not pull, added by name                            |
 | `tectonic-cache-filelist-linux.txt` | A sink-only primed cache's contents, kept as a diff baseline                 |
 | `smoke/`                            | The release smoke suite and its fixtures, with its own `package.json` + lock |

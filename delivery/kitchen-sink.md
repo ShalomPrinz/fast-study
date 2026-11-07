@@ -71,3 +71,5 @@ Term
 H~2~O ו-x^2^ .
 
 ![תרשים](probe.png)
+
+![גרף מתוך שקף](probe.pdf)

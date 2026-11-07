@@ -22,7 +22,7 @@ separate `actions/cache/save` step right after the wait step passes, so a failed
 never saved and a later failure or a cancelled run does not lose a good one.
 
 - **The key is exact**: `latex-<os>-tectonic<TECTONIC_VERSION>-pandoc<PANDOC_VERSION>-<hash>`, the
-  hash over `prime_cache.py`, the sink, `probe.png`, the supplement, `backend/pipeline/to_pdf.py`
+  hash over `prime_cache.py`, the sink, `probe.png`, `probe.pdf`, the supplement, `backend/pipeline/to_pdf.py`
   (`LATEX_HEADER`) and `backend/assets/{templates,filters,fonts}/`. There are no `restore-keys`: the
   prime only adds files, so a partial match would carry files no input pulls any more into every
   installer from then on.
@@ -40,16 +40,18 @@ never saved and a later failure or a cancelled run does not lose a good one.
 Its contents come from enumerating the branches in `backend/assets/templates/` — pandoc 3.13's
 stock template, its embedded partials (`pandoc --print-default-data-file templates/common.latex`)
 and the local `fonts.latex` — and `to_pdf.py`'s `LATEX_HEADER`, not from sampling summaries. Every
-block pulls in a package, and dropping one drops that package from the cache. No summary in the
-corpus has a callout, image, link, strikeout, `\cancel` or spanning grid table, so `tcolorbox`,
-`graphicx`, `soul`, `cancel` and `multirow` reach the cache only because the sink asks. `svg` is the
-one branch left out: it needs Inkscape, which never ships, and the bidi pass turns images into text.
+block pulls in a package, and dropping one drops that package from the cache. Summary figures
+are a pdfium-cropped one-page PDF (`probe.pdf`) and a PNG (`probe.png`), both included by
+xdvipdfmx natively, so neither adds a cache file beyond `graphicx`, which a summary with figures
+loads. No summary in the corpus has a callout, link, strikeout, `\cancel` or spanning grid table, so
+`tcolorbox`, `soul`, `cancel` and `multirow` reach the cache only because the sink asks. `svg` is the
+one branch left out: it needs Inkscape, which never ships.
 Its doubly-nested `\mathbf` line pulls Latin Modern bold math at 10/7/5pt, which body `\mathbf`
 needs; without it a render fails `pdf_missing_font`.
 
-- **Primed raw**, skipping the bidi preprocessing: `wrap_english_phrases` rewrites a markdown image
-  into text ([`backend/docs/BIDI.md`](../../backend/docs/BIDI.md#wrap_english_phrases)), so a
-  preprocessed sink would never load `graphicx`. `probe.png` sits beside the `.tex` for the same reason.
+- **Primed raw**, skipping the bidi preprocessing, which adds no package of its own.
+  `probe.png` and `probe.pdf` sit beside the `.tex` because `drop_missing_images.lua` drops an image
+  whose file is absent.
 - **Rendered strict** — no `-Z continue-on-errors`, unlike the app. Under the app's flags an
   unprimed package exits 0 with a plausible PDF; strict, it exits 1 naming the missing `.sty`. That
   proves the sink rendered whole under a template or engine change — never that the cache covers

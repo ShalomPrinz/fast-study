@@ -52,6 +52,10 @@ const LONG_LECTURE = 'Long Tone Lecture';
 const UPDATE_COURSE = 'Update Course';
 // A line of fixtures/summary.md: Hebrew only, so a missing Hebrew font cannot drop it unnoticed.
 const PDF_PHRASE = 'רדיוס ההתכנסות נתון על ידי נוסחת קושי הדמר';
+// Text inside fixtures/figures/fig1.pdf, a slide graph cropped the way summary figures are.
+const FIGURE_PHRASE = 'Good X';
+// What test 6 appends to the fixed summary: one PDF and one PNG figure, linked as the app links them.
+const FIGURE_LINES = '\n\n![גרף](figures/fig1.pdf)\n\n![תרשים](figures/fig2.png)\n';
 // Every binary resources/bin/ ships, which is every tool the services probe but curl — Windows
 // ships curl.exe, so lib/tools resolves it off PATH instead.
 const TOOLS = ['ffmpeg', 'pandoc', 'tectonic', 'yt-dlp'];
@@ -662,7 +666,10 @@ test('6. the PDF, for real', async () => {
   const { page } = session;
   const { db, api } = services;
   const before = formatsSnapshot();
-  await db.putSummary(COURSE, LECTURE, fixture('summary.md').toString('utf8'));
+  for (const figure of ['fig1.pdf', 'fig2.png']) {
+    await db.putFigure(COURSE, LECTURE, figure, fixture(path.join('figures', figure)));
+  }
+  await db.putSummary(COURSE, LECTURE, fixture('summary.md').toString('utf8') + FIGURE_LINES);
 
   expect(await api.runStep(COURSE, LECTURE, 'pdf'), 'the PDF step failed').toBeNull();
   const pdf = (await db.entry(COURSE, LECTURE)).files['summary.pdf'];
@@ -677,6 +684,8 @@ test('6. the PDF, for real', async () => {
   expect(carriesPhrase(text, PDF_PHRASE), 'summary.pdf dropped glyphs of the fixed summary').toBe(
     true,
   );
+  // Absent, the shipped drop_missing_images.lua lost the staged figure or tectonic could not include it.
+  expect(carriesPhrase(text, FIGURE_PHRASE), 'summary.pdf lacks the PDF figure').toBe(true);
   // A complete lecture folds its step rows into one row.
   await expect(page.getByTestId('pipeline-collapsed')).toBeVisible();
 });
