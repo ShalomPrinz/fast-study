@@ -126,7 +126,7 @@ test('a zoom capture whose window is closed mid-way answers 503 zoom_browser_clo
     });
     return b;
   });
-  t.after(configureSessions({ zoom: launch }));
+  t.after(configureSessions({ zoom: { launch } }));
   const ref = encodeRef({
     title: 'L',
     pageUrl: 'https://zoom.us/rec/share/abc',
@@ -177,7 +177,7 @@ test('a window closed during the launch answers 503 zoom_browser_closed, not the
     };
     return b;
   });
-  t.after(configureSessions({ zoom: launch }));
+  t.after(configureSessions({ zoom: { launch } }));
   const ref = encodeRef({
     title: 'L',
     pageUrl: 'https://zoom.us/rec/share/abc',

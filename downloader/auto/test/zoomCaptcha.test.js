@@ -276,13 +276,13 @@ function fakeRes() {
   return res;
 }
 
-// A zoom session whose one page is `page`.
-function sessionOn(t, page) {
+// A zoom session whose one page is `page`; `opened` is the profile's post-launch hook (none by default).
+function sessionOn(t, page, opened) {
   const browser = Object.assign(new EventEmitter(), {
     newContext: async () => ({ newPage: async () => page }),
     close: async () => {},
   });
-  t.after(configureSessions({ zoom: async () => browser }));
+  t.after(configureSessions({ zoom: { launch: async () => browser, opened } }));
 }
 
 const resolveBody = {
@@ -372,7 +372,7 @@ test('a captcha clears the style before the window is shown and sets it once par
   t.after(configureZoomCaptcha({ platform: 'win32', detectMs: 50, solveMs: 5000 }));
   const page = captchaPage({ gate: false, frame: true });
   const log = styleLog(t, page);
-  sessionOn(t, page);
+  sessionOn(t, page, zoomOpened);
 
   const res = fakeRes();
   const done = handleResolve({ body: resolveBody, headers: {} }, res);
@@ -410,7 +410,7 @@ test('FASTSTUDY_ZOOM_VISIBLE=1 styles nothing', async (t) => {
   t.after(() => delete process.env.FASTSTUDY_ZOOM_VISIBLE);
   const page = captchaPage({ gate: false, frame: true });
   const log = styleLog(t, page);
-  sessionOn(t, page);
+  sessionOn(t, page, zoomOpened);
 
   const res = fakeRes();
   const done = handleResolve({ body: resolveBody, headers: {} }, res);

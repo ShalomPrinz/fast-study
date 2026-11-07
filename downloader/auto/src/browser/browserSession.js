@@ -135,16 +135,16 @@ export function browserClosed(err, page) {
   );
 }
 
-// Per-extractor browser choice. 'zoom' = headed chrome+stealth, hidden per platform (docs/ZOOM.md).
+// Per-profile `{ launch, opened }`; `opened` runs once the page exists. 'zoom' = headed chrome+stealth (docs/ZOOM.md).
 const LAUNCHERS = {
-  zoom: () => launchZoomBrowser(),
+  zoom: { launch: () => launchZoomBrowser(), opened: zoomOpened },
 };
 
 // One lazily-built session per profile, kept open across requests (each with its own
 // idle timer). An extractor's `browserProfile` selects which one it runs on.
 const sessions = new Map();
 
-/** Tests swap a profile's launcher (dropping its session); → a function restoring the previous ones. */
+/** Tests swap a profile's `{ launch, opened }` entry (dropping its session); → a function restoring the previous ones. */
 export function configureSessions(overrides) {
   const prev = { ...LAUNCHERS };
   const reset = () => {
@@ -158,13 +158,13 @@ export function configureSessions(overrides) {
   };
 }
 
-// Per-profile hook run once the browser's page exists (zoom styles its fresh window).
-const OPENED = { zoom: zoomOpened };
-
 export function getSession(profile) {
   if (!LAUNCHERS[profile]) throw new Error(`no browser profile '${profile}'`);
   if (!sessions.has(profile)) {
-    sessions.set(profile, new BrowserSession(LAUNCHERS[profile], { opened: OPENED[profile] }));
+    sessions.set(
+      profile,
+      new BrowserSession(LAUNCHERS[profile].launch, { opened: LAUNCHERS[profile].opened }),
+    );
   }
   return sessions.get(profile);
 }
