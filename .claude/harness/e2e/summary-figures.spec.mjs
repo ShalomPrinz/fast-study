@@ -77,8 +77,9 @@ test('figures reach the editor PDF pane, and deleting a figure line removes it f
   await page.locator('.edit-toolbar-actions .btn--primary').click();
   await expect(page.locator('.edit-unsaved')).toHaveCount(0);
 
+  // Saving drops summary.pdf until the re-render lands, so a 404 means "not yet", not failure.
   await expect
-    .poll(async () => (await pdfText()).figures, { timeout: 90_000 })
+    .poll(async () => (await pdfText({ soft: true }))?.figures, { timeout: 90_000 })
     .toBe(pdfBefore.figures - 1);
   await page.waitForTimeout(1000);
   await shot('after');
@@ -86,24 +87,32 @@ test('figures reach the editor PDF pane, and deleting a figure line removes it f
 });
 
 /** The summary.pdf's figure captions (`איור N`), counted through the backend's pypdfium2. */
-async function pdfText() {
+async function pdfText({ soft = false } = {}) {
   const { execFileSync } = await import('node:child_process');
   const res = await fetch(`${lecture()}/files/summary.pdf`);
+  if (!res.ok && soft) return null;
   if (!res.ok) throw new Error(`GET summary.pdf answered ${res.status}`);
   const file = path.join(harness.evidence, 'summary-figures.pdf');
   fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
-  const out = execFileSync(
-    'uv',
-    [
-      'run',
-      '--project',
-      path.resolve(import.meta.dirname, '../../../backend'),
-      'python',
-      '-c',
-      'import pypdfium2 as p,sys,re;d=p.PdfDocument(sys.argv[1]);print(len(re.findall("איור|רויא", "".join(x.get_textpage().get_text_range() for x in d))))',
-      file,
-    ],
-    { encoding: 'utf8' },
-  );
+  let out;
+  try {
+    out = execFileSync(
+      'uv',
+      [
+        'run',
+        '--project',
+        path.resolve(import.meta.dirname, '../../../backend'),
+        'python',
+        '-c',
+        'import pypdfium2 as p,sys,re;d=p.PdfDocument(sys.argv[1]);print(len(re.findall("איור|רויא", "".join(x.get_textpage().get_text_range() for x in d))))',
+        file,
+      ],
+      { encoding: 'utf8' },
+    );
+  } catch (err) {
+    // A poll can land mid-upload and read a truncated PDF; that is "not yet" too.
+    if (soft) return null;
+    throw err;
+  }
   return { figures: Number(out.trim().split('\n').pop()) };
 }
