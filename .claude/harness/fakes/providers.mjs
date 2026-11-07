@@ -7,6 +7,14 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assignmentDoc, describeCall, partsOf, promptHeads } from './assignment-calls.mjs';
+import {
+  boxReply,
+  boxesHead,
+  figureLines,
+  figureSources,
+  isBoxCall,
+  placeFigures,
+} from './figure-calls.mjs';
 import { createRules } from './provider-rules.mjs';
 
 // The harness's own copy, not the repo's: everything a run reads or writes lives under one root.
@@ -24,6 +32,7 @@ const INSTRUCTIONS = fileURLToPath(
   new URL('../../../backend/assets/instructions', import.meta.url),
 );
 const HEADS = promptHeads(INSTRUCTIONS, (file) => fs.readFileSync(file, 'utf8'));
+const BOXES_HEAD = boxesHead(INSTRUCTIONS, (file) => fs.readFileSync(file, 'utf8'));
 const ASSIGNMENT_DOCS = {
   intuition: fs.readFileSync(path.join(FIXTURES, 'assignment-intuition.md'), 'utf8'),
   solution: fs.readFileSync(path.join(FIXTURES, 'assignment-solution.md'), 'utf8'),
@@ -313,7 +322,18 @@ async function handle(req, res) {
     if (fail === '500')
       return json(res, 500, { error: { code: 500, message: 'fake gemini is down' } });
     if (doc) assignmentCalls.push(describeCall(doc, parts));
-    const answer = fail === 'empty' ? '' : doc ? ASSIGNMENT_DOCS[doc] : SUMMARY;
+    // Summary figures: a labelled FILE/PICTURE summary call links the attached materials, the box call boxes them.
+    const sources = doc ? null : figureSources(parts);
+    const answer =
+      fail === 'empty'
+        ? ''
+        : doc
+          ? ASSIGNMENT_DOCS[doc]
+          : isBoxCall(parts, BOXES_HEAD)
+            ? boxReply(parts)
+            : sources
+              ? placeFigures(SUMMARY, figureLines(sources))
+              : SUMMARY;
     return json(res, 200, {
       candidates: [
         { content: { role: 'model', parts: [{ text: answer }] }, finishReason: 'STOP', index: 0 },
