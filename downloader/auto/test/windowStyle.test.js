@@ -1,7 +1,7 @@
 // The Windows tool-window styler: one spawn per change, collapsing, never rejecting, a no-op elsewhere.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { toolPath } from '@faststudy/tools';
+import path from 'node:path';
 import {
   windowMarker,
   styleScript,
@@ -143,9 +143,17 @@ test('the script never compiles C#, which would write into %TEMP%', () => {
   }
 });
 
-test('the real spawn is toolPath("powershell") with windowsHide pinned true', () => {
+test('the real spawn is the System32 powershell.exe under SystemRoot with windowsHide pinned true', (t) => {
+  const prev = process.env.SystemRoot;
+  t.after(() =>
+    prev === undefined ? delete process.env.SystemRoot : (process.env.SystemRoot = prev),
+  );
+  process.env.SystemRoot = 'D:\\Win';
   const { file, args, options } = powershellCommand('Write-Output 1');
-  assert.equal(file, toolPath('powershell'));
+  assert.equal(
+    file,
+    path.join('D:\\Win', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
+  );
   assert.equal(options.windowsHide, true);
   assert.ok(options.timeout > 0);
   assert.equal(args.at(-2), '-EncodedCommand');

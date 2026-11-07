@@ -2,7 +2,8 @@
 // tool-window style, applied from outside by one powershell.exe spawn per change. Best-effort, never
 // fails a call. See docs/SESSIONS.md § Off the taskbar (Windows).
 import { execFile } from 'node:child_process';
-import { toolPath, NO_WINDOW } from '@faststudy/tools';
+import path from 'node:path';
+import { NO_WINDOW } from '@faststudy/tools';
 
 /** The switch both launches carry, so the helper finds the window by command line. */
 export const windowMarker = (name) => `--faststudy-window=${name}`;
@@ -68,7 +69,13 @@ const TIMEOUT_MS = 15_000;
 /** The spawn for `script`. NO_WINDOW is mandatory: packaged, a bare spawn from a GUI process opens a console. */
 export function powershellCommand(script) {
   return {
-    file: toolPath('powershell'),
+    file: path.join(
+      process.env.SystemRoot ?? 'C:\\Windows',
+      'System32',
+      'WindowsPowerShell',
+      'v1.0',
+      'powershell.exe',
+    ),
     args: [
       '-NoProfile',
       '-NonInteractive',
