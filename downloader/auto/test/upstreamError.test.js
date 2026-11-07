@@ -46,6 +46,18 @@ test('a 502 HTML then a 200 succeeds after one resend, with no block mode', asyn
   assert.equal(challengeRoute(`${SITE}/webservice/rest/server.php`), null);
 });
 
+test('the first 5xx logs one resend line with the path and no token', async (t) => {
+  const lines = [];
+  t.mock.method(console, 'warn', (m) => lines.push(String(m)));
+  stub(t, [() => html(502), ok]);
+  await gated(call);
+  const sent = lines.filter((l) => l.includes('resending once'));
+  assert.equal(sent.length, 1);
+  assert.match(sent[0], /^moodle HTTP 502, text\/html via node, resending once in \d+ ms: /);
+  assert.ok(sent[0].includes('/webservice/rest/server.php'));
+  assert.ok(!sent[0].includes('token=') && !sent[0].includes('tok'));
+});
+
 test('a 502 twice is moodle_upstream_error, not site_blocked', async (t) => {
   const calls = stub(t, [() => html(502)]);
   const err = await fails(call);

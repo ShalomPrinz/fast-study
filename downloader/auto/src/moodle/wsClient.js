@@ -54,6 +54,11 @@ async function withHeadTimeout(init, run) {
 async function moodleFetch(url, init, opts = {}) {
   const res = await routedFetch(url, init, opts);
   if (!serverFault(res)) return res;
+  const type1 = res.headers.get('content-type') || 'no content-type';
+  console.warn(
+    `moodle ${opts.label ?? ''}HTTP ${res.status}, ${type1} via ${ROUTE.get(res) ?? 'node'}, ` +
+      `resending once in ${moodleGate.cooldownMs} ms: ${String(url).split('?')[0]}`,
+  );
   await discard(res);
   await sleepUnlessAborted(moodleGate.cooldownMs, init.signal ?? moodleGate.signal());
   const again = await routedFetch(url, init, opts);
