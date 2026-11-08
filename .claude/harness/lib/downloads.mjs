@@ -21,7 +21,8 @@ export async function pickCourse(page, course) {
 /** Pick `course` and switch the loaded list to All, the old per-card view. */
 export async function loadRecordings(page, course) {
   await pickCourse(page, course);
-  await page.locator('.downloads-scope-switch .mode-toggle-btn', { hasText: 'All' }).click();
+  // ScopeControls.tsx renders the buttons `new`, then `all`; the text is localized, the order is not.
+  await page.locator('.downloads-scope-switch .mode-toggle-btn').nth(1).click();
 }
 
 /** Open the loaded list's segment (Videos, Materials, Unknown) holding `title`; → its card. */
