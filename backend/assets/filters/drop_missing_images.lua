@@ -1,5 +1,5 @@
--- Drop an image whose src is under figures/ and whose file is not in the build dir (pandoc's cwd), so a
--- link to a deleted figure vanishes instead of failing the render; any other src is left alone.
+-- Drop an image whose src is not a file in the build dir (pandoc's cwd) -- a deleted figure, a URL, a typed
+-- path -- so a missing image vanishes instead of failing the render.
 -- Runs on pandoc 3.1 and up, so it carries no version check.
 
 local function is_file(src)
@@ -13,12 +13,8 @@ local function is_file(src)
   return err == nil
 end
 
-local function is_gone_figure(el)
-  return el.src:sub(1, 8) == 'figures/' and not is_file(el.src)
-end
-
 function Image(el)
-  if is_gone_figure(el) then return {} end
+  if not is_file(el.src) then return {} end
 end
 
 local function blank(inlines)

@@ -50,8 +50,8 @@ Its doubly-nested `\mathbf` line pulls Latin Modern bold math at 10/7/5pt, which
 needs; without it a render fails `pdf_missing_font`.
 
 - **Primed raw**, skipping the bidi preprocessing, which adds no package of its own.
-  `probe.png` and `probe.pdf` sit beside the `.tex` because `drop_missing_images.lua` keeps an image
-  outside `figures/` as written, so a missing file fails the render.
+  `probe.png` and `probe.pdf` sit beside the `.tex` because `drop_missing_images.lua` silently drops
+  an image that is not a file in the build dir, and with no image left `graphicx` never loads.
 - **Rendered strict** — no `-Z continue-on-errors`, unlike the app. Under the app's flags an
   unprimed package exits 0 with a plausible PDF; strict, it exits 1 naming the missing `.sty`. That
   proves the sink rendered whole under a template or engine change — never that the cache covers

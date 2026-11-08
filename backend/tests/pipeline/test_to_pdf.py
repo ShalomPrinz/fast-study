@@ -274,13 +274,13 @@ class TestHebrewInCodeBlockRenders:
     reason="needs tectonic + pandoc to render",
 )
 @pytest.mark.parametrize("src", ["nothere.png", "https://example.com/a.png"])
-def test_an_image_outside_figures_that_cannot_load_fails_the_render(tmp_path, src):
+def test_a_missing_image_outside_figures_is_dropped_and_the_render_succeeds(
+    tmp_path, src
+):
     md_path = tmp_path / "s.md"
     md_path.write_text(f"hello\n\n![x]({src})\n", encoding="utf-8")
-    with pytest.raises(PdfRenderError) as exc:
-        convert_to_pdf(str(md_path))
-    assert exc.value.code == "latex_error"
-    assert f"Unable to load picture or PDF file '{src}'" in exc.value.params["message"]
+    pdf_path, _ = convert_to_pdf(str(md_path))
+    assert os.path.getsize(pdf_path) > 0
 
 
 @pytest.mark.skipif(

@@ -1,4 +1,4 @@
-"""drop_missing_images.lua through real pandoc: only a figures/ image whose file is missing is dropped."""
+"""drop_missing_images.lua through real pandoc: any image whose file is missing is dropped."""
 
 import shutil
 import subprocess
@@ -88,13 +88,17 @@ def test_a_figure_path_leaving_the_build_dir_or_a_directory_is_dropped(tmp_path)
     assert "includegraphics" not in out
 
 
-def test_an_image_outside_figures_reaches_latex_untouched(tmp_path):
-    # These fail the render with latex_error (Unable to load picture).
-    md = "![x](nothere.png)\n\n![y](https://example.com/y.png)\n\n![z](/etc/passwd)\n"
+def test_a_missing_image_outside_figures_or_a_url_is_dropped(tmp_path):
+    md = "a ![x](nothere.png) b\n\n![y](https://example.com/y.png)\n\n![z](/etc/passwd)\n"
     out = render(tmp_path, md)
-    assert "{nothere.png}" in out
-    assert "{https://example.com/y.png}" in out
-    assert "{/etc/passwd}" in out
+    assert "includegraphics" not in out
+    assert "figure" not in out
+    assert "a" in out and "b" in out
+
+
+def test_an_existing_image_outside_figures_is_kept(tmp_path):
+    out = render(tmp_path, "![x](probe.png)\n", ("probe.png",))
+    assert "{probe.png}" in out
 
 
 def test_a_missing_image_outside_figures_in_a_code_block_is_untouched(tmp_path):

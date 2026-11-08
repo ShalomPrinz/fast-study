@@ -328,7 +328,7 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
 
     output_path = input_path.with_suffix(".pdf")
 
-    # A `figures/` folder beside the markdown holds the images it links; only those can render.
+    # A `figures/` folder beside the markdown holds the images it links; any image not in the build dir is dropped.
     figures_src = input_path.parent / FIGURES_DIR
     staged = (
         sorted(p for p in figures_src.iterdir() if p.is_file())

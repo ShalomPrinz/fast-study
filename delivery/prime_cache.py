@@ -22,7 +22,7 @@ from tools import tool_path
 SINK = _DELIVERY / "kitchen-sink.md"
 SUPPLEMENT = _DELIVERY / "cache-supplement.txt"
 # The sink's figures, a PNG and a one-page PDF cropped the way summary figures are. They sit beside
-# the .tex, outside figures/, so drop_missing_images.lua keeps them and a missing one fails the render.
+# the .tex because drop_missing_images.lua drops an absent image, and then graphicx never loads.
 IMAGES = (_DELIVERY / "probe.png", _DELIVERY / "probe.pdf")
 
 # A cold prime fetches every package over the network one at a time, which is minutes.
