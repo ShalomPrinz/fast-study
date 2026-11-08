@@ -618,3 +618,19 @@ class TestRenderWithFigure:
         assert (
             "נעלם" not in text
         )  # the dangling link vanished instead of failing the render
+
+
+# Real Gemini boxes on the fixture's pages 1-3, and the pixel boxes the spike's snap.py snapped them to.
+SPIKE_BOXES = {1: [188, 33, 968, 488], 2: [371, 265, 988, 707], 3: [189, 492, 968, 909]}
+SPIKE_SNAPPED = {
+    1: (50, 204, 983, 1107),
+    2: (523, 407, 1423, 1122),
+    3: (974, 204, 1892, 1099),
+}
+
+
+@pytest.mark.parametrize("page_no", [1, 2, 3])
+def test_snap_box_matches_spike(page_no):
+    gray = _page(page_no).convert("L")
+    px = sf.box_to_pixels(SPIKE_BOXES[page_no], *gray.size)
+    assert sf.snap_box(gray, px) == SPIKE_SNAPPED[page_no]
