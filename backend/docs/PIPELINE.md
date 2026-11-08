@@ -32,7 +32,7 @@ A lecture may hold any number of materials of any file type. `database/` owns th
 
 ## Summary figures
 
-With `settings.summary_figures()` (`SUMMARY_FIGURES`, off unless set) a lecture or recitation summary shows the graphs of its slide PDFs and PPTXs, cropped to the graph alone and placed after the paragraph that discusses it. An assignment's `intuition`/`solution` never get any, and with the setting off the figure step does not exist: no labels, no PPTX pictures, no extra prompt, no Gemini call; the only trace is the `DELETE figures` below, which still runs on every fresh lecture/recitation summarize so stale figures never linger.
+With `settings.summary_figures()` (`SUMMARY_FIGURES`, off unless set) a lecture or recitation summary shows the graphs of its slide PDFs and PPTXs, cropped to the graph alone and placed after the paragraph that discusses it. An assignment's `intuition`/`solution` never get any, and with the setting off the figure step does not exist: no labels, no PPTX pictures, no extra prompt, no Gemini call; `_exec_summarize` makes no figures call at all, so a failing figures store cannot fail the step.
 
 The figure step runs inside `summarize()`/`summarize_materials()` (`pipeline/summary_figures.py`), so its Gemini call lands in that step's timing bucket. Two Gemini calls:
 
@@ -45,7 +45,7 @@ Then `resolve_figures` makes each figure, numbers the survivors `fig1`, `fig2`â€
 
 A failure is per figure, never per summary: an unknown material or picture name, a PDF that cannot be opened or rendered, a page out of range or rotated, an invalid or degenerate box, `found: false`, a blank crop or a failed crop each drop that image line and log it. A failed box call (any error, bad JSON) drops every PDF figure and keeps the PPTX ones. More than 8 candidates: the rest are dropped. No user-facing marker, no error code.
 
-`_exec_summarize` stores the result only after the summary is non-empty, then runs the write order above (the `DELETE` for every fresh lecture/recitation summarize, never for an assignment). A caption in a standalone image line may hold one level of balanced brackets, one pattern (`IMAGE_CAPTION`) used by the link parser in `pipeline/summary_figures.py`; the render drops non-staged images in pandoc's AST, not by pattern. `_exec_pdf` fetches `figures/*` for the render ([PDF.md](PDF.md)); Drive still uploads only `summary.pdf`.
+`_exec_summarize` stores the result only after the summary is non-empty, then runs the write order above (the `DELETE` only with the setting on, for lecture/recitation, never for an assignment; figures left over from an earlier run are cleared by the next summarize with it on or by the video `PUT` wipe, and with it off the summary links none). A caption in a standalone image line may hold one level of balanced brackets, one pattern (`IMAGE_CAPTION`) used by the link parser in `pipeline/summary_figures.py`; the render drops non-staged images in pandoc's AST, not by pattern. `_exec_pdf` fetches `figures/*` for the render ([PDF.md](PDF.md)); Drive still uploads only `summary.pdf`.
 
 Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode. The model is `settings.gemini_model()` â€” `LLMClient`'s default, so summarize and the course overview cannot drift apart.
 

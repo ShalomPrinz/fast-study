@@ -717,9 +717,9 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                 recorded = [e["name"] for e in selected]
         # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
-        # Clear the old figures first (also with the setting off): a failed clear then fails the step
-        # having written nothing, so the pdf step never renders old figN files under new links.
-        if kind in FIGURE_KINDS:
+        # With the setting on, clear the old figures first: a failed clear then fails the step having
+        # written nothing, so the pdf step never renders old figN files under new links.
+        if figures is not None:
             db_client.delete_figures(course, lecture, kind)
         db_client.put_summary(course, lecture, kind, summary, fresh=True)
         if kind in FIGURE_KINDS and figures is not None:

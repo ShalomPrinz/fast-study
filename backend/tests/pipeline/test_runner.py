@@ -2617,6 +2617,7 @@ def _run_summarize_figures(
     boom=None,
     summary_boom=None,
     figure_boom=None,
+    delete_boom=None,
 ):
     """Run the transcript path of _exec_summarize with the figure setting `on`; the fake summarize
     fills `figures.files` the way the real call does. Returns the result, the ordered db calls and
@@ -2665,7 +2666,7 @@ def _run_summarize_figures(
         patch.object(
             runner.db_client,
             "delete_figures",
-            side_effect=lambda *a: calls.append(("delete", a)),
+            side_effect=record("delete", delete_boom),
         ),
         patch.object(
             runner.db_client,
@@ -2682,18 +2683,18 @@ def _run_summarize_figures(
     return result, calls, seen
 
 
-def test_figures_off_runs_no_figure_step(monkeypatch):
-    result, calls, seen = _run_summarize_figures(monkeypatch, on=False)
+def test_figures_off_makes_no_figures_call_even_if_a_clear_would_fail(monkeypatch):
+    result, calls, seen = _run_summarize_figures(
+        monkeypatch, on=False, delete_boom=OSError("locked"), figure_boom=OSError("x")
+    )
     assert result["status"] == "done"
     assert len(seen["args"]) == 2  # summarize(transcript, paths): no figures argument
-    assert [c[0] for c in calls] == ["delete", "summary"]
+    assert [c[0] for c in calls] == ["summary"]
 
 
-def test_figures_off_still_clears_stale_figures_but_not_for_an_assignment(monkeypatch):
-    _, calls, _ = _run_summarize_figures(monkeypatch, on=False)
-    assert ("delete", ("C1", "L1", "lecture")) in calls
+def test_figures_never_touched_for_an_assignment(monkeypatch):
     _, calls, _ = _run_summarize_figures(
-        monkeypatch, on=False, kind=runner.ASSIGNMENT_KIND
+        monkeypatch, on=True, kind=runner.ASSIGNMENT_KIND
     )
     assert [c[0] for c in calls] == ["summary"]
 
