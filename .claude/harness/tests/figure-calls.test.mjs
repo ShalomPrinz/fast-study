@@ -38,7 +38,7 @@ test('links name the attached materials, and are placed after plain paragraphs o
 });
 
 test('the box call is told by the prompt head and answers every figure id', () => {
-  const parts = [text('HEAD\nrest'), text('Figure 1: a'), text('Figure 2: b')];
+  const parts = [text('HEAD\nrest'), text('Figure 1 (slide 3): a'), text('Figure 2 (slide 5): b')];
   assert.equal(isBoxCall(parts, 'HEAD'), true);
   assert.equal(isBoxCall([text('other')], 'HEAD'), false);
   assert.deepEqual(JSON.parse(boxReply(parts)), {

@@ -50,10 +50,10 @@ export function placeFigures(summary, lines) {
 /** Whether the request is the box call: its first text part is figure_boxes.md. */
 export const isBoxCall = (parts, head) => !!head && texts(parts)[0]?.startsWith(head);
 
-/** The box reply: every `Figure <id>:` part found at the box of page <id>, as figureLines links each PDF's pages in order. */
+/** The box reply: every `Figure <id> (slide <page>):` part found at the box of page <id>, as figureLines links each PDF's pages in order. */
 export function boxReply(parts) {
   const ids = texts(parts)
-    .map((text) => /^Figure (\d+):/.exec(text)?.[1])
+    .map((text) => /^Figure (\d+) \(slide \d+\):/.exec(text)?.[1])
     .filter(Boolean);
   return JSON.stringify({
     figures: ids.map((id) => ({
