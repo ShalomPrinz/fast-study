@@ -683,13 +683,12 @@ class TestFigures:
             f"--lua-filter={to_pdf.DIRECTION_FILTER}",
         ]
 
-    def test_the_header_caps_figures_at_the_line_width_and_forty_percent_of_the_text_height(
+    def test_the_header_caps_figures_at_forty_percent_of_the_text_height_and_never_enlarges(
         self,
     ):
-        assert (
-            r"\setkeys{Gin}{width=\linewidth,height=0.4\textheight,keepaspectratio}"
-            in LATEX_HEADER
-        )
+        assert r"\Gscale@div\@tempa{0.4\textheight}" in LATEX_HEADER
+        assert r"\Gscale@div\@tempb{\linewidth}" in LATEX_HEADER
+        assert r"\setkeys{Gin}" not in LATEX_HEADER
 
 
 @pytest.mark.usefixtures("no_bin_dir")
