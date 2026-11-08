@@ -199,3 +199,96 @@ describe('fault', () => {
     assert.equal(createSiteControl().fault('/media/lecture-01.mp4', get), null);
   });
 });
+
+describe('fault rules', () => {
+  const get = { method: 'GET' };
+  const WS = '/webservice/rest/server.php';
+
+  test('match is a substring of the path or the wsfunction', () => {
+    const site = createSiteControl();
+    site.control({ fault: { match: 'pluginfile.php/', status: 502 } });
+    site.control({ fault: { match: 'core_course_get_contents', status: 503, body: '<p>wall' } });
+    assert.deepEqual(site.rule('/pluginfile.php/1/a.pdf', get), { status: 502, body: undefined });
+    assert.deepEqual(site.rule(WS, { ...get, wsfunction: 'core_course_get_contents' }), {
+      status: 503,
+      body: '<p>wall',
+    });
+    assert.equal(site.rule(WS, { ...get, wsfunction: 'other' }), null);
+    assert.equal(site.rule('/media/x.mp4', get), null);
+  });
+
+  test('times counts down, then the rule is gone; no times is unlimited', () => {
+    const site = createSiteControl();
+    site.control({ fault: { match: 'a', status: 500, times: 2 } });
+    assert.ok(site.rule('/a', get));
+    assert.ok(site.rule('/a', get));
+    assert.equal(site.rule('/a', get), null);
+    site.control({ fault: { match: 'b', status: 500 } });
+    for (let i = 0; i < 5; i++) assert.ok(site.rule('/b', get));
+  });
+
+  test('probes neither match nor spend a time', () => {
+    const site = createSiteControl();
+    site.control({ fault: { match: 'a', status: 500, times: 1 } });
+    assert.equal(site.rule('/a', { method: 'HEAD' }), null);
+    assert.equal(site.rule('/a', { method: 'GET', range: 'bytes=0-0' }), null);
+    assert.ok(site.rule('/a', get));
+  });
+
+  test('rules coexist; clearFaults and reset drop them', () => {
+    const site = createSiteControl();
+    site.control({ fault: { match: 'a', status: 500 } });
+    site.control({ fault: { match: 'b', status: 502 } });
+    assert.equal(site.rule('/b', get).status, 502);
+    site.control({ clearFaults: true });
+    assert.equal(site.rule('/a', get), null);
+    site.control({ fault: { match: 'a', status: 500 } });
+    site.control({ reset: true });
+    assert.equal(site.rule('/a', get), null);
+  });
+
+  test('a bad rule is refused', () => {
+    const site = createSiteControl();
+    for (const fault of [
+      {},
+      { match: 'a' },
+      { match: '', status: 500 },
+      { match: 'a', status: 99 },
+      { match: 'a', status: 500, times: 0 },
+      { match: 'a', status: 500, body: 5 },
+    ]) {
+      assert.throws(() => site.control({ fault }), /fault:/);
+    }
+  });
+});
+
+describe('request log', () => {
+  test('filters by match and since, and keeps the status the caller sets', () => {
+    const site = createSiteControl();
+    const a = site.record({ method: 'GET', path: '/pluginfile.php/1/a.pdf' });
+    a.status = 502;
+    site.record({ method: 'GET', path: '/webservice/rest/server.php', wsfunction: 'core_x' });
+    assert.equal(site.hits().length, 2);
+    assert.deepEqual(
+      site.hits({ match: 'pluginfile' }).map((h) => h.status),
+      [502],
+    );
+    assert.equal(site.hits({ match: 'core_x' }).length, 1);
+    assert.deepEqual(
+      site.hits({ since: a.seq }).map((h) => h.wsfunction),
+      ['core_x'],
+    );
+    site.record({ method: 'GET', host: 'captcha.test', path: '/x' });
+    assert.equal(site.hits({ match: 'captcha.test' }).length, 1);
+  });
+
+  test('the ring keeps the newest 500; reset clears it', () => {
+    const site = createSiteControl();
+    for (let i = 0; i < 510; i++) site.record({ method: 'GET', path: `/p${i}` });
+    const all = site.hits();
+    assert.equal(all.length, 500);
+    assert.equal(all[0].path, '/p10');
+    site.control({ reset: true });
+    assert.deepEqual(site.hits(), []);
+  });
+});

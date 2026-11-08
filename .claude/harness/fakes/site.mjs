@@ -446,10 +446,37 @@ function handle(req, res) {
     });
   }
   const { state } = site;
+  if (route === '/hits') {
+    const since = Number(url.searchParams.get('since') ?? 0);
+    if (!Number.isFinite(since)) return json(res, { error: 'since must be a number' }, 400);
+    return json(res, site.hits({ match: url.searchParams.get('match') ?? '', since }));
+  }
   if (route === '/health') {
     return json(res, { status: 'ok', ...state, parked: site.parked() });
   }
   if (route === '/tool') return json(res, site.tool(url.searchParams.get('url') ?? ''));
+  // Every other request is logged, then meets the fault rules before any routing.
+  const wsfunction = url.searchParams.get('wsfunction') ?? undefined;
+  // The captcha page polls /harness/solved every 300 ms; logging it would flood the ring.
+  if (route !== '/harness/solved') {
+    const hit = site.record({
+      method: req.method,
+      host: (req.headers.host ?? '').split(':')[0],
+      path: route,
+      wsfunction,
+    });
+    // A socket closed before the response finished (parked hold, dropHalfway) never got its statusCode on the wire.
+    res.on('close', () => (hit.status = res.writableFinished ? res.statusCode : 'aborted'));
+  }
+  const faulted = site.rule(route, { method: req.method, range: req.headers.range, wsfunction });
+  if (faulted) {
+    const text = faulted.body ?? JSON.stringify({ error: 'harness fault' });
+    res.writeHead(faulted.status, {
+      'content-type': faulted.body === undefined ? 'application/json' : 'text/html; charset=utf-8',
+      'content-length': Buffer.byteLength(text),
+    });
+    return res.end(text);
+  }
 
   const host = (req.headers.host ?? '').split(':')[0];
   if (host === 'zoom.us' || host.endsWith('.zoom.us')) return serveZoom(req, res, route);

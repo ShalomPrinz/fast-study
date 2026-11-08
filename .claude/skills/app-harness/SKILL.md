@@ -58,7 +58,9 @@ with the console errors and failed requests the command caused. Service logs are
 The seeded `hb-*` courses are ready-made fixtures (the README's table says what each holds). Force a
 failure with `curl -s $(hb url providers)/control …` or `$(hb url site)/control …`, or with
 `hb lock` (the file refuses writes with `423 file_locked`, its lecture and course folders refuse a
-rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture`. The site's
+rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture`. The site also takes
+`{"fault":{"match":"pluginfile.php/","status":502,"times":1,"body":"<html>…"}}` (`match`: a path or Moodle
+`wsfunction` substring; `{"clearFaults":true}` drops them) and (no `body` answers JSON `{"error":"harness fault"}`) and logs each request (host, path, `status`; `"aborted"` if cut off before answered) at `GET $(hb url site)/hits[?match=…&since=seq]`. The site's
 `radware` mode walls Moodle until a captcha is solved with `{"solve":true}`; `{"revoke":true}` makes
 the next call meet a fresh captcha, with no reseed. Restart one service after a code change with
 `node .claude/harness/setup.mjs --harness $HARNESS_DIR --restart <service>` (names in `hb help`). Put the baseline back

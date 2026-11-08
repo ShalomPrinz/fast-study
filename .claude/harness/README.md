@@ -506,7 +506,7 @@ call lands on `window.__fsRestarts` (`service-banner.spec.mjs`).
 `reseed`, `reset`), a lecture view's `step` rows and `expectRunComplete` (the folded "Summary ready" row), `treeLecture` over the database's
 `/tree`, `driveFile` walking the fake Drive's folder chain, and `dropFile`, which drops a local file on an
 element the way a drag from the file manager does. `lib/downloads.mjs` picks a course in the combobox (`pickCourse`), loads its recordings
-and finds or downloads a row by title, for the specs and `hb download` alike; it switches the loaded list to the All scope (the New view hides the cards and segments the specs drive). The fake course's `ערוץ חיצוני` section holds one lone playlist row, `ערוץ הקורס ביוטיוב`, for the New view's select-all rule.
+and finds or downloads a row by title, for the specs and `hb download` alike; it switches the loaded list to the All scope by button position, not text, so it works in Hebrew (the New view hides the cards and segments the specs drive). The fake course's `ערוץ חיצוני` section holds one lone playlist row, `ערוץ הקורס ביוטיוב`, for the New view's select-all rule.
 
 ## Driving failures
 
@@ -527,8 +527,14 @@ curl -s $S/control -d '{"solve":true}'     # radware: the open captcha page solv
 curl -s $S/control -d '{"revoke":true}'    # radware: every clearance stale, an unused solve disarmed
 curl -s $S/control -d '{"downloadMs":60000}' # how long each download takes (3000)
 curl -s $S/control -d '{"hold":true}'      # park every Moodle-host request until {"hold":false}
-curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, hold off, revoked, every /die/ re-armed
+curl -s $S/control -d '{"fault":{"match":"pluginfile.php/","status":502,"times":1}}'  # any route; `match` is a substring of the path or the Moodle `wsfunction`
+curl -s $S/control -d '{"fault":{"match":"core_course_get_contents","status":200,"body":"<html>wall</html>"}}'  # `body` goes out as text/html; no `times` = every request
+curl -s $S/control -d '{"clearFaults":true}'  # drop the fault rules alone
+curl -s "$S/hits?match=pluginfile&since=0"  # every request the site served: seq, at, method, host, path, wsfunction, status (null while in flight, "aborted" when the socket closed before the answer finished)
+curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, hold off, revoked, every /die/ re-armed, faults and the log cleared
 ```
+
+Fault rules apply before routing to every site request except `/control`, `/health`, `/hits` and `/tool`; several coexist, the first match answers, and `times` counts the requests that got the fault. A HEAD or `bytes=0-0` probe never matches or spends a `times`, as for `/deny/`. A rule without `body` answers JSON `{"error":"harness fault"}`. `/hits` keeps the last 500 requests (`since` is the last `seq` seen, non-numeric answers 400; `match` also tests the host; the captcha page's `/harness/solved` polling is not logged), so a resend's count and timing read from `at`.
 
 The four modes after `invalidtoken` are a site auto/ must refuse. `not_moodle` answers the probe's
 `service-nologin.php` with a 404 page and `mobile_service_off` with `enablemobilewebservice: 0` — the
