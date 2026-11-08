@@ -369,15 +369,19 @@ def _crop_pdf_page(
 # ---- The box call ----
 
 
-def request_boxes(wanted: list[tuple[int, str, bytes]]) -> dict[int, list | None]:
-    """One Gemini call for every PDF figure, as (id, caption, page PNG): id → box_2d, None when
+def request_boxes(
+    wanted: list[tuple[int, str, int, bytes]],
+) -> dict[int, list | None]:
+    """One Gemini call for every PDF figure, as (id, caption, page, page PNG): id → box_2d, None when
     Gemini did not find it. Raises when the call or its JSON fails."""
 
     contents: list = [BOXES_PROMPT_FILE.read_text(encoding="utf-8")]
-    for fid, caption, png in wanted:
-        contents.append(f"Figure {fid}: {caption}")
+    for fid, caption, page, png in wanted:
+        contents.append(f"Figure {fid} (slide {page}): {caption}")
         contents.append(types.Part.from_bytes(data=png, mime_type="image/png"))
-    reply = json.loads(LLMClient().generate(contents, response_schema=BOX_SCHEMA))
+    reply = json.loads(
+        LLMClient().generate(contents, response_schema=BOX_SCHEMA, temperature=0)
+    )
     boxes: dict[int, list | None] = {}
     for entry in reply["figures"]:
         boxes[int(entry["id"])] = entry["box_2d"] if entry["found"] else None
@@ -460,7 +464,7 @@ def resolve_figures(summary: str, sources: FigureSources) -> str:
         try:
             boxes = request_boxes(
                 [
-                    (fid + 1, candidates[fid].caption, png)
+                    (fid + 1, candidates[fid].caption, candidates[fid].page, png)
                     for fid, (_, png) in pages.items()
                 ]
             )

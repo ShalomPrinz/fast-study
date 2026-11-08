@@ -200,7 +200,7 @@ def _boxes(**by_id):
     """A request_boxes stand-in answering each figure id from `by_id` (`i1=…`), None otherwise."""
 
     def fake(wanted):
-        return {i: by_id.get(f"i{i}") for i, _, _ in wanted}
+        return {i: by_id.get(f"i{i}") for i, *_ in wanted}
 
     return fake
 
@@ -255,8 +255,8 @@ class TestResolve:
 
         with patch.object(sf, "request_boxes", fake):
             sf.resolve_figures(f"{GOLDEN_LINES}\n", src)
-        assert [(i, c) for i, c, _ in seen] == [(1, "גרף טוב"), (2, "עקומות")]
-        assert all(png.startswith(b"\x89PNG") for _, _, png in seen)
+        assert [(i, c) for i, c, *_ in seen] == [(1, "גרף טוב"), (2, "עקומות")]
+        assert all(png.startswith(b"\x89PNG") for *_, png in seen)
 
     @pytest.mark.parametrize(
         "bad",
@@ -561,14 +561,17 @@ class TestBoxCall:
             ' {"id": 2, "found": false, "box_2d": [0, 0, 0, 0]}]}'
         )
         with patch.object(sf, "LLMClient", return_value=client):
-            boxes = sf.request_boxes([(1, "a", b"\x89PNG1"), (2, "b", b"\x89PNG2")])
+            boxes = sf.request_boxes(
+                [(1, "a", 3, b"\x89PNG1"), (2, "b", 5, b"\x89PNG2")]
+            )
         assert boxes == {1: [1, 2, 3, 4], 2: None}
         contents = client.generate.call_args.args[0]
         assert [c for c in contents if isinstance(c, str)][1:] == [
-            "Figure 1: a",
-            "Figure 2: b",
+            "Figure 1 (slide 3): a",
+            "Figure 2 (slide 5): b",
         ]
         assert client.generate.call_args.kwargs["response_schema"] is sf.BOX_SCHEMA
+        assert client.generate.call_args.kwargs["temperature"] == 0
         part = contents[2]
         assert (
             part.inline_data.mime_type == "image/png"

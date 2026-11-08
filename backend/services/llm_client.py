@@ -240,13 +240,17 @@ class LLMClient:
             return GEMINI_MODELS[0]
         return GEMINI_MODELS[(GEMINI_MODELS.index(self.model) + 1) % len(GEMINI_MODELS)]
 
-    def generate(self, contents: list, response_schema: dict | None = None) -> str:
-        """Send contents to the model and return its stripped text; a `response_schema` makes it
-        strict JSON. With auto-fallback on, a 503 retries once on the next model for this call
-        only; if that fails too, the original error stands."""
+    def generate(
+        self,
+        contents: list,
+        response_schema: dict | None = None,
+        temperature: float | None = None,
+    ) -> str:
+        """Return the model's stripped text; `response_schema` forces JSON, `temperature` overrides the default.
+        With auto-fallback on, a 503 retries once on the next model; if that fails too, the first error stands."""
 
         try:
-            return self._generate(contents, self.model, response_schema)
+            return self._generate(contents, self.model, response_schema, temperature)
         except CodedError as first:
             e = first
             fallback = self._fallback_model()
@@ -260,12 +264,16 @@ class LLMClient:
         if hook:
             hook(self.model, fallback)
         try:
-            return self._generate(contents, fallback, response_schema)
+            return self._generate(contents, fallback, response_schema, temperature)
         except Exception as second:
             raise e from second
 
     def _generate(
-        self, contents: list, model: str, response_schema: dict | None = None
+        self,
+        contents: list,
+        model: str,
+        response_schema: dict | None = None,
+        temperature: float | None = None,
     ) -> str:
         """One generate_content call on `model`, SDK failures mapped to coded errors."""
 
@@ -286,6 +294,7 @@ class LLMClient:
                     automatic_function_calling=types.AutomaticFunctionCallingConfig(
                         disable=True
                     ),
+                    temperature=temperature,
                     **json_mode,
                 ),
             )
