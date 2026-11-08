@@ -16,7 +16,12 @@ _REPO = _DELIVERY.parent
 # way services.spec puts it on `pathex`.
 sys.path.insert(0, str(_REPO / "backend"))
 
-from pipeline.to_pdf import BUILD_STEM, build_tex
+from pipeline.to_pdf import (
+    BUILD_STEM,
+    apply_outside_fences,
+    build_tex,
+    preprocess_markdown,
+)
 from tools import tool_path
 
 SINK = _DELIVERY / "kitchen-sink.md"
@@ -98,7 +103,10 @@ def main() -> None:
         build = Path(build_dir)
         for image in IMAGES:
             shutil.copy2(image, build / image.name)
-        build_tex(SINK.read_text(encoding="utf-8"), build)
+        build_tex(
+            apply_outside_fences(SINK.read_text(encoding="utf-8"), preprocess_markdown),
+            build,
+        )
         _render(build)
 
     for name in _supplement_names():

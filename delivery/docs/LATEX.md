@@ -23,7 +23,8 @@ never saved and a later failure or a cancelled run does not lose a good one.
 
 - **The key is exact**: `latex-<os>-tectonic<TECTONIC_VERSION>-pandoc<PANDOC_VERSION>-<hash>`, the
   hash over `prime_cache.py`, the sink, `probe.png`, `probe.pdf`, the supplement, `backend/pipeline/to_pdf.py`
-  (`LATEX_HEADER`) and `backend/assets/{templates,filters,fonts}/`. There are no `restore-keys`: the
+  (`LATEX_HEADER`), `backend/pipeline/pdf/` (the preprocessing helpers) and
+  `backend/assets/{templates,filters,fonts}/`. There are no `restore-keys`: the
   prime only adds files, so a partial match would carry files no input pulls any more into every
   installer from then on.
 - **The prime runs on a hit too.** Restored, it is a top-up of reused files, but its strict render
@@ -49,8 +50,11 @@ one branch left out: it needs Inkscape, which never ships.
 Its doubly-nested `\mathbf` line pulls Latin Modern bold math at 10/7/5pt, which body `\mathbf`
 needs; without it a render fails `pdf_missing_font`.
 
-- **Primed raw**, skipping the bidi preprocessing, which adds no package of its own.
-  `probe.png` and `probe.pdf` sit beside the `.tex` because `drop_missing_images.lua` silently drops
+- **Preprocessed as the app does**, through `convert_to_pdf`'s `apply_outside_fences` +
+  `preprocess_markdown`, so a package a preprocessing change starts to need lands in the cache at the
+  prime, but only for constructs the sink carries. Branches the sink never triggers, today its math
+  helpers, stay unprimed by this render.
+- `probe.png` and `probe.pdf` sit beside the `.tex` because `drop_missing_images.lua` silently drops
   an image that is not a file in the build dir, and with no image left `graphicx` never loads.
 - **Rendered strict** — no `-Z continue-on-errors`, unlike the app. Under the app's flags an
   unprimed package exits 0 with a plausible PDF; strict, it exits 1 naming the missing `.sty`. That
