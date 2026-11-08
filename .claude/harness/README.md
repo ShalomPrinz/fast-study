@@ -591,6 +591,8 @@ with its real mime type (`lib/course-files.mjs`; setup builds the bytes under `f
 `diagram.png`, `code-samples.zip`, `big-appendix.pdf` (11 MB, over Gemini's 10 MB limit, generated at setup)
 and `lecture3-audio.mp3`, which auto does not list (audio is not a material).
 
+The harness does not duplicate a file whose owner already has it: `setup.mjs` copies it from the owner into the stack's fixtures (the `econ-slides` decks come from `backend/tests/fixtures/`).
+
 `mod_assign_get_assignments` lists `תרגיל בית 1` (a PDF and a `.py`) in section `חומרי עזר` and
 `תרגיל בית 2` (a PDF) in section `תרגולים`; each `cmid` is the id of a bare `assign` module in that
 section's contents, so auto's `/list` gives them `media: 'assignment'` with the matching `section`.
@@ -603,7 +605,7 @@ An assignment doc's `generateContent` (its last text part starts with the first 
 
 ### Summary figures
 
-With `SUMMARY_FIGURES` on, the fake Gemini answers a summary call carrying `FILE …`/`PICTURE …` label parts with the fixture summary plus standalone figure lines naming the materials as attached: each PDF's `#page=1` and `#page=2`, then the first PPTX picture. The box call (its first text part is `figure_boxes.md`) gets `found` for every `Figure <id>:` at the graph box of `econ-slides` page <id> (`fakes/figure-calls.mjs`). `fixtures/econ-slides.pdf` and `.pptx` are copies of the backend's test decks, copied to the stack's fixtures on setup; `hb set SUMMARY_FIGURES=true` turns the feature on.
+With `SUMMARY_FIGURES` on, the fake Gemini answers a summary call carrying `FILE …`/`PICTURE …` label parts with the fixture summary plus standalone figure lines naming the materials as attached: each PDF's `#page=1` and `#page=2`, then the first PPTX picture. The box call (its first text part is `figure_boxes.md`) gets `found` for every `Figure <id>:` at the graph box of `econ-slides` page <id> (`fakes/figure-calls.mjs`). `econ-slides.pdf` and `.pptx` are the backend's test decks (`backend/tests/fixtures/`), copied to the stack's fixtures on setup; `hb set SUMMARY_FIGURES=true` turns the feature on.
 
 ## Inspecting a PDF
 
