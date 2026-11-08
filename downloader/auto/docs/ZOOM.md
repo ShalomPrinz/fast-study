@@ -32,7 +32,7 @@ The one platform-dependent part of `launchZoomBrowser()`.
 
 **Windows** — no Xvfb, so the window is parked off-screen (`--window-position=-32000,-32000`);
 otherwise a batch of N lectures steals focus N times. `FASTSTUDY_ZOOM_VISIBLE=1` keeps it on-screen.
-It comes on screen only for a captcha ([below](#captcha-browserzoomcaptchajs)).
+It also carries the Win32 tool-window style, so it stays out of Alt+Tab, though a fresh launch can keep its taskbar button until the next captcha ([SESSIONS.md](SESSIONS.md#off-the-taskbar-windows-browserwindowstylejs), "A taskbar button can outlive the style"), cleared and re-applied around a captcha. It comes on screen only for a captcha ([below](#captcha-browserzoomcaptchajs)). The session closes an idle browser after 10 min.
 
 **Linux** — a managed Xvfb virtual display, which under WSL also keeps the hardware D3D12 renderer
 (`/dev/dxg` is reached independent of the X display). Spawned lazily on the first zoom launch,
@@ -71,9 +71,9 @@ window gives up early.
   reads false, and the capture carries on; its `/resolve` 200 carries `captchaSolved: true`, on that
   one answer only, so a resolve queued behind the wait never claims it. Unsolved after 10 minutes
   is `503 zoom_captcha_timeout {url}`; a window the user closes is `zoom_browser_closed`.
-  `zoomCaptcha` clears however it ends. Windows' foreground lock can still leave it behind the
-  user's work, so `POST /window/show` raises it again: on screen, minimized, restored, then
-  `bringToFront` — the minimize and restore is what gets past the lock.
+  `zoomCaptcha` clears however it ends. The first show and `POST /window/show` run the same
+  sequence: on screen, minimize, restore, then `bringToFront` — Windows' foreground lock leaves a
+  bare `bringToFront` behind the user's work, and the minimize and restore gets past it.
 - **Linux** — Xvfb has no screen to show it on, so a visible captcha frame answers `503
   zoom_captcha_unsupported {url}` at once, and no player answers `zoom_no_media_request {url}`.
 

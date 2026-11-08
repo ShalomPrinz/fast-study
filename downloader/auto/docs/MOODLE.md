@@ -146,9 +146,9 @@ are made from inside that browser:
   captcha on its first launch with this one. Landing on the site means the profile's
   clearance still holds: it stays off-screen and `moodleFetch` resends the same call through it once
   (the wall means Moodle never processed it; bodies are strings or forms, so they send twice), so
-  the caller never sees the block. Landing anywhere else is the captcha: the window moves on screen
-  (CDP `Browser.setWindowBounds`), comes to the front and holds the Moodle lock
-  ([GATE.md](GATE.md#holds-that-outlive-the-request)) (`POST /window/show` raises it again, as for zoom's
+  the caller never sees the block. Landing anywhere else is the captcha: the window moves on screen, minimizes and restores
+  (CDP `Browser.setWindowBounds`; the minimize and restore gets past Windows' foreground lock), comes to the front and holds the Moodle lock
+  ([GATE.md](GATE.md#holds-that-outlive-the-request)) (`POST /window/show` runs the same sequence, as for zoom's
   [captcha](ZOOM.md#captcha-browserzoomcaptchajs)), and the call waits for the user's solve
   (`waitChallenge`): the page landing back on the site resends it through the window once and it
   returns normally, so the caller never sees the captcha either. A page the site moves to the
@@ -170,6 +170,7 @@ are made from inside that browser:
   waits and the probe opens the window itself and reports `challengeWindow`, `'captcha'` and
   `'ready'` included (none when the window closed while it loaded), holding the lock for a press as before any wait. A call walled _through_ the window while it sits on the site (its root loads fine, `server.php` is walled) is not resent again: it throws `site_blocked` with `params.challengeWindow:'walled'`, the site refusing requests rather than a captcha to solve; no window is raised and no lock taken. A block while it is up reuses it (Chrome locks the profile, so a second launch would
   fail), reloading its root when the page itself was challenged.
+- **Off the taskbar.** Off-screen alone still left a taskbar button and an Alt+Tab entry, so on Windows the window also carries the tool-window style, cleared for a captcha and re-applied after parking ([SESSIONS.md](SESSIONS.md#off-the-taskbar-windows-browserwindowstylejs)). The 60 s idle close stays: a window idling on lemida costs about +467 MB working set and +23% of one core against `about:blank` ([Run 4](#bot-protection-what-was-learned)).
 - **The route.** While it is open, `moodleFetch` sends every call on its site — WS calls, the public
   config, the pluginfile preflight and stream — as a `fetch` from the page. The site's own scripts
   (from `cdn.jsdelivr.net`, `js.nagich.co.il`) replace the page's `fetch` and
@@ -456,6 +457,30 @@ every off-screen request to -13107, which is still far off-screen. `--window-pos
 profile's saved position, while without it Chrome pulls a saved off-screen window back to a visible
 strip, hence the flag on every launch. A closed window reopened on the profile needs no new captcha
 while the clearance lasts.
+
+**Run 4: the tool-window style (2026-11)** (Chrome 156.0.8078.80, Windows; a helper script using `Add-Type` P/Invoke, finding the window by profile dir: the PIDs of `chrome.exe` from `Get-CimInstance Win32_Process`, then their visible, titled `Chrome_WidgetWin_1` top-levels through `EnumWindows`). Taskbar presence was read from the taskbar's buttons through UI Automation; Alt+Tab presence from Windows' rule (visible, not cloaked, not owned, not a tool window). A future check reuses this method, except that on Windows 11 the UIA taskbar counts proved unreliable (Run 5), so check the taskbar by eye.
+
+_Stage 1, neutral sites (example.com, Wikipedia, httpbin; fresh profile)._
+
+- `toolwindow` held through `goto` and `reload`, fetches through the hidden iframe, 90 s idle then a fetch, CDP parking at -32000, `context.newPage()`, and the captcha raise then park and re-apply. Never on the taskbar or in Alt+Tab; fetches worked. Not throttled: a 100 ms timer counted 900 of 900 ticks over 90 s; `visibilityState` stayed `visible`.
+- `hide` (`SW_HIDE` alone), rejected: `context.newPage()` showed the window again and it stayed on the taskbar; the CDP raise alone could not bring a hidden window on screen.
+- Focus: the app's real `raise()` (CDP normal, minimized, normal, `{left:80, top:80}`, then `bringToFront()`) took focus in 6 of 6 clean trials with another app in front, with the style on and with it cleared first. Cleared, the window was on the taskbar and in Alt+Tab during the raise; re-applied (ex-style read back `0x00200180`), it was in neither.
+- A `window.open` popup starts on screen at 0,0, on the taskbar and in Alt+Tab, without the style.
+- Cost per helper call: 0.75-0.95 s from Node; 350-420 ms inside the script (`Add-Type` 170-220 ms, PID lookup 115-175 ms, Win32 calls 20-45 ms); the rest is PowerShell starting.
+
+_Stage 2, lemida behind Radware (a copy of the real profile, deleted afterwards)._
+
+- Radware accepts a tool-styled window: 3 of 3 page fetches of `/webservice/rest/server.php?moodlewsrestformat=json` passed (200 `application/json` `invalidtoken`); one only after a captcha, solved in 33 s through the flow clear style, raise, solve, park, re-apply.
+- The page never undid the style: ex-style `0x00200080` after landing, after the fetches and at the end; off the taskbar and out of Alt+Tab throughout.
+- Idle cost, lemida against `about:blank` on the same profile: +467 MB working set (939 vs 472 MB), +342 MB private bytes, +23.4% of one core (steady 24% mean, 27.5% peak over 10 min), zero network requests, so page script, probably Radware's. This is why the challenge window keeps its 60 s idle close.
+
+**Run 5: the shipped styling, live (2026-11-06)** (Chrome 157.0.8103.38, Windows 11 26200; the real modules against a local fake site, run as `FastStudy.exe` with `ELECTRON_RUN_AS_NODE`; two runs)
+
+- The marker lookup found both windows. `0x80` was set on every park and cleared on every show, and Alt+Tab was right throughout.
+- Hebrew `TEMP`: `Add-Type` exited 1, because csc got `?` in the path. The in-memory script compiles and reaches its window lookup (exit 3, no window running) with an ASCII or a Hebrew `TEMP`. A spawn takes 486-652 ms from Node.
+- Foreground (counts taken with another app in front, after the user had clicked into it, the case the foreground lock is about): a first show with only `bringToFront` missed it 2 of 2 times. With the raise's sequence (style clear, CDP normal, on screen, minimized, normal, then `bringToFront`), the first show took it 2 of 2 times, and raises 4 of 4.
+- `windowsHide` holds: no console window appeared under the GUI-subsystem parent, and no stray `powershell.exe` was left after the idle close.
+- Taskbar: on Windows 11, the UIA button counts contradict the style, so only a check by eye is reliable. For what the eye saw, see [SESSIONS.md](SESSIONS.md#off-the-taskbar-windows-browserwindowstylejs) "Known gaps".
 
 **History.** On 2026-09-07 the app worked again some time after the user solved a captcha in a WSL
 browser; nothing committed then touched the WS transport, so the block most likely expired by itself.

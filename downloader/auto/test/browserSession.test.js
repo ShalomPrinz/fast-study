@@ -126,7 +126,7 @@ test('a zoom capture whose window is closed mid-way answers 503 zoom_browser_clo
     });
     return b;
   });
-  t.after(configureSessions({ zoom: launch }));
+  t.after(configureSessions({ zoom: { launch } }));
   const ref = encodeRef({
     title: 'L',
     pageUrl: 'https://zoom.us/rec/share/abc',
@@ -161,8 +161,8 @@ test('the idle close never fires under a locked op, and is re-armed when it ends
     t.mock.timers.tick(60 * 60 * 1000); // an hour-long capture
     assert.equal(session.isOpen(), true, 'still open mid-op');
   });
-  t.mock.timers.tick(44 * 60 * 1000);
-  assert.equal(session.isOpen(), true, 'the 45-min clock starts when the op ends');
+  t.mock.timers.tick(9 * 60 * 1000);
+  assert.equal(session.isOpen(), true, 'the 10-min clock starts when the op ends');
   t.mock.timers.tick(2 * 60 * 1000);
   await Promise.resolve();
   assert.equal(session.isOpen(), false);
@@ -177,7 +177,7 @@ test('a window closed during the launch answers 503 zoom_browser_closed, not the
     };
     return b;
   });
-  t.after(configureSessions({ zoom: launch }));
+  t.after(configureSessions({ zoom: { launch } }));
   const ref = encodeRef({
     title: 'L',
     pageUrl: 'https://zoom.us/rec/share/abc',
@@ -192,4 +192,20 @@ test('a window closed during the launch answers 503 zoom_browser_closed, not the
   );
   assert.equal(res.code, 503);
   assert.equal(res.body.code, 'zoom_browser_closed');
+});
+
+test('the opened hook runs once per launched browser, after its page exists', async (t) => {
+  const { launch, launched } = fakeLauncher();
+  const calls = [];
+  let session;
+  session = new BrowserSession(launch, { opened: () => calls.push(session.page) });
+  t.after(() => session.close());
+
+  await Promise.all([session.open(), session.open()]);
+  await session.open();
+  assert.deepEqual(calls, [launched[0].page]);
+
+  launched[0].userClose();
+  await session.open();
+  assert.deepEqual(calls, [launched[0].page, launched[1].page], 'a relaunch calls it again');
 });

@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
 import { resolveBrowserChannel } from './browserChannel.js';
+import { windowMarker } from './windowStyle.js';
 import { CodedError } from '../lib/errors.js';
 
 // Stealth minus 'user-agent-override' on playwright-extra's chromium only, loaded and registered
@@ -156,7 +157,7 @@ export async function launchZoomBrowser() {
   // Windows has no Xvfb, so the window is parked off-screen instead — otherwise a batch of N
   // lectures steals focus N times. FASTSTUDY_ZOOM_VISIBLE=1 keeps it on-screen to watch a capture.
   if (windows && process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') {
-    args.push('--window-position=-32000,-32000');
+    args.push('--window-position=-32000,-32000', windowMarker('zoom'));
   }
 
   const { channel } = await resolveBrowserChannel();
