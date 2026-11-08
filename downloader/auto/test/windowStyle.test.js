@@ -110,6 +110,29 @@ test('a rejecting run resolves, warns once, and the next request still runs', as
   assert.match(warn.mock.calls[0].arguments[0], /^\[window\] challenge .*exit 1/);
 });
 
+test('a failed hide counts as applied: a repeat hide spawns nothing, the next cycle restyles', async (t) => {
+  const { runs, finish } = manualRun(t);
+  t.mock.method(console, 'warn', () => {});
+  const s = windowStyler('challenge');
+  const a = s.hide();
+  await tick();
+  finish(0, new Error('exit 1'));
+  await a;
+  const r = s.hide();
+  await tick();
+  assert.deepEqual(runs, [true], 'the second hide resolves without a run');
+  await r;
+  const b = s.show();
+  await tick();
+  finish(1);
+  await b;
+  const c = s.hide();
+  await tick();
+  assert.deepEqual(runs, [true, false, true]);
+  finish(2);
+  await c;
+});
+
 test('off Windows nothing is spawned', async (t) => {
   const { runs } = manualRun(t, 'linux');
   const s = windowStyler('zoom');
