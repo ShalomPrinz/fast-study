@@ -4,8 +4,12 @@
 export const boxesHead = (instructionsDir, readFile) =>
   readFile(`${instructionsDir}/figure_boxes.md`).split(/\r?\n/, 1)[0].trim();
 
-// Normalized [ymin, xmin, ymax, xmax]: the graph with its labels on the econ-slides fixture's pages 1 and 2.
-export const FIGURE_BOX = [200, 60, 840, 520];
+// Normalized [ymin, xmin, ymax, xmax]: the graph on each of the econ-slides fixture's pages 1-3, indexed by page - 1.
+export const FIGURE_BOXES = [
+  [200, 30, 960, 500],
+  [380, 270, 985, 720],
+  [200, 490, 985, 960],
+];
 
 const texts = (parts) => parts.filter((p) => typeof p.text === 'string').map((p) => p.text.trim());
 
@@ -46,12 +50,16 @@ export function placeFigures(summary, lines) {
 /** Whether the request is the box call: its first text part is figure_boxes.md. */
 export const isBoxCall = (parts, head) => !!head && texts(parts)[0]?.startsWith(head);
 
-/** The box reply: every `Figure <id>:` part found at FIGURE_BOX. */
+/** The box reply: every `Figure <id>:` part found at the box of page <id>, as figureLines links each PDF's pages in order. */
 export function boxReply(parts) {
   const ids = texts(parts)
     .map((text) => /^Figure (\d+):/.exec(text)?.[1])
     .filter(Boolean);
   return JSON.stringify({
-    figures: ids.map((id) => ({ id: Number(id), found: true, box_2d: FIGURE_BOX })),
+    figures: ids.map((id) => ({
+      id: Number(id),
+      found: true,
+      box_2d: FIGURE_BOXES[(Number(id) - 1) % FIGURE_BOXES.length],
+    })),
   });
 }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  FIGURE_BOX,
+  FIGURE_BOXES,
   boxReply,
   figureLines,
   figureSources,
@@ -43,8 +43,8 @@ test('the box call is told by the prompt head and answers every figure id', () =
   assert.equal(isBoxCall([text('other')], 'HEAD'), false);
   assert.deepEqual(JSON.parse(boxReply(parts)), {
     figures: [
-      { id: 1, found: true, box_2d: FIGURE_BOX },
-      { id: 2, found: true, box_2d: FIGURE_BOX },
+      { id: 1, found: true, box_2d: FIGURE_BOXES[0] },
+      { id: 2, found: true, box_2d: FIGURE_BOXES[1] },
     ],
   });
 });

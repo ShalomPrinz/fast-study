@@ -17,9 +17,21 @@ FIXTURES = Path(__file__).parent.parent / "fixtures"
 DECK_PDF = FIXTURES / "econ-slides.pdf"
 DECK_PPTX = FIXTURES / "econ-slides.pptx"
 
-# Normalized [ymin, xmin, ymax, xmax] on the fixture's pages: the graph with its labels, leaving the
-# slide title above and the bullets and footer beside and below.
-TIGHT = {1: [200, 60, 840, 520], 2: [200, 60, 840, 520]}
+# Normalized [ymin, xmin, ymax, xmax] on the fixture's pages 1-3: each graph with its axis labels,
+# leaving the slide title above and the bullets beside or above. Slide 1's x label sits against the
+# footer, so its crop carries the footer too.
+TIGHT = {
+    1: [200, 30, 960, 500],
+    2: [380, 270, 985, 720],
+    3: [200, 490, 985, 960],
+}
+# Per slide: a graph word (axis label, legend or title), a bullet word and a slide-title word.
+GRAPH_TEXT = {1: "(good 1)", 2: "budget", 3: "Utility possibility frontier"}
+SLIDE_TEXT = {
+    1: ("צרכנים", "קופסת"),
+    2: ("הצרכן", "בחירת"),
+    3: ("פארטו", "אפשרויות"),
+}
 
 
 def _page(page_no: int):
@@ -117,27 +129,28 @@ class TestBoxToPixels:
 class TestSnap:
     @pytest.mark.parametrize("page_no", [1, 2, 3])
     def test_a_tight_box_keeps_the_whole_graph_and_no_slide_text(self, page_no):
-        text = _text_in_crop(_crop(page_no, TIGHT[1]))
-        assert "Good X" in text or "Apples" in text or "Utility of consumer A" in text
-        assert "Microeconomics" not in text  # the footer
-        assert "consumers" not in text and "Higher curves" not in text  # the bullets
+        text = _text_in_crop(_crop(page_no, TIGHT[page_no]))
+        bullet, title = SLIDE_TEXT[page_no]
+        assert GRAPH_TEXT[page_no] in text
         assert (
-            "Edgeworth box" not in text and "Utility possibility" not in text
-        )  # the title
+            bullet not in text and title not in text
+        )  # the bullets and the slide title
+        if page_no != 1:  # slide 1's x label touches the footer, so its crop keeps it
+            assert "הרצאה" not in text  # the footer
 
     def test_a_short_box_grows_to_the_axis_labels_and_right_edge(self):
-        # Ends 4% above the x-axis labels and 6% short of the legend's right edge.
-        text = _text_in_crop(_crop(1, [200, 60, 800, 470]))
-        assert "Good X" in text and "Good Y" in text and "contract curve" in text
+        # Ends at the top of the x label and 6% short of the legend's right edge.
+        text = _text_in_crop(_crop(2, [400, 270, 970, 660]))
+        assert "x1" in text and "x2" in text and "budget" in text
         assert "10" in text  # the last x tick label
 
     def test_a_loose_box_is_trimmed_to_the_ink(self):
         img = _page(2)
         tight = sf.snap_box(img.convert("L"), sf.box_to_pixels(TIGHT[2], *img.size))
         loose = sf.snap_box(
-            img.convert("L"), sf.box_to_pixels([150, 20, 900, 530], *img.size)
+            img.convert("L"), sf.box_to_pixels([330, 250, 1000, 740], *img.size)
         )
-        # The title and bullets are over 12 white lines away, so growth never reaches them.
+        # The bullets above are over 12 white lines away, so growth never reaches them.
         assert all(
             abs(a - b) <= sf.MARGIN_PX * 2 for a, b in zip(tight, loose, strict=True)
         )
@@ -272,7 +285,7 @@ class TestResolve:
         self, tmp_path
     ):
         src = _sources(tmp_path)
-        md = f"{GOLDEN_LINES}\n![תמונה](material.2.pptx#image3.png)\n"
+        md = f"{GOLDEN_LINES}\n![תמונה](material.2.pptx#image4.png)\n"
         with patch.object(sf, "request_boxes", side_effect=RuntimeError("503")):
             out = sf.resolve_figures(md, src)
         assert out.strip() == "![תמונה](figures/fig1.png)"
@@ -368,8 +381,8 @@ class TestPptxPictures:
         pics = sf.extract_pptx_pictures(DECK_PPTX, "material.2.pptx", tmp_path)
         assert [(p.ref, p.slide) for p in pics] == [
             ("material.2.pptx#image1.png", 1),
-            ("material.2.pptx#image3.png", 2),
-            ("material.2.pptx#image4.png", 3),
+            ("material.2.pptx#image4.png", 2),
+            ("material.2.pptx#image5.png", 3),
         ]
         assert all(p.path.exists() and p.mime == "image/png" for p in pics)
 
@@ -476,7 +489,7 @@ class TestSummarizeCall:
         transcript = tmp_path / "transcript.txt"
         transcript.write_text("hi")
         src = _fixture_sources(tmp_path)
-        client = _client("# t\n\n![תמונה](material.2.pptx#image3.png)\n")
+        client = _client("# t\n\n![תמונה](material.2.pptx#image4.png)\n")
         with patch.object(summarize_mod, "LLMClient", return_value=client):
             out = summarize_mod.summarize(
                 transcript,
@@ -493,8 +506,8 @@ class TestSummarizeCall:
             "FILE material.pdf (original file name: Week 3.pdf)",
             "FILE material.2.pptx (original file name: Slides.pptx)",
             "PICTURE material.2.pptx#image1.png (on slide 1)",
-            "PICTURE material.2.pptx#image3.png (on slide 2)",
-            "PICTURE material.2.pptx#image4.png (on slide 3)",
+            "PICTURE material.2.pptx#image4.png (on slide 2)",
+            "PICTURE material.2.pptx#image5.png (on slide 3)",
         ]
         # Each label is the part immediately before its file.
         first = contents.index(labels[0])
@@ -600,7 +613,7 @@ class TestRenderWithFigure:
         pdf, warning = convert_to_pdf(str(md))
         assert warning is None
         text = "".join(page.get_text() for page in fitz.open(pdf))
-        assert "Good X" in text  # the vector figure is on the page
+        assert "contract curve" in text  # the vector figure is on the page
         assert "איור" in text and "Edgeworth" in text  # "Figure 1: <caption>"
         assert (
             "נעלם" not in text

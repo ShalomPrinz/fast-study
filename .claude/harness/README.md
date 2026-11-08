@@ -603,7 +603,7 @@ An assignment doc's `generateContent` (its last text part starts with the first 
 
 ### Summary figures
 
-With `SUMMARY_FIGURES` on, the fake Gemini answers a summary call carrying `FILE …`/`PICTURE …` label parts with the fixture summary plus standalone figure lines naming the materials as attached: each PDF's `#page=1` and `#page=2`, then the first PPTX picture. The box call (its first text part is `figure_boxes.md`) gets `found` for every `Figure <id>:` at one box on the `econ-slides` pages (`fakes/figure-calls.mjs`). `fixtures/econ-slides.pdf` and `.pptx` are copies of the backend's test decks, copied to the stack's fixtures on setup; `hb set SUMMARY_FIGURES=true` turns the feature on.
+With `SUMMARY_FIGURES` on, the fake Gemini answers a summary call carrying `FILE …`/`PICTURE …` label parts with the fixture summary plus standalone figure lines naming the materials as attached: each PDF's `#page=1` and `#page=2`, then the first PPTX picture. The box call (its first text part is `figure_boxes.md`) gets `found` for every `Figure <id>:` at the graph box of `econ-slides` page <id> (`fakes/figure-calls.mjs`). `fixtures/econ-slides.pdf` and `.pptx` are copies of the backend's test decks, copied to the stack's fixtures on setup; `hb set SUMMARY_FIGURES=true` turns the feature on.
 
 ## Inspecting a PDF
 
