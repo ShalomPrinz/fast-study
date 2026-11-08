@@ -316,6 +316,37 @@ test('a captcha opened by no waiting call (the probe) keeps admitting a press', 
   assert.equal(moodleGate.busy(), false);
 });
 
+test('a second settle on a captcha already up takes no second lease and runs one more show', async (t) => {
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  const hold = t.mock.method(moodleGate, 'hold');
+  assert.equal(await moodleGate.run({}, () => openChallenge(SITE)), 'captcha');
+  assert.equal(hold.mock.calls.length, 1);
+  const count = (pred) => profile.log.filter(pred).length;
+  const [ctx] = profile.launches;
+  const before = {
+    off: count((l) => l === 'style:off'),
+    min: count((l) => l.includes('minimized')),
+    front: count((l) => l === 'front'),
+  };
+  assert.equal(await openChallenge(SITE), 'captcha');
+  assert.equal(hold.mock.calls.length, 1, 'no second Moodle lease');
+  assert.equal(
+    count((l) => l === 'style:off'),
+    before.off,
+    'the style is already cleared: no spawn',
+  );
+  assert.equal(
+    count((l) => l.includes('minimized')),
+    before.min + 1,
+  );
+  assert.equal(
+    count((l) => l === 'front'),
+    before.front + 1,
+  );
+  assert.deepEqual(ctx.bounds.at(-1), { left: 80, top: 80 });
+  assert.deepEqual(shown(), { open: true, captcha: true });
+});
+
 test('a captcha raised again during an admitted retry still admits the next retry', async (t) => {
   const profile = fakeProfile(t, { lands: 'captcha' });
   await moodleGate.run({}, () => openChallenge(SITE));
