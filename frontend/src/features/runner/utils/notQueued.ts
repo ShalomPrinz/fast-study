@@ -1,6 +1,6 @@
 import type { Course, InFlightEntry, Kind, QueueEntry, RunError } from '@/types'
 import type { StatusNodeState } from '@/shared/components/StatusNode'
-import { isQuotaError } from '@/shared/utils/runError'
+import { isFiguresError, isQuotaError } from '@/shared/utils/runError'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import { holdsFile, isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
@@ -49,7 +49,7 @@ export function notQueuedState(
   item: PendingLecture,
 ): StatusNodeState {
   const error = errors[inFlightKey(item.course, item.lecture, item.kind)]
-  if (!error) return 'pending'
+  if (!error || isFiguresError(error)) return 'pending'
   return isQuotaError(error.code) ? 'quota' : 'failed'
 }
 
@@ -59,5 +59,5 @@ export function notQueuedTitle(
   item: PendingLecture,
 ): string | undefined {
   const error = errors[inFlightKey(item.course, item.lecture, item.kind)]
-  return error ? serviceErrorText(error) : undefined
+  return error && !isFiguresError(error) ? serviceErrorText(error) : undefined
 }

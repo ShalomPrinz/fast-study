@@ -78,6 +78,10 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}` | stream one file                                                           |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}/path` | `{path}`, the absolute on-disk path; 404 if absent                   |
 | `DELETE /courses/{course}/lectures/{lecture}/files/{name}` | delete one file; `423` if it is open in another program                   |
+| `PUT    /courses/{course}/lectures/{lecture}/figures/{name}` | write one summary figure (raw body); `name` must be `fig<N>.<pdf\|png\|jpg\|jpeg\|gif>`, else `400` `figure_name_invalid` `{name}`; creates `figures/` on demand, never the lecture (`404` `lecture_not_found`); neutral, no notify; `423` if locked |
+| `GET    /courses/{course}/lectures/{lecture}/figures/{name}` | the bytes, media type from `mimetypes.guess_type`; `400` `figure_name_invalid`; `404` `file_not_found` |
+| `GET    /courses/{course}/lectures/{lecture}/figures`      | `{figures: [name, …]}` in natural order (`fig2` before `fig10`); `[]` for a missing lecture or folder |
+| `DELETE /courses/{course}/lectures/{lecture}/figures`      | clear every figure and the folder; idempotent `204`; `404` `lecture_not_found`; all-or-nothing on locks (`423`) |
 | `GET    /courses/{course}/lectures/{lecture}/summary`      | `{content, hasOriginal}`                                                  |
 | `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8); `?fresh=true` drops the snapshot and `.summary_materials.json`; `404` if the lecture is missing |
 | `DELETE /courses/{course}/lectures/{lecture}/summary`      | revert to `original_summary.md`                                           |
@@ -104,7 +108,7 @@ a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
 The two file-write paths differ on purpose, and confusing them destroys data:
 
 - **`PUT /…/video`** is the downloader's fresh-source path. It erases every predefined file plus
-  `original_summary.md`, the partial-transcript meta, and both pdf dotfiles — they all belong to
+  `original_summary.md`, the partial-transcript meta, both pdf dotfiles, `.figures_pending` and the `figures/` folder — they all belong to
   the _old_ video. Materials stay: they are attached, not derived. The wipe is all-or-nothing: the whole set is probed for locks first, so one
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand (the downloader uploads to brand-new lectures) but never the course: a missing one is `404` `course_not_found`.
@@ -150,7 +154,7 @@ Renaming a course or lecture folder is the one exception: on Windows it fails wi
 read/write/delete, so no pre-probe of the files catches it. The rename routes answer `423`
 `folder_in_use` `{name}` for exactly that case and leave every other `PermissionError` a `400`.
 
-`DELETE /…/files/summary.md` additionally drops `.summary_materials.json`; `GET /…/files/{name}` (and the overview twin) takes its media type from `mimetypes.guess_type`. `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
+`DELETE /…/files/summary.md` additionally drops `.summary_materials.json` and `.figures_pending` (the backend writes and deletes that empty marker with plain `PUT`/`DELETE /…/files/.figures_pending`; the tree reports it as `figuresPending`); `GET /…/files/{name}` (and the overview twin) takes its media type from `mimetypes.guess_type`. `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
 chokepoint for that rule — a warning describes THIS pdf and cannot outlive it — so backend
 teardown, frontend deletes, and re-render resets all get it without repeating the logic.
 
@@ -174,6 +178,14 @@ back. Both files are probed for locks first, so a `423` leaves the snapshot in p
 route, it never creates the lecture dir.
 
 Summary writes never go through the generic files route — that would skip the snapshot.
+
+## Summary figures
+
+`figures/` under a lecture or recitation dir holds the crops the backend's summarize step links from
+`summary.md` as `![caption](figures/fig1.pdf)`. The backend calls `DELETE …/figures` before writing a
+fresh set; the database's own `PUT …/summary?fresh=true` does not touch them. Only the video `PUT`
+wipes them (in the same lock-probed all-or-nothing set). They are not a tree row, a material or a
+predefined file, and `Restore original` leaves them alone.
 
 ## No outbound calls
 

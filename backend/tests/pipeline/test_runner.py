@@ -2602,3 +2602,212 @@ def test_no_record_runs_nothing(monkeypatch):
     runner._errors.pop("c||l1||lecture")
     _sweep()
     assert ran == []
+
+
+# ---- summary figures ----
+
+
+def _run_summarize_figures(
+    monkeypatch,
+    *,
+    on: bool,
+    kind="lecture",
+    summary="# s\n\n![c](figures/fig1.pdf)\n",
+    contents=None,
+    boom=None,
+    summary_boom=None,
+    figure_boom=None,
+    delete_boom=None,
+):
+    """Run the transcript path of _exec_summarize with the figure setting `on`; the fake summarize
+    fills `figures.files` the way the real call does. Returns the result, the ordered db calls and
+    the summarize call args."""
+
+    if on:
+        monkeypatch.setenv("SUMMARY_FIGURES", "true")
+    else:
+        monkeypatch.delenv("SUMMARY_FIGURES", raising=False)
+    contents = contents if contents is not None else {"material.pdf": b"%PDF-a"}
+    calls: list = []
+    seen: dict = {}
+
+    def record(name, boom):
+        def fake(*a, **k):
+            if boom:
+                raise boom
+            calls.append((name, a))
+
+        return fake
+
+    def fake_summarize(transcript, paths, *figures):
+        seen["args"] = (transcript, paths, *figures)
+        if boom:
+            raise boom
+        if figures and figures[0].pdfs:
+            figures[0].files["fig1.pdf"] = b"%PDF-crop"
+        return summary
+
+    with (
+        patch.object(runner.db_client, "file_exists", return_value=True),
+        patch.object(
+            runner.db_client,
+            "list_materials",
+            return_value=[
+                {"name": n, "size": len(b), "filename": f"orig-{n}"}
+                for n, b in contents.items()
+            ],
+        ),
+        patch.object(
+            runner.db_client,
+            "get_file_bytes",
+            side_effect=lambda c, l, k, name: contents.get(name, b"transcript"),
+        ),
+        patch.object(runner, "summarize", side_effect=fake_summarize),
+        patch.object(
+            runner.db_client,
+            "delete_figures",
+            side_effect=record("delete", delete_boom),
+        ),
+        patch.object(
+            runner.db_client,
+            "put_figure",
+            side_effect=record("put", figure_boom),
+        ),
+        patch.object(
+            runner.db_client,
+            "put_summary",
+            side_effect=record("summary", summary_boom),
+        ),
+    ):
+        result = runner._exec_summarize("C1", "L1", kind)
+    return result, calls, seen
+
+
+def test_figures_off_makes_no_figures_call_even_if_a_clear_would_fail(monkeypatch):
+    result, calls, seen = _run_summarize_figures(
+        monkeypatch, on=False, delete_boom=OSError("locked"), figure_boom=OSError("x")
+    )
+    assert result["status"] == "done"
+    assert len(seen["args"]) == 2  # summarize(transcript, paths): no figures argument
+    assert [c[0] for c in calls] == ["summary"]
+
+
+def test_figures_never_touched_for_an_assignment(monkeypatch):
+    _, calls, _ = _run_summarize_figures(
+        monkeypatch, on=True, kind=runner.ASSIGNMENT_KIND
+    )
+    assert [c[0] for c in calls] == ["summary"]
+
+
+def test_a_failed_summary_write_leaves_the_old_figures(monkeypatch):
+    result, calls, _ = _run_summarize_figures(
+        monkeypatch, on=True, summary_boom=RuntimeError("db down")
+    )
+    assert result["status"] == "error"
+    assert [c[0] for c in calls] == ["delete"]
+
+
+def test_a_failed_figure_write_is_skipped_and_the_step_still_succeeds(monkeypatch):
+    result, calls, _ = _run_summarize_figures(
+        monkeypatch, on=True, figure_boom=RuntimeError("locked")
+    )
+    assert result["status"] == "done"
+    assert [c[0] for c in calls] == ["delete", "summary"]
+
+
+def test_figures_on_clears_then_writes_the_summary_then_writes_figures(monkeypatch):
+    result, calls, seen = _run_summarize_figures(monkeypatch, on=True)
+    assert result["status"] == "done"
+    assert calls == [
+        ("delete", ("C1", "L1", "lecture")),
+        ("summary", ("C1", "L1", "lecture", "# s\n\n![c](figures/fig1.pdf)\n")),
+        ("put", ("C1", "L1", "lecture", "fig1.pdf", b"%PDF-crop")),
+    ]
+    figures = seen["args"][2]
+    assert list(figures.pdfs) == ["material.pdf"]
+    assert (
+        figures.labels["material.pdf"]
+        == "FILE material.pdf (original file name: orig-material.pdf)"
+    )
+
+
+def test_figures_on_with_no_materials_still_clears_the_old_ones(monkeypatch):
+    _, calls, _ = _run_summarize_figures(monkeypatch, on=True, contents={})
+    assert [c[0] for c in calls] == ["delete", "summary"]
+
+
+def test_a_failed_summary_leaves_the_existing_figures(monkeypatch):
+    result, calls, _ = _run_summarize_figures(
+        monkeypatch, on=True, boom=RuntimeError("x")
+    )
+    assert result["status"] == "error"
+    assert calls == []
+
+
+def test_a_recitation_gets_figures_and_an_assignment_never_does(monkeypatch):
+    monkeypatch.setenv("SUMMARY_FIGURES", "true")
+    assert runner._figure_sources("recitation") is not None
+    assert runner._figure_sources(runner.ASSIGNMENT_KIND) is None
+    monkeypatch.setenv("SUMMARY_FIGURES", "false")
+    assert runner._figure_sources("lecture") is None
+
+
+def test_materials_only_summary_passes_the_figure_sources_too(monkeypatch):
+    monkeypatch.setenv("SUMMARY_FIGURES", "true")
+    seen = {}
+
+    def fake(paths, *figures):
+        seen["figures"] = figures
+        return "# s"
+
+    with (
+        patch.object(
+            runner.db_client,
+            "file_exists",
+            side_effect=lambda c, l, k, name: False,
+        ),
+        patch.object(
+            runner.db_client,
+            "list_materials",
+            return_value=[{"name": "material.pdf", "size": 6}],
+        ),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"%PDF-a"),
+        patch.object(runner, "summarize_materials", side_effect=fake),
+        patch.object(runner.db_client, "delete_figures") as delete,
+        patch.object(runner.db_client, "put_summary"),
+    ):
+        assert runner._exec_summarize("C1", "L1", "lecture")["status"] == "done"
+    assert len(seen["figures"]) == 1 and "material.pdf" in seen["figures"][0].pdfs
+    delete.assert_called_once_with("C1", "L1", "lecture")
+
+
+def test_exec_pdf_downloads_the_figures_beside_the_markdown(no_figures):
+    no_figures.return_value = ["fig1.pdf", "fig2.png"]
+    staged = {}
+
+    def convert(md_path):
+        folder = Path(md_path).parent / "figures"
+        staged.update({p.name: p.read_bytes() for p in folder.iterdir()})
+        out = Path(md_path).with_suffix(".pdf")
+        out.write_bytes(b"%PDF-1.4 stub")
+        return str(out), None
+
+    with patch.object(
+        runner.db_client, "get_figure", side_effect=lambda c, l, k, name: name.encode()
+    ):
+        result, _ = _run_exec_pdf(convert)
+    assert result == {"status": "done"}
+    assert staged == {"fig1.pdf": b"fig1.pdf", "fig2.png": b"fig2.png"}
+
+
+def test_exec_pdf_with_no_figures_creates_no_folder(no_figures):
+    seen = {}
+
+    def convert(md_path):
+        seen["folder"] = (Path(md_path).parent / "figures").exists()
+        out = Path(md_path).with_suffix(".pdf")
+        out.write_bytes(b"%PDF-1.4 stub")
+        return str(out), None
+
+    _run_exec_pdf(convert)
+    assert seen == {"folder": False}

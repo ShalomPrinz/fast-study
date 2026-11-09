@@ -36,6 +36,13 @@ from pipeline.summarize import (
     summarize,
     summarize_materials,
 )
+from pipeline.summary_figures import (
+    FigureSources,
+    apply_replacements,
+    crop_pdf_links,
+    next_figure_number,
+    raw_pdf_links,
+)
 from pipeline.to_pdf import PdfRenderError, convert_to_pdf
 from pipeline.transcribe import (
     PARTIAL_META,
@@ -48,6 +55,8 @@ from pipeline.upload_to_drive import upload_to_drive
 log = logging.getLogger("runner")
 
 RECITATIONS_DIR = "Recitations"
+# The kinds whose summary may carry the slides' graphs; an assignment's documents never do.
+FIGURE_KINDS = ("lecture", "recitation")
 STEP_ORDER = ["audio", "transcribe", "summarize", "pdf", "drive"]
 STEP_OUTPUT = {
     "audio": "audio.mp3",
@@ -60,6 +69,9 @@ STEP_OUTPUT = {
 # summary.pdf entry's `warning`), and the generated LaTeX kept only on a hard failure.
 PDF_WARNING_FILE = ".pdf_warning"
 PDF_BUILD_TEX_FILE = ".pdf_build.tex"
+# Empty marker: summary.md still holds uncropped PDF figure links (a failed box call).
+FIGURES_PENDING_FILE = ".figures_pending"
+ORIGINAL_SUMMARY_FILE = "original_summary.md"
 
 _locks: dict[
     tuple[str, str, str], asyncio.Lock
@@ -88,8 +100,9 @@ _GEMINI_QUOTA_CODES = frozenset({"gemini_quota_exhausted", "gemini_quota_blocked
 _GROQ_LIMIT_CODES = frozenset({"groq_rate_limited", "groq_rate_limit_blocked"})
 
 
-# The steps that call Gemini, the only ones auto retry re-runs.
-_GEMINI_STEPS = frozenset({"summarize", "intuition", "solution"})
+# The steps that call Gemini, the only ones auto retry re-runs. `figures` runs only on request or
+# retry: it is in no step list, so no pipeline or run-all reaches it.
+_GEMINI_STEPS = frozenset({"summarize", "intuition", "solution", "figures"})
 # skey → the waiting retry: the lecture, the failed step, the `origin` to replay ("step" for a lone
 # step, "pipeline" for a pipeline/queue run), its `attempt` number and the timer handle.
 _retries: dict[str, dict] = {}
@@ -357,6 +370,22 @@ def _fire_retry(skey: str) -> None:
     db_client.notify()
 
 
+def _arm_figures_retry(
+    course: str, lecture: str, kind: str, failed: dict | None
+) -> None:
+    """Once a run that left `.figures_pending` has finished its steps, record the box failure as a
+    `figures` error and arm its retry; a run that ended on another error keeps that one."""
+
+    skey = _skey(course, lecture, kind)
+    if failed is None or skey in _errors:
+        return
+    _errors[skey] = _error_record(
+        "figures", failed["message"], code=failed["code"], params=failed["params"]
+    )
+    _schedule_retry(course, lecture, kind, "figures", "step")
+    db_client.notify()
+
+
 # ---- empty-file guard ----
 
 # A 0-byte pipeline file means the producing tool returned success with no content
@@ -576,8 +605,35 @@ def _download_materials(
     return sent
 
 
+def _figure_sources(kind: str) -> FigureSources | None:
+    """An empty source bag when this summary should carry the slides' graphs, else None."""
+
+    if settings.summary_figures() and kind in FIGURE_KINDS:
+        return FigureSources()
+    return None
+
+
+def _store_figures(
+    course: str, lecture: str, kind: str, files: dict[str, bytes]
+) -> None:
+    """Write the new summary's figures, each best-effort: a failed write is logged and skipped, its
+    link vanishing at render. The old ones were cleared before the summary was written."""
+
+    for name, data in files.items():
+        try:
+            db_client.put_figure(course, lecture, kind, name, data)
+        except Exception as e:
+            log.warning(
+                "%s/%s (%s): could not store %s: %s", course, lecture, kind, name, e
+            )
+
+
 def _summarize_from_materials(
-    course: str, lecture: str, kind: str, entries: list[dict]
+    course: str,
+    lecture: str,
+    kind: str,
+    entries: list[dict],
+    figures: FigureSources | None = None,
 ) -> tuple[str, list[str]]:
     """Summarize a materials-only lecture from its attached files alone; every one empty is a
     step error. Returns the summary and the names sent."""
@@ -587,7 +643,13 @@ def _summarize_from_materials(
         if not sent:
             raise CodedError("every attached material is empty", "materials_empty")
         log.info("Summarize: no transcript — %d materials only", len(sent))
-        return summarize_materials([p for _, p in sent]), [n for n, _ in sent]
+        paths = [p for _, p in sent]
+        if figures is None:
+            return summarize_materials(paths), [n for n, _ in sent]
+        figures.add_materials(
+            sent, {e["name"]: _display_name(e) for e in entries}, Path(tmp)
+        )
+        return summarize_materials(paths, figures), [n for n, _ in sent]
 
 
 def _summarize_source(course: str, lecture: str, kind: str) -> list[dict] | None:
@@ -619,6 +681,29 @@ def _record_used_materials(course: str, lecture: str, kind: str, names: list[str
         )
 
 
+def _set_figures_pending(course: str, lecture: str, kind: str, pending: bool) -> bool:
+    """Write (`pending`) or drop the `.figures_pending` marker, best-effort: the summary is already
+    stored, so a failing marker call is logged, never the step's failure. True iff a write landed."""
+
+    try:
+        if pending:
+            db_client.put_file_bytes(course, lecture, kind, FIGURES_PENDING_FILE, b"")
+        else:
+            db_client.delete_file(course, lecture, kind, FIGURES_PENDING_FILE)
+        return pending
+    except Exception as e:
+        log.warning(
+            "%s/%s (%s): could not %s %s: %s",
+            course,
+            lecture,
+            kind,
+            "write" if pending else "drop",
+            FIGURES_PENDING_FILE,
+            e,
+        )
+        return False
+
+
 def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
     """Summarize transcript.txt → summary.md via Gemini, passing every attached material;
     a materials-only lecture summarizes from them alone. A daily Gemini 429 is flagged."""
@@ -631,9 +716,12 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                 "transcript.txt",
                 "transcribe",
             )
+        figures = _figure_sources(kind)
         if entries:
             _check_sizes(entries)
-            summary, used = _summarize_from_materials(course, lecture, kind, entries)
+            summary, used = _summarize_from_materials(
+                course, lecture, kind, entries, figures
+            )
             recorded = [e["name"] for e in entries]
             # A video that landed mid-summarize supersedes the materials: write nothing and fail,
             # so the run stops and the video path (transcribe) is what runs next.
@@ -664,18 +752,122 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                     if sent
                     else "no materials found — transcript only",
                 )
-                summary = summarize(transcript, [p for _, p in sent])
+                paths = [p for _, p in sent]
+                if figures is None:
+                    summary = summarize(transcript, paths)
+                else:
+                    figures.add_materials(
+                        sent,
+                        {e["name"]: _display_name(e) for e in selected},
+                        transcript.parent,
+                    )
+                    summary = summarize(transcript, paths, figures)
                 used = [n for n, _ in sent]
                 recorded = [e["name"] for e in selected]
         # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
+        # With the setting on, clear the old figures first: a failed clear then fails the step having
+        # written nothing, so the pdf step never renders old figN files under new links.
+        if figures is not None:
+            db_client.delete_figures(course, lecture, kind)
         db_client.put_summary(course, lecture, kind, summary, fresh=True)
+        if kind in FIGURE_KINDS and figures is not None:
+            _store_figures(course, lecture, kind, figures.files)
         _record_used_materials(course, lecture, kind, recorded)
-        return {"status": "done", "usedMaterial": bool(used)}
+        result = {"status": "done", "usedMaterial": bool(used)}
+        if kind in FIGURE_KINDS:
+            failed = figures.boxes_failed if figures is not None else None
+            marked = _set_figures_pending(course, lecture, kind, failed is not None)
+            if failed is not None and marked:
+                result["figures_failed"] = {
+                    "message": str(failed),
+                    "code": failed.code,
+                    "params": failed.params,
+                }
+        return result
     except GeminiRateLimitError as e:
         return {**_failed(e), "daily_quota": e.info["is_daily"]}
     except Exception as e:
         return _failed(e)
+
+
+def _exec_figures(course: str, lecture: str, kind: str) -> dict:
+    """Crop the raw PDF figure links a failed box call left in summary.md and rewrite only those
+    lines. `changed` means the PDF is stale; a failed box call changes nothing and fails."""
+
+    try:
+        if not db_client.file_exists(course, lecture, kind, "summary.md"):
+            _drop_pending_marker(course, lecture, kind)
+            return {"status": "done", "changed": False}
+        summary = db_client.get_summary(course, lecture, kind)
+        links = raw_pdf_links(summary)
+        if not links:
+            _drop_pending_marker(course, lecture, kind)
+            return {"status": "done", "changed": False}
+        wanted = {link.material for link in links}
+        entries = [
+            e
+            for e in db_client.list_materials(course, lecture, kind)
+            if e["name"] in wanted and e["name"].lower().endswith(".pdf")
+        ]
+        sources = FigureSources()
+        with tempfile.TemporaryDirectory() as tmp:
+            for name, path in _download_materials(
+                course, lecture, kind, Path(tmp), entries
+            ):
+                sources.pdfs[name] = path
+            first = next_figure_number(
+                db_client.list_figures(course, lecture, kind), summary
+            )
+            pairs = crop_pdf_links(summary, sources, first)
+        # Figures first, so a link never points at a figure that is not stored yet.
+        for name, data in sources.files.items():
+            db_client.put_figure(course, lecture, kind, name, data)
+        if sources.files:
+            db_client.notify()
+        # Re-read right before the write so a mid-call edit survives. A crop is no user edit: plain
+        # file writes (no `put_summary`) take no revert snapshot and keep .summary_materials.json.
+        current = db_client.get_summary(course, lecture, kind)
+        rewritten = apply_replacements(current, pairs)
+        if db_client.file_exists(course, lecture, kind, ORIGINAL_SUMMARY_FILE):
+            original = db_client.get_file_bytes(
+                course, lecture, kind, ORIGINAL_SUMMARY_FILE
+            ).decode("utf-8")
+            cropped = apply_replacements(original, pairs)
+            if cropped != original and cropped.strip():
+                db_client.put_file_bytes(
+                    course, lecture, kind, ORIGINAL_SUMMARY_FILE, cropped.encode()
+                )
+        if rewritten != current:
+            _require_nonempty("summary.md", rewritten.encode("utf-8"))
+            db_client.put_file_bytes(
+                course, lecture, kind, "summary.md", rewritten.encode("utf-8")
+            )
+        db_client.notify()
+        # Kept while a raw line is left (an edited caption); best-effort, since a later run's
+        # no-links path clears it and this run must still refresh the PDF.
+        if not raw_pdf_links(rewritten):
+            try:
+                db_client.delete_file(course, lecture, kind, FIGURES_PENDING_FILE)
+            except Exception as e:
+                log.warning(
+                    "%s/%s (%s): could not drop the marker: %s",
+                    course,
+                    lecture,
+                    kind,
+                    e,
+                )
+            db_client.notify()
+        return {"status": "done", "changed": True}
+    except Exception as e:
+        return _failed(e)
+
+
+def _drop_pending_marker(course: str, lecture: str, kind: str) -> None:
+    """Drop the marker when there is nothing left to crop; a failing delete fails the step."""
+
+    db_client.delete_file(course, lecture, kind, FIGURES_PENDING_FILE)
+    db_client.notify()
 
 
 def _drop_marker(course: str, lecture: str, kind: str, name: str) -> None:
@@ -686,6 +878,19 @@ def _drop_marker(course: str, lecture: str, kind: str, name: str) -> None:
         db_client.delete_file(course, lecture, kind, name)
     except Exception:
         log.exception("failed to delete %s", name)
+
+
+def _download_figures(course: str, lecture: str, kind: str, dest: Path) -> None:
+    """Fetch the summary's figures into `dest/figures/`, beside the markdown that links them."""
+
+    names = db_client.list_figures(course, lecture, kind)
+    if not names:
+        return
+    (dest / "figures").mkdir()
+    for name in names:
+        (dest / "figures" / name).write_bytes(
+            db_client.get_figure(course, lecture, kind, name)
+        )
 
 
 def _exec_pdf(course: str, lecture: str, kind: str, *, fresh: bool = False) -> dict:
@@ -709,6 +914,7 @@ def _exec_pdf(course: str, lecture: str, kind: str, *, fresh: bool = False) -> d
             md = db_client.get_summary(course, lecture, kind)
             _require_nonempty("summary.md", md.encode("utf-8"))
             md_path.write_text(md, encoding="utf-8")
+            _download_figures(course, lecture, kind, md_path.parent)
             _, warning = convert_to_pdf(str(md_path))
         # After the workspace uploaded the PDF, so a warning never exists without it.
         # A clean render clears any stale warning (delete_file is a no-op when missing).
@@ -924,6 +1130,7 @@ _EXECUTORS = {
     "summarize": _exec_summarize,
     "pdf": _exec_pdf,
     "drive": _exec_drive,
+    "figures": _exec_figures,
 }
 
 
@@ -1238,10 +1445,9 @@ async def _run_step_unlocked(
     keep_in_flight: bool = False,
     fresh: bool = False,
     origin: str = "step",
-) -> None:
-    """Run one step once, to done or a recorded error. Unsafe: the caller must hold this
-    lecture's lock; keep_in_flight leaves the end-of-step clear to it. `origin` is the request a
-    transient Gemini failure's auto retry replays: a lone "step" or the whole "pipeline"."""
+) -> dict:
+    """Run one step once; returns the executor's result. The caller holds the lecture's lock.
+    keep_in_flight leaves the end-of-step clear to it; `origin` ("step"|"pipeline") is what a retry replays."""
 
     global _summarize_block, _transcribe_block
     skey = _skey(course, lecture, kind)
@@ -1279,7 +1485,7 @@ async def _run_step_unlocked(
         if not keep_in_flight:
             _in_flight.pop(skey, None)
             db_client.notify()
-        return
+        return result
     else:  # error
         msg = result.get("message") or result.get("status") or "unknown error"
         params = result.get("params") or {}
@@ -1303,7 +1509,37 @@ async def _run_step_unlocked(
         if not keep_in_flight:
             _in_flight.pop(skey, None)
             db_client.notify()
-        return
+        return result
+
+
+async def _run_figures_unlocked(course: str, lecture: str, kind: str) -> None:
+    """The `figures` step, then pdf and drive when the summary changed and their outputs exist,
+    under one in-flight entry. The caller holds the lock."""
+
+    skey = _skey(course, lecture, kind)
+    try:
+        result = await _run_step_unlocked(
+            course, lecture, kind, "figures", keep_in_flight=True
+        )
+        if result["status"] != "done" or not result.get("changed"):
+            return
+        exists = lambda name: asyncio.to_thread(
+            db_client.file_exists, course, lecture, kind, name
+        )
+        if not await exists("summary.pdf"):
+            return
+        await _run_step_unlocked(course, lecture, kind, "pdf", keep_in_flight=True)
+        if (
+            skey not in _errors
+            and settings.drive_enabled()
+            and await exists("drive_url.txt")
+        ):
+            await _run_step_unlocked(
+                course, lecture, kind, "drive", keep_in_flight=True
+            )
+    finally:
+        if _in_flight.pop(skey, None) is not None:
+            db_client.notify()
 
 
 async def _run_pipeline_unlocked(
@@ -1320,6 +1556,7 @@ async def _run_pipeline_unlocked(
     global _handover
     skey = _skey(course, lecture, kind)
     held = False
+    figures_failed = None
     # The lecture stays in _in_flight from its first step to here, so /status never shows
     # it idle between steps; this finally clears it unless hand_over leaves it to the next one.
     try:
@@ -1364,12 +1601,15 @@ async def _run_pipeline_unlocked(
                     "Gemini daily quota" if step == "summarize" else "Groq rate limit",
                 )
                 return True
-            await _run_step_unlocked(
+            result = await _run_step_unlocked(
                 course, lecture, kind, step, keep_in_flight=True, origin="pipeline"
             )
+            if result["status"] == "done" and step == "summarize":
+                figures_failed = result.get("figures_failed")
             if skey in _errors:
                 return False  # a step error halts the whole pipeline for this lecture
     finally:
+        _arm_figures_retry(course, lecture, kind, figures_failed)
         # No notify when nothing ran: run_all's per-lecture pings must not burst (PIPELINE.md).
         if not held and _in_flight.pop(skey, None) is not None:
             db_client.notify()
@@ -1382,7 +1622,12 @@ async def run_step(
     `fresh` (pdf only) deletes the old summary.pdf under the lock before the render."""
 
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
-        await _run_step_unlocked(course, lecture, kind, step, fresh=fresh)
+        if step == "figures":
+            await _run_figures_unlocked(course, lecture, kind)
+        else:
+            result = await _run_step_unlocked(course, lecture, kind, step, fresh=fresh)
+            if step == "summarize" and result["status"] == "done":
+                _arm_figures_retry(course, lecture, kind, result.get("figures_failed"))
         if kind != ASSIGNMENT_KIND:
             await asyncio.to_thread(auto_remove, course, lecture, kind)
 

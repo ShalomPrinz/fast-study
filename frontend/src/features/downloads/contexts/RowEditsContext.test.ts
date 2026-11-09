@@ -25,6 +25,7 @@ function node(name: string): Lecture {
     transcribePartial: null,
     removed: [],
     done: false,
+    figuresPending: false,
   }
 }
 

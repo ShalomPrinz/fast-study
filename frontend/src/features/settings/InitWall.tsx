@@ -90,6 +90,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     gdriveRootFolder: stored.gdriveRootFolder ?? 'FastStudy',
     geminiModel: stored.geminiModel ?? '',
     geminiAutoFallback: stored.geminiAutoFallback ?? true,
+    summaryFigures: stored.summaryFigures ?? false,
     autoRetry: autoRetryFromStore(stored),
     // Not asked about here — carried through so the wall's save leaves the default alone.
     autoRun: toAutoRun(stored.autoRun),

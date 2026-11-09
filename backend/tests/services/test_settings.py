@@ -138,3 +138,21 @@ class TestAutoRetry:
         monkeypatch.setenv("AUTO_RETRY_MINUTES", raw)
         assert settings.auto_retry_count() == count
         assert settings.auto_retry_minutes() == minutes
+
+
+class TestSummaryFigures:
+    def test_unset_is_off(self, monkeypatch):
+        monkeypatch.delenv("SUMMARY_FIGURES", raising=False)
+        assert settings.summary_figures() is False
+
+    @pytest.mark.parametrize("value", ["true", "1", " On "])
+    def test_truthy_values(self, monkeypatch, value):
+        monkeypatch.setenv("SUMMARY_FIGURES", value)
+        assert settings.summary_figures() is True
+
+    def test_config_writes_the_env_var_and_a_null_leaves_it(self, monkeypatch):
+        monkeypatch.delenv("SUMMARY_FIGURES", raising=False)
+        assert settings.apply_config({"summary_figures": None}) == []
+        assert settings.apply_config({"summary_figures": True}) == ["summary_figures"]
+        assert os.environ["SUMMARY_FIGURES"] == "true"
+        monkeypatch.delenv("SUMMARY_FIGURES")

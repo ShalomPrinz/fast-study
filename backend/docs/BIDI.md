@@ -86,6 +86,7 @@ Wraps Latin runs in `\LR{}` (LaTeX-escaped — `x86_64` carries special chars) s
 - **A balanced `(…)` / `[…]` group is wrapped whole**, delimiters included; requiring the closer means a lone one on the Hebrew side is never swallowed. The body must still anchor on a Latin word — a bare `(0)` already resolves correctly.
 - **A group directly after a word belongs to it** (`console.log('hi')`, `arr[i]`), else the two islands print backwards.
 - **A run ENDING in `<digit>)` becomes `\LR{\textenglish{…}}`** — that paren sits on the RTL boundary and mirrors inside a bare `\LR{}` (`(Software 1.0)` → `(Software (1.0`). Only `)` mirrors; `]` and a mid-run `)` are safe.
+- **A figure's caption is prose**: `![caption](figures/fig1.pdf)` keeps its `](…)` target untouched (link targets are protected) and its Latin runs become `\LR{}` inside the `\caption{…}`, so `איור 1: תיבת Edgeworth` orders right; an all-English caption renders as one `\LR{}` island.
 - **Punctuation directly after a protected span** is wrapped in `\RL{}`, else bidi attaches it to the LTR island — after the Latin substitution, or the phrase regex matches the literal "RL".
 
 ## Verifying a bidi fix

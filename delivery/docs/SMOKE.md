@@ -24,10 +24,10 @@ root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
 | 1. fresh install        | the per-user NSIS install fails, `resources/` drifts from `BOOT.md`'s tree, the shipped extension's version is not the recorded `extension-version.txt`, the shipped native host breaks | —                                                  |
 | 2. DLL imports          | an installed binary imports a DLL a clean PC lacks                                                                                   | —                                                  |
-| 3. boot                 | the launcher spawns out of order, a bundled tool is unusable, `bin/` and the probed tools differ, a service runs without the secret  | —                                                  |
+| 3. boot                 | the launcher spawns out of order, a bundled tool is unusable, `bin/` and the probed tools differ, a service runs without the secret, a frozen native library (pdfium, Pillow's `_imaging`) fails to load at import | —                                                  |
 | 4. first run            | main's native folder dialog over IPC breaks, keys land in `settings.json` unencrypted, a probe reaches the network instead of `unverified` | `first-run-and-data-folder.spec.mjs`               |
 | 5. provider steps       | the bundled ffmpeg is not spawned by path; a frozen SDK fails to import or build a request, rather than failing on the network       | `failure-surfacing.spec.mjs`                       |
-| 6. the PDF              | bundled pandoc or tectonic fails, the shipped `.fmt` is rebuilt rather than reused, Hebrew glyphs drop                               | `recitation-pipeline.spec.mjs`                     |
+| 6. the PDF              | bundled pandoc or tectonic fails, the shipped `.fmt` is rebuilt rather than reused, Hebrew glyphs drop, a PDF or PNG summary figure misses the shipped cache or its filter | `recitation-pipeline.spec.mjs`, `summary-figures.spec.mjs` |
 | 7. live SSE             | SSE never reaches the document under `app://bundle` with the launch secret, so the page needs a reload                              | `recitation-pipeline.spec.mjs`                     |
 | 8. drive off            | a fresh install's defaults run a step past the PDF or upload to Drive                                                                | —                                                  |
 | 9. opening a PDF        | `open-pdf` fails through the preload bridge and `shell.openPath`; a real Windows exclusive handle is not reported as `file_locked`   | `locked-file.spec.mjs`                             |
@@ -60,7 +60,10 @@ A new smoke test adds its row here; a test with no packaging-only failure belong
   loopback and nothing else, so a wrong firewall assumption fails under its own name.
 - **No provider is faked or reached.** The provider steps run and must fail on the network, which
   proves the frozen SDKs import and build a request. A fixed transcript and summary (`fixtures/`) go
-  in through `database/`'s routes, so the PDF step runs for real.
+  in through `database/`'s routes, so the PDF step runs for real; test 6 also puts two figures
+  (`fixtures/figures/`, a pdfium-cropped PDF and a PNG) and links them as the app does.
+  Cropping itself runs only after a Gemini answer, so the frozen pdfium and Pillow are proven by
+  boot's import alone, never by a render.
 - **Disk only through `database/`**, with the URLs and launch secret read off `window.faststudy`;
   the suite never spells the `DATA_ROOT` layout.
 - **`data-testid`s only**, never visible text — the ids are a contract held by

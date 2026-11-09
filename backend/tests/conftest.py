@@ -34,3 +34,15 @@ def put_materials(monkeypatch):
     mock = MagicMock()
     monkeypatch.setattr(db_client, "put_summary_materials", mock)
     return mock
+
+
+# The pdf step lists the summary's figures through the database; none unless a test says otherwise.
+@pytest.fixture(autouse=True)
+def no_figures(monkeypatch):
+    from unittest.mock import MagicMock
+
+    from services import db_client
+
+    mock = MagicMock(return_value=[])
+    monkeypatch.setattr(db_client, "list_figures", mock)
+    return mock

@@ -75,7 +75,7 @@ baseline again.
 ## The baseline, and one course per flow
 
 A seed wipes both scratch roots and restores everything a flow can change: the scratch `.env` (fake
-keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, `AUTO_REMOVE=off`,
+keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, `AUTO_REMOVE=off`, `SUMMARY_FIGURES=false`,
 `MOODLE_SITE=https://lemida.biu.ac.il`) pushed to the running backend, database and auto-downloader through
 `POST /config`, the Moodle token (after
 `/auth/disconnect`, the only thing that clears the auto-downloader's in-memory "expired"), both
@@ -456,7 +456,7 @@ child that never reports, a restart that keeps its port), and the DOM timeline's
 change and flicker logic (its recorder and replay run in a browser, so the live stack proves them), and `hb`'s
 browser actions — real `hb.mjs` argv against a stand-in session, so what it receives is exactly what was typed. Each fake keeps
 that logic in a side-effect-free sibling (`provider-rules.mjs`, `site-control.mjs`,
-`tool-args.mjs`) so a test imports it without a port or a fixture. `test_shim.py` runs the real
+`tool-args.mjs`, `figure-calls.mjs`) so a test imports it without a port or a fixture. `test_shim.py` runs the real
 Python shim in a child interpreter per case, since its patches are process-wide: lock globs as tail
 matches, the Windows `winerror` 32 and 5 refusals, and `fs.crud` reading `win32`. `netns.test.mjs` covers
 the isolate-or-fall-back decision and the relays' byte-for-byte piping, SSE and WebSocket upgrade included.
@@ -473,7 +473,7 @@ materials-only lecture made from course PDFs attached in Downloads, lecture mate
 type (chips by original name, the Gemini switch, a pptx sent as text, the 10 MB refusal), course
 assignments (listed by section in Downloads, downloaded into the tree's group, opened by name), the first-run wall then a
 data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
-out the site's captcha (and failing `site_captcha_timeout` unsolved), the smart Downloads page's New view (`smart-downloads`: first-load banner, mark irrelevant and restore, a subset downloaded with the dead link auto-skipped; it restarts auto and the server per test, since their probe cache and last run would pre-decide that row), and study progress (done
+out the site's captcha (and failing `site_captcha_timeout` unsolved), the smart Downloads page's New view (`smart-downloads`: first-load banner, mark irrelevant and restore, a subset downloaded with the dead link auto-skipped; it restarts auto and the server per test, since their probe cache and last run would pre-decide that row), summary figures (`summary-figures`: slide PDF and PPTX materials give cropped figures in the editor's PDF pane, and deleting a figure line then saving drops it), and study progress (done
 marks, the current arrow, the counts and the overview's current-item buttons) and the first-run tour
 (seven steps, spotlight or screenshot card, Back, Skip, Esc, "Don't show again", Settings replay, Tab trapped; skipped while `TOUR_ENABLED` is false) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to one
@@ -591,6 +591,8 @@ with its real mime type (`lib/course-files.mjs`; setup builds the bytes under `f
 `diagram.png`, `code-samples.zip`, `big-appendix.pdf` (11 MB, over Gemini's 10 MB limit, generated at setup)
 and `lecture3-audio.mp3`, which auto does not list (audio is not a material).
 
+The harness does not duplicate a file whose owner already has it: `setup.mjs` copies it from the owner into the stack's fixtures (the `econ-slides` decks come from `backend/tests/fixtures/`).
+
 `mod_assign_get_assignments` lists `תרגיל בית 1` (a PDF and a `.py`) in section `חומרי עזר` and
 `תרגיל בית 2` (a PDF) in section `תרגולים`; each `cmid` is the id of a bare `assign` module in that
 section's contents, so auto's `/list` gives them `media: 'assignment'` with the matching `section`.
@@ -601,14 +603,18 @@ specs call `geminiUploads()` from `e2e/fixtures.mjs`. `/control {"reset":true}` 
 
 An assignment doc's `generateContent` (its last text part starts with the first line of the backend's `assignment_intuition.md` / `assignment_solution.md`, read from `backend/assets/instructions`) answers `fixtures/assignment-intuition.md` / `assignment-solution.md` (short Hebrew, a formula and a callout) instead of the summary, and is recorded as `{doc, files, summaries}` — the attached files' mime types (an Office file's extracted text is uploaded as `text/plain`) and each `<lecture kind title>` summary part. `GET $(hb url providers)/assignment-calls` returns `{calls: [...]}` in order (answered calls only; `reset` clears it). The shim stamps an assignment's calls `course/Assignments/name`, so `{"gemini":{"mode":"500","match":"Assignments"}}` fails them alone and a lecture-targeted rule never reaches them. Matching and recording live in `fakes/assignment-calls.mjs`.
 
+### Summary figures
+
+With `SUMMARY_FIGURES` on, the fake Gemini answers a summary call carrying `FILE …`/`PICTURE …` label parts with the fixture summary plus standalone figure lines naming the materials as attached: each PDF's `#page=1` and `#page=2`, then the first PPTX picture. The box call (its first text part is `figure_boxes.md`) gets `found` for every `Figure <id>:` at the graph box of `econ-slides` page <id> (`fakes/figure-calls.mjs`). `econ-slides.pdf` and `.pptx` are the backend's test decks (`backend/tests/fixtures/`), copied to the stack's fixtures on setup; `hb set SUMMARY_FIGURES=true` turns the feature on.
+
 ## Inspecting a PDF
 
-The box has no `pdftotext` or `pdftoppm`. PyMuPDF is a backend dependency, so read text and render
-pages through the backend's environment:
+The box has no `pdftotext` or `pdftoppm`. PyMuPDF is a backend test extra and pypdfium2 a runtime dependency (CI syncs only the latter); read text and render
+pages through the backend's environment, adding `--extra test` for `fitz`:
 
 ```bash
-cd backend && uv run python -c "import fitz, sys; d = fitz.open(sys.argv[1]); print(d[0].get_text())" FILE.pdf
-cd backend && uv run python -c "import fitz, sys; fitz.open(sys.argv[1])[0].get_pixmap(dpi=110).save(sys.argv[2])" FILE.pdf page1.png
+cd backend && uv run --extra test python -c "import fitz, sys; d = fitz.open(sys.argv[1]); print(d[0].get_text())" FILE.pdf
+cd backend && uv run --extra test python -c "import fitz, sys; fitz.open(sys.argv[1])[0].get_pixmap(dpi=110).save(sys.argv[2])" FILE.pdf page1.png
 ```
 
 Open the PNG to check the Hebrew RTL layout by eye; `get_text()` returns the logical order.

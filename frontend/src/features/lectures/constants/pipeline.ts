@@ -65,6 +65,9 @@ export function visiblePipeline(driveEnabled: boolean, files: FileStatus): typeo
   return PIPELINE.filter((p) => p.step !== 'drive')
 }
 
+// The graph-cropping run is no stage, so it has no `PIPELINE` row; this is its running label.
+export const FIGURES_RUNNING_LABEL = msg`Cropping the images…`
+
 const STEP_FILE_MUT: Partial<Record<Step, FileName>> = {}
 const STEP_INPUT_FILE_MUT: Partial<Record<Step, FileName>> = {}
 const STEP_LABEL_MUT: Partial<Record<Step, MessageDescriptor>> = {}

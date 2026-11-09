@@ -23,6 +23,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `auto_retry` (bool), `auto_retry_count`, `auto_retry_minutes` (ints) | `AUTO_RETRY`, `AUTO_RETRY_COUNT`, `AUTO_RETRY_MINUTES` |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
 | `auto_run`                                         | `AUTO_RUN`                                        |
+| `summary_figures` (bool; the backend defaults it off) | `SUMMARY_FIGURES`                              |
 | `moodle_site` (the auto-downloader's)              | `MOODLE_SITE`                                     |
 | `ai_provider` (the "Study with AI" pick)           | `AI_PROVIDER`                                     |
 | `auto_remove`, `auto_remove_after`                 | `AUTO_REMOVE`, `AUTO_REMOVE_AFTER`                |

@@ -38,6 +38,7 @@ const lecture = (name: string, present: FileName[]): Lecture => ({
   transcribePartial: null,
   removed: [],
   done: false,
+  figuresPending: false,
 })
 
 const done = (name: string) => lecture(name, ['video.mp4', 'summary.pdf', 'drive_url.txt'])

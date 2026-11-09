@@ -42,6 +42,7 @@ function node(
     transcribePartial: null,
     removed: has.removedVideo ? ['video.mp4'] : [],
     done: false,
+    figuresPending: false,
     ...(has.source ? { videoSource: has.source } : {}),
   }
 }

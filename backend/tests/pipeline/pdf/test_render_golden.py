@@ -25,6 +25,8 @@ pytestmark = pytest.mark.skipif(
 
 def _render(markdown: str) -> str:
     with tempfile.TemporaryDirectory() as build_dir:
+        # The fixture's image must exist in the build dir or the image filter drops it.
+        (Path(build_dir) / "probe.png").touch()
         return build_tex(
             apply_outside_fences(markdown, preprocess_markdown), Path(build_dir)
         )

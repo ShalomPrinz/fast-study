@@ -7,7 +7,9 @@ interface RunnerStatusValue {
   trigger: () => Promise<void>
   isInFlight: (course: string, lecture: string, kind: Kind) => boolean
   getInFlight: (course: string, lecture: string, kind: Kind) => InFlightEntry | null
+  // The last step failure; the graph-cropping record is `getFiguresError`'s, never this one's.
   getError: (course: string, lecture: string, kind: Kind) => RunError | null
+  getFiguresError: (course: string, lecture: string, kind: Kind) => RunError | null
   getAssignmentRun: (course: string, assignment: string) => InFlightEntry | null
   getAssignmentError: (course: string, assignment: string) => RunError | null
   // Called when this window's run answered `started`: drops the lecture's previous error.
@@ -22,6 +24,7 @@ export const RunnerStatusContext = createContext<RunnerStatusValue>({
   isInFlight: () => false,
   getInFlight: () => null,
   getError: () => null,
+  getFiguresError: () => null,
   getAssignmentRun: () => null,
   getAssignmentError: () => null,
   markStarted: () => {},

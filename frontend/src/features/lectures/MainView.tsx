@@ -8,7 +8,7 @@ import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import ServiceError from '@/shared/components/ServiceError'
 import { deleteFile, deleteMaterial, fetchSummaryContent } from '@/services/database'
 import { openLectureFile, openExternalUrl } from '@/services/open'
-import { runStep, runPipeline, cancelRetry } from '@/services/backend'
+import { runStep, runPipeline, runFigures, cancelRetry } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { useCompactHeaderActions } from '@/features/lectures/hooks/useCompactHeaderActions'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
@@ -42,6 +42,8 @@ import {
 } from '@/features/lectures/utils/lectureProgress'
 import { lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
+import FiguresWarning from '@/features/lectures/components/FiguresWarning'
+import { figuresWarning } from '@/features/lectures/utils/figuresWarning'
 import StudyDoneButton from '@/features/lectures/components/StudyDoneButton'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import StudyWithAiCard, {
@@ -119,6 +121,7 @@ export default function MainView() {
     transcribePartial,
     removed,
     done,
+    figuresPending,
   } = useLectureRoute()
   const supported = useSupportedMaterials()
   // Only what Summarize would send counts toward the materials-only rule and the ETA.
@@ -140,8 +143,10 @@ export default function MainView() {
     setStepsOpen(false)
   }
 
-  const { isInFlight, getError } = useRunnerStatus()
+  const { isInFlight, getInFlight, getError, getFiguresError, markStarted } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
+  const inflightStep = getInFlight(course, lecture, kind)?.step ?? null
+  const figuresError = getFiguresError(course, lecture, kind)
   const lectureError = getError(course, lecture, kind)
   const remote = useRemoteInflightState({
     course,
@@ -190,6 +195,18 @@ export default function MainView() {
     // A refused step refreshes too: it was refused over state the tree may be showing stale.
     try {
       toastInitResult(await runStep(course, lecture, step, kind), { busy: t`Step already running` })
+    } catch (e) {
+      toastFailure(e)
+    }
+    refreshCourses()
+  }
+
+  // A failed retry leaves the warning up and says nothing more: the record it writes is the answer.
+  async function handleRetryFigures() {
+    try {
+      const result = await runFigures(course, lecture, kind)
+      toastInitResult(result, { busy: t`Step already running` })
+      if (result.status === 'started') markStarted(course, lecture, kind)
     } catch (e) {
       toastFailure(e)
     }
@@ -246,6 +263,17 @@ export default function MainView() {
     }
     refreshCourses()
   }
+
+  const figures = figuresWarning({ pending: figuresPending, complete, stepsOpen, inflightStep })
+  const figuresLine = (inRow: boolean) =>
+    figures && (
+      <FiguresWarning
+        view={inRow ? { ...figures, placement: 'row' } : figures}
+        error={figuresError}
+        onRetry={handleRetryFigures}
+        onCancelRetry={() => cancelRetry(course, lecture, kind)}
+      />
+    )
 
   const stepRows = (
     <>
@@ -326,6 +354,7 @@ export default function MainView() {
                   </>
                 )}
               </p>
+              {file === 'summary.md' && figures?.inRow && figuresLine(true)}
               {!exists &&
                 !isRunning &&
                 step &&
@@ -535,41 +564,44 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
               <span className="section-count">{t`${doneCount} of ${stageCount} complete`}</span>
             </div>
 
-            <div className="pipeline-card lecture-pipeline lecture-split-steps">
-              {complete ? (
-                <div
-                  className="pipeline-row pipeline-collapsed"
-                  data-testid="pipeline-collapsed"
-                  onClick={() => setStepsOpen(true)}
-                >
-                  <StatusNode state="done" />
-                  <div className="pipeline-row-body">
-                    <div className="pipeline-stage-line">
-                      <span className="pipeline-stage">
-                        <Trans>Summary ready</Trans>
-                      </span>
+            <div className="lecture-split-steps">
+              {figures?.placement === 'banner' && figuresLine(false)}
+              <div className="pipeline-card lecture-pipeline">
+                {complete ? (
+                  <div
+                    className="pipeline-row pipeline-collapsed"
+                    data-testid="pipeline-collapsed"
+                    onClick={() => setStepsOpen(true)}
+                  >
+                    <StatusNode state="done" />
+                    <div className="pipeline-row-body">
+                      <div className="pipeline-stage-line">
+                        <span className="pipeline-stage">
+                          <Trans>Summary ready</Trans>
+                        </span>
+                      </div>
+                      <p className="pipeline-file">
+                        <Plural value={stageCount} one="# step" other="# steps" />
+                      </p>
                     </div>
-                    <p className="pipeline-file">
-                      <Plural value={stageCount} one="# step" other="# steps" />
-                    </p>
+                    <Tooltip content={t`Show steps`}>
+                      <button
+                        className="pipeline-icon-btn"
+                        aria-label={t`Show steps`}
+                        data-testid="pipeline-steps-open"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setStepsOpen(true)
+                        }}
+                      >
+                        <Icon icon="info" />
+                      </button>
+                    </Tooltip>
                   </div>
-                  <Tooltip content={t`Show steps`}>
-                    <button
-                      className="pipeline-icon-btn"
-                      aria-label={t`Show steps`}
-                      data-testid="pipeline-steps-open"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setStepsOpen(true)
-                      }}
-                    >
-                      <Icon icon="info" />
-                    </button>
-                  </Tooltip>
-                </div>
-              ) : (
-                stepRows
-              )}
+                ) : (
+                  stepRows
+                )}
+              </div>
             </div>
 
             {showsPdfHero(files, driveEnabled) && (

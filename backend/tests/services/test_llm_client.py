@@ -506,3 +506,38 @@ def test_a_timeout_is_not_unreachable(monkeypatch):
     with pytest.raises(CodedError) as exc:
         LLMClient(api_key="k").generate(["x"])
     assert exc.value.code == "gemini_timeout"
+
+
+def _schema_client(monkeypatch):
+    sdk = MagicMock()
+    _patched_client(sdk, monkeypatch)
+    monkeypatch.delenv("GEMINI_AUTO_FALLBACK", raising=False)
+    return LLMClient(model=llm_mod.GEMINI_MODELS[0], api_key="k"), sdk
+
+
+def test_generate_with_a_schema_asks_for_json_and_falls_back_with_it(monkeypatch):
+    client, sdk = _schema_client(monkeypatch)
+    sdk.models.generate_content.side_effect = [
+        Exception("503 UNAVAILABLE"),
+        SimpleNamespace(text='{"ok": true}'),
+    ]
+    schema = {"type": "object"}
+    assert client.generate(["x"], response_schema=schema) == '{"ok": true}'
+    for call in sdk.models.generate_content.call_args_list:
+        config = call.kwargs["config"]
+        assert config.response_mime_type == "application/json"
+        assert config.response_schema == schema
+    assert [c.kwargs["model"] for c in sdk.models.generate_content.call_args_list] == [
+        client.model,
+        client._fallback_model(),
+    ]
+
+
+def test_generate_without_a_schema_sends_no_json_mode(monkeypatch):
+    client, sdk = _schema_client(monkeypatch)
+    sdk.models.generate_content.return_value = SimpleNamespace(text="hi")
+    client.generate(["x"])
+    assert (
+        sdk.models.generate_content.call_args.kwargs["config"].response_mime_type
+        is None
+    )

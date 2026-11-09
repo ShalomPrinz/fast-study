@@ -128,6 +128,18 @@
 \newtcolorbox{calloutwarning}{calloutstyle, colback=calloutWarningTint, colframe=calloutWarningFrame}
 \newtcolorbox{calloutinsight}{calloutstyle, colback=calloutInsightTint, colframe=calloutInsightFrame}
 
+\makeatletter
+\@ifundefined{pandocbounded}{}{\renewcommand*\pandocbounded[1]{%
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{0.4\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi%
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}}
+\makeatother
+
 \usepackage{stmaryrd}
 \usepackage{hyperref}
 \usepackage[normalem]{ulem}

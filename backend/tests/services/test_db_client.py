@@ -154,3 +154,36 @@ class TestRemoveFiles:
         with _answering(FakeResponse(423, body)), pytest.raises(DbClientError) as e:
             db_client.remove_files("C", "L", "lecture", ["audio.mp3"])
         assert e.value.code == "file_locked"
+
+
+# The conftest fixture replaces db_client.list_figures for every test, so the real one is kept here.
+_REAL_LIST_FIGURES = db_client.list_figures
+
+
+class TestFigures:
+    def test_routes_and_kind(self):
+        with _answering(FakeResponse(204)) as req:
+            db_client.put_figure("C 1", "L", "recitation", "fig1.pdf", b"x")
+            db_client.delete_figures("C 1", "L", "recitation")
+        put, delete = (c.args + (c.kwargs,) for c in req.call_args_list)
+        assert put[0] == "PUT" and put[1].endswith(
+            "/courses/C%201/lectures/L/figures/fig1.pdf"
+        )
+        assert put[2]["params"] == {"kind": "recitation"} and put[2]["data"] == b"x"
+        assert delete[0] == "DELETE" and delete[1].endswith("/lectures/L/figures")
+
+    def test_list_and_get(self):
+        with _answering(FakeResponse(200, {"figures": ["fig1.pdf", "fig2.png"]})):
+            assert _REAL_LIST_FIGURES("C", "L", "lecture") == ["fig1.pdf", "fig2.png"]
+        with _answering(FakeResponse(200, {})):
+            assert _REAL_LIST_FIGURES("C", "L", "lecture") == []
+        with _answering(FakeResponse(200)):
+            assert db_client.get_figure("C", "L", "lecture", "fig1.pdf") == b"payload"
+
+    def test_a_locked_clear_keeps_its_code(self):
+        locked = FakeResponse(
+            423, {"error": "locked", "code": "file_locked", "params": {}}
+        )
+        with _answering(locked), pytest.raises(DbClientError) as e:
+            db_client.delete_figures("C", "L", "lecture")
+        assert e.value.code == "file_locked"

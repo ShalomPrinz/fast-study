@@ -9,6 +9,7 @@ from .paths import (
     ARCHIVED_MARKER,
     ASSIGNMENTS_DIR,
     DONE_MARKER,
+    FIGURES_PENDING_MARKER,
     LECTURES_ONLY_MARKER,
     OVERVIEW_DIR,
     PDF_WARNING_MARKER,
@@ -125,6 +126,7 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         "transcribePartial": _read_transcribe_partial(lecture_path),
         "removed": _removed(files),
         "done": (lecture_path / DONE_MARKER).exists(),
+        "figuresPending": (lecture_path / FIGURES_PENDING_MARKER).exists(),
     }
     source = read_video_source(lecture_path)
     if source is not None:

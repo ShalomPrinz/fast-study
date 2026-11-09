@@ -270,6 +270,20 @@ class TestHebrewInCodeBlockRenders:
 
 
 @pytest.mark.skipif(
+    not (_tectonic_available() and _pandoc_available()),
+    reason="needs tectonic + pandoc to render",
+)
+@pytest.mark.parametrize("src", ["nothere.png", "https://example.com/a.png"])
+def test_a_missing_image_outside_figures_is_dropped_and_the_render_succeeds(
+    tmp_path, src
+):
+    md_path = tmp_path / "s.md"
+    md_path.write_text(f"hello\n\n![x]({src})\n", encoding="utf-8")
+    pdf_path, _ = convert_to_pdf(str(md_path))
+    assert os.path.getsize(pdf_path) > 0
+
+
+@pytest.mark.skipif(
     not (_tectonic_available() and _pandoc_available() and _pymupdf_available()),
     reason="needs tectonic + pandoc + pymupdf to render and inspect a real PDF",
 )
@@ -635,6 +649,60 @@ class TestInvocation:
             ]
         build_dir = fake.calls[0][1]
         assert not Path(build_dir).exists()
+
+
+class _SnapshotRun(FakeRun):
+    """A FakeRun that also records what pandoc was handed: its input markdown and staged figures."""
+
+    def __call__(self, cmd, *args, cwd=None, **kwargs):
+        if cmd[0] == "pandoc":
+            d = Path(cwd)
+            self.input_md = (d / "input.md").read_text(encoding="utf-8")
+            self.staged = (
+                sorted(p.name for p in (d / "figures").iterdir())
+                if (d / "figures").is_dir()
+                else None
+            )
+        return super().__call__(cmd, *args, cwd=cwd, **kwargs)
+
+
+@pytest.mark.usefixtures("no_bin_dir")
+class TestFigures:
+    MD = "פסקה.\n\n![איור](figures/fig1.pdf)\n\n![נעלם](figures/fig2.pdf)\n\n![x](http://e/x.png)\n"
+
+    def _convert(self, fake, with_figure=True):
+        with _render(fake, self.MD) as md_path:
+            figures = Path(md_path).parent / "figures"
+            if with_figure:
+                figures.mkdir()
+                (figures / "fig1.pdf").write_bytes(b"%PDF-1.4 fig")
+                (figures / "fig9.pdf").write_bytes(b"%PDF-1.4 unlinked")
+            convert_to_pdf(md_path)
+            # The figures folder beside the markdown is never written to or removed.
+            assert figures.exists() == with_figure
+
+    def test_figures_beside_the_markdown_are_staged_in_the_build_dir(self):
+        fake = _SnapshotRun()
+        self._convert(fake)
+        assert fake.staged == ["fig1.pdf", "fig9.pdf"]
+        assert "figures" in fake.build_files
+
+    def test_the_image_filter_runs_before_the_direction_filter(self):
+        # Dropping unstaged images is the filter's job (test_drop_missing_images.py); here only the wiring.
+        fake = _SnapshotRun()
+        self._convert(fake)
+        filters = [a for a in fake.pandoc_cmd if a.startswith("--lua-filter=")]
+        assert filters == [
+            f"--lua-filter={to_pdf.IMAGE_FILTER}",
+            f"--lua-filter={to_pdf.DIRECTION_FILTER}",
+        ]
+
+    def test_the_header_caps_figures_at_forty_percent_of_the_text_height_and_never_enlarges(
+        self,
+    ):
+        assert r"\Gscale@div\@tempa{0.4\textheight}" in LATEX_HEADER
+        assert r"\Gscale@div\@tempb{\linewidth}" in LATEX_HEADER
+        assert r"\setkeys{Gin}" not in LATEX_HEADER
 
 
 @pytest.mark.usefixtures("no_bin_dir")

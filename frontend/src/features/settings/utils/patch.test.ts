@@ -8,6 +8,7 @@ const STORED: Settings = {
   groqApiKeySet: true,
   geminiModel: 'gemini-3.5-flash',
   geminiAutoFallback: null,
+  summaryFigures: null,
   autoRetry: null,
   autoRetryCount: null,
   autoRetryMinutes: null,
@@ -31,6 +32,7 @@ const UNCHANGED: SettingsForm = {
   gdriveRootFolder: '',
   geminiModel: 'gemini-3.5-flash',
   geminiAutoFallback: true,
+  summaryFigures: false,
   autoRetry: { on: true, count: 3, minutes: 10 },
   autoRun: 'full',
   autoRemove: { on: false, what: 'video', after: null },
@@ -56,6 +58,18 @@ describe('buildPatch', () => {
     expect(formFromStore(stored, OPTIONS).geminiAutoFallback).toBe(false)
     expect(buildPatch({ ...UNCHANGED, geminiAutoFallback: true }, stored, true)).toEqual({
       geminiAutoFallback: true,
+    })
+  })
+
+  it('treats unset summary figures as off: checking sends true, leaving it sends nothing', () => {
+    expect(formFromStore(STORED, OPTIONS).summaryFigures).toBe(false)
+    expect(buildPatch({ ...UNCHANGED, summaryFigures: true }, STORED, true)).toEqual({
+      summaryFigures: true,
+    })
+    expect(storeBody({ summaryFigures: true })).toEqual({ summary_figures: true })
+    const on = { ...STORED, summaryFigures: true }
+    expect(buildPatch({ ...UNCHANGED, summaryFigures: false }, on, true)).toEqual({
+      summaryFigures: false,
     })
   })
 

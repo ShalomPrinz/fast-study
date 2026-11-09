@@ -19,6 +19,7 @@ export interface SettingsForm {
   gdriveRootFolder: string
   geminiModel: string
   geminiAutoFallback: boolean
+  summaryFigures: boolean
   autoRetry: AutoRetryForm
   autoRun: AutoRun
   autoRemove: AutoRemoveForm
@@ -52,6 +53,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: formModel(stored, options),
     geminiAutoFallback: stored.geminiAutoFallback ?? true,
+    summaryFigures: stored.summaryFigures ?? false,
     autoRetry: autoRetryFromStore(stored),
     autoRun: toAutoRun(stored.autoRun),
     autoRemove: autoRemoveFromStore(stored),
@@ -89,6 +91,8 @@ export function buildPatch(
   if (form.geminiModel !== (stored.geminiModel ?? '')) patch.geminiModel = form.geminiModel
   if (form.geminiAutoFallback !== (stored.geminiAutoFallback ?? true))
     patch.geminiAutoFallback = form.geminiAutoFallback
+  if (form.summaryFigures !== (stored.summaryFigures ?? false))
+    patch.summaryFigures = form.summaryFigures
   Object.assign(patch, autoRetryPatch(form.autoRetry, stored))
   if (form.driveEnabled !== (stored.driveEnabled ?? false)) patch.driveEnabled = form.driveEnabled
   // Only while Drive is on, where the field shows: the wall's untouched default is no choice to store.

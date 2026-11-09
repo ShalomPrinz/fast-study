@@ -16,13 +16,19 @@ _REPO = _DELIVERY.parent
 # way services.spec puts it on `pathex`.
 sys.path.insert(0, str(_REPO / "backend"))
 
-from pipeline.to_pdf import BUILD_STEM, build_tex
+from pipeline.to_pdf import (
+    BUILD_STEM,
+    apply_outside_fences,
+    build_tex,
+    preprocess_markdown,
+)
 from tools import tool_path
 
 SINK = _DELIVERY / "kitchen-sink.md"
 SUPPLEMENT = _DELIVERY / "cache-supplement.txt"
-# The sink's one image. graphicx loads only if the file is really beside the .tex.
-IMAGE = _DELIVERY / "probe.png"
+# The sink's figures, a PNG and a one-page PDF cropped the way summary figures are. They sit beside
+# the .tex because drop_missing_images.lua drops an absent image, and then graphicx never loads.
+IMAGES = (_DELIVERY / "probe.png", _DELIVERY / "probe.pdf")
 
 # A cold prime fetches every package over the network one at a time, which is minutes.
 _RENDER_TIMEOUT_SECONDS = 1800
@@ -95,10 +101,12 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory() as build_dir:
         build = Path(build_dir)
-        shutil.copy2(IMAGE, build / IMAGE.name)
-        # Raw, not preprocessed: the bidi pass rewrites the sink's markdown image into text, and
-        # graphicx would never be pulled.
-        build_tex(SINK.read_text(encoding="utf-8"), build)
+        for image in IMAGES:
+            shutil.copy2(image, build / image.name)
+        build_tex(
+            apply_outside_fences(SINK.read_text(encoding="utf-8"), preprocess_markdown),
+            build,
+        )
         _render(build)
 
     for name in _supplement_names():

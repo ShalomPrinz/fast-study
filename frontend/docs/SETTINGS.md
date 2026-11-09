@@ -16,6 +16,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Drive root folder | `FastStudy`, sent only once Drive is on  | any folder name       | `backend/`        |
 | Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
 | Auto change model when busy | on (a checkbox beside the model) | off       | `backend/`        |
+| Summary figures   | off (a checkbox beside the model)         | on                    | `backend/`        |
 | Auto retry        | on, 3 retries, 10 minutes apart           | off; 1-10 retries, 1-120 minutes | `backend/`, `electron/` store |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Auto-remove       | off                                       | video, video + audio  | `backend/`        |
@@ -33,6 +34,8 @@ only whole numbers, clamped to the range (`parseRetryInt`; empty or fractional t
 out-of-range value (the launcher store would refuse it with `setting_out_of_range`). The three fields go to the
 backend's `POST /config`, which clamps them; turning the switch off drops every waiting retry there. The countdown
 UI is in [LECTURES.md](LECTURES.md) §Runner status.
+
+**Summary figures** (`summaryFigures`, unset reads as off) makes `summarize` crop the graphs out of a lecture's slide PDFs/PPTXs into the summary. It sits beside the summary model, is owned by the backend (`/config`) and, like it, is hidden where the model is.
 
 **Auto-run is a ceiling on unattended work, not a schedule.** It caps a dropped or downloaded video; it
 never caps a run the user starts. An unset value reads as the backend's own fallback (`useAutoRun`), so
@@ -183,7 +186,7 @@ keyring) cannot store them. `runtime.ts` resolves the launcher's report once as 
 no bridge means browser dev, where keys go to `.env`, so a missing answer means a machine that is fine.
 
 Degraded, not fatal: a field that can never be filled invites a user to try, so the wall drops the whole
-keys section, and `/settings` drops the key fields and the summary model, leaving `SecureStorageNotice`
+keys section, and `/settings` drops the key fields and the summary model with its two checkboxes, leaving `SecureStorageNotice`
 under the section heading. The keys stop counting in `missingEntries` and `isInitialized` (which take the flag as an argument,
 staying pure), or the wall would have no way past. A save stays safe: a blank key is never sent, and an
 unrendered model select still holds the stored or default id.

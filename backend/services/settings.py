@@ -33,6 +33,7 @@ _ENV_KEYS = {
     "auto_retry": "AUTO_RETRY",
     "auto_retry_count": "AUTO_RETRY_COUNT",
     "auto_retry_minutes": "AUTO_RETRY_MINUTES",
+    "summary_figures": "SUMMARY_FIGURES",
 }
 
 # Auto-retry defaults and clamp ranges.
@@ -83,6 +84,12 @@ def drive_enabled() -> bool:
     never configured Drive completes each lecture at its PDF."""
 
     return os.environ.get("DRIVE_ENABLED", "").strip().lower() in _TRUTHY
+
+
+def summary_figures() -> bool:
+    """Whether a lecture or recitation summary carries the slides' graphs. Opt-in: unset means off."""
+
+    return os.environ.get("SUMMARY_FIGURES", "").strip().lower() in _TRUTHY
 
 
 def auto_retry() -> bool:

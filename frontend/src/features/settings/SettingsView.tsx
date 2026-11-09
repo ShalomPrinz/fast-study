@@ -438,6 +438,26 @@ export default function SettingsView() {
                       </Trans>
                     </span>
                   </div>
+                  <div className="settings-field">
+                    <label className="settings-check">
+                      <input
+                        type="checkbox"
+                        checked={form.summaryFigures}
+                        onChange={(e) => setForm({ ...form, summaryFigures: e.target.checked })}
+                      />
+                      <span className="settings-check-text">
+                        <span>
+                          <Trans>Add figures to the summary</Trans>
+                        </span>
+                      </span>
+                    </label>
+                    <span className="settings-hint">
+                      <Trans>
+                        Crops the graphs from the slide PDFs and PPTXs attached to a lecture. Graphs
+                        drawn with PowerPoint shapes need the deck saved as PDF.
+                      </Trans>
+                    </span>
+                  </div>
                 </>
               )}
             </section>

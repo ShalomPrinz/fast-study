@@ -12,7 +12,7 @@ it backward-compatible or flag the impact.
 
 | Doc                                  | Covers                                                                 |
 | ------------------------------------ | ---------------------------------------------------------------------- |
-| [docs/LAYOUT.md](docs/LAYOUT.md)     | `DATA_ROOT` layout, name sanitizing, materials, dotfiles, tree shape   |
+| [docs/LAYOUT.md](docs/LAYOUT.md)     | `DATA_ROOT` layout, name sanitizing, materials, figures, dotfiles, tree shape   |
 | [docs/API.md](docs/API.md)           | route table, response envelope, write semantics, file locks, trust model |
 | [docs/SETTINGS.md](docs/SETTINGS.md) | the settings store: fields, `.env` merge, `DATA_ROOT` validation, unset root |
 | [docs/OVERVIEW.md](docs/OVERVIEW.md) | the course-level `overview/` area and `meta.json` atomicity            |

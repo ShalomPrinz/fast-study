@@ -652,3 +652,21 @@ def test_a_string_is_rejected_for_gemini_auto_fallback(env_file):
     )
 
     assert "GEMINI_AUTO_FALLBACK" not in env_file.read_text(encoding="utf-8")
+
+
+def test_summary_figures_defaults_null_and_round_trips(client, env_file):
+    assert client.get("/settings").json()["summary_figures"] is None
+    assert (
+        client.put("/settings", json={"summary_figures": True}).json()[
+            "summary_figures"
+        ]
+        is True
+    )
+    assert dotenv_values(env_file)["SUMMARY_FIGURES"] == "true"
+    assert (
+        client.put("/settings", json={"summary_figures": False}).json()[
+            "summary_figures"
+        ]
+        is False
+    )
+    assert client.put("/settings", json={"summary_figures": "false"}).status_code == 400

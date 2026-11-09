@@ -28,6 +28,7 @@ function lecture(name: string, ...present: string[]): Lecture {
     transcribePartial: null,
     removed: [],
     done: false,
+    figuresPending: false,
   }
 }
 

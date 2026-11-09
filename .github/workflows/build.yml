@@ -51,8 +51,8 @@ jobs:
         run: |
           mkdir -p "$STAGE/bin" downloads
           base=https://github.com
-          curl -fsSL -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
-          curl -fsSL -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
+          curl -fsSL --retry 5 --retry-delay 10 -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
+          curl -fsSL --retry 5 --retry-delay 10 -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
           for zip in tectonic pandoc; do 7z x -y -o"downloads/$zip" "downloads/$zip.zip" > /dev/null; done
           cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
           cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ env.STAGE }}/latex
-          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
+          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/probe.pdf', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/pipeline/pdf/**', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
 
       # Network-bound, ~7.5 minutes cold; over a restored cache a top-up, run anyway as the strict proof.
       # tectonic fetches each LaTeX package on first use and the shipped app renders --only-cached,
@@ -86,10 +86,10 @@ jobs:
       - name: Download ffmpeg and yt-dlp
         run: |
           base=https://github.com
-          curl -fsSL -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
+          curl -fsSL --retry 5 --retry-delay 10 -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
           # Unpinned on purpose: yt-dlp rots as YouTube changes signatures, so a build ships the
           # newest one and the app self-updates from there.
-          curl -fsSL -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+          curl -fsSL --retry 5 --retry-delay 10 -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
           7z x -y -o"downloads/ffmpeg" "downloads/ffmpeg.zip" > /dev/null
           cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
           ls -l "$STAGE/bin"
@@ -175,8 +175,8 @@ jobs:
           pyi=(--with "pyinstaller==$PYINSTALLER_VERSION" --no-binary-package pyinstaller)
           uv run "${pyi[@]}" pyinstaller ../delivery/services.spec
           ours=$(uv run "${pyi[@]}" python -c "import PyInstaller, hashlib, pathlib; print(hashlib.sha256((pathlib.Path(PyInstaller.__file__).parent / 'bootloader/Windows-64bit-intel/run.exe').read_bytes()).hexdigest())")
-          wheel=$(curl -fsSL "https://pypi.org/pypi/pyinstaller/$PYINSTALLER_VERSION/json" | node -e 'console.log(JSON.parse(require("fs").readFileSync(0)).urls.find((u) => u.filename.endsWith("-win_amd64.whl")).url)')
-          curl -fsSL -o "$RUNNER_TEMP/pyinstaller.whl" "$wheel"
+          wheel=$(curl -fsSL --retry 5 --retry-delay 10 "https://pypi.org/pypi/pyinstaller/$PYINSTALLER_VERSION/json" | node -e 'console.log(JSON.parse(require("fs").readFileSync(0)).urls.find((u) => u.filename.endsWith("-win_amd64.whl")).url)')
+          curl -fsSL --retry 5 --retry-delay 10 -o "$RUNNER_TEMP/pyinstaller.whl" "$wheel"
           stock=$(7z e -so "$RUNNER_TEMP/pyinstaller.whl" PyInstaller/bootloader/Windows-64bit-intel/run.exe | sha256sum | cut -d' ' -f1)
           echo "bootloader run.exe: ours $ours, stock $stock"
           [ "$ours" != "$stock" ] || { echo "::error::faststudy-services.exe would carry PyInstaller's stock bootloader"; exit 1; }

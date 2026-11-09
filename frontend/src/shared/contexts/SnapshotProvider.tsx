@@ -6,7 +6,7 @@ import { fetchTree } from '@/services/database'
 import { isConnectionError } from '@/services/http'
 import { toast } from '@/services/toaster'
 import { inFlightKey, parseInFlightKey } from '@/shared/utils/inFlightKey'
-import { isQuotaError } from '@/shared/utils/runError'
+import { isFiguresError, isQuotaError } from '@/shared/utils/runError'
 import { failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import LectureLead, { AssignmentLead } from '@/shared/components/LectureLead'
@@ -89,6 +89,8 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     // summarize are `blocked`, or one batch would toast the same sentence once per lecture.
     for (const [key, error] of Object.entries(s.errors)) {
       if (isQuotaError(error.code) && error.blocked) continue
+      // The lecture page's warning owns a cropping failure; a toast would shout over a finished summary.
+      if (isFiguresError(error)) continue
       announce(key, error)
     }
     announceNotices('runner', s.notices)
@@ -183,7 +185,13 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
   }
 
   function getError(course: string, lecture: string, kind: Kind): RunError | null {
-    return status?.errors[inFlightKey(course, lecture, kind)] ?? null
+    const error = status?.errors[inFlightKey(course, lecture, kind)] ?? null
+    return isFiguresError(error) ? null : error
+  }
+
+  function getFiguresError(course: string, lecture: string, kind: Kind): RunError | null {
+    const error = status?.errors[inFlightKey(course, lecture, kind)] ?? null
+    return isFiguresError(error) ? error : null
   }
 
   function getAssignmentRun(course: string, assignment: string): InFlightEntry | null {
@@ -219,6 +227,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
           isInFlight,
           getInFlight,
           getError,
+          getFiguresError,
           getAssignmentRun,
           getAssignmentError,
           markStarted,

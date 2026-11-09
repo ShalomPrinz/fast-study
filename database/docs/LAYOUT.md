@@ -77,6 +77,13 @@ the first is edit state read through the summary endpoint, the second is progres
 inlined as `transcribePartial` — but the video wipe takes both, since each describes the old video.
 Materials are outside it too: they are a numbered family (below), not a fixed name.
 
+## Figures
+
+`figures/` (`FIGURES_DIR`) inside a lecture or recitation dir holds the summary's cropped graphs,
+`fig<N>.<pdf|png|jpg|jpeg|gif>`, linked from `summary.md` by relative path. It is a derived artifact:
+the video wipe removes it, nothing in the tree lists it, and `fs/figures.py` owns the name rule,
+natural-order listing and clear. Routes: [API.md](API.md#summary-figures).
+
 ## Materials
 
 A lecture can hold any number of attached files of any extension, named `material.<ext>` (index 1),
@@ -140,6 +147,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.generated/` | assignment dir | hidden folder made on the first doc write, never the assignment itself: `{doc}.md`, `original_{doc}.md` (editor snapshot, same rules as `original_summary.md`), `{doc}.pdf`, `{doc}.pdf_warning`, `{doc}.pdf_build.tex`, with `doc` in `intuition`, `solution` |
 | `.summary_materials.json` | lecture dir | `{"materials": [...]}` — the materials attached at the last Summarize (the run that wrote the current `summary.md`), including attached files it skipped; `[]` = nothing attached |
 | `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
+| `.figures_pending`       | lecture dir | empty marker the backend writes when `summary.md` still has uncropped figure links; deleting `summary.md` or a new `video.mp4` drops it |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
 | `.{slug}.pdf_warning`    | overview/   | same, per overview pdf (see OVERVIEW.md)                  |
 
@@ -172,7 +180,7 @@ Each lecture entry carries `files` (every predefined name → `{exists, size, mt
 `materials` (index-ordered `{name, size, mtime}` plus `source`, `filename` and `attach` when set, always present and `[]` when none — presence
 in the list *is* existence, so entries carry no `exists`), `transcribePartial`, and `removed` (the
 names derived above, in `REMOVABLE_FILES` order; always present, `[]` when none), `summaryMaterials` (`string[]` from `.summary_materials.json`, `null` when absent or unreadable), `done` (`.done`
-exists; always present, `false` when absent) and `videoSource` (the ref from `.video_source.json`; omitted when absent, and kept while `files["video.mp4"].exists` is false). Three fields are inlined onto file entries rather than exposed as separate
+exists; always present, `false` when absent), `figuresPending` (`.figures_pending` exists; always present, `false` when absent) and `videoSource` (the ref from `.video_source.json`; omitted when absent, and kept while `files["video.mp4"].exists` is false). Three fields are inlined onto file entries rather than exposed as separate
 endpoints, because the frontend needs them on every render of the tree:
 
 - `drive_url.txt` → `url` on its own entry.

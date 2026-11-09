@@ -29,6 +29,7 @@ export const SETTINGS = {
   MOODLE_SITE: ['moodle_site', 'string'],
   AUTO_REMOVE: ['auto_remove', 'string'],
   AUTO_REMOVE_AFTER: ['auto_remove_after', 'string'],
+  SUMMARY_FIGURES: ['summary_figures', 'bool'],
 };
 
 /** The model the running backend offers first — read live, so the baseline never names one it lacks. */
@@ -49,6 +50,8 @@ export function baselineEnv(paths, geminiModel) {
     AUTO_REMOVE: 'off',
     // Empty reads as unset in both the store and the backend; omitted, the backend keeps the last value.
     AUTO_REMOVE_AFTER: '',
+    // Off, as shipped: the figures flow turns it on and the next reseed puts it back.
+    SUMMARY_FIGURES: 'false',
     // Set, or the first-run wall would block every run until a site is picked.
     MOODLE_SITE: FAKE_MOODLE_SITE,
   };

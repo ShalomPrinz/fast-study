@@ -40,6 +40,7 @@ function node(name: string, video = false, videoSource?: string): Lecture {
     transcribePartial: null,
     removed: [],
     done: false,
+    figuresPending: false,
     ...(videoSource ? { videoSource } : {}),
   }
 }

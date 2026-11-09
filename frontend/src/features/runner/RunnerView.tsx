@@ -7,7 +7,13 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useAutoRun, useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
-import { PIPELINE, stepPosition, visiblePipeline } from '@/features/lectures/constants/pipeline'
+import {
+  FIGURES_RUNNING_LABEL,
+  PIPELINE,
+  stepPosition,
+  visiblePipeline,
+} from '@/features/lectures/constants/pipeline'
+import { FIGURES_STEP } from '@/shared/utils/runError'
 import { markRemoved, skippedStage } from '@/features/lectures/utils/lectureProgress'
 import { attachedMaterials } from '@/features/lectures/utils/materials'
 import { useSupportedMaterials } from '@/shared/contexts/SupportedMaterialsContext'
@@ -355,7 +361,11 @@ export default function RunnerView() {
                                 state="running"
                                 chip={
                                   <span className="chip chip--accent">
-                                    {stage ? t(stage.runningLabel ?? stage.stageLabel) : entry.step}
+                                    {stage
+                                      ? t(stage.runningLabel ?? stage.stageLabel)
+                                      : entry.step === FIGURES_STEP
+                                        ? t(FIGURES_RUNNING_LABEL)
+                                        : entry.step}
                                   </span>
                                 }
                               />

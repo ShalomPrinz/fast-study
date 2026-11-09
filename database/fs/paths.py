@@ -43,6 +43,8 @@ VIDEO_SOURCE_MARKER = ".video_source.json"
 # LaTeX the backend keeps only on a hard render failure. Dotfiles never become tree rows.
 PDF_WARNING_MARKER = ".pdf_warning"
 PDF_BUILD_TEX_MARKER = ".pdf_build.tex"
+# Lecture-dir empty marker: summary.md still holds uncropped figure links; presence is the fact, and it follows summary.md.
+FIGURES_PENDING_MARKER = ".figures_pending"
 # Lecture-dir empty marker: the user studied it. A video upload keeps it — it describes the study, not the video.
 DONE_MARKER = ".done"
 
@@ -56,6 +58,9 @@ PREDEFINED_FILES = (
     "summary.pdf",
     "drive_url.txt",
 )
+
+# Lecture-dir subfolder of summary figures (fig<N>.<ext>) the summary links by relative path; a derived artifact.
+FIGURES_DIR = "figures"
 
 # The only files the remove route will delete; when to remove them is the backend's policy.
 REMOVABLE_FILES = ("video.mp4", "audio.mp3")
