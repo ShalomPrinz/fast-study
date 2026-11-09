@@ -42,6 +42,18 @@ no estimate — so a host never changes height when the stats arrive; the real f
 A missing file whose step is the lecture's `error.step` shows `failed`, or `quota` for a Gemini quota
 code (`utils/stepState.ts`); the row's `data-status` carries the same state.
 
+**Graphs waiting to be cropped** (`Lecture.figuresPending`, the backend's `.figures_pending` marker) show one line,
+`FiguresWarning`: "Gemini didn't answer how to crop the images" with Retry (`runFigures`, `POST /run/figures`).
+`figuresWarning` (`utils/figuresWarning.ts`) decides its placement — above the pipeline card while the pipeline is
+collapsed (`.figures-warning--banner`), else under the Summary row's file name (`--row`; the steps modal's rows show it too, whatever the
+placement) — and its state: while the in-flight `step` is `figures` it reads as cropping progress with no button
+(`data-figures-state="cropping"`), and Retry is disabled while any step runs. `figures` is not a `PIPELINE` stage: it is
+in no `STEP_SET`, so `useRemoteInflightState` yields no `remote` for it, and its error record is told apart by
+`isFiguresError` (`utils/runError.ts`). `getError` hides that record, so it never reaches the "Last error" box, a row
+glyph, the editor's error or a toast (`SnapshotProvider` skips it); `getFiguresError` hands it to the line, whose
+tooltip is its reason and which shows the `RetryLine` while an automatic retry waits. `/running` ignores it too
+(`waitingRetries`, `notQueuedState`/`notQueuedTitle`). A failed manual retry toasts nothing; the new record is the answer.
+
 `StudyDoneButton` marks the lecture studied (`--info`, "Done"); once done it turns `--success` with a ✓ and a
 tooltip saying a click reverts it. Done is manual and independent of the pipeline, so it is always enabled.
 

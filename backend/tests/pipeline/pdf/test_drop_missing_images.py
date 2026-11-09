@@ -104,3 +104,9 @@ def test_an_existing_image_outside_figures_is_kept(tmp_path):
 def test_a_missing_image_outside_figures_in_a_code_block_is_untouched(tmp_path):
     out = render(tmp_path, "```\n![x](nothere.png)\n```\n")
     assert "![x](nothere.png)" in out
+
+
+def test_a_raw_pdf_page_link_is_dropped_without_failing_the_render(tmp_path):
+    out = render(tmp_path, "before\n\n![cap](slides.pdf#page=3)\n\nafter\n")
+    assert "slides.pdf" not in out and "includegraphics" not in out
+    assert "before" in out and "after" in out

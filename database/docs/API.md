@@ -108,7 +108,7 @@ a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
 The two file-write paths differ on purpose, and confusing them destroys data:
 
 - **`PUT /…/video`** is the downloader's fresh-source path. It erases every predefined file plus
-  `original_summary.md`, the partial-transcript meta, both pdf dotfiles and the `figures/` folder — they all belong to
+  `original_summary.md`, the partial-transcript meta, both pdf dotfiles, `.figures_pending` and the `figures/` folder — they all belong to
   the _old_ video. Materials stay: they are attached, not derived. The wipe is all-or-nothing: the whole set is probed for locks first, so one
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand (the downloader uploads to brand-new lectures) but never the course: a missing one is `404` `course_not_found`.
@@ -154,7 +154,7 @@ Renaming a course or lecture folder is the one exception: on Windows it fails wi
 read/write/delete, so no pre-probe of the files catches it. The rename routes answer `423`
 `folder_in_use` `{name}` for exactly that case and leave every other `PermissionError` a `400`.
 
-`DELETE /…/files/summary.md` additionally drops `.summary_materials.json`; `GET /…/files/{name}` (and the overview twin) takes its media type from `mimetypes.guess_type`. `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
+`DELETE /…/files/summary.md` additionally drops `.summary_materials.json` and `.figures_pending` (the backend writes and deletes that empty marker with plain `PUT`/`DELETE /…/files/.figures_pending`; the tree reports it as `figuresPending`); `GET /…/files/{name}` (and the overview twin) takes its media type from `mimetypes.guess_type`. `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
 chokepoint for that rule — a warning describes THIS pdf and cannot outlive it — so backend
 teardown, frontend deletes, and re-render resets all get it without repeating the logic.
 

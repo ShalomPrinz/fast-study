@@ -182,6 +182,26 @@ def _is_user_actionable(e: db_client.DbClientError) -> bool:
     return e.code in _USER_ACTIONABLE_STORAGE_CODES
 
 
+async def _run_figures(course: str, lecture: str, kind: str):
+    """The `figures` step sits outside _STEP_CONFIG and enabled_steps: it needs only a summary.md,
+    and works with SUMMARY_FIGURES off since the raw links are already in it."""
+
+    ready = await asyncio.to_thread(
+        runner.db_client.file_exists, course, lecture, kind, "summary.md"
+    )
+    if not ready:
+        return _error(
+            failure(
+                "summary.md is required — run Summarize first",
+                "missing_prerequisite",
+                file="summary.md",
+                step="summarize",
+            ),
+            409,
+        )
+    return {"status": runner.try_run_step(course, lecture, kind, "figures")}
+
+
 @app.post("/courses/{course}/lectures/{lecture}/run/{step}")
 async def run_step(
     course: str,
@@ -190,6 +210,8 @@ async def run_step(
     kind: Kind = Query("lecture"),
     fresh: bool = Query(False),
 ):
+    if step == "figures":
+        return await _run_figures(course, lecture, kind)
     if step not in _STEP_CONFIG:
         return _error(failure(f"Unknown step: {step}", "unknown_step", step=step), 404)
     if step not in runner.enabled_steps():

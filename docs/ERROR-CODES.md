@@ -146,6 +146,7 @@ failures it was given, so a refusal the user can act on is caught by the route i
 | `pipeline/transcribe.py`                | `groq_rate_limited`         | `limit`, `used`, `requested`, `retry_after_seconds` | user |
 | `pipeline/runner.py` blocked record     | `groq_rate_limit_blocked`   | same as `groq_rate_limited`     | user  |
 | `pipeline/summarize.py`                 | `summarization_failed`      | `detail`                        | user  |
+| `pipeline/summary_figures.py` box call  | `figure_boxes_failed`       | `detail`                        | user  |
 | `pipeline/summarize.py` `generate_assignment_doc` | `assignment_generation_failed` | `detail`     | user  |
 | `pipeline/to_pdf.py`                    | `pdf_tool_timeout`          | `tool`, `seconds`               | user  |
 | `pipeline/to_pdf.py`                    | `pdf_pandoc_failed`         | `detail`                        | user  |

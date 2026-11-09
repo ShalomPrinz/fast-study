@@ -43,6 +43,8 @@ VIDEO_SOURCE_MARKER = ".video_source.json"
 # LaTeX the backend keeps only on a hard render failure. Dotfiles never become tree rows.
 PDF_WARNING_MARKER = ".pdf_warning"
 PDF_BUILD_TEX_MARKER = ".pdf_build.tex"
+# Lecture-dir empty marker: summary.md still holds uncropped figure links; presence is the fact, and it follows summary.md.
+FIGURES_PENDING_MARKER = ".figures_pending"
 # Lecture-dir empty marker: the user studied it. A video upload keeps it — it describes the study, not the video.
 DONE_MARKER = ".done"
 

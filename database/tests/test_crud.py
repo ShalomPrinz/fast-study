@@ -2,7 +2,7 @@
 
 import pytest
 from fs import crud
-from fs.paths import PDF_BUILD_TEX_MARKER, PDF_WARNING_MARKER
+from fs.paths import FIGURES_PENDING_MARKER, PDF_BUILD_TEX_MARKER, PDF_WARNING_MARKER
 
 
 @pytest.fixture
@@ -42,3 +42,28 @@ class TestDeleteFile:
         assert not (lecture / "audio.mp3").exists()
         assert (lecture / PDF_WARNING_MARKER).exists()
         assert (lecture / PDF_BUILD_TEX_MARKER).exists()
+
+
+class TestFiguresPending:
+    def test_deleting_summary_md_drops_the_marker(self, lecture):
+        (lecture / "summary.md").write_text("# s")
+        (lecture / FIGURES_PENDING_MARKER).write_bytes(b"")
+
+        crud.delete_file("Algo", "L1", "summary.md", "lecture")
+
+        assert not (lecture / FIGURES_PENDING_MARKER).exists()
+
+    def test_deleting_another_file_keeps_the_marker(self, lecture):
+        (lecture / "audio.mp3").write_bytes(b"ID3")
+        (lecture / FIGURES_PENDING_MARKER).write_bytes(b"")
+
+        crud.delete_file("Algo", "L1", "audio.mp3", "lecture")
+
+        assert (lecture / FIGURES_PENDING_MARKER).exists()
+
+    def test_video_wipe_drops_the_marker(self, lecture):
+        (lecture / FIGURES_PENDING_MARKER).write_bytes(b"")
+
+        crud.write_video("Algo", "L1", "lecture", b"mp4")
+
+        assert not (lecture / FIGURES_PENDING_MARKER).exists()

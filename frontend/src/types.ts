@@ -72,6 +72,8 @@ export interface Lecture {
   removed: RemovableFile[]
   // The user marked it studied; always present.
   done: boolean
+  // The summary's graphs wait to be cropped (the `.figures_pending` marker); always present.
+  figuresPending: boolean
   // The discovery row's `ref` its video came from; absent for a hand-placed video. Kept after the video is removed.
   videoSource?: string
 }

@@ -1,5 +1,6 @@
 import type { InFlightEntry, Kind, RetryInfo, RunError, RunnerStatus } from '@/types'
 import { parseInFlightKey } from '@/shared/utils/inFlightKey'
+import { isFiguresError } from '@/shared/utils/runError'
 
 // An in-flight entry that is a lecture or recitation, as the lecture-only helpers need it.
 export type LectureRun = InFlightEntry & { kind: Kind }
@@ -19,7 +20,7 @@ export function waitingRetries(errors: Record<string, RunError>): WaitingRetry[]
   const out: WaitingRetry[] = []
   for (const [key, error] of Object.entries(errors)) {
     const id = parseInFlightKey(key)
-    if (!id || id.kind === 'assignment' || !error.retry) continue
+    if (!id || id.kind === 'assignment' || !error.retry || isFiguresError(error)) continue
     out.push({ course: id.course, lecture: id.lecture, kind: id.kind, retry: error.retry })
   }
   return out.sort((a, b) => Date.parse(a.retry.at) - Date.parse(b.retry.at))

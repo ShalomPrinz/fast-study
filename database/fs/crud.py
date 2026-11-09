@@ -8,6 +8,7 @@ from .paths import (
     ARCHIVED_MARKER,
     ASSIGNMENTS_DIR,
     DONE_MARKER,
+    FIGURES_PENDING_MARKER,
     LECTURES_ONLY_MARKER,
     OVERVIEW_DIR,
     PDF_BUILD_TEX_MARKER,
@@ -191,6 +192,7 @@ def write_video(
             "transcript.partial.meta.json",
             PDF_WARNING_MARKER,
             PDF_BUILD_TEX_MARKER,
+            FIGURES_PENDING_MARKER,
             SUMMARY_MATERIALS_MARKER,
             # The old ref names the video being replaced; dropped strictly so a failed new write leaves none, never a stale one.
             VIDEO_SOURCE_MARKER,
@@ -230,6 +232,7 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
         forget_meta(d, file)
     if file == "summary.md":
         (d / SUMMARY_MATERIALS_MARKER).unlink(missing_ok=True)
+        (d / FIGURES_PENDING_MARKER).unlink(missing_ok=True)
     if file == "summary.pdf":
         (d / PDF_WARNING_MARKER).unlink(missing_ok=True)
         (d / PDF_BUILD_TEX_MARKER).unlink(missing_ok=True)

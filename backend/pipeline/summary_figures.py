@@ -13,6 +13,7 @@ from xml.etree import ElementTree as ET
 import pypdfium2 as pdfium
 from google.genai import types
 from PIL import Image
+from services.errors import CodedError
 from services.llm_client import LLMClient
 from services.resources import resource_path
 
@@ -98,6 +99,8 @@ class FigureSources:
     pictures: dict[str, Picture] = field(default_factory=dict)
     labels: dict[str, str] = field(default_factory=dict)
     files: dict[str, bytes] = field(default_factory=dict)
+    # Set when the box call failed: the PDF links stay raw for a later `figures` run.
+    boxes_failed: CodedError | None = None
 
     def has_sources(self) -> bool:
         return bool(self.pdfs or self.pictures)
@@ -437,16 +440,27 @@ def _render_page(pdf_path: Path, page_no: int):
         doc.close()
 
 
+def boxes_error(e: Exception) -> CodedError:
+    """The box call's failure as a coded one: a Gemini availability or quota error keeps its own
+    code (auto retry classifies it), anything else is `figure_boxes_failed`."""
+
+    if isinstance(e, CodedError) and e.code.startswith("gemini_"):
+        return e
+    return CodedError(
+        f"the figure box call failed: {e}", "figure_boxes_failed", detail=str(e)
+    )
+
+
 def resolve_figures(summary: str, sources: FigureSources) -> str:
-    """Turn the summary's image links into figures: fills `sources.files` with `figN.ext` bytes and
-    returns the summary with each kept link rewritten to `figures/figN.ext`. A figure that cannot be
-    made drops its line, never the summary; an unexpected error keeps the summary with no figures."""
+    """Fill `sources.files` with `figN.ext` bytes and return the summary with kept links rewritten.
+    A failed figure drops its line; a failed box call keeps PDF links raw and sets `boxes_failed`."""
 
     try:
         return _resolve(summary, sources)
     except Exception:
         log.exception("figures: resolution failed, keeping the summary without figures")
         sources.files.clear()
+        sources.boxes_failed = None
         try:
             return _IMAGE_LINE_AND_BREAK_RE.sub("", summary)
         except Exception:
@@ -454,8 +468,9 @@ def resolve_figures(summary: str, sources: FigureSources) -> str:
             return summary
 
 
-def _resolve(summary: str, sources: FigureSources) -> str:
-    links = find_links(summary)
+def _candidates(links: list[Link], sources: FigureSources) -> list[Link]:
+    """The links that name a known source, capped at MAX_FIGURES; the rest are logged and dropped."""
+
     candidates: list[Link] = []
     for link in links:
         if link.page is not None and link.material in sources.pdfs:
@@ -471,10 +486,16 @@ def _resolve(summary: str, sources: FigureSources) -> str:
             log.warning(
                 "figures: dropping %r: over the %d cap", link.caption, MAX_FIGURES
             )
+    return candidates
 
-    made: dict[
-        int, tuple[str, bytes]
-    ] = {}  # id of the link in `candidates` → (ext, bytes)
+
+def _make_figures(
+    candidates: list[Link], sources: FigureSources
+) -> tuple[dict[int, tuple[str, bytes]], set[int]]:
+    """Make each candidate's figure: (index in `candidates` → (ext, bytes), the indexes whose PDF
+    page was rendered but whose box call failed — also recorded on `sources.boxes_failed`)."""
+
+    made: dict[int, tuple[str, bytes]] = {}
     pages: dict[int, tuple[Image.Image, bytes]] = {}
     for fid, link in enumerate(candidates):
         if link.picture is not None:
@@ -488,48 +509,139 @@ def _resolve(summary: str, sources: FigureSources) -> str:
         rendered = _render_page(sources.pdfs[link.material], link.page)
         if rendered is not None:
             pages[fid] = (rendered, _png(rendered))
-    if pages:
+    if not pages:
+        return made, set()
+    try:
+        boxes = request_boxes(
+            [
+                (fid + 1, candidates[fid].caption, candidates[fid].page, png)
+                for fid, (_, png) in pages.items()
+            ]
+        )
+    except Exception as e:
+        log.warning("figures: box call failed, keeping the PDF links raw: %s", e)
+        sources.boxes_failed = boxes_error(e)
+        return made, set(pages)
+    for fid, (img, _) in pages.items():
+        link = candidates[fid]
+        px = box_to_pixels(boxes.get(fid + 1), *img.size)
+        snapped = snap_box(img.convert("L"), px) if px else None
+        if snapped is None:
+            log.warning("figures: dropping %r: no usable box", link.caption)
+            continue
         try:
-            boxes = request_boxes(
-                [
-                    (fid + 1, candidates[fid].caption, candidates[fid].page, png)
-                    for fid, (_, png) in pages.items()
-                ]
+            data = _crop_pdf_page(
+                sources.pdfs[link.material], link.page - 1, snapped, img.size
             )
         except Exception as e:
-            log.warning("figures: box call failed, dropping every PDF figure: %s", e)
-            boxes = {}
-        for fid, (img, _) in pages.items():
-            link = candidates[fid]
-            px = box_to_pixels(boxes.get(fid + 1), *img.size)
-            snapped = snap_box(img.convert("L"), px) if px else None
-            if snapped is None:
-                log.warning("figures: dropping %r: no usable box", link.caption)
-                continue
-            try:
-                data = _crop_pdf_page(
-                    sources.pdfs[link.material], link.page - 1, snapped, img.size
-                )
-            except Exception as e:
-                log.warning("figures: dropping %r: crop failed: %s", link.caption, e)
-                continue
-            made[fid] = ("pdf", data)
+            log.warning("figures: dropping %r: crop failed: %s", link.caption, e)
+            continue
+        made[fid] = ("pdf", data)
+    return made, set()
 
-    out, pos, number = [], 0, 0
+
+def _number(
+    candidates: list[Link],
+    made: dict[int, tuple[str, bytes]],
+    sources: FigureSources,
+    first: int,
+) -> dict[tuple[int, int], str]:
+    """Name the survivors `fig<first>`, `fig<first+1>`… in document order, filling `sources.files`;
+    returns link span → file name."""
+
     names: dict[tuple[int, int], str] = {}
+    number = first
     for fid, link in enumerate(candidates):
         if fid in made:
-            number += 1
             ext, data = made[fid]
             names[link.span] = f"fig{number}.{ext}"
             sources.files[f"fig{number}.{ext}"] = data
+            number += 1
+    return names
+
+
+def _resolve(summary: str, sources: FigureSources) -> str:
+    links = find_links(summary)
+    candidates = _candidates(links, sources)
+    made, failed = _make_figures(candidates, sources)
+    names = _number(candidates, made, sources, 1)
+    keep = {candidates[fid].span for fid in failed}
+
+    out, pos = [], 0
     for link in links:
         out.append(summary[pos : link.span[0]])
         pos = link.span[1]
         name = names.get(link.span)
         if name:
             out.append(f"![{link.caption}](figures/{name})")
+        elif link.span in keep:
+            out.append(summary[link.span[0] : link.span[1]])
         elif pos < len(summary) and summary[pos] == "\n":
             pos += 1  # the dropped line's own newline
+    out.append(summary[pos:])
+    return "".join(out)
+
+
+# ---- The retry: crop the links a failed box call left raw ----
+
+_FIGURE_NUMBER_RE = re.compile(r"fig(\d+)\.")
+
+
+def next_figure_number(stored: list[str], summary: str) -> int:
+    """One past the highest `figN` among the stored figures and the summary's own links."""
+
+    found = [int(m[1]) for name in stored if (m := _FIGURE_NUMBER_RE.match(name))]
+    found += [int(m[1]) for m in re.finditer(r"figures/fig(\d+)\.", summary)]
+    return max(found, default=0) + 1
+
+
+def raw_pdf_links(summary: str) -> list[Link]:
+    """The standalone `name.pdf#page=N` image lines still waiting for a crop."""
+
+    return [link for link in find_links(summary) if link.page is not None]
+
+
+def crop_pdf_links(
+    summary: str, sources: FigureSources, first: int
+) -> list[tuple[str, str]]:
+    """Make figures for the raw PDF links from number `first`: (link line, replacement) pairs, the
+    replacement empty for a dropped figure. Raises the box call's coded error when it fails."""
+
+    links = raw_pdf_links(summary)
+    candidates = _candidates(links, sources)
+    made, _ = _make_figures(candidates, sources)
+    if sources.boxes_failed is not None:
+        raise sources.boxes_failed
+    names = _number(candidates, made, sources, first)
+    return [
+        (
+            summary[link.span[0] : link.span[1]],
+            f"![{link.caption}](figures/{names[link.span]})"
+            if link.span in names
+            else "",
+        )
+        for link in links
+    ]
+
+
+def apply_replacements(summary: str, pairs: list[tuple[str, str]]) -> str:
+    """Replace each raw PDF link line of `summary` that matches a pair's first item (in order, so
+    duplicates pair up one by one); every other line, an edit made since, stays as it is."""
+
+    waiting: dict[str, list[str]] = {}
+    for line, replacement in pairs:
+        waiting.setdefault(line, []).append(replacement)
+    out, pos = [], 0
+    for link in raw_pdf_links(summary):
+        queue = waiting.get(summary[link.span[0] : link.span[1]])
+        if not queue:
+            continue
+        replacement = queue.pop(0)
+        out.append(summary[pos : link.span[0]])
+        pos = link.span[1]
+        if replacement:
+            out.append(replacement)
+        elif pos < len(summary) and summary[pos] == "\n":
+            pos += 1
     out.append(summary[pos:])
     return "".join(out)

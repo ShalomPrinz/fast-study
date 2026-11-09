@@ -45,6 +45,17 @@ export async function runStep(
   )
 }
 
+// Re-asks Gemini where the summary's graphs are and crops them; answers `busy` while the lecture runs.
+export async function runFigures(
+  course: string,
+  lecture: string,
+  kind?: Kind,
+): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(
+    `${lectureBase(course, lecture)}/run/figures${kindQuery(kind)}`,
+  )
+}
+
 // Starts an assignment's doc generation or PDF re-render; `fresh` applies to `*_pdf` only.
 export async function runAssignmentStep(
   course: string,

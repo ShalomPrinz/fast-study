@@ -281,21 +281,40 @@ class TestResolve:
         assert out.startswith("a\n\n") and out.rstrip().endswith("b")
         assert list(src.files) == ["fig1.pdf"]
 
-    def test_a_failed_box_call_drops_every_pdf_figure_but_keeps_pictures(
+    def test_a_failed_box_call_keeps_the_pdf_links_raw_and_still_makes_pictures(
         self, tmp_path
     ):
         src = _sources(tmp_path)
         md = f"{GOLDEN_LINES}\n![תמונה](material.2.pptx#image4.png)\n"
         with patch.object(sf, "request_boxes", side_effect=RuntimeError("503")):
             out = sf.resolve_figures(md, src)
-        assert out.strip() == "![תמונה](figures/fig1.png)"
+        assert out == (
+            f"{GOOD}\n\n![עקומות](material.pdf#page=2)\n![תמונה](figures/fig1.png)\n"
+        )
         assert list(src.files) == ["fig1.png"]
+        assert src.boxes_failed.code == "figure_boxes_failed"
+        assert src.boxes_failed.params == {"detail": "503"}
 
-    def test_a_malformed_box_reply_drops_the_pdf_figures(self, tmp_path):
+    def test_a_gemini_failure_keeps_its_own_code(self, tmp_path):
+        from services.errors import CodedError
+
+        src = _sources(tmp_path)
+        err = CodedError("busy", "gemini_overloaded", model="m")
+        with patch.object(sf, "request_boxes", side_effect=err):
+            sf.resolve_figures(f"{GOOD}\n", src)
+        assert src.boxes_failed is err
+
+    def test_a_malformed_box_reply_keeps_the_pdf_links(self, tmp_path):
         src = _sources(tmp_path)
         with patch.object(sf, "request_boxes", side_effect=KeyError("figures")):
+            assert sf.resolve_figures(f"{GOOD}\n", src) == f"{GOOD}\n"
+        assert src.files == {} and src.boxes_failed.code == "figure_boxes_failed"
+
+    def test_an_unusable_box_is_not_a_box_call_failure(self, tmp_path):
+        src = _sources(tmp_path)
+        with patch.object(sf, "request_boxes", _boxes(i1=None)):
             assert sf.resolve_figures(f"{GOOD}\n", src) == ""
-        assert src.files == {}
+        assert src.boxes_failed is None
 
     def test_no_more_than_eight_figures_survive(self, tmp_path):
         src = _sources(tmp_path)
@@ -324,6 +343,44 @@ class TestResolve:
 
 
 GOLDEN_LINES = f"{GOOD}\n\n![עקומות](material.pdf#page=2)"
+
+
+class TestRetryHelpers:
+    def test_next_number_follows_the_highest_stored_or_linked_figure(self):
+        assert sf.next_figure_number([], "") == 1
+        assert sf.next_figure_number(["fig1.png", "fig4.pdf"], "") == 5
+        assert sf.next_figure_number(["fig1.png"], "![x](figures/fig7.pdf)") == 8
+
+    def test_crop_pdf_links_numbers_from_first_and_leaves_other_lines(self, tmp_path):
+        src = FigureSources(pdfs={"material.pdf": DECK_PDF})
+        md = f"![k](figures/fig1.png)\n\n{GOOD}\n\n![x](material.pdf#page=3)\n"
+        with patch.object(sf, "request_boxes", _boxes(i1=TIGHT[1], i2=None)):
+            pairs = sf.crop_pdf_links(md, src, 2)
+        assert pairs == [
+            (GOOD, "![גרף טוב](figures/fig2.pdf)"),
+            ("![x](material.pdf#page=3)", ""),
+        ]
+        assert list(src.files) == ["fig2.pdf"]
+
+    def test_crop_pdf_links_raises_the_box_failure(self, tmp_path):
+        src = FigureSources(pdfs={"material.pdf": DECK_PDF})
+        with patch.object(sf, "request_boxes", side_effect=RuntimeError("x")):
+            with pytest.raises(Exception) as e:
+                sf.crop_pdf_links(f"{GOOD}\n", src, 1)
+        assert e.value.code == "figure_boxes_failed"
+
+    def test_apply_replaces_only_matching_lines(self):
+        md = f"a\n\n{GOOD}\n\nedited\n\n![x](material.pdf#page=3)\n\n{GOOD}\n"
+        out = sf.apply_replacements(
+            md,
+            [
+                (GOOD, "![גרף טוב](figures/fig2.pdf)"),
+                ("![x](material.pdf#page=3)", ""),
+                (GOOD, ""),
+            ],
+        )
+        assert out == "a\n\n![גרף טוב](figures/fig2.pdf)\n\nedited\n\n\n"
+        assert sf.apply_replacements(md, [("![nope](a.pdf#page=1)", "")]) == md
 
 
 # ---- PPTX pictures ----

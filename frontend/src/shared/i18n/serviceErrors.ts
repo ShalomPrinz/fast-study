@@ -114,6 +114,10 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       '{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}',
   }),
+  // Gemini's own error text rides in `detail`.
+  figure_boxes_failed: msg({
+    message: "Gemini didn't say where the images are in the slides, so they were not cropped.",
+  }),
   assignment_inputs_empty: msg({
     message: 'Nothing to send to Gemini — switch on a file or choose course material.',
   }),

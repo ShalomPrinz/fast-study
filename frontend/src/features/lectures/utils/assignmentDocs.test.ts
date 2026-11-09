@@ -120,6 +120,7 @@ const lecture = (name: string, summary: boolean, size = 0): Lecture => ({
   transcribePartial: null,
   removed: [],
   done: false,
+  figuresPending: false,
 })
 const course = (): Course => ({
   name: 'C',
