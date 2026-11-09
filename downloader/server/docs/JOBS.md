@@ -160,7 +160,7 @@ On a clean exit the runner posts `{operation, file_size_bytes, duration_seconds}
 
 - `operation` is per tool (`curl`, `yt-dlp`, and `fetch` as `download:material`, assignment files included): a curl-replayed in-site `.mp4` and a yt-dlp fetch have very different
   throughput curves, and one merged regression makes both estimates worse.
-- `duration_seconds` is wall-clock spawn → exit; the upload is a separate concern.
+- `duration_seconds` is wall-clock first byte on disk → exit, the first byte seen by an `fs.watch` on the temp dir (opened before the spawn, closed at first byte and on every exit, since Windows locks a watched dir against its removal). A wait in auto's gate or a proxy queue is not charged, and neither is a pre-spawn `cookies.txt`. A clean exit with no byte seen sends nothing; a sample floors at 1 ms (the backend rejects a zero). `startedAt` (the bar's clock) stays the spawn. The upload is a separate concern.
 - `file_size_bytes` is the bytes measured on disk, falling back to the probed size. The backend
   rejects a non-positive size, so a job with neither sends nothing.
 - A non-zero exit or a cancel sends nothing — a truncated download is not a valid sample. Fire-and-forget and

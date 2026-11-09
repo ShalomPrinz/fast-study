@@ -10,6 +10,7 @@ import {
   emitLog,
   emitError,
   formatBytes,
+  measureBytes,
 } from '../progress.js';
 import { recordDownloadTiming } from '../services/timing.js';
 import { onAutodl } from '../services/autodl.js';
@@ -116,6 +117,7 @@ export async function runDownloadJob(
   const signal = jobSignal(jobId);
   if (!signal) return; // a restart dropped the job during the retry wait: nothing to run against
   const tempDir = makeTempDir();
+  let stopWatch = () => {};
   try {
     // Leading blank line is a TTY-only spacer for the in-place render. Under concurrently
     // stdout is a pipe where each newline gets its own `Downloader |` prefix.
@@ -132,16 +134,6 @@ export async function runDownloadJob(
     // `env` is a downloader's own additions to this process's environment, never a replacement:
     // yt-dlp needs ELECTRON_RUN_AS_NODE set on its spawn to accept the launcher as a JS runtime.
     const { command, args, env } = downloader.buildCommand(input, tempDir);
-    // stdio ignore/ignore/pipe: child stays silent; stderr captured for error detail.
-    const spawnedAt = Date.now();
-    const child = spawn(command, args, {
-      cwd: tempDir,
-      stdio: ['ignore', 'ignore', 'pipe'],
-      env: { ...process.env, ...env },
-      signal,
-      ...NO_WINDOW,
-    });
-    const tail = makeStderrTail(child);
     const entry = {
       label,
       tempDir,
@@ -152,10 +144,39 @@ export async function runDownloadJob(
       lastEmit: 0,
       emitted: false,
     };
+    // The timing sample counts from the first byte on disk, so a wait in auto's gate or a proxy
+    // queue is not charged to the transfer. Watched before the spawn so a fast child can't beat it.
+    let firstByteAt = null;
+    let watcher = null;
+    stopWatch = () => {
+      try {
+        watcher?.close(); // on Windows an open watch holds the dir, so it must close before the rm
+      } catch {}
+      watcher = null;
+    };
+    try {
+      watcher = fs.watch(tempDir, () => {
+        if (firstByteAt === null && measureBytes(entry) > 0) {
+          firstByteAt = Date.now();
+          stopWatch();
+        }
+      });
+      watcher.on('error', stopWatch); // a watch failure costs only the sample
+    } catch {}
+    // stdio ignore/ignore/pipe: child stays silent; stderr captured for error detail.
+    const child = spawn(command, args, {
+      cwd: tempDir,
+      stdio: ['ignore', 'ignore', 'pipe'],
+      env: { ...process.env, ...env },
+      signal,
+      ...NO_WINDOW,
+    });
+    const tail = makeStderrTail(child);
     registerDownload(tempDir, entry);
     startJob(jobId, entry); // the job reads bytes off the same entry the renderer polls
 
     child.on('error', (err) => {
+      stopWatch();
       // An abort kills the child and surfaces here as an AbortError; `close` ends it as cancelled.
       if (signal?.aborted) return;
       deregisterDownload(tempDir);
@@ -167,6 +188,7 @@ export async function runDownloadJob(
       removeTempDir(tempDir);
     });
     child.on('close', async (code) => {
+      stopWatch();
       deregisterDownload(tempDir);
       const finalBytes = freezeJobBytes(jobId); // last measurement before the upload deletes the temp dir
       // Killed by a cancel: whatever reached the temp dir is partial, so nothing is uploaded or timed.
@@ -240,7 +262,14 @@ export async function runDownloadJob(
         return;
       }
       // Timing sample only after a clean exit — a truncated download is not a valid duration
-      recordDownloadTiming(downloader.tool, finalBytes || bytes, (Date.now() - spawnedAt) / 1000);
+      // No byte ever seen: the clock never started, and the spawn-to-exit wait is not a sample.
+      // The backend rejects a zero duration, so a same-millisecond first byte and exit floors at 1 ms.
+      if (firstByteAt !== null)
+        recordDownloadTiming(
+          downloader.tool,
+          finalBytes || bytes,
+          Math.max(0.001, (Date.now() - firstByteAt) / 1000),
+        );
       markStoring(jobId);
       // Not done at exit 0 — the bytes are still in a temp dir nobody else can see.
       // The job turns `done` only once the database has them.
@@ -257,6 +286,7 @@ export async function runDownloadJob(
       tool: downloader.tool,
       detail: err.message,
     });
+    stopWatch();
     removeTempDir(tempDir);
   }
 }

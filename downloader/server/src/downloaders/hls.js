@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { uploadVideo } from '../services/database.js';
 import { probeHlsBytes } from '../services/hls.js';
+import { COOKIE_FILE } from '../services/autodl.js';
 import { ytdlp, buildHlsArgs, buildCookieJar } from './ytdlp.js';
 import { toolPath } from '@faststudy/tools';
 
@@ -22,7 +23,7 @@ export const hls = {
 function writeCookieJar(url, headers, tempDir) {
   const jar = buildCookieJar(url, headers);
   if (!jar) return null;
-  const file = join(tempDir, 'cookies.txt');
+  const file = join(tempDir, COOKIE_FILE);
   writeFileSync(file, jar, { mode: 0o600 });
   return file;
 }

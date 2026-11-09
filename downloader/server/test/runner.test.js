@@ -94,6 +94,58 @@ test('a fetch job reports and records download:material', async () => {
   assert.ok(bodies.at(-1).file_size_bytes > 0);
 });
 
+test('the timing sample starts at the first byte, not the spawn', async () => {
+  const before = bodies.length;
+  const { downloader } = fakeDownloader(
+    "setTimeout(() => { require('fs').writeFileSync('video.mp4', 'x'); setTimeout(() => {}, 150) }, 800)",
+  );
+  const id = start(downloader, 'late-byte');
+  await until(() => job(id).status === 'done');
+  await until(() => bodies.length === before + 1);
+  const d = bodies.at(-1).duration_seconds;
+  assert.ok(d >= 0.1 && d < 0.6, `got ${d}`);
+});
+
+test('a tiny fast file records a positive sample that excludes the wait before it', async () => {
+  const before = bodies.length;
+  const { downloader } = fakeDownloader(
+    "setTimeout(() => { require('fs').writeFileSync('video.mp4', 'x'); setTimeout(() => {}, 150) }, 600)",
+  );
+  const id = start(downloader, 'tiny');
+  await until(() => job(id).status === 'done');
+  await until(() => bodies.length === before + 1);
+  const d = bodies.at(-1).duration_seconds;
+  assert.ok(d >= 0.1 && d < 0.4, `got ${d}`);
+});
+
+test('a pre-spawn cookies.txt does not start the clock', async () => {
+  const before = bodies.length;
+  const { downloader } = fakeDownloader(
+    "setTimeout(() => require('fs').writeFileSync('cookies.txt', 'jar2'), 300);" +
+      "setTimeout(() => { require('fs').writeFileSync('video.mp4', 'x'); setTimeout(() => {}, 200) }, 700)",
+  );
+  downloader.measure = 'dir';
+  const build = downloader.buildCommand;
+  downloader.buildCommand = (input, tempDir) => {
+    fs.writeFileSync(path.join(tempDir, 'cookies.txt'), 'jar');
+    return build(input, tempDir);
+  };
+  const id = start(downloader, 'cookie', 'yt-dlp');
+  await until(() => job(id).status === 'done');
+  await until(() => bodies.length === before + 1);
+  const d = bodies.at(-1).duration_seconds;
+  assert.ok(d >= 0.1 && d < 0.35, `got ${d}`);
+});
+
+test('a clean exit with no byte seen records no sample', async () => {
+  const before = samples.length;
+  const { downloader } = fakeDownloader('0');
+  const id = start(downloader, 'no-byte');
+  await until(() => job(id).status === 'done' || job(id).status === 'error');
+  await new Promise((r) => setTimeout(r, 150));
+  assert.equal(samples.length, before);
+});
+
 test('cancelling a running job kills the child and leaves no file, upload or sample', async () => {
   const before = samples.length;
   const { downloader, seen } = fakeDownloader(WRITE_THEN_HANG);

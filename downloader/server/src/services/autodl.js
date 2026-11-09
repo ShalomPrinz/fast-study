@@ -32,8 +32,10 @@ export function autodlHeaderList(url) {
 export const HEADER_FILE = 'request-headers.txt';
 // auto's response headers, dumped by curl so the runner can read the status of a refusal.
 export const RESPONSE_FILE = 'response-headers.txt';
+// yt-dlp's cookie jar for a replayed HLS capture; written before the spawn, so not a downloaded byte.
+export const COOKIE_FILE = 'cookies.txt';
 // The temp-dir files that are not the download, which a byte count leaves out.
-export const AUTODL_FILES = new Set([HEADER_FILE, RESPONSE_FILE]);
+export const AUTODL_FILES = new Set([HEADER_FILE, RESPONSE_FILE, COOKIE_FILE]);
 
 // curl's failure, retry and stall flags for `url`; auto's get only a connect timeout (loopback), no retry or stall
 // flag, so its refusal stays typed and a gate-queue wait is not mistaken for a stall (docs/DOWNLOAD.md). Writes autodlHeaders to a file in `tempDir` for auto.
