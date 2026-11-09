@@ -38,11 +38,12 @@ never saved and a later failure or a cancelled run does not lose a good one.
 
 ## `kitchen-sink.md`
 
-Its contents come from enumerating the branches in `backend/assets/templates/` — pandoc 3.13's
-stock template, its embedded partials (`pandoc --print-default-data-file templates/common.latex`)
-and the local `fonts.latex` — and `to_pdf.py`'s `LATEX_HEADER`, not from sampling summaries. Every
-block pulls in a package, and dropping one drops that package from the cache. Summary figures
-are a pdfium-cropped one-page PDF (`probe.pdf`) and a PNG (`probe.png`), both included by
+It carries two kinds of content, neither sampled from summaries. Blocks that pull packages come from
+enumerating the branches in `backend/assets/templates/` — pandoc 3.13's stock template, its embedded
+partials (`pandoc --print-default-data-file templates/common.latex`) and the local `fonts.latex` —
+and `to_pdf.py`'s `LATEX_HEADER`; dropping a package block drops that package from the cache. Lines
+that come from the preprocessing helpers run what they emit through the strict render, described
+below. Summary figures are a pdfium-cropped one-page PDF (`probe.pdf`) and a PNG (`probe.png`), both included by
 xdvipdfmx natively, so neither adds a cache file beyond `graphicx`, which a summary with figures
 loads. No summary in the corpus has a callout, link, strikeout, `\cancel` or spanning grid table, so
 `tcolorbox`, `soul`, `cancel` and `multirow` reach the cache only because the sink asks. `svg` is the
@@ -52,8 +53,14 @@ needs; without it a render fails `pdf_missing_font`.
 
 - **Preprocessed as the app does**, through `convert_to_pdf`'s `apply_outside_fences` +
   `preprocess_markdown`, so a package a preprocessing change starts to need lands in the cache at the
-  prime, but only for constructs the sink carries. Branches the sink never triggers, today its math
-  helpers, stay unprimed by this render.
+  prime, but only for constructs the sink carries. Its `\text{}` and `gradient $x$` lines and its
+  LaTeX-specials code span render what the helpers emit: `\ `, `\text{\RL{}}`, `\text{\LR{}}`,
+  `\ensuremath`, a merged `\LR{$x$}` and every `_latex_escape` output. Those lines pull no cache file
+  today, so they guard the next change rather than fill the cache. Helpers that write no LaTeX command
+  (`close_unbalanced_display_math`, `normalize_dashes`, `unwrap_math_code`, `demote_math_identifier`,
+  `unwrap_math_text_macros`, `normalize_math_spans`, `ensure_blank_before_lists`) never fire here, and
+  neither do `wrap_english_phrases`' `\LR{\textenglish{}}` and literal `\command` runs, which stay
+  unrendered by the prime; measured, those two add no cache file.
 - `probe.png` and `probe.pdf` sit beside the `.tex` because `drop_missing_images.lua` silently drops
   an image that is not a file in the build dir, and with no image left `graphicx` never loads.
 - **Rendered strict** — no `-Z continue-on-errors`, unlike the app. Under the app's flags an

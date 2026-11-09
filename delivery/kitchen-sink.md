@@ -26,6 +26,12 @@ $$A\mathbf{x} - x_0 \mathbf{1} \le \mathbf{b}_{\mathbf{i}_{\mathbf{j}}}$$
 
 $$\frac{\cancel{a}\,b}{\cancel{a}} = b$$
 
+מקרה $5 \text{ תאים}$, מקרה $\text{תאים } 7$ ומקרה $x \text{ s.t. } y \text{ } z$.
+
+המשתנה gradient $x$ וגם $y$ descent.
+
+`a_b^c~d\e{f}%&#$`
+
 | עמודה א | עמודה ב | Value |
 | ------- | ------- | ----: |
 | ערך     | ערך שני | 3.14  |
