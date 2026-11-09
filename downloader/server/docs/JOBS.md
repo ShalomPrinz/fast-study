@@ -131,7 +131,7 @@ list, wherever the file is hosted: a Lemida recording sits on Oracle Cloud) and 
 pasted link auto proxies from the Moodle site (the target is a url on auto); else `'other'` — `/download`,
 `/download-youtube` and any other pasted link. A restart keeps it. `dest` is `'app'` or `'folder'`; an app job's `folder`/`fileName`
 are `null`, a folder job's `course`/`lecture`/`kind` are. A folder job's `fileName` is the requested
-stem until `done`, then the name actually saved (`Talk (2).mp4`). `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `tool` via
+stem until `done`, then the name actually saved (`Talk (2).mp4`). `operation` (`'download:curl'|'download:ytdlp'|'download:material'|null`) derives from `tool` via
 `services/timing.js`. `ref` (or `null`) is the discovery row that spawned the job; jobs sharing a
 `ref` group under one row, which is what keeps a zoom `<name>.1`/`<name>.2` pair together.
 
@@ -158,7 +158,7 @@ stem until `done`, then the name actually saved (`Talk (2).mp4`). `operation` (`
 On a clean exit the runner posts `{operation, file_size_bytes, duration_seconds}` to the backend's
 `POST /timing` (`services/timing.js`), the samples the frontend's ETA regression is built from.
 
-- `operation` is per tool (`fetch` records none): a curl-replayed in-site `.mp4` and a yt-dlp fetch have very different
+- `operation` is per tool (`curl`, `yt-dlp`, and `fetch` as `download:material`, assignment files included): a curl-replayed in-site `.mp4` and a yt-dlp fetch have very different
   throughput curves, and one merged regression makes both estimates worse.
 - `duration_seconds` is wall-clock spawn → exit; the upload is a separate concern.
 - `file_size_bytes` is the bytes measured on disk, falling back to the probed size. The backend

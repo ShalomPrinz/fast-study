@@ -136,7 +136,7 @@ export interface CourseSummary {
   content: string
 }
 
-export type DownloadOperation = 'download:curl' | 'download:ytdlp'
+export type DownloadOperation = 'download:curl' | 'download:ytdlp' | 'download:material'
 export type TimingOperation =
   Step | 'summarize_materials' | 'assignment_intuition' | 'assignment_solution' | DownloadOperation
 

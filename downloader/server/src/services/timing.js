@@ -1,9 +1,13 @@
 import { BACKEND_URL } from '../config.js';
 import { peerHeaders } from '@faststudy/runtime';
 
-// Per-tool buckets: a curl-replayed in-site .mp4 and a yt-dlp YouTube fetch have very
-// different throughput curves, and averaging them into one regression makes both ETAs worse.
-export const OPERATIONS = { curl: 'download:curl', 'yt-dlp': 'download:ytdlp' };
+// Per-tool buckets, since throughput differs by tool and one shared regression worsens every ETA.
+// `fetch` covers material and assignment files as one bucket.
+export const OPERATIONS = {
+  curl: 'download:curl',
+  'yt-dlp': 'download:ytdlp',
+  fetch: 'download:material',
+};
 
 // The download:* operation a tool records under, or null for an unknown/absent tool.
 export function operationForTool(tool) {

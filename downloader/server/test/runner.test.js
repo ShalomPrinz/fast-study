@@ -8,10 +8,15 @@ import path from 'node:path';
 
 // A stand-in backend that counts `POST /timing` samples; set before the runner reads its config.
 const samples = [];
+const bodies = [];
 const backend = http.createServer((req, res) => {
   if (req.url === '/timing') samples.push(req.method);
-  req.resume();
-  res.end('{}');
+  let raw = '';
+  req.on('data', (c) => (raw += c));
+  req.on('end', () => {
+    if (req.url === '/timing') bodies.push(JSON.parse(raw));
+    res.end('{}');
+  });
 });
 await new Promise((r) => backend.listen(0, '127.0.0.1', r));
 process.env.BACKEND_URL = `http://127.0.0.1:${backend.address().port}`;
@@ -24,10 +29,10 @@ const WRITE_THEN_HANG =
   "require('fs').writeFileSync('video.mp4', 'partial'); setInterval(() => {}, 1000)";
 
 // A curl-shaped downloader whose child is `node -e script`; records what the runner did with it.
-function fakeDownloader(script, { probe = async () => 7 } = {}) {
+function fakeDownloader(script, { probe = async () => 7, tool = 'curl' } = {}) {
   const seen = { tempDir: null, built: false, uploads: 0 };
   const downloader = {
-    tool: 'curl',
+    tool,
     measure: 'file',
     probeSize: probe,
     upload: async () => {
@@ -52,8 +57,8 @@ async function until(check) {
   assert.ok(check(), 'condition never held');
 }
 
-function start(downloader, lecture) {
-  const jobId = createJob({ course: 'C', lecture, kind: 'video', tool: 'curl' });
+function start(downloader, lecture, tool = 'curl') {
+  const jobId = createJob({ course: 'C', lecture, kind: 'video', tool });
   runDownloadJob(
     downloader,
     { url: 'http://example.invalid/v.mp4' },
@@ -74,6 +79,19 @@ test('a clean exit uploads and records one timing sample', async () => {
   await until(() => job(id).status === 'done');
   assert.equal(seen.uploads, 1);
   await until(() => samples.length === before + 1);
+});
+
+test('a fetch job reports and records download:material', async () => {
+  const before = bodies.length;
+  const { downloader } = fakeDownloader("require('fs').writeFileSync('video.mp4', 'x')", {
+    tool: 'fetch',
+  });
+  const id = start(downloader, 'fetched', 'fetch');
+  assert.equal(job(id).operation, 'download:material');
+  await until(() => job(id).status === 'done');
+  await until(() => bodies.length === before + 1);
+  assert.equal(bodies.at(-1).operation, 'download:material');
+  assert.ok(bodies.at(-1).file_size_bytes > 0);
 });
 
 test('cancelling a running job kills the child and leaves no file, upload or sample', async () => {

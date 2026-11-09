@@ -55,8 +55,8 @@ mid-download drops that download's bars and status until the name comes back.
 ## Bars and retry
 
 A ref's jobs are the display atoms, sorted by lecture so a pair's bars never reorder. Each
-`JobProgressBar` owns its own `useTimingStats(operation, expectedBytes)` — `download:curl` or
-`download:ytdlp`, two buckets because their throughput differs — so one unknown size blanks only its own
+`JobProgressBar` owns its own `useTimingStats(operation, expectedBytes)` — `download:curl`,
+`download:ytdlp` or `download:material` (a `fetch` job), separate buckets because their throughput differs — so one unknown size blanks only its own
 bar. The `.1`/`.2` title shows only with more than one bar. The bar is `MainView`'s `ProgressBar`, with
 the same states. `startedAt` is the server's clock compared to the browser's `Date.now()`, which assumes
 the two agree.

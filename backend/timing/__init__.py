@@ -13,7 +13,9 @@ DB_PATH = runtime.state_path("timing.db")
 log = logging.getLogger("timing")
 
 # Mirrors the downloader server's tool→operation map
-DOWNLOAD_OPERATIONS = frozenset({"download:curl", "download:ytdlp"})
+DOWNLOAD_OPERATIONS = frozenset(
+    {"download:curl", "download:ytdlp", "download:material"}
+)
 
 ASSIGNMENT_OPERATIONS = frozenset({"assignment_intuition", "assignment_solution"})
 

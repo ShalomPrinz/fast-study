@@ -22,6 +22,10 @@ class TestRecord:
         timing.record("  download:ytdlp  ", 10, 1.0)
         assert _rows()[0][0] == "download:ytdlp"
 
+    def test_accepts_material_download(self):
+        assert timing.record("download:material", 1000, 2.5) == {"status": "ok"}
+        assert _rows() == [("download:material", 1000, 2.5)]
+
     @pytest.mark.parametrize("operation", ["", "   "])
     def test_rejects_blank_operation(self, operation):
         with pytest.raises(CodedError) as e:
