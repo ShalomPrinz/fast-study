@@ -1,6 +1,7 @@
 // Block mode: one headed Chrome on a persistent profile carries Moodle calls, the only client whose clearance
 // the bot manager honours; closing it ends block mode (off the taskbar on Windows). See docs/MOODLE.md § Bot protection.
 import fs from 'node:fs';
+import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { statePath } from '@faststudy/runtime';
 import { launchPersistentBrowser } from '../browser/browserLaunch.js';
@@ -54,6 +55,30 @@ export function configureChallenge(overrides) {
 
 /** Where the window's profile — and with it the bot manager's clearance — lives. */
 export const profileDir = () => statePath('moodle-profile');
+
+// A window killed at quit leaves the profile marked crashed ("Restore pages"), and Translate's flag is not enough: the pref is the control.
+function quietPrefs() {
+  const file = path.join(profileDir(), 'Default', 'Preferences');
+  try {
+    let prefs = {};
+    if (fs.existsSync(file)) prefs = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (prefs === null || typeof prefs !== 'object' || Array.isArray(prefs)) return;
+    prefs.profile = { ...prefs.profile, exit_type: 'Normal', exited_cleanly: true };
+    prefs.translate = { ...prefs.translate, enabled: false };
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    // Temp + rename, so a kill mid-write cannot leave a half-written file.
+    const tmp = `${file}.tmp`;
+    try {
+      fs.writeFileSync(tmp, JSON.stringify(prefs));
+      fs.renameSync(tmp, file);
+    } catch (err) {
+      fs.rmSync(tmp, { force: true });
+      throw err;
+    }
+  } catch {
+    // Unreadable or unwritable: the window just may show the bubbles.
+  }
+}
 
 /**
  * `{ open, captcha, solved }`: a window is up; it is on screen waiting for the user to solve a
@@ -582,6 +607,7 @@ async function openOnce(site, waiter) {
     // clearance earned under a UA Moodle's app-only calls refuse.
     const ua = await deps.userAgent().catch(() => null);
     if (!ua) return false;
+    quietPrefs();
     context = await deps.launch(profileDir(), {
       headless: false,
       viewport: null,

@@ -83,6 +83,51 @@ function fakeRes() {
 
 // ── The launch and the window-state rule ────────────────────────────────────
 
+const prefsPath = () => path.join(statePath('moodle-profile'), 'Default', 'Preferences');
+
+test('launch patches Preferences first: merged, other keys kept', async (t) => {
+  fs.rmSync(statePath('moodle-profile'), { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(prefsPath()), { recursive: true });
+  fs.writeFileSync(
+    prefsPath(),
+    JSON.stringify({
+      a: 1,
+      profile: { exit_type: 'Crashed', name: 'x' },
+      translate: { blocked: ['he'] },
+    }),
+  );
+  const profile = fakeProfile(t);
+  assert.equal(await gated(() => openChallenge(SITE)), 'ready');
+  const want = {
+    a: 1,
+    profile: { exit_type: 'Normal', name: 'x', exited_cleanly: true },
+    translate: { blocked: ['he'], enabled: false },
+  };
+  assert.equal(fs.existsSync(`${prefsPath()}.tmp`), false);
+  // Already patched when the browser starts.
+  assert.deepEqual(JSON.parse(profile.launches[0].prefsAtLaunch), want);
+});
+
+test('launch creates a missing Preferences file', async (t) => {
+  fs.rmSync(statePath('moodle-profile'), { recursive: true, force: true });
+  const profile = fakeProfile(t);
+  assert.equal(await gated(() => openChallenge(SITE)), 'ready');
+  assert.deepEqual(JSON.parse(profile.launches[0].prefsAtLaunch), {
+    profile: { exit_type: 'Normal', exited_cleanly: true },
+    translate: { enabled: false },
+  });
+});
+
+test('corrupt Preferences is left byte-identical and the launch proceeds', async (t) => {
+  fs.rmSync(statePath('moodle-profile'), { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(prefsPath()), { recursive: true });
+  fs.writeFileSync(prefsPath(), '{not json');
+  const profile = fakeProfile(t);
+  assert.equal(await gated(() => openChallenge(SITE)), 'ready');
+  assert.equal(profile.launches.length, 1);
+  assert.equal(fs.readFileSync(prefsPath(), 'utf8'), '{not json');
+});
+
 test('the window launches headed on the persistent profile, always off-screen', async (t) => {
   const profile = fakeProfile(t);
   assert.equal(await gated(() => openChallenge(SITE)), 'ready');

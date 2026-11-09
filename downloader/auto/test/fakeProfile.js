@@ -2,6 +2,7 @@
 // captcha host, runs page.evaluate in Node against a stand-in document whose iframes' fetch is the
 // stubbed globalThis.fetch, and records every window move. Installed through configureChallenge.
 import fs from 'node:fs';
+import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { configureChallenge, closeChallenge } from '../src/moodle/challenge.js';
 import { configureWindowStyle } from '../src/browser/windowStyle.js';
@@ -45,6 +46,8 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs, styleFails =
     },
   });
   const launch = async (dir, opts) => {
+    const prefsFile = path.join(dir, 'Default', 'Preferences');
+    const prefsAtLaunch = fs.existsSync(prefsFile) ? fs.readFileSync(prefsFile, 'utf8') : null;
     fs.mkdirSync(dir, { recursive: true });
     const context = new EventEmitter();
     let url = 'about:blank';
@@ -68,6 +71,7 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs, styleFails =
     });
     Object.assign(context, {
       dir,
+      prefsAtLaunch,
       opts,
       page,
       document: fakeDocument(),
