@@ -74,6 +74,7 @@ _IMAGE_LINE_RE = re.compile(
     rf"^[ \t]*!\[(?P<caption>{IMAGE_CAPTION})\]\((?P<target>[^)\n]*)\)[ \t]*$",
     re.MULTILINE,
 )
+_IMAGE_LINE_AND_BREAK_RE = re.compile(_IMAGE_LINE_RE.pattern + r"\n?", re.MULTILINE)
 _PAGE_RE = re.compile(r"^page=(\d+)$")
 
 
@@ -107,19 +108,33 @@ class FigureSources:
         """Register each file sent as (allocated name, file sent): its label, and the PDF or the
         PPTX's pictures. `dest` holds the original of an Office file, which is sent as text."""
 
-        for name, path in sent:
-            shown = displays.get(name, name)
-            self.labels[path.name] = (
-                f"FILE {name} (original file name: {shown})"
-                if shown != name
-                else f"FILE {name}"
+        # All or nothing: one failure leaves the bag untouched, so no label or source names a file
+        # that was not sent, and the summary runs as it would without figures.
+        pdfs: dict[str, Path] = {}
+        pictures: dict[str, Picture] = {}
+        labels: dict[str, str] = {}
+        try:
+            for name, path in sent:
+                shown = displays.get(name, name)
+                labels[path.name] = (
+                    f"FILE {name} (original file name: {shown})"
+                    if shown != name
+                    else f"FILE {name}"
+                )
+                ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+                if ext == "pdf":
+                    pdfs[name] = path
+                elif ext == "pptx":
+                    for pic in extract_pptx_pictures(dest / name, name, dest):
+                        pictures[pic.ref] = pic
+        except Exception:
+            log.exception(
+                "figures: cannot prepare the figure sources, summarizing without"
             )
-            ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
-            if ext == "pdf":
-                self.pdfs[name] = path
-            elif ext == "pptx":
-                for pic in extract_pptx_pictures(dest / name, name, dest):
-                    self.pictures[pic.ref] = pic
+            return
+        self.pdfs.update(pdfs)
+        self.pictures.update(pictures)
+        self.labels.update(labels)
 
 
 def figures_prompt() -> str:
@@ -425,8 +440,21 @@ def _render_page(pdf_path: Path, page_no: int):
 def resolve_figures(summary: str, sources: FigureSources) -> str:
     """Turn the summary's image links into figures: fills `sources.files` with `figN.ext` bytes and
     returns the summary with each kept link rewritten to `figures/figN.ext`. A figure that cannot be
-    made drops its line, never the summary."""
+    made drops its line, never the summary; an unexpected error keeps the summary with no figures."""
 
+    try:
+        return _resolve(summary, sources)
+    except Exception:
+        log.exception("figures: resolution failed, keeping the summary without figures")
+        sources.files.clear()
+        try:
+            return _IMAGE_LINE_AND_BREAK_RE.sub("", summary)
+        except Exception:
+            log.exception("figures: cannot strip the image lines")
+            return summary
+
+
+def _resolve(summary: str, sources: FigureSources) -> str:
     links = find_links(summary)
     candidates: list[Link] = []
     for link in links:

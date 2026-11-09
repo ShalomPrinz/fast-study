@@ -519,6 +519,62 @@ class TestSummarizeCall:
             "fig1.png"
         ]
 
+    def test_unexpected_resolution_error_keeps_the_summary_without_figures(
+        self, tmp_path
+    ):
+        transcript = tmp_path / "transcript.txt"
+        transcript.write_text("hi")
+        src = _fixture_sources(tmp_path)
+        src.files["fig9.png"] = b"stale"
+        client = _client("# t\n\n![a](material.pdf#page=1)\n\ntext\n")
+        with (
+            patch.object(summarize_mod, "LLMClient", return_value=client),
+            patch.dict(
+                summarize_mod.resolve_figures.__globals__,
+                {"_render_page": MagicMock(side_effect=RuntimeError("boom"))},
+            ),
+        ):
+            out = summarize_mod.summarize(transcript, [src.pdfs["material.pdf"]], src)
+        assert out == "# t\n\n\ntext\n" and src.files == {}
+
+    def test_unexpected_source_error_summarizes_as_without_figures(self, tmp_path):
+        transcript = tmp_path / "transcript.txt"
+        transcript.write_text("hi")
+        pdf = tmp_path / "material.pdf"
+        shutil.copy(DECK_PDF, pdf)
+        pptx = tmp_path / "material.2.pptx"
+        txt = tmp_path / "material.2.pptx.txt"
+        txt.write_text("x")
+        src = FigureSources()
+        with patch.dict(
+            FigureSources.add_materials.__globals__,
+            {"extract_pptx_pictures": MagicMock(side_effect=OSError("disk"))},
+        ):
+            src.add_materials(
+                [("material.pdf", pdf), ("material.2.pptx", txt)], {}, tmp_path
+            )
+        assert not src.has_sources() and src.labels == {} and not pptx.exists()
+        client = _client("# t\n")
+        with patch.object(summarize_mod, "LLMClient", return_value=client):
+            out = summarize_mod.summarize(transcript, [pdf, txt], src)
+        assert out == "# t\n"
+        assert not [
+            c
+            for c in client.generate.call_args.args[0]
+            if isinstance(c, str) and c.startswith("FILE ")
+        ]
+
+    def test_a_failed_summary_call_still_fails(self, tmp_path):
+        transcript = tmp_path / "transcript.txt"
+        transcript.write_text("hi")
+        client = _client("")
+        client.generate.side_effect = RuntimeError("down")
+        with (
+            patch.object(summarize_mod, "LLMClient", return_value=client),
+            pytest.raises(Exception, match="down"),
+        ):
+            summarize_mod.summarize(transcript, [], FigureSources())
+
     def test_no_figures_means_the_request_is_unchanged(self, tmp_path):
         transcript = tmp_path / "transcript.txt"
         transcript.write_text("hi")
