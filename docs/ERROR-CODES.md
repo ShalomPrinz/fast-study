@@ -327,8 +327,9 @@ the Moodle site can answer auto's `moodle_busy`, `link_not_a_video`, `link_dead`
 `link_probe_inconclusive`; `autodl_unreachable` reaches `/download-url` for any URL, since only auto
 can say which URLs are Moodle's.
 
-A section run's target carries a `code` only as auto's `site_captcha_timeout` (no params): on the row
-whose resolve timed out on the captcha, and on each later `moodle` row the run then fails unsent.
+A section run's target carries a `code` (no params) only as auto's `site_captcha_timeout` — on the row
+whose resolve timed out on the captcha, and on each later `moodle` row the run then fails unsent — or
+as `moodle_upstream_error`, on that row alone while the run goes on.
 
 `POST /jobs/:id/restart` answers `job_unknown` (404) for an id already superseded by a restart,
 `job_not_restartable` (409) when a late click lands after the job finished or began storing, and
@@ -343,10 +344,10 @@ on both channels unchanged, so `database_store_failed` is only the fallback for 
 — a network error on the job path, or a non-JSON body. `/upload-pdf` keeps answering 502 either way.
 
 `downloaders/runner.js` likewise ends a job whose file on auto was refused with auto's own
-`code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_reconnect_required`,
+`code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_upstream_error`, `moodle_reconnect_required`,
 `moodle_file_unknown`); a body that is not auto's envelope falls back to `download_tool_failed` /
 `download_auth_failed`. A 401/403 on the run the silent re-resolve started is `download_refused`, since
-that token is fresh and reconnecting would not help. A re-resolve that auto answers `503 site_blocked` or `site_captcha_timeout`
+that token is fresh and reconnecting would not help. A re-resolve that auto answers `503 site_blocked`, `site_captcha_timeout` or `moodle_upstream_error`
 likewise ends the job with that code and params, never `recapture_failed`.
 
 The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live only in `progress.js`'s
@@ -383,6 +384,7 @@ failure (OS reason, `unsupported`, other statuses, a bad URL) carries no `code`.
 | `http/server.js` `sendReconnect`| `moodle_reconnect_required`   | —                        | user  |
 | `moodle/wsClient.js`            | `site_blocked`                | `detail`, `challengeWindow`? | user  |
 | `moodle/wsClient.js`            | `site_captcha_timeout`        | —                        | user  |
+| `moodle/wsClient.js` `moodleFetch` | `moodle_upstream_error`   | `detail`                 | user  |
 | `lib/errors.js` `unreachable`   | `site_unreachable`            | `host`, `detail`, `proxy`? | user  |
 | `http/server.js` `sendPasscode` | `zoom_passcode_required`      | `reason`, `course`, `name` | user |
 | `browser/browserChannel.js`     | `browser_missing`             | `detail`                 | user  |

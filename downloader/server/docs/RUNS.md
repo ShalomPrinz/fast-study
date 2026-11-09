@@ -72,7 +72,7 @@ serially. It differs from a section run in two rules:
 ## Dispositions
 
 Each target is `{ ref, name, kind, media, disposition, moodle?, code? }` — `moodle` as submitted,
-`code` only `site_captcha_timeout` (below):
+`code` only `site_captcha_timeout` (below) or `moodle_upstream_error`:
 
 | disposition    | meaning                                                                    |
 | -------------- | -------------------------------------------------------------------------- |
@@ -97,6 +97,10 @@ The driver maps `downloadItem`'s status (the same function `POST /download-item`
 - **409** → `status:'paused'` at this index (below).
 - **422** → `unsupported`, continue — one row's verdict, not the run's.
 - **anything else** (500, 502, auto unreachable) → `queue-failed`, continue.
+
+**A Moodle 5xx marks its row only.** A row answered `503 moodle_upstream_error` (the 5xx outlasted
+auto's one resend) is `queue-failed` with `code:'moodle_upstream_error'` and no params; no run-level
+flag is set, so the later rows run as usual.
 
 **A captcha left unsolved stops the Moodle rows.** A row answered `503 site_captcha_timeout` (auto
 waited 10 minutes on a captcha nobody solved) is `queue-failed` with `code:'site_captcha_timeout'`,

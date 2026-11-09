@@ -59,6 +59,7 @@ import {
   openMoodleFile,
   pluginfileUrl,
   SiteCaptchaTimeoutError,
+  MoodleUpstreamError,
 } from '../moodle/wsClient.js';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -160,6 +161,11 @@ export function sendUnsupported(res, err) {
 async function sentWall(res, route, e) {
   if (e instanceof SiteCaptchaTimeoutError) {
     logResult(route, `captcha timeout (503): ${e.message}`);
+    send(res, 503, failureOf(e));
+    return true;
+  }
+  if (e instanceof MoodleUpstreamError) {
+    logResult(route, `upstream error (503): ${e.message}`);
     send(res, 503, failureOf(e));
     return true;
   }

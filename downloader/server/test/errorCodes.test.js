@@ -118,6 +118,12 @@ test("a re-resolve maps auto's statuses to its own codes", () => {
     reresolveFailure(503, { error: 'unsolved', code: 'site_captcha_timeout', params: {} }),
     { error: 'unsolved', code: 'site_captcha_timeout', params: {} },
   );
+  // A Moodle 5xx auto resent once keeps its code too; the body has no `status`.
+  const upstream = { detail: 'HTTP 502, text/html' };
+  assert.deepEqual(
+    reresolveFailure(503, { error: 'gateway', code: 'moodle_upstream_error', params: upstream }),
+    { error: 'gateway', code: 'moodle_upstream_error', params: upstream },
+  );
   // status 0 is "never reached auto at all", and reads as the network failure it is.
   assert.deepEqual(reresolveFailure(0, null).params, { detail: 'HTTP network' });
 });

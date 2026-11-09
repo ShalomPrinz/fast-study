@@ -6,6 +6,7 @@ import {
   WsBlockedError,
   WsError,
   WsRedirectError,
+  MoodleUpstreamError,
   getPublicConfig,
 } from './wsClient.js';
 import { candidateRoots, normalizeSite } from './site.js';
@@ -23,6 +24,7 @@ const unsupported = (site, reason) => ({
 function failureDetail(err) {
   if (err instanceof SiteCaptchaTimeoutError) return 'timeout';
   if (err instanceof WsBlockedError) return 'site_blocked';
+  if (err instanceof MoodleUpstreamError) return 'network'; // a 5xx root: closest of the frozen details
   if (err?.name === 'TimeoutError' || err?.name === 'AbortError') return 'timeout';
   return 'network';
 }

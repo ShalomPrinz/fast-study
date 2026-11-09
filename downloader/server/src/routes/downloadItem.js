@@ -43,7 +43,7 @@ export function reresolveFailure(status, body) {
       code: 'recapture_unsupported',
       params: { detail: body?.message ?? null },
     };
-  // A block, or a captcha left unsolved, is auto's own refusal, relayed as the runner relays one from /moodle/file.
+  // A block, an unsolved captcha or a Moodle 5xx is auto's own refusal, relayed as the runner relays one from /moodle/file.
   if (status === 503 && SITE_REFUSALS.has(body?.code))
     return {
       error: body.message ?? body.error ?? 'site blocked',
@@ -53,7 +53,7 @@ export function reresolveFailure(status, body) {
   return recaptureFailed(body?.error ?? `HTTP ${status || 'network'}`);
 }
 
-const SITE_REFUSALS = new Set(['site_blocked', 'site_captcha_timeout']);
+const SITE_REFUSALS = new Set(['site_blocked', 'site_captcha_timeout', 'moodle_upstream_error']);
 
 function recaptureFailed(detail) {
   return { error: `re-capture failed: ${detail}`, code: 'recapture_failed', params: { detail } };

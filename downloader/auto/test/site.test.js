@@ -371,3 +371,11 @@ test('POST /config leaves an omitted site alone and refuses a non-URL', async ()
   assert.equal(cleared.code, 200);
   assert.equal(currentSite(), null);
 });
+
+test('a root answering 5xx twice is unverified with detail network', async (t) => {
+  stubFetch(t, () => reply(502, 'text/html', ''));
+  assert.deepEqual((await gated(() => probeSite('https://x.ac.il'))).params, {
+    site: 'https://x.ac.il',
+    detail: 'network',
+  });
+});

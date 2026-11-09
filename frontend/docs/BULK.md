@@ -23,8 +23,9 @@ Moodle heading or ref contains, so it never collides with a section key and `run
 `services/downloadServer.ts`, plain JS in the server's `runs.js`. Change one, change the other.
 `disposition` is what the run decided — `pending` (not reached), `skipped`, `unsupported`,
 `queue-failed`, or `queued`, the only one whose outcome is still open. `moodle` is the Item's own flag,
-sent per target; `code` is only `site_captcha_timeout`, on the row whose captcha went unsolved and every
-later `moodle` row the server then fails unsent.
+sent per target; `code` is `site_captcha_timeout`, on the row whose captcha went unsolved and every
+later `moodle` row the server then fails unsent, or `moodle_upstream_error`, on a row whose resolve
+hit a persistent Moodle 5xx (the run goes on).
 
 ## Submit
 
@@ -102,6 +103,8 @@ Warning lines cover what the summary cannot; the first shows at once, the other 
 - **Captcha unsolved** (`captchaTimeoutCount`): targets carrying `code: 'site_captcha_timeout'`, with
   that code's catalog sentence. Shown while the run still walks its non-Moodle rows too, since those
   targets are already final.
+- **Moodle server error** (`upstreamErrorCount`): targets carrying `code: 'moodle_upstream_error'`, with
+  that code's catalog sentence, worded "download(s) failed" since material rows hit it too; `queue-failed`, so no other line counts them.
 - **Unverified** (`unverifiedCount`): `queued`, no jobs, not in the tree — the lecture was deleted or
   renamed, the name desynced, or the tree fetch failed (it publishes an empty tree). No action, since
   none is fixable from here.

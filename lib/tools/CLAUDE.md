@@ -22,9 +22,11 @@ the Python half is here with one consumer.
 - **`curl` is deliberately not bundled.** Windows 10+ ships `curl.exe`, so `toolPath('curl')` returns
   the bare name even when a bin dir is set. It is the one `toolPath` exception to "never PATH" and it
   is encoded in `SYSTEM_TOOLS` / `_SYSTEM_TOOLS` rather than left to each caller to remember.
-- **`reg.exe` bypasses `toolPath` and the `/tools` probe.** `downloader/auto` spawns
-  `%SystemRoot%\System32\reg.exe` on Windows only to read the system proxy for a `site_unreachable`
-  hint; it ships with Windows, and a failure only drops the hint, so no feature needs probing.
+- **`reg.exe` and `powershell.exe` bypass `toolPath` and the `/tools` probe.** On Windows only,
+  `downloader/auto` spawns `%SystemRoot%\System32\reg.exe` to read the system proxy for a
+  `site_unreachable` hint, and `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe` to style
+  its parked windows; both ship with Windows, and a failure costs only the hint or the cosmetics, so
+  neither is probed.
 - **`yt-dlp` resolves to the per-user copy when there is one.** In a packaged run `toolPath('yt-dlp')`
   returns `statePath('bin', 'yt-dlp')` if that file exists, because yt-dlp updates itself and the
   install directory is read-only and replaced wholesale by an app update. The branch sits *inside*
