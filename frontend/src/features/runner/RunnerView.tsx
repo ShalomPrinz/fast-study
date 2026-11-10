@@ -432,6 +432,7 @@ export default function RunnerView() {
                           lecture={w.lecture}
                           kind={w.kind}
                           state="failed"
+                          hint={notQueuedTitle(status?.errors ?? {}, w)}
                           note={
                             <RetryLine
                               retry={w.retry}

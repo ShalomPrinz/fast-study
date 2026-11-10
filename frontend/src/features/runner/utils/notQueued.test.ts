@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { RunError, Course, FileStatus, InFlightEntry, Lecture, QueueEntry } from '@/types'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
+import { waitingRetries } from './runnerState'
 import { notQueued, notQueuedState, notQueuedTitle } from './notQueued'
 
 function files(...present: string[]): FileStatus {
@@ -146,6 +147,21 @@ describe('notQueuedTitle', () => {
     expect(notQueuedTitle(errors, item)).toBe(serviceErrorText(error))
     expect(notQueuedTitle(errors, item)).toContain('boom')
     expect(notQueuedTitle({}, item)).toBeUndefined()
+  })
+
+  it('carries the error text for a lecture waiting on an auto retry', () => {
+    const error: RunError = {
+      step: 'summary.md',
+      message: 'rate limited',
+      code: 'gemini_rate_limited',
+      params: { detail: 'slow down' },
+      provider: 'gemini',
+      blocked: false,
+      retry: { at: '2030-01-01T00:00:00Z', attempt: 1 } as RunError['retry'],
+    }
+    const errors = { [inFlightKey('C1', 'L1', 'lecture')]: error }
+    const [w] = waitingRetries(errors)
+    expect(notQueuedTitle(errors, w)).toBe(serviceErrorText(error))
   })
 })
 

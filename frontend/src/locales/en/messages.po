@@ -56,7 +56,7 @@ msgid "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} 
 msgstr "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} other {# summaries}}"
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:460
+#: src/features/runner/RunnerView.tsx:461
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 
@@ -2143,7 +2143,7 @@ msgstr "Not in course"
 msgid "not provided"
 msgstr "not provided"
 
-#: src/features/runner/RunnerView.tsx:455
+#: src/features/runner/RunnerView.tsx:456
 msgid "Not queued"
 msgstr "Not queued"
 
@@ -2630,7 +2630,7 @@ msgstr "Run Remaining"
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
-#: src/features/runner/RunnerView.tsx:467
+#: src/features/runner/RunnerView.tsx:468
 msgid "Run these now"
 msgstr "Run these now"
 
@@ -3261,7 +3261,7 @@ msgstr "Then {0} will be regenerated."
 msgid "These materials are over {limit_mb} MB: {files}. Turn them off for the summary, then try again."
 msgstr "These materials are over {limit_mb} MB: {files}. Turn them off for the summary, then try again."
 
-#: src/features/runner/RunnerView.tsx:489
+#: src/features/runner/RunnerView.tsx:490
 msgid "These won't start until you run them."
 msgstr "These won't start until you run them."
 

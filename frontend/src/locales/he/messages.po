@@ -56,7 +56,7 @@ msgid "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} 
 msgstr "{0, plural, one {קובץ אחד} two {# קבצים} other {# קבצים}} · {1, plural, one {סיכום אחד} two {# סיכומים} other {# סיכומים}}"
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:460
+#: src/features/runner/RunnerView.tsx:461
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {הרצאה אחת לא הושלמה} two {# הרצאות לא הושלמו} other {# הרצאות לא הושלמו}}"
 
@@ -2143,7 +2143,7 @@ msgstr "לא בקורס"
 msgid "not provided"
 msgstr "חסר"
 
-#: src/features/runner/RunnerView.tsx:455
+#: src/features/runner/RunnerView.tsx:456
 msgid "Not queued"
 msgstr "לא בתור"
 
@@ -2630,7 +2630,7 @@ msgstr "הרצת השלבים הנותרים"
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
-#: src/features/runner/RunnerView.tsx:467
+#: src/features/runner/RunnerView.tsx:468
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
@@ -3261,7 +3261,7 @@ msgstr "לאחר מכן {0} ייווצר מחדש."
 msgid "These materials are over {limit_mb} MB: {files}. Turn them off for the summary, then try again."
 msgstr "החומרים האלה גדולים מ-{limit_mb} MB: {files}. כבה אותם בסיכום ונסה שוב."
 
-#: src/features/runner/RunnerView.tsx:489
+#: src/features/runner/RunnerView.tsx:490
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
 
