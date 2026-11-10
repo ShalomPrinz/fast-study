@@ -21,7 +21,7 @@ import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
 import Icon from '@/shared/components/Icon'
-import { cancelRetry, moveToFront, runPipeline } from '@/services/backend'
+import { cancelRetry, runRetryNow, moveToFront, runPipeline } from '@/services/backend'
 import RetryLine from '@/shared/components/RetryLine'
 import { toast, toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
@@ -436,6 +436,7 @@ export default function RunnerView() {
                             <RetryLine
                               retry={w.retry}
                               onCancel={() => cancelRetry(w.course, w.lecture, w.kind)}
+                              onRunNow={() => runRetryNow(w.course, w.lecture, w.kind)}
                             />
                           }
                         />

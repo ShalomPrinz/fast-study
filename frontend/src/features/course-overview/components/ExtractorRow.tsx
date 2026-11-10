@@ -8,7 +8,7 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { ExtractorContext } from '@/features/course-overview/contexts/ExtractorContext'
 import type { ExtractorValue } from '@/features/course-overview/contexts/ExtractorContext'
-import { cancelOverviewRetry } from '@/services/backend'
+import { cancelOverviewRetry, runOverviewRetryNow } from '@/services/backend'
 import RetryLine from '@/shared/components/RetryLine'
 import ExtractorHeader from './ExtractorHeader'
 import ExtractorSteps from './ExtractorSteps'
@@ -51,7 +51,11 @@ export default function ExtractorRow({ extractor }: { extractor: OverviewExtract
         <ExtractorHeader />
         {retry && (
           <div className="overview-branch-retry">
-            <RetryLine retry={retry} onCancel={() => cancelOverviewRetry(course, slug)} />
+            <RetryLine
+              retry={retry}
+              onCancel={() => cancelOverviewRetry(course, slug)}
+              onRunNow={() => runOverviewRetryNow(course, slug)}
+            />
           </div>
         )}
         <ExtractorSteps />

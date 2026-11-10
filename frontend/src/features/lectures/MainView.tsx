@@ -8,7 +8,7 @@ import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import ServiceError from '@/shared/components/ServiceError'
 import { deleteFile, deleteMaterial, fetchSummaryContent } from '@/services/database'
 import { openLectureFile, openExternalUrl } from '@/services/open'
-import { runStep, runPipeline, runFigures, cancelRetry } from '@/services/backend'
+import { runStep, runPipeline, runFigures, cancelRetry, runRetryNow } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { useCompactHeaderActions } from '@/features/lectures/hooks/useCompactHeaderActions'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
@@ -272,6 +272,7 @@ export default function MainView() {
         error={figuresError}
         onRetry={handleRetryFigures}
         onCancelRetry={() => cancelRetry(course, lecture, kind)}
+        onRunRetryNow={() => runRetryNow(course, lecture, kind)}
       />
     )
 
@@ -363,6 +364,7 @@ export default function MainView() {
                   <RetryLine
                     retry={lectureError.retry}
                     onCancel={() => cancelRetry(course, lecture, kind)}
+                    onRunNow={() => runRetryNow(course, lecture, kind)}
                   />
                 )}
               {isRunning && remote && (

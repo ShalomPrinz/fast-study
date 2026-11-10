@@ -26,6 +26,8 @@ import {
   courseOverviewBase,
   overviewGenerateQuery,
   retryPath,
+  retryNowPath,
+  overviewRetryNowPath,
   overviewRetryPath,
 } from '@/shared/utils/url'
 import { createClient } from './http'
@@ -215,6 +217,23 @@ export async function cancelOverviewRetry(
   extractor: string,
 ): Promise<{ cancelled: boolean }> {
   return backend.delete<{ cancelled: boolean }>(overviewRetryPath(course, extractor))
+}
+
+/** Fires a waiting auto retry immediately; `lecture` is the assignment name for that kind. */
+export async function runRetryNow(
+  course: string,
+  lecture: string,
+  kind: RunKind,
+): Promise<{ fired: boolean }> {
+  return backend.post<{ fired: boolean }>(retryNowPath(course, lecture, kind))
+}
+
+/** Fires an overview extractor's waiting auto retry immediately. */
+export async function runOverviewRetryNow(
+  course: string,
+  extractor: string,
+): Promise<{ fired: boolean }> {
+  return backend.post<{ fired: boolean }>(overviewRetryNowPath(course, extractor))
 }
 
 interface RawOverviewExtractor {

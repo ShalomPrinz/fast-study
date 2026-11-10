@@ -101,7 +101,8 @@ test('cancelling a waiting retry leaves the plain error and nothing re-runs', as
   const row = view.locator('.pipeline-row[data-step="summarize"]');
 
   await row.locator('.btn--ghost').click();
-  await row.getByRole('button', { name: 'Cancel retry' }).click();
+  await row.locator('.retry-line-menu').click();
+  await page.locator('.retry-line-cancel').click();
 
   await expect(row.locator('.retry-line')).toHaveCount(0);
   await expect(row).toHaveAttribute('data-status', 'failed');
@@ -113,4 +114,24 @@ test('cancelling a waiting retry leaves the plain error and nothing re-runs', as
   expect(await providerHits()).toEqual(before);
   await expect(row).toHaveAttribute('data-status', 'failed');
   await shot(page, 'cancelled');
+});
+
+test('Run now fires the waiting retry at once and the next attempt is armed', async ({
+  context,
+}) => {
+  // Every call fails, so the fired retry shows as one more Gemini hit and the line moves to attempt 2.
+  await providers({ gemini: { mode: '503', match: MATCH } });
+  const page = await open(context, `/${encodeURIComponent(COURSE)}/${encodeURIComponent(LECTURE)}`);
+  const row = page.getByTestId('lecture-view').locator('.pipeline-row[data-step="summarize"]');
+
+  await row.locator('.btn--ghost').click();
+  const line = row.locator('.retry-line');
+  await expect(line).toHaveAttribute('data-retry-attempt', '1');
+  const before = JSON.stringify(await providerHits());
+  await line.locator('.retry-line-menu').click();
+  await page.locator('.retry-line-run-now').click();
+
+  await expect(line).toHaveAttribute('data-retry-attempt', '2');
+  expect(JSON.stringify(await providerHits())).not.toEqual(before);
+  await shot(page, 'run-now');
 });

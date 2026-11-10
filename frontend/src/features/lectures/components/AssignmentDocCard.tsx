@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import type { AssignmentDocInfo, AssignmentDocName, InFlightEntry, RunError } from '@/types'
-import { cancelRetry, runAssignmentStep } from '@/services/backend'
+import { cancelRetry, runRetryNow, runAssignmentStep } from '@/services/backend'
 import { openAssignmentGenerated } from '@/services/open'
 import { toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
@@ -191,6 +191,7 @@ export default function AssignmentDocCard({
         <RetryLine
           retry={state.error.retry}
           onCancel={() => cancelRetry(course, assignment, 'assignment')}
+          onRunNow={() => runRetryNow(course, assignment, 'assignment')}
         />
       )}
       {confirming && (

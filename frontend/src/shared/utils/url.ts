@@ -70,6 +70,16 @@ export function retryPath(course: string, lecture: string, kind: RunKind): strin
   return path`/retry?course=${course}&lecture=${lecture}&kind=${kind}`
 }
 
+// `POST /retry/now`: fires the waiting retry immediately.
+export function retryNowPath(course: string, lecture: string, kind: RunKind): string {
+  return path`/retry/now?course=${course}&lecture=${lecture}&kind=${kind}`
+}
+
+// `POST /courses/{c}/overview/retry/now`: fires one extractor's waiting retry immediately.
+export function overviewRetryNowPath(course: string, extractor: string): string {
+  return courseOverviewBase(course) + path`/retry/now?extractor=${extractor}`
+}
+
 // `DELETE /courses/{c}/overview/retry`: cancels one extractor's waiting auto retry.
 export function overviewRetryPath(course: string, extractor: string): string {
   return courseOverviewBase(course) + path`/retry?extractor=${extractor}`

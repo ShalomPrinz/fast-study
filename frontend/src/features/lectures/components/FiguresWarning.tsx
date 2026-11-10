@@ -16,11 +16,18 @@ interface Props {
   error: RunError | null
   onRetry: () => void
   onCancelRetry: () => Promise<unknown>
+  onRunRetryNow: () => Promise<unknown>
 }
 
 // One line for graphs waiting to be cropped, in both placements: the warning with Retry, or, while the
 // cropping runs, plain progress.
-export default function FiguresWarning({ view, error, onRetry, onCancelRetry }: Props) {
+export default function FiguresWarning({
+  view,
+  error,
+  onRetry,
+  onCancelRetry,
+  onRunRetryNow,
+}: Props) {
   const { t } = useLingui()
   const { placement, cropping, retryDisabled } = view
 
@@ -52,7 +59,9 @@ export default function FiguresWarning({ view, error, onRetry, onCancelRetry }: 
               {t`Retry`}
             </button>
           </div>
-          {error?.retry && <RetryLine retry={error.retry} onCancel={onCancelRetry} />}
+          {error?.retry && (
+            <RetryLine retry={error.retry} onCancel={onCancelRetry} onRunNow={onRunRetryNow} />
+          )}
         </>
       )}
     </div>

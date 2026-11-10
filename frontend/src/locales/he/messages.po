@@ -56,7 +56,7 @@ msgid "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} 
 msgstr "{0, plural, one {קובץ אחד} two {# קבצים} other {# קבצים}} · {1, plural, one {סיכום אחד} two {# סיכומים} other {# סיכומים}}"
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:459
+#: src/features/runner/RunnerView.tsx:460
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {הרצאה אחת לא הושלמה} two {# הרצאות לא הושלמו} other {# הרצאות לא הושלמו}}"
 
@@ -73,7 +73,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:486
+#: src/features/lectures/MainView.tsx:488
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -158,7 +158,7 @@ msgid "{0} remaining"
 msgstr "נותרו {0}"
 
 #. placeholder {0}: formatDuration(videoDuration)
-#: src/features/lectures/MainView.tsx:483
+#: src/features/lectures/MainView.tsx:485
 msgid "{0} video"
 msgstr "וידאו באורך {0}"
 
@@ -194,11 +194,11 @@ msgstr "{course} · מטלה {assignment}"
 msgid "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 msgstr "{deferred, plural, one {הרצאה אחת בעיבוד כרגע; הקבצים שלה יוסרו כשההרצה שלה תסתיים.} two {# הרצאות בעיבוד כרגע; הקבצים שלהן יוסרו כשההרצה שלהן תסתיים.} other {# הרצאות בעיבוד כרגע; הקבצים שלהן יוסרו כשההרצה שלהן תסתיים.}}"
 
-#: src/features/lectures/MainView.tsx:675
+#: src/features/lectures/MainView.tsx:677
 msgid "{deleteName} will be deleted."
 msgstr "{deleteName} יימחק."
 
-#: src/features/lectures/MainView.tsx:564
+#: src/features/lectures/MainView.tsx:566
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
@@ -264,7 +264,7 @@ msgstr "{generated} מתוך {0} נוצרו"
 msgid "{host} could not be reached. Check your internet connection and try again."
 msgstr "לא ניתן להתחבר אל {host}. בדוק את החיבור לאינטרנט ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:299
+#: src/features/lectures/MainView.tsx:300
 msgid "{input} was removed"
 msgstr "{input} הוסר"
 
@@ -372,11 +372,11 @@ msgstr "{removed, plural, =0 {לא היו קבצים להסיר באף הרצא�
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. היא מתאפסת בחצות לפי שעון החוף המערבי בארה״ב.} other {יותר מדי בקשות ל-Gemini. נסה שוב בעוד דקה.}}"
 
-#: src/features/lectures/MainView.tsx:463
+#: src/features/lectures/MainView.tsx:465
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stepCount}"
 
-#: src/features/lectures/MainView.tsx:584
+#: src/features/lectures/MainView.tsx:586
 msgid "{stageCount, plural, one {# step} other {# steps}}"
 msgstr "{stageCount, plural, one {שלב אחד} two {# שלבים} other {# שלבים}}"
 
@@ -682,7 +682,7 @@ msgstr "הרצה אוטומטית: כל השלבים"
 msgid "Automatic retry"
 msgstr "ניסיון חוזר אוטומטי"
 
-#: src/features/lectures/MainView.tsx:434
+#: src/features/lectures/MainView.tsx:436
 msgid "Available once the summary is generated."
 msgstr "זמין אחרי יצירת הסיכום."
 
@@ -747,11 +747,11 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/CourseUrlPaste.tsx:69
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
-#: src/features/lectures/components/AssignmentDocCard.tsx:201
+#: src/features/lectures/components/AssignmentDocCard.tsx:202
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/shared/components/RetryLine.tsx:44
+#: src/shared/components/RetryLine.tsx:47
 msgid "Cancel retry"
 msgstr "ביטול הניסיון"
 
@@ -895,7 +895,7 @@ msgctxt "edge"
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "לחץ על \"טען הרחבה שהועלתה\". בחלון שנפתח, הדבק את נתיב התיקייה שלמטה בשורת הכתובת שבראש החלון, הקש Enter ולחץ על \"בחר תיקייה\"."
 
-#: src/features/lectures/MainView.tsx:433
+#: src/features/lectures/MainView.tsx:435
 msgid "Click \"Open chat\" to study this lecture with {provider}."
 msgstr "לחץ על \"פתיחת צ'אט\" בשביל ללמוד את ההרצאה הזו עם {provider}."
 
@@ -949,7 +949,7 @@ msgstr "איסוף"
 msgid "Compile"
 msgstr "הרכבה"
 
-#: src/features/lectures/MainView.tsx:477
+#: src/features/lectures/MainView.tsx:479
 msgid "Complete"
 msgstr "הושלם"
 
@@ -1001,7 +1001,7 @@ msgstr "סוג תוכן"
 msgid "Continue Generating"
 msgstr "המשך יצירה"
 
-#: src/features/lectures/MainView.tsx:303
+#: src/features/lectures/MainView.tsx:304
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
@@ -1080,7 +1080,7 @@ msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר
 msgid "Couldn't copy the assignment material. Try again."
 msgstr "לא הצלחנו להעתיק את חומר המטלה. נסה שוב."
 
-#: src/features/lectures/MainView.tsx:438
+#: src/features/lectures/MainView.tsx:440
 msgid "Couldn't copy the summary. Try again."
 msgstr "לא הצלחנו להעתיק את הסיכום. נסה שוב."
 
@@ -1176,7 +1176,7 @@ msgstr "לא הצלחנו לטעון את הקורסים."
 msgid "Create"
 msgstr "יצירה"
 
-#: src/features/lectures/MainView.tsx:400
+#: src/features/lectures/MainView.tsx:402
 msgid "Create {input} first"
 msgstr "צור קודם את {input}"
 
@@ -1401,7 +1401,7 @@ msgstr "עריכה"
 msgid "Edit source URL"
 msgstr "עריכת כתובת מקור"
 
-#: src/features/lectures/MainView.tsx:496
+#: src/features/lectures/MainView.tsx:498
 msgid "Edit summary"
 msgstr "עריכת סיכום"
 
@@ -1633,7 +1633,7 @@ msgstr "Gemini לא יכול לקרוא סוג קובץ כזה"
 msgid "Gemini couldn't write this document."
 msgstr "‏Gemini לא הצליח לכתוב את המסמך."
 
-#: src/features/lectures/components/FiguresWarning.tsx:43
+#: src/features/lectures/components/FiguresWarning.tsx:50
 msgid "Gemini didn't answer how to crop the images."
 msgstr "Gemini לא ענה איך לחתוך את התמונות."
 
@@ -1649,7 +1649,7 @@ msgstr "Gemini מקבל את התמלול ואת כל החומרים שתוסי�
 msgid "Gemini is writing…"
 msgstr "‏Gemini כותב…"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:199
+#: src/features/lectures/components/AssignmentDocCard.tsx:200
 msgid "Gemini will write it again."
 msgstr "‏Gemini יכתוב אותו מחדש."
 
@@ -1669,7 +1669,7 @@ msgstr "יצירה"
 msgid "Generate Course Overviews"
 msgstr "יצירת סקירות הקורס"
 
-#: src/features/lectures/MainView.tsx:435
+#: src/features/lectures/MainView.tsx:437
 msgid "Generate the summary first"
 msgstr "צור קודם את הסיכום"
 
@@ -1756,7 +1756,7 @@ msgstr "אישרתי, לנסות שוב"
 msgid "I solved the captcha"
 msgstr "פתרתי את החידה"
 
-#: src/features/lectures/MainView.tsx:443
+#: src/features/lectures/MainView.tsx:445
 msgid "I want to study this lecture in depth, and soon I'll ask you specific questions about it. Its summary is below.\n"
 "\n"
 "To start, reply with a single sentence — \"What do you want to learn first?\" — followed by a numbered list of 4–6 topics from the lecture to choose from."
@@ -1826,7 +1826,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:424
+#: src/features/lectures/MainView.tsx:426
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -1941,7 +1941,7 @@ msgstr "התאמת מילה שלמה"
 #: src/features/downloads/components/NewView.tsx:142
 #: src/features/downloads/DownloadsView.tsx:199
 #: src/features/lectures/AssignmentView.tsx:141
-#: src/features/lectures/MainView.tsx:629
+#: src/features/lectures/MainView.tsx:631
 msgid "Materials"
 msgstr "חומרים"
 
@@ -1953,10 +1953,10 @@ msgstr "דקות בין ניסיונות"
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
-#: src/features/lectures/components/LectureActionsMenu.tsx:42
-#: src/features/lectures/components/LectureActionsMenu.tsx:47
 #: src/features/lectures/components/OpenWithMenu.tsx:48
 #: src/features/lectures/components/OpenWithMenu.tsx:51
+#: src/shared/components/OverflowMenu.tsx:49
+#: src/shared/components/OverflowMenu.tsx:55
 msgid "More actions"
 msgstr "פעולות נוספות"
 
@@ -2139,11 +2139,11 @@ msgstr "אין מספיק נתונים להערכה"
 msgid "Not in course"
 msgstr "לא בקורס"
 
-#: src/features/lectures/MainView.tsx:412
+#: src/features/lectures/MainView.tsx:414
 msgid "not provided"
 msgstr "חסר"
 
-#: src/features/runner/RunnerView.tsx:454
+#: src/features/runner/RunnerView.tsx:455
 msgid "Not queued"
 msgstr "לא בתור"
 
@@ -2237,7 +2237,7 @@ msgstr "פתיחת התיקייה"
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "פתח את Google Chrome, הדבק את הכתובת הזו בשורת הכתובת שבראש החלון והקש Enter:"
 
-#: src/features/lectures/MainView.tsx:507
+#: src/features/lectures/MainView.tsx:509
 msgid "Open in Drive"
 msgstr "פתיחה ב-Drive"
 
@@ -2260,7 +2260,7 @@ msgstr "פתח את Microsoft Edge, הדבק את הכתובת הזו בשורת
 #: src/features/lectures/components/PdfHero.tsx:192
 #: src/features/lectures/components/PdfViewer.tsx:131
 #: src/features/lectures/components/PdfViewer.tsx:132
-#: src/features/lectures/MainView.tsx:501
+#: src/features/lectures/MainView.tsx:503
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
 msgstr "פתיחת ה-PDF"
@@ -2369,7 +2369,7 @@ msgstr "הדבק את חומר המטלה עם Ctrl+V בחלון שייפתח, �
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "הדבק את כתובת עמוד הקורס (…/course/view.php?id=…)"
 
-#: src/features/lectures/MainView.tsx:436
+#: src/features/lectures/MainView.tsx:438
 msgid "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgstr "הדבק את תוכן ההרצאה עם Ctrl+V בחלון שייפתח, העתקנו כבר מה שצריך בשבילך."
 
@@ -2391,7 +2391,7 @@ msgstr "ה-PDF נוצר עם אזהרות"
 msgid "Pin FastStudy to the toolbar"
 msgstr "הצמדת FastStudy לסרגל הכלים"
 
-#: src/features/lectures/MainView.tsx:562
+#: src/features/lectures/MainView.tsx:564
 msgid "Pipeline"
 msgstr "שלבים"
 
@@ -2509,7 +2509,7 @@ msgstr "הקלטות. הורדת הקלטה לא מפעילה דבר, ואת ה�
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:169
 #: src/features/lectures/components/AssignmentDocCard.tsx:172
-#: src/features/lectures/components/AssignmentDocCard.tsx:200
+#: src/features/lectures/components/AssignmentDocCard.tsx:201
 msgid "Regenerate"
 msgstr "יצירה מחדש"
 
@@ -2529,7 +2529,7 @@ msgstr "הסרת {name}"
 msgid "Remove files from every existing lecture?"
 msgstr "להסיר קבצים מכל ההרצאות הקיימות?"
 
-#: src/features/lectures/MainView.tsx:379
+#: src/features/lectures/MainView.tsx:381
 msgid "Removed"
 msgstr "הוסר"
 
@@ -2593,7 +2593,7 @@ msgstr "שחזור המקור"
 msgid "Results"
 msgstr "תוצאות"
 
-#: src/features/lectures/components/FiguresWarning.tsx:52
+#: src/features/lectures/components/FiguresWarning.tsx:59
 #: src/features/lectures/DocEditor.tsx:364
 #: src/features/settings/SettingsView.tsx:184
 msgid "Retry"
@@ -2609,16 +2609,20 @@ msgstr "ניסיון חוזר ✗"
 msgid "Retry automatically when Gemini is busy or unreachable"
 msgstr "נסה שוב אוטומטית כש-Gemini עמוס או לא זמין"
 
-#: src/shared/components/RetryLine.tsx:38
+#: src/shared/components/RetryLine.tsx:41
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "ניסיון חוזר בעוד {time} (ניסיון {attempt}/{of})"
 
-#: src/features/lectures/MainView.tsx:383
-#: src/features/lectures/MainView.tsx:386
+#: src/features/lectures/MainView.tsx:385
+#: src/features/lectures/MainView.tsx:388
 msgid "Rotate {file}"
 msgstr "יצירה מחדש של {file}"
 
-#: src/features/lectures/MainView.tsx:535
+#: src/shared/components/RetryLine.tsx:45
+msgid "Run now"
+msgstr "הפעל עכשיו"
+
+#: src/features/lectures/MainView.tsx:537
 msgid "Run Remaining"
 msgstr "הרצת השלבים הנותרים"
 
@@ -2626,7 +2630,7 @@ msgstr "הרצת השלבים הנותרים"
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
-#: src/features/runner/RunnerView.tsx:466
+#: src/features/runner/RunnerView.tsx:467
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
@@ -2788,8 +2792,8 @@ msgstr "הצג עוד"
 msgid "Show screenshot"
 msgstr "הצג צילום מסך"
 
-#: src/features/lectures/MainView.tsx:587
-#: src/features/lectures/MainView.tsx:590
+#: src/features/lectures/MainView.tsx:589
+#: src/features/lectures/MainView.tsx:592
 msgid "Show steps"
 msgstr "הצגת השלבים"
 
@@ -2813,7 +2817,7 @@ msgstr "דולג"
 msgid "Skipped"
 msgstr "דולגו"
 
-#: src/features/lectures/MainView.tsx:396
+#: src/features/lectures/MainView.tsx:398
 msgid "skipped (no video)"
 msgstr "דולג (אין וידאו)"
 
@@ -2876,7 +2880,7 @@ msgstr "הסיכומים מועלים ל-Drive של החשבון הזה. חיב�
 msgid "Summarize"
 msgstr "סיכום"
 
-#: src/features/lectures/MainView.tsx:345
+#: src/features/lectures/MainView.tsx:346
 msgid "summarized from materials only"
 msgstr "סוכם מהחומרים בלבד"
 
@@ -2892,7 +2896,7 @@ msgstr "סיכום התמלול נכשל."
 msgid "Summary"
 msgstr "סיכום"
 
-#: src/features/lectures/MainView.tsx:437
+#: src/features/lectures/MainView.tsx:439
 msgid "Summary copied — paste it in the chat with Ctrl+V."
 msgstr "הסיכום הועתק — הדבק אותו בצ'אט עם Ctrl+V."
 
@@ -2908,7 +2912,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
-#: src/features/lectures/MainView.tsx:580
+#: src/features/lectures/MainView.tsx:582
 msgid "Summary ready"
 msgstr "הסיכום מוכן"
 
@@ -3050,11 +3054,11 @@ msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "נתיב התיקייה והכפתורים שלו זמינים באפליקציית FastStudy למחשב."
 
-#: src/features/lectures/MainView.tsx:659
+#: src/features/lectures/MainView.tsx:661
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
-#: src/features/course-overview/components/ExtractorRow.tsx:62
+#: src/features/course-overview/components/ExtractorRow.tsx:66
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייווצרו מחדש:"
 
@@ -3079,7 +3083,7 @@ msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחב
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון ונסה שוב."
 
-#: src/features/lectures/MainView.tsx:676
+#: src/features/lectures/MainView.tsx:678
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -3249,7 +3253,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "חלון ה-Zoom נסגר במהלך ההורדה. נסה להוריד שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:660
+#: src/features/lectures/MainView.tsx:662
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
@@ -3257,7 +3261,7 @@ msgstr "לאחר מכן {0} ייווצר מחדש."
 msgid "These materials are over {limit_mb} MB: {files}. Turn them off for the summary, then try again."
 msgstr "החומרים האלה גדולים מ-{limit_mb} MB: {files}. כבה אותם בסיכום ונסה שוב."
 
-#: src/features/runner/RunnerView.tsx:488
+#: src/features/runner/RunnerView.tsx:489
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
 

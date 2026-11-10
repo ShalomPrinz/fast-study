@@ -26,7 +26,7 @@ nav tile per track — then one `.pipeline-card` of branch rows. Each tile names
 green line beneath both tiles joins each such track's note. A lectures-only course has one track, so one
 tile and no recitation count. A running branch shows its phase and a clock counting up from `startedAt` where a lecture shows an
 ETA — elapsed, since `timing.db` records no overview operation to estimate from. A branch waiting on a Gemini auto retry (`extractors[slug].retry`) shows `RetryLine` under its row,
-cancelling through `cancelOverviewRetry`. Expanding a branch shows
+whose menu runs it now (`runOverviewRetryNow`) or cancels it (`cancelOverviewRetry`). Expanding a branch shows
 its phases as nodes over its files as monospace chips; only the branch's final PDF opens.
 
 ## Generate vs. continue vs. re-generate

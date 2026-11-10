@@ -4,6 +4,8 @@ import {
   path,
   retryPath,
   overviewRetryPath,
+  retryNowPath,
+  overviewRetryNowPath,
   kindQuery,
   runStepQuery,
   courseRoute,
@@ -106,6 +108,17 @@ describe('overviewGenerateQuery', () => {
     )
     expect(overviewGenerateQuery(['x'], 'topics', true)).toBe(
       '?extractors=x&from_phase=topics&skip_existing=true',
+    )
+  })
+})
+
+describe('retry run-now paths', () => {
+  it('mirrors the cancel paths under /retry/now', () => {
+    expect(retryNowPath('C', 'hw 1', 'assignment')).toBe(
+      '/retry/now?course=C&lecture=hw%201&kind=assignment',
+    )
+    expect(overviewRetryNowPath('a b', 'x/y')).toBe(
+      '/courses/a%20b/overview/retry/now?extractor=x%2Fy',
     )
   })
 })

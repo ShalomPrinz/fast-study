@@ -27,7 +27,7 @@ when the MP4 header yields one, material count, the `StudyDoneButton` toggle, th
 `.pipeline-card` holding all stages as rows parted by inset rules. The per-file actions — edit summary,
 open PDF, open in Drive, each once its file exists — sit on a second header row, keeping them off a title
 column with no width floor. Below 960px `useCompactHeaderActions` (one `matchMedia` on window width; the
-content pane is always the window less 536) folds them into `LectureActionsMenu`, a ⋮ left of
+content pane is always the window less 536) folds them into `LectureActionsMenu` (a thin wrapper of the shared `OverflowMenu`), a ⋮ left of
 `Run Remaining` so the primary button never moves.
 A complete lecture (`filesComplete`) shows the pipeline as one `Summary ready` row with `N steps` on its `pipeline-file` line and an
 `info` button at its end; a click anywhere on the row opens `PipelineStepsModal` (the `info` button is the keyboard target) with the full rows (the same `stepRows` the incomplete page renders)
@@ -203,7 +203,7 @@ tests the four quota codes (two Gemini, two Groq) `backend/pipeline/runner.py` s
 
 **A waiting Gemini auto retry** is `errors[key].retry = { attempt, of, at }`; the lecture is then in neither
 `in_flight` nor `queue`. `RetryLine` (`shared/components/`) renders it everywhere a failed Gemini step shows:
-muted "Retrying in m:ss (attempt n/N)" plus a "Cancel retry" button (`cancelRetry`, `DELETE /retry`), counting down
+muted "Retrying in m:ss (attempt n/N)" plus a ⋮ `OverflowMenu` (`.retry-line-menu`) with "Run now" (`.retry-line-run-now`, `runRetryNow`, `POST /retry/now`, counts as the next attempt) and "Cancel retry" (`.retry-line-cancel`, `cancelRetry`, `DELETE /retry`), counting down
 locally from `at` with no polling. `/running` lists `waitingRetries(errors)` (lectures and recitations, soonest first)
 at the end of "Queued" with the line under the row, and `notQueued` skips them; the failed step's lecture row and an
 assignment doc card show the line under the error. The line leaves when the next status drops `retry`
