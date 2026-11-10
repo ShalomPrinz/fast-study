@@ -366,6 +366,13 @@ async def overview_cancel_retry(course: str, extractor: str = Query(...)):
     return {"cancelled": course_runner.cancel_retry(course, extractor)}
 
 
+@app.post("/courses/{course}/overview/retry/now")
+async def overview_retry_now(course: str, extractor: str = Query(...)):
+    """Fire an extractor's waiting auto retry now. `fired` is false when none waited."""
+
+    return {"fired": course_runner.run_retry_now(course, extractor)}
+
+
 @app.get("/overview/extractors")
 def overview_extractors():
     """Static extractor listing. `slug` is the stable id, `title` is the label."""
@@ -425,6 +432,17 @@ async def cancel_retry(
     its error stays. `cancelled` is false when none waited."""
 
     return {"cancelled": runner.cancel_retry(course, lecture, kind)}
+
+
+@app.post("/retry/now")
+async def retry_now(
+    course: str,
+    lecture: str,
+    kind: Literal["lecture", "recitation", "assignment"] = Query("lecture"),
+):
+    """Fire a step's waiting auto retry now, as if its timer elapsed. `fired` is false when none waited."""
+
+    return {"fired": runner.run_retry_now(course, lecture, kind)}
 
 
 @app.get("/status")

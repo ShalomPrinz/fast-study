@@ -147,6 +147,22 @@ class TestOverviewRetry:
 
         asyncio.run(go())
 
+    def test_run_now_fires_at_once_and_arms_the_next_retry(self, db, monkeypatch):
+        monkeypatch.setattr(course_analyze, "analyze", _failing())
+
+        async def go():
+            _generate()
+            await _wait_done()
+            handle = course_runner._retries[(COURSE, SLUG)]["handle"]
+            assert course_runner.run_retry_now(COURSE, SLUG) is True
+            assert handle.cancelled() and course_runner._retries == {}
+            await _wait_done()
+            await _wait_done()
+            assert course_runner._retries[(COURSE, SLUG)]["attempt"] == 2
+            assert course_runner.run_retry_now(COURSE, "nope") is False
+
+        asyncio.run(go())
+
     def test_a_manual_run_supersedes_the_retry(self, db, monkeypatch):
         monkeypatch.setattr(course_analyze, "analyze", _failing())
 

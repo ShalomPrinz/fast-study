@@ -66,6 +66,12 @@ Cancels the waiting auto retry of one lecture step (`lecture` carries the assign
 `DELETE /courses/{course}/overview/retry?extractor={slug}`
 The same for an overview extractor's waiting analyze retry. → `{"cancelled": bool}`.
 
+`POST /retry/now?course=&lecture=&kind=lecture|recitation|assignment`
+Fires the waiting auto retry now, exactly as if its timer elapsed: it counts as the next attempt, a further transient failure arms the next retry as usual, and a busy lecture keeps its plain error. → `{"fired": bool}` — `false` when none waited.
+
+`POST /courses/{course}/overview/retry/now?extractor={slug}`
+The same for an overview extractor's waiting analyze retry. → `{"fired": bool}`.
+
 ## Timing
 
 `operation` on record is restricted to an allowlist: the pipeline steps (`STEP_ORDER`), `assignment_intuition` / `assignment_solution` and downloader's `OPERATIONS`.

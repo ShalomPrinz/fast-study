@@ -243,6 +243,30 @@ class TestFiring:
         asyncio.run(go())
 
 
+class TestRunNow:
+    def test_fires_at_once_with_the_attempt_carried_and_the_timer_cancelled(self):
+        async def go():
+            calls = []
+            with _fail(calls=calls):
+                await runner.run_step(C, L, "lecture", "summarize")
+            handle = runner._retries[SKEY]["handle"]
+            with _fail(calls=calls):
+                assert runner.run_retry_now(C, L, "lecture") is True
+                assert handle.cancelled() and runner._retries == {}
+                await _drain()
+            assert calls == ["summarize", "summarize"]
+            # still transient: the next retry is armed as attempt 2
+            assert runner._retries[SKEY]["attempt"] == 2
+
+        asyncio.run(go())
+
+    def test_false_when_none_waits(self):
+        async def go():
+            assert runner.run_retry_now(C, L, "lecture") is False
+
+        asyncio.run(go())
+
+
 class TestCancelAndSupersede:
     @staticmethod
     async def _armed():

@@ -245,3 +245,21 @@ class TestCancelRetryRoutes:
             )
         assert r.json() == {"cancelled": True}
         f.assert_called_once_with("C", "pitfalls")
+
+
+class TestRetryNowRoutes:
+    def test_lecture_route(self):
+        with patch.object(backend_main.runner, "run_retry_now", return_value=True) as f:
+            r = client.post("/retry/now", params={"course": "C", "lecture": "L"})
+        assert r.json() == {"fired": True}
+        f.assert_called_once_with("C", "L", "lecture")
+
+    def test_overview_route(self):
+        with patch.object(
+            backend_main.course_runner, "run_retry_now", return_value=False
+        ) as f:
+            r = client.post(
+                "/courses/C/overview/retry/now", params={"extractor": "pitfalls"}
+            )
+        assert r.json() == {"fired": False}
+        f.assert_called_once_with("C", "pitfalls")

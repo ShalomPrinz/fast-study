@@ -49,6 +49,17 @@ def cancel_retry(course: str, slug: str) -> bool:
     return dropped
 
 
+def run_retry_now(course: str, slug: str) -> bool:
+    """Fire the waiting analyze retry now, as if its timer elapsed. False when none waits."""
+
+    entry = _retries.get((course, slug))
+    if entry is None:
+        return False
+    entry["handle"].cancel()
+    _fire_retry(course, slug)
+    return True
+
+
 def cancel_all_retries() -> None:
     """Drop every waiting retry, e.g. when the auto-retry switch goes off."""
 

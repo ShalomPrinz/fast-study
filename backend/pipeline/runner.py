@@ -298,6 +298,18 @@ def cancel_retry(course: str, lecture: str, kind: str) -> bool:
     return dropped
 
 
+def run_retry_now(course: str, lecture: str, kind: str) -> bool:
+    """Fire the waiting retry now, as if its timer elapsed. False when none waits."""
+
+    skey = _skey(course, lecture, kind)
+    entry = _retries.get(skey)
+    if entry is None:
+        return False
+    entry["handle"].cancel()
+    _fire_retry(skey)
+    return True
+
+
 def cancel_all_retries() -> None:
     """Drop every waiting retry, e.g. when the auto-retry switch goes off."""
 
