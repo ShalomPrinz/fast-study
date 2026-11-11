@@ -44,3 +44,12 @@
   background: var(--surface-sunken);
   color: var(--text);
 }
+
+.actions-menu-item--danger {
+  color: var(--danger);
+}
+
+.actions-menu-item--danger:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}

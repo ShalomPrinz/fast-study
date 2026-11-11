@@ -203,7 +203,7 @@ tests the four quota codes (two Gemini, two Groq) `backend/pipeline/runner.py` s
 
 **A waiting Gemini auto retry** is `errors[key].retry = { attempt, of, at }`; the lecture is then in neither
 `in_flight` nor `queue`. `RetryLine` (`shared/components/`) renders it everywhere a failed Gemini step shows:
-muted "Retrying in m:ss (attempt n/N)" plus a ⋮ `OverflowMenu` (`.retry-line-menu`) with "Run now" (`.retry-line-run-now`, `runRetryNow`, `POST /retry/now`, counts as the next attempt) and "Cancel retry" (`.retry-line-cancel`, `cancelRetry`, `DELETE /retry`), counting down
+muted "Retrying in m:ss (attempt n/N)" (`.retry-line-text`) that is itself the trigger (`.retry-line-menu`, a chevron-marked pill via `OverflowMenu`'s `trigger` prop; clicks stop at the line) of a menu with "Run now" (`.retry-line-run-now`, `runRetryNow`, `POST /retry/now`, counts as the next attempt) and "Cancel retry" (red `danger` item, `.retry-line-cancel`, `cancelRetry`, `DELETE /retry`), counting down
 locally from `at` with no polling. `/running` lists `waitingRetries(errors)` (lectures and recitations, soonest first)
 at the end of "Queued" with the line under the row, and `notQueued` skips them; the failed step's lecture row and an
 assignment doc card show the line under the error. The line leaves when the next status drops `retry`

@@ -92,3 +92,8 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* An open row menu (the retry line's) must reach past the card's edge, so the clip that rounds the corners gives way. */
+.pipeline-card:has(.actions-menu-list) {
+  overflow: visible;
+}

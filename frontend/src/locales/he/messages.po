@@ -751,9 +751,9 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/shared/components/RetryLine.tsx:47
+#: src/shared/components/RetryLine.tsx:59
 msgid "Cancel retry"
-msgstr "ביטול הניסיון"
+msgstr "ביטול ניסיון חוזר"
 
 #: src/features/downloads/components/FolderJobList.tsx:93
 #: src/features/downloads/components/ManualDownload.tsx:282
@@ -1955,8 +1955,8 @@ msgstr "Moodle דחה את הבקשה."
 
 #: src/features/lectures/components/OpenWithMenu.tsx:48
 #: src/features/lectures/components/OpenWithMenu.tsx:51
-#: src/shared/components/OverflowMenu.tsx:49
-#: src/shared/components/OverflowMenu.tsx:55
+#: src/shared/components/OverflowMenu.tsx:65
+#: src/shared/components/OverflowMenu.tsx:71
 msgid "More actions"
 msgstr "פעולות נוספות"
 
@@ -2609,7 +2609,7 @@ msgstr "ניסיון חוזר ✗"
 msgid "Retry automatically when Gemini is busy or unreachable"
 msgstr "נסה שוב אוטומטית כש-Gemini עמוס או לא זמין"
 
-#: src/shared/components/RetryLine.tsx:41
+#: src/shared/components/RetryLine.tsx:52
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "ניסיון חוזר בעוד {time} (ניסיון {attempt}/{of})"
 
@@ -2618,9 +2618,9 @@ msgstr "ניסיון חוזר בעוד {time} (ניסיון {attempt}/{of})"
 msgid "Rotate {file}"
 msgstr "יצירה מחדש של {file}"
 
-#: src/shared/components/RetryLine.tsx:45
+#: src/shared/components/RetryLine.tsx:57
 msgid "Run now"
-msgstr "הפעל עכשיו"
+msgstr "הרצה מיידית"
 
 #: src/features/lectures/MainView.tsx:537
 msgid "Run Remaining"

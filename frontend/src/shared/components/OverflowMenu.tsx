@@ -1,5 +1,5 @@
 import Tooltip from '@/shared/components/Tooltip'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
 import './OverflowMenu.css'
@@ -11,16 +11,20 @@ export interface OverflowAction {
   testId?: string
   // A stable modifier class for the item, for live-DOM checks (docs/TESTING.md).
   className?: string
+  // Renders the item in the danger colour.
+  danger?: boolean
 }
 
 interface Props {
   actions: OverflowAction[]
   testId?: string
   className?: string
+  // Replaces the ⋯ icon: the children become the whole trigger, a bare button styled by `className`.
+  trigger?: ReactNode
 }
 
 // A ghost ⋯ button opening a dropdown of actions; closes on an outside pointerdown or Escape.
-export default function OverflowMenu({ actions, testId, className }: Props) {
+export default function OverflowMenu({ actions, testId, className, trigger }: Props) {
   const { t } = useLingui()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -46,26 +50,39 @@ export default function OverflowMenu({ actions, testId, className }: Props) {
 
   return (
     <div className="actions-menu" ref={ref}>
-      <Tooltip content={t`More actions`} placement="bottom">
+      {trigger ? (
         <button
           type="button"
-          className={`btn btn--ghost actions-menu-btn${className ? ` ${className}` : ''}`}
+          className={className}
           data-testid={testId}
           onClick={() => setOpen((v) => !v)}
-          aria-label={t`More actions`}
           aria-haspopup="menu"
           aria-expanded={open}
         >
-          <Icon icon="overflow" />
+          {trigger}
         </button>
-      </Tooltip>
+      ) : (
+        <Tooltip content={t`More actions`} placement="bottom">
+          <button
+            type="button"
+            className={`btn btn--ghost actions-menu-btn${className ? ` ${className}` : ''}`}
+            data-testid={testId}
+            onClick={() => setOpen((v) => !v)}
+            aria-label={t`More actions`}
+            aria-haspopup="menu"
+            aria-expanded={open}
+          >
+            <Icon icon="overflow" />
+          </button>
+        </Tooltip>
+      )}
       {open && (
         <div className="actions-menu-list" role="menu">
-          {actions.map(({ label, onClick, testId, className }) => (
+          {actions.map(({ label, onClick, testId, className, danger }) => (
             <button
               key={label}
               type="button"
-              className={`actions-menu-item${className ? ` ${className}` : ''}`}
+              className={`actions-menu-item${danger ? ' actions-menu-item--danger' : ''}${className ? ` ${className}` : ''}`}
               data-testid={testId}
               role="menuitem"
               onClick={() => {

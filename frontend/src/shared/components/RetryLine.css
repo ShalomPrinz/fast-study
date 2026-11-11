@@ -10,3 +10,32 @@
 .retry-line .retry-line-text {
   white-space: nowrap;
 }
+
+/* The whole line is the menu trigger: a pill-like button with a chevron, tinted on hover. */
+.retry-line .retry-line-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.retry-line .retry-line-menu:hover,
+.retry-line .retry-line-menu[aria-expanded='true'] {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.retry-line .retry-line-menu:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.retry-line .actions-menu-list {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+}
