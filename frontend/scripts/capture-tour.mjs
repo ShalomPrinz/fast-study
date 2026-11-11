@@ -1,4 +1,4 @@
-// Recaptures the tour screenshot cards (downloads, runner, lecture) as he/en 1008x630 JPEGs from a live harness stack.
+// Recaptures the tour screenshot cards (downloads, runner, lecture) as he/en 1440x900 JPEGs at 1.5x from a live harness stack.
 //   node frontend/scripts/capture-tour.mjs --harness DIR   (wipes the stack and seeds the showcase dataset; see docs/TOUR.md)
 import fs from 'node:fs'
 import path from 'node:path'
@@ -17,8 +17,10 @@ import {
 } from '../../.claude/harness/showcase/capture.mjs'
 
 const OUT = path.join(REPO, 'frontend', 'src', 'assets', 'tour')
-const SIZE = { width: 1008, height: 630 }
-const QUALITY = 80
+// Wide enough that the lecture page lays out in two columns (its container query flips at 640px of the main column, ~1180px of window).
+const SIZE = { width: 1440, height: 900 }
+const SCALE = 1.5
+const QUALITY = 75
 const LANGS = ['he', 'en']
 // The element each slide's screenshot marks with a ring.
 const RING = {
@@ -70,6 +72,7 @@ async function capture() {
     // The tour is marked seen so it does not draw over its own screenshots.
     const { browser, context } = await launchBrowser({
       viewport: SIZE,
+      deviceScaleFactor: SCALE,
       locale: lang,
       storage: { 'fast-study:tour-dismissed': '1' },
     })

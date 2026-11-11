@@ -21,5 +21,7 @@ elements and never reads the user's data: each slide is a captured screenshot, a
 - **Recapturing.** Manual, no CI. Against your own harness stack:
   `node .claude/harness/setup.mjs --harness DIR` then `node frontend/scripts/capture-tour.mjs --harness DIR`. It wipes
   that stack, seeds the showcase dataset (`.claude/harness/showcase/`), holds one run mid-transcription and writes
-  1008x630 JPEGs with a ring on the slide's element (`RING` in the script; it selects by class, so a renamed class
+  1440x900 JPEGs at 1.5x scale with a ring on the slide's element (`RING` in the script; it selects by class, so a renamed class
   breaks the capture, not the app).
+  The width is fixed by the lecture page, which lays out in two columns only once its main column is 640px wide (window
+  about 1270px); 1440 shows it comfortably, and the dialog frame (`aspect-ratio` in `Tour.css`) matches the 1440:900 shot.
