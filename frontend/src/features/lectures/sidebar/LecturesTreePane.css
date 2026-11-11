@@ -43,3 +43,12 @@
   background: var(--danger-soft);
   color: var(--danger);
 }
+
+/* Two classes, so it outweighs `.spinner`'s colours whatever order the sheets load in. */
+.spinner.tree-pane-spinner {
+  width: 27px;
+  height: 27px;
+  border-width: 3px;
+  border-color: var(--sidebar-dim);
+  border-top-color: var(--accent-on-dark);
+}

@@ -1,12 +1,13 @@
 import { useLayoutEffect, useRef } from 'react'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
+import { courseLoadNotice, isCourseTreeLoading } from '@/shared/utils/courseLoadNotice'
 import { PendingUploadProvider } from './PendingUploadModal'
 import NewCourseRow from './NewCourseRow'
 import CourseGroup from './tree/CourseGroup'
 import ArchivedSection from './tree/ArchivedSection'
 import '@/styles/sidebar-tree.css'
+import '@/styles/spinner.css'
 import './LecturesTreePane.css'
 
 // Saved on every scroll rather than on unmount, where the detached nav already reads 0.
@@ -24,6 +25,8 @@ function LecturesTreePaneBody() {
   const { courses, loaded, loadFailed } = useCourseTreeContext()
   const active = courses.filter((c) => !c.archived)
   const notice = courseLoadNotice(courses, loaded, loadFailed)
+  const loading = isCourseTreeLoading(courses, loaded, loadFailed)
+  const { t } = useLingui()
   const navRef = useRef<HTMLElement>(null)
 
   useLayoutEffect(() => {
@@ -33,13 +36,19 @@ function LecturesTreePaneBody() {
   return (
     <aside className="tree-pane">
       <nav
-        className={notice ? 'sidebar-nav sidebar-nav--empty' : 'sidebar-nav'}
+        className={notice || loading ? 'sidebar-nav sidebar-nav--empty' : 'sidebar-nav'}
         ref={navRef}
         onScroll={(e) => {
           savedScrollTop = e.currentTarget.scrollTop
         }}
       >
-        {notice === 'failed' ? (
+        {loading ? (
+          <div
+            className="spinner spinner--sm tree-pane-spinner"
+            role="status"
+            aria-label={t`Loading courses…`}
+          />
+        ) : notice === 'failed' ? (
           <p className="tree-pane-empty tree-pane-empty--failed">
             <Trans>Courses failed to load.</Trans>
           </p>

@@ -254,7 +254,7 @@ page) while the tree still has it, else `/`.
 
 `LecturesTreePane` renders beside `/`, the overview, an assignment and `/:course/:lecture` only. It holds the active
 `CourseGroup`s, `ArchivedSection` and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
-lecture row can prompt. With no active course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. An expanded course opens with an Overview row; the course header only toggles.
+lecture row can prompt. With no active course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. Before the first load settles, `isCourseTreeLoading` centres a labelled `.spinner` there instead. An expanded course opens with an Overview row; the course header only toggles.
 
 The home route `/` is an `EmptyCard` asking to pick a lecture. With no active course, `courseLoadNotice`
 (`shared/utils/`, shared with Search) swaps it for a hint to add one (`.main-view--no-courses`) once a load

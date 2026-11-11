@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Course } from '@/types'
-import { courseLoadNotice } from './courseLoadNotice'
+import { courseLoadNotice, isCourseTreeLoading } from './courseLoadNotice'
 
 const active = { name: 'A', archived: false } as Course
 const archived = { name: 'B', archived: true } as Course
@@ -22,5 +22,14 @@ describe('courseLoadNotice', () => {
   it('stays quiet while active courses are shown, failed refresh or not', () => {
     expect(courseLoadNotice([active], true, false)).toBe(null)
     expect(courseLoadNotice([active], true, true)).toBe(null)
+  })
+})
+
+describe('isCourseTreeLoading', () => {
+  it('is true only before the first load settles with nothing to show', () => {
+    expect(isCourseTreeLoading([], false, false)).toBe(true)
+    expect(isCourseTreeLoading([], true, false)).toBe(false)
+    expect(isCourseTreeLoading([], false, true)).toBe(false)
+    expect(isCourseTreeLoading([active], false, false)).toBe(false)
   })
 })

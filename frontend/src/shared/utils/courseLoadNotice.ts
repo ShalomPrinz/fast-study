@@ -13,3 +13,12 @@ export function courseLoadNotice(
   if (loadFailed) return 'failed'
   return loaded ? 'no-courses' : null
 }
+
+// True while the first load is still pending and there is nothing to show yet.
+export function isCourseTreeLoading(
+  courses: Course[],
+  loaded: boolean,
+  loadFailed: boolean,
+): boolean {
+  return !loaded && !loadFailed && !courses.some((c) => !c.archived)
+}

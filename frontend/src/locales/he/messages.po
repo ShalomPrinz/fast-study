@@ -1166,7 +1166,7 @@ msgstr "קורסים"
 
 #: src/App.tsx:39
 #: src/features/downloads/DownloadsView.tsx:367
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:44
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:53
 #: src/features/search/SearchView.tsx:238
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1913,6 +1913,10 @@ msgstr "טעינת התיקייה של FastStudy"
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:49
+msgid "Loading courses…"
+msgstr "טוען קורסים…"
+
 #: src/features/downloads/components/CoursePicker.tsx:107
 msgid "Loading your courses…"
 msgstr "טוען את הקורסים שלך…"
@@ -2045,7 +2049,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet"
 msgstr "אין עדיין הרצאות"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:48
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:57
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
