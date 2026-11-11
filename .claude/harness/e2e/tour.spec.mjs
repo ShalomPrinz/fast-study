@@ -18,8 +18,9 @@ test('the tour shows on first load, walks to Done, and stays gone after a reload
   const start = new URL(page.url()).pathname;
   await expect(page.locator('.tour-dot')).toHaveCount(STEPS);
   await expect(page.locator('.tour-slide')).toHaveCount(2);
-  await expect(page.locator('.tour-back')).toBeDisabled();
+  await expect(page.locator('.tour-back')).toHaveCount(0); // no Back on step 1
 
+  let heightBefore = 0;
   const slideOf = (i) => (i < SLIDE_SWITCH ? 0 : 1);
   for (let i = 0; i < STEPS - 1; i++) {
     await expect(active(page)).toHaveCount(1);
@@ -32,12 +33,15 @@ test('the tour shows on first load, walks to Done, and stays gone after a reload
     await expect(page.locator('.tour-slide.active .tour-highlight')).toBeVisible();
     await expect(page.locator('.tour-skip')).toBeVisible();
     if (i > 0) await expect(page.locator('.tour-back')).toBeEnabled();
+    else await expect(page.locator('.tour-back')).toHaveCount(0);
+    if (i === STEPS - 2) heightBefore = (await dialog(page).boundingBox()).height;
     await page.locator('.tour-next').click();
   }
 
   // Last step: Skip is gone and Next is Done; Back returns without moving the page.
   await expect(page.locator('.tour-dot').nth(STEPS - 1)).toHaveClass(/active/);
-  await expect(page.locator('.tour-skip')).toHaveCount(0);
+  await expect(page.locator('.tour-skip')).toHaveCount(0); // the real Skip; its invisible twin is .tour-skip-spacer
+  expect((await dialog(page).boundingBox()).height).toBe(heightBefore); // the twin keeps the footer height
   await page.locator('.tour-back').click();
   await expect(page.locator('.tour-dot').nth(STEPS - 2)).toHaveClass(/active/);
   await page.locator('.tour-next').click();
