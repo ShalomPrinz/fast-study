@@ -692,7 +692,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "זמין אחרי שתבחר חומר מהקורס או תיצור מדריך."
 
 #: src/features/lectures/DocEditor.tsx:249
-#: src/features/tour/Tour.tsx:128
+#: src/features/tour/Tour.tsx:129
 msgid "Back"
 msgstr "חזרה"
 
@@ -929,7 +929,7 @@ msgstr "לחץ כדי לסמן שעוד לא סיימת את התרגול הזה
 
 #: src/features/downloads/DownloadsView.tsx:388
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
-#: src/features/tour/Tour.tsx:71
+#: src/features/tour/Tour.tsx:72
 msgid "Close"
 msgstr "סגירה"
 
@@ -1267,7 +1267,7 @@ msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
 #: src/features/lectures/components/StudyDoneButton.tsx:54
-#: src/features/tour/Tour.tsx:131
+#: src/features/tour/Tour.tsx:132
 msgid "Done"
 msgstr "סיימתי"
 
@@ -1966,7 +1966,7 @@ msgid "New course"
 msgstr "קורס חדש"
 
 #: src/features/runner/RunnerView.tsx:416
-#: src/features/tour/Tour.tsx:131
+#: src/features/tour/Tour.tsx:132
 msgid "Next"
 msgstr "הבאה"
 
@@ -2783,7 +2783,7 @@ msgstr "הצגת השלבים"
 msgid "Sidebar"
 msgstr "סרגל צד"
 
-#: src/features/tour/Tour.tsx:104
+#: src/features/tour/Tour.tsx:105
 msgid "Skip"
 msgstr "דילוג"
 
@@ -2803,7 +2803,7 @@ msgstr "דולגו"
 msgid "skipped (no video)"
 msgstr "דולג (אין וידאו)"
 
-#: src/features/tour/Tour.tsx:115
+#: src/features/tour/Tour.tsx:116
 msgid "Slide {position} of {total}"
 msgstr "שקף {position} מתוך {total}"
 

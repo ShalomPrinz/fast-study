@@ -692,7 +692,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "Available once you choose course material or generate a guide."
 
 #: src/features/lectures/DocEditor.tsx:249
-#: src/features/tour/Tour.tsx:128
+#: src/features/tour/Tour.tsx:129
 msgid "Back"
 msgstr "Back"
 
@@ -929,7 +929,7 @@ msgstr "Click to mark this recitation as not done"
 
 #: src/features/downloads/DownloadsView.tsx:388
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
-#: src/features/tour/Tour.tsx:71
+#: src/features/tour/Tour.tsx:72
 msgid "Close"
 msgstr "Close"
 
@@ -1267,7 +1267,7 @@ msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
 #: src/features/lectures/components/StudyDoneButton.tsx:54
-#: src/features/tour/Tour.tsx:131
+#: src/features/tour/Tour.tsx:132
 msgid "Done"
 msgstr "Done"
 
@@ -1966,7 +1966,7 @@ msgid "New course"
 msgstr "New course"
 
 #: src/features/runner/RunnerView.tsx:416
-#: src/features/tour/Tour.tsx:131
+#: src/features/tour/Tour.tsx:132
 msgid "Next"
 msgstr "Next"
 
@@ -2783,7 +2783,7 @@ msgstr "Show steps"
 msgid "Sidebar"
 msgstr "Sidebar"
 
-#: src/features/tour/Tour.tsx:104
+#: src/features/tour/Tour.tsx:105
 msgid "Skip"
 msgstr "Skip"
 
@@ -2803,7 +2803,7 @@ msgstr "Skipped"
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
-#: src/features/tour/Tour.tsx:115
+#: src/features/tour/Tour.tsx:116
 msgid "Slide {position} of {total}"
 msgstr "Slide {position} of {total}"
 

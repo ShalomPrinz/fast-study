@@ -29,8 +29,6 @@ function TourRun() {
   const go = (delta: number) => setIndex((i) => moveSlide(i, delta, total))
   const advance = () => (last ? stop() : go(1))
 
-  useEffect(() => next.current?.focus(), [index])
-
   // Focus returns to where it was when the tour ends; Tab stays inside the dialog, Esc closes, arrows move.
   const keys = useRef({ go, stop, rtl })
   keys.current = { go, stop, rtl }
@@ -56,6 +54,9 @@ function TourRun() {
       restore()
     }
   }, [])
+
+  // After the remember effect above: it must read the prior element before Next takes focus.
+  useEffect(() => next.current?.focus(), [index])
 
   // The track lays slides out along the reading direction, so RTL slides it the other way.
   const shift = `translateX(${(rtl ? 1 : -1) * index * 100}%)`
