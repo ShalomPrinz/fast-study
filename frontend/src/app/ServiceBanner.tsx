@@ -62,7 +62,7 @@ export default function ServiceBanner() {
         {canRestart ? (
           <Trans>Part of FastStudy isn't responding.</Trans>
         ) : (
-          <Trans>Part of FastStudy isn't responding. Restart the services.</Trans>
+          <Trans>Part of FastStudy isn't responding. Restart the app.</Trans>
         )}
       </span>
       {canRestart && (
@@ -79,7 +79,7 @@ export default function ServiceBanner() {
       </button>
       {confirming && (
         <ConfirmModal
-          message={t`Restart FastStudy's services?`}
+          message={t`Restart FastStudy?`}
           warning={t`Work in progress will be stopped.`}
           confirmLabel={t`Restart`}
           cancelLabel={t`Cancel`}

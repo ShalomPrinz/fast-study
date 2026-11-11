@@ -26,7 +26,7 @@ the throw is unchanged. `serviceHealth.ts` is the store behind `app/ServiceBanne
 strip atop the content column; it shows on a report or on the launcher's `services.onStopped` push (never
 quieted) and returns after a dismissal on the next one. Where `services.restart` exists (packaged) the
 banner has a Restart button, which asks first when a pipeline run, overview generation, download job or
-section run is live (`useRunnerStatus`, `useAnyJobActive`, `useAnyRunActive`); without the bridge it only says to restart the services.
+section run is live (`useRunnerStatus`, `useAnyJobActive`, `useAnyRunActive`); without the bridge it only says to restart the app.
 Call sites add no connection handling
 of their own; they ignore the throw or check `isConnectionError`. `shared/utils/failure.ts`'s
 `toastFailure` is that check plus the resolved sentence, and is the single funnel for a refused request's
