@@ -1,5 +1,6 @@
 /* Above the modal layer (1000) and the toasts; it swallows clicks so the app underneath stays still. */
 .tour-overlay {
+  --tour-glide: 480ms cubic-bezier(0.22, 0.8, 0.2, 1);
   position: fixed;
   inset: 0;
   z-index: 2000;
@@ -7,7 +8,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-7);
-  background: rgba(23, 23, 31, 0.5);
+  background: var(--tour-scrim);
   animation: tour-fade 200ms ease-out;
 }
 
@@ -59,7 +60,7 @@
 
 .tour-track {
   display: flex;
-  transition: transform 380ms cubic-bezier(0.22, 0.8, 0.2, 1);
+  transition: transform var(--tour-glide);
 }
 
 .tour-slide {
@@ -77,7 +78,7 @@
   width: 100%;
 }
 
-/* Physical on purpose: the callout and highlight are placed by the screenshot's own coordinates, which do not mirror. */
+/* Physical on purpose: the callout, highlight and the callout arrow's left/right rules sit at the screenshot's own coordinates, which do not mirror. */
 .tour-frame {
   position: relative;
   direction: ltr;
@@ -102,20 +103,20 @@
   position: absolute;
   border-radius: var(--r-lg);
   box-shadow:
-    0 0 0 3px var(--accent),
-    0 0 0 9999px rgba(23, 23, 31, 0.2);
+    0 0 0 var(--tour-ring) var(--accent),
+    0 0 0 9999px var(--tour-dim);
   pointer-events: none;
   transition:
-    left 380ms cubic-bezier(0.22, 0.8, 0.2, 1),
-    top 380ms cubic-bezier(0.22, 0.8, 0.2, 1),
-    width 380ms cubic-bezier(0.22, 0.8, 0.2, 1),
-    height 380ms cubic-bezier(0.22, 0.8, 0.2, 1);
+    left var(--tour-glide),
+    top var(--tour-glide),
+    width var(--tour-glide),
+    height var(--tour-glide);
 }
 
 .tour-callout {
   position: absolute;
   z-index: 1;
-  width: 270px;
+  width: var(--tour-callout-width);
   max-width: 100%;
   display: flex;
   flex-direction: column;
@@ -127,8 +128,8 @@
   box-shadow: var(--shadow-lg);
   text-align: start;
   transition:
-    left 380ms cubic-bezier(0.22, 0.8, 0.2, 1),
-    top 380ms cubic-bezier(0.22, 0.8, 0.2, 1);
+    left var(--tour-glide),
+    top var(--tour-glide);
 }
 
 /* No side of the element has room (a narrow window): the box sits under the screenshot, with no arrow. */
@@ -138,7 +139,7 @@
 }
 
 .tour-callout-title {
-  font-size: 16px;
+  font-size: var(--fs-section);
   font-weight: 650;
   letter-spacing: -0.01em;
 }
@@ -160,34 +161,36 @@
 .tour-callout[data-side]::before {
   content: '';
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: var(--tour-arrow-size);
+  height: var(--tour-arrow-size);
   background: var(--surface);
   border: 0 solid var(--line);
   transform: rotate(45deg);
+  /* Half the square plus its 1px border sticks out past the box edge. */
+  --tour-arrow-out: calc(var(--tour-arrow-size) / -2 - 1px);
 }
 
 .tour-callout[data-side='right']::before {
-  left: -7px;
-  top: calc(var(--tour-arrow) - 6px);
+  left: var(--tour-arrow-out);
+  top: calc(var(--tour-arrow) - var(--tour-arrow-size) / 2);
   border-width: 0 0 1px 1px;
 }
 
 .tour-callout[data-side='left']::before {
-  right: -7px;
-  top: calc(var(--tour-arrow) - 6px);
+  right: var(--tour-arrow-out);
+  top: calc(var(--tour-arrow) - var(--tour-arrow-size) / 2);
   border-width: 1px 1px 0 0;
 }
 
 .tour-callout[data-side='below']::before {
-  top: -7px;
-  left: calc(var(--tour-arrow) - 6px);
+  top: var(--tour-arrow-out);
+  left: calc(var(--tour-arrow) - var(--tour-arrow-size) / 2);
   border-width: 1px 0 0 1px;
 }
 
 .tour-callout[data-side='above']::before {
-  bottom: -7px;
-  left: calc(var(--tour-arrow) - 6px);
+  bottom: var(--tour-arrow-out);
+  left: calc(var(--tour-arrow) - var(--tour-arrow-size) / 2);
   border-width: 0 1px 1px 0;
 }
 
@@ -202,6 +205,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+.tour-skip-spacer {
+  visibility: hidden;
 }
 
 .tour-side--end {

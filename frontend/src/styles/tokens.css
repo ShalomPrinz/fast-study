@@ -90,6 +90,13 @@
   --shadow-md: 0 4px 14px rgba(23, 23, 31, 0.07);
   --shadow-lg: 0 18px 44px rgba(23, 23, 31, 0.16);
 
+  /* The first-launch tour: the full-screen scrim, the lighter dim around a highlighted element, and its ring, box and arrow sizes. */
+  --tour-scrim: rgba(23, 23, 31, 0.5);
+  --tour-dim: rgba(23, 23, 31, 0.2);
+  --tour-ring: 3px;
+  --tour-callout-width: 270px;
+  --tour-arrow-size: 12px;
+
   font-family: var(--font-ui);
 }
 

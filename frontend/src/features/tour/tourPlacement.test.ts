@@ -18,6 +18,13 @@ describe('placeCallout', () => {
     expect(p.y + p.arrow).toBeCloseTo((r.y + r.h / 2) * frame.h)
   })
 
+  it('sits level with the element top when asked, the arrow still on its middle', () => {
+    const r = { x: 0.1, y: 0.25, w: 0.1, h: 0.4 }
+    const p = placeCallout(r, box, frame, undefined, undefined, undefined, true)!
+    expect(p.y).toBeCloseTo(r.y * frame.h)
+    expect(p.y + p.arrow).toBeCloseTo((r.y + r.h / 2) * frame.h)
+  })
+
   it('goes below a wide element that leaves no room at its sides', () => {
     const r = { x: 0.03, y: 0.12, w: 0.94, h: 0.05 }
     expect(placeCallout(r, box, frame)!.side).toBe('below')

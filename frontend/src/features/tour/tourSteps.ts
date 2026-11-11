@@ -16,6 +16,8 @@ export interface TourStep {
   shot: TourShotId
   title: MessageDescriptor
   body: MessageDescriptor
+  // The box sits level with the element's top rather than its middle (see placeCallout).
+  alignTop?: boolean
 }
 
 export const TOUR_SHOTS: TourShot[] = [
@@ -40,10 +42,10 @@ export const TOUR_STEPS: TourStep[] = [
     body: msg`Use your university account, the Chrome extension, or add a file by hand.`,
   },
   {
-    id: 'downloads-scope',
+    id: 'downloads-recording',
     shot: 'downloads',
-    title: msg`New or all`,
-    body: msg`See only the recordings you have not downloaded yet, or every recording in the course.`,
+    title: msg`Download a recording`,
+    body: msg`Choose its name, set whether it is a lecture or a recitation, then download it.`,
   },
   {
     id: 'lectures-nav',
@@ -56,6 +58,8 @@ export const TOUR_STEPS: TourStep[] = [
     shot: 'lecture',
     title: msg`Courses and lectures`,
     body: msg`Each course lists its lectures and recitations. Pick one to open it.`,
+    // The tree is tall; centred, the box would cover the lecture's title beside it.
+    alignTop: true,
   },
   {
     id: 'lecture-pdf',

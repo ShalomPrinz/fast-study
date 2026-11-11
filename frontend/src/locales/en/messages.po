@@ -440,11 +440,11 @@ msgstr "A file inside \"{name}\" is open in another program. Close it and try ag
 msgid "A file the PDF template needs is missing: {asset}."
 msgstr "A file the PDF template needs is missing: {asset}."
 
-#: src/features/tour/tourSteps.ts:64
+#: src/features/tour/tourSteps.ts:68
 msgid "A finished lecture opens with its summary, ready to read right here."
 msgstr "A finished lecture opens with its summary, ready to read right here."
 
-#: src/features/tour/tourSteps.ts:26
+#: src/features/tour/tourSteps.ts:28
 msgid "A finished lecture, showing its PDF summary"
 msgstr "A finished lecture, showing its PDF summary"
 
@@ -692,7 +692,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "Available once you choose course material or generate a guide."
 
 #: src/features/lectures/DocEditor.tsx:249
-#: src/features/tour/TourCallout.tsx:75
+#: src/features/tour/TourCallout.tsx:81
 msgid "Back"
 msgstr "Back"
 
@@ -708,7 +708,7 @@ msgstr "Bar-Ilan University"
 msgid "Ben-Gurion University"
 msgstr "Ben-Gurion University"
 
-#: src/features/tour/tourSteps.ts:34
+#: src/features/tour/tourSteps.ts:36
 msgid "Bring recordings in from here: pick a course and download its videos."
 msgstr "Bring recordings in from here: pick a course and download its videos."
 
@@ -833,6 +833,10 @@ msgstr "Choose app"
 #: src/features/settings/components/DataRootField.tsx:82
 msgid "Choose folder"
 msgstr "Choose folder"
+
+#: src/features/tour/tourSteps.ts:48
+msgid "Choose its name, set whether it is a lecture or a recitation, then download it."
+msgstr "Choose its name, set whether it is a lecture or a recitation, then download it."
 
 #: src/features/settings/components/AutoRemoveField.tsx:119
 msgid "Choose when the files are removed."
@@ -1165,7 +1169,7 @@ msgstr "Course URL"
 msgid "Courses"
 msgstr "Courses"
 
-#: src/features/tour/tourSteps.ts:57
+#: src/features/tour/tourSteps.ts:59
 msgid "Courses and lectures"
 msgstr "Courses and lectures"
 
@@ -1271,7 +1275,7 @@ msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
 #: src/features/lectures/components/StudyDoneButton.tsx:54
-#: src/features/tour/TourCallout.tsx:78
+#: src/features/tour/TourCallout.tsx:85
 msgid "Done"
 msgstr "Done"
 
@@ -1289,6 +1293,10 @@ msgstr "Download"
 #: src/features/extension/ExtensionGuide.tsx:171
 msgid "Download a lecture"
 msgstr "Download a lecture"
+
+#: src/features/tour/tourSteps.ts:47
+msgid "Download a recording"
+msgstr "Download a recording"
 
 #: src/features/downloads/components/RecordingRow.tsx:322
 #: src/features/downloads/components/RecordingRow.tsx:327
@@ -1380,7 +1388,7 @@ msgstr "Drive folder name"
 msgid "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 msgstr "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 
-#: src/features/tour/tourSteps.ts:58
+#: src/features/tour/tourSteps.ts:60
 msgid "Each course lists its lectures and recitations. Pick one to open it."
 msgstr "Each course lists its lectures and recitations. Pick one to open it."
 
@@ -1444,7 +1452,7 @@ msgstr "Every attached material is empty, so there is nothing to summarize. Repl
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 
-#: src/features/tour/tourSteps.ts:52
+#: src/features/tour/tourSteps.ts:54
 msgid "Every downloaded recording lives under Lectures, and its summary is created on its own."
 msgstr "Every downloaded recording lives under Lectures, and its summary is created on its own."
 
@@ -1969,12 +1977,8 @@ msgstr "New"
 msgid "New course"
 msgstr "New course"
 
-#: src/features/tour/tourSteps.ts:45
-msgid "New or all"
-msgstr "New or all"
-
 #: src/features/runner/RunnerView.tsx:416
-#: src/features/tour/TourCallout.tsx:78
+#: src/features/tour/TourCallout.tsx:85
 msgid "Next"
 msgstr "Next"
 
@@ -2206,7 +2210,7 @@ msgstr "Only YouTube playlists can be opened up; {host} cannot."
 msgid "Open {name}"
 msgstr "Open {name}"
 
-#: src/features/tour/tourSteps.ts:70
+#: src/features/tour/tourSteps.ts:74
 msgid "Open a chat with the lecture's content and ask questions about it."
 msgstr "Open a chat with the lecture's content and ask questions about it."
 
@@ -2711,10 +2715,6 @@ msgstr "Searches the summaries of the course picked in the field"
 msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
-#: src/features/tour/tourSteps.ts:46
-msgid "See only the recordings you have not downloaded yet, or every recording in the course."
-msgstr "See only the recordings you have not downloaded yet, or every recording in the course."
-
 #. placeholder {0}: item.title
 #: src/features/downloads/components/NewView.tsx:310
 msgid "Select {0}"
@@ -2795,7 +2795,8 @@ msgstr "Show steps"
 msgid "Sidebar"
 msgstr "Sidebar"
 
-#: src/features/tour/Tour.tsx:140
+#: src/features/tour/Tour.tsx:142
+#: src/features/tour/Tour.tsx:146
 msgid "Skip"
 msgstr "Skip"
 
@@ -2815,7 +2816,7 @@ msgstr "Skipped"
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
-#: src/features/tour/Tour.tsx:151
+#: src/features/tour/Tour.tsx:157
 msgid "Slide {position} of {total}"
 msgstr "Slide {position} of {total}"
 
@@ -2836,7 +2837,7 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/tour/tourSteps.ts:33
+#: src/features/tour/tourSteps.ts:35
 msgid "Start in Downloads"
 msgstr "Start in Downloads"
 
@@ -2867,7 +2868,7 @@ msgid "Student QA"
 msgstr "Student QA"
 
 #: src/features/lectures/components/StudyWithAiCard.tsx:101
-#: src/features/tour/tourSteps.ts:69
+#: src/features/tour/tourSteps.ts:73
 msgid "Study with AI"
 msgstr "Study with AI"
 
@@ -3045,7 +3046,7 @@ msgstr "The downloaded file could not be stored."
 msgid "The downloader can't fetch this file"
 msgstr "The downloader can't fetch this file"
 
-#: src/features/tour/tourSteps.ts:24
+#: src/features/tour/tourSteps.ts:26
 msgid "The Downloads screen, with the University, Extension and Manual tabs"
 msgstr "The Downloads screen, with the University, Extension and Manual tabs"
 
@@ -3114,7 +3115,7 @@ msgstr "The PDF is older than an earlier step's output. Re-generate it."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "The PDF is older than the summary. Re-generate it."
 
-#: src/features/tour/tourSteps.ts:63
+#: src/features/tour/tourSteps.ts:67
 msgid "The PDF summary"
 msgstr "The PDF summary"
 
@@ -3354,7 +3355,7 @@ msgstr "This source can't be downloaded automatically."
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 
-#: src/features/tour/tourSteps.ts:39
+#: src/features/tour/tourSteps.ts:41
 msgid "Three ways to download"
 msgstr "Three ways to download"
 
@@ -3490,7 +3491,7 @@ msgstr "Use Save at the top of the page first"
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 
-#: src/features/tour/tourSteps.ts:40
+#: src/features/tour/tourSteps.ts:42
 msgid "Use your university account, the Chrome extension, or add a file by hand."
 msgstr "Use your university account, the Chrome extension, or add a file by hand."
 
@@ -3609,7 +3610,7 @@ msgstr "You've finished this assignment."
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
 
-#: src/features/tour/tourSteps.ts:51
+#: src/features/tour/tourSteps.ts:53
 msgid "Your lectures"
 msgstr "Your lectures"
 

@@ -64,7 +64,7 @@ function TourRun() {
   }, [])
 
   // After the remember effect above: it must read the prior element before Next takes focus.
-  useEffect(() => next.current?.focus(), [index])
+  useEffect(() => next.current?.focus({ preventScroll: true }), [index])
 
   // The track lays slides out along the reading direction, so RTL slides it the other way.
   const shotIndex = TOUR_SHOTS.findIndex((s) => s.id === TOUR_STEPS[index].shot)
@@ -122,6 +122,7 @@ function TourRun() {
                         body={t(step.body)}
                         rtl={rtl}
                         rect={rectOf(i18n.locale, step.id)}
+                        alignTop={step.alignTop}
                         frame={frame}
                         nav={{ last, canBack: index > 0, onBack: () => go(-1), onNext: advance }}
                         nextRef={next}
@@ -135,7 +136,12 @@ function TourRun() {
         </div>
         <div className="tour-footer">
           <div className="tour-side">
-            {!last && (
+            {last ? (
+              // Skip is gone on the last step; an invisible twin keeps the footer, and so the dialog, the same height.
+              <span className="btn btn--ghost tour-skip-spacer" aria-hidden="true">
+                <Trans>Skip</Trans>
+              </span>
+            ) : (
               <button className="btn btn--ghost tour-skip" onClick={stop}>
                 <Trans>Skip</Trans>
               </button>

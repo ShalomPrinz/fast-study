@@ -9,6 +9,7 @@ interface Props {
   rtl: boolean
   // The step's element in the frame (fractions); absent, the box just docks.
   rect: Rect | undefined
+  alignTop?: boolean
   frame: RefObject<HTMLElement>
   nav: { last: boolean; canBack: boolean; onBack: () => void; onNext: () => void }
   nextRef: RefObject<HTMLButtonElement>
@@ -22,6 +23,7 @@ export default function TourCallout({
   body,
   rtl,
   rect,
+  alignTop,
   frame,
   nav,
   nextRef,
@@ -50,7 +52,10 @@ export default function TourCallout({
     )
   }, [titleId, title, body, frameSize])
 
-  const placed = rect && frameSize && boxSize ? placeCallout(rect, boxSize, frameSize) : null
+  const placed =
+    rect && frameSize && boxSize
+      ? placeCallout(rect, boxSize, frameSize, undefined, undefined, undefined, alignTop)
+      : null
   const style = placed
     ? ({
         left: placed.x,
@@ -71,9 +76,11 @@ export default function TourCallout({
       </h2>
       <p className="tour-callout-body">{body}</p>
       <div className="tour-callout-actions">
-        <button className="btn btn--ghost tour-back" disabled={!nav.canBack} onClick={nav.onBack}>
-          <Trans>Back</Trans>
-        </button>
+        {nav.canBack && (
+          <button className="btn btn--ghost tour-back" onClick={nav.onBack}>
+            <Trans>Back</Trans>
+          </button>
+        )}
         <button ref={nextRef} className="btn btn--primary tour-next" onClick={nav.onNext}>
           {nav.last ? <Trans>Done</Trans> : <Trans>Next</Trans>}
         </button>

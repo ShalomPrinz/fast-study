@@ -31,6 +31,8 @@ export function placeCallout(
   gap = 18,
   margin = 12,
   arrowInset = 22,
+  // Sit level with the element's top instead of its middle, for a tall element whose middle puts the box over the page's own title.
+  alignTop = false,
 ): Placement | null {
   const left = rect.x * frame.w
   const top = rect.y * frame.h
@@ -49,13 +51,13 @@ export function placeCallout(
     right: () => {
       const x = right + gap
       if (x > maxX) return null
-      const y = clamp(midY - box.h / 2, margin, maxY)
+      const y = clamp(alignTop ? top : midY - box.h / 2, margin, maxY)
       return { side: 'right', x, y, arrow: aim(midY, y, box.h) }
     },
     left: () => {
       const x = left - gap - box.w
       if (x < margin) return null
-      const y = clamp(midY - box.h / 2, margin, maxY)
+      const y = clamp(alignTop ? top : midY - box.h / 2, margin, maxY)
       return { side: 'left', x, y, arrow: aim(midY, y, box.h) }
     },
     below: () => {

@@ -22,13 +22,14 @@ const LANGS = ['he', 'en']
 const STEPS = [
   { id: 'downloads-nav', shot: 'downloads', sel: '.sidebar a[href="/downloads"]' },
   { id: 'downloads-tabs', shot: 'downloads', sel: '.downloads-tabs' },
-  { id: 'downloads-scope', shot: 'downloads', sel: '.downloads-scope-switch' },
+  { id: 'downloads-recording', shot: 'downloads', sel: '.recording-card:visible >> nth=0' },
   { id: 'lectures-nav', shot: 'lecture', sel: '.sidebar-nav-block > button' },
   // The open course's block: header, Overview, lectures and Recitations are all inside its .course-group.
   {
     id: 'lectures-tree',
     shot: 'lecture',
     sel: `.course-group:has(.course-name:text-is("${HERO.course}"))`,
+    within: '.tree-pane',
   },
   { id: 'lecture-pdf', shot: 'lecture', sel: '.lecture-split-pdf' },
   { id: 'lecture-ai', shot: 'lecture', sel: '.study-ai-block' },
@@ -48,8 +49,12 @@ async function pickCourse(page) {
   await page.waitForLoadState('networkidle')
 }
 
-// The union of every match's bounding box, as fractions of the viewport.
-async function rectOf(page, sel) {
+// How far the app draws the highlight outside a rect: Tour.tsx's 5px padding plus --tour-ring (3px).
+const REACH = 8
+
+// The union of every match's bounding box, as fractions of the viewport. With `within`, the box is pulled in so the
+// drawn highlight (REACH outside it) stays inside that element instead of spilling onto its neighbour.
+async function rectOf(page, sel, within) {
   const boxes = await page.locator(sel).evaluateAll((els) =>
     els.map((el) => {
       const r = el.getBoundingClientRect()
@@ -57,10 +62,23 @@ async function rectOf(page, sel) {
     }),
   )
   if (!boxes.length) throw new Error(`no element for ${sel}`)
-  const left = Math.min(...boxes.map((b) => b[0]))
-  const top = Math.min(...boxes.map((b) => b[1]))
-  const right = Math.max(...boxes.map((b) => b[2]))
-  const bottom = Math.max(...boxes.map((b) => b[3]))
+  let left = Math.min(...boxes.map((b) => b[0]))
+  let top = Math.min(...boxes.map((b) => b[1]))
+  let right = Math.max(...boxes.map((b) => b[2]))
+  let bottom = Math.max(...boxes.map((b) => b[3]))
+  if (within) {
+    const pane = await page
+      .locator(within)
+      .first()
+      .evaluate((el) => {
+        const r = el.getBoundingClientRect()
+        return [r.left, r.top, r.right, r.bottom]
+      })
+    left = Math.max(left, pane[0] + REACH)
+    top = Math.max(top, pane[1] + REACH)
+    right = Math.min(right, pane[2] - REACH)
+    bottom = Math.min(bottom, pane[3] - REACH)
+  }
   const f = (n) => Math.round(n * 10000) / 10000
   return {
     x: f(left / SIZE.width),
@@ -93,7 +111,7 @@ async function capture() {
         if (name === 'downloads') await pickCourse(page)
         await page.mouse.move(0, 0)
         await page.waitForTimeout(800)
-        for (const s of steps) rects[lang][s.id] = await rectOf(page, s.sel)
+        for (const s of steps) rects[lang][s.id] = await rectOf(page, s.sel, s.within)
         const file = path.join(OUT, lang, `${name}.jpg`)
         await page.screenshot({ path: file, type: 'jpeg', quality: QUALITY })
         console.log(`captured ${path.relative(REPO, file)} (${fs.statSync(file).size} bytes)`)
