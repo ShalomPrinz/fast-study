@@ -144,6 +144,8 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   const status = rowStatus(jobs)
   const split = jobs.length > 1
   const downloading = status === 'running'
+  // Name and kind pick the target this row's bars are scoped to, so they hold still while it downloads.
+  const editLocked = pending || retryingId !== null || downloading
   const failed = queueFailed || status === 'error'
   const action = rowAction({ pending, unsupported, failed, done: status === 'done' })
   // The pipeline is running or queued on a lecture this row would write; the hook re-checks on start.
@@ -244,12 +246,14 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
             <button
               className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
               onClick={() => setKind('lecture')}
+              disabled={editLocked}
             >
               <Trans>Lecture</Trans>
             </button>
             <button
               className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
               onClick={() => setKind('recitation')}
+              disabled={editLocked}
             >
               <Trans>Recitation</Trans>
             </button>
@@ -265,6 +269,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
           value={value}
           options={material || assignment ? attachable : []}
           onChange={setName}
+          disabled={editLocked}
           placeholder={suggestion}
           ariaLabel={
             assignment ? t`Assignment` : material ? t`Attach material to` : t`Lecture name`

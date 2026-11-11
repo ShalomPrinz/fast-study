@@ -10,14 +10,20 @@ import { MoodleLockProvider } from '@/features/downloads/contexts/MoodleLockCont
 import RecordingRow from './RecordingRow'
 
 const { hook } = vi.hoisted(() => ({
-  hook: { download: vi.fn(), passcode: null as PasscodePromptProps | null },
+  hook: {
+    download: vi.fn(),
+    passcode: null as PasscodePromptProps | null,
+    pending: false,
+    retryingId: null as string | null,
+    jobs: [] as object[],
+  },
 }))
 vi.mock('@/features/downloads/hooks/useRecordingDownload', () => ({
   useRecordingDownload: () => ({
     download: hook.download,
     retryClip: vi.fn(),
-    pending: false,
-    retryingId: null,
+    pending: hook.pending,
+    retryingId: hook.retryingId,
     failed: false,
     passcode: hook.passcode,
   }),
@@ -31,7 +37,7 @@ vi.mock('@/shared/contexts/RunnerStatusContext', () => ({
 vi.mock('@/features/lectures/utils/renameLock', () => ({ isLectureRenameLocked: () => false }))
 vi.mock('@/features/downloads/contexts/DownloadJobsContext', async (importOriginal) => ({
   ...(await importOriginal<object>()),
-  useRowJobs: () => [],
+  useRowJobs: () => hook.jobs,
 }))
 vi.mock('@/features/downloads/contexts/RowEditsContext', async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -86,6 +92,9 @@ afterEach(cleanup)
 beforeEach(() => {
   hook.download.mockReset()
   hook.passcode = null
+  hook.pending = false
+  hook.retryingId = null
+  hook.jobs = []
 })
 
 describe('RecordingRow modals under the Moodle lock', () => {
@@ -154,5 +163,43 @@ describe('RecordingRow unknown rows', () => {
     expect(document.querySelector('.chip--neutral')?.textContent).toBe('Unsupported')
     expect(document.body.textContent).not.toContain('Material')
     expect(button('.recording-download-btn').disabled).toBe(true)
+  })
+})
+
+describe('RecordingRow edit lock', () => {
+  const job = (status: string) => ({
+    id: 'j',
+    title: 'Lecture 3',
+    course: 'Algebra',
+    kind: 'lecture',
+    status,
+    ref: 'r',
+  })
+  const locked = () =>
+    [...document.querySelectorAll<HTMLButtonElement>('.mode-toggle-btn')]
+      .map((b) => b.disabled)
+      .concat(document.querySelector<HTMLInputElement>('.recording-name-input')!.disabled)
+
+  it('locks kind and name while the download is pending or running', () => {
+    hook.pending = true
+    const view = render(tree(false, false))
+    expect(locked()).toEqual([true, true, true])
+    hook.pending = false
+    hook.jobs = [job('running')]
+    view.rerender(tree(false, false))
+    expect(locked()).toEqual([true, true, true])
+  })
+
+  it('locks kind and name while a clip retry is pending', () => {
+    hook.jobs = [job('error')]
+    hook.retryingId = 'j'
+    render(tree(false, false))
+    expect(locked()).toEqual([true, true, true])
+  })
+
+  it.each(['done', 'error', 'cancelled'])('unlocks once the job is %s', (status) => {
+    hook.jobs = [job(status)]
+    render(tree(false, false))
+    expect(locked()).toEqual([false, false, false])
   })
 })

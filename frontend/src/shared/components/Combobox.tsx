@@ -16,6 +16,7 @@ interface Props {
   inputClassName?: string
   ariaLabel?: string
   dir?: 'auto' | 'ltr' | 'rtl'
+  disabled?: boolean
 }
 
 // Free text with the options as an ARIA combobox listbox; unedited since focus it lists every option,
@@ -32,6 +33,7 @@ export default function Combobox({
   inputClassName,
   ariaLabel,
   dir,
+  disabled,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [edited, setEdited] = useState(false)
@@ -39,7 +41,7 @@ export default function Combobox({
   const listRef = useRef<HTMLUListElement>(null)
   const key = value.trim().toLowerCase()
   const shown = filterOptions(options, value, edited)
-  const expanded = open && shown.length > 0
+  const expanded = open && !disabled && shown.length > 0
   const listId = `${id}-listbox`
   const optionId = (i: number) => `${id}-option-${i}`
 
@@ -87,6 +89,7 @@ export default function Combobox({
         className={inputClassName}
         aria-label={ariaLabel}
         dir={dir}
+        disabled={disabled}
         role="combobox"
         aria-expanded={expanded}
         aria-controls={listId}
