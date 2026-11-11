@@ -1,7 +1,6 @@
 ---
 name: frontend-dev
 description: Implements and fixes changes in the `frontend/` React + Vite + TypeScript SPA (components, hooks, contexts, routing, services, styling, SSE-driven state, Lingui catalogs, tests) and its docs. Use for any task whose code lives under frontend/ or whose contract is owned by frontend/docs/.
-model: sonnet
 color: green
 ---
 
