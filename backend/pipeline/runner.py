@@ -124,9 +124,20 @@ _queue: list[
     QueueEntry
 ] = []  # drained in order by run_all; in memory only, a restart empties it
 
+# The key of the head entry run_all has begun but whose first step has not yet started: it stays
+# in _queue until _run_step_unlocked puts it in _in_flight, so /status never shows it in neither.
+_started: tuple[str, str, str] | None = None
+
 # Lectures whose lock only an auto-remove sweep holds, for one removal call: a trigger finding the
 # lock held so waits for it instead of being refused or skipped (docs/PIPELINE.md, Auto-remove).
 _removing: set[tuple[str, str, str]] = set()
+
+
+def _unqueue(key: tuple[str, str, str]) -> None:
+    """Drop every queue entry for this lecture; the run's own entry leaves with no await between
+    this and the _in_flight write that follows."""
+
+    _queue[:] = [q for q in _queue if q[:3] != key]
 
 
 def _lkey(course: str, lecture: str, kind: str) -> tuple[str, str, str]:
@@ -1358,13 +1369,14 @@ def move_to_front(course: str, lecture: str, kind: str) -> str:
     """Make a queued lecture the runner's next one, keeping its entry and depth. Returns 'moved',
     or 'not_queued' when it is not waiting in the queue (in flight counts as not queued)."""
 
-    index = next(
-        (i for i, q in enumerate(_queue) if q[:3] == (course, lecture, kind)), None
-    )
-    if index is None:
-        return "not_queued"
-    if index > 0:
-        _queue.insert(0, _queue.pop(index))
+    key = (course, lecture, kind)
+    index = next((i for i, q in enumerate(_queue) if q[:3] == key), None)
+    if index is None or key == _started:
+        return "not_queued"  # a head entry run_all has begun is starting, not waiting
+    # Behind a started head, which stays at index 0 until its first step begins.
+    front = 1 if _started is not None and _queue[0][:3] == _started else 0
+    if index > front:
+        _queue.insert(front, _queue.pop(index))
         db_client.notify()
     return "moved"
 
@@ -1464,6 +1476,7 @@ async def _run_step_unlocked(
     global _summarize_block, _transcribe_block
     skey = _skey(course, lecture, kind)
     _drop_handover()  # the held lecture leaves in the same notify this one arrives in
+    _unqueue((course, lecture, kind))  # queue -> in flight in one synchronous block
     _in_flight[skey] = {
         "course": course,
         "lecture": lecture,
@@ -1836,7 +1849,7 @@ async def run_all() -> dict:
     """Drain the runner queue sequentially until it is empty, so a lecture enqueued mid-run joins
     this run instead of racing it. The caller enqueues; this never re-scans."""
 
-    global _summarize_block, _transcribe_block
+    global _summarize_block, _transcribe_block, _started
     log.info(
         "run_all starting with %d queued lecture(s): %s",
         len(_queue),
@@ -1853,10 +1866,12 @@ async def run_all() -> dict:
     # can reorder and overwrite the fresher snapshot. Same for the per-lecture done below.
     try:
         while _queue:
-            # Recomputed before the pop, so a lecture a manual run pulled out stops being counted.
+            # Recomputed before the head is taken, so a lecture a manual run pulled out stops
+            # being counted; the head is read, not popped, and is still counted until its step.
             _runner_status["total"] = _runner_status["done"] + len(_queue)
-            entry = _queue.pop(0)
+            entry = _queue[0]
             course, lecture, kind = entry.course, entry.lecture, entry.kind
+            _started = (course, lecture, kind)
             log.info(
                 "=== starting pipeline %d/%d: %s/%s (%s) at depth %s ===",
                 _runner_status["done"] + 1,
@@ -1874,6 +1889,8 @@ async def run_all() -> dict:
                     lecture,
                     kind,
                 )
+                _unqueue(_started)
+                _started = None
                 _drop_handover()
                 _runner_status["done"] += 1
                 db_client.notify()
@@ -1897,9 +1914,14 @@ async def run_all() -> dict:
                     "code": code,
                     "params": params,
                 }
+            # An entry that reached no step is still queued; leave in the same pass as done.
+            queued = len(_queue)
+            _unqueue(_started)
+            _started = None
             _runner_status["done"] += 1
-            # An entry that started no step left the previous lecture held: clear it now.
-            if _handover != _skey(course, lecture, kind) and _drop_handover():
+            # One notify covers the entry leaving and, if it started no step, the held lecture too.
+            dropped = _handover != _skey(course, lecture, kind) and _drop_handover()
+            if dropped or len(_queue) != queued:
                 db_client.notify()
         blocked = (
             f", {blocked_count} stopped on a Gemini daily quota or Groq rate limit"
@@ -1915,6 +1937,9 @@ async def run_all() -> dict:
         )
         return {"status": "completed", **get_status()}
     finally:
+        if _started is not None:
+            _unqueue(_started)
+            _started = None
         _runner_status["running"] = False
         _summarize_block = None
         _transcribe_block = None

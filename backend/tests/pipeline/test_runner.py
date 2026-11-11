@@ -1010,7 +1010,7 @@ class TestRunAllHandover:
     def test_a_no_op_entry_clears_the_held_lecture_once(self):
         done = {"status": "done"}
         snaps = _run_all_observed({"L1": [done], "L2": [], "L3": [], "L4": [done]})
-        assert snaps == [["L1"], [], ["L4"], []]
+        assert snaps == [["L1"], [], [], ["L4"], []]  # each no-op exit notifies once
 
     def test_a_step_error_clears_the_lecture_and_notifies(self):
         done, err = {"status": "done"}, {"status": "error", "message": "boom"}
