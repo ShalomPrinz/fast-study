@@ -66,7 +66,7 @@ export default function Sidebar() {
   const onLectures = !(onRunning || onDownloads || onSearch || onSettings)
 
   return (
-    <aside className="sidebar" data-tour="sidebar">
+    <aside className="sidebar">
       <nav className="sidebar-nav-block">
         <button
           className={rowClass(onLectures)}

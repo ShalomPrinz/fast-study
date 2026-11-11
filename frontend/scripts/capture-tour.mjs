@@ -1,9 +1,8 @@
-// Recaptures the tour screenshot cards (runner, lecture, editor) as he/en 1008x630 JPEGs from a live harness stack.
+// Recaptures the tour screenshot cards (downloads, runner, lecture) as he/en 1008x630 JPEGs from a live harness stack.
 //   node frontend/scripts/capture-tour.mjs --harness DIR   (wipes the stack and seeds the showcase dataset; see docs/TOUR.md)
 import fs from 'node:fs'
 import path from 'node:path'
 import {
-  EDITOR,
   HERO,
   REPO,
   calibrate,
@@ -12,7 +11,6 @@ import {
   launchBrowser,
   lecturePath,
   lectureVideo,
-  openEditor,
   q,
   seedShowcase,
   waitFor,
@@ -22,14 +20,14 @@ const OUT = path.join(REPO, 'frontend', 'src', 'assets', 'tour')
 const SIZE = { width: 1008, height: 630 }
 const QUALITY = 80
 const LANGS = ['he', 'en']
-// The element each card marks with a ring, since the card's step has no live target to spotlight.
+// The element each slide's screenshot marks with a ring.
 const RING = {
-  runner: '[data-tour="runner-run"]',
-  lecture: '[data-tour="lecture-pdf"]',
-  editor: '.edit-toolbar-actions .btn--primary',
+  downloads: '.downloads-tabs',
+  runner: '.focus-card',
+  lecture: '.lecture-split-pdf',
 }
 // A lecture that stays unfinished, so the runner has a run to show mid-step.
-const RUNNING = { course: EDITOR.course, lecture: 'הרצאה 2 — תנאים ולולאות', minutes: 82 }
+const RUNNING = { course: 'מבוא למדעי המחשב', lecture: 'הרצאה 2 — תנאים ולולאות', minutes: 82 }
 
 const { DB, BACKEND, PROVIDERS, APP } = connect(
   'usage: node frontend/scripts/capture-tour.mjs --harness DIR (a live app-harness stack)',
@@ -69,7 +67,7 @@ async function releaseRun() {
 async function capture() {
   for (const lang of LANGS) {
     fs.mkdirSync(path.join(OUT, lang), { recursive: true })
-    // The tour is dismissed so it does not draw over its own cards.
+    // The tour is marked seen so it does not draw over its own screenshots.
     const { browser, context } = await launchBrowser({
       viewport: SIZE,
       locale: lang,
@@ -81,7 +79,7 @@ async function capture() {
       await page.goto(APP + route)
       await page.waitForLoadState('networkidle')
       await page.waitForSelector(RING[name])
-      if (name === 'editor') await openEditor(page)
+      if (name === 'downloads') await pickCourse(page)
       await page.addStyleTag({
         content: `${RING[name]} { outline: 3px solid #4f5bd5; outline-offset: 4px; border-radius: 12px; }`,
       })
@@ -91,11 +89,19 @@ async function capture() {
       await page.screenshot({ path: file, type: 'jpeg', quality: QUALITY })
       console.log(`captured ${path.relative(REPO, file)} (${fs.statSync(file).size} bytes)`)
     }
+    // Loads the Moodle-linked course's recordings, so the page shows a list instead of an empty body.
+    const pickCourse = async (page) => {
+      await page.locator('#course-source').click()
+      await page.getByRole('option', { name: 'מבני נתונים', exact: true }).click()
+      await page.locator('.downloads-scope-switch .mode-toggle-btn').nth(1).click()
+      await page.waitForSelector('.recording-card')
+      await page.waitForLoadState('networkidle')
+    }
     const lectureRoute = (c, l) => `/${q(c)}/${q(l)}`
     try {
+      await shot('downloads', '/downloads')
       await shot('runner', '/running')
       await shot('lecture', lectureRoute(HERO.course, HERO.lecture))
-      await shot('editor', `${lectureRoute(EDITOR.course, EDITOR.lecture)}/edit`)
     } finally {
       await browser.close()
     }

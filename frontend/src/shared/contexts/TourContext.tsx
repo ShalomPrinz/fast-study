@@ -1,7 +1,6 @@
 import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
-import { isTourDismissed } from '@/features/tour/tourFlag'
-import { TOUR_ENABLED } from '@/features/tour/tourEnabled'
+import { isTourSeen, markTourSeen } from '@/features/tour/tourFlag'
 
 interface TourValue {
   active: boolean
@@ -11,14 +10,16 @@ interface TourValue {
 
 const TourContext = createContext<TourValue | null>(null)
 
-// Whether the guided tour is running. It starts on mount unless dismissed for good: mounted in
-// `Layout`, that is every launch that reaches the app, and right after the first-run wall.
+// Whether the tour is showing. It starts on mount only until it has been seen once (mounted in
+// `Layout`, so right after the first-run wall); `stop` marks it seen however it ended, `start` replays.
 export function TourProvider({ children }: { children: ReactNode }) {
-  const [active, setActive] = useState(() => TOUR_ENABLED && !isTourDismissed())
+  const [active, setActive] = useState(() => !isTourSeen())
+  const stop = () => {
+    markTourSeen()
+    setActive(false)
+  }
   return (
-    <TourContext.Provider
-      value={{ active, start: () => setActive(true), stop: () => setActive(false) }}
-    >
+    <TourContext.Provider value={{ active, start: () => setActive(true), stop }}>
       {children}
     </TourContext.Provider>
   )

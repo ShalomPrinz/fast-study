@@ -341,12 +341,10 @@ export default function RunnerView() {
                   {focus || assignmentRuns.length > 0 ? (
                     <>
                       {focus && (
-                        <div data-tour="runner-run">
-                          <FocusCard
-                            key={`${focus.course}||${focus.lecture}||${focus.kind}`}
-                            entry={focus}
-                          />
-                        </div>
+                        <FocusCard
+                          key={`${focus.course}||${focus.lecture}||${focus.kind}`}
+                          entry={focus}
+                        />
                       )}
                       {(alsoRunning.length > 0 || assignmentRuns.length > 0) && (
                         <div className="pipeline-card runner-also">

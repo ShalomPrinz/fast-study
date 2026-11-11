@@ -340,7 +340,7 @@ export default function DocEditor({ source }: { source: DocSource }) {
           />
         </div>
 
-        <div className="edit-panel edit-panel--text" data-tour="summary-editor">
+        <div className="edit-panel edit-panel--text">
           <div className="pane-header">
             <span className="pane-label">{source.mdName}</span>
             {dirty && (

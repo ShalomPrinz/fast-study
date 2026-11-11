@@ -1,79 +1,180 @@
 /* Above the modal layer (1000) and the toasts; it swallows clicks so the app underneath stays still. */
-.tour-blocker {
+.tour-overlay {
   position: fixed;
   inset: 0;
   z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-7);
+  background: rgba(23, 23, 31, 0.5);
+  animation: tour-fade 200ms ease-out;
 }
 
-.tour-spot {
-  position: fixed;
-  border-radius: var(--r-lg);
-  box-shadow:
-    0 0 0 2px var(--accent),
-    0 0 0 9999px rgba(23, 23, 31, 0.55);
-  pointer-events: none;
-}
-
-.tour-popover,
-.tour-card {
+.tour-dialog {
+  position: relative;
+  width: 760px;
+  max-width: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-7) var(--space-6);
+  overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  padding: var(--space-6);
+  border-radius: 20px;
   box-shadow: var(--shadow-lg);
   color: var(--text);
+  animation: tour-rise 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.tour-popover {
-  width: 340px;
-  max-width: calc(100vw - 24px);
+.tour-close {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-end: var(--space-3);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text-2);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
 }
 
-.tour-card {
-  width: 640px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
+.tour-close:hover {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.tour-viewport {
+  overflow: hidden;
+  /* Room for the frame's shadow, which the clip would otherwise cut; each slide insets itself by the same amount. */
+  margin: calc(-1 * var(--space-4));
+}
+
+.tour-track {
+  display: flex;
+  transition: transform 380ms cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+
+.tour-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.tour-frame {
+  width: 100%;
+  aspect-ratio: 1008 / 630;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface-sunken);
+  box-shadow: var(--shadow-md);
 }
 
 .tour-shot {
+  display: block;
   width: 100%;
-  height: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
+  height: 100%;
+  object-fit: cover;
 }
 
 .tour-title {
-  font-size: var(--fs-section);
-  font-weight: 600;
+  margin-block-start: var(--space-6);
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
 .tour-body {
+  max-width: 460px;
+  margin-block-start: var(--space-2);
   font-size: var(--fs-row);
   line-height: 1.6;
   color: var(--text-2);
 }
 
-.tour-dismiss {
+.tour-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.tour-side {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  font-size: var(--fs-body);
-  color: var(--text-2);
+}
+
+.tour-side--end {
+  justify-content: flex-end;
+}
+
+.tour-dots {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.tour-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--control-line);
   cursor: pointer;
+  transition:
+    width 240ms ease,
+    background-color 240ms ease;
 }
 
-.tour-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+.tour-dot.active {
+  width: 22px;
+  background: var(--accent);
 }
 
-.tour-count {
-  flex: 1;
-  font-size: var(--fs-meta);
-  color: var(--text-3);
+@keyframes tour-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes tour-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+
+@media (max-width: 640px) {
+  .tour-footer {
+    grid-template-columns: auto 1fr;
+  }
+  .tour-dots {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-overlay,
+  .tour-dialog {
+    animation: none;
+  }
+  .tour-track,
+  .tour-dot {
+    transition: none;
+  }
 }

@@ -1,7 +1,7 @@
 const KEY = 'fast-study:tour-dismissed'
 
-// A failed read means "show the tour": an unreadable flag must never hide the onboarding.
-export function isTourDismissed(): boolean {
+// A failed read means "not seen": an unreadable flag must never hide the onboarding.
+export function isTourSeen(): boolean {
   try {
     return localStorage.getItem(KEY) === '1'
   } catch {
@@ -9,7 +9,7 @@ export function isTourDismissed(): boolean {
   }
 }
 
-export function dismissTour(): void {
+export function markTourSeen(): void {
   try {
     localStorage.setItem(KEY, '1')
   } catch {

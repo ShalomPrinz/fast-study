@@ -21,7 +21,7 @@ export function filesComplete(files: FileStatus, driveEnabled: boolean): boolean
   return files[driveEnabled ? 'drive_url.txt' : 'summary.pdf'].exists
 }
 
-// Whether the lecture page shows the PDF preview (`data-tour="lecture-pdf"`): complete, with a PDF on disk.
+// Whether the lecture page shows the PDF preview: complete, with a PDF on disk.
 export function showsPdfHero(files: FileStatus, driveEnabled: boolean): boolean {
   return filesComplete(files, driveEnabled) && files['summary.pdf'].exists
 }

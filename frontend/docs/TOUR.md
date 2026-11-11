@@ -1,24 +1,25 @@
-# First-run guided tour
+# First-launch tour
 
-An in-house spotlight tour (`features/tour/`, built on `@floating-ui/react`, no tour library) over the real UI.
+A three-slide carousel modal (`features/tour/`, no tour library). It never navigates, never points at live
+elements and never reads the user's data: each slide is a captured screenshot, a title and one line.
 
-- **Disabled.** `TOUR_ENABLED` in `features/tour/tourEnabled.ts` is `false`: no auto-start, no Settings replay button. Set it to `true` to restore both.
-- **Start.** `shared/contexts/TourContext` is mounted in `Layout`, so the tour starts on every launch that reaches
-  the app (right after the first-run wall included) unless dismissed. Settings → "Replay tutorial" starts it regardless.
-- **Dismissal.** `localStorage['fast-study:tour-dismissed'] = '1'`, written only when "Don't show again" (unchecked
-  by default) is ticked as the tour ends by Done, Skip or Esc. Every read and write is wrapped; a failed read shows the tour.
-  It touches no service or settings store.
-- **Steps** (`tourSteps.ts`, with the `data-tour` anchor each spotlights): `sidebar` (`sidebar`), `downloads`
-  (`downloads-tabs`, `/downloads`), `runner` (`runner-run`, `/running`), `lecture` (`lecture-pdf`, first lecture whose page shows the PDF
-  preview: `showsPdfHero`, so with Drive on it must also be uploaded), `editor` (`summary-editor`, first lecture with a summary.md, `/edit`), `search` (`search-field`,
-  `/search`), `drive` (`settings-drive`, `/settings`). The tour navigates as it advances.
-- **Anchor convention.** `data-tour="<anchor>"` on the real element, unique per page. Step text lives in `tourSteps.ts`
-  as Lingui `msg` descriptors.
-- **Live vs card.** `useAnchor` watches the anchor for the whole step; `tourMode` spotlights it while present, and it falls back to the card if it leaves the DOM (e.g. a run ends); one still missing after 2.5 s (a new user has no run, lecture or
-  editor) shows a centered card with the screenshot `assets/tour/{he,en}/<id>.jpg` matching the UI language.
-  Only `runner`, `lecture` and `editor` have shots.
-- **Focus.** Tab wraps inside the popover/card, focus moves to Next on each step and returns to the prior element when the tour ends, only if it is still on the page (`tourFocus.ts`, hand-rolled: the dialog switches between two elements, which `FloatingFocusManager` would fight).
-- **Recapturing the shots.** Manual, no CI. Against your own harness stack:
+- **Slides** (`tourSteps.ts`): `downloads` (the Downloads screen), `runner` (a lecture mid-run), `lecture` (a
+  finished lecture's PDF summary). Titles, bodies and alt text are Lingui `msg` descriptors.
+- **Start.** `shared/contexts/TourContext` is mounted in `Layout` and starts the tour on mount only while the seen
+  flag is unset, so it shows right after the first-run wall. Settings → "Replay tutorial" calls `start()` and ignores the flag.
+- **Seen flag.** `localStorage['fast-study:tour-dismissed'] = '1'` (`tourFlag.ts`), written by the context's `stop()`,
+  which every ending goes through: Done, Skip, the close button, Esc. The key name is fixed: the app harness presets it
+  in every browser. Reads and writes are wrapped; a failed read counts as unseen.
+- **Controls.** Next (Done on the last slide), Back, Skip (hidden on the last slide), close, clickable dots. Left/Right
+  arrows move between slides, mirrored in RTL (`tourMachine.arrowDelta`). The track slides along the reading direction,
+  so RTL slides the other way and the dots list right to left.
+- **Dialog.** `role="dialog"`, `aria-modal`, labelled by the active slide's title; inactive slides are `inert` and
+  `aria-hidden`. Tab wraps inside it, focus moves to Next on each slide and returns to the prior element when the tour
+  ends (`tourFocus.ts`). Screenshots carry alt text describing the screen. Motion honours `prefers-reduced-motion`.
+- **Screenshots.** `src/assets/tour/{he,en}/<id>.jpg`, picked by UI language through `import.meta.glob`; a missing one
+  hides the image. The app has no dark theme, so there is one light set.
+- **Recapturing.** Manual, no CI. Against your own harness stack:
   `node .claude/harness/setup.mjs --harness DIR` then `node frontend/scripts/capture-tour.mjs --harness DIR`. It wipes
-  that stack, seeds the showcase dataset (`.claude/harness/showcase/`, not the harness's test fixtures), holds one run mid-transcription, and writes 1008x630 JPEGs
-  (a ring marks the step's element). A new card step needs an entry in the script's `RING` map.
+  that stack, seeds the showcase dataset (`.claude/harness/showcase/`), holds one run mid-transcription and writes
+  1008x630 JPEGs with a ring on the slide's element (`RING` in the script; it selects by class, so a renamed class
+  breaks the capture, not the app).

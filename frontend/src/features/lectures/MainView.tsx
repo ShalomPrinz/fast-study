@@ -607,7 +607,7 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
             </div>
 
             {showsPdfHero(files, driveEnabled) && (
-              <div className="lecture-split-pdf" data-tour="lecture-pdf">
+              <div className="lecture-split-pdf">
                 <PdfHero
                   course={course}
                   lecture={lecture}
