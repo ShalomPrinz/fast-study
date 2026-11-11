@@ -1,93 +1,67 @@
-// The first-run guided tour: seven steps (spotlight or screenshot card); only a ticked "Don't show again"
-// stops it returning. Every other spec runs with the tour dismissed.
+// The first-run tour: a three-slide carousel modal, shown once. Every other spec runs with the tour dismissed.
 import { expect, reseed, reset, test } from './fixtures.mjs';
 
-// Skipped while TOUR_ENABLED is false (frontend/src/features/tour/tourEnabled.ts); un-skip when it is flipped on.
-test.skip(true, 'tour disabled: TOUR_ENABLED is false');
 test.use({ tourDismissed: false });
 test.beforeEach(reseed);
 test.afterEach(reset);
 
-const STEPS = ['sidebar', 'downloads', 'runner', 'lecture', 'editor', 'search', 'drive'];
-// No run is live and the editor's lecture exists, so only the runner has no anchor to spotlight.
-const CARD = new Set(['runner']);
+const SLIDES = 3;
+const dialog = (page) => page.locator('.tour-dialog');
+const active = (page) => page.locator('.tour-dot.active');
 
-const dialog = (page) => page.locator('.tour-popover, .tour-card');
-const count = (page) => page.locator('.tour-count');
-
-test('the tour walks every step, spotlighting live anchors and carding the missing one', async ({
+test('the tour shows on first load, walks to Done, and stays gone after a reload', async ({
   page,
 }) => {
   await page.goto('/');
   await expect(dialog(page)).toBeVisible();
-  await expect(page.locator('.tour-blocker')).toBeVisible();
+  const start = new URL(page.url()).pathname;
+  await expect(page.locator('.tour-dot')).toHaveCount(SLIDES);
+  await expect(page.locator('.tour-back')).toBeDisabled();
 
-  for (const [i, id] of STEPS.entries()) {
-    await expect(count(page)).toHaveText(`${i + 1} of ${STEPS.length}`, { timeout: 10_000 });
-    if (CARD.has(id)) {
-      // The anchor is waited for 2.5 s before the card replaces the spotlight.
-      await expect(page.locator('.tour-card')).toBeVisible({ timeout: 10_000 });
-      await expect(page.locator('.tour-card .tour-shot')).toBeVisible();
-      await expect(page.locator('.tour-popover')).toHaveCount(0);
-    } else {
-      await expect(page.locator('.tour-popover')).toBeVisible({ timeout: 10_000 });
-      await expect(page.locator('.tour-spot')).toBeVisible();
-      await expect(page.locator('.tour-shot')).toHaveCount(0);
-    }
-    if (i === 0) await expect(page.locator('.tour-back')).toBeDisabled();
-    if (i < STEPS.length - 1) await page.locator('.tour-next').click();
+  for (let i = 0; i < SLIDES - 1; i++) {
+    await expect(active(page)).toHaveCount(1);
+    await expect(page.locator('.tour-dot').nth(i)).toHaveClass(/active/);
+    // The slides sit side by side in the DOM; the active one's screenshot is the one in view.
+    await expect(page.locator('.tour-slide').nth(i).locator('.tour-shot')).toBeInViewport();
+    await expect(page.locator('.tour-slide').nth(i).locator('.tour-title')).not.toBeEmpty();
+    await expect(page.locator('.tour-skip')).toBeVisible();
+    await page.locator('.tour-next').click();
   }
 
-  // Back returns one step, route included.
+  // Last slide: Skip is gone and Next is Done; Back returns without moving the page.
+  await expect(page.locator('.tour-dot').nth(SLIDES - 1)).toHaveClass(/active/);
+  await expect(page.locator('.tour-skip')).toHaveCount(0);
   await page.locator('.tour-back').click();
-  await expect(count(page)).toHaveText(`6 of ${STEPS.length}`);
-  await expect(page).toHaveURL(/\/search/);
-  await expect(page.locator('.tour-popover')).toBeVisible();
+  await expect(page.locator('.tour-dot').nth(SLIDES - 2)).toHaveClass(/active/);
   await page.locator('.tour-next').click();
+  expect(new URL(page.url()).pathname).toBe(start);
+
   await page.locator('.tour-next').click(); // Done
   await expect(dialog(page)).toHaveCount(0);
-  await expect(page.locator('.tour-blocker')).toHaveCount(0);
-});
-
-test('Skip and Escape close the tour but a reload brings it back', async ({ page }) => {
-  await page.goto('/');
-  await expect(dialog(page)).toBeVisible();
-  await page.locator('.tour-skip').click();
-  await expect(dialog(page)).toHaveCount(0);
+  expect(new URL(page.url()).pathname).toBe(start);
 
   await page.reload();
-  await expect(dialog(page)).toBeVisible();
-  await page.keyboard.press('Escape');
+  await expect(page.locator('.sidebar-nav-block')).toBeVisible();
   await expect(dialog(page)).toHaveCount(0);
-
-  await page.reload();
-  await expect(dialog(page)).toBeVisible();
 });
 
-test('"Don\'t show again" keeps the tour away, and Settings replays it', async ({ page }) => {
+test('Skip counts as seen, and Settings replays the tour from the first slide', async ({
+  page,
+}) => {
   await page.goto('/');
   await expect(dialog(page)).toBeVisible();
-  await page.locator('.tour-dismiss input').check();
   await page.locator('.tour-skip').click();
   await expect(dialog(page)).toHaveCount(0);
 
   await page.reload();
   await expect(page.locator('.sidebar-nav-block')).toBeVisible();
   await expect(dialog(page)).toHaveCount(0);
-  await expect(page.locator('.tour-blocker')).toHaveCount(0);
 
   await page.goto('/settings');
   await page.locator('.settings-replay-tour').click();
   await expect(dialog(page)).toBeVisible();
-  await expect(count(page)).toHaveText(`1 of ${STEPS.length}`);
-});
-
-test('Tab stays inside the tour dialog', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.locator('.tour-popover')).toBeVisible();
-  await expect(page.locator('.tour-next')).toBeFocused();
-  await page.keyboard.press('Tab');
-  expect(
-    await page.locator(':focus').evaluate((el) => !!el.closest('.tour-popover, .tour-card')),
-  ).toBe(true);
+  await expect(page.locator('.tour-dot').first()).toHaveClass(/active/);
+  await page.keyboard.press('Escape');
+  await expect(dialog(page)).toHaveCount(0);
+  await expect(page).toHaveURL(/\/settings/);
 });

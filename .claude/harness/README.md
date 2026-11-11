@@ -475,7 +475,7 @@ assignments (listed by section in Downloads, downloaded into the tree's group, o
 data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
 out the site's captcha (and failing `site_captcha_timeout` unsolved), the smart Downloads page's New view (`smart-downloads`: first-load banner, mark irrelevant and restore, a subset downloaded with the dead link auto-skipped; it restarts auto and the server per test, since their probe cache and last run would pre-decide that row), summary figures (`summary-figures`: slide PDF and PPTX materials give cropped figures in the editor's PDF pane, and deleting a figure line then saving drops it), and study progress (done
 marks, the current arrow, the counts and the overview's current-item buttons) and the first-run tour
-(seven steps, spotlight or screenshot card, Back, Skip, Esc, "Don't show again", Settings replay, Tab trapped; skipped while `TOUR_ENABLED` is false) — and run with
+(three-slide carousel modal: auto-show, Next to Done, Skip, seen after a reload, Settings replay, URL unchanged) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to one
 `setup.mjs --harness DIR` started (run it in the foreground with `timeout: 600000`); the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to every branch, with real ffmpeg (BtbN's static build of the shipped major.minor), pandoc and tectonic, installed by the composite action
