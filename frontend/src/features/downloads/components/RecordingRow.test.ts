@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createElement } from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, fireEvent, cleanup } from '@testing-library/react'
+import { render, fireEvent, cleanup, screen } from '@testing-library/react'
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import type { Item } from '@/features/downloads/services/autoDownloader'
@@ -195,6 +195,28 @@ describe('RecordingRow edit lock', () => {
     hook.retryingId = 'j'
     render(tree(false, false))
     expect(locked()).toEqual([true, true, true])
+  })
+
+  it('hints why on hover only while locked', async () => {
+    hook.pending = true
+    const view = render(tree(false, false))
+    fireEvent.mouseEnter(document.querySelector('.mode-toggle')!)
+    expect((await screen.findByRole('tooltip')).textContent).toBe("Can't change while downloading")
+    hook.pending = false
+    view.rerender(tree(false, false))
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+
+  it('blurring the name field as it locks throws nothing, and its wrapper hints why', async () => {
+    const view = render(tree(false, false))
+    const input = document.querySelector<HTMLInputElement>('.recording-name-input')!
+    fireEvent.focus(input)
+    hook.pending = true
+    view.rerender(tree(false, false))
+    expect(() => fireEvent.blur(input)).not.toThrow()
+    await new Promise((r) => setTimeout(r, 50))
+    fireEvent.mouseEnter(document.querySelector('.recording-name-field')!)
+    expect((await screen.findByRole('tooltip')).textContent).toBe("Can't change while downloading")
   })
 
   it.each(['done', 'error', 'cancelled'])('unlocks once the job is %s', (status) => {

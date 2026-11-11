@@ -43,6 +43,8 @@
 
 /* The name takes whatever the fixed-width furniture on either side of it leaves. */
 .recording-name-field {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
 }
@@ -119,4 +121,10 @@
   gap: 6px;
   font-size: var(--fs-meta);
   color: var(--warn);
+}
+
+/* A locked kind or name says so on hover; the tooltip explains why. */
+.recording-card-line .mode-toggle-btn:disabled,
+.recording-name-input:disabled {
+  cursor: not-allowed;
 }

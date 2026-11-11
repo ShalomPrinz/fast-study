@@ -146,6 +146,7 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
   const downloading = status === 'running'
   // Name and kind pick the target this row's bars are scoped to, so they hold still while it downloads.
   const editLocked = pending || retryingId !== null || downloading
+  const lockHint = t`Can't change while downloading`
   const failed = queueFailed || status === 'error'
   const action = rowAction({ pending, unsupported, failed, done: status === 'done' })
   // The pipeline is running or queued on a lecture this row would write; the hook re-checks on start.
@@ -242,41 +243,47 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
 
         {/* A lectures-only course saves every new recording as a lecture. */}
         {!onlyLectures && !assignment && (
-          <div className="mode-toggle mode-toggle--light">
-            <button
-              className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-              onClick={() => setKind('lecture')}
-              disabled={editLocked}
-            >
-              <Trans>Lecture</Trans>
-            </button>
-            <button
-              className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-              onClick={() => setKind('recitation')}
-              disabled={editLocked}
-            >
-              <Trans>Recitation</Trans>
-            </button>
-          </div>
+          <Tooltip content={editLocked ? lockHint : null}>
+            <div className="mode-toggle mode-toggle--light">
+              <button
+                className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+                onClick={() => setKind('lecture')}
+                disabled={editLocked}
+              >
+                <Trans>Lecture</Trans>
+              </button>
+              <button
+                className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+                onClick={() => setKind('recitation')}
+                disabled={editLocked}
+              >
+                <Trans>Recitation</Trans>
+              </button>
+            </div>
+          </Tooltip>
         )}
 
         {/* Material and assignment rows pick an existing lecture or assignment, so the input offers
             them — while staying free text, since the target may not exist yet. */}
-        <Combobox
-          id={id}
-          className="recording-name-field"
-          inputClassName="source-row-input recording-name-input"
-          value={value}
-          options={material || assignment ? attachable : []}
-          onChange={setName}
-          disabled={editLocked}
-          placeholder={suggestion}
-          ariaLabel={
-            assignment ? t`Assignment` : material ? t`Attach material to` : t`Lecture name`
-          }
-          // A suggestion input follows the UI direction so its text aligns with the list (I18N.md).
-          dir={material || assignment ? undefined : 'auto'}
-        />
+        <Tooltip content={editLocked ? lockHint : null}>
+          {/* A plain wrapper, so the tooltip's focus/hover handlers land on a DOM node, not Combobox's onBlur. */}
+          <div className="recording-name-field">
+            <Combobox
+              id={id}
+              inputClassName="source-row-input recording-name-input"
+              value={value}
+              options={material || assignment ? attachable : []}
+              onChange={setName}
+              disabled={editLocked}
+              placeholder={suggestion}
+              ariaLabel={
+                assignment ? t`Assignment` : material ? t`Attach material to` : t`Lecture name`
+              }
+              // A suggestion input follows the UI direction so its text aligns with the list (I18N.md).
+              dir={material || assignment ? undefined : 'auto'}
+            />
+          </div>
+        </Tooltip>
         {fileCount > 0 && (
           <span className="recording-material-count">
             <Plural value={fileCount} one="# file" other="# files" />

@@ -50,7 +50,7 @@ A recording is a two-line card — what it is, then where it is going (`Save as`
 action). States are tints: accent while downloading, `--ok` once the target is in the course (an
 `In course` chip plus an icon-only `Download again`, always visible so it is keyboard- and
 touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
-The kind toggle and name field are disabled from Download until the job ends (`pending`, running, or a clip retry in flight), since they pick the target the bars are scoped to; a card only queued by a bulk run stays editable.
+The kind toggle and name field are disabled from Download until the job ends (`pending`, running, or a clip retry in flight), since they pick the target the bars are scoped to; a locked control shows a not-allowed cursor and a "Can't change while downloading" tooltip; a card only queued by a bulk run stays editable.
 
 ## Course sources
 

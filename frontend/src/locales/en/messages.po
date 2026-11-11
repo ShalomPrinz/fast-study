@@ -128,7 +128,7 @@ msgid "{0} / {count}"
 msgstr "{0} / {count}"
 
 #. placeholder {0}: job.title
-#: src/features/downloads/components/RecordingRow.tsx:203
+#: src/features/downloads/components/RecordingRow.tsx:204
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
@@ -202,11 +202,11 @@ msgstr "{deleteName} will be deleted."
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
-#: src/features/downloads/components/RecordingRow.tsx:184
+#: src/features/downloads/components/RecordingRow.tsx:185
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
 msgstr "{effectiveName} already exists in {course}. Download again and overwrite?"
 
-#: src/features/downloads/components/RecordingRow.tsx:192
+#: src/features/downloads/components/RecordingRow.tsx:193
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 
@@ -247,7 +247,7 @@ msgstr "{file} was not found in the course's overview."
 msgid "{file} was not found."
 msgstr "{file} was not found."
 
-#: src/features/downloads/components/RecordingRow.tsx:282
+#: src/features/downloads/components/RecordingRow.tsx:289
 msgid "{fileCount, plural, one {# file} other {# files}}"
 msgstr "{fileCount, plural, one {# file} other {# files}}"
 
@@ -280,7 +280,7 @@ msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgid "{locked, plural, one {# lecture was skipped: a file is open in another program. Close it and press Apply under “Disk space” again.} other {# lectures were skipped: a file is open in another program. Close it and press Apply under “Disk space” again.}}"
 msgstr "{locked, plural, one {# lecture was skipped: a file is open in another program. Close it and press Apply under “Disk space” again.} other {# lectures were skipped: a file is open in another program. Close it and press Apply under “Disk space” again.}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:287
+#: src/features/downloads/components/RecordingRow.tsx:294
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
@@ -604,7 +604,7 @@ msgstr "Archived ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
 
-#: src/features/downloads/components/RecordingRow.tsx:275
+#: src/features/downloads/components/RecordingRow.tsx:280
 msgid "Assignment"
 msgstr "Assignment"
 
@@ -634,7 +634,7 @@ msgstr "Assignments you marked done"
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 msgstr "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
 
-#: src/features/downloads/components/RecordingRow.tsx:275
+#: src/features/downloads/components/RecordingRow.tsx:280
 msgid "Attach material to"
 msgstr "Attach material to"
 
@@ -720,11 +720,15 @@ msgstr "Browser for downloading recordings"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "Building the PDF took too long and was stopped after {seconds} seconds."
 
+#: src/features/downloads/components/RecordingRow.tsx:149
+msgid "Can't change while downloading"
+msgstr "Can't change while downloading"
+
 #: src/features/downloads/utils/downloadErrors.ts:53
 msgid "Can't download {name} while it's being processed or waiting in line"
 msgstr "Can't download {name} while it's being processed or waiting in line"
 
-#: src/features/downloads/components/RecordingRow.tsx:156
+#: src/features/downloads/components/RecordingRow.tsx:157
 msgid "Can't download while this lecture is being processed or waiting in line"
 msgstr "Can't download while this lecture is being processed or waiting in line"
 
@@ -758,8 +762,8 @@ msgstr "Cancel retry"
 #: src/features/downloads/components/FolderJobList.tsx:93
 #: src/features/downloads/components/ManualDownload.tsx:282
 #: src/features/downloads/components/RecordingJobList.tsx:63
-#: src/features/downloads/components/RecordingRow.tsx:299
-#: src/features/downloads/components/RecordingRow.tsx:339
+#: src/features/downloads/components/RecordingRow.tsx:306
+#: src/features/downloads/components/RecordingRow.tsx:346
 msgid "Cancelled"
 msgstr "Cancelled"
 
@@ -1281,7 +1285,7 @@ msgstr "Done"
 
 #: src/features/downloads/components/ManualDownload.tsx:187
 #: src/features/downloads/components/RecordingJobList.tsx:77
-#: src/features/downloads/components/RecordingRow.tsx:363
+#: src/features/downloads/components/RecordingRow.tsx:370
 msgid "Download"
 msgstr "Download"
 
@@ -1289,8 +1293,8 @@ msgstr "Download"
 msgid "Download a lecture"
 msgstr "Download a lecture"
 
-#: src/features/downloads/components/RecordingRow.tsx:315
-#: src/features/downloads/components/RecordingRow.tsx:320
+#: src/features/downloads/components/RecordingRow.tsx:322
+#: src/features/downloads/components/RecordingRow.tsx:327
 msgid "Download again"
 msgstr "Download again"
 
@@ -1313,14 +1317,14 @@ msgstr "Download selected ({0})"
 
 #: src/features/downloads/components/FolderJobList.tsx:88
 #: src/features/downloads/components/ManualDownload.tsx:277
-#: src/features/downloads/components/RecordingRow.tsx:300
-#: src/features/downloads/components/RecordingRow.tsx:361
+#: src/features/downloads/components/RecordingRow.tsx:307
+#: src/features/downloads/components/RecordingRow.tsx:368
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
 #: src/features/downloads/components/FolderJobList.tsx:83
 #: src/features/downloads/components/ManualDownload.tsx:272
-#: src/features/downloads/components/RecordingRow.tsx:305
+#: src/features/downloads/components/RecordingRow.tsx:312
 msgid "Downloading"
 msgstr "Downloading"
 
@@ -1350,7 +1354,7 @@ msgid "Downloading update…"
 msgstr "Downloading update…"
 
 #: src/features/downloads/components/BulkRunControls.tsx:62
-#: src/features/downloads/components/RecordingRow.tsx:295
+#: src/features/downloads/components/RecordingRow.tsx:302
 msgid "Downloading…"
 msgstr "Downloading…"
 
@@ -1497,7 +1501,7 @@ msgstr "Extracting audio"
 msgid "failed"
 msgstr "failed"
 
-#: src/features/downloads/components/RecordingRow.tsx:297
+#: src/features/downloads/components/RecordingRow.tsx:304
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
@@ -1561,7 +1565,7 @@ msgstr "FastStudy uses two free services: one turns the recording into text, the
 msgid "FastStudy's use and transfer of information received from Google APIs will adhere to the <0>Google API Services User Data Policy</0>, including the Limited Use requirements."
 msgstr "FastStudy's use and transfer of information received from Google APIs will adhere to the <0>Google API Services User Data Policy</0>, including the Limited Use requirements."
 
-#: src/features/downloads/components/RecordingRow.tsx:231
+#: src/features/downloads/components/RecordingRow.tsx:232
 msgid "File type"
 msgstr "File type"
 
@@ -1780,7 +1784,7 @@ msgstr "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the
 msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 msgstr "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 
-#: src/features/downloads/components/RecordingRow.tsx:313
+#: src/features/downloads/components/RecordingRow.tsx:320
 msgid "In course"
 msgstr "In course"
 
@@ -1830,7 +1834,7 @@ msgstr "Language"
 msgid "Last error:"
 msgstr "Last error:"
 
-#: src/features/downloads/components/RecordingRow.tsx:226
+#: src/features/downloads/components/RecordingRow.tsx:227
 msgid "Last modified on Moodle"
 msgstr "Last modified on Moodle"
 
@@ -1839,7 +1843,7 @@ msgid "lecture"
 msgstr "lecture"
 
 #: src/features/downloads/components/ManualDownload.tsx:162
-#: src/features/downloads/components/RecordingRow.tsx:251
+#: src/features/downloads/components/RecordingRow.tsx:253
 #: src/features/lectures/components/CourseMaterialBox.tsx:79
 msgid "Lecture"
 msgstr "Lecture"
@@ -1858,7 +1862,7 @@ msgstr "Lecture {0}"
 msgid "Lecture and recitation summaries to include with this assignment"
 msgstr "Lecture and recitation summaries to include with this assignment"
 
-#: src/features/downloads/components/RecordingRow.tsx:275
+#: src/features/downloads/components/RecordingRow.tsx:280
 msgid "Lecture name"
 msgstr "Lecture name"
 
@@ -1909,13 +1913,13 @@ msgstr "Load new version"
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
-#: src/features/search/SearchView.tsx:247
-msgid "Loading summaries…"
-msgstr "Loading summaries…"
-
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:49
 msgid "Loading courses…"
 msgstr "Loading courses…"
+
+#: src/features/search/SearchView.tsx:247
+msgid "Loading summaries…"
+msgstr "Loading summaries…"
 
 #: src/features/downloads/components/CoursePicker.tsx:107
 msgid "Loading your courses…"
@@ -2139,7 +2143,7 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/downloads/components/RecordingRow.tsx:332
+#: src/features/downloads/components/RecordingRow.tsx:339
 msgid "Not in course"
 msgstr "Not in course"
 
@@ -2344,14 +2348,11 @@ msgstr "Overview is already running for this course"
 msgid "Part of FastStudy isn't responding."
 msgstr "Part of FastStudy isn't responding."
 
+#: src/app/ServiceBanner.tsx:65
 #: src/services/http.ts:62
 #: src/shared/i18n/serviceErrors.ts:44
 msgid "Part of FastStudy isn't responding. Restart the app."
 msgstr "Part of FastStudy isn't responding. Restart the app."
-
-#: src/app/ServiceBanner.tsx:65
-msgid "Part of FastStudy isn't responding. Restart the services."
-msgstr "Part of FastStudy isn't responding. Restart the services."
 
 #: src/features/downloads/components/PasscodePrompt.tsx:65
 msgid "Passcode"
@@ -2457,7 +2458,7 @@ msgid "recitation"
 msgstr "recitation"
 
 #: src/features/downloads/components/ManualDownload.tsx:168
-#: src/features/downloads/components/RecordingRow.tsx:258
+#: src/features/downloads/components/RecordingRow.tsx:260
 #: src/features/lectures/components/CourseMaterialBox.tsx:79
 msgid "Recitation"
 msgstr "Recitation"
@@ -2578,8 +2579,8 @@ msgid "Restart"
 msgstr "Restart"
 
 #: src/app/ServiceBanner.tsx:82
-msgid "Restart FastStudy's services?"
-msgstr "Restart FastStudy's services?"
+msgid "Restart FastStudy?"
+msgstr "Restart FastStudy?"
 
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Restart now"
@@ -2605,7 +2606,7 @@ msgstr "Retry"
 
 #: src/features/downloads/components/ManualDownload.tsx:292
 #: src/features/downloads/components/RecordingJobList.tsx:75
-#: src/features/downloads/components/RecordingRow.tsx:359
+#: src/features/downloads/components/RecordingRow.tsx:366
 msgid "Retry ✗"
 msgstr "Retry ✗"
 
@@ -2662,7 +2663,7 @@ msgstr "Save & update PDF"
 msgid "Save anyway"
 msgstr "Save anyway"
 
-#: src/features/downloads/components/RecordingRow.tsx:240
+#: src/features/downloads/components/RecordingRow.tsx:241
 msgid "Save as"
 msgstr "Save as"
 
@@ -3042,7 +3043,7 @@ msgstr "The download was refused — the session has expired. Reconnect the acco
 msgid "The downloaded file could not be stored."
 msgstr "The downloaded file could not be stored."
 
-#: src/features/downloads/components/RecordingRow.tsx:345
+#: src/features/downloads/components/RecordingRow.tsx:352
 msgid "The downloader can't fetch this file"
 msgstr "The downloader can't fetch this file"
 
@@ -3315,7 +3316,7 @@ msgstr "This Google Drive file is not shared publicly, or was removed. Open it i
 msgid "This isn't a web address. Copy the address from your browser's address bar."
 msgstr "This isn't a web address. Copy the address from your browser's address bar."
 
-#: src/features/downloads/components/RecordingRow.tsx:329
+#: src/features/downloads/components/RecordingRow.tsx:336
 msgid "This lecture holds a different video"
 msgstr "This lecture holds a different video"
 
@@ -3602,7 +3603,7 @@ msgstr "You must read the privacy policy before you continue."
 msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
 msgstr "You're logged in to {foreignName}. Connecting here logs you out of it."
 
-#: src/features/downloads/components/RecordingRow.tsx:374
+#: src/features/downloads/components/RecordingRow.tsx:381
 msgid "You've finished this assignment."
 msgstr "You've finished this assignment."
 
