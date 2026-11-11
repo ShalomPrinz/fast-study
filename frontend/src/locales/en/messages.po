@@ -440,11 +440,11 @@ msgstr "A file inside \"{name}\" is open in another program. Close it and try ag
 msgid "A file the PDF template needs is missing: {asset}."
 msgstr "A file the PDF template needs is missing: {asset}."
 
-#: src/features/tour/tourSteps.ts:31
-msgid "A finished lecture opens with its PDF summary, ready to read."
-msgstr "A finished lecture opens with its PDF summary, ready to read."
+#: src/features/tour/tourSteps.ts:64
+msgid "A finished lecture opens with its summary, ready to read right here."
+msgstr "A finished lecture opens with its summary, ready to read right here."
 
-#: src/features/tour/tourSteps.ts:32
+#: src/features/tour/tourSteps.ts:26
 msgid "A finished lecture, showing its PDF summary"
 msgstr "A finished lecture, showing its PDF summary"
 
@@ -692,7 +692,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "Available once you choose course material or generate a guide."
 
 #: src/features/lectures/DocEditor.tsx:249
-#: src/features/tour/Tour.tsx:129
+#: src/features/tour/TourCallout.tsx:75
 msgid "Back"
 msgstr "Back"
 
@@ -708,9 +708,9 @@ msgstr "Bar-Ilan University"
 msgid "Ben-Gurion University"
 msgstr "Ben-Gurion University"
 
-#: src/features/tour/tourSteps.ts:18
-msgid "Bring in recordings"
-msgstr "Bring in recordings"
+#: src/features/tour/tourSteps.ts:34
+msgid "Bring recordings in from here: pick a course and download its videos."
+msgstr "Bring recordings in from here: pick a course and download its videos."
 
 #: src/features/settings/components/BrowserPrereqField.tsx:54
 msgid "Browser for downloading recordings"
@@ -929,7 +929,7 @@ msgstr "Click to mark this recitation as not done"
 
 #: src/features/downloads/DownloadsView.tsx:388
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
-#: src/features/tour/Tour.tsx:72
+#: src/features/tour/Tour.tsx:81
 msgid "Close"
 msgstr "Close"
 
@@ -1165,6 +1165,10 @@ msgstr "Course URL"
 msgid "Courses"
 msgstr "Courses"
 
+#: src/features/tour/tourSteps.ts:57
+msgid "Courses and lectures"
+msgstr "Courses and lectures"
+
 #: src/App.tsx:39
 #: src/features/downloads/DownloadsView.tsx:367
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:53
@@ -1267,7 +1271,7 @@ msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
 #: src/features/lectures/components/StudyDoneButton.tsx:54
-#: src/features/tour/Tour.tsx:132
+#: src/features/tour/TourCallout.tsx:78
 msgid "Done"
 msgstr "Done"
 
@@ -1376,9 +1380,9 @@ msgstr "Drive folder name"
 msgid "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 msgstr "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 
-#: src/features/tour/tourSteps.ts:25
-msgid "Each lecture moves through audio, transcript, summary and PDF on its own."
-msgstr "Each lecture moves through audio, transcript, summary and PDF on its own."
+#: src/features/tour/tourSteps.ts:58
+msgid "Each course lists its lectures and recitations. Pick one to open it."
+msgstr "Each course lists its lectures and recitations. Pick one to open it."
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:154
 msgid "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
@@ -1439,6 +1443,10 @@ msgstr "Every attached material is empty, so there is nothing to summarize. Repl
 #: src/features/settings/components/DataRootField.tsx:56
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
+
+#: src/features/tour/tourSteps.ts:52
+msgid "Every downloaded recording lives under Lectures, and its summary is created on its own."
+msgstr "Every downloaded recording lives under Lectures, and its summary is created on its own."
 
 #: src/features/settings/components/DataRootField.tsx:98
 msgid "Everything stays on this computer. FastStudy has no servers of its own and keeps no copy of your lectures or summaries."
@@ -1699,10 +1707,6 @@ msgstr "Google Drive gets the summary PDF, and only if you turned Drive upload o
 #: src/shared/i18n/serviceErrors.ts:129
 msgid "Google Drive is not connected. Connect it in Settings."
 msgstr "Google Drive is not connected. Connect it in Settings."
-
-#: src/features/tour/tourSteps.ts:19
-msgid "Grab videos with the Chrome extension, or let the auto-downloader fetch your course."
-msgstr "Grab videos with the Chrome extension, or let the auto-downloader fetch your course."
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:120
 msgid "Groq gets a lecture's audio to transcribe it."
@@ -1965,8 +1969,12 @@ msgstr "New"
 msgid "New course"
 msgstr "New course"
 
+#: src/features/tour/tourSteps.ts:45
+msgid "New or all"
+msgstr "New or all"
+
 #: src/features/runner/RunnerView.tsx:416
-#: src/features/tour/Tour.tsx:132
+#: src/features/tour/TourCallout.tsx:78
 msgid "Next"
 msgstr "Next"
 
@@ -2198,6 +2206,10 @@ msgstr "Only YouTube playlists can be opened up; {host} cannot."
 msgid "Open {name}"
 msgstr "Open {name}"
 
+#: src/features/tour/tourSteps.ts:70
+msgid "Open a chat with the lecture's content and ask questions about it."
+msgstr "Open a chat with the lecture's content and ask questions about it."
+
 #: src/features/extension/ExtensionGuide.tsx:174
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
@@ -2424,10 +2436,6 @@ msgstr "Re-generate {title}"
 #: src/features/course-overview/components/StepRow.tsx:53
 msgid "Re-generate from {stepLabel}"
 msgstr "Re-generate from {stepLabel}"
-
-#: src/features/tour/tourSteps.ts:30
-msgid "Read the summary"
-msgstr "Read the summary"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:99
 msgid "Ready"
@@ -2703,6 +2711,10 @@ msgstr "Searches the summaries of the course picked in the field"
 msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
+#: src/features/tour/tourSteps.ts:46
+msgid "See only the recordings you have not downloaded yet, or every recording in the course."
+msgstr "See only the recordings you have not downloaded yet, or every recording in the course."
+
 #. placeholder {0}: item.title
 #: src/features/downloads/components/NewView.tsx:310
 msgid "Select {0}"
@@ -2783,7 +2795,7 @@ msgstr "Show steps"
 msgid "Sidebar"
 msgstr "Sidebar"
 
-#: src/features/tour/Tour.tsx:105
+#: src/features/tour/Tour.tsx:140
 msgid "Skip"
 msgstr "Skip"
 
@@ -2803,7 +2815,7 @@ msgstr "Skipped"
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
-#: src/features/tour/Tour.tsx:116
+#: src/features/tour/Tour.tsx:151
 msgid "Slide {position} of {total}"
 msgstr "Slide {position} of {total}"
 
@@ -2823,6 +2835,10 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 #: src/features/downloads/components/AddCoursePanel.tsx:110
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
+
+#: src/features/tour/tourSteps.ts:33
+msgid "Start in Downloads"
+msgstr "Start in Downloads"
 
 #: src/features/settings/InitWall.tsx:337
 msgid "Start using FastStudy"
@@ -2851,6 +2867,7 @@ msgid "Student QA"
 msgstr "Student QA"
 
 #: src/features/lectures/components/StudyWithAiCard.tsx:101
+#: src/features/tour/tourSteps.ts:69
 msgid "Study with AI"
 msgstr "Study with AI"
 
@@ -3028,7 +3045,7 @@ msgstr "The downloaded file could not be stored."
 msgid "The downloader can't fetch this file"
 msgstr "The downloader can't fetch this file"
 
-#: src/features/tour/tourSteps.ts:20
+#: src/features/tour/tourSteps.ts:24
 msgid "The Downloads screen, with the University, Extension and Manual tabs"
 msgstr "The Downloads screen, with the University, Extension and Manual tabs"
 
@@ -3097,6 +3114,10 @@ msgstr "The PDF is older than an earlier step's output. Re-generate it."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "The PDF is older than the summary. Re-generate it."
 
+#: src/features/tour/tourSteps.ts:63
+msgid "The PDF summary"
+msgstr "The PDF summary"
+
 #: src/features/downloads/components/BulkRunNotes.tsx:48
 msgid "the run stopped early. Download them again to pick them up."
 msgstr "the run stopped early. Download them again to pick them up."
@@ -3128,10 +3149,6 @@ msgstr "the run was cancelled. Run the section again to pick them up."
 #: src/features/runner/RunnerView.tsx:394
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
-
-#: src/features/tour/tourSteps.ts:26
-msgid "The Running screen, with a lecture partway through its steps"
-msgstr "The Running screen, with a lecture partway through its steps"
 
 #: src/shared/i18n/serviceErrors.ts:340
 msgid "The setting \"{field}\" isn't recognized, so it wasn't saved."
@@ -3337,6 +3354,10 @@ msgstr "This source can't be downloaded automatically."
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 
+#: src/features/tour/tourSteps.ts:39
+msgid "Three ways to download"
+msgstr "Three ways to download"
+
 #: src/features/course-overview/constants/overview.ts:27
 msgid "Topics"
 msgstr "Topics"
@@ -3469,6 +3490,10 @@ msgstr "Use Save at the top of the page first"
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 
+#: src/features/tour/tourSteps.ts:40
+msgid "Use your university account, the Chrome extension, or add a file by hand."
+msgstr "Use your university account, the Chrome extension, or add a file by hand."
+
 #: src/features/downloads/components/RecordingRow.tsx:60
 #: src/features/lectures/constants/pipeline.ts:18
 #: src/features/settings/components/AutoRemoveField.tsx:31
@@ -3491,10 +3516,6 @@ msgstr "Videos"
 #: src/features/downloads/components/AccountStatus.tsx:175
 msgid "waiting for you to solve the captcha"
 msgstr "waiting for you to solve the captcha"
-
-#: src/features/tour/tourSteps.ts:24
-msgid "Watch it work"
-msgstr "Watch it work"
 
 #: src/features/settings/components/BrowserPrereqField.tsx:39
 msgid "We couldn't check right now."
@@ -3587,6 +3608,10 @@ msgstr "You've finished this assignment."
 #: src/features/settings/InitWall.tsx:227
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
+
+#: src/features/tour/tourSteps.ts:51
+msgid "Your lectures"
+msgstr "Your lectures"
 
 #: src/features/settings/InitWall.tsx:218
 msgid "Your two API keys"

@@ -72,7 +72,15 @@
   text-align: center;
 }
 
+.tour-stage {
+  position: relative;
+  width: 100%;
+}
+
+/* Physical on purpose: the callout and highlight are placed by the screenshot's own coordinates, which do not mirror. */
 .tour-frame {
+  position: relative;
+  direction: ltr;
   width: 100%;
   aspect-ratio: 1440 / 900;
   overflow: hidden;
@@ -89,19 +97,98 @@
   object-fit: cover;
 }
 
-.tour-title {
-  margin-block-start: var(--space-6);
-  font-size: 22px;
+/* The soft spotlight: a light dim over everything but the element, which gets an accent ring. */
+.tour-highlight {
+  position: absolute;
+  border-radius: var(--r-lg);
+  box-shadow:
+    0 0 0 3px var(--accent),
+    0 0 0 9999px rgba(23, 23, 31, 0.2);
+  pointer-events: none;
+  transition:
+    left 380ms cubic-bezier(0.22, 0.8, 0.2, 1),
+    top 380ms cubic-bezier(0.22, 0.8, 0.2, 1),
+    width 380ms cubic-bezier(0.22, 0.8, 0.2, 1),
+    height 380ms cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+
+.tour-callout {
+  position: absolute;
+  z-index: 1;
+  width: 270px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  text-align: start;
+  transition:
+    left 380ms cubic-bezier(0.22, 0.8, 0.2, 1),
+    top 380ms cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+
+/* No side of the element has room (a narrow window): the box sits under the screenshot, with no arrow. */
+.tour-callout--docked {
+  position: static;
+  margin: var(--space-4) auto 0;
+}
+
+.tour-callout-title {
+  font-size: 16px;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
 
-.tour-body {
-  max-width: 460px;
-  margin-block-start: var(--space-2);
+.tour-callout-body {
   font-size: var(--fs-row);
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--text-2);
+}
+
+.tour-callout-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-block-start: var(--space-2);
+}
+
+/* The arrow: a rotated square on the edge facing the element, its two outer borders drawn. */
+.tour-callout[data-side]::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border: 0 solid var(--line);
+  transform: rotate(45deg);
+}
+
+.tour-callout[data-side='right']::before {
+  left: -7px;
+  top: calc(var(--tour-arrow) - 6px);
+  border-width: 0 0 1px 1px;
+}
+
+.tour-callout[data-side='left']::before {
+  right: -7px;
+  top: calc(var(--tour-arrow) - 6px);
+  border-width: 1px 1px 0 0;
+}
+
+.tour-callout[data-side='below']::before {
+  top: -7px;
+  left: calc(var(--tour-arrow) - 6px);
+  border-width: 1px 0 0 1px;
+}
+
+.tour-callout[data-side='above']::before {
+  bottom: -7px;
+  left: calc(var(--tour-arrow) - 6px);
+  border-width: 0 1px 1px 0;
 }
 
 .tour-footer {
@@ -174,7 +261,9 @@
     animation: none;
   }
   .tour-track,
-  .tour-dot {
+  .tour-dot,
+  .tour-highlight,
+  .tour-callout {
     transition: none;
   }
 }

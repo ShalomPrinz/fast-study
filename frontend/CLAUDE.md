@@ -35,7 +35,7 @@ back to those overrides, then the dev ports — see
 | [SETTINGS.md](docs/SETTINGS.md)            | the settings, the store, the first-run wall, prerequisites, accounts, Drive consent |
 | [SEARCH.md](docs/SEARCH.md)                | client-side corpus, find → group → build, snippets, paging                        |
 | [I18N.md](docs/I18N.md)                    | translated chrome vs. untranslated data, Hebrew voice and vocabulary, extract, RTL |
-| [TOUR.md](docs/TOUR.md)                    | the first-launch tour carousel: slides, seen flag, screenshot recapture                  |
+| [TOUR.md](docs/TOUR.md)                    | the first-launch guided tour: steps, callout placement, seen flag, recapture                |
 | [TESTING.md](docs/TESTING.md)              | vitest conventions, verifying layout with Playwright, stable selectors            |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.

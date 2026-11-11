@@ -3,10 +3,10 @@ import { arrowDelta, moveSlide } from './tourMachine'
 
 describe('moveSlide', () => {
   it('moves by the delta and stops at both ends', () => {
-    expect(moveSlide(0, 1, 3)).toBe(1)
-    expect(moveSlide(2, 1, 3)).toBe(2)
-    expect(moveSlide(0, -1, 3)).toBe(0)
-    expect(moveSlide(2, -1, 3)).toBe(1)
+    expect(moveSlide(0, 1, 7)).toBe(1)
+    expect(moveSlide(6, 1, 7)).toBe(6)
+    expect(moveSlide(0, -1, 7)).toBe(0)
+    expect(moveSlide(6, -1, 7)).toBe(5)
   })
 })
 

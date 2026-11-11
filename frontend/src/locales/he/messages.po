@@ -440,11 +440,11 @@ msgstr "קובץ בתוך \"{name}\" פתוח בתוכנה אחרת. סגור א
 msgid "A file the PDF template needs is missing: {asset}."
 msgstr "חסר קובץ שתבנית ה-PDF זקוקה לו: {asset}."
 
-#: src/features/tour/tourSteps.ts:31
-msgid "A finished lecture opens with its PDF summary, ready to read."
-msgstr "הרצאה שהסתיימה נפתחת עם סיכום ה-PDF שלה, מוכן לקריאה."
+#: src/features/tour/tourSteps.ts:64
+msgid "A finished lecture opens with its summary, ready to read right here."
+msgstr "הרצאה שהסתיימה נפתחת עם הסיכום שלה, מוכן לקריאה כאן."
 
-#: src/features/tour/tourSteps.ts:32
+#: src/features/tour/tourSteps.ts:26
 msgid "A finished lecture, showing its PDF summary"
 msgstr "הרצאה שהסתיימה, עם סיכום ה-PDF שלה"
 
@@ -692,7 +692,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "זמין אחרי שתבחר חומר מהקורס או תיצור מדריך."
 
 #: src/features/lectures/DocEditor.tsx:249
-#: src/features/tour/Tour.tsx:129
+#: src/features/tour/TourCallout.tsx:75
 msgid "Back"
 msgstr "חזרה"
 
@@ -708,9 +708,9 @@ msgstr "אוניברסיטת בר-אילן"
 msgid "Ben-Gurion University"
 msgstr "אוניברסיטת בן-גוריון"
 
-#: src/features/tour/tourSteps.ts:18
-msgid "Bring in recordings"
-msgstr "הבאת הקלטות"
+#: src/features/tour/tourSteps.ts:34
+msgid "Bring recordings in from here: pick a course and download its videos."
+msgstr "מכאן מביאים הקלטות: בחר קורס והורד את הווידאו שלו."
 
 #: src/features/settings/components/BrowserPrereqField.tsx:54
 msgid "Browser for downloading recordings"
@@ -929,7 +929,7 @@ msgstr "לחץ כדי לסמן שעוד לא סיימת את התרגול הזה
 
 #: src/features/downloads/DownloadsView.tsx:388
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
-#: src/features/tour/Tour.tsx:72
+#: src/features/tour/Tour.tsx:81
 msgid "Close"
 msgstr "סגירה"
 
@@ -1165,6 +1165,10 @@ msgstr "כתובת הקורס"
 msgid "Courses"
 msgstr "קורסים"
 
+#: src/features/tour/tourSteps.ts:57
+msgid "Courses and lectures"
+msgstr "קורסים והרצאות"
+
 #: src/App.tsx:39
 #: src/features/downloads/DownloadsView.tsx:367
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:53
@@ -1267,7 +1271,7 @@ msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
 #: src/features/lectures/components/StudyDoneButton.tsx:54
-#: src/features/tour/Tour.tsx:132
+#: src/features/tour/TourCallout.tsx:78
 msgid "Done"
 msgstr "סיימתי"
 
@@ -1376,9 +1380,9 @@ msgstr "שם התיקייה ב-Drive"
 msgid "Drive upload isn't saved yet. Use Save at the top of the page to save both."
 msgstr "ההעלאה ל-Drive עוד לא נשמרה. כדי לשמור את שתיהן, לחץ על \"שמירה\" בראש העמוד."
 
-#: src/features/tour/tourSteps.ts:25
-msgid "Each lecture moves through audio, transcript, summary and PDF on its own."
-msgstr "כל הרצאה עוברת לבד שמע, תמלול, סיכום ו-PDF."
+#: src/features/tour/tourSteps.ts:58
+msgid "Each course lists its lectures and recitations. Pick one to open it."
+msgstr "כל קורס מציג את ההרצאות והתרגולים שלו. בחר אחד כדי לפתוח אותו."
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:154
 msgid "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
@@ -1439,6 +1443,10 @@ msgstr "כל החומרים המצורפים ריקים, ולכן אין מה ל
 #: src/features/settings/components/DataRootField.tsx:56
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. בחר תיקייה במחשב הזה שאינה מסונכרנת לענן."
+
+#: src/features/tour/tourSteps.ts:52
+msgid "Every downloaded recording lives under Lectures, and its summary is created on its own."
+msgstr "כל הקלטה שהורדה נמצאת בהרצאות, והסיכום שלה נוצר מעצמו."
 
 #: src/features/settings/components/DataRootField.tsx:98
 msgid "Everything stays on this computer. FastStudy has no servers of its own and keeps no copy of your lectures or summaries."
@@ -1699,10 +1707,6 @@ msgstr "Google Drive מקבל את ה-PDF של הסיכום, ורק אם הפע�
 #: src/shared/i18n/serviceErrors.ts:129
 msgid "Google Drive is not connected. Connect it in Settings."
 msgstr "Google Drive לא מחובר. חבר אותו בהגדרות."
-
-#: src/features/tour/tourSteps.ts:19
-msgid "Grab videos with the Chrome extension, or let the auto-downloader fetch your course."
-msgstr "הורידו סרטונים עם תוסף Chrome, או תנו להורדה האוטומטית להביא את הקורס."
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:120
 msgid "Groq gets a lecture's audio to transcribe it."
@@ -1965,8 +1969,12 @@ msgstr "חדשים"
 msgid "New course"
 msgstr "קורס חדש"
 
+#: src/features/tour/tourSteps.ts:45
+msgid "New or all"
+msgstr "חדשים או הכול"
+
 #: src/features/runner/RunnerView.tsx:416
-#: src/features/tour/Tour.tsx:132
+#: src/features/tour/TourCallout.tsx:78
 msgid "Next"
 msgstr "הבאה"
 
@@ -2198,6 +2206,10 @@ msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {h
 msgid "Open {name}"
 msgstr "פתיחת {name}"
 
+#: src/features/tour/tourSteps.ts:70
+msgid "Open a chat with the lecture's content and ask questions about it."
+msgstr "פתח צ'אט עם תוכן ההרצאה ושאל עליו שאלות."
+
 #: src/features/extension/ExtensionGuide.tsx:174
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "פתח הקלטה בכל אתר שתבחר (אפשר גם באתר האוניברסיטה) והפעל אותה. לחץ על הסמל של FastStudy, בחר את הקורס ואת ההרצאה ולחץ על \"הורדה\". בסיום ההורדה, ההרצאה מופיעה תחת הקורס שלה."
@@ -2424,10 +2436,6 @@ msgstr "יצירה מחדש של {title}"
 #: src/features/course-overview/components/StepRow.tsx:53
 msgid "Re-generate from {stepLabel}"
 msgstr "יצירה מחדש משלב {stepLabel}"
-
-#: src/features/tour/tourSteps.ts:30
-msgid "Read the summary"
-msgstr "קריאת הסיכום"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:99
 msgid "Ready"
@@ -2703,6 +2711,10 @@ msgstr "מחפש בסיכומים של הקורס שנבחר בשדה"
 msgid "Section {0} is waiting for a passcode"
 msgstr "היחידה {0} ממתינה לקוד גישה"
 
+#: src/features/tour/tourSteps.ts:46
+msgid "See only the recordings you have not downloaded yet, or every recording in the course."
+msgstr "הצג רק הקלטות שעוד לא הורדו, או את כל ההקלטות בקורס."
+
 #. placeholder {0}: item.title
 #: src/features/downloads/components/NewView.tsx:310
 msgid "Select {0}"
@@ -2783,7 +2795,7 @@ msgstr "הצגת השלבים"
 msgid "Sidebar"
 msgstr "סרגל צד"
 
-#: src/features/tour/Tour.tsx:105
+#: src/features/tour/Tour.tsx:140
 msgid "Skip"
 msgstr "דילוג"
 
@@ -2803,7 +2815,7 @@ msgstr "דולגו"
 msgid "skipped (no video)"
 msgstr "דולג (אין וידאו)"
 
-#: src/features/tour/Tour.tsx:116
+#: src/features/tour/Tour.tsx:151
 msgid "Slide {position} of {total}"
 msgstr "שקף {position} מתוך {total}"
 
@@ -2823,6 +2835,10 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 #: src/features/downloads/components/AddCoursePanel.tsx:110
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (לא חובה)…"
+
+#: src/features/tour/tourSteps.ts:33
+msgid "Start in Downloads"
+msgstr "מתחילים בהורדות"
 
 #: src/features/settings/InitWall.tsx:337
 msgid "Start using FastStudy"
@@ -2851,6 +2867,7 @@ msgid "Student QA"
 msgstr "שאלות סטודנטים"
 
 #: src/features/lectures/components/StudyWithAiCard.tsx:101
+#: src/features/tour/tourSteps.ts:69
 msgid "Study with AI"
 msgstr "ללמוד עם AI"
 
@@ -3028,7 +3045,7 @@ msgstr "לא ניתן לשמור את הקובץ שהורד."
 msgid "The downloader can't fetch this file"
 msgstr "אי אפשר להוריד את הקובץ הזה"
 
-#: src/features/tour/tourSteps.ts:20
+#: src/features/tour/tourSteps.ts:24
 msgid "The Downloads screen, with the University, Extension and Manual tabs"
 msgstr "מסך ההורדות, עם הלשוניות אוניברסיטה, תוסף וידני"
 
@@ -3097,6 +3114,10 @@ msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור 
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
 
+#: src/features/tour/tourSteps.ts:63
+msgid "The PDF summary"
+msgstr "סיכום ה-PDF"
+
 #: src/features/downloads/components/BulkRunNotes.tsx:48
 msgid "the run stopped early. Download them again to pick them up."
 msgstr "ההרצה נעצרה מוקדם. הורד אותם שוב כדי להשלים אותם."
@@ -3128,10 +3149,6 @@ msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי
 #: src/features/runner/RunnerView.tsx:394
 msgid "the runner takes these in order"
 msgstr "ההרצות מתבצעות לפי הסדר"
-
-#: src/features/tour/tourSteps.ts:26
-msgid "The Running screen, with a lecture partway through its steps"
-msgstr "מסך עיבוד ההרצאות, עם הרצאה באמצע שלביה"
 
 #: src/shared/i18n/serviceErrors.ts:340
 msgid "The setting \"{field}\" isn't recognized, so it wasn't saved."
@@ -3337,6 +3354,10 @@ msgstr "לא ניתן להוריד את המקור הזה אוטומטית."
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש. טען את הגרסה החדשה, או השאר את השינויים שלך ושמור אותם במקומה."
 
+#: src/features/tour/tourSteps.ts:39
+msgid "Three ways to download"
+msgstr "שלוש דרכים להוריד"
+
 #: src/features/course-overview/constants/overview.ts:27
 msgid "Topics"
 msgstr "נושאים"
@@ -3469,6 +3490,10 @@ msgstr "לחץ קודם על שמירה בראש העמוד"
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ופתור שם את החידה. ואז לחץ על \"אישרתי, לנסות שוב\"."
 
+#: src/features/tour/tourSteps.ts:40
+msgid "Use your university account, the Chrome extension, or add a file by hand."
+msgstr "אפשר להשתמש בחשבון האוניברסיטה, בתוסף לכרום או להוסיף קובץ ידנית."
+
 #: src/features/downloads/components/RecordingRow.tsx:60
 #: src/features/lectures/constants/pipeline.ts:18
 #: src/features/settings/components/AutoRemoveField.tsx:31
@@ -3491,10 +3516,6 @@ msgstr "וידאו"
 #: src/features/downloads/components/AccountStatus.tsx:175
 msgid "waiting for you to solve the captcha"
 msgstr "ממתין שתפתור את החידה"
-
-#: src/features/tour/tourSteps.ts:24
-msgid "Watch it work"
-msgstr "צפו בעבודה"
 
 #: src/features/settings/components/BrowserPrereqField.tsx:39
 msgid "We couldn't check right now."
@@ -3587,6 +3608,10 @@ msgstr "סיימת את המטלה הזו"
 #: src/features/settings/InitWall.tsx:227
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-FastStudy אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
+
+#: src/features/tour/tourSteps.ts:51
+msgid "Your lectures"
+msgstr "ההרצאות שלך"
 
 #: src/features/settings/InitWall.tsx:218
 msgid "Your two API keys"
