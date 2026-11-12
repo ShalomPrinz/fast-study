@@ -77,7 +77,7 @@ Each consumer names its own tools and publishes the result on a secret-guarded `
 `database/` spawns nothing and has no `/tools`; every service's `/health` is liveness-only.
 
 The record's shape is read by `frontend/src/app/toolWarnings.ts` (one translated toast per broken
-tool by `code`, the only user-facing render), `delivery/smoke/release.spec.js` (every tool `"ok"`)
+tool by `code`, the only user-facing render), `delivery/smoke/tests/03-boot.js` (every tool `"ok"`)
 and each producer's boot log.
 
 ## Tests
