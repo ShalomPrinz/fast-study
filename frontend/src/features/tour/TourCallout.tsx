@@ -82,7 +82,7 @@ export default function TourCallout({
           </button>
         )}
         <button ref={nextRef} className="btn btn--primary tour-next" onClick={nav.onNext}>
-          {nav.last ? <Trans>Done</Trans> : <Trans>Next</Trans>}
+          {nav.last ? <Trans>Done</Trans> : <Trans>Continue</Trans>}
         </button>
       </div>
     </div>

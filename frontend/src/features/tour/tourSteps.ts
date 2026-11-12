@@ -32,46 +32,46 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'downloads-nav',
     shot: 'downloads',
-    title: msg`Start in Downloads`,
-    body: msg`Bring recordings in from here: pick a course and download its videos.`,
+    title: msg`Download recordings`,
+    body: msg`Download recordings here so you can summarize them.`,
   },
   {
     id: 'downloads-tabs',
     shot: 'downloads',
     title: msg`Three ways to download`,
-    body: msg`Use your university account, the Chrome extension, or add a file by hand.`,
+    body: msg`Use your university account, the browser extension, or a link.`,
   },
   {
     id: 'downloads-recording',
     shot: 'downloads',
     title: msg`Download a recording`,
-    body: msg`Choose its name, set whether it is a lecture or a recitation, then download it.`,
+    body: msg`Choose a name for the recording and download it.`,
   },
   {
     id: 'lectures-nav',
     shot: 'lecture',
     title: msg`Your lectures`,
-    body: msg`Every downloaded recording lives under Lectures, and its summary is created on its own.`,
+    body: msg`Downloaded recordings appear on the Lectures page.`,
   },
   {
     id: 'lectures-tree',
     shot: 'lecture',
     title: msg`Courses and lectures`,
-    body: msg`Each course lists its lectures and recitations. Pick one to open it.`,
+    body: msg`Each course shows the lectures, recitations and assignments you downloaded to it.`,
     // The tree is tall; centred, the box would cover the lecture's title beside it.
     alignTop: true,
   },
   {
     id: 'lecture-pdf',
     shot: 'lecture',
-    title: msg`The PDF summary`,
-    body: msg`A finished lecture opens with its summary, ready to read right here.`,
+    title: msg`The recording summary`,
+    body: msg`Once a lecture is processed, its summary appears on this page.`,
   },
   {
     id: 'lecture-ai',
     shot: 'lecture',
     title: msg`Study with AI`,
-    body: msg`Open a chat with the lecture's content and ask questions about it.`,
+    body: msg`Open a chat with the lecture's content to study it with AI.`,
   },
 ]
 
