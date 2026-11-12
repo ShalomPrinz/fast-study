@@ -164,7 +164,7 @@ was passed):
 1. **Settings** — the first-run wall (`hb wall`, reload, then `hb unwall`), switching the data root
    to the empty marked `<harness>/data-empty`, changing the data root, the key probe (valid and rejected),
    Drive connect/disconnect, prerequisites, and a saved setting reaching the service that reads it.
-2. **Course and lecture management** — create, rename, delete, archive, a recitation, a duplicate
+2. **Course and lecture management** — create, rename, delete, a recitation, a duplicate
    name, the two seeded names that differ only by a suffix.
 3. **Downloads** — list the fake course, expand the YouTube row, download one item, "download all"
    for a section, live job progress (slow it with `downloadMs` and reload mid-download), a
