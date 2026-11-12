@@ -72,6 +72,7 @@ async function capture() {
     viewport: SIZE,
     deviceScaleFactor: SCALE,
     locale: 'he',
+    storage: { 'fast-study:tour-dismissed': '1' },
   });
   const page = await context.newPage();
   page.setDefaultTimeout(15_000);
