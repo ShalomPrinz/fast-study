@@ -47,6 +47,8 @@ the transfer: the flag is `false` once the child has exited (the upload to the d
 measured bytes reach the probed size (yt-dlp's merge), on every non-running job, and on jobs of a
 section run ([RUNS.md](RUNS.md), which has its own pace). It clears when bytes grow, and a
 `job:change` ping goes out only when a flag changes. A re-run of the same job restarts the clock.
+The timer exists only while some job is `running`: the first start arms it and the last job to leave
+`running` (terminal status or a restart's drop) clears it, so an idle server has no periodic wakeup.
 
 `POST /jobs/:id/restart` starts a running or queued single job over from zero, with no resume: it
 aborts the child, or the retry / re-resolve wait between attempts (the runner removes the partial temp dir and a pending retry never spawns: its job is gone), drops the old job from `/jobs` at once

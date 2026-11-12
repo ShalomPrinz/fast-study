@@ -122,6 +122,19 @@ export function checkStalls(now = Date.now()) {
   if (changed) broadcastJobs();
 }
 
+// Stops the stall timer once no job is `running`, so an idle server never wakes; `startJob` re-arms it.
+function disarmStallTimerIfIdle() {
+  if (!stallTimer) return;
+  for (const job of jobs.values()) if (job.status === 'running') return;
+  clearInterval(stallTimer);
+  stallTimer = null;
+}
+
+// Whether the stall timer is ticking.
+export function stallTimerArmed() {
+  return stallTimer !== null;
+}
+
 // The child exited clean and the bytes are going to the database: past the point a restart can abort.
 export function markStoring(id) {
   const job = jobs.get(id);
@@ -137,7 +150,7 @@ export function restartJob(id) {
   if (job.inRun) return { code: 'job_in_run' };
   if (terminal(job) || job.storing || !job.restart) return { code: 'job_not_restartable' };
   job.abort.abort();
-  jobs.delete(id);
+  removeJob(id);
   return { id: job.restart() };
 }
 
@@ -190,6 +203,7 @@ export function finishJob(id, status, message = null, code = null, params = null
   job.message = message;
   job.code = code;
   job.params = params;
+  disarmStallTimerIfIdle();
   broadcastJobs();
   // Only `done` is evicted on a timer; `error`/`cancelled` stay until a retry supersedes them.
   // Ids are fresh UUIDs, so a late timer for a superseded job finds nothing and stays silent.
@@ -214,7 +228,14 @@ function supersedeTerminal({ course, lecture, kind, media, ref, dest, folder, fi
 }
 
 function evict(id) {
-  if (jobs.delete(id)) broadcastJobs();
+  if (removeJob(id)) broadcastJobs();
+}
+
+// The one way a job leaves the registry: a running one dropped here must not keep the stall timer alive.
+function removeJob(id) {
+  const removed = jobs.delete(id);
+  disarmStallTimerIfIdle();
+  return removed;
 }
 
 function liveBytes(job) {
