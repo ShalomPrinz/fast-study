@@ -6,7 +6,6 @@ from .assignments import list_assignments
 from .materials import list_materials
 from .mp4 import read_duration
 from .paths import (
-    ARCHIVED_MARKER,
     ASSIGNMENTS_DIR,
     DONE_MARKER,
     FIGURES_PENDING_MARKER,
@@ -169,15 +168,25 @@ def _read_source_url(course_path: Path) -> Optional[str]:
     return p.read_text(encoding="utf-8").strip() or None
 
 
+def _drop_archived_marker(course_path: Path) -> None:
+    """Delete a course dir's leftover `.archived` file; a failed delete is ignored so a tree read never fails on it."""
+
+    # Migration, see docs/MIGRATIONS.md ("Leftover .archived marker").
+    try:
+        (course_path / ".archived").unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 def read_course(name: str) -> Optional[dict]:
     """Return the full tree for a single course (lectures + recitations), or None if it doesn't exist."""
 
     course_path = data_root() / name
     if not course_path.exists():
         return None
+    _drop_archived_marker(course_path)
     return {
         "name": name,
-        "archived": (course_path / ARCHIVED_MARKER).exists(),
         "lectures_only": _lectures_only(course_path),
         "source_url": _read_source_url(course_path),
         "skipped": read_skipped(course_path),

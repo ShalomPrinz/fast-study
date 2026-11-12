@@ -48,7 +48,6 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `POST   /courses`                                          | create course (`{name}`, optional `{source_url}`)                         |
 | `PATCH  /courses/{course}`                                 | rename course (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file under it is open elsewhere |
 | `PATCH  /courses/{course}/source_url`                      | set/clear source_url; empty or null clears                                |
-| `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`); 404 if the course is missing; `400` `setting_must_be_boolean` on a non-bool |
 | `PATCH  /courses/{course}/lectures_only`                   | pick/unpick as lectures-only (`{lectures_only}`, toggles `.lectures_only`); 404 if the course is missing; `400` `setting_must_be_boolean` on a non-bool |
 | `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name |
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file in it is open elsewhere |
@@ -100,7 +99,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /events`                                           | SSE stream of `notify` events                                             |
 | `POST   /notify`                                           | broadcast a `notify` event                                                |
 
-Course create/rename/archive/lectures-only pick, lecture create/rename, `POST /…/removed` and a `POST /config` carrying `data_root` or `course_structure` broadcast
+Course create/rename/lectures-only pick, lecture create/rename, `POST /…/removed` and a `POST /config` carrying `data_root` or `course_structure` broadcast
 a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
 
 ## Write semantics

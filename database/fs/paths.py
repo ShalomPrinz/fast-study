@@ -30,8 +30,7 @@ MAX_NAME_LEN = 80
 # Course-level dir for overview pipeline outputs (files belong to the course, not a lecture).
 OVERVIEW_DIR = "overview"
 
-# Course-dir dotfiles: empty archived flag, empty lectures-only pick, and the auto-downloader's lecture-site URL.
-ARCHIVED_MARKER = ".archived"
+# Course-dir dotfiles: empty lectures-only pick, and the auto-downloader's lecture-site URL.
 LECTURES_ONLY_MARKER = ".lectures_only"
 SOURCE_URL_MARKER = ".source_url"
 # Course-dir JSON {"refs": [...]}: discovery refs the user or the downloader skipped, one set per course (recitations included).

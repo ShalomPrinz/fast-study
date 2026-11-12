@@ -19,7 +19,6 @@ from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
 from fs.paths import (
-    ARCHIVED_MARKER,
     DONE_MARKER,
     LECTURES_ONLY_MARKER,
     SKIPPED_MARKER,
@@ -204,19 +203,6 @@ def _bool_field(body: dict, field: str) -> bool:
             f"{field} must be a boolean", "setting_must_be_boolean", field=field
         )
     return body[field]
-
-
-@app.patch("/courses/{course}/archived")
-async def patch_course_archived(course: str, request: Request):
-    """Archive or unarchive a course (toggles its .archived marker)."""
-
-    try:
-        body = await request.json()
-        crud.set_course_archived(course, _bool_field(body, "archived"))
-        broadcast_notify()
-        return Response(status_code=204)
-    except Exception as e:
-        return _failure(e, 400, "file_write_failed", {"file": ARCHIVED_MARKER})
 
 
 @app.patch("/courses/{course}/lectures_only")

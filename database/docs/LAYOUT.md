@@ -135,7 +135,6 @@ since a rename moves the containing directory. None of them may ever become a tr
 
 | File                     | Where       | Holds                                                    |
 | ------------------------ | ----------- | -------------------------------------------------------- |
-| `.archived`              | course dir  | empty marker; course is archived                          |
 | `.lectures_only`         | course dir  | empty marker; picked as lectures-only, counted only under `lectures_some` ([SETTINGS.md](SETTINGS.md)) |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
 | `.skipped.json`          | course dir  | `{"refs": [...]}`: discovery refs the user or the downloader skipped; one set per course, recitations included; removed once empty |
@@ -170,7 +169,7 @@ A materials-only lecture has neither, so it reports nothing removed.
 
 ## Tree shape
 
-`read_tree` returns one node per course: `name`, `archived`, `lectures_only`, `source_url`,
+`read_tree` returns one node per course: `name`, `lectures_only`, `source_url`,
 `skipped` (`string[]` of refs from `.skipped.json`, insertion order, always present, `[]` when none),
 `lectures`, `recitations`, `assignments`. `lectures_only` is resolved, never raw: `course_structure == lectures_all`,
 or `lectures_some` and the course has `.lectures_only` — consumers read only this flag, never the setting. `Recitations`, `Assignments` and `overview` are skipped as lectures.

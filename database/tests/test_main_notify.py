@@ -38,7 +38,6 @@ def seeded(data_root):
     [
         ("post", "/courses", {"name": "New"}),
         ("patch", "/courses/Algo", {"name": "Algo2"}),
-        ("patch", "/courses/Algo/archived", {"archived": True}),
         ("patch", "/courses/Algo/lectures_only", {"lectures_only": True}),
         ("post", "/courses/Algo/lectures", {"name": "L2"}),
         ("post", "/courses/Algo/lectures?kind=recitation", {"name": "R2"}),
@@ -57,7 +56,6 @@ def test_tree_mutation_notifies_once(client, seeded, notifies, method, url, body
     [
         ("post", "/courses", {"name": "Algo"}),
         ("patch", "/courses/Missing", {"name": "X"}),
-        ("patch", "/courses/Algo/archived", {}),
         ("patch", "/courses/Algo/lectures_only", {}),
         ("patch", "/courses/Missing/lectures_only", {"lectures_only": True}),
         ("post", "/courses/Algo/lectures", {"name": "L1"}),

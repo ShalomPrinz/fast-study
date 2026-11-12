@@ -9,7 +9,7 @@ The event carries **no payload** — the body of `/notify` is drained and discar
 "something changed, refetch" ping, which keeps producers from having to model what changed and
 keeps the channel a single event type. Producers are the backend (each meaningful pipeline and
 course-overview state change, via `services/db_client.notify`), the downloader server (after a
-successful upload), and this service itself after a successful course create, rename, archive or lectures-only pick,
+successful upload), and this service itself after a successful course create, rename or lectures-only pick,
 lecture create, rename or done toggle, an assignment done toggle, attach, selection, doc or generated-file write, a summary write or restore (so an editor open in another window sees it), and a `POST /config` that applies a new `data_root` or `course_structure` — so every open tree
 refetches, not just the window that acted.
 

@@ -66,3 +66,14 @@ one-line comment pointing at this file.
   tag, which is what it shipped unstamped.
 - **Remove when:** the newest non-draft Release carries `extension-version.txt`, which every
   publish uploads. After removal, a missing asset should fail the build instead.
+
+## Leftover .archived marker
+
+- **Code:** `database/fs/tree.py`, `_drop_archived_marker`, called from `read_course`.
+- **Old state:** a course the user archived in an older version holds an empty `.archived` file in
+  its course dir. Nothing reads it any more.
+- **What it does:** every tree read deletes the file from each course dir it lists; a delete that
+  fails is ignored and retried on the next read.
+- **Remove when:** every install has listed its courses once on a version that carries this code.
+  After removal, a still-present `.archived` file is an inert hidden file: it never becomes a tree
+  row and changes no behaviour.

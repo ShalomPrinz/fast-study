@@ -5,7 +5,6 @@ from pathlib import Path
 from .figures import figure_files, wipe_figures
 from .material_meta import forget_meta
 from .paths import (
-    ARCHIVED_MARKER,
     ASSIGNMENTS_DIR,
     DONE_MARKER,
     FIGURES_PENDING_MARKER,
@@ -87,18 +86,6 @@ def set_course_source_url(name: str, source_url: str | None) -> None:
     url = (source_url or "").strip()
     if url:
         marker.write_text(url, encoding="utf-8")
-    elif marker.exists():
-        marker.unlink()
-
-
-def set_course_archived(name: str, archived: bool) -> None:
-    """Create or remove the .archived marker inside a course dir (idempotent); CourseNotFound if the dir is gone."""
-
-    if not course_dir(name).is_dir():
-        raise CourseNotFound(f"course not found: {name}", course=name)
-    marker = course_dir(name) / ARCHIVED_MARKER
-    if archived:
-        marker.touch(exist_ok=True)
     elif marker.exists():
         marker.unlink()
 

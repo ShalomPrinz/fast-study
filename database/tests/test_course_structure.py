@@ -128,12 +128,20 @@ def test_get_course_structure_reports_the_live_mode(client):
     }
 
 
-@pytest.mark.parametrize(
-    "field,marker", [("lectures_only", ".lectures_only"), ("archived", ".archived")]
-)
-def test_course_flag_patch_refuses_a_non_bool(client, courses, field, marker):
-    r = client.patch(f"/courses/Plain/{field}", json={field: "false"})
+def test_lectures_only_patch_refuses_a_non_bool(client, courses):
+    r = client.patch("/courses/Plain/lectures_only", json={"lectures_only": "false"})
     assert r.status_code == 400
     assert r.json()["code"] == "setting_must_be_boolean"
-    assert r.json()["params"] == {"field": field}
-    assert not (courses / "Plain" / marker).exists()
+    assert r.json()["params"] == {"field": "lectures_only"}
+    assert not (courses / "Plain" / ".lectures_only").exists()
+
+
+def test_tree_read_deletes_a_leftover_archived_marker(client, courses):
+    (courses / "Plain" / ".archived").touch()
+    (courses / "Picked" / ".archived").mkdir()  # undeletable by unlink: must not fail
+
+    names = {c["name"] for c in client.get("/tree").json()}
+
+    assert names == {"Picked", "Plain"}
+    assert not (courses / "Plain" / ".archived").exists()
+    assert "archived" not in client.get("/tree").json()[0]
