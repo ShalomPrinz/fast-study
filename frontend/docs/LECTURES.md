@@ -290,8 +290,9 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
 - `CourseGroup` owns `expanded`, `recExpanded` and `assignExpanded`, so the sub-groups survive collapsing the
   course. It auto-expands when one of its lectures, its overview or an assignment is the open route (deep links).
 - `AssignmentsGroup` lists the course's `assignments` after the recitations, styled like them, whatever
-  `lectures_only` says and never folded into the lectures; nothing creates one by hand, so a course
-  without any shows no group. Rows carry ✓/arrow marks and a done/total count.
+  `lectures_only` says and never folded into the lectures. Nothing creates one by hand, so the group
+  shows only once one is listed or downloading, the latter's loading row inside it. Rows carry ✓/arrow
+  marks; the header's done/total count is hidden while none is listed.
 - The pane unmounts on other routes; only each course's expansion (a module map in
   `utils/courseExpansion.ts`, moved to the new name on a course rename) and the nav's scroll position
   survive, the latter saved on each scroll because a detached nav reads 0. The auto-expand re-runs on

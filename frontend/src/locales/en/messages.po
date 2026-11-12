@@ -650,11 +650,11 @@ msgstr "Assignment Solution"
 
 #: src/features/downloads/components/NewView.tsx:143
 #: src/features/downloads/DownloadsView.tsx:201
-#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:37
+#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:42
 msgid "Assignments"
 msgstr "Assignments"
 
-#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:40
+#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:45
 msgid "Assignments you marked done"
 msgstr "Assignments you marked done"
 

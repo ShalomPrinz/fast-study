@@ -68,6 +68,8 @@ export interface DownloadJob {
   course: string
   lecture: string
   kind: Kind
+  // `assignment` for an assignment download (its name rides in `lecture`), else null.
+  media: 'assignment' | null
   tool: DownloadTool
   operation: DownloadOperation | null
   ref: string | null

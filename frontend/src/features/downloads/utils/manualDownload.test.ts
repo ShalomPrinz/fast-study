@@ -16,6 +16,7 @@ function job(status: DownloadJob['status']): DownloadJob {
     course: 'Algo',
     lecture: 'Lecture 3',
     kind: 'lecture',
+    media: null,
     tool: 'yt-dlp',
     operation: null,
     ref: null,

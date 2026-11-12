@@ -88,9 +88,11 @@ download effect only; `RecordingJobList` is presentational.
 
 A non-terminal job (or a `done` one the tree has not caught up to) whose course+lecture+kind is not in the
 course tree shows as a non-clickable sidebar row with a spinner and its ETA bar, in the lecture or
-recitation list it will land in (a lectures-only course's lecture list takes both kinds). It is derived
+recitation list it will land in (a lectures-only course's lecture list takes both kinds). An assignment
+job (`media: 'assignment'`, its name in `lecture`) shows only in the Assignments group, which renders for
+it even before the course's first assignment is listed. It is derived
 from the `/jobs` snapshot (`placeholderJobs`, `useCourseJobs`) with nothing created early on disk, and
-gives way to the real lecture when the tree SSE brings it. An `error` or `cancelled` job leaves none; the
+gives way to the real lecture or assignment when the tree SSE brings it. An `error` or `cancelled` job leaves none; the
 failure toast is the signal. The Running pipelines page does not list downloads.
 
 ## Manual jobs

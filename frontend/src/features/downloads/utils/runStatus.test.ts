@@ -66,6 +66,7 @@ function job(over: Partial<DownloadJob> & Pick<DownloadJob, 'id'>): DownloadJob 
     course: 'Algebra',
     lecture: 'Lecture 1',
     kind: 'lecture',
+    media: null,
     tool: null,
     operation: null,
     ref: 'r1',

@@ -8,11 +8,14 @@ import Chevron from '@/shared/components/Chevron'
 import { ROUTES, routeParam } from '@/shared/utils/routes'
 import { assignmentRoute } from '@/shared/utils/url'
 import { useCourseGroup } from './CourseGroupContext'
+import PlaceholderLectureItem from './PlaceholderLectureItem'
+import { useCourseJobs } from '@/features/downloads/contexts/DownloadJobsContext'
+import { placeholderJobs } from '@/features/downloads/utils/placeholders'
 import '@/styles/sidebar-tree.css'
 import './RecitationsGroup.css'
 
-// The course's assignments, listed apart from its lectures whatever `lectures_only` says; there is no
-// way to add one by hand, so a course without any shows no group. `expand` is owned by CourseGroup.
+// The course's assignments, apart from its lectures whatever `lectures_only` says; with none listed
+// and none downloading there is no group, since nothing adds one by hand. CourseGroup owns `expand`.
 export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
   const { t } = useLingui()
   const { course } = useCourseGroup()
@@ -22,8 +25,10 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
     match && routeParam(match.params.course) === course.name
       ? routeParam(match.params.assignment)
       : null
+  const jobs = useCourseJobs(course.name)
+  const pending = placeholderJobs(jobs, course.name, course, 'assignment')
 
-  if (!course.assignments.length) return null
+  if (!course.assignments.length && !pending.length) return null
   const progress = trackProgress(course.assignments)
 
   return (
@@ -36,7 +41,7 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
           <span dir="auto">
             <Trans>Assignments</Trans>
           </span>
-          {!course.archived && (
+          {!course.archived && progress.total > 0 && (
             <Tooltip content={t`Assignments you marked done`} placement="inline-end">
               <span className="course-count">
                 {progress.done}/{progress.total}
@@ -70,6 +75,9 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
                 </span>
               </button>
             </li>
+          ))}
+          {pending.map((job) => (
+            <PlaceholderLectureItem key={job.lecture} job={job} />
           ))}
         </ul>
       )}

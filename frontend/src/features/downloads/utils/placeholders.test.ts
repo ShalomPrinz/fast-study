@@ -9,6 +9,7 @@ function job(over: Partial<DownloadJob> = {}): DownloadJob {
     course: 'C',
     lecture: 'L1',
     kind: 'lecture',
+    media: null,
     tool: 'curl',
     operation: null,
     ref: null,
@@ -60,5 +61,23 @@ describe('placeholderJobs', () => {
     const jobs = [job(), job({ id: 'j2', kind: 'recitation', lecture: 'R' })]
     expect(placeholderJobs(jobs, 'C', only, 'lecture')).toHaveLength(2)
     expect(placeholderJobs(jobs, 'C', only, 'recitation')).toEqual([])
+  })
+
+  it('lists an assignment job only in the Assignments group, until the tree has it', () => {
+    const a = job({ lecture: 'HW1', media: 'assignment' })
+    expect(placeholderJobs([a], 'C', tree, 'lecture')).toEqual([])
+    expect(placeholderJobs([a], 'C', tree, 'recitation')).toEqual([])
+    expect(placeholderJobs([a], 'C', { ...tree, lectures_only: true }, 'lecture')).toEqual([])
+    expect(placeholderJobs([a], 'C', tree, 'assignment')).toHaveLength(1)
+    // A same-named lecture does not hide it; only a listed assignment does.
+    expect(placeholderJobs([a], 'C', { lectures: [{ name: 'HW1' }] }, 'assignment')).toHaveLength(1)
+    const listed = { ...tree, assignments: [{ name: 'HW1' }] }
+    expect(placeholderJobs([{ ...a, status: 'done' }], 'C', listed, 'assignment')).toEqual([])
+  })
+
+  it('keeps lecture jobs out of the Assignments group and drops failed assignments', () => {
+    expect(placeholderJobs([job()], 'C', tree, 'assignment')).toEqual([])
+    const failed = job({ lecture: 'HW1', media: 'assignment', status: 'error' })
+    expect(placeholderJobs([failed], 'C', tree, 'assignment')).toEqual([])
   })
 })
