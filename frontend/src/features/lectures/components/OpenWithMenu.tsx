@@ -2,6 +2,7 @@ import Tooltip from '@/shared/components/Tooltip'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
+import { isOutsidePress } from '@/shared/utils/tooltip'
 import { shouldOpenUp } from './openWithPlacement'
 import './OpenWithMenu.css'
 
@@ -30,7 +31,7 @@ export default function OpenWithMenu({ onOpenWith }: { onOpenWith: () => void })
   useEffect(() => {
     if (!open) return
     function onPointerDown(e: PointerEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+      if (isOutsidePress(ref.current, e.target)) setOpen(false)
     }
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)

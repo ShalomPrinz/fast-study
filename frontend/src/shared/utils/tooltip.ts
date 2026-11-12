@@ -18,3 +18,12 @@ export function physicalPlacement(
   if (placement === 'inline-end') return rtl ? 'left' : 'right'
   return placement
 }
+
+// A popover's outside-press check: a hint is portaled to <body>, so pressing in one (to select its
+// text) would otherwise read as outside the menu its anchor sits in.
+export function isOutsidePress(container: Element | null, target: EventTarget | null): boolean {
+  if (!(target instanceof Node)) return true
+  if (container?.contains(target)) return false
+  const el = target instanceof Element ? target : target.parentElement
+  return !el?.closest('.tooltip')
+}

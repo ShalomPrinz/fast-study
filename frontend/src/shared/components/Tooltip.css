@@ -14,7 +14,8 @@
   line-height: 1.45;
   white-space: normal;
   overflow-wrap: anywhere;
-  pointer-events: none;
+  cursor: text;
+  user-select: text;
   animation: tooltip-in 0.12s ease-out;
 }
 

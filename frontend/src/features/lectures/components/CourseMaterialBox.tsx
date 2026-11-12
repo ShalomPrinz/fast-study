@@ -5,6 +5,7 @@ import { setAssignmentLectures } from '@/services/database'
 import { toastFailure } from '@/shared/utils/failure'
 import { summarizedLectures } from '@/features/lectures/utils/assignmentDocs'
 import Icon from '@/shared/components/Icon'
+import { isOutsidePress } from '@/shared/utils/tooltip'
 import '@/styles/button.css'
 import '@/styles/chip.css'
 import './CourseMaterialBox.css'
@@ -31,7 +32,7 @@ export default function CourseMaterialBox({ course, assignment, chosen, locked }
   useEffect(() => {
     if (!open) return
     function onPointerDown(e: PointerEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+      if (isOutsidePress(ref.current, e.target)) setOpen(false)
     }
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)

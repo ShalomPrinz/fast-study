@@ -2,6 +2,7 @@ import Tooltip from '@/shared/components/Tooltip'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
+import { isOutsidePress } from '@/shared/utils/tooltip'
 import './OverflowMenu.css'
 
 export interface OverflowAction {
@@ -33,7 +34,7 @@ export default function OverflowMenu({ actions, testId, className, trigger }: Pr
   useEffect(() => {
     if (!open) return
     function onPointerDown(e: PointerEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+      if (isOutsidePress(ref.current, e.target)) setOpen(false)
     }
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)

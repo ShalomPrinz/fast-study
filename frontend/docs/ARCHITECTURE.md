@@ -161,6 +161,8 @@ empty `content`. `placement` is `top`/`bottom`/`inline-start`/`inline-end`, the 
 against the document's `dir`. A disabled button gets its hint on hover only, with no wrapper: it takes no keyboard focus, and Chromium still fires hover on it.
 A button disabled for a lasting reason (missing input or prerequisite, lock, unaccepted policy) passes that reason, with the fix, as its `content` while disabled; busy states (saving, checking) get none.
 It is `position: fixed`, so it never grows the window's scroll height, and closes on any ancestor scroll.
+The pointer can move from the anchor into the hint (`safePolygon`) and drag-select its text; a drag that drifts out does not close it, and one released outside keeps it open while it holds the selection.
+Presses in a hint never reach its anchor's React handlers, and every popover's outside-press check goes through `isOutsidePress` (`shared/utils/tooltip`), which counts a hint as inside.
 An icon-only control keeps its accessible name as `aria-label`, since the tooltip only describes it.
 
 **No cross-file rule may depend on source order.** Vite's import order differs between dev (per-module

@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
-import { hasTooltipContent, physicalPlacement } from './tooltip'
+import { hasTooltipContent, isOutsidePress, physicalPlacement } from './tooltip'
 
 describe('hasTooltipContent', () => {
   it('shows nothing for an absent, false or blank hint', () => {
@@ -23,5 +24,16 @@ describe('physicalPlacement', () => {
     expect(physicalPlacement('inline-end', true)).toBe('left')
     expect(physicalPlacement('inline-start', false)).toBe('left')
     expect(physicalPlacement('inline-start', true)).toBe('right')
+  })
+})
+
+describe('isOutsidePress', () => {
+  it('treats a press in the container or in any hint as inside', () => {
+    document.body.innerHTML =
+      '<div id="menu"><button id="item"></button></div><div class="tooltip"><span id="hint">t</span></div><p id="out"></p>'
+    const menu = document.getElementById('menu')
+    expect(isOutsidePress(menu, document.getElementById('item'))).toBe(false)
+    expect(isOutsidePress(menu, document.getElementById('hint')!.firstChild)).toBe(false)
+    expect(isOutsidePress(menu, document.getElementById('out'))).toBe(true)
   })
 })

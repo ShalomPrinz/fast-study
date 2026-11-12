@@ -6,6 +6,7 @@ import { toast } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { useAiProvider, useSettingsContext } from '@/shared/contexts/SettingsContext'
 import Icon from '@/shared/components/Icon'
+import { isOutsidePress } from '@/shared/utils/tooltip'
 import Tooltip from '@/shared/components/Tooltip'
 import { AI_PROVIDER_IDS, AI_PROVIDERS, type AiProvider } from '@/features/lectures/utils/aiChat'
 import '@/styles/button.css'
@@ -45,7 +46,7 @@ export default function StudyWithAiCard({ ready, copy, collect }: Props) {
   useEffect(() => {
     if (!menuOpen) return
     function onPointerDown(e: PointerEvent) {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false)
+      if (isOutsidePress(menuRef.current, e.target)) setMenuOpen(false)
     }
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') setMenuOpen(false)
