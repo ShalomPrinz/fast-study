@@ -1404,7 +1404,7 @@ msgid "Downloading…"
 msgstr "Downloading…"
 
 #: src/features/downloads/DownloadsView.tsx:231
-#: src/shared/sidebar/Sidebar.tsx:81
+#: src/shared/sidebar/Sidebar.tsx:78
 msgid "Downloads"
 msgstr "Downloads"
 
@@ -1900,7 +1900,7 @@ msgid "Lecture name…"
 msgstr "Lecture name…"
 
 #: src/features/search/SearchView.tsx:206
-#: src/shared/sidebar/Sidebar.tsx:75
+#: src/shared/sidebar/Sidebar.tsx:72
 msgid "Lectures"
 msgstr "Lectures"
 
@@ -2678,7 +2678,7 @@ msgid "Running · lecture {0} of {1}"
 msgstr "Running · lecture {0} of {1}"
 
 #: src/features/runner/RunnerView.tsx:306
-#: src/shared/sidebar/Sidebar.tsx:78
+#: src/shared/sidebar/Sidebar.tsx:75
 msgid "Running pipelines"
 msgstr "Running pipelines"
 
@@ -2728,7 +2728,7 @@ msgstr "Scroll to the end of the policy first"
 msgid "Scroll to the end to confirm."
 msgstr "Scroll to the end to confirm."
 
-#: src/shared/sidebar/Sidebar.tsx:84
+#: src/shared/sidebar/Sidebar.tsx:81
 msgid "Search"
 msgstr "Search"
 
@@ -2797,7 +2797,7 @@ msgstr "session expired"
 
 #: src/features/settings/SettingsView.tsx:174
 #: src/features/settings/SettingsView.tsx:340
-#: src/shared/sidebar/Sidebar.tsx:87
+#: src/shared/sidebar/Sidebar.tsx:84
 msgid "Settings"
 msgstr "Settings"
 

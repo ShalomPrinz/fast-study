@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Icon from '@/shared/components/Icon'
 import type { IconName } from '@/shared/components/Icon'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -8,6 +8,7 @@ import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
 import { lastLectureRoute, readLastLecture } from '@/features/lectures/utils/lastLecture'
 import { versionTag } from '@/services/runtime'
 import LanguageSwitcher from './LanguageSwitcher'
+import SidebarLink, { rowClass } from './SidebarLink'
 import UpdateRow from './UpdateRow'
 import './Sidebar.css'
 
@@ -26,10 +27,6 @@ function useRunnerProgress(): string | undefined {
   // `done` counts finished lectures; display the 1-indexed current one, capped at total.
   const current = Math.min(status.runner.done + 1, status.runner.total)
   return `${current}/${status.runner.total}`
-}
-
-function rowClass(active: boolean): string {
-  return `sidebar-nav-row${active ? ' active' : ''}`
 }
 
 function NavBody({
@@ -74,18 +71,18 @@ export default function Sidebar() {
         >
           <NavBody icon="nav-lectures" label={t`Lectures`} />
         </button>
-        <Link className={rowClass(onRunning)} to="/running">
+        <SidebarLink active={onRunning} to="/running">
           <NavBody icon="nav-running" label={t`Running pipelines`} badge={runnerProgress} />
-        </Link>
-        <Link className={rowClass(onDownloads)} to="/downloads">
+        </SidebarLink>
+        <SidebarLink active={onDownloads} to="/downloads">
           <NavBody icon="nav-downloads" label={t`Downloads`} badge={runningDownloads} />
-        </Link>
-        <Link className={rowClass(onSearch)} to="/search">
+        </SidebarLink>
+        <SidebarLink active={onSearch} to="/search">
           <NavBody icon="nav-search" label={t`Search`} />
-        </Link>
-        <Link className={rowClass(onSettings)} to="/settings">
+        </SidebarLink>
+        <SidebarLink active={onSettings} to="/settings">
           <NavBody icon="nav-settings" label={t`Settings`} />
-        </Link>
+        </SidebarLink>
       </nav>
 
       <div className="sidebar-footer">

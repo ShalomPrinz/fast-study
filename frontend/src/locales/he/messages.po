@@ -1404,7 +1404,7 @@ msgid "Downloading…"
 msgstr "מוריד…"
 
 #: src/features/downloads/DownloadsView.tsx:231
-#: src/shared/sidebar/Sidebar.tsx:81
+#: src/shared/sidebar/Sidebar.tsx:78
 msgid "Downloads"
 msgstr "הורדות"
 
@@ -1900,7 +1900,7 @@ msgid "Lecture name…"
 msgstr "שם ההרצאה…"
 
 #: src/features/search/SearchView.tsx:206
-#: src/shared/sidebar/Sidebar.tsx:75
+#: src/shared/sidebar/Sidebar.tsx:72
 msgid "Lectures"
 msgstr "הרצאות"
 
@@ -2678,7 +2678,7 @@ msgid "Running · lecture {0} of {1}"
 msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 
 #: src/features/runner/RunnerView.tsx:306
-#: src/shared/sidebar/Sidebar.tsx:78
+#: src/shared/sidebar/Sidebar.tsx:75
 msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
 
@@ -2728,7 +2728,7 @@ msgstr "גלול קודם עד סוף המדיניות"
 msgid "Scroll to the end to confirm."
 msgstr "גלול עד הסוף כדי לאשר."
 
-#: src/shared/sidebar/Sidebar.tsx:84
+#: src/shared/sidebar/Sidebar.tsx:81
 msgid "Search"
 msgstr "חיפוש"
 
@@ -2797,7 +2797,7 @@ msgstr "תוקף החיבור פג"
 
 #: src/features/settings/SettingsView.tsx:174
 #: src/features/settings/SettingsView.tsx:340
-#: src/shared/sidebar/Sidebar.tsx:87
+#: src/shared/sidebar/Sidebar.tsx:84
 msgid "Settings"
 msgstr "הגדרות"
 
