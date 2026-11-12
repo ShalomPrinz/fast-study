@@ -426,7 +426,7 @@ draining one, and the site's `blocked`, `invalidtoken`, `missing_function`, `dow
 back — Gemini's `429min` and the site's `blocked_ws`, `radware`, `no_enrol_function`, `hold`,
 `solve` and `revoke` are not; Drive disconnects and reconnects through
 the backend's routes, left connected; the app, loaded in headless chromium from this stack's
-frontend, lists every non-archived course and reaches each service's `/health` from that origin, so
+frontend, lists every course and reaches each service's `/health` from that origin, so
 a CORS allowlist that refuses its port, or a SPA pointed at another stack, fails here
 (`evidence/selfcheck-app.png`);
 and `audio` (real ffmpeg) → `transcribe` (fake Groq) runs green.

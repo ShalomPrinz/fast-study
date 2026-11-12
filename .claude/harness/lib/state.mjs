@@ -45,7 +45,6 @@ export async function snapshot(paths) {
       tree.map((course) => [
         course.name,
         {
-          archived: course.archived,
           source_url: course.source_url,
           lectures: lectures(course.lectures),
           recitations: lectures(course.recitations),

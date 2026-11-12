@@ -357,7 +357,7 @@ async function driveDisconnectsAndReconnects() {
 async function theAppLoadsFromItsOrigin(paths) {
   const APP = appUrl();
   const { body: tree } = await call(`${DATABASE}/tree`);
-  const courses = tree.filter((course) => !course.archived).map((course) => course.name);
+  const courses = tree.map((course) => course.name);
   const { browser, page } = await openBrowser();
   const errors = [];
   page.on('console', (message) => message.type() === 'error' && errors.push(message.text()));
