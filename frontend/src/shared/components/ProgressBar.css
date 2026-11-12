@@ -16,7 +16,7 @@
   height: 100%;
   background: var(--accent);
   border-radius: var(--r-pill);
-  transition: width 0.5s linear;
+  transition: width 1s linear;
   animation: progress-grow 0.5s ease-out;
 }
 

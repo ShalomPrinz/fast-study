@@ -1,5 +1,4 @@
 import Tooltip from '@/shared/components/Tooltip'
-import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { openOverviewFile } from '@/services/open'
 import { formatDuration, formatMonthDate, formatFullTimestamp } from '@/shared/utils/format'
@@ -24,23 +23,12 @@ import '@/styles/pipeline-card.css'
 import '@/styles/button.css'
 import './ExtractorHeader.css'
 import Chevron from '@/shared/components/Chevron'
+import { useNow } from '@/shared/hooks/useNow'
 
-// Seconds since `startedAt`, ticking client-side; null stops the clock and clears it.
-function useElapsed(startedAt: number | null): number | null {
-  const [elapsed, setElapsed] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (startedAt === null) {
-      setElapsed(null)
-      return
-    }
-    const tick = () => setElapsed((Date.now() - startedAt) / 1000)
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [startedAt])
-
-  return elapsed
+// The time since `startedAt`, ticking client-side; mounted only while a branch runs, so an idle one holds no clock.
+function ElapsedClock({ startedAt }: { startedAt: number }) {
+  const now = useNow()
+  return ` · ${formatDuration((now - startedAt) / 1000)}`
 }
 
 export default function ExtractorHeader() {
@@ -67,7 +55,6 @@ export default function ExtractorHeader() {
   const runningPhase = stepsFor(phases).find((s) => s.phase === st?.phase)
   const phaseLabel = runningPhase ? t(runningPhase.label) : null
   const startedAt = st?.startedAt ? Date.parse(st.startedAt) : null
-  const elapsed = useElapsed(bs.running ? startedAt : null)
 
   // The context never toasts; components do.
   async function handleGenerate() {
@@ -102,7 +89,7 @@ export default function ExtractorHeader() {
       {bs.running ? (
         <span className="overview-branch-running">
           {phaseLabel ? t`${phaseLabel}…` : t`Generating…`}
-          {elapsed !== null && ` · ${formatDuration(elapsed)}`}
+          {startedAt !== null && <ElapsedClock startedAt={startedAt} />}
         </span>
       ) : (
         <span className="overview-branch-actions">

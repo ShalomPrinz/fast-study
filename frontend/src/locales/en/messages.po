@@ -153,7 +153,7 @@ msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} rejected this key. Generate a new one in its console."
 
 #. placeholder {0}: formatDuration(remaining)
-#: src/shared/components/ProgressBar.tsx:63
+#: src/shared/components/ProgressBar.tsx:58
 msgid "{0} remaining"
 msgstr "{0} remaining"
 
@@ -344,7 +344,7 @@ msgstr "{path} exists but is not a folder."
 msgid "{phase, select, analyze {Analyzing \"{title}\" failed in the course \"{course}\"} other {Generating \"{title}\" failed in the course \"{course}\"}}"
 msgstr "{phase, select, analyze {Analyzing \"{title}\" failed in the course \"{course}\"} other {Generating \"{title}\" failed in the course \"{course}\"}}"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:104
+#: src/features/course-overview/components/ExtractorHeader.tsx:91
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
@@ -779,7 +779,7 @@ msgstr "Can't replace the video while it's being processed or waiting in line"
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/shared/components/RetryLine.tsx:59
+#: src/shared/components/RetryLine.tsx:55
 msgid "Cancel retry"
 msgstr "Cancel retry"
 
@@ -1480,7 +1480,7 @@ msgstr "Error reports are now off. Some parts of FastStudy will stop sending the
 msgid "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 msgstr "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 
-#: src/shared/components/ProgressBar.tsx:38
+#: src/shared/components/ProgressBar.tsx:33
 msgid "Estimating…"
 msgstr "Estimating…"
 
@@ -1698,7 +1698,7 @@ msgstr "Gemini's daily quota is used up. It resets at midnight Pacific time."
 msgid "Gemini's rate limit was reached."
 msgstr "Gemini's rate limit was reached."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:133
+#: src/features/course-overview/components/ExtractorHeader.tsx:120
 msgid "Generate"
 msgstr "Generate"
 
@@ -1722,7 +1722,7 @@ msgstr "Generating · {runningTitle}"
 msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "Generating from {stepLabel} step will rebuild:"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:104
+#: src/features/course-overview/components/ExtractorHeader.tsx:91
 #: src/features/course-overview/components/GenerateAllButton.tsx:49
 msgid "Generating…"
 msgstr "Generating…"
@@ -2167,7 +2167,7 @@ msgstr "Not confirmed yet"
 msgid "not connected"
 msgstr "not connected"
 
-#: src/shared/components/ProgressBar.tsx:38
+#: src/shared/components/ProgressBar.tsx:33
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
@@ -2298,8 +2298,8 @@ msgstr "Open lecture"
 msgid "Open Microsoft Edge, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Microsoft Edge, paste this address into the address bar at the top and press Enter:"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:111
-#: src/features/course-overview/components/ExtractorHeader.tsx:114
+#: src/features/course-overview/components/ExtractorHeader.tsx:98
+#: src/features/course-overview/components/ExtractorHeader.tsx:101
 #: src/features/lectures/components/AssignmentDocCard.tsx:159
 #: src/features/lectures/components/PdfHero.tsx:192
 #: src/features/lectures/components/PdfViewer.tsx:131
@@ -2373,7 +2373,7 @@ msgstr "Over 10 MB — Summarize will fail while this is attached"
 msgid "Overview"
 msgstr "Overview"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:76
+#: src/features/course-overview/components/ExtractorHeader.tsx:63
 #: src/features/course-overview/components/ExtractorRow.tsx:32
 #: src/features/course-overview/components/GenerateAllButton.tsx:29
 #: src/features/course-overview/components/StepRow.tsx:39
@@ -2471,8 +2471,8 @@ msgstr "Queued"
 msgid "Re-download ↻"
 msgstr "Re-download ↻"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:122
-#: src/features/course-overview/components/ExtractorHeader.tsx:125
+#: src/features/course-overview/components/ExtractorHeader.tsx:109
+#: src/features/course-overview/components/ExtractorHeader.tsx:112
 msgid "Re-generate {title}"
 msgstr "Re-generate {title}"
 
@@ -2646,7 +2646,7 @@ msgstr "Retry ✗"
 msgid "Retry automatically when Gemini is busy or unreachable"
 msgstr "Retry automatically when Gemini is busy or unreachable"
 
-#: src/shared/components/RetryLine.tsx:52
+#: src/shared/components/RetryLine.tsx:48
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "Retrying in {time} (attempt {attempt}/{of})"
 
@@ -2655,7 +2655,7 @@ msgstr "Retrying in {time} (attempt {attempt}/{of})"
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
-#: src/shared/components/RetryLine.tsx:57
+#: src/shared/components/RetryLine.tsx:53
 msgid "Run now"
 msgstr "Run now"
 
@@ -2965,7 +2965,7 @@ msgstr "Switch on a file or choose course material first"
 
 #. placeholder {0}: formatDuration(elapsed)
 #. placeholder {1}: formatDuration(longest)
-#: src/shared/components/ProgressBar.tsx:62
+#: src/shared/components/ProgressBar.tsx:57
 msgid "Taking longer than expected · {0} · longest recorded: {1}"
 msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 

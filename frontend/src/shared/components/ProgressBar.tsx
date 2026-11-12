@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { TimingStats } from '@/types'
 import { formatDuration } from '@/shared/utils/format'
 import { etaProgress } from '@/shared/utils/eta'
+import { useNow } from '@/shared/hooks/useNow'
 import './ProgressBar.css'
 
 interface Props {
@@ -16,14 +16,9 @@ interface Props {
 // ETA bar: elapsed time against a given estimate, ticking client-side.
 export default function ProgressBar({ stats, startedAt, completedFraction = 0, className }: Props) {
   const { t } = useLingui()
-  // The tick stores the clock, not the elapsed time, so a changed `startedAt` (a queued job's 0
+  // The hook hands out the clock, not the elapsed time, so a changed `startedAt` (a queued job's 0
   // becoming its real start) is measured at once instead of showing the old start until the next tick.
-  const [now, setNow] = useState(Date.now)
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 500)
-    return () => clearInterval(id)
-  }, [])
+  const now = useNow()
 
   const extra = className ? ` ${className}` : ''
 

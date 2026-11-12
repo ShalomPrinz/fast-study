@@ -48,6 +48,11 @@ fresher one. The unkeyed status-and-tree pair, and the overview's files-meta-sta
 `useNewestRequest()` instead: any answer newer than the one shown lands, since under a steady notify stream
 every answer is overtaken before it arrives and latest-only never settles.
 
+Everything that ticks — `ProgressBar`'s ETA, `RetryLine`'s countdown, the overview's elapsed clock — reads
+`useNow()` (`shared/hooks/`), one module-level 1 s timer that runs only while a component is subscribed,
+so all of them update in one commit and an idle app has no periodic wakeup. A component reads a fresh
+clock on mount; `.progress-fill`'s `1s linear` width transition matches the tick, so the bar moves continuously.
+
 ## Routes
 
 `react-router-dom` v7, declared in `App.tsx` from the patterns in `shared/utils/routes.ts` (also what

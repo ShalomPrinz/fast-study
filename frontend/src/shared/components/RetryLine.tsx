@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { RetryInfo } from '@/types'
 import OverflowMenu from '@/shared/components/OverflowMenu'
 import Icon from '@/shared/components/Icon'
 import { toastFailure } from '@/shared/utils/failure'
+import { useNow } from '@/shared/hooks/useNow'
 import { formatCountdown, secondsUntil } from '@/shared/utils/retry'
 import '@/styles/button.css'
 import './RetryLine.css'
@@ -20,11 +20,7 @@ interface Props {
 // locally from `retry.at`; the line disappears when the pushed status drops `retry`.
 export default function RetryLine({ retry, onCancel, onRunNow }: Props) {
   const { t } = useLingui()
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [])
+  const now = useNow()
 
   const time = formatCountdown(secondsUntil(retry.at, now))
   const { attempt, of } = retry
