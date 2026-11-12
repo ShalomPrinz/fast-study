@@ -124,3 +124,61 @@ describe('Tooltip drag-select end', () => {
     expect(screen.queryByRole('tooltip')).toBeNull()
   })
 })
+
+describe('Tooltip drag-select containment', () => {
+  const rootUserSelect = () => document.documentElement.style.userSelect
+
+  for (const [how, finish] of [
+    ['pointerup', () => fireEvent.pointerUp(document.body)],
+    ['pointercancel', () => fireEvent.pointerCancel(document.body)],
+    ['unmount', () => cleanup()],
+  ] as const) {
+    it(`makes the page unselectable for the drag and restores it on ${how}`, async () => {
+      document.documentElement.style.userSelect = 'auto'
+      const { tooltip } = await hoverOpen()
+      await act(async () => {
+        fireEvent.pointerDown(tooltip, { button: 0 })
+      })
+      expect(rootUserSelect()).toBe('none')
+      await act(async () => {
+        finish()
+      })
+      expect(rootUserSelect()).toBe('auto')
+      document.documentElement.style.userSelect = ''
+    })
+  }
+
+  for (const order of [
+    [1, 2],
+    [2, 1],
+  ]) {
+    it(`restores it once two touches on two hints both lift, ${order.join(' then ')}`, async () => {
+      document.documentElement.style.userSelect = 'auto'
+      render(
+        createElement(
+          'div',
+          null,
+          createElement(Tooltip, { content: 'A', children: createElement('button', null, 'A') }),
+          createElement(Tooltip, { content: 'B', children: createElement('button', null, 'B') }),
+        ),
+      )
+      await act(async () => {
+        for (const button of screen.getAllByRole('button')) fireEvent.mouseEnter(button)
+      })
+      await screen.findByText('B', { selector: '.tooltip-content' }, { timeout: 1500 })
+      const hints = screen.getAllByRole('tooltip')
+      expect(hints).toHaveLength(2)
+      await act(async () => {
+        fireEvent.pointerDown(hints[0], { button: 0, pointerId: 1 })
+        fireEvent.pointerDown(hints[1], { button: 0, pointerId: 2 })
+        fireEvent.pointerUp(document.body, { pointerId: order[0] })
+      })
+      expect(rootUserSelect()).toBe('none')
+      await act(async () => {
+        fireEvent.pointerUp(document.body, { pointerId: order[1] })
+      })
+      expect(rootUserSelect()).toBe('auto')
+      document.documentElement.style.userSelect = ''
+    })
+  }
+})
