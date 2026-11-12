@@ -1796,7 +1796,7 @@ def auto_remove(course: str, lecture: str, kind: str) -> str:
 
 
 async def apply_auto_remove() -> dict:
-    """Apply the live rule to every lecture and recitation in the tree, archived courses included.
+    """Apply the live rule to every lecture and recitation in the tree.
     A lecture mid-run is deferred: the hook at the end of its run applies the rule then."""
 
     counts = {"removed": 0, "locked": 0, "deferred": 0, "failed": 0}

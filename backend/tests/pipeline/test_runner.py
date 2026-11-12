@@ -2321,7 +2321,6 @@ def _sweep_tree(*lectures: str) -> list:
     return [
         {
             "name": "C1",
-            "archived": True,
             "lectures": [
                 {"name": name, "files": _files(video=True, pdf=True), "removed": []}
                 for name in lectures
@@ -2352,7 +2351,7 @@ class TestApplyAutoRemove:
             patch.object(runner, "auto_remove", lambda _c, lec, _k: outcomes[lec]),
         ):
             counts = asyncio.run(go())
-        # R1 has no pdf yet, so it is not counted anywhere; the archived course is swept.
+        # R1 has no pdf yet, so it is not counted anywhere.
         assert counts == {"removed": 1, "locked": 1, "deferred": 1, "failed": 1}
 
     def test_rule_off_reads_nothing(self, monkeypatch, clean_queue):
