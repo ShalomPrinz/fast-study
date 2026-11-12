@@ -36,19 +36,17 @@ test.beforeEach(() => {
   seen.length = 0;
 });
 
-test('/courses keeps lectures_only per course, names only, archived dropped', async () => {
+test('/courses keeps lectures_only per course, names only', async () => {
   answers['/tree'] = [
     200,
     [
       {
         name: 'Calc',
         lectures_only: true,
-        archived: false,
         lectures: [{ name: 'L1', status: 'done' }],
         recitations: [],
       },
       { name: 'Algebra', lectures_only: false, lectures: [], recitations: [{ name: 'R1' }] },
-      { name: 'Old', lectures_only: true, archived: true, lectures: [], recitations: [] },
     ],
   ];
   const res = await realFetch(`${base}/courses`);

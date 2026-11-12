@@ -8,8 +8,7 @@ the latter.
 
 `/tree` returns rich lecture objects, but the popup's autocomplete wants names only, so they are
 reshaped here to `[{name, lectures_only, lectures, recitations}]` rather than changing a `/tree`
-contract the frontend depends on. Archived courses are dropped so finished ones don't clutter
-suggestions. `lectures_only` is the database's per-course resolution, passed through so the popup
+contract the frontend depends on. `lectures_only` is the database's per-course resolution, passed through so the popup
 hides the Lecture/Recitation choice; `getCourseStructure()` proxies `GET /course_structure` (the
 live global mode) for a course typed in that the tree doesn't hold yet.
 
@@ -19,7 +18,7 @@ The database's video PUT and `/materials` POST answer 404 `course_not_found` for
 and its `POST /courses` refuses an existing one (409 `name_taken`). So `/download`,
 `/download-youtube` and `/upload-pdf` — the extension's routes, whose course field is free text —
 first `POST /courses` unconditionally, so no download pays for a full `/tree` scan. A 409
-`name_taken` means the folder exists (archived, a race, or a case-only match on Windows) and counts
+`name_taken` means the folder exists (a race, or a case-only match on Windows) and counts
 as success. Any other refusal is answered as a 502 with the database's own `code`, and no job starts.
 
 ## `uploadVideo` — the video PUT wipes derived artifacts

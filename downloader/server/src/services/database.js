@@ -24,19 +24,17 @@ function refused(body, status) {
 }
 
 // /tree returns rich lecture/recitation objects; the popup only wants the names and each course's
-// resolved `lectures_only`, and archived courses are dropped so finished ones don't clutter suggestions.
+// resolved `lectures_only`.
 export async function listCourses() {
   const res = await fetch(`${DATABASE_URL}/tree`, { headers: peerHeaders() });
   if (!res.ok) throw new Error(`database /tree returned ${res.status}`);
   const tree = await res.json();
-  return tree
-    .filter((c) => !c.archived)
-    .map((c) => ({
-      name: c.name,
-      lectures_only: c.lectures_only === true,
-      lectures: (c.lectures ?? []).map((l) => l.name),
-      recitations: (c.recitations ?? []).map((r) => r.name),
-    }));
+  return tree.map((c) => ({
+    name: c.name,
+    lectures_only: c.lectures_only === true,
+    lectures: (c.lectures ?? []).map((l) => l.name),
+    recitations: (c.recitations ?? []).map((r) => r.name),
+  }));
 }
 
 // The live global course-structure mode, `{course_structure}` — what a course not in the tree yet resolves to.
