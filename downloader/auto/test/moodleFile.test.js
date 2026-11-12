@@ -300,3 +300,43 @@ test('two materials with different fileurls in one lecture each stream their own
   }
   assert.deepEqual(got, ['AAAA', 'BBBBBBBB']);
 });
+
+test('a caller that hangs up during the upstream open aborts the Moodle fetch', async (t) => {
+  const base = await serve(t);
+  const local = realFetch;
+  let hang = false;
+  let opened;
+  const opening = new Promise((resolve) => (opened = resolve));
+  t.mock.method(globalThis, 'fetch', async (url, init) => {
+    if (String(url).startsWith(base)) return local(url, init);
+    if (!hang) {
+      return new Response(PDF, {
+        status: 200,
+        headers: { 'content-type': 'application/pdf', 'content-length': String(PDF.length) },
+      });
+    }
+    opened();
+    return new Promise((_, reject) => {
+      init.signal.addEventListener('abort', () => reject(init.signal.reason), { once: true });
+    });
+  });
+  const ref = encodeRef({
+    strategy: 'moodle-file',
+    fileurl: `${SITE}/webservice/pluginfile.php/9/mod_resource/content/1/hangup.pdf`,
+    kind: 'lecture',
+  });
+  const res = await local(`${base}/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ref, course: 'CH', name: 'LH', kind: 'lecture' }),
+  });
+  const { targets } = await res.json();
+  hang = true;
+  const caller = new AbortController();
+  const pending = local(`${base}${targets[0].url}`, { signal: caller.signal });
+  await opening;
+  caller.abort();
+  await assert.rejects(pending, { name: 'AbortError' });
+  // The lock is free only once the handler returned, which needs the upstream fetch aborted.
+  await gated(async () => {});
+});

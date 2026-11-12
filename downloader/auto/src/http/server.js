@@ -949,7 +949,7 @@ async function openProxied(file, res, { range, signal }) {
 
 // Stream a resolved Moodle-host file to server/ under the lock, Range passed through for a resume.
 // An unknown id (auto restarted) is 401, which server/ answers with its one silent re-resolve.
-export const handleMoodleFile = gated('/moodle/file', async (req, res) => {
+export const handleMoodleFile = gated('/moodle/file', async (req, res, signal) => {
   const file = fileById(req.params.id);
   if (!file) {
     logResult('/moodle/file', 'unknown id (401)');
@@ -959,14 +959,12 @@ export const handleMoodleFile = gated('/moodle/file', async (req, res) => {
       params: {},
     });
   }
-  const gone = new AbortController();
-  res.on('close', () => gone.abort());
   let upstream;
   try {
-    upstream = await openProxied(file, res, { range: req.headers.range, signal: gone.signal });
+    upstream = await openProxied(file, res, { range: req.headers.range, signal });
     if (!upstream) return;
   } catch (e) {
-    if (gone.signal.aborted) return;
+    if (signal.aborted) return;
     if (invalidToken(e)) {
       siteAuth().auth.markExpired();
       logResult('/moodle/file', 'reconnect (401)');
