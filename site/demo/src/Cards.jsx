@@ -3,7 +3,7 @@ import icon from '../../img/icon.svg';
 import { progress } from './motion.mjs';
 import { COLOR, FONT, FPS } from './theme.mjs';
 
-function Dark({ children, dir }) {
+function Dark({ children, dir, style }) {
   return (
     <AbsoluteFill
       style={{
@@ -13,12 +13,16 @@ function Dark({ children, dir }) {
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column',
+        ...style,
       }}
     >
       {children}
     </AbsoluteFill>
   );
 }
+
+// A frame by which every entrance on a card has finished.
+const SETTLED = 300;
 
 const rise = (frame, from) => {
   const p = progress(frame, from, from + 16);
@@ -66,6 +70,18 @@ export function TitleCard({ strings, frame }) {
           ...rise(frame, 20),
         }}
       >
+        {strings.tagline}
+      </div>
+    </Dark>
+  );
+}
+
+// The page's poster: the title card's parts settled, set above and below a centre left clear for the play button.
+export function PosterCard({ strings }) {
+  return (
+    <Dark dir={strings.dir} style={{ justifyContent: 'space-between', padding: '140px 0 236px' }}>
+      <Brand strings={strings} frame={SETTLED} size={180} />
+      <div style={{ fontSize: 56, lineHeight: '84px', fontWeight: 500, color: COLOR.darkFg }}>
         {strings.tagline}
       </div>
     </Dark>

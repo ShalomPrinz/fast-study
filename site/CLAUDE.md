@@ -82,7 +82,9 @@ The SmartScreen steps come from a real Windows install and cannot be captured he
 A 60-second walk through one lecture in Hebrew and English: a title card, four flows — downloading a
 recording from the course's Moodle, the pipeline's steps completing, the summary PDF, the Drive
 control on the finished lecture — and an end card with the page's own call to action. Each MP4 is
-1920×1080 at 30 fps, H.264 yuv420p + AAC, moov atom first; each poster is the title card.
+1920×1080 at 30 fps, H.264 yuv420p + AAC, moov atom first. Each poster is the composition's own
+`Poster` still, not a frame of the video: the title card's logo, wordmark and tagline with the
+wordmark above and the tagline below a centre left clear for the page's play button.
 
 `demo/` is the one place in `site/` with a `package.json`: Remotion `4.0.543` (pinned), React and
 `@fontsource/heebo`. The picture is stills of the app animated in code — camera, cursor, crossfades —
@@ -93,6 +95,7 @@ the language as a prop and picks that language's strings and footage.
 ```bash
 node site/demo/capture.mjs --harness DIR   # rewrites demo/public/footage/ on a live app-harness stack
 cd site/demo && npm ci && npm run render   # rewrites the four files in video/
+cd site/demo && npm run posters            # rewrites the two posters alone, the MP4s untouched
 ```
 
 `capture.mjs` seeds the showcase dataset and drives the journey lecture with two pages on one stack,

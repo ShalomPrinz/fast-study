@@ -11,7 +11,7 @@ import {
 } from 'remotion';
 import enShots from '../public/footage/en/manifest.json';
 import heShots from '../public/footage/he/manifest.json';
-import { EndCard, TitleCard } from './Cards.jsx';
+import { EndCard, PosterCard, TitleCard } from './Cards.jsx';
 import { Backdrop, Caption, ChapterRail } from './Chrome.jsx';
 import { Download, Drive, Pdf, Pipeline } from './Scenes.jsx';
 import en from './strings/en.json';
@@ -40,11 +40,8 @@ function Scene({ name, children }) {
   );
 }
 
-export function Demo({ lang }) {
-  const frame = useCurrentFrame();
-  const { strings, footage } = LANGS[lang];
-  const { shots, sheet } = footage;
-  // No frame renders before Heebo has loaded in every weight the video sets, Hebrew included.
+// No frame renders before Heebo has loaded in every weight the video sets, Hebrew included.
+function useHeebo() {
   const [handle] = useState(() => delayRender('Heebo'));
   useEffect(() => {
     Promise.all(
@@ -53,6 +50,19 @@ export function Demo({ lang }) {
       ),
     ).then(() => continueRender(handle));
   }, [handle]);
+}
+
+// The still the page shows before the video plays.
+export function Poster({ lang }) {
+  useHeebo();
+  return <PosterCard strings={LANGS[lang].strings} />;
+}
+
+export function Demo({ lang }) {
+  const frame = useCurrentFrame();
+  const { strings, footage } = LANGS[lang];
+  const { shots, sheet } = footage;
+  useHeebo();
 
   const flows = { from: SCENES.download.from, until: SCENES.end.from + FADE };
   return (

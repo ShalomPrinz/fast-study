@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "studio": "remotion studio src/index.jsx",
-    "render": "node render.mjs"
+    "render": "node render.mjs",
+    "posters": "node render.mjs --posters"
   },
   "dependencies": {
     "@fontsource/heebo": "5.3.0",
