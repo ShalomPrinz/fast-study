@@ -27,6 +27,15 @@ export async function launch(env = {}) {
   } catch (error) {
     throw new Error(`could not launch ${appExe()} (${ASSUMPTION_ELECTRON}): ${error.message}`);
   }
+  // The first-run tour's overlay would block clicks; the tour itself is the harness's to test.
+  // Registered before app://bundle loads (after boot), so it runs ahead of the SPA on every load.
+  await app.context().addInitScript(() => {
+    try {
+      localStorage.setItem('fast-study:tour-dismissed', '1');
+    } catch {
+      /* no storage on this origin */
+    }
+  });
   await app.context().tracing.start({ screenshots: true, snapshots: true });
   let page;
   try {

@@ -110,6 +110,7 @@ A new smoke test adds its row here; a test with no packaging-only failure belong
   size, see `electron/windowState.js`) — Windows clamps it to the runner's 1024x768 desktop (`"viewport"` in any `smoke-traces` launch trace). So a step touching
   a layout-dependent control works in both branches — test 9 clicks `lecture-actions-menu` only if present.
 - **Launched with `--lang=en-US`**, so a failure screenshot is readable.
+- **The first-run tour is pre-dismissed** by a context init script on every launch, so its overlay blocks no click; the tour is `tour.spec.mjs`'s.
 
 ## Re-running against an existing build
 
