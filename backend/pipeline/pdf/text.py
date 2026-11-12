@@ -4,10 +4,18 @@ _LIST_ITEM_RE = re.compile(r"^(\s*(?:[-*+]|\d+\.)\s)")
 # A callout div marker line (`::: definition` opens, `:::` closes; `attr` empty on a close).
 # Here rather than in course/ because pipeline/ may not import course/.
 DIV_MARKER_RE = re.compile(r"^ {0,3}:{3,}[ \t]*(?P<attr>.*?)[ \t]*$")
-_DISPLAY_MATH = r"\$\$[\s\S]*?\$\$"
-# Excludes the backtick: a `$` inside inline code is a literal, and pandoc won't let
-# math cross a code span — so two unrelated code spans must never pair up as "math".
-_INLINE_MATH = r"\$[^\$\n`]+?\$"
+# An escaped backslash or dollar. Every span scanner tries it FIRST, so a `$` opens math only
+# after an even run of backslashes — fixed-width lookbehind cannot count a run.
+_ESCAPE = r"\\[\\$]"
+_DISPLAY_OPEN = r"\$\$"
+# Body up to the closing `$$`; `\x` pairs are consumed whole, so `\$$` never closes but `\\$$` does.
+_DISPLAY_CLOSE = r"(?:\\[\s\S]|[^\\])*?\$\$"
+_DISPLAY_MATH = _DISPLAY_OPEN + _DISPLAY_CLOSE
+# Tokenizes a line into escape pairs and `$$`; only group 1 is a display delimiter.
+_DISPLAY_DELIM_RE = re.compile(r"\\.|(\$\$)")
+# No backtick in the body: pandoc won't let math cross a code span, so two code spans never
+# pair up as "math". Inside the body `\x` pairs are consumed whole, so `\$` closes nothing.
+_INLINE_MATH = r"\$(?:\\[^\n]|[^\$\n`\\])+?\$"
 # Shared with `bidi._INLINE_CODE_RE` so the two can't disagree on what is code — a span
 # only one of them claims comes out double-wrapped. Newline-bounded, matching pandoc.
 _INLINE_CODE_BODY = r"[^`\n]+"
@@ -16,9 +24,9 @@ _INLINE_CODE_BODY = r"[^`\n]+"
 _DOUBLE_CODE_BODY = r"(?:[^`\n]|`(?!`))+"
 _INLINE_CODE = r"``" + _DOUBLE_CODE_BODY + r"``|`" + _INLINE_CODE_BODY + r"`"
 # The one definition of "renders verbatim", shared by every helper that must leave math AND
-# code alone. The capturing group keeps the delimiters, so split() puts spans at odd indices.
+# code alone. Group 1 is a span; a match without it is an escape, which is plain prose.
 _PROTECTED_RE = re.compile(
-    r"(" + _DISPLAY_MATH + r"|" + _INLINE_MATH + r"|" + _INLINE_CODE + r")"
+    _ESCAPE + r"|(" + _DISPLAY_MATH + r"|" + _INLINE_MATH + r"|" + _INLINE_CODE + r")"
 )
 
 _LATEX_SPECIAL = {
@@ -38,11 +46,23 @@ _LATIN = r"A-Za-zÀ-ÖØ-öø-ɏ"
 _HEBREW = "֐-׿"
 
 
+def split_protected(text: str) -> list[str]:
+    """Split text on math/code spans, delimiters kept: prose at even indices, spans at odd."""
+
+    parts, last = [], 0
+    for m in _PROTECTED_RE.finditer(text):
+        if m.group(1) is not None:
+            parts += [text[last : m.start()], m.group(1)]
+            last = m.end()
+    parts.append(text[last:])
+    return parts
+
+
 def normalize_dashes(text: str) -> str:
     """Convert em/en dashes to ASCII, which behave predictably under bidi. Code and
     math spans render verbatim, so a dash inside one is left alone."""
 
-    parts = _PROTECTED_RE.split(text)
+    parts = split_protected(text)
     for i in range(0, len(parts), 2):
         parts[i] = parts[i].replace("—", " - ").replace("–", "-")
     return "".join(parts)
@@ -100,6 +120,6 @@ def ensure_blank_before_lists(text: str) -> str:
             if prev.strip() and not _LIST_ITEM_RE.match(prev):
                 result.append("\n")
         result.append(line)
-        if line.count("$$") % 2:
+        if sum(map(bool, _DISPLAY_DELIM_RE.findall(line))) % 2:
             in_display_math = not in_display_math
     return "".join(result)

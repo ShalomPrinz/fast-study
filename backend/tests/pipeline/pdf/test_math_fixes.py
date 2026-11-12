@@ -39,6 +39,14 @@ class TestCloseUnbalancedDisplayMath:
         text = r"$$\frac{1}{2}$$"
         assert close_unbalanced_display_math(text) == text
 
+    def test_escaped_dollar_is_not_the_lone_closer(self):
+        # A multi-line block whose first line ends in a literal \$ is still open.
+        text = "$$ a = 5\\$\n+ b $$"
+        assert close_unbalanced_display_math(text) == text
+
+    def test_escaped_dollar_in_body_does_not_hide_the_lone_closer(self):
+        assert close_unbalanced_display_math(r"$$ 5\$ + b $") == r"$$ 5\$ + b $$"
+
     def test_inline_math_untouched(self):
         text = "הערך $x$ גדול"
         assert close_unbalanced_display_math(text) == text
@@ -137,6 +145,13 @@ class TestDemoteMathIdentifier:
 
     def test_capitalized_identifier_demoted(self):
         assert demote_math_identifier("$_Exit$") == "`_Exit`"
+
+    def test_escaped_dollar_does_not_open_an_identifier(self):
+        text = r"$x\$_abc$"
+        assert demote_math_identifier(text) == text
+
+    def test_escaped_backslash_before_identifier_still_demotes(self):
+        assert demote_math_identifier("\\\\$_exit$") == "\\\\`_exit`"
 
     def test_multiple_identifiers_each_demoted(self):
         assert demote_math_identifier("$_exit$ ו-$_Exit$") == "`_exit` ו-`_Exit`"
@@ -415,6 +430,16 @@ class TestWrapMathTextDir:
 
 
 class TestMergeLtrMath:
+    def test_span_ending_in_escaped_dollar_is_not_display_math(self):
+        # Regression: the `\$$` closing the first span was read as a `$$` opener, so the
+        # walk skipped to the next one and the pair between them never merged.
+        text = r"$F^\$$ ואז \LR{abc} $x$ סוף $y^\$$"
+        assert merge_ltr_math(text) == r"$F^\$$ ואז \LR{abc $x$} סוף $y^\$$"
+
+    def test_escaped_dollar_in_prose_opens_no_span(self):
+        text = r"5\$ ואז \LR{abc} ועוד 7\$"
+        assert merge_ltr_math(text) == text
+
     def test_code_then_math_merged(self):
         # Regression: \LR{\textenglish{\texttt{current}}} and $\leftarrow v$ are separate LTR
         # islands; RTL bidi reverses them to "← v current".
@@ -451,6 +476,11 @@ class TestMergeLtrMath:
 
     def test_lone_lr_untouched(self):
         text = r"עברית \LR{Word} עברית"
+        assert merge_ltr_math(text) == text
+
+    def test_escaped_dollar_does_not_end_display_math(self):
+        # Regression: the `\$$` closed the block early, so the pair inside it was merged.
+        text = "$$a \\$$ \\LR{x} $y$ b$$"
         assert merge_ltr_math(text) == text
 
     def test_display_math_not_descended_into(self):

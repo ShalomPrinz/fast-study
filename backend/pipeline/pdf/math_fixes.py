@@ -1,15 +1,24 @@
 import re
 
-from pipeline.pdf.text import _DISPLAY_MATH, _HEBREW, _INLINE_MATH, _LATIN
+from pipeline.pdf.text import (
+    _DISPLAY_CLOSE,
+    _DISPLAY_MATH,
+    _ESCAPE,
+    _HEBREW,
+    _INLINE_MATH,
+    _LATIN,
+)
 
-_MATH_SPAN_RE = re.compile(_DISPLAY_MATH + r"|" + _INLINE_MATH)
+# Group 1 is a math span; a match without it is an escape (`\\`, `\$`) and stays as typed.
+_MATH_SPAN_RE = re.compile(_ESCAPE + r"|(" + _DISPLAY_MATH + r"|" + _INLINE_MATH + r")")
 # A code span whose ENTIRE body is one math expression, so spans mixing code and
 # prose (`RSI`) are left as real code.
 _MATH_IN_CODE_RE = re.compile(r"`\s*(" + _DISPLAY_MATH + r"|" + _INLINE_MATH + r")\s*`")
 
 # Whole line: opens `$$`, no other `$` or backtick in the body, closes with a lone `$`.
+# An escaped `\$` is body text, never the lone closer.
 _UNBALANCED_DISPLAY_MATH_RE = re.compile(
-    r"^([ \t]*\$\$[^$`\n]+)\$[ \t]*$", re.MULTILINE
+    r"^([ \t]*\$\$(?:\\[^\n]|[^$`\n\\])+)\$[ \t]*$", re.MULTILINE
 )
 
 
@@ -28,14 +37,18 @@ def unwrap_math_code(text: str) -> str:
 
 
 # Body shape (_ + letter + 2+ ident chars) excludes real math: $x_i$, $_2F_1$, $a_{ij}$.
-_MATH_IDENTIFIER_RE = re.compile(r"(?<!\$)\$\s*(_[A-Za-z][A-Za-z0-9_]+)\s*\$(?!\$)")
+_MATH_IDENTIFIER_RE = re.compile(
+    _ESCAPE + r"|(?<!\$)\$\s*(_[A-Za-z][A-Za-z0-9_]+)\s*\$(?!\$)"
+)
 
 
 def demote_math_identifier(text: str) -> str:
     """Rewrite an underscore-led identifier in math (`$_exit$`) as a code span —
     it's code, and the leading _ would otherwise become a subscript operator."""
 
-    return _MATH_IDENTIFIER_RE.sub(lambda m: "`" + m.group(1) + "`", text)
+    return _MATH_IDENTIFIER_RE.sub(
+        lambda m: "`" + m.group(1) + "`" if m.group(1) else m.group(0), text
+    )
 
 
 _TEXT_WRAPPED_MACRO_RE = re.compile(r"\\text\s*\{\s*(\\[A-Za-z]+)\s*\}")
@@ -132,6 +145,7 @@ def merge_rtl_math_number(text: str) -> str:
 
 
 _INLINE_MATH_ONLY_RE = re.compile(_INLINE_MATH)
+_DISPLAY_CLOSE_RE = re.compile(_DISPLAY_CLOSE)
 
 
 def _lr_block_end(text: str, start: int) -> int:
@@ -163,10 +177,14 @@ def merge_ltr_math(text: str) -> str:
     last = 0  # start of the untouched run still to be flushed
     n = len(text)
     while i < n:
+        # An escaped character is a literal — `\$` must not start a span or half a `$$`.
+        if text[i] == "\\" and not text.startswith(r"\LR{", i):
+            i += 2
+            continue
         # Skip display math wholesale — never reorder or descend into it.
         if text.startswith("$$", i):
-            j = text.find("$$", i + 2)
-            i = (j + 2) if j != -1 else n
+            close = _DISPLAY_CLOSE_RE.match(text, i + 2)
+            i = close.end() if close else n
             continue
         if text.startswith(r"\LR{", i):
             end = _lr_block_end(text, i)
@@ -199,6 +217,9 @@ def merge_ltr_math(text: str) -> str:
                     out.append(r"\LR{" + m.group(0) + " " + inner + "}")
                     i = last = end
                     continue
+                # Step over the whole span, so a `\$$` at its end is not read as display math.
+                i = m.end()
+                continue
         i += 1
     out.append(text[last:])
     return "".join(out)
@@ -209,7 +230,7 @@ def normalize_math_spans(text: str) -> str:
 
     def replace(m: re.Match) -> str:
         s = m.group(0)
-        if s.startswith("$$"):
+        if m.group(1) is None or s.startswith("$$"):
             return s
         return "$" + s[1:-1].strip() + "$"
 

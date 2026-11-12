@@ -7,6 +7,7 @@ from pipeline.pdf.text import (
     apply_outside_fences,
     ensure_blank_before_lists,
     normalize_dashes,
+    split_protected,
 )
 from pipeline.to_pdf import preprocess_markdown
 
@@ -143,10 +144,20 @@ class TestEnsureBlankBeforeLists:
         text = "$$\nx = a\n$$\nפסקה\n- פריט\n"
         assert "\n\n- פריט" in ensure_blank_before_lists(text)
 
+    # ---------------------------------------------------------------------------
+    # apply_outside_fences
+    # ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# apply_outside_fences
-# ---------------------------------------------------------------------------
+    def test_inline_span_ending_in_escaped_dollar_is_not_display_math(self):
+        # Regression: the `\$$` closing `$F^\$$` counted as a display delimiter, so the
+        # list below was taken for math and got no blank line.
+        text = "מחיר $F^\\$$ הוא:\n- א\n- ב\n"
+        assert ensure_blank_before_lists(text) == "מחיר $F^\\$$ הוא:\n\n- א\n- ב\n"
+
+    def test_line_break_before_display_closer_still_closes(self):
+        # A `$$` after a TeX line break (two backslashes) is the closer, not an escaped dollar.
+        text = "$$a \\\\$$\nפסקה\n- פריט\n"
+        assert "\n\n- פריט" in ensure_blank_before_lists(text)
 
 
 class TestApplyOutsideFences:
@@ -292,3 +303,57 @@ class TestCalloutDivMarkers:
         # and pandoc treats an unmatched fence as literal text.
         out = apply_outside_fences("abc\n:::\ndef\n", str.upper)
         assert out == "ABC\n:::\nDEF\n"
+
+
+# ---------------------------------------------------------------------------
+# escaped dollars through the whole chain
+# ---------------------------------------------------------------------------
+
+
+class TestEscapedDollar:
+    """A backslash-escaped `$` never delimits a math span — see docs/BIDI.md."""
+
+    def test_escaped_dollar_inside_inline_math_stays_one_span(self):
+        text = r"המחיר $F_k^\$$ נקבע"
+        assert preprocess_markdown(text) == text
+
+    def test_two_spans_on_one_line_keep_space_and_get_no_lr(self):
+        # Regression: the first span ended at its `\$`, so the Hebrew between the two was
+        # read as math (space stripped) and the second span as prose (`$\LR{f}^\$$`).
+        text = r"$F_k^\$$ לבין $f^\$$"
+        assert preprocess_markdown(text) == text
+
+    def test_escaped_dollar_in_prose_opens_no_span(self):
+        # Were the two `\$` paired as math, `and` would sit in a span and go unwrapped.
+        out = preprocess_markdown(r"עולה 5\$ and 7\$ בסך הכל")
+        assert r"\LR{and" in out
+        assert out.count("$") == 2
+
+    def test_escaped_dollar_before_inline_math_opens_no_display_span(self):
+        # Regression: `\$$x$` opened display math that swallowed everything up to `$$y$$`'s opener.
+        parts = split_protected("עלות \\$$x$ ואז $$y$$")
+        assert parts == ["עלות \\$", "$x$", " ואז ", "$$y$$", ""]
+
+    def test_escaped_dollar_does_not_close_display_math(self):
+        assert split_protected("$$a \\$$ b$$ c") == ["", "$$a \\$$ b$$", " c"]
+
+    def test_line_break_before_closer_closes_display_math(self):
+        parts = split_protected("$$a \\\\$$ $x$")
+        assert parts == ["", "$$a \\\\$$", " ", "$x$", ""]
+
+    def test_escaped_backslash_before_display_math_still_opens(self):
+        # Regression: the `$$` after `\\` opened nothing, so the block was wrapped as prose.
+        text = "נתיב \\\\$$\nf(x) = a x + b\n$$\nסוף"
+        assert preprocess_markdown(text) == text
+
+    def test_escaped_backslash_before_display_math_keeps_later_spaces(self):
+        # Regression: the first block went unseen, so ` ו ` was read as math and stripped.
+        text = "\\\\$$a$$ ו $$b$$"
+        assert preprocess_markdown(text) == text
+
+    def test_escaped_backslash_before_inline_math_still_opens(self):
+        assert split_protected("\\\\$x$") == ["\\\\", "$x$", ""]
+
+    def test_odd_backslash_run_escapes_the_dollar(self):
+        assert split_protected("\\\\\\$x$ y") == ["\\\\\\$x$ y"]
+        assert split_protected("\\\\\\\\$x$") == ["\\\\\\\\", "$x$", ""]

@@ -5,8 +5,8 @@ from pipeline.pdf.text import (
     _HEBREW,
     _INLINE_CODE_BODY,
     _LATIN,
-    _PROTECTED_RE,
     _latex_escape,
+    split_protected,
 )
 
 _INLINE_CODE_RE = re.compile(
@@ -141,7 +141,7 @@ def wrap_english_phrases(text: str) -> str:
 
     # Split on math/code spans so _MULTI_LATIN_RE never touches them: odd indices are
     # protected passthrough, even ones get substituted.
-    parts = _PROTECTED_RE.split(text)
+    parts = split_protected(text)
     out = []
     pos = 0  # offset of the current chunk in text
     for i, part in enumerate(parts):
@@ -187,7 +187,7 @@ def force_ltr_inline_code(text: str) -> str:
 
     # The shared splitter, rewriting the protected halves rather than skipping them. Math must
     # still split, else a `$…$` inside a code span cuts it in two.
-    parts = _PROTECTED_RE.split(text)
+    parts = split_protected(text)
     for i in range(1, len(parts), 2):
         m = _INLINE_CODE_RE.fullmatch(parts[i])
         if m:
