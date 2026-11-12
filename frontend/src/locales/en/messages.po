@@ -524,8 +524,8 @@ msgstr "Add a course from Downloads or New course to get started"
 msgid "Add a course to search its summaries."
 msgstr "Add a course to search its summaries."
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:96
-#: src/features/lectures/components/CourseMaterialBox.tsx:103
+#: src/features/lectures/components/CourseMaterialBox.tsx:97
+#: src/features/lectures/components/CourseMaterialBox.tsx:104
 msgid "Add a lecture or recitation"
 msgstr "Add a lecture or recitation"
 
@@ -848,8 +848,8 @@ msgstr "Choose a data folder."
 msgid "Choose a name for the recording and download it."
 msgstr "Choose a name for the recording and download it."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:116
-#: src/features/lectures/components/StudyWithAiCard.tsx:125
+#: src/features/lectures/components/StudyWithAiCard.tsx:117
+#: src/features/lectures/components/StudyWithAiCard.tsx:126
 msgid "Choose AI provider"
 msgstr "Choose AI provider"
 
@@ -1172,7 +1172,7 @@ msgstr "Course"
 msgid "Course \"{course}\" doesn't exist."
 msgstr "Course \"{course}\" doesn't exist."
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:86
+#: src/features/lectures/components/CourseMaterialBox.tsx:87
 msgid "Course material"
 msgstr "Course material"
 
@@ -1873,7 +1873,7 @@ msgstr "lecture"
 
 #: src/features/downloads/components/ManualDownload.tsx:162
 #: src/features/downloads/components/RecordingRow.tsx:253
-#: src/features/lectures/components/CourseMaterialBox.tsx:79
+#: src/features/lectures/components/CourseMaterialBox.tsx:80
 msgid "Lecture"
 msgstr "Lecture"
 
@@ -1887,7 +1887,7 @@ msgstr "Lecture"
 msgid "Lecture {0}"
 msgstr "Lecture {0}"
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:130
+#: src/features/lectures/components/CourseMaterialBox.tsx:131
 msgid "Lecture and recitation summaries to include with this assignment"
 msgstr "Lecture and recitation summaries to include with this assignment"
 
@@ -1990,10 +1990,10 @@ msgstr "Minutes between retries"
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
-#: src/features/lectures/components/OpenWithMenu.tsx:48
-#: src/features/lectures/components/OpenWithMenu.tsx:51
-#: src/shared/components/OverflowMenu.tsx:65
-#: src/shared/components/OverflowMenu.tsx:71
+#: src/features/lectures/components/OpenWithMenu.tsx:49
+#: src/features/lectures/components/OpenWithMenu.tsx:52
+#: src/shared/components/OverflowMenu.tsx:66
+#: src/shared/components/OverflowMenu.tsx:72
 msgid "More actions"
 msgstr "More actions"
 
@@ -2069,7 +2069,7 @@ msgstr "No files of unknown type found."
 msgid "No Google Drive folder is set. Choose one in Settings."
 msgstr "No Google Drive folder is set. Choose one in Settings."
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:107
+#: src/features/lectures/components/CourseMaterialBox.tsx:108
 msgid "No lecture in this course has a summary yet."
 msgstr "No lecture in this course has a summary yet."
 
@@ -2153,7 +2153,7 @@ msgstr "No video was captured on that Zoom page. The passcode or the player may 
 msgid "None"
 msgstr "None"
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:135
+#: src/features/lectures/components/CourseMaterialBox.tsx:136
 msgid "None chosen — only the assignment files will be used."
 msgstr "None chosen — only the assignment files will be used."
 
@@ -2257,7 +2257,7 @@ msgstr "Open a chat with the lecture's content to study it with AI."
 msgid "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 msgstr "Open a lecture on the course site and press play. Click the FastStudy icon, choose the course and the lecture, then click \"Download\". Once it finishes, the lecture appears under its course."
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:111
+#: src/features/lectures/components/StudyWithAiCard.tsx:112
 msgid "Open chat"
 msgstr "Open chat"
 
@@ -2333,7 +2333,7 @@ msgstr "Open the sign-in page"
 msgid "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 msgstr "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 
-#: src/features/lectures/components/OpenWithMenu.tsx:69
+#: src/features/lectures/components/OpenWithMenu.tsx:70
 msgid "Open with…"
 msgstr "Open with…"
 
@@ -2491,7 +2491,7 @@ msgstr "recitation"
 
 #: src/features/downloads/components/ManualDownload.tsx:168
 #: src/features/downloads/components/RecordingRow.tsx:260
-#: src/features/lectures/components/CourseMaterialBox.tsx:79
+#: src/features/lectures/components/CourseMaterialBox.tsx:80
 msgid "Recitation"
 msgstr "Recitation"
 
@@ -2558,7 +2558,7 @@ msgstr "Regenerate {doc}?"
 msgid "Reload"
 msgstr "Reload"
 
-#: src/features/lectures/components/CourseMaterialBox.tsx:146
+#: src/features/lectures/components/CourseMaterialBox.tsx:147
 msgid "Remove {name}"
 msgstr "Remove {name}"
 
@@ -2902,7 +2902,7 @@ msgstr "Storage"
 msgid "Student QA"
 msgstr "Student QA"
 
-#: src/features/lectures/components/StudyWithAiCard.tsx:101
+#: src/features/lectures/components/StudyWithAiCard.tsx:102
 #: src/features/tour/tourSteps.ts:73
 msgid "Study with AI"
 msgstr "Study with AI"
