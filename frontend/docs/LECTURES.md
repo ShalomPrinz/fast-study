@@ -240,7 +240,7 @@ server-side, so no frontend path clears it.
 Five route rows — Lectures, Running pipelines, Downloads, Search, Settings — exactly one
 active per page ([ARCHITECTURE.md](ARCHITECTURE.md) §Routes). Running pipelines shows `current/total`
 while the runner is on; Downloads counts running jobs. Every glyph is inline SVG from `Icon`.
-The link rows render through `SidebarLink`, which sets `draggable={false}` so a native link drag never trails a ghost of the page title and URL.
+The link rows render through `SidebarLink`.
 
 The footer is `UpdateRow` above a row with `LanguageSwitcher` at the inline start and the version tag at the
 end — the bridge's `version` when `packaged`, else `dev`. `UpdateRow` follows the launcher's update phase

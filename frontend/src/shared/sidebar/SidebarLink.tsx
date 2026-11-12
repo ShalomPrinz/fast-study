@@ -7,7 +7,7 @@ export function rowClass(active: boolean): string {
   return `sidebar-nav-row${active ? ' active' : ''}`
 }
 
-// A sidebar route row. Not draggable: a native link drag would trail a ghost of the page title and URL.
+// A sidebar route row.
 export default function SidebarLink({
   to,
   active,
@@ -18,7 +18,7 @@ export default function SidebarLink({
   children: ReactNode
 }) {
   return (
-    <Link className={rowClass(active)} to={to} draggable={false}>
+    <Link className={rowClass(active)} to={to}>
       {children}
     </Link>
   )

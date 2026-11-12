@@ -135,11 +135,13 @@ accent — the downloads media switch. `LanguageSwitcher` reuses the dark CSS wi
 
 ## Styling
 
+No link starts a native drag: `tokens.css` sets `a { -webkit-user-drag: none }`, so no ghost of the page title and URL trails the cursor — in the error boundary too, which renders outside `Layout`. A new link needs no `draggable` attribute.
+
 Plain global CSS whose class names are byte-identical to the `className` strings, so one grep hits markup
 and rule. A component's CSS is `X.css` beside `X.tsx`. A class two or more components render lives in a
 named `src/styles/` stylesheet, and **every component using it imports it** rather than relying on a
 parent — Vite dedupes, and a component's imports stay the exhaustive list of what can style it.
-`styles/tokens.css` is the only global sheet (reset, `html/body/#root`, custom properties, no class
+`styles/tokens.css` is the only global sheet (reset, `html/body/#root`, the link-drag rule, custom properties, no class
 selector), and `main.tsx` imports only it and the fonts; `.claude/hooks/lint.sh` enforces both, plus the
 absence of a root `index.css`.
 
