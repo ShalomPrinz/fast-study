@@ -24,6 +24,7 @@ export function createJob({
   course = null,
   lecture = null,
   kind = null,
+  media = null,
   tool,
   ref = null,
   fromCache = false,
@@ -36,13 +37,14 @@ export function createJob({
 }) {
   // A retry supersedes any terminal predecessor for this target so `/jobs` holds at most
   // one job per target.
-  supersedeTerminal({ course, lecture, kind, ref, dest, folder, fileName });
+  supersedeTerminal({ course, lecture, kind, media, ref, dest, folder, fileName });
   const id = randomUUID();
   jobs.set(id, {
     id,
     course,
     lecture,
     kind,
+    media,
     tool,
     ref,
     fromCache,
@@ -196,13 +198,17 @@ export function finishJob(id, status, message = null, code = null, params = null
 
 // Evict any terminal predecessor (`done`, `error` or `cancelled`) to guarantee one job per target.
 // A folder job's target is folder + requested name, so it never matches an app job's course/lecture.
-function supersedeTerminal({ course, lecture, kind, ref, dest, folder, fileName }) {
+function supersedeTerminal({ course, lecture, kind, media, ref, dest, folder, fileName }) {
   for (const [id, job] of jobs) {
     if (!terminal(job) || job.dest !== dest) continue;
     const same =
       dest === 'folder'
         ? job.folder === folder && job.requested === fileName
-        : job.ref === ref && job.course === course && job.lecture === lecture && job.kind === kind;
+        : job.ref === ref &&
+          job.course === course &&
+          job.lecture === lecture &&
+          job.kind === kind &&
+          job.media === media;
     if (same) evict(id);
   }
 }
@@ -216,7 +222,7 @@ function liveBytes(job) {
 }
 
 function snapshot(job) {
-  const { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt } = job;
+  const { id, status, course, lecture, kind, media, tool, ref, expectedBytes, startedAt } = job;
   const { message, code, params, dest, folder, fileName, source, stalled } = job;
   return {
     id,
@@ -224,6 +230,7 @@ function snapshot(job) {
     course,
     lecture,
     kind,
+    media,
     tool,
     ref,
     dest,

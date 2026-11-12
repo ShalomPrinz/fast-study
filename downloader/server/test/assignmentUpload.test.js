@@ -88,3 +88,9 @@ test('an assignment job uploads to the assignment route and calls no backend pip
     paths.every((p) => p.includes('/assignments/') || p === '/notify' || p.includes('timing')),
   );
 });
+
+test('toRun marks only an assignment run with media assignment', () => {
+  const target = { tool: 'fetch', url: 'http://example.invalid/x', filename: 'f.pdf' };
+  assert.equal(toRun(target, 'assignment').media, 'assignment');
+  assert.equal(toRun(target, 'material').media, null);
+});

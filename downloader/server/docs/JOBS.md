@@ -114,7 +114,7 @@ Terminal jobs are kept asymmetrically:
   can't tell it from never-attempted. It stays with no timeout until a retry supersedes it, and so
   does **`cancelled`**, for the same reason.
 
-`createJob` evicts **any terminal predecessor** for the same target (course + lecture + kind + ref;
+`createJob` evicts **any terminal predecessor** for the same target (course + lecture + kind + media + ref;
 for a folder job, folder + requested file name — the two kinds never match each other),
 so `/jobs` holds at most one job per target and the frontend does no client-side dedupe. A pending
 `DONE_BRIDGE_MS` eviction for an already-superseded job then no-ops, without a ping.
@@ -125,8 +125,8 @@ The body is `{ boot, jobs }`. `boot` is an opaque per-process UUID, never persis
 on a restart, so a client whose tracked job is missing from `jobs` fails it only when `boot` differs
 from the one it last saw — a job merely evicted after its `DONE_BRIDGE_MS` bridge keeps the same `boot`.
 Each job is
-`{ id, status, course, lecture, kind, tool, ref, dest, folder, fileName, operation, expectedBytes,
-startedAt, stalled, source, message, code, params }`. `stalled` is above. `source` is `'moodle'` for every `/download-item` job (anything picked from the university course
+`{ id, status, course, lecture, kind, media, tool, ref, dest, folder, fileName, operation, expectedBytes,
+startedAt, stalled, source, message, code, params }`. `stalled` is above. `media` is `'assignment'` for a job auto resolved as an assignment (its `lecture` is the assignment name), else `null`; a restart keeps it. `source` is `'moodle'` for every `/download-item` job (anything picked from the university course
 list, wherever the file is hosted: a Lemida recording sits on Oracle Cloud) and for a `/download-url`
 pasted link auto proxies from the Moodle site (the target is a url on auto); else `'other'` — `/download`,
 `/download-youtube` and any other pasted link. A restart keeps it. `dest` is `'app'` or `'folder'`; an app job's `folder`/`fileName`

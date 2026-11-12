@@ -15,7 +15,7 @@ function inputFor(target, url) {
     : { url };
 }
 
-// A resolved target → the downloader + input pair a job runs it with. Only curl replays
+// A resolved target → the downloader + input pair a job runs it with, plus the job's `media` mark. Only curl replays
 // captured headers; the other two take a bare url.
 // An assignment answer must be a fetch target with a `filename` (the database requires it); anything
 // else is refused rather than run as a video.
@@ -27,6 +27,7 @@ export function toRun(target, media) {
   return {
     downloader,
     input: inputFor(target, url),
+    media: media === 'assignment' ? 'assignment' : null,
   };
 }
 
@@ -133,11 +134,12 @@ export async function downloadItem({
 
   // The job's lecture is the stored spelling; a zoom split's `.1`/`.2` can push a long base past
   // the length budget. `reresolve` keeps auto's own name, which is the key into its replay cache.
-  const jobIds = runs.map(({ downloader, input }, i) =>
+  const jobIds = runs.map(({ downloader, input, media }, i) =>
     startJob(downloader, input, {
       course,
       lecture: storedName(targets[i].name),
       kind,
+      media,
       ref,
       fromCache: targets[i].fromCache === true,
       reresolve: makeReresolve({ ref, course, name: targets[i].name, kind }),
@@ -188,6 +190,7 @@ export async function downloadUrl({ url, course, lecture, kind }) {
     course,
     lecture,
     kind,
+    media: run.media,
     fromCache: target.fromCache === true,
     reresolve: makeReresolve({ url, course, name: lecture, kind }),
     moodle: onAutodl(run.input.url),

@@ -108,3 +108,19 @@ test('cancelling a finished job leaves it alone', () => {
   cancelJob(id);
   assert.equal(jobSignal(id).aborted, false);
 });
+
+// The frontend files an assignment job under Assignments, never as a loading lecture.
+test('an assignment job is marked media assignment and never supersedes a same-named lecture', () => {
+  const lecture = createJob({ course: 'C', lecture: 'A1', kind: 'lecture', tool: 'curl' });
+  finishJob(lecture, 'error', 'x', 'download_tool_failed', {});
+  const assignment = createJob({
+    course: 'C',
+    lecture: 'A1',
+    kind: 'lecture',
+    media: 'assignment',
+    tool: 'fetch',
+  });
+  const byId = Object.fromEntries(listJobs().map((j) => [j.id, j]));
+  assert.equal(byId[assignment].media, 'assignment');
+  assert.equal(byId[lecture].media, null);
+});

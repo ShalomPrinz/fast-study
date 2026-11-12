@@ -22,6 +22,7 @@ const router = Router();
  *   reresolve refreshes a stale cached cap so the SAME job re-runs; null when there is no ref.
  *   ref, a discovery row's, rides to a material upload as its `source`. `moodle`: the job reads `source: 'moodle'` (a
  *   course-list pick, or a pasted link auto proxies from the Moodle site); `inRun`: a section run owns the job.
+ *   `media`: `'assignment'` for an assignment fetch, else null; a restart keeps it.
  */
 export function startJob(
   downloader,
@@ -30,6 +31,7 @@ export function startJob(
     course,
     lecture,
     kind,
+    media = null,
     ref = null,
     fromCache = false,
     reresolve = null,
@@ -42,6 +44,7 @@ export function startJob(
       course,
       lecture,
       kind,
+      media,
       tool: downloader.tool,
       ref,
       fromCache,
