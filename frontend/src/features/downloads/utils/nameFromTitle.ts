@@ -21,8 +21,11 @@ function subNumber(rest: string): number | null {
 const SECTION_NUMBER =
   /(?:הרצאות|הרצאה|תרגולים|תרגול|תרגיל|lecture|recitation|tutorial|tirgul)[\s#:.\-–]*(\d+)(?![\d/])(?!\.\d)/i
 
-// Title: first integer plus sub-marker -> 'הרצאה 11.1'. Numberless title: its section's keyword heading
-// number (a range takes its first), else the tree's next name. `prefixKind` overrides the prefix's kind.
+// A "part N" / "חלק N" marker: the decimal of a keyword-numbered session, never the session number itself.
+const PART_NUMBER = /(?<![A-Za-zא-ת])(?:part|חלק)[\s#:.\-–]*(\d+)(?!\d)/i
+
+// Title's first integer plus sub-marker -> 'הרצאה 11.1', else the section's keyword number, else the next name.
+// A part marker becomes the decimal of a keyword number, title's else section's. `prefixKind` overrides the kind.
 export function suggestItemName(
   title: string,
   kind: Kind,
@@ -31,8 +34,21 @@ export function suggestItemName(
   prefixKind: Kind = kind,
   section = '',
 ): string {
-  const text = String(title ?? '')
+  const raw = String(title ?? '')
   const heading = String(section ?? '')
+  const part = raw.match(PART_NUMBER)
+  if (part) {
+    const base = raw.match(SECTION_NUMBER) ?? heading.match(SECTION_NUMBER)
+    if (base) {
+      const prefix = sessionPrefix(courses, course, prefixKind) ?? fallbackPrefix(prefixKind)
+      const rest = base.input!.slice(base.index! + base[0].length)
+      const own = /^\s*[-–]\s*\d/.test(rest) ? null : subNumber(rest)
+      const number = parseInt(base[1], 10)
+      // '11א חלק 2' has two sub-markers; guessing which one wins would mislabel, so neither does.
+      return own === null ? `${prefix} ${number}.${parseInt(part[1], 10)}` : `${prefix} ${number}`
+    }
+  }
+  const text = part ? `${raw.slice(0, part.index)} ${raw.slice(part.index! + part[0].length)}` : raw
   const m = text.match(/\d+/)
   const hit = m ? null : heading.match(SECTION_NUMBER)
   const found = m ?? hit

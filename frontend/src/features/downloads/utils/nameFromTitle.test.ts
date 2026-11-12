@@ -43,6 +43,62 @@ describe('suggestItemName', () => {
     )
   })
 
+  describe('part marker', () => {
+    const c = course(['הרצאה 3'], ['תרגול 2'])
+    const en = course(['Lecture 3'], ['Recitation 2'])
+    it("makes the part the decimal of the section's number", () => {
+      expect(suggestItemName('חלק 1', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 5')).toBe(
+        'הרצאה 5.1',
+      )
+      expect(suggestItemName('part 1', 'lecture', en, 'Algebra', 'lecture', 'lecture 5')).toBe(
+        'Lecture 5.1',
+      )
+      expect(suggestItemName('חלק 2', 'recitation', c, 'Algebra', 'recitation', 'תרגול 4')).toBe(
+        'תרגול 4.2',
+      )
+      expect(
+        suggestItemName('Part 2', 'recitation', en, 'Algebra', 'recitation', 'Recitation 4'),
+      ).toBe('Recitation 4.2')
+    })
+    it("makes the part the decimal of the title's own number", () => {
+      expect(suggestItemName('הרצאה 5 חלק 1', 'lecture', c, 'Algebra')).toBe('הרצאה 5.1')
+      expect(suggestItemName('Lecture 5 - Part 1', 'lecture', en, 'Algebra')).toBe('Lecture 5.1')
+      expect(
+        suggestItemName('תרגול 4 חלק 2', 'recitation', c, 'Algebra', 'recitation', 'תרגול 9'),
+      ).toBe('תרגול 4.2')
+      expect(suggestItemName('Recitation 4 part 2', 'recitation', en, 'Algebra')).toBe(
+        'Recitation 4.2',
+      )
+    })
+    it('never takes a bare part number as the session number', () => {
+      const next = suggestItemName('x', 'lecture', c, 'Algebra')
+      expect(suggestItemName('חלק 2', 'lecture', c, 'Algebra', 'lecture', 'שבוע 3')).toBe(next)
+      expect(suggestItemName('חלק 2', 'lecture', c, 'Algebra')).toBe(next)
+      expect(suggestItemName('part 2', 'lecture', c, 'Algebra', 'lecture', '')).toBe(next)
+    })
+    it('counts only a keyword number as the base', () => {
+      expect(
+        suggestItemName('Algebra 2 part 1', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 5'),
+      ).toBe('הרצאה 5.1')
+      expect(suggestItemName('5 חלק 1', 'lecture', c, 'Algebra')).toBe('הרצאה 5')
+    })
+    it('gives no decimal when the base already has its own sub-marker', () => {
+      expect(suggestItemName('הרצאה 11א חלק 2', 'lecture', c, 'Algebra')).toBe('הרצאה 11')
+      expect(suggestItemName('חלק 2', 'lecture', c, 'Algebra', 'lecture', 'הרצאה 3א')).toBe(
+        'הרצאה 3',
+      )
+    })
+    it("takes a range heading's first number as the base", () => {
+      expect(suggestItemName('חלק 2', 'lecture', c, 'Algebra', 'lecture', 'הרצאות 3-4')).toBe(
+        'הרצאה 3.2',
+      )
+    })
+    it('drops the matched marker, not an earlier copy of its text', () => {
+      expect(suggestItemName('Department 3 part 3', 'lecture', c, 'Algebra')).toBe('הרצאה 3')
+      expect(suggestItemName('Department 3a part 3', 'lecture', c, 'Algebra')).toBe('הרצאה 3.1')
+    })
+  })
+
   describe('section heading', () => {
     const c = course(['הרצאה 3'])
     it('numbers a numberless title from a keyword section, sub-marker included', () => {
