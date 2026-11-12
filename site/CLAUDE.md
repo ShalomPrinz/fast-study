@@ -65,7 +65,8 @@ on the fakes, and rewrites `hero.jpg`, `feature-*.jpg` and `journey-*.jpg` in He
 Every name and text a shot shows comes from the showcase dataset, which is separate from the harness's test fixtures. The journey
 follows `JOURNEY`: downloaded from the fake Moodle course's videostream row `הקלטה 4 — גרפים` on the `וידאו` tab, whose
 probed size gives the download card a bar with time left, its run held on a slow fake Groq, then
-given its dataset text. `feature-search` is shot after it, so the journey lecture is among the hits.
+given its dataset text. `feature-search` is shot after it, so the journey lecture is among the hits. `feature-ai` is the lecture view
+of the overview course's first lecture, a finished one other than the hero's, with the Study with AI card in its side column.
 
 `pages.yml`'s `capture` job runs this before every deploy: when the latest release's tag differs from
 `img/captured-version` (no marker counts as different; no release skips), it sets up the harness

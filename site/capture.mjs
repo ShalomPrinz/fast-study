@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  COURSES,
   EDITOR,
   HERO,
   JOURNEY,
@@ -27,6 +28,8 @@ const IMG = path.join(path.dirname(fileURLToPath(import.meta.url)), 'img');
 const SIZE = { width: 1280, height: 800 };
 const SCALE = 2;
 const QUALITY = 85;
+
+const AI = { course: OVERVIEW, lecture: COURSES.find((c) => c.name === OVERVIEW).lectures[0].name };
 
 const { harness, DB, BACKEND, PROVIDERS, SITE, APP } = connect(
   'usage: node site/capture.mjs --harness DIR (a live app-harness stack)',
@@ -99,11 +102,10 @@ async function capture() {
   await openEditor(page);
   await shot('feature-editor');
 
-  await open('/settings');
-  await page.evaluate(() =>
-    document.getElementById('auto-run').scrollIntoView({ block: 'center' }),
-  );
-  await shot('feature-auto');
+  // A finished lecture other than the hero's: the Study with AI card sits in its side column.
+  await open(lectureRoute(AI.course, AI.lecture));
+  await page.waitForSelector('.study-ai[data-state="ready"]');
+  await shot('feature-ai');
 
   await journey(page, open, shot, lectureRoute);
 
