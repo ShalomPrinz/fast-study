@@ -190,7 +190,7 @@ every notify together with the tree, never polled. `inFlight` covers active step
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
 An assignment run (`kind: "assignment"`, the name in the `lecture` slot, keyed `course||name||assignment`) is
 never queued: `/running` lists it as a link row after the lecture rows, never as the focus card, with the step
-label from `assignmentStepLabel`; its toast is led by `AssignmentLead`. `getAssignmentRun` / `getAssignmentError`
+label from `assignmentStepLabel`; its toast is led by `AssignmentLead` (a transient Gemini code reads as one sentence instead, below). `getAssignmentRun` / `getAssignmentError`
 read it.
 On `/running` an in-flight row is one link to its lecture. A waiting row's text acts instead, and only its
 trailing icon opens the lecture. A not-queued row shows `failed` or `quota` from `errors` (pending otherwise) and runs its pipeline beside the runner, and a queued one
@@ -198,7 +198,8 @@ moves to the front (the head row's text is inert). Either way the reorder arrive
 
 `errors` maps each key to `{ step, message, code, params, provider, blocked, retry }`. The "Last error" box and
 the toast both render it through `ServiceError` ([I18N.md](I18N.md)), the toast led by `LectureLead`, the lecture and course
-`parseInFlightKey` reads off the key, since it shows on any page; `isQuotaError` (`utils/runError.ts`)
+`parseInFlightKey` reads off the key, since it shows on any page. A transient Gemini code (`gemini_overloaded`, `gemini_timeout`, `gemini_unreachable`, `gemini_quota_exhausted`, daily quota included) toasts
+instead as one sentence from `failedRunSentence` naming the failed `step`, the lecture or assignment, the course and the reason, with no advice so a waiting retry never contradicts it; `isQuotaError` (`utils/runError.ts`)
 tests the four quota codes (two Gemini, two Groq) `backend/pipeline/runner.py` spells, which is also what marks the row's glyph.
 
 **A waiting Gemini auto retry** is `errors[key].retry = { attempt, of, at }`; the lecture is then in neither

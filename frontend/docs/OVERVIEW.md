@@ -57,7 +57,8 @@ the overview's `missing_prerequisite` read through `serviceErrors.ts` onto that 
 toast; `already_generated` is suppressed, since the row already reads as done and every "Generate Course Overviews"
 pass re-stamps it. With no warning, `branchBadge` shows the ≠ stale badge when an earlier output is newer than
 `{slug}.pdf` — a failed analyze/to_pdf over an already-moved meta range, which survives a backend restart.
-Errors toast once per `(course, slug, failure)` through `useReportOnce`, pruned only
+Errors toast once per `(course, slug, failure)` through `useReportOnce` — a transient Gemini code as one
+`failedRunSentence` naming the phase, branch and course, any other led by the branch title — pruned only
 within the current course so switching back does not re-toast. The toast's send also reports a row-less failure
 to Sentry, so only a failure that actually toasts is reported; a failure with no code and no prose (`isBare`) shows
 just the translated `failed` and is not reported.

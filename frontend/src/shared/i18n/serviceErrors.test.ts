@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  failedRunSentence,
   failureId,
   resolveServiceError,
   rowFor,
@@ -259,5 +260,98 @@ describe('site_unreachable proxy hint', () => {
   it('adds none when proxy is absent or null', () => {
     expect(resolveServiceError({ ...base, params: { host: 'h' } }).hint).toBeNull()
     expect(resolveServiceError({ ...base, params: { host: 'h', proxy: null } }).hint).toBeNull()
+  })
+})
+
+describe('failedRunSentence', () => {
+  const retry = { attempt: 1, of: 3, at: '2026-01-01T00:00:00Z' }
+  const lecture = {
+    kind: 'lecture',
+    step: 'summarize',
+    course: 'Calculus',
+    lecture: 'Lecture 3',
+  } as const
+  const fail = (code: string, params: Record<string, string | null> = {}, retry?: unknown) => ({
+    message: 'prose',
+    code,
+    params,
+    retry,
+  })
+  const strip = (s: string | null) => s?.replace(/[\u2068\u2069]/g, '')
+
+  it.each(['gemini_overloaded', 'gemini_timeout', 'gemini_unreachable', 'gemini_quota_exhausted'])(
+    'names the lecture, course and model for %s',
+    (code) => {
+      const sentence = strip(
+        failedRunSentence(fail(code, { model: 'gemini-x', seconds: '60' }), lecture),
+      )
+      expect(sentence).toContain('Lecture 3')
+      expect(sentence).toContain('Calculus')
+      if (code !== 'gemini_quota_exhausted') expect(sentence).toContain('gemini-x')
+    },
+  )
+
+  it('is null for any other code, which keeps the lead and headline', () => {
+    expect(failedRunSentence(fail('summarization_failed'), lecture)).toBeNull()
+    expect(failedRunSentence(fail('gemini_quota_blocked'), lecture)).toBeNull()
+    expect(failedRunSentence({ message: 'x' }, lecture)).toBeNull()
+  })
+
+  it('isolates each name so a mixed-script sentence keeps its order', () => {
+    const sentence = failedRunSentence(fail('gemini_overloaded', { model: 'gemini-x' }), lecture)!
+    for (const name of ['Lecture 3', 'Calculus', 'gemini-x']) {
+      expect(sentence).toContain(`\u2068${name}\u2069`)
+    }
+  })
+
+  it('reads the same with a null model as with none', () => {
+    expect(failedRunSentence(fail('gemini_overloaded', { model: null }), lecture)).toBe(
+      failedRunSentence(fail('gemini_overloaded'), lecture),
+    )
+  })
+
+  it('names the step that failed, not always the summary', () => {
+    const summary = failedRunSentence(fail('gemini_overloaded'), lecture)
+    const other = failedRunSentence(fail('gemini_overloaded'), { ...lecture, step: 'transcribe' })
+    const intuition = failedRunSentence(fail('gemini_overloaded'), {
+      kind: 'assignment',
+      step: 'intuition',
+      course: 'Calculus',
+      assignment: 'HW 2',
+    })
+    const solution = failedRunSentence(fail('gemini_overloaded'), {
+      kind: 'assignment',
+      step: 'solution',
+      course: 'Calculus',
+      assignment: 'HW 2',
+    })
+    expect(new Set([summary, other, intuition, solution]).size).toBe(4)
+    expect(strip(intuition)).toContain('HW 2')
+  })
+
+  it('names only the course and branch for an overview phase', () => {
+    const run = {
+      kind: 'overview',
+      phase: 'analyze',
+      title: 'Exam Hints',
+      course: 'Calculus',
+    } as const
+    const analyze = strip(failedRunSentence(fail('gemini_timeout', { seconds: '60' }), run))
+    const noPhase = failedRunSentence(fail('gemini_timeout', { seconds: '60' }), {
+      ...run,
+      phase: null,
+    })
+    expect(analyze).toContain('Exam Hints')
+    expect(analyze).toContain('Calculus')
+    expect(noPhase).not.toBe(failedRunSentence(fail('gemini_timeout', { seconds: '60' }), run))
+  })
+
+  it('gives no try-again advice, so a waiting retry never contradicts it', () => {
+    for (const code of ['gemini_overloaded', 'gemini_timeout', 'gemini_unreachable']) {
+      expect(failedRunSentence(fail(code, {}, retry), lecture)).not.toMatch(/try again/i)
+      expect(failedRunSentence(fail(code), lecture)).toBe(
+        failedRunSentence(fail(code, {}, retry), lecture),
+      )
+    }
   })
 })

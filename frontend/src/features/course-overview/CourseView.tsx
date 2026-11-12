@@ -12,7 +12,7 @@ import { lectureTrack, recitationTrack } from '@/features/lectures/utils/courseT
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import { toast } from '@/services/toaster'
-import { failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
+import { failedRunSentence, failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { captureUnmappedFailure } from '@/services/sentry'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import {
@@ -60,8 +60,17 @@ function CourseOverviewBody() {
       // The branch's own name leads, so a course generating several says which one failed. A bare
       // failure shows just the translated word and is not reported: nothing diagnostic in it.
       const bare = isBare(st)
+      // A transient Gemini failure reads as one sentence naming the phase, branch and course instead.
+      const sentence = failedRunSentence(failure, {
+        kind: 'overview',
+        phase: st.phase,
+        title,
+        course,
+      })
       reportError(key, `${title}|${failureId(failure)}`, {
-        node: serviceErrorNode(failure, title, bare ? t`failed` : undefined, false),
+        node: sentence
+          ? serviceErrorNode(failure, undefined, sentence, false)
+          : serviceErrorNode(failure, title, bare ? t`failed` : undefined, false),
         failure: bare ? null : failure,
       })
     }

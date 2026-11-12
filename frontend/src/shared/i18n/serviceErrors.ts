@@ -377,6 +377,83 @@ export function rowFor(failure: ServiceFailure): MessageDescriptor | null {
   return serviceErrorRow(failure.code)
 }
 
+// What a pipeline-failure toast names: the step that failed and the lecture, assignment or overview
+// branch it failed on. `step` is the run record's step; an overview branch has a phase and a course only.
+export type FailedRun =
+  | { kind: 'lecture'; step: string; course: string; lecture: string }
+  | { kind: 'assignment'; step: string; course: string; assignment: string }
+  | { kind: 'overview'; phase: string | null | undefined; title: string; course: string }
+
+// The transient Gemini codes' reasons, written to complete "… because {reason}." without advice: the
+// toast is one sentence, and "try again" would contradict a retry already counting down.
+const TOAST_REASONS: Record<string, MessageDescriptor> = {
+  gemini_overloaded: msg({
+    message:
+      '{model, select, undefined {the Gemini model is under high demand} other {the Gemini model {model} is under high demand}}',
+  }),
+  gemini_timeout: msg({
+    message:
+      '{model, select, undefined {the Gemini model did not respond for {seconds} seconds} other {the Gemini model {model} did not respond for {seconds} seconds}}',
+  }),
+  gemini_unreachable: msg({
+    message:
+      '{model, select, undefined {Gemini could not be reached} other {the Gemini model {model} could not be reached}}',
+  }),
+  gemini_quota_exhausted: msg({
+    message:
+      "{scope, select, daily {Gemini's daily quota is used up until midnight Pacific time} other {Gemini's rate limit was reached}}",
+  }),
+}
+
+// What failed, per run kind; only the steps that call Gemini have a clause of their own. Kept out of a
+// `code: msg(` map, which `errorCodeDrift.test.ts` reads as the catalog's codes.
+const LECTURE_SUBJECT = msg({
+  message:
+    '{step, select, summarize {The summary failed for "{lecture}" in "{course}"} other {The run failed for "{lecture}" in "{course}"}}',
+})
+const ASSIGNMENT_SUBJECT = msg({
+  message:
+    '{step, select, intuition {The intuition guide failed for assignment "{assignment}" in "{course}"} solution {The full solution failed for assignment "{assignment}" in "{course}"} other {The run failed for assignment "{assignment}" in "{course}"}}',
+})
+const OVERVIEW_SUBJECT = msg({
+  message:
+    '{phase, select, analyze {Analyzing "{title}" failed in the course "{course}"} other {Generating "{title}" failed in the course "{course}"}}',
+})
+const TOAST_SUBJECTS = {
+  lecture: LECTURE_SUBJECT,
+  assignment: ASSIGNMENT_SUBJECT,
+  overview: OVERVIEW_SUBJECT,
+}
+
+const TOAST_SENTENCE = msg({ message: '{subject} because {reason}.' })
+
+// First-strong isolation, so a Latin name or model inside a Hebrew sentence (or the reverse) keeps its
+// own direction without reordering the words around it — the plain-string form of `<bdi>`.
+const isolate = (value: string) => `\u2068${value}\u2069`
+
+// One sentence naming the failed step, what it ran on and why, for a transient Gemini failure's toast;
+// null for any other code, which keeps the lead + headline form.
+export function failedRunSentence(failure: ServiceFailure, run: FailedRun): string | null {
+  const reasonRow = failure.code ? TOAST_REASONS[failure.code] : undefined
+  if (!reasonRow) return null
+  const params = present(failure.params ?? {})
+  if (typeof params.model === 'string') params.model = isolate(params.model)
+  const reason = i18n._(reasonRow.id, params, { message: reasonRow.message })
+  const names =
+    run.kind === 'lecture'
+      ? { step: run.step, lecture: isolate(run.lecture) }
+      : run.kind === 'assignment'
+        ? { step: run.step, assignment: isolate(run.assignment) }
+        : { phase: run.phase ?? 'other', title: isolate(run.title) }
+  const subjectRow = TOAST_SUBJECTS[run.kind]
+  const subject = i18n._(
+    subjectRow.id,
+    { ...names, course: isolate(run.course) },
+    { message: subjectRow.message },
+  )
+  return i18n._(TOAST_SENTENCE.id, { subject, reason }, { message: TOAST_SENTENCE.message })
+}
+
 // The headline for a failure with no catalog row; its English prose rides beneath as the detail.
 const FALLBACK = msg({ message: 'Something went wrong.' })
 

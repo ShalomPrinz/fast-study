@@ -7,7 +7,12 @@ import { isConnectionError } from '@/services/http'
 import { toast } from '@/services/toaster'
 import { inFlightKey, parseInFlightKey } from '@/shared/utils/inFlightKey'
 import { isFiguresError, isQuotaError } from '@/shared/utils/runError'
-import { failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
+import {
+  failedRunSentence,
+  failureId,
+  type FailedRun,
+  type ServiceFailure,
+} from '@/shared/i18n/serviceErrors'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import LectureLead, { AssignmentLead } from '@/shared/components/LectureLead'
 import { announceNotices } from '@/shared/utils/notices'
@@ -69,18 +74,29 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     validKeys.add('runner-crash')
     pruneErrors(validKeys)
     // A toast shows on any page, so it names the lecture its key holds; the runner crash names its own.
-    const lectureLead = (key: string) => {
+    // A transient Gemini failure reads as one sentence naming the step instead of lead over headline.
+    const toastNode = (key: string, failure: ServiceFailure, step?: string) => {
       const parsed = parseInFlightKey(key)
-      if (!parsed) return undefined
-      return parsed.kind === 'assignment' ? (
-        <AssignmentLead course={parsed.course} assignment={parsed.lecture} />
-      ) : (
-        <LectureLead course={parsed.course} lecture={parsed.lecture} />
+      if (!parsed) return serviceErrorNode(failure)
+      const { course, lecture, kind } = parsed
+      const run: FailedRun =
+        kind === 'assignment'
+          ? { kind, step: step ?? '', course, assignment: lecture }
+          : { kind: 'lecture', step: step ?? '', course, lecture }
+      const sentence = failedRunSentence(failure, run)
+      if (sentence) return serviceErrorNode(failure, undefined, sentence)
+      return serviceErrorNode(
+        failure,
+        kind === 'assignment' ? (
+          <AssignmentLead course={course} assignment={lecture} />
+        ) : (
+          <LectureLead course={course} lecture={lecture} />
+        ),
       )
     }
-    const announce = (key: string, failure: ServiceFailure) =>
+    const announce = (key: string, failure: ServiceFailure, step?: string) =>
       statusPrimed.current
-        ? reportError(key, failureId(failure), serviceErrorNode(failure, lectureLead(key)))
+        ? reportError(key, failureId(failure), toastNode(key, failure, step))
         : seedError(key, failureId(failure))
     if (!s.runner.running && s.runner.lastError) {
       announce('runner-crash', s.runner.lastError)
@@ -91,7 +107,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
       if (isQuotaError(error.code) && error.blocked) continue
       // The lecture page's warning owns a cropping failure; a toast would shout over a finished summary.
       if (isFiguresError(error)) continue
-      announce(key, error)
+      announce(key, error, error.step)
     }
     announceNotices('runner', s.notices)
     statusPrimed.current = true

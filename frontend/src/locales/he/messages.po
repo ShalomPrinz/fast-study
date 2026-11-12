@@ -68,7 +68,7 @@ msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {הרצאה אחת בעיבוד} two {# הרצאות בעיבוד} other {# הרצאות בעיבוד}}"
 
 #. placeholder {0}: lectures.length
-#: src/features/course-overview/CourseView.tsx:98
+#: src/features/course-overview/CourseView.tsx:107
 msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
@@ -78,7 +78,7 @@ msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
 #. placeholder {0}: recitations.length
-#: src/features/course-overview/CourseView.tsx:102
+#: src/features/course-overview/CourseView.tsx:111
 msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {תרגול אחד} two {# תרגולים} other {# תרגולים}}"
 
@@ -256,7 +256,7 @@ msgid "{files, plural, one {# file} other {# files}} · {lectures, plural, =0 {n
 msgstr "{files, plural, one {קובץ אחד} other {# קבצים}} · {lectures, plural, =0 {בלי חומר מהקורס} one {הרצאה אחת מצורפת} other {# הרצאות מצורפות}}"
 
 #. placeholder {0}: extractors.length
-#: src/features/course-overview/CourseView.tsx:130
+#: src/features/course-overview/CourseView.tsx:139
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
@@ -292,6 +292,10 @@ msgstr "{model, select, undefined {לא ניתן להתחבר ל-Gemini. בדו�
 msgid "{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the Gemini model {model}. Check your internet connection.}}"
 msgstr "{model, select, undefined {לא ניתן להתחבר ל-Gemini. בדוק את חיבור האינטרנט.} other {לא ניתן להתחבר למודל Gemini‏ {model}. בדוק את חיבור האינטרנט.}}"
 
+#: src/shared/i18n/serviceErrors.ts:398
+msgid "{model, select, undefined {Gemini could not be reached} other {the Gemini model {model} could not be reached}}"
+msgstr "{model, select, undefined {לא ניתן היה להתחבר ל-Gemini} other {לא ניתן היה להתחבר למודל {model}}}"
+
 #: src/shared/i18n/serviceErrors.ts:93
 msgid "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}"
 msgstr "{model, select, undefined {מודל Gemini לא הגיב במשך {seconds} שניות, ולכן הבקשה נעצרה. נסה שוב.} other {מודל Gemini {model} לא הגיב במשך {seconds} שניות, ולכן הבקשה נעצרה. נסה שוב.}}"
@@ -300,6 +304,10 @@ msgstr "{model, select, undefined {מודל Gemini לא הגיב במשך {secon
 msgid "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped.}}"
 msgstr "{model, select, undefined {מודל Gemini לא הגיב במשך {seconds} שניות, ולכן הבקשה נעצרה.} other {מודל Gemini {model} לא הגיב במשך {seconds} שניות, ולכן הבקשה נעצרה.}}"
 
+#: src/shared/i18n/serviceErrors.ts:394
+msgid "{model, select, undefined {the Gemini model did not respond for {seconds} seconds} other {the Gemini model {model} did not respond for {seconds} seconds}}"
+msgstr "{model, select, undefined {מודל Gemini לא הגיב במשך {seconds} שניות} other {המודל {model} לא הגיב במשך {seconds} שניות}}"
+
 #: src/shared/i18n/serviceErrors.ts:89
 msgid "{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The Gemini model {model} is under high demand right now. This is usually temporary, so try again later.}}"
 msgstr "{model, select, undefined {מודל Gemini עמוס כרגע בגלל ביקוש גבוה. זה בדרך כלל זמני, אז נסה שוב מאוחר יותר.} other {מודל Gemini {model} עמוס כרגע בגלל ביקוש גבוה. זה בדרך כלל זמני, אז נסה שוב מאוחר יותר.}}"
@@ -307,6 +315,10 @@ msgstr "{model, select, undefined {מודל Gemini עמוס כרגע בגלל ב
 #: src/shared/i18n/serviceErrors.ts:358
 msgid "{model, select, undefined {The Gemini model is under high demand right now.} other {The Gemini model {model} is under high demand right now.}}"
 msgstr "{model, select, undefined {מודל Gemini עמוס כרגע בגלל ביקוש גבוה.} other {מודל Gemini {model} עמוס כרגע בגלל ביקוש גבוה.}}"
+
+#: src/shared/i18n/serviceErrors.ts:390
+msgid "{model, select, undefined {the Gemini model is under high demand} other {the Gemini model {model} is under high demand}}"
+msgstr "{model, select, undefined {מודל Gemini בביקוש גבוה} other {המודל {model} בביקוש גבוה}}"
 
 #: src/shared/i18n/serviceErrors.ts:113
 msgid "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
@@ -328,11 +340,15 @@ msgstr "לא ניתן לכתוב אל {path}."
 msgid "{path} exists but is not a folder."
 msgstr "{path} קיים אבל אינו תיקייה."
 
+#: src/shared/i18n/serviceErrors.ts:418
+msgid "{phase, select, analyze {Analyzing \"{title}\" failed in the course \"{course}\"} other {Generating \"{title}\" failed in the course \"{course}\"}}"
+msgstr "{phase, select, analyze {הניתוח של \"{title}\" נכשל בקורס \"{course}\"} other {היצירה של \"{title}\" נכשלה בקורס \"{course}\"}}"
+
 #: src/features/course-overview/components/ExtractorHeader.tsx:104
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
-#: src/features/course-overview/CourseView.tsx:105
+#: src/features/course-overview/CourseView.tsx:114
 msgid "{processed} fully processed"
 msgstr "{processed} עובדו במלואן"
 
@@ -364,6 +380,10 @@ msgstr "{remaining, plural, one {הצג עוד אחד} two {הצג עוד #} oth
 msgid "{removed, plural, =0 {No lecture had files to remove.} one {Removed files from # lecture.} other {Removed files from # lectures.}}"
 msgstr "{removed, plural, =0 {לא היו קבצים להסיר באף הרצאה.} one {הוסרו קבצים מהרצאה אחת.} two {הוסרו קבצים מ-# הרצאות.} other {הוסרו קבצים מ-# הרצאות.}}"
 
+#: src/shared/i18n/serviceErrors.ts:402
+msgid "{scope, select, daily {Gemini's daily quota is used up until midnight Pacific time} other {Gemini's rate limit was reached}}"
+msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה עד חצות לפי שעון החוף המערבי בארה״ב} other {נשלחו יותר מדי בקשות ל-Gemini}}"
+
 #: src/shared/i18n/serviceErrors.ts:76
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. היא מתאפסת בחצות לפי שעון החוף המערבי בארה״ב.} other {יותר מדי בקשות ל-Gemini. נסה שוב בעוד דקה.}}"
@@ -383,6 +403,18 @@ msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — יי
 #: src/shared/i18n/serviceErrors.ts:34
 msgid "{step, select, download {This step needs {file}, which is not there yet. Download the lecture video first.} other {This step needs {file}, which is not there yet. Run the step before it first.}}"
 msgstr "{step, select, download {השלב הזה זקוק ל-{file}, שעדיין לא קיים. הורד קודם את הווידאו של ההרצאה.} other {השלב הזה זקוק ל-{file}, שעדיין לא קיים. הרץ קודם את השלב שלפניו.}}"
+
+#: src/shared/i18n/serviceErrors.ts:414
+msgid "{step, select, intuition {The intuition guide failed for assignment \"{assignment}\" in \"{course}\"} solution {The full solution failed for assignment \"{assignment}\" in \"{course}\"} other {The run failed for assignment \"{assignment}\" in \"{course}\"}}"
+msgstr "{step, select, intuition {המדריך לאינטואיציה נכשל עבור המטלה \"{assignment}\" בקורס \"{course}\"} solution {הפתרון המלא נכשל עבור המטלה \"{assignment}\" בקורס \"{course}\"} other {ההרצה נכשלה עבור המטלה \"{assignment}\" בקורס \"{course}\"}}"
+
+#: src/shared/i18n/serviceErrors.ts:410
+msgid "{step, select, summarize {The summary failed for \"{lecture}\" in \"{course}\"} other {The run failed for \"{lecture}\" in \"{course}\"}}"
+msgstr "{step, select, summarize {הסיכום נכשל עבור \"{lecture}\" בקורס \"{course}\"} other {ההרצה נכשלה עבור \"{lecture}\" בקורס \"{course}\"}}"
+
+#: src/shared/i18n/serviceErrors.ts:428
+msgid "{subject} because {reason}."
+msgstr "{subject} כי {reason}."
 
 #: src/shared/i18n/serviceErrors.ts:239
 msgid "{tool} can't be started, so the parts of FastStudy that need it will fail."
@@ -468,7 +500,7 @@ msgstr "בקורס של הרצאות בלבד התרגולים מופיעים ב
 msgid "A one-time setup of about three minutes."
 msgstr "הגדרה חד־פעמית של כשלוש דקות."
 
-#: src/shared/i18n/serviceErrors.ts:398
+#: src/shared/i18n/serviceErrors.ts:475
 msgid "A proxy is set on this computer, and the app may not reach the site through it. Try another network or turn the proxy off."
 msgstr "מוגדר פרוקסי במחשב הזה, ויתכן שהאפליקציה לא מצליחה להגיע דרכו אל האתר. נסה רשת אחרת או כבה את הפרוקסי."
 
@@ -1149,7 +1181,7 @@ msgstr "חומר מהקורס"
 msgid "Course name…"
 msgstr "שם הקורס…"
 
-#: src/features/course-overview/CourseView.tsx:127
+#: src/features/course-overview/CourseView.tsx:136
 msgid "Course overview"
 msgstr "סקירת קורס"
 
@@ -1506,7 +1538,7 @@ msgid "Extracting audio"
 msgstr "מחלץ שמע"
 
 #: src/features/course-overview/constants/overview.ts:116
-#: src/features/course-overview/CourseView.tsx:64
+#: src/features/course-overview/CourseView.tsx:73
 msgid "failed"
 msgstr "נכשל"
 
@@ -1682,7 +1714,7 @@ msgstr "צור קודם את הסיכום"
 msgid "Generate this step first"
 msgstr "צור קודם את השלב הזה"
 
-#: src/features/course-overview/CourseView.tsx:94
+#: src/features/course-overview/CourseView.tsx:103
 msgid "Generating · {runningTitle}"
 msgstr "יוצר · {runningTitle}"
 
@@ -2172,11 +2204,11 @@ msgstr "אין חדש בקורס הזה."
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
-#: src/shared/contexts/SnapshotProvider.tsx:153
+#: src/shared/contexts/SnapshotProvider.tsx:169
 msgid "Nothing to run - All pipelines complete"
 msgstr "אין מה להריץ - כל ההרצאות הושלמו"
 
-#: src/shared/contexts/SnapshotProvider.tsx:157
+#: src/shared/contexts/SnapshotProvider.tsx:173
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בעיבוד"
 
@@ -2832,7 +2864,7 @@ msgid "Something went wrong"
 msgstr "משהו השתבש"
 
 #: src/shared/i18n/serviceErrors.ts:43
-#: src/shared/i18n/serviceErrors.ts:381
+#: src/shared/i18n/serviceErrors.ts:458
 msgid "Something went wrong."
 msgstr "משהו השתבש."
 
