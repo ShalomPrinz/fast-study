@@ -54,6 +54,13 @@ export async function toneVideo() {
   return fs.readFileSync(out);
 }
 
+let toneBytes = null;
+
+export async function tone() {
+  toneBytes ??= await toneVideo();
+  return toneBytes;
+}
+
 /** A six-hour tone video, so the backend's audio step keeps the shipped ffmpeg running long enough
  *  to be found and outlived: ten minutes encoded once, then stream-copied end to end. Answers the bytes. */
 export async function longToneVideo() {

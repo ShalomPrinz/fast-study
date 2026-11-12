@@ -8,6 +8,12 @@ installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, 
 path, the browser chain, an in-place update. It needs an installed Windows build, so off the runner
 only `npx playwright test --list` works — it is never "passed" from WSL.
 
+`release.spec.js` is the one file Playwright loads: it holds the serial mode, the hooks and the 16
+`test()` lines in order, each given the body `tests/NN-<name>.js` exports. What two or more tests
+share lives in `lib/` — the running app in `lib/session.js`, whose `session` and `services` importers
+read as live bindings and only its own functions reassign; a helper or constant one test uses stays
+in that test's file.
+
 ## Scope
 
 The suite asks one question: did build, freeze, stage and install produce the app the source tests
@@ -39,7 +45,7 @@ root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 | 15. the browser chain   | the prerequisite misresolves installed Chrome or Edge; the PDF step depends on a browser                                             | —                                                  |
 | 16. an in-place update  | the updater fails to replace `resources/` from a feed, or loses the keys, the yt-dlp copy or the new `.fmt`                          | —                                                  |
 
-A new smoke test adds its row here; a test with no packaging-only failure belongs in the harness or a unit test.
+A new smoke test adds its row here, its file under `tests/` and its line in `release.spec.js`; a test with no packaging-only failure belongs in the harness or a unit test.
 
 ## Rules
 
