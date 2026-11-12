@@ -9,11 +9,13 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | `index.html`  | Every section, both languages' copy side by side as `.he` / `.en` spans          |
 | `code-signing.html` | The code signing policy SignPath Foundation requires: its title and team roles on top, the full privacy policy as the last section (`#privacy`) — also the privacy URL Google OAuth brand verification holds, so it keeps the Drive scope, token and Limited Use lines |
 | `style.css`   | The app's own tokens, light only, logical properties for both directions        |
-| `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>`. Also the journey carousel, and the zoom overlay every `main img` opens (a `<dialog>`; Esc or a click anywhere but the arrows closes, focus returns). A journey shot's zoom also steps the four shots (edge arrows, ←/→ by reading direction, N of 4 counter, wrapping) by driving the carousel's `show()`, and the carousel and focus end on the last one viewed |
+| `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>`. Also the demo player (below), the journey carousel, and the zoom overlay every `main img` but the demo poster opens (a `<dialog>`; Esc or a click anywhere but the arrows closes, focus returns). A journey shot's zoom also steps the four shots (edge arrows, ←/→ by reading direction, N of 4 counter, wrapping) by driving the carousel's `show()`, and the carousel and focus end on the last one viewed |
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
 | `capture.mjs` | Recaptures the eleven app screenshots on a live app-harness stack, using the showcase dataset and helpers in `.claude/harness/showcase/` |
 | `img/captured-version` | Release tag whose becoming latest triggered the last capture, taken from main at that time (`v1.2.3`); `pages.yml`'s `capture` job compares it with the latest release and never deploys it |
 | `img/`        | The app screenshots (a 1280×800 layout at 2×, 2560×1600 JPEG, sharp at the carousel's 925px (85% of the 1088px slide) on high-DPI screens: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
+| `demo/`       | The demo video's source, never deployed: a Remotion project (`src/`), its footage (`public/footage/`), the music cut and `capture.mjs` |
+| `video/`      | The rendered demo: `demo-he.mp4`, `demo-en.mp4` and a `poster-*.jpg` for each |
 | `sitemap.xml` | Both page URLs, for Search Console; a new page gets a `<url>` here               |
 
 `index.html`'s `<head>` carries the `google-site-verification` meta for the Search Console property
@@ -27,7 +29,7 @@ visits, no cookies; both download buttons carry `data-goatcounter-click="downloa
 
 ## What the page covers
 
-Hero, how it works, the lecture journey (`#journey`: a four-step carousel, one `journey-*` shot at a time, wrapping both ways; without JS the four steps stack), six features, universities, what you'll need, privacy (error reports included),
+Hero, the demo video (`#demo`), how it works, the lecture journey (`#journey`: a four-step carousel, one `journey-*` shot at a time, wrapping both ways; without JS the four steps stack), six features, universities, what you'll need, privacy (error reports included),
 the SmartScreen install steps and a short FAQ. The footer links `code-signing.html`, which carries the
 policy title and the roles SignPath's conditions require. Its role names (Committers and reviewers, Approvers) and the term "Code signing policy" — shown
 in English in the Hebrew view too — follow [SignPath's conditions](https://signpath.org/terms.html) verbatim. Every claim is the app's current behaviour, checked
@@ -74,3 +76,45 @@ main so it ships the new images, and drops the marker from `_site`. Heebo comes 
 `@fontsource/heebo` npm package (Hebrew subset included), so the runner needs no system Hebrew font.
 
 The SmartScreen steps come from a real Windows install and cannot be captured here.
+
+## Demo video
+
+A 60-second walk through one lecture in Hebrew and English: a title card, four flows — downloading a
+recording from the course's Moodle, the pipeline's steps completing, the summary PDF, the Drive
+control on the finished lecture — and an end card with the page's own call to action. Each MP4 is
+1920×1080 at 30 fps, H.264 yuv420p + AAC, moov atom first; each poster is the title card.
+
+`demo/` is the one place in `site/` with a `package.json`: Remotion `4.0.543` (pinned), React and
+`@fontsource/heebo`. The picture is stills of the app animated in code — camera, cursor, crossfades —
+inside a drawn frame, never a screen recording. `src/strings/{he,en}.json` hold every word the video
+draws and its direction, `src/timeline.mjs` every scene's and caption's frame; the composition takes
+the language as a prop and picks that language's strings and footage.
+
+```bash
+node site/demo/capture.mjs --harness DIR   # rewrites demo/public/footage/ on a live app-harness stack
+cd site/demo && npm ci && npm run render   # rewrites the four files in video/
+```
+
+`capture.mjs` seeds the showcase dataset and drives the journey lecture with two pages on one stack,
+Hebrew acting and English watching, so both languages show the same state: the download's bar at five
+points, each provider step held on its slow fake, the finished lecture, and the summary PDF's text
+block as one sheet. Beside each language's stills, `manifest.json` records every still's place in the
+1280×800 layout and the boxes the camera and cursor aim at, so the composition holds no coordinates.
+
+The Downloads shots never frame anything under the card below the recording's: the rows further
+down are the fake Moodle's own fixtures, so `Download` in `src/Scenes.jsx` ends every camera rect there.
+
+On the page (`#demo`) nothing of the video loads before the click: `main.js` puts the page
+language's poster, lazy, under a play button in a 16:9 frame, and the click swaps in a
+`<video controls playsinline>` on `video/demo-<lang>.mp4`, playing with sound; its native controls
+are the mute control. The language toggle swaps the poster, or a loaded video's file at the same
+time and play state — both languages share one timeline. When it ends the poster returns. Without JS
+the play button is a plain link to `video/demo-he.mp4` over the Hebrew poster.
+
+Recapture and render are manual and their output is committed: rendering in CI would need Remotion
+and a headless browser on the runner and would commit about 10 MB of binaries to main per release.
+`pages.yml` deletes `demo/` from the staged copy.
+
+Music: "Spring At Last" by HoliznaCC0, from "Spring at last (LOFI TAPE)", CC0 1.0 Universal —
+https://freemusicarchive.org/music/holiznacc0/spring-at-last-lofi-tape/spring-at-last. `demo/public/music.mp3`
+is the cut the video uses.

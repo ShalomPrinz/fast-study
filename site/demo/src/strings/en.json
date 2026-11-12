@@ -1,0 +1,27 @@
+{
+  "dir": "ltr",
+  "name": "FastStudy",
+  "tagline": "From a recorded lecture to a written summary — automatically",
+  "chapters": {
+    "download": "Download",
+    "pipeline": "Processing",
+    "pdf": "Summary",
+    "drive": "Drive"
+  },
+  "captions": {
+    "download": "Pick a recording from your course's Moodle and click Download",
+    "auto": "From here it runs on its own",
+    "audio": "Extracting audio",
+    "transcribe": "Transcribing",
+    "summarize": "Summarizing",
+    "export": "Exporting the PDF",
+    "ready": "Summary ready",
+    "pdf": "A clean PDF summary: headings, formulas and tables",
+    "drive": "And the summary is uploaded to your Google Drive"
+  },
+  "end": {
+    "cta": "Download for Windows",
+    "note": "Windows 10/11 · Free",
+    "url": "shalomprinz.github.io/fast-study"
+  }
+}

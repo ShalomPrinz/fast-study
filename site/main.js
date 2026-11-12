@@ -1,5 +1,5 @@
 // The language toggle: ?lang= wins, then the remembered choice, then Hebrew. Both languages' copy is in the
-// markup, so this only flips the root's lang/dir, the title and the image alts.
+// markup, so this only flips the root's lang/dir, the title, the image alts and the demo player's version.
 (function () {
   const KEY = 'faststudy-site:lang';
   // Each page carries its own English title on <title data-en>, so one script serves every page.
@@ -22,16 +22,68 @@
     } catch {}
   }
 
+  // The demo player: the page language's poster under a play button; nothing of the video loads before the click.
+  const play = document.querySelector('.demo-play');
+  const poster = new Image(1920, 1080);
+  poster.className = 'demo-poster';
+  poster.loading = 'lazy';
+  poster.alt = '';
+  let video = null;
+  let shown = null;
+
+  // Before the click the poster follows the language; a loaded video changes file and keeps its place.
+  function showDemo(lang) {
+    if (!play || lang === shown) return;
+    shown = lang;
+    if (!video) return (poster.src = `video/poster-${lang}.jpg`);
+    const at = video.currentTime;
+    const playing = !video.paused;
+    video.src = `video/demo-${lang}.mp4`;
+    // A seek set before the new file's metadata is dropped once play() starts it.
+    video.addEventListener('loadedmetadata', () => (video.currentTime = at), { once: true });
+    if (playing) video.play();
+  }
+
+  if (play) {
+    play.prepend(poster);
+    play.setAttribute('role', 'button');
+    play.addEventListener('keydown', (e) => {
+      if (e.key !== ' ') return;
+      e.preventDefault();
+      play.click();
+    });
+    play.addEventListener('click', (e) => {
+      e.preventDefault();
+      video = document.createElement('video');
+      video.className = 'demo-video';
+      video.controls = true;
+      video.playsInline = true;
+      video.src = `video/demo-${shown}.mp4`;
+      video.addEventListener('ended', () => {
+        const held = document.activeElement === video;
+        video.replaceWith(play);
+        video = null;
+        poster.src = `video/poster-${shown}.jpg`;
+        if (held) play.focus();
+      });
+      play.replaceWith(video);
+      video.focus();
+      video.play();
+    });
+  }
+
   function apply(lang) {
     root.lang = lang;
     root.dir = lang === 'he' ? 'rtl' : 'ltr';
     document.title = TITLES[lang];
     images.forEach((img) => (img.alt = lang === 'he' ? img.dataset.altHe : img.dataset.altEn));
+    showDemo(lang);
   }
 
   const asked = new URLSearchParams(location.search).get('lang');
   const initial = [asked, remembered()].find((l) => l === 'he' || l === 'en') || 'he';
   if (initial !== 'he') apply(initial);
+  else showDemo(initial);
 
   document.getElementById('lang-toggle').addEventListener('click', () => {
     const next = root.lang === 'he' ? 'en' : 'he';
@@ -81,7 +133,7 @@ let journey = null;
 // Every content screenshot enlarges over a dimmed page; a click anywhere but the journey arrows, or Esc, closes it and focus returns to its opener.
 // A journey shot also steps through the four shots in place, and the carousel follows to the one last viewed.
 (function () {
-  const shots = document.querySelectorAll('main img');
+  const shots = document.querySelectorAll('main img:not(.demo-poster)');
   if (!shots.length) return;
   const dialog = document.createElement('dialog');
   dialog.className = 'zoom';

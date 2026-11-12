@@ -1,0 +1,27 @@
+{
+  "dir": "rtl",
+  "name": "FastStudy",
+  "tagline": "מהרצאה מוקלטת לסיכום כתוב — אוטומטית",
+  "chapters": {
+    "download": "הורדה",
+    "pipeline": "עיבוד",
+    "pdf": "סיכום",
+    "drive": "Drive"
+  },
+  "captions": {
+    "download": "בוחרים הקלטה מה-Moodle של הקורס ולוחצים הורדה",
+    "auto": "מכאן הכול אוטומטי",
+    "audio": "הפקת שמע",
+    "transcribe": "תמלול",
+    "summarize": "סיכום",
+    "export": "ייצוא ל-PDF",
+    "ready": "הסיכום מוכן",
+    "pdf": "סיכום מסודר ב-PDF: כותרות, נוסחאות וטבלאות",
+    "drive": "והסיכום עולה ל-Google Drive שלכם"
+  },
+  "end": {
+    "cta": "הורדה ל־Windows",
+    "note": "Windows 10/11 · חינם",
+    "url": "shalomprinz.github.io/fast-study"
+  }
+}

@@ -305,6 +305,77 @@ p {
   background: #c9cbd6;
 }
 
+/* Demo video: the poster under a play button until the click, then the video in the same 16:9 frame. */
+.demo {
+  padding-block-start: 0;
+}
+
+.demo-player {
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--sidebar-bg);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
+}
+
+.demo-player:has(:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.demo-play {
+  position: relative;
+  display: block;
+  block-size: 100%;
+}
+
+.demo-poster,
+.demo-video {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Dimmed, so the play button reads as the control over the title card. */
+.demo-poster {
+  opacity: 0.6;
+}
+
+.demo-play-icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: clamp(64px, 9vw, 96px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.demo-play:hover .demo-play-icon {
+  background: var(--accent-hover);
+}
+
+.demo-play:focus-visible {
+  outline: none;
+}
+
+.demo-play:focus-visible .demo-play-icon {
+  box-shadow:
+    0 0 0 4px #fff,
+    0 0 0 8px var(--accent);
+}
+
+.demo-play-icon svg {
+  inline-size: 46%;
+  fill: currentColor;
+}
+
 /* Sections */
 .section {
   padding-block: 64px;

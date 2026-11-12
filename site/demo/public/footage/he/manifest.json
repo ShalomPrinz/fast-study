@@ -1,0 +1,895 @@
+{
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "shots": {
+    "downloads-window": {
+      "file": "downloads-window.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 800
+      },
+      "boxes": {
+        "card": {
+          "x": 111,
+          "y": 429,
+          "width": 842,
+          "height": 96
+        },
+        "button": {
+          "x": 130,
+          "y": 475,
+          "width": 110,
+          "height": 32
+        },
+        "name": {
+          "x": 250,
+          "y": 473,
+          "width": 476,
+          "height": 37
+        },
+        "panel": {
+          "x": 92,
+          "y": 217,
+          "width": 880,
+          "height": 741
+        }
+      }
+    },
+    "download-0": {
+      "file": "download-0.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1012,
+        "height": 800
+      },
+      "boxes": {
+        "card": {
+          "x": 111,
+          "y": 429,
+          "width": 842,
+          "height": 96
+        },
+        "button": {
+          "x": 130,
+          "y": 475,
+          "width": 110,
+          "height": 32
+        },
+        "name": {
+          "x": 250,
+          "y": 473,
+          "width": 476,
+          "height": 37
+        },
+        "panel": {
+          "x": 92,
+          "y": 217,
+          "width": 880,
+          "height": 741
+        }
+      }
+    },
+    "download-1": {
+      "file": "download-1.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1012,
+        "height": 800
+      },
+      "boxes": {
+        "card": {
+          "x": 111,
+          "y": 429,
+          "width": 842,
+          "height": 129
+        },
+        "name": {
+          "x": 184,
+          "y": 473,
+          "width": 542,
+          "height": 37
+        },
+        "panel": {
+          "x": 92,
+          "y": 217,
+          "width": 880,
+          "height": 774
+        }
+      }
+    },
+    "download-2": {
+      "file": "download-2.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1012,
+        "height": 800
+      },
+      "boxes": {
+        "card": {
+          "x": 111,
+          "y": 429,
+          "width": 842,
+          "height": 129
+        },
+        "name": {
+          "x": 184,
+          "y": 473,
+          "width": 542,
+          "height": 37
+        },
+        "panel": {
+          "x": 92,
+          "y": 217,
+          "width": 880,
+          "height": 774
+        }
+      }
+    },
+    "download-3": {
+      "file": "download-3.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1012,
+        "height": 800
+      },
+      "boxes": {
+        "card": {
+          "x": 111,
+          "y": 429,
+          "width": 842,
+          "height": 129
+        },
+        "name": {
+          "x": 184,
+          "y": 473,
+          "width": 542,
+          "height": 37
+        },
+        "panel": {
+          "x": 92,
+          "y": 217,
+          "width": 880,
+          "height": 774
+        }
+      }
+    },
+    "download-4": {
+      "file": "download-4.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1012,
+        "height": 800
+      },
+      "boxes": {
+        "card": {
+          "x": 111,
+          "y": 429,
+          "width": 842,
+          "height": 129
+        },
+        "name": {
+          "x": 184,
+          "y": 473,
+          "width": 542,
+          "height": 37
+        },
+        "panel": {
+          "x": 92,
+          "y": 217,
+          "width": 880,
+          "height": 774
+        }
+      }
+    },
+    "download-5": {
+      "file": "download-5.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1012,
+        "height": 800
+      },
+      "boxes": {
+        "card": {
+          "x": 111,
+          "y": 429,
+          "width": 842,
+          "height": 129
+        },
+        "name": {
+          "x": 184,
+          "y": 473,
+          "width": 542,
+          "height": 37
+        },
+        "panel": {
+          "x": 92,
+          "y": 217,
+          "width": 880,
+          "height": 774
+        }
+      }
+    },
+    "download-done": {
+      "file": "download-done.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1012,
+        "height": 800
+      },
+      "boxes": {
+        "card": {
+          "x": 111,
+          "y": 429,
+          "width": 842,
+          "height": 96
+        },
+        "name": {
+          "x": 256,
+          "y": 473,
+          "width": 470,
+          "height": 37
+        },
+        "panel": {
+          "x": 92,
+          "y": 217,
+          "width": 880,
+          "height": 741
+        }
+      }
+    },
+    "lecture-window": {
+      "file": "lecture-window.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 186,
+          "width": 343,
+          "height": 396
+        },
+        "video": {
+          "x": 362,
+          "y": 187,
+          "width": 341,
+          "height": 65
+        },
+        "audio": {
+          "x": 362,
+          "y": 252,
+          "width": 341,
+          "height": 65
+        },
+        "transcribe": {
+          "x": 362,
+          "y": 317,
+          "width": 341,
+          "height": 65
+        },
+        "summarize": {
+          "x": 362,
+          "y": 382,
+          "width": 341,
+          "height": 69
+        },
+        "pdf": {
+          "x": 362,
+          "y": 451,
+          "width": 341,
+          "height": 65
+        },
+        "drive": {
+          "x": 362,
+          "y": 516,
+          "width": 341,
+          "height": 65
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 128
+        },
+        "column": {
+          "x": 55,
+          "y": 154,
+          "width": 649,
+          "height": 428
+        }
+      }
+    },
+    "pipeline-idle": {
+      "file": "pipeline-idle.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 744,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 186,
+          "width": 343,
+          "height": 396
+        },
+        "video": {
+          "x": 362,
+          "y": 187,
+          "width": 341,
+          "height": 65
+        },
+        "audio": {
+          "x": 362,
+          "y": 252,
+          "width": 341,
+          "height": 65
+        },
+        "transcribe": {
+          "x": 362,
+          "y": 317,
+          "width": 341,
+          "height": 65
+        },
+        "summarize": {
+          "x": 362,
+          "y": 382,
+          "width": 341,
+          "height": 69
+        },
+        "pdf": {
+          "x": 362,
+          "y": 451,
+          "width": 341,
+          "height": 65
+        },
+        "drive": {
+          "x": 362,
+          "y": 516,
+          "width": 341,
+          "height": 65
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 128
+        },
+        "column": {
+          "x": 55,
+          "y": 154,
+          "width": 649,
+          "height": 428
+        }
+      }
+    },
+    "pipeline-audio": {
+      "file": "pipeline-audio.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 744,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 186,
+          "width": 343,
+          "height": 409
+        },
+        "video": {
+          "x": 362,
+          "y": 187,
+          "width": 341,
+          "height": 65
+        },
+        "audio": {
+          "x": 362,
+          "y": 252,
+          "width": 341,
+          "height": 78
+        },
+        "transcribe": {
+          "x": 362,
+          "y": 330,
+          "width": 341,
+          "height": 65
+        },
+        "summarize": {
+          "x": 362,
+          "y": 395,
+          "width": 341,
+          "height": 69
+        },
+        "pdf": {
+          "x": 362,
+          "y": 464,
+          "width": 341,
+          "height": 65
+        },
+        "drive": {
+          "x": 362,
+          "y": 529,
+          "width": 341,
+          "height": 65
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 128
+        },
+        "column": {
+          "x": 55,
+          "y": 154,
+          "width": 649,
+          "height": 441
+        }
+      }
+    },
+    "pipeline-transcribe-1": {
+      "file": "pipeline-transcribe-1.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 744,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 186,
+          "width": 343,
+          "height": 409
+        },
+        "video": {
+          "x": 362,
+          "y": 187,
+          "width": 341,
+          "height": 65
+        },
+        "audio": {
+          "x": 362,
+          "y": 252,
+          "width": 341,
+          "height": 65
+        },
+        "transcribe": {
+          "x": 362,
+          "y": 317,
+          "width": 341,
+          "height": 78
+        },
+        "summarize": {
+          "x": 362,
+          "y": 395,
+          "width": 341,
+          "height": 69
+        },
+        "pdf": {
+          "x": 362,
+          "y": 464,
+          "width": 341,
+          "height": 65
+        },
+        "drive": {
+          "x": 362,
+          "y": 529,
+          "width": 341,
+          "height": 65
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 128
+        },
+        "column": {
+          "x": 55,
+          "y": 154,
+          "width": 649,
+          "height": 441
+        }
+      }
+    },
+    "pipeline-transcribe-2": {
+      "file": "pipeline-transcribe-2.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 744,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 186,
+          "width": 343,
+          "height": 409
+        },
+        "video": {
+          "x": 362,
+          "y": 187,
+          "width": 341,
+          "height": 65
+        },
+        "audio": {
+          "x": 362,
+          "y": 252,
+          "width": 341,
+          "height": 65
+        },
+        "transcribe": {
+          "x": 362,
+          "y": 317,
+          "width": 341,
+          "height": 78
+        },
+        "summarize": {
+          "x": 362,
+          "y": 395,
+          "width": 341,
+          "height": 69
+        },
+        "pdf": {
+          "x": 362,
+          "y": 464,
+          "width": 341,
+          "height": 65
+        },
+        "drive": {
+          "x": 362,
+          "y": 529,
+          "width": 341,
+          "height": 65
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 128
+        },
+        "column": {
+          "x": 55,
+          "y": 154,
+          "width": 649,
+          "height": 441
+        }
+      }
+    },
+    "pipeline-summarize-1": {
+      "file": "pipeline-summarize-1.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 744,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 186,
+          "width": 343,
+          "height": 409
+        },
+        "video": {
+          "x": 362,
+          "y": 187,
+          "width": 341,
+          "height": 65
+        },
+        "audio": {
+          "x": 362,
+          "y": 252,
+          "width": 341,
+          "height": 65
+        },
+        "transcribe": {
+          "x": 362,
+          "y": 317,
+          "width": 341,
+          "height": 65
+        },
+        "summarize": {
+          "x": 362,
+          "y": 382,
+          "width": 341,
+          "height": 82
+        },
+        "pdf": {
+          "x": 362,
+          "y": 464,
+          "width": 341,
+          "height": 65
+        },
+        "drive": {
+          "x": 362,
+          "y": 529,
+          "width": 341,
+          "height": 65
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 128
+        },
+        "column": {
+          "x": 55,
+          "y": 154,
+          "width": 649,
+          "height": 441
+        }
+      }
+    },
+    "pipeline-summarize-2": {
+      "file": "pipeline-summarize-2.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 744,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 186,
+          "width": 343,
+          "height": 409
+        },
+        "video": {
+          "x": 362,
+          "y": 187,
+          "width": 341,
+          "height": 65
+        },
+        "audio": {
+          "x": 362,
+          "y": 252,
+          "width": 341,
+          "height": 65
+        },
+        "transcribe": {
+          "x": 362,
+          "y": 317,
+          "width": 341,
+          "height": 65
+        },
+        "summarize": {
+          "x": 362,
+          "y": 382,
+          "width": 341,
+          "height": 82
+        },
+        "pdf": {
+          "x": 362,
+          "y": 464,
+          "width": 341,
+          "height": 65
+        },
+        "drive": {
+          "x": 362,
+          "y": 529,
+          "width": 341,
+          "height": 65
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 128
+        },
+        "column": {
+          "x": 55,
+          "y": 154,
+          "width": 649,
+          "height": 441
+        }
+      }
+    },
+    "pipeline-pdf": {
+      "file": "pipeline-pdf.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 744,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 231,
+          "width": 343,
+          "height": 405
+        },
+        "video": {
+          "x": 362,
+          "y": 232,
+          "width": 341,
+          "height": 65
+        },
+        "audio": {
+          "x": 362,
+          "y": 297,
+          "width": 341,
+          "height": 65
+        },
+        "transcribe": {
+          "x": 362,
+          "y": 362,
+          "width": 341,
+          "height": 65
+        },
+        "summarize": {
+          "x": 362,
+          "y": 427,
+          "width": 341,
+          "height": 65
+        },
+        "pdf": {
+          "x": 362,
+          "y": 492,
+          "width": 341,
+          "height": 78
+        },
+        "drive": {
+          "x": 362,
+          "y": 570,
+          "width": 341,
+          "height": 65
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 173
+        },
+        "column": {
+          "x": 55,
+          "y": 199,
+          "width": 649,
+          "height": 437
+        }
+      }
+    },
+    "finished-window": {
+      "file": "finished-window.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 231,
+          "width": 343,
+          "height": 70
+        },
+        "pdf": {
+          "x": 361,
+          "y": 319,
+          "width": 343,
+          "height": 446
+        },
+        "openPdf": {
+          "x": 372,
+          "y": 328,
+          "width": 135,
+          "height": 31
+        },
+        "actions": {
+          "x": 40,
+          "y": 123,
+          "width": 664,
+          "height": 31
+        },
+        "drive": {
+          "x": 40,
+          "y": 123,
+          "width": 110,
+          "height": 31
+        },
+        "state": {
+          "x": 658,
+          "y": 91,
+          "width": 46,
+          "height": 18
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 173
+        },
+        "column": {
+          "x": 55,
+          "y": 199,
+          "width": 649,
+          "height": 566
+        }
+      }
+    },
+    "finished": {
+      "file": "finished.jpg",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 744,
+        "height": 800
+      },
+      "boxes": {
+        "steps": {
+          "x": 361,
+          "y": 231,
+          "width": 343,
+          "height": 70
+        },
+        "pdf": {
+          "x": 361,
+          "y": 319,
+          "width": 343,
+          "height": 446
+        },
+        "openPdf": {
+          "x": 372,
+          "y": 328,
+          "width": 135,
+          "height": 31
+        },
+        "actions": {
+          "x": 40,
+          "y": 123,
+          "width": 664,
+          "height": 31
+        },
+        "drive": {
+          "x": 40,
+          "y": 123,
+          "width": 110,
+          "height": 31
+        },
+        "state": {
+          "x": 658,
+          "y": 91,
+          "width": 46,
+          "height": 18
+        },
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 744,
+          "height": 173
+        },
+        "column": {
+          "x": 55,
+          "y": 199,
+          "width": 649,
+          "height": 566
+        }
+      }
+    }
+  },
+  "sheet": {
+    "file": "summary.jpg",
+    "width": 1901,
+    "height": 1880
+  }
+}
