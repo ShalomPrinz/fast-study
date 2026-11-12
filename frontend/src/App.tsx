@@ -22,7 +22,7 @@ import { isRtl } from '@/services/i18n'
 import { ROUTES } from '@/shared/utils/routes'
 import '@/styles/panel.css'
 
-// The lectures home: a lecture to pick, or — with no active course — how to add one or why none loaded.
+// The lectures home: a lecture to pick, or — with no course — how to add one or why none loaded.
 function EmptyState() {
   const { courses, loaded, loadFailed } = useCourseTreeContext()
   const notice = courseLoadNotice(courses, loaded, loadFailed)

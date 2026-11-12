@@ -5,7 +5,6 @@ import { courseLoadNotice, isCourseTreeLoading } from '@/shared/utils/courseLoad
 import { PendingUploadProvider } from './PendingUploadModal'
 import NewCourseRow from './NewCourseRow'
 import CourseGroup from './tree/CourseGroup'
-import ArchivedSection from './tree/ArchivedSection'
 import '@/styles/sidebar-tree.css'
 import '@/styles/spinner.css'
 import './LecturesTreePane.css'
@@ -23,7 +22,6 @@ export default function LecturesTreePane() {
 
 function LecturesTreePaneBody() {
   const { courses, loaded, loadFailed } = useCourseTreeContext()
-  const active = courses.filter((c) => !c.archived)
   const notice = courseLoadNotice(courses, loaded, loadFailed)
   const loading = isCourseTreeLoading(courses, loaded, loadFailed)
   const { t } = useLingui()
@@ -57,10 +55,9 @@ function LecturesTreePaneBody() {
             <Trans>No lectures yet. Add one from Downloads, or add a course manually.</Trans>
           </p>
         ) : (
-          active.map((c) => <CourseGroup key={c.name} course={c} />)
+          courses.map((c) => <CourseGroup key={c.name} course={c} />)
         )}
       </nav>
-      <ArchivedSection />
       <div className="tree-pane-footer">
         <NewCourseRow />
       </div>

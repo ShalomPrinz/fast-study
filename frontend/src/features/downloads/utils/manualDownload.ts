@@ -16,11 +16,11 @@ export function parseTarget(target: string): StoredTarget | null {
   return { course: target.slice(0, at), lecture: target.slice(at + 1) }
 }
 
-// The active course a typed name means, in its stored spelling; null makes it a new course. Case is
+// The course a typed name means, in its stored spelling; null makes it a new course. Case is
 // ignored because NTFS folds it, so the database would refuse the new folder as taken.
-export function matchCourse(active: readonly Course[], typed: string): string | null {
+export function matchCourse(courses: readonly Course[], typed: string): string | null {
   const key = typed.trim().toLowerCase()
-  return active.find((c) => c.name.toLowerCase() === key)?.name ?? null
+  return courses.find((c) => c.name.toLowerCase() === key)?.name ?? null
 }
 
 export type ManualStatus = 'queued' | 'running' | 'done' | 'error' | 'cancelled'
@@ -48,7 +48,6 @@ export function suggestManualName(
         ...courses,
         {
           name: course,
-          archived: false,
           source_url: null,
           lectures_only: false,
           lectures: [],

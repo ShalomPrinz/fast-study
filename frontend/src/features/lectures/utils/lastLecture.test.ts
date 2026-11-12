@@ -21,7 +21,6 @@ const lecture = (name: string) => ({ name }) as Lecture
 const courses: Course[] = [
   {
     name: 'אלגברה',
-    archived: false,
     source_url: null,
     lectures_only: false,
     lectures: [lecture('Lecture 1')],

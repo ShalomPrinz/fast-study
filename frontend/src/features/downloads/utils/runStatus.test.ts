@@ -49,7 +49,6 @@ function tree(lectures: Lecture[]): Course[] {
   return [
     {
       name: 'Algebra',
-      archived: false,
       source_url: null,
       lectures_only: false,
       lectures,

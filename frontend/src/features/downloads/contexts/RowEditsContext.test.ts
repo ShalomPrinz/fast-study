@@ -32,7 +32,6 @@ function node(name: string): Lecture {
 const COURSES: Course[] = [
   {
     name: 'Algebra',
-    archived: false,
     source_url: null,
     lectures_only: false,
     lectures: [node('Lecture 1'), node('Lecture 2')],
@@ -100,7 +99,6 @@ describe('a download lock', () => {
   const EMPTY_COURSE: Course[] = [
     {
       name: 'Algebra',
-      archived: false,
       source_url: null,
       lectures_only: false,
       lectures: [],

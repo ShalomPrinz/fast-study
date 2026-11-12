@@ -29,7 +29,7 @@ The Extension tab's header row, also under the tabs, holds the browser switch (`
 The University tab's frozen row sits in the header under the tabs (`CourseSourceBar`, only while University
 is chosen): the course box, a pencil ("Edit source URL"; always shown, disabled with a "Choose a course first" hint until a course is picked) and "+ Add course", centred as a group, text and controls at 1.2x size, the box a fixed narrower width. The box
 is the shared `Combobox` in pick-only mode (`onPick`; typed text filters and reverts to the picked name on blur,
-so it never creates) over every active course. Picking loads at once (`discover`); a course with no source
+so it never creates) over every course. Picking loads at once (`discover`); a course with no source
 is still pickable: it opens the Moodle picker (`EditSourcePanel`) at once, one `/courses` fetch per open, and
 if cancelled leaves a "No source URL yet" note instead of recordings (the pencil reopens it); a pick made while
 discovery is barred (account disconnected, Moodle lock busy) closes the open recordings, shows the reason
@@ -95,7 +95,7 @@ own branch in the catalog row, so it never reads as the bare generic line.
 ## Manual download
 
 The Manual tab (`ManualDownload`), always open: paste a video link, type a course
-(the active ones are suggestions; any other name is created first, an archived one answers `name_taken`),
+(the existing ones are suggestions; any other name is created first),
 kind and name, and `POST /download-url` queues it. auto decides the route: a link on the configured
 Moodle site's origin is proxied through auto under the Moodle lock (below), any other runs yt-dlp; both
 fetch with no session or cookies, so the link must open without signing in. The name is `suggestName`'s next free one, also skipping names
@@ -104,7 +104,7 @@ the tree yet; replacing a stored video confirms first. The link is never cleared
 the download starts, lands or fails. Its jobs are [JOBS.md](JOBS.md) §Manual jobs.
 The whole draft (link, course, kind, name) is a module store, so it survives leaving the page but not an app restart.
 The course field is the shared `Combobox`, an in-app ARIA combobox rather than a `<datalist>`, whose Chromium popup
-can't be styled or made to list everything: unedited since it opened it lists every active course, after an edit
+can't be styled or made to list everything: unedited since it opened it lists every course, after an edit
 only those containing the text (`filterOptions`); arrows move, Enter or a click picks, Escape closes.
 The form is a two-column grid in reading order: link and course a full row each, kind beside name, then
 the wide Download button centred; its text and controls are one type step above the page's other forms.

@@ -6,7 +6,6 @@ import { sortLectures } from './lectureSort'
 
 const node = (lectures: string[], recitations: string[], lectures_only: boolean): Course => ({
   name: 'Algebra',
-  archived: false,
   source_url: null,
   lectures_only,
   // The tree arrives with each list in `sortLectures` order, as SnapshotProvider hands it out.

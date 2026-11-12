@@ -32,7 +32,6 @@ function course(name: string, lectures: string[], recitations: string[] = []): C
   const node = (n: string) => ({ name: n }) as Lecture
   return {
     name,
-    archived: false,
     source_url: null,
     lectures_only: false,
     lectures: lectures.map(node),
@@ -95,14 +94,14 @@ describe('suggestManualName', () => {
 })
 
 describe('matchCourse', () => {
-  const active = [{ name: 'Algo', lectures: [] }] as unknown as Course[]
+  const courses = [{ name: 'Algo', lectures: [] }] as unknown as Course[]
 
   it('answers the stored spelling of a course typed in another case or padded', () => {
-    expect(matchCourse(active, '  aLGO ')).toBe('Algo')
+    expect(matchCourse(courses, '  aLGO ')).toBe('Algo')
   })
 
-  it('answers null for a name no active course has, which makes it a new course', () => {
-    expect(matchCourse(active, 'Algo 2')).toBeNull()
+  it('answers null for a name no course has, which makes it a new course', () => {
+    expect(matchCourse(courses, 'Algo 2')).toBeNull()
     expect(matchCourse([], 'Algo')).toBeNull()
   })
 })

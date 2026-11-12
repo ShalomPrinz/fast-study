@@ -57,7 +57,7 @@ export function useManualEntries(): readonly ManualEntry[] {
 }
 
 // The form's half-typed fields for this app session, so leaving the page and coming back restores
-// them. Null course/name follow the first active course and the suggestion, untouched until edited.
+// them. Null course/name follow the first course and the suggestion, untouched until edited.
 export interface ManualDraft {
   url: string
   course: string | null

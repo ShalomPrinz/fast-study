@@ -62,8 +62,7 @@ function metaClass(shown: boolean): string {
 export default function DownloadsView() {
   const { t } = useLingui()
   const { courses, loaded, loadFailed } = useCourseTreeContext()
-  const active = courses.filter((c) => !c.archived)
-  const withSource = active.filter((c) => c.source_url).length
+  const withSource = courses.filter((c) => c.source_url).length
 
   const { selected, pending, items, edits, reconnectKey, loadKey } = useDownloadsSession()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
@@ -91,7 +90,7 @@ export default function DownloadsView() {
   const editMatch = useMatch(ROUTES.editSource)
   const editName = editMatch ? routeParam(editMatch.params.course) : null
   const panel: 'edit' | 'add' | null = addMatch ? 'add' : editMatch ? 'edit' : null
-  const editCourse = editName ? active.find((c) => c.name === editName) : undefined
+  const editCourse = editName ? courses.find((c) => c.name === editName) : undefined
   // Panels opened in-app carry this flag, so a close pops to the entry they were opened from and
   // leaves no duplicate; a panel URL opened cold has no such entry and replaces.
   const panelState = { fromDownloads: true }
@@ -112,7 +111,7 @@ export default function DownloadsView() {
   // the course's source URL as it is then.
   const [deferred, setDeferred] = useState<string | null>(null)
   const shown = boxCourse(chosen, editName, !!editCourse)
-  const chosenCourse = active.find((c) => c.name === shown)
+  const chosenCourse = courses.find((c) => c.name === shown)
   const [tab, selectTab] = useDownloadsTab()
   const [browser, setBrowser] = useState<Browser>(readBrowser)
   // Held here rather than in the session, so leaving the page drops every lock.
@@ -128,7 +127,7 @@ export default function DownloadsView() {
   useEffect(() => {
     if (deferred && !barred) {
       setDeferred(null)
-      const course = courses.find((c) => c.name === deferred && !c.archived)
+      const course = courses.find((c) => c.name === deferred)
       if (course?.source_url) void discover(course, { wait: true })
     }
   }, [deferred, barred, courses, discover])
@@ -165,7 +164,7 @@ export default function DownloadsView() {
   }, [addedName, courses])
 
   function pickCourse(name: string) {
-    const course = active.find((c) => c.name === name)
+    const course = courses.find((c) => c.name === name)
     setChosen(name)
     // A course with no source opens the picker at once; a Moodle list already open is kept, not refetched.
     if (course && !course.source_url) navigate(editSourceRoute(name), panelNav)
@@ -280,7 +279,7 @@ export default function DownloadsView() {
               {tab === 'university' && (
                 <CourseSourceBar
                   chosen={chosenCourse?.name ?? ''}
-                  names={active.map((c) => c.name)}
+                  names={courses.map((c) => c.name)}
                   onPick={pickCourse}
                   onEdit={() => navigate(editSourceRoute(shown), panelNav)}
                   onAdd={() => navigate(ROUTES.addCourse, panelNav)}

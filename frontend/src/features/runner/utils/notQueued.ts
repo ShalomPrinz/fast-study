@@ -24,8 +24,6 @@ export function notQueued(
   )
   const out: PendingLecture[] = []
   for (const course of courses) {
-    // An archived course is out of the runner's reach, the same way it contributes no progress.
-    if (course.archived) continue
     const groups: [Kind, typeof course.lectures][] = [
       ['lecture', course.lectures],
       ['recitation', course.recitations],

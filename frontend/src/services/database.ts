@@ -162,10 +162,6 @@ export async function renameCourse(oldName: string, newName: string): Promise<st
   return name
 }
 
-export async function setCourseArchived(course: string, archived: boolean): Promise<void> {
-  await database.patch(path`/courses/${course}/archived`, { json: { archived } })
-}
-
 // Marks a lecture or recitation studied, or back to not; idempotent either way.
 export async function setLectureDone(
   course: string,

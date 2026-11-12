@@ -6,6 +6,6 @@ export function addedCoursePick(
   courses: readonly Course[],
   name: string,
 ): { course: Course; load: boolean } | null {
-  const course = courses.find((c) => c.name === name && !c.archived)
+  const course = courses.find((c) => c.name === name)
   return course ? { course, load: !!course.source_url } : null
 }

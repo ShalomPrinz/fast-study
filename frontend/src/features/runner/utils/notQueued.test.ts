@@ -36,7 +36,6 @@ function lecture(name: string, ...present: string[]): Lecture {
 function course(name: string, lectures: Lecture[], recitations: Lecture[] = []): Course {
   return {
     name,
-    archived: false,
     source_url: null,
     lectures_only: false,
     lectures,
@@ -109,11 +108,6 @@ describe('notQueued', () => {
       { course: 'C1', lecture: 'L1', kind: 'recitation' },
       { course: 'C2', lecture: 'L1', kind: 'lecture' },
     ])
-  })
-
-  it('leaves an archived course out — the runner never reaches it', () => {
-    const tree = [{ ...course('C1', [lecture('L1', 'video.mp4')]), archived: true }]
-    expect(notQueued(tree, [], [], false)).toEqual([])
   })
 })
 

@@ -2,13 +2,11 @@ import { useState } from 'react'
 import { useMatch, useNavigate } from 'react-router-dom'
 import { useLingui } from '@lingui/react/macro'
 import type { ExpandHandle } from '@/types'
-import { renameCourse, setCourseArchived } from '@/services/database'
+import { renameCourse } from '@/services/database'
 import { toastFailure } from '@/shared/utils/failure'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
-import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import Icon from '@/shared/components/Icon'
 import Tooltip from '@/shared/components/Tooltip'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
@@ -31,8 +29,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { t } = useLingui()
   const { course, add } = useCourseGroup()
   const { selected, onSelect } = useSelection()
-  const { refreshCourses, refreshUntil } = useCourseTreeContext()
-  const shiftHeld = useShiftHeld()
+  const { refreshUntil } = useCourseTreeContext()
   const { status } = useRunnerStatus()
   const downloading = useCourseDownloading(course.name)
   const navigate = useNavigate()
@@ -95,17 +92,6 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
     add.start('lecture')
   }
 
-  async function toggleArchived(e: React.MouseEvent) {
-    e.stopPropagation()
-    try {
-      await setCourseArchived(course.name, !course.archived)
-    } catch (err) {
-      toastFailure(err)
-      return
-    }
-    refreshCourses()
-  }
-
   return (
     <div className="course-header">
       {renaming ? (
@@ -141,7 +127,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             <span className="course-name" dir="auto">
               {pendingName ?? course.name}
             </span>
-            {!course.archived && progress.total > 0 && (
+            {progress.total > 0 && (
               <Tooltip
                 content={renameLocked ? undefined : t`Lectures you marked done`}
                 placement="inline-end"
@@ -154,27 +140,13 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           </button>
         </Tooltip>
       )}
-      {!renaming &&
-        (shiftHeld ? (
-          <Tooltip
-            content={course.archived ? t`Unarchive course` : t`Archive course`}
-            placement="inline-end"
-          >
-            <button
-              className="course-add-btn course-archive-btn"
-              onClick={toggleArchived}
-              aria-label={course.archived ? t`Unarchive course` : t`Archive course`}
-            >
-              <Icon icon={course.archived ? 'unarchive' : 'archive'} />
-            </button>
-          </Tooltip>
-        ) : (
-          <Tooltip content={t`Add lecture`} placement="inline-end">
-            <button className="course-add-btn" onClick={startAdding} aria-label={t`Add lecture`}>
-              +
-            </button>
-          </Tooltip>
-        ))}
+      {!renaming && (
+        <Tooltip content={t`Add lecture`} placement="inline-end">
+          <button className="course-add-btn" onClick={startAdding} aria-label={t`Add lecture`}>
+            +
+          </button>
+        </Tooltip>
+      )}
     </div>
   )
 }

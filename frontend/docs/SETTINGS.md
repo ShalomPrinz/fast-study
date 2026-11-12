@@ -78,8 +78,8 @@ it to the store alone, the launcher's in the packaged app and the database's `.e
 
 **Course structure** applies live through the database's `/config`, which re-resolves every course's
 `lectures_only` and notifies. Everything but this field reads only that per-course flag
-([LECTURES.md](LECTURES.md)). Under "chosen courses" (`CourseStructureField`) a checklist of the active
-courses writes each pick at once (`PATCH /courses/{course}/lectures_only`), like archiving, and the box
+([LECTURES.md](LECTURES.md)). Under "chosen courses" (`CourseStructureField`) a checklist of the
+courses writes each pick at once (`PATCH /courses/{course}/lectures_only`), and the box
 reads the tree's flag — which is the pick only while that mode is live, so until it is saved the field
 says to save first (`checklistState`). A new course starts unchecked.
 

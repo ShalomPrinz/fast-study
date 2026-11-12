@@ -41,7 +41,7 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
           <span dir="auto">
             <Trans>Assignments</Trans>
           </span>
-          {!course.archived && progress.total > 0 && (
+          {progress.total > 0 && (
             <Tooltip content={t`Assignments you marked done`} placement="inline-end">
               <span className="course-count">
                 {progress.done}/{progress.total}

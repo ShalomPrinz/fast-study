@@ -7,7 +7,6 @@ const lecture = (name: string) => ({ name }) as Lecture
 const course = (lectures: string[], recitations: string[] = []): Course[] => [
   {
     name: 'Algebra',
-    archived: false,
     source_url: null,
     lectures_only: false,
     lectures: lectures.map(lecture),

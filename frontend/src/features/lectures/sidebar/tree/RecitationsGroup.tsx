@@ -34,7 +34,7 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
           <span dir="auto">
             <Trans>Recitations</Trans>
           </span>
-          {!course.archived && progress.total > 0 && (
+          {progress.total > 0 && (
             <Tooltip content={t`Recitations you marked done`} placement="inline-end">
               <span className="course-count">
                 {progress.done}/{progress.total}

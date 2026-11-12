@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:262
+#: src/features/search/SearchView.tsx:261
 msgid " — showing {shownFindings}"
 msgstr " — showing {shownFindings}"
 
@@ -83,7 +83,7 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:260
+#: src/features/search/SearchView.tsx:259
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
@@ -138,7 +138,7 @@ msgid "{0} API key"
 msgstr "{0} API key"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/DownloadsView.tsx:384
+#: src/features/downloads/DownloadsView.tsx:383
 msgid "{0} found"
 msgstr "{0} found"
 
@@ -268,11 +268,11 @@ msgstr "{host} could not be reached. Check your internet connection and try agai
 msgid "{input} was removed"
 msgstr "{input} was removed"
 
-#: src/features/downloads/components/ManualDownload.tsx:193
+#: src/features/downloads/components/ManualDownload.tsx:192
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
-#: src/features/search/SearchView.tsx:261
+#: src/features/search/SearchView.tsx:260
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
@@ -444,7 +444,7 @@ msgstr "{upstreamFailed, plural, one {# download failed: {upstreamBecause}} othe
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} no longer exists. Check the course page for a new link."
 
-#: src/features/downloads/DownloadsView.tsx:248
+#: src/features/downloads/DownloadsView.tsx:247
 msgid "{withSource} courses with a source"
 msgstr "{withSource} courses with a source"
 
@@ -496,7 +496,7 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 msgstr "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 
-#: src/features/downloads/DownloadsView.tsx:251
+#: src/features/downloads/DownloadsView.tsx:250
 msgid "A one-time setup of about three minutes."
 msgstr "A one-time setup of about three minutes."
 
@@ -520,7 +520,7 @@ msgstr "A window opened on the university site. Solve the captcha there, and the
 msgid "Add a course from Downloads or New course to get started"
 msgstr "Add a course from Downloads or New course to get started"
 
-#: src/features/search/SearchView.tsx:231
+#: src/features/search/SearchView.tsx:230
 msgid "Add a course to search its summaries."
 msgstr "Add a course to search its summaries."
 
@@ -533,8 +533,8 @@ msgstr "Add a lecture or recitation"
 msgid "Add figures to the summary"
 msgstr "Add figures to the summary"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:172
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:173
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:144
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:145
 msgid "Add lecture"
 msgstr "Add lecture"
 
@@ -619,15 +619,6 @@ msgstr "Appearance and behaviour"
 msgid "Apply"
 msgstr "Apply"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:160
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:166
-msgid "Archive course"
-msgstr "Archive course"
-
-#: src/features/lectures/sidebar/tree/ArchivedSection.tsx:24
-msgid "Archived ({archivedCount})"
-msgstr "Archived ({archivedCount})"
-
 #: src/features/course-overview/components/StepRow.tsx:83
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
@@ -649,7 +640,7 @@ msgid "Assignment Solution"
 msgstr "Assignment Solution"
 
 #: src/features/downloads/components/NewView.tsx:143
-#: src/features/downloads/DownloadsView.tsx:201
+#: src/features/downloads/DownloadsView.tsx:200
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:42
 msgid "Assignments"
 msgstr "Assignments"
@@ -760,7 +751,7 @@ msgstr "Can't download while this lecture is being processed or waiting in line"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "Can't rename while it's being processed or waiting in line"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:125
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "Can't rename while something in this course is being processed, downloaded or generated"
 
@@ -784,7 +775,7 @@ msgid "Cancel retry"
 msgstr "Cancel retry"
 
 #: src/features/downloads/components/FolderJobList.tsx:93
-#: src/features/downloads/components/ManualDownload.tsx:282
+#: src/features/downloads/components/ManualDownload.tsx:281
 #: src/features/downloads/components/RecordingJobList.tsx:63
 #: src/features/downloads/components/RecordingRow.tsx:306
 #: src/features/downloads/components/RecordingRow.tsx:346
@@ -832,7 +823,7 @@ msgid "Checking…"
 msgstr "Checking…"
 
 #: src/features/downloads/components/CourseSourceBar.tsx:50
-#: src/features/downloads/components/ManualDownload.tsx:83
+#: src/features/downloads/components/ManualDownload.tsx:82
 msgid "Choose a course first"
 msgstr "Choose a course first"
 
@@ -886,7 +877,7 @@ msgstr "Choose your browser:"
 msgid "Choose your university above to connect its account."
 msgstr "Choose your university above to connect its account."
 
-#: src/features/downloads/DownloadsView.tsx:358
+#: src/features/downloads/DownloadsView.tsx:357
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
@@ -955,7 +946,7 @@ msgstr "Click to mark this lecture as not done"
 msgid "Click to mark this recitation as not done"
 msgstr "Click to mark this recitation as not done"
 
-#: src/features/downloads/DownloadsView.tsx:388
+#: src/features/downloads/DownloadsView.tsx:387
 #: src/features/lectures/components/PipelineStepsModal.tsx:50
 #: src/features/tour/Tour.tsx:81
 msgid "Close"
@@ -1006,7 +997,7 @@ msgid "Connect Google Drive now?"
 msgstr "Connect Google Drive now?"
 
 #: src/features/downloads/components/CoursePicker.tsx:100
-#: src/features/downloads/DownloadsView.tsx:81
+#: src/features/downloads/DownloadsView.tsx:80
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
 
@@ -1117,7 +1108,7 @@ msgstr "Couldn't copy the assignment material. Try again."
 msgid "Couldn't copy the summary. Try again."
 msgstr "Couldn't copy the summary. Try again."
 
-#: src/features/downloads/components/ManualDownload.tsx:314
+#: src/features/downloads/components/ManualDownload.tsx:313
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
@@ -1163,8 +1154,8 @@ msgstr "Couldn't start capturing the Zoom recording. Try again."
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
-#: src/features/downloads/components/ManualDownload.tsx:140
-#: src/features/search/SearchView.tsx:183
+#: src/features/downloads/components/ManualDownload.tsx:139
+#: src/features/search/SearchView.tsx:182
 msgid "Course"
 msgstr "Course"
 
@@ -1202,9 +1193,9 @@ msgid "Courses and lectures"
 msgstr "Courses and lectures"
 
 #: src/App.tsx:39
-#: src/features/downloads/DownloadsView.tsx:367
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:53
-#: src/features/search/SearchView.tsx:238
+#: src/features/downloads/DownloadsView.tsx:366
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:51
+#: src/features/search/SearchView.tsx:237
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
 msgstr "Courses failed to load."
@@ -1312,7 +1303,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/ManualDownload.tsx:187
+#: src/features/downloads/components/ManualDownload.tsx:186
 #: src/features/downloads/components/RecordingJobList.tsx:77
 #: src/features/downloads/components/RecordingRow.tsx:370
 msgid "Download"
@@ -1339,7 +1330,7 @@ msgstr "Download all"
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
-#: src/features/downloads/DownloadsView.tsx:254
+#: src/features/downloads/DownloadsView.tsx:253
 msgid "Download any open video on the internet"
 msgstr "Download any open video on the internet"
 
@@ -1357,7 +1348,7 @@ msgid "Download selected ({0})"
 msgstr "Download selected ({0})"
 
 #: src/features/downloads/components/FolderJobList.tsx:88
-#: src/features/downloads/components/ManualDownload.tsx:277
+#: src/features/downloads/components/ManualDownload.tsx:276
 #: src/features/downloads/components/RecordingRow.tsx:307
 #: src/features/downloads/components/RecordingRow.tsx:368
 msgid "Downloaded ✓"
@@ -1368,7 +1359,7 @@ msgid "Downloaded recordings appear on the Lectures page."
 msgstr "Downloaded recordings appear on the Lectures page."
 
 #: src/features/downloads/components/FolderJobList.tsx:83
-#: src/features/downloads/components/ManualDownload.tsx:272
+#: src/features/downloads/components/ManualDownload.tsx:271
 #: src/features/downloads/components/RecordingRow.tsx:312
 msgid "Downloading"
 msgstr "Downloading"
@@ -1403,7 +1394,7 @@ msgstr "Downloading update…"
 msgid "Downloading…"
 msgstr "Downloading…"
 
-#: src/features/downloads/DownloadsView.tsx:231
+#: src/features/downloads/DownloadsView.tsx:230
 #: src/shared/sidebar/Sidebar.tsx:78
 msgid "Downloads"
 msgstr "Downloads"
@@ -1458,7 +1449,7 @@ msgstr "Edit summary"
 msgid "Enter a course name first"
 msgstr "Enter a course name first"
 
-#: src/features/downloads/components/ManualDownload.tsx:85
+#: src/features/downloads/components/ManualDownload.tsx:84
 msgid "Enter a name first"
 msgstr "Enter a name first"
 
@@ -1871,7 +1862,7 @@ msgstr "Last modified on Moodle"
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/ManualDownload.tsx:162
+#: src/features/downloads/components/ManualDownload.tsx:161
 #: src/features/downloads/components/RecordingRow.tsx:253
 #: src/features/lectures/components/CourseMaterialBox.tsx:80
 msgid "Lecture"
@@ -1899,7 +1890,7 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
-#: src/features/search/SearchView.tsx:206
+#: src/features/search/SearchView.tsx:205
 #: src/shared/sidebar/Sidebar.tsx:72
 msgid "Lectures"
 msgstr "Lectures"
@@ -1922,7 +1913,7 @@ msgstr "Lectures only, in every course"
 msgid "Lectures only, in the courses I choose"
 msgstr "Lectures only, in the courses I choose"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:146
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:132
 msgid "Lectures you marked done"
 msgstr "Lectures you marked done"
 
@@ -1942,11 +1933,11 @@ msgstr "Load new version"
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:49
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:47
 msgid "Loading courses…"
 msgstr "Loading courses…"
 
-#: src/features/search/SearchView.tsx:247
+#: src/features/search/SearchView.tsx:246
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
@@ -1954,11 +1945,11 @@ msgstr "Loading summaries…"
 msgid "Loading your courses…"
 msgstr "Loading your courses…"
 
-#: src/features/downloads/DownloadsView.tsx:257
+#: src/features/downloads/DownloadsView.tsx:256
 msgid "Loading your data…"
 msgstr "Loading your data…"
 
-#: src/features/downloads/DownloadsView.tsx:223
+#: src/features/downloads/DownloadsView.tsx:222
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
 msgstr "Loading…"
@@ -1971,12 +1962,12 @@ msgstr "Manual"
 msgid "Mark selected as irrelevant"
 msgstr "Mark selected as irrelevant"
 
-#: src/features/search/SearchView.tsx:216
+#: src/features/search/SearchView.tsx:215
 msgid "Match whole word"
 msgstr "Match whole word"
 
 #: src/features/downloads/components/NewView.tsx:142
-#: src/features/downloads/DownloadsView.tsx:199
+#: src/features/downloads/DownloadsView.tsx:198
 #: src/features/lectures/AssignmentView.tsx:141
 #: src/features/lectures/MainView.tsx:631
 msgid "Materials"
@@ -1997,7 +1988,7 @@ msgstr "Moodle refused the request."
 msgid "More actions"
 msgstr "More actions"
 
-#: src/features/downloads/components/ManualDownload.tsx:175
+#: src/features/downloads/components/ManualDownload.tsx:174
 msgid "Name in the course"
 msgstr "Name in the course"
 
@@ -2025,11 +2016,7 @@ msgstr "Next match"
 msgid "No"
 msgstr "No"
 
-#: src/features/lectures/sidebar/tree/ArchivedSection.tsx:32
-msgid "No archived courses"
-msgstr "No archived courses"
-
-#: src/features/downloads/DownloadsView.tsx:216
+#: src/features/downloads/DownloadsView.tsx:215
 msgid "No assignments found."
 msgstr "No assignments found."
 
@@ -2049,7 +2036,7 @@ msgstr "No Chrome or Edge was found on this computer. Install Chrome and try aga
 msgid "No Chrome window is waiting on a captcha anymore."
 msgstr "No Chrome window is waiting on a captcha anymore."
 
-#: src/features/settings/components/CourseStructureField.tsx:77
+#: src/features/settings/components/CourseStructureField.tsx:76
 msgid "No courses yet."
 msgstr "No courses yet."
 
@@ -2061,7 +2048,7 @@ msgstr "No current courses."
 msgid "No data folder is set. Choose one in Settings."
 msgstr "No data folder is set. Choose one in Settings."
 
-#: src/features/downloads/DownloadsView.tsx:217
+#: src/features/downloads/DownloadsView.tsx:216
 msgid "No files of unknown type found."
 msgstr "No files of unknown type found."
 
@@ -2081,7 +2068,7 @@ msgstr "No Lectures"
 msgid "No lectures yet"
 msgstr "No lectures yet"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:57
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:55
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
@@ -2101,7 +2088,7 @@ msgstr "no material found"
 msgid "no material will be sent"
 msgstr "no material will be sent"
 
-#: src/features/downloads/DownloadsView.tsx:215
+#: src/features/downloads/DownloadsView.tsx:214
 msgid "No materials found."
 msgstr "No materials found."
 
@@ -2129,11 +2116,11 @@ msgstr "No Recitations"
 msgid "No recitations yet"
 msgstr "No recitations yet"
 
-#: src/features/downloads/DownloadsView.tsx:214
+#: src/features/downloads/DownloadsView.tsx:213
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/DownloadsView.tsx:373
+#: src/features/downloads/DownloadsView.tsx:372
 msgid "No source URL yet. Use the pencil to choose one."
 msgstr "No source URL yet. Use the pencil to choose one."
 
@@ -2192,7 +2179,7 @@ msgstr "Not sent to Gemini"
 msgid "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 msgstr "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 
-#: src/features/search/SearchView.tsx:270
+#: src/features/search/SearchView.tsx:269
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
@@ -2398,7 +2385,7 @@ msgstr "Passcode"
 msgid "Paste a URL instead"
 msgstr "Paste a URL instead"
 
-#: src/features/downloads/components/ManualDownload.tsx:81
+#: src/features/downloads/components/ManualDownload.tsx:80
 msgid "Paste a video link first"
 msgstr "Paste a video link first"
 
@@ -2462,7 +2449,7 @@ msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPri
 msgstr "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
 #: src/features/downloads/components/FolderJobList.tsx:78
-#: src/features/downloads/components/ManualDownload.tsx:267
+#: src/features/downloads/components/ManualDownload.tsx:266
 #: src/features/runner/RunnerView.tsx:389
 msgid "Queued"
 msgstr "Queued"
@@ -2489,7 +2476,7 @@ msgstr "Ready"
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/ManualDownload.tsx:168
+#: src/features/downloads/components/ManualDownload.tsx:167
 #: src/features/downloads/components/RecordingRow.tsx:260
 #: src/features/lectures/components/CourseMaterialBox.tsx:80
 msgid "Recitation"
@@ -2510,7 +2497,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:35
-#: src/features/search/SearchView.tsx:214
+#: src/features/search/SearchView.tsx:213
 msgid "Recitations"
 msgstr "Recitations"
 
@@ -2528,7 +2515,7 @@ msgstr "Recitations you marked done"
 msgid "Reconnect"
 msgstr "Reconnect"
 
-#: src/features/downloads/DownloadsView.tsx:382
+#: src/features/downloads/DownloadsView.tsx:381
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
 
@@ -2626,7 +2613,7 @@ msgstr "Restore"
 msgid "Restore original"
 msgstr "Restore original"
 
-#: src/features/search/SearchView.tsx:255
+#: src/features/search/SearchView.tsx:254
 msgid "Results"
 msgstr "Results"
 
@@ -2636,7 +2623,7 @@ msgstr "Results"
 msgid "Retry"
 msgstr "Retry"
 
-#: src/features/downloads/components/ManualDownload.tsx:292
+#: src/features/downloads/components/ManualDownload.tsx:291
 #: src/features/downloads/components/RecordingJobList.tsx:75
 #: src/features/downloads/components/RecordingRow.tsx:366
 msgid "Retry ✗"
@@ -2737,15 +2724,15 @@ msgstr "Search"
 msgid "Search settings"
 msgstr "Search settings"
 
-#: src/features/search/SearchView.tsx:149
+#: src/features/search/SearchView.tsx:148
 msgid "Search summaries"
 msgstr "Search summaries"
 
-#: src/features/search/SearchView.tsx:169
+#: src/features/search/SearchView.tsx:168
 msgid "Search this course's summaries…"
 msgstr "Search this course's summaries…"
 
-#: src/features/search/SearchView.tsx:152
+#: src/features/search/SearchView.tsx:151
 msgid "Searches the summaries of the course picked in the field"
 msgstr "Searches the summaries of the course picked in the field"
 
@@ -2817,7 +2804,7 @@ msgstr "Show captcha window"
 msgid "Show in folder"
 msgstr "Show in folder"
 
-#: src/features/search/SearchView.tsx:299
+#: src/features/search/SearchView.tsx:298
 msgid "Show more"
 msgstr "Show more"
 
@@ -3435,18 +3422,13 @@ msgstr "Turn on the Google Drive upload above to choose this."
 msgid "Tutorial"
 msgstr "Tutorial"
 
-#: src/features/downloads/components/ManualDownload.tsx:155
+#: src/features/downloads/components/ManualDownload.tsx:154
 msgid "Type"
 msgstr "Type"
 
 #: src/features/settings/components/ApiKeyField.tsx:71
 msgid "Type any name (for example FastStudy) and click \"Submit\"."
 msgstr "Type any name (for example FastStudy) and click \"Submit\"."
-
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:160
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:166
-msgid "Unarchive course"
-msgstr "Unarchive course"
 
 #: src/features/downloads/components/DownloadsTabs.tsx:16
 #: src/features/settings/components/MoodleSiteField.tsx:115
@@ -3470,7 +3452,7 @@ msgid "University saved"
 msgstr "University saved"
 
 #: src/features/downloads/components/NewView.tsx:144
-#: src/features/downloads/DownloadsView.tsx:205
+#: src/features/downloads/DownloadsView.tsx:204
 msgid "Unknown"
 msgstr "Unknown"
 
@@ -3540,12 +3522,12 @@ msgstr "Video"
 msgid "Video and audio"
 msgstr "Video and audio"
 
-#: src/features/downloads/components/ManualDownload.tsx:125
+#: src/features/downloads/components/ManualDownload.tsx:124
 msgid "Video link"
 msgstr "Video link"
 
 #: src/features/downloads/components/NewView.tsx:141
-#: src/features/downloads/DownloadsView.tsx:198
+#: src/features/downloads/DownloadsView.tsx:197
 msgid "Videos"
 msgstr "Videos"
 
@@ -3597,7 +3579,7 @@ msgstr "Where \"Study with AI\" opens a lecture's summary."
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
-#: src/features/search/SearchView.tsx:223
+#: src/features/search/SearchView.tsx:222
 msgid "Whole word only"
 msgstr "Whole word only"
 

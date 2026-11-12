@@ -8,7 +8,7 @@ import { checklistState } from '../utils/courseStructure'
 import '@/styles/settings-form.css'
 import './CourseStructureField.css'
 
-// The mode saves with the page; a course's pick under "specific courses" writes at once, like archiving.
+// The mode saves with the page; a course's pick under "specific courses" writes at once.
 export default function CourseStructureField({
   value,
   saved,
@@ -57,7 +57,6 @@ export default function CourseStructureField({
 function CourseChecklist() {
   const { courses, refreshUntil } = useCourseTreeContext()
   const [pending, setPending] = useState<string | null>(null)
-  const active = courses.filter((c) => !c.archived)
 
   async function toggle(course: string, on: boolean) {
     setPending(course)
@@ -71,7 +70,7 @@ function CourseChecklist() {
     setPending(null)
   }
 
-  if (!active.length) {
+  if (!courses.length) {
     return (
       <p className="settings-note">
         <Trans>No courses yet.</Trans>
@@ -80,7 +79,7 @@ function CourseChecklist() {
   }
   return (
     <ul className="course-structure-list" data-course-structure="list">
-      {active.map((c) => (
+      {courses.map((c) => (
         <li key={c.name}>
           <label className="settings-check">
             <input

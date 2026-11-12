@@ -58,7 +58,6 @@ function ManualForm() {
   const id = useId()
   const { courses } = useCourseTreeContext()
   const entries = useManualEntries()
-  const active = courses.filter((c) => !c.archived)
   // In the module store, so a trip to another page keeps what was typed; null fields follow defaults.
   const { url, course: typed, kind: picked, name } = useManualDraft()
   const newCoursesLecturesOnly = useNewCoursesLecturesOnly()
@@ -66,8 +65,8 @@ function ManualForm() {
   const [confirm, setConfirm] = useState(false)
   const { locked: lockedFor, start } = useManualStart()
 
-  const courseText = typed ?? active[0]?.name ?? ''
-  const existing = matchCourse(active, courseText)
+  const courseText = typed ?? courses[0]?.name ?? ''
+  const existing = matchCourse(courses, courseText)
   const course = existing ?? courseText.trim()
   const claimed = entries.map((e) => ({ ...e.target, kind: e.request.kind }))
   // A lectures-only course hides the toggle: a new item is a lecture, an existing recitation's name its own.
@@ -90,7 +89,7 @@ function ManualForm() {
   async function submit() {
     const request = { url: url.trim(), course, lecture: lecture.trim(), kind }
     setPending(true)
-    // A name no active course has is a new course; an archived one answers `name_taken`.
+    // A name no course has is a new course.
     if (!existing) {
       try {
         await createCourse(course)
@@ -139,12 +138,12 @@ function ManualForm() {
         <label className="manual-download-label" htmlFor={`${id}-course`}>
           <Trans>Course</Trans>
         </label>
-        {/* Free text with the active courses as suggestions: a name none of them has is a new course. */}
+        {/* Free text with the courses as suggestions: a name none of them has is a new course. */}
         <Combobox
           id={`${id}-course`}
           inputClassName="source-row-input"
           value={courseText}
-          options={active.map((c) => c.name)}
+          options={courses.map((c) => c.name)}
           onChange={(course) => updateManualDraft({ course })}
         />
       </div>

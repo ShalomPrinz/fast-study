@@ -4,7 +4,7 @@ export interface CourseExpansion {
   assignExpanded?: boolean
 }
 
-// Module scope outlives the tree pane's unmount, so active courses reopen as the user left them.
+// Module scope outlives the tree pane's unmount, so courses reopen as the user left them.
 const saved = new Map<string, CourseExpansion>()
 
 export function savedExpansion(course: string): CourseExpansion | undefined {

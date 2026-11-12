@@ -210,15 +210,15 @@ describe('refreshUntil', () => {
 describe('the course tree', () => {
   it('orders courses by name, whatever order the database lists them in', async () => {
     fetchRunnerStatus.mockResolvedValueOnce(status(1))
-    const names = ['Physics', 'אלגברה', 'Calculus', 'archived', 'בדידה']
+    const names = ['Physics', 'אלגברה', 'Calculus', 'biology', 'בדידה']
     fetchTree.mockResolvedValueOnce(
       names.map((name) => ({ name, lectures: [], recitations: [] })) as unknown as Course[],
     )
     const { result } = render()
     await act(async () => {})
-    // Case-insensitive, Latin before Hebrew: a plain code-unit sort would put `archived` after `Physics`.
+    // Case-insensitive, Latin before Hebrew: a plain code-unit sort would put `biology` after `Physics`.
     expect(result.current.courses.map((c) => c.name)).toEqual([
-      'archived',
+      'biology',
       'Calculus',
       'Physics',
       'אלגברה',

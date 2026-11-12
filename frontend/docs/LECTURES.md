@@ -254,11 +254,11 @@ page) while the tree still has it, else `/`.
 
 ## Tree pane
 
-`LecturesTreePane` renders beside `/`, the overview, an assignment and `/:course/:lecture` only. It holds the active
-`CourseGroup`s, `ArchivedSection` and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
-lecture row can prompt. With no active course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. Before the first load settles, `isCourseTreeLoading` centres a labelled `.spinner` there instead. An expanded course opens with an Overview row; the course header only toggles.
+`LecturesTreePane` renders beside `/`, the overview, an assignment and `/:course/:lecture` only. It holds the
+`CourseGroup`s and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
+lecture row can prompt. With no course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. Before the first load settles, `isCourseTreeLoading` centres a labelled `.spinner` there instead. An expanded course opens with an Overview row; the course header only toggles.
 
-The home route `/` is an `EmptyCard` asking to pick a lecture. With no active course, `courseLoadNotice`
+The home route `/` is an `EmptyCard` asking to pick a lecture. With no course, `courseLoadNotice`
 (`shared/utils/`, shared with Search) swaps it for a hint to add one (`.main-view--no-courses`) once a load
 succeeds, or the danger-bordered "Courses failed to load." (`.main-view--failed`) whenever the latest load failed.
 
@@ -273,8 +273,7 @@ reads one in the tree's order: the user's manual `done` marks count toward `done
 is the first not done, strictly — an earlier gap stays current. Each row's mark is a ✓ when done, an arrow
 on its track's current item and empty otherwise; a running or queued row shows a spinner in its place.
 Marks are display-only. The course header counts lectures, the Recitations header recitations, the Assignments header assignments
-(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. An
-archived course shows no count.
+(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header.
 
 **A lectures-only course** (the tree's resolved `lectures_only`, never the setting — [SETTINGS.md](SETTINGS.md))
 has one track: `utils/courseTree.ts`'s `lectureTrack` merges its recitations into the lecture list with no
@@ -303,7 +302,7 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
 - New course/lecture/recitation inputs stay open with the typed text until the create succeeds
   (`useCreateAttempt`): `CreateStatus` shows "Creating…" and blocks a second submit, then the refusal in place.
 
-Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. A running
+Shift-click renames a row inline. A running
 or queued lecture, and a course holding one, a generating overview (`/status`'s `overview_running`) or a
 non-terminal download job or a `running`/`paused` section run (`useCourseDownloading`, extension jobs
 included), refuse the rename

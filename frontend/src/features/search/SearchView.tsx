@@ -50,9 +50,8 @@ function takeGroups(groups: MatchGroup[], limit: number): MatchGroup[] {
 export default function SearchView() {
   const { t } = useLingui()
   const { courses, loaded, loadFailed } = useCourseTreeContext()
-  const active = courses.filter((c) => !c.archived)
   // No picker without options, whatever the reason; only a tree that loaded can say "no courses".
-  const hasCourses = active.length > 0
+  const hasCourses = courses.length > 0
   const notice = courseLoadNotice(courses, loaded, loadFailed)
 
   const [chosen, setChosen] = useState(() => localStorage.getItem(COURSE_STORAGE_KEY))
@@ -64,7 +63,7 @@ export default function SearchView() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   // Derived rather than stored, so a stale stored name (or a tree that hasn't loaded) falls back.
-  const course = active.find((c) => c.name === chosen)?.name ?? active[0]?.name ?? null
+  const course = courses.find((c) => c.name === chosen)?.name ?? courses[0]?.name ?? null
   const { summaries, loading, error } = useCourseSummaries(course)
 
   function selectCourse(name: string) {
@@ -182,7 +181,7 @@ export default function SearchView() {
                     onChange={(e) => selectCourse(e.target.value)}
                     aria-label={t`Course`}
                   >
-                    {active.map((c) => (
+                    {courses.map((c) => (
                       <option key={c.name} value={c.name} dir="auto">
                         {c.name}
                       </option>

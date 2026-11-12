@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Course } from '@/types'
 import { courseLoadNotice, isCourseTreeLoading } from './courseLoadNotice'
 
-const active = { name: 'A', archived: false } as Course
-const archived = { name: 'B', archived: true } as Course
+const course = { name: 'A' } as Course
 
 describe('courseLoadNotice', () => {
   it('waits for the first load to settle', () => {
@@ -12,16 +11,13 @@ describe('courseLoadNotice', () => {
   it('hints once a good load holds no course', () => {
     expect(courseLoadNotice([], true, false)).toBe('no-courses')
   })
-  it('counts only active courses', () => {
-    expect(courseLoadNotice([archived], true, false)).toBe('no-courses')
-  })
   it('reports a failed load with nothing to show', () => {
     expect(courseLoadNotice([], true, true)).toBe('failed')
-    expect(courseLoadNotice([archived], false, true)).toBe('failed')
+    expect(courseLoadNotice([], false, true)).toBe('failed')
   })
-  it('stays quiet while active courses are shown, failed refresh or not', () => {
-    expect(courseLoadNotice([active], true, false)).toBe(null)
-    expect(courseLoadNotice([active], true, true)).toBe(null)
+  it('stays quiet while courses are shown, failed refresh or not', () => {
+    expect(courseLoadNotice([course], true, false)).toBe(null)
+    expect(courseLoadNotice([course], true, true)).toBe(null)
   })
 })
 
@@ -30,6 +26,6 @@ describe('isCourseTreeLoading', () => {
     expect(isCourseTreeLoading([], false, false)).toBe(true)
     expect(isCourseTreeLoading([], true, false)).toBe(false)
     expect(isCourseTreeLoading([], false, true)).toBe(false)
-    expect(isCourseTreeLoading([active], false, false)).toBe(false)
+    expect(isCourseTreeLoading([course], false, false)).toBe(false)
   })
 })

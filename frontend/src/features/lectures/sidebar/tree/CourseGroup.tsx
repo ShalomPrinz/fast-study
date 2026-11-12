@@ -24,7 +24,7 @@ export default function CourseGroup({ course }: { course: Course }) {
   const { refreshCourses } = useCourseTreeContext()
   const add = useAddLecture(course)
 
-  const saved = course.archived ? undefined : savedExpansion(course.name)
+  const saved = savedExpansion(course.name)
   const [expanded, setExpanded] = useState(saved?.expanded ?? false)
   const [recExpanded, setRecExpanded] = useState(saved?.recExpanded ?? false)
   const [assignExpanded, setAssignExpanded] = useState(saved?.assignExpanded ?? false)
@@ -33,8 +33,8 @@ export default function CourseGroup({ course }: { course: Course }) {
   const didAutoExpandRef = useRef(false)
 
   useEffect(() => {
-    if (!course.archived) saveExpansion(course.name, { expanded, recExpanded, assignExpanded })
-  }, [course.name, course.archived, expanded, recExpanded, assignExpanded])
+    saveExpansion(course.name, { expanded, recExpanded, assignExpanded })
+  }, [course.name, expanded, recExpanded, assignExpanded])
 
   // Expand once when this course's lecture or overview first becomes the open page (deep link).
   // Runs again on remount, deliberately overriding a remembered collapse so the open page's course shows.

@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Course } from '@/types'
 import { addedCoursePick } from './addedCourse'
 
-const course = (name: string, source_url?: string, archived = false) =>
-  ({ name, source_url, archived }) as Course
+const course = (name: string, source_url?: string) => ({ name, source_url }) as Course
 
 describe('addedCoursePick', () => {
   it('loads an added course that has a source', () => {
@@ -14,8 +13,7 @@ describe('addedCoursePick', () => {
     expect(addedCoursePick([course('a')], 'a')?.load).toBe(false)
   })
 
-  it('finds nothing until the course is in the tree, or when it is archived', () => {
+  it('finds nothing until the course is in the tree', () => {
     expect(addedCoursePick([course('b')], 'a')).toBeNull()
-    expect(addedCoursePick([course('a', 'https://x', true)], 'a')).toBeNull()
   })
 })

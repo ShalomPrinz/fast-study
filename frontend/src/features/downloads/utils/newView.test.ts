@@ -151,7 +151,6 @@ describe('recognisedByRef and the first-load banner', () => {
   const course = (over: Partial<Course>): Course[] => [
     {
       name: 'Algebra',
-      archived: false,
       source_url: null,
       lectures_only: false,
       lectures: [],

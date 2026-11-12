@@ -5,8 +5,7 @@
   color: var(--sidebar-fg);
   display: flex;
   flex-direction: column;
-  /* Sidebar itself doesn't scroll — each nav region scrolls independently so the
-     archived panel and footer stay put while the active list scrolls (VSCode-style split). */
+  /* Sidebar itself doesn't scroll — its nav region does, so the footer stays put. */
   overflow: hidden;
   border-inline-end: 1px solid var(--sidebar-line);
 }

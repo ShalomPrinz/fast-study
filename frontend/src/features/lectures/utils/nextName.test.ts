@@ -11,7 +11,6 @@ const course = (
 ): Course[] => [
   {
     name: 'Algebra',
-    archived: false,
     source_url: null,
     lectures_only,
     lectures: lectures.map(lecture),

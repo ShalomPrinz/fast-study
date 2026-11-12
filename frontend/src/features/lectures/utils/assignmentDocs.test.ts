@@ -124,7 +124,6 @@ const lecture = (name: string, summary: boolean, size = 0): Lecture => ({
 })
 const course = (): Course => ({
   name: 'C',
-  archived: false,
   source_url: null,
   lectures_only: false,
   lectures: [lecture('L1', true, 100), lecture('L2', false)],
