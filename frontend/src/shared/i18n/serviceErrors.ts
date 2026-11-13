@@ -321,7 +321,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message: 'The Zoom window was closed during the capture. Try the download again.',
   }),
   zoom_captcha_unsupported: msg({
-    message: 'Zoom asked for a captcha, and solving it is only supported on Windows.',
+    message: 'Zoom asked for a captcha, and solving it is only supported on Windows and macOS.',
   }),
   zoom_captcha_timeout: msg({
     message: "The Zoom captcha wasn't solved within 10 minutes. Try the download again.",

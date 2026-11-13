@@ -3652,8 +3652,8 @@ msgid "Your university's Moodle address"
 msgstr "Your university's Moodle address"
 
 #: src/shared/i18n/serviceErrors.ts:323
-msgid "Zoom asked for a captcha, and solving it is only supported on Windows."
-msgstr "Zoom asked for a captcha, and solving it is only supported on Windows."
+msgid "Zoom asked for a captcha, and solving it is only supported on Windows and macOS."
+msgstr "Zoom asked for a captcha, and solving it is only supported on Windows and macOS."
 
 #: src/features/lectures/components/PdfViewer.tsx:117
 #: src/features/lectures/components/PdfViewer.tsx:120
