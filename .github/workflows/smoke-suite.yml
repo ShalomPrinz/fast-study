@@ -106,7 +106,7 @@ jobs:
   # The macOS suite: only what is Mac-specific, on the dmg and the updater's zip build-mac uploaded.
   smoke-mac:
     if: inputs.target != 'windows'
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
     permissions:
       actions: read

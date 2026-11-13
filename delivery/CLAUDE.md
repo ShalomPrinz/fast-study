@@ -31,7 +31,7 @@ cd delivery/smoke && npm ci && npx playwright test --list                       
 node delivery/boot-timing.mjs [collect|view] [--repo owner/name]               # boot-time chart
 ```
 
-Only `.github/workflows/build.yml` produces a release, on `windows-latest` and `macos-14`: neither
+Only `.github/workflows/build.yml` produces a release, on `windows-latest` and `macos-15`: neither
 PyInstaller nor electron-builder's NSIS and dmg targets cross-compile, so WSL can freeze a Linux
 bundle, prime and stage, but never build or run either one. No Mac exists outside the runner, so a
 macOS failure is debugged from the job log alone. A freeze needs `backend/credentials.json` on disk; a Linux freeze

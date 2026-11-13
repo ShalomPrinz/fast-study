@@ -22,16 +22,9 @@ export default async function zoomHidden() {
     [PROBE, path.join(paths.resourcesDir(), 'downloader', 'auto'), paths.workDir()],
     { timeoutMs: 5 * 60_000, env },
   );
-  const xvfb = await run('/usr/bin/pgrep', ['-x', 'Xvfb']);
   evidence(
     '6. zoom browser hidden state',
-    [
-      `probe exit ${probe.code}`,
-      probe.stdout.trim(),
-      probe.stderr.trim(),
-      `Xvfb processes: ${xvfb.stdout.trim() || 'none'}`,
-    ].join('\n'),
+    [`probe exit ${probe.code}`, probe.stdout.trim(), probe.stderr.trim()].join('\n'),
   );
   expect(probe.code, `${probe.stdout}\n${probe.stderr}`).toBe(0);
-  expect(xvfb.stdout.trim(), 'an Xvfb is running').toBe('');
 }

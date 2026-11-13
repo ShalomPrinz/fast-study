@@ -125,16 +125,19 @@ only what is Mac-specific; everything above stays Windows-only. Its bodies are `
 `lib/paths.js` answers the bundle's and the state root's macOS paths to the shared `lib/`. It sets up
 no firewall, since it runs no provider step.
 
-| Test               | The failure only the macOS packaging can cause                                                             |
+| Test               | The failure it catches — only the macOS packaging can cause it, test 6 aside                                                            |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- |
 | 1. dmg install     | the dmg does not mount or holds no `FastStudy.app`; a tool lost its exec bit; the bundle is another version |
 | 2. signatures      | the bundle's seal, or any Mach-O inside it, fails `codesign --verify`; a native one has no arm64 slice     |
 | 3. boot and tools  | a service does not come up from the bundle; `GET /tools` reports a darwin tool unusable                    |
 | 4. ffmpeg          | the source-built ffmpeg cannot run the audio step: `ffmpeg.py`'s prefix and `strip_audio.py`'s arguments, on a tone it encodes itself, must write an MP3 that reads back 16 kHz mono |
 | 5. native host     | the Chrome manifest the running app registered names a script that does not answer one framed `{}` with the live port, secret and extension version |
-| 6. zoom            | the staged `auto`'s real zoom session, run on the app binary as node, does not report `NSRunningApplication.hidden`, hides a second browser launched beside it, or does not come back on `show()`; an Xvfb runs |
+| 6. zoom            | the staged `auto`, run on the app binary as node, cannot open its real zoom session or reach `osascript`; the session's browser does not report `NSRunningApplication.hidden`, hides a second browser launched beside it, or does not come back on `show()` |
 | 7. update          | a lower-version build fed the candidate over loopback does not download it, swap the bundle and relaunch it |
 
+- **Test 6 also holds a flow check.** Hiding the zoom browser and `show()` are `downloader/auto`
+  behaviour, kept here because no harness spec can cover them: the harness runs on Linux and
+  `auto`'s unit tests fake the `osascript` call. Its packaging fact is the first clause alone.
 - **Evidence is written, not only asserted.** Each test appends what it observed to
   `test-results/mac-evidence.md` — the `codesign` output, `/tools`, the native host's reply with the
   secret masked, the zoom states, `update.log` — which the job puts in the run summary and uploads as

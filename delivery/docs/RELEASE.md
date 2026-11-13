@@ -18,23 +18,22 @@ OV/EV certificate avoids it. The LaTeX cache ships with tectonic's prebuilt form
 
 ### The macOS app
 
-`build-mac` builds the same staged tree on `macos-14` as an arm64-only `FastStudy.app`: a `.dmg` to
+`build-mac` builds the same staged tree on `macos-15` as an arm64-only `FastStudy.app`: a `.dmg` to
 download, and a `.zip` plus `latest-mac.yml` for the launcher's own updater
 ([`electron/docs/UPDATES.md`](../../electron/docs/UPDATES.md#the-macos-install-step)). It is
 **ad-hoc signed, never notarized**, so Gatekeeper blocks the first run until the user picks Open
 Anyway in System Settings. Unsigned code does not run at all on arm64 macOS, so the job fails unless
 `codesign --verify --deep --strict` passes on the bundle and `smoke/lib/macho.js` verifies every
-Mach-O inside it, each native one (`MacOS/`, `bin/`, `services/`) carrying an arm64 slice — the
-runner has Rosetta, a user's Mac may not. Everything is staged before `npm run dist:mac`, which seals
+Mach-O inside it, each native one (`MacOS/`, `bin/`, `services/`) carrying an arm64 slice — a
+Mac with Rosetta runs an x86_64 one, a user's Mac may have none. Everything is staged before `npm run dist:mac`, which seals
 the bundle; a file changed afterwards breaks the signature.
 
 It runs after `build` only to read its outputs — the app version, the previous version and the
 extension version — so both platforms ship one version and `extension-version.txt` stays one file.
 The frontend is built again there with the same inputs, the freeze uses PyInstaller's stock
 bootloader (the Windows job compiles its own only for Defender), and the LaTeX cache is primed on
-the runner under its own key ([LATEX.md](LATEX.md#across-runs)). A cold run is about 25 minutes —
-the ffmpeg compile, the prime and two app builds — and about 12 with both caches warm; its summary
-lists the measured size of the dmg, the zip and each tool.
+the runner under its own key ([LATEX.md](LATEX.md#across-runs)). Its summary lists the measured size of the dmg, the
+zip and each tool.
 
 ## Build, test, publish
 
