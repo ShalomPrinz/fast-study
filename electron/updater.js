@@ -1,8 +1,13 @@
+const path = require('node:path');
 const { app } = require('electron');
 // Safe at module scope: `autoUpdater` is a lazy getter that builds the platform updater on first
 // access, so nothing platform-specific is constructed here — see the guard in `startUpdater`.
 const { autoUpdater } = require('electron-updater');
 const { wirePhases } = require('./updatePhases');
+const { bundlePath, launchHelper, stageUpdate } = require('./macUpdate');
+
+// macOS installs by its own bundle swap: Squirrel.Mac refuses an ad-hoc signed build (docs/UPDATES.md).
+const MAC = process.platform === 'darwin';
 
 const RECHECK_MS = 30 * 60 * 1000;
 
@@ -15,11 +20,15 @@ const listeners = new Set();
 let shown = null;
 let onShown = () => {};
 let restarting = null;
+// macOS only: the unpacked update awaiting the swap, and whether the helper relaunches after it.
+let staged = null;
+let relaunch = false;
 
 /** Check GitHub Releases at launch and every 30 minutes, download in the background, install on quit. `log` is main's
  *  `log(source, line)`; `onPhase` (optional, may arrive on a later call, replayed with the current
- *  phase) feeds the launch screen's failure view — see docs/UPDATES.md. */
-function startUpdater(log, onPhase) {
+ *  phase) feeds the launch screen's failure view — see docs/UPDATES.md. `stateDir` is the state
+ *  root, where macOS stages the download and logs the swap. */
+function startUpdater(log, onPhase, stateDir) {
   // Dev never updates: outside a package there is no `app-update.yml` and every call throws.
   if (!app.isPackaged) return;
   if (onPhase) {
@@ -37,9 +46,10 @@ function startUpdater(log, onPhase) {
   };
   // Both are electron-updater's defaults, set explicitly because they are the decision: download
   // without asking, and hand the file to NSIS on quit.
-  autoUpdater.autoDownload = true;
+  // Off on macOS, where either would hand the update to Squirrel.Mac.
+  autoUpdater.autoDownload = !MAC;
   // Runs on `quit`, after main's `will-quit` kill — load-bearing, see docs/UPDATES.md.
-  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.autoInstallOnAppQuit = !MAC;
   // The app ships only the full `nsis` installer, never `nsis-web`.
   autoUpdater.disableWebInstaller = true;
 
@@ -78,6 +88,7 @@ function startUpdater(log, onPhase) {
       const result = await autoUpdater.checkForUpdates();
       // A failed download already reached the `error` listener; this only drops its duplicate rejection.
       result?.downloadPromise?.catch(() => {});
+      if (MAC && result?.isUpdateAvailable) await stageMacUpdate(result.updateInfo, stateDir, log);
     } catch (error) {
       // Offline is the ordinary case: an unhandled rejection here would crash a machine merely offline.
       log('updater', `check failed: ${error.message}`);
@@ -95,6 +106,32 @@ function startUpdater(log, onPhase) {
     check(() => {});
   }, RECHECK_MS);
   timer.unref();
+}
+
+/** macOS: download and unpack the update ourselves, then report it on electron-updater's own events
+ *  so the phases, the timer and the log line are the ones Windows gets. Never throws. */
+async function stageMacUpdate(info, stateDir, log) {
+  try {
+    const bundle = bundlePath(process.execPath);
+    staged = await stageUpdate({
+      files: autoUpdater.updateInfoAndProvider.provider.resolveFiles(info),
+      dir: path.join(stateDir, 'update'),
+      bundle,
+    });
+    // `quit` follows main's `will-quit` kill, so the helper starts once every service is dead.
+    app.once('quit', () => {
+      const logFile = path.join(stateDir, 'logs', 'update.log');
+      try {
+        const pid = launchHelper({ pid: process.pid, bundle, staged, relaunch, logFile });
+        log('updater', `install helper started (pid ${pid}) — it logs to ${logFile}`);
+      } catch (error) {
+        log('updater', `install helper not started: ${error.message}`);
+      }
+    });
+    autoUpdater.emit('update-downloaded', info);
+  } catch (error) {
+    autoUpdater.emit('error', error);
+  }
 }
 
 /** The app window's update state, `'downloading' | 'downloaded' | null`, and its one push target. */
@@ -117,7 +154,13 @@ function restartToUpdate(stop, recover, log) {
     try {
       await stop();
       autoUpdater.on('error', onError);
-      autoUpdater.quitAndInstall(false, true);
+      if (MAC) {
+        // The `quit` hook does the install; this only asks its helper to reopen the app.
+        relaunch = true;
+        app.quit();
+      } else {
+        autoUpdater.quitAndInstall(false, true);
+      }
     } catch (error) {
       failure = error;
     } finally {

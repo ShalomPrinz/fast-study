@@ -1,9 +1,9 @@
-"""Draw electron/assets/icon.ico, the app icon electron-builder ships.
+"""Draw electron/assets/icon.ico and icon.icns, the app icons electron-builder ships.
 
     python3 electron/assets/make_icon.py
 
-Kept as a script rather than an SVG because nothing in the toolchain renders SVG, and the .ico is
-the committed artifact either way. Colours are frontend/src/styles/tokens.css's --accent and
+Kept as a script rather than an SVG because nothing in the toolchain renders SVG, and the .ico and
+.icns are the committed artifacts either way. Colours are frontend/src/styles/tokens.css's --accent and
 --surface, so the installer and the app read as one product.
 """
 
@@ -19,6 +19,10 @@ WHITE = (255, 255, 255, 255)  # --surface
 DETAILED = (256, 128, 64, 48)
 SIMPLE = (32, 16)
 SUPERSAMPLE = 8
+# macOS draws no mask of its own: Apple's grid insets the shape to 824 of 1024 so it sits level
+# with its Dock neighbours.
+MAC_SIZE = 1024
+MAC_INSET = 824
 
 
 def _play(draw: ImageDraw.ImageDraw, left: float, top: float, height: float) -> None:
@@ -81,6 +85,14 @@ def main() -> None:
         append_images=images[1:],
     )
     print(f"wrote {out} — {', '.join(f'{i.width}px' for i in images)}")
+
+    mac = Image.new("RGBA", (MAC_SIZE, MAC_SIZE), (0, 0, 0, 0))
+    margin = (MAC_SIZE - MAC_INSET) // 2
+    mac.paste(_draw(MAC_INSET, True), (margin, margin))
+    out = Path(__file__).with_name("icon.icns")
+    # Pillow downsamples the one image into every size the format holds.
+    mac.save(out, format="ICNS")
+    print(f"wrote {out}")
 
 
 if __name__ == "__main__":

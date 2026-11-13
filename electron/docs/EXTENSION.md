@@ -42,7 +42,14 @@ JSON, or `{ "running": false }` when the file is missing or unreadable, then exi
 as a whole frame arrives, because the browser keeps stdin open until the host exits. The bridge file's path
 is its `argv[2]`. The host gets no `FASTSTUDY_STATE_DIR`, since the browser starts it, not main.
 
-Registration runs on every packaged Windows launch, writing into `<state root>/native-host/`:
+Registration runs on every packaged Windows and macOS launch. Both write the same host manifest —
+`name`, `description`, `path` (the file the browser runs), `type: "stdio"`, and `allowed_origins:
+["chrome-extension://hknnjgdhokbapjodjklfodhobjekjlnn/"]`, whose trailing slash is required. Edge
+loads the extension under the same `key`-pinned ID, so the same `chrome-extension://` origin matches.
+
+### Windows
+
+It writes into `<state root>/native-host/`:
 
 - `host.bat`: `@echo off`, then `set ELECTRON_RUN_AS_NODE=1`, then one line that runs `FastStudy.exe` on
   `host.js` with the bridge file's path. Nothing may echo, because stdout is the framed channel. Each path
@@ -50,13 +57,10 @@ Registration runs on every packaged Windows launch, writing into `<state root>/n
   variable, since cmd reads `.bat` bytes in the console codepage and a non-ASCII user name would not
   survive. A literal `%` is doubled. The file lives in the state root because it carries absolute
   paths, and `resources/` is replaced by updates.
-- `com.faststudy.bridge.json`, the host manifest: `name`, `description`, `path` (the `.bat`), `type:
-  "stdio"`, and `allowed_origins: ["chrome-extension://hknnjgdhokbapjodjklfodhobjekjlnn/"]`. The
-  trailing slash is required.
+- `com.faststudy.bridge.json`, the host manifest, whose `path` is the `.bat`.
 - `reg add <key> /ve /t REG_SZ /d <manifest path> /f` for each browser's key, both pointing at that one
   manifest: `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.faststudy.bridge` and
-  `HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.faststudy.bridge`. Edge loads the extension
-  under the same `key`-pinned ID, so the same `chrome-extension://` origin matches. Each write runs
+  `HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.faststudy.bridge`. Each write runs
   through `child_process` with no native module and logs its own line naming the browser, and one
   failing never skips the other.
 
@@ -65,3 +69,21 @@ line. Every step is idempotent, and a failure is one log line that never fails t
 per-user install means HKCU needs no admin. `assets/installer.nsh`'s `customUnInstall` deletes both
 browsers' keys on uninstall but not on an update, which runs the old uninstaller first. The state-root
 files stay behind, but with no key neither browser finds them.
+
+### macOS
+
+There is no registry: each browser reads the manifest out of its own per-user folder.
+
+- `<state root>/native-host/host.sh`, mode `755`: `#!/bin/sh`, then one line that `exec`s the app
+  binary (`FastStudy.app/Contents/MacOS/FastStudy`) with `ELECTRON_RUN_AS_NODE=1` on `host.js` and
+  the bridge file's path. Each path is one single-quoted word, and the origin argument the browser
+  appends is dropped. It lives in the state root for the same reason the `.bat` does.
+- `com.faststudy.bridge.json`, whose `path` is that script, written to both
+  `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/` and
+  `~/Library/Application Support/Microsoft Edge/NativeMessagingHosts/`. The folder is created when
+  missing, so a browser installed later finds it. Each write logs its own line naming the browser,
+  and one failing never skips the other.
+
+The script and both manifests are rewritten only when their content changed. Nothing removes the
+manifests when the app is dragged to the Trash; they then name a script whose `exec` fails, and the
+extension reads that as the app not running.

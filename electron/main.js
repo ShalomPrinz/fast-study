@@ -25,6 +25,7 @@ const windowState = require('./windowState');
 const { dataFilePath, openDataFileWith, revealDataFile } = require('./dataFiles');
 const {
   registerHost,
+  registerHostMac,
   removeBridge,
   syncExtension,
   writeBridge,
@@ -48,9 +49,12 @@ const SENTRY_ENVIRONMENT = app.isPackaged ? 'production' : 'development';
 
 // Per-user writable state: what `statePath`/`state_path` join onto in every service. Passed
 // explicitly rather than left to their fallback, so main's log lands beside the children's state.
-const STATE_DIR = app.isPackaged
-  ? path.join(process.env.LOCALAPPDATA || app.getPath('userData'), 'FastStudy')
-  : path.join(REPO_ROOT, '.state');
+const STATE_DIR = !app.isPackaged
+  ? path.join(REPO_ROOT, '.state')
+  : process.platform === 'darwin'
+    ? // Already `~/Library/Application Support/FastStudy`; a second leaf would nest it.
+      app.getPath('userData')
+    : path.join(process.env.LOCALAPPDATA || app.getPath('userData'), 'FastStudy');
 
 const LOG_FILE = path.join(STATE_DIR, 'logs', 'launch.log');
 // The init wall's prefilled data folder: a suggestion only — nothing creates it until the user saves.
@@ -484,7 +488,7 @@ function publishBridge(port) {
   }
 }
 
-/** Packaged only: refresh the extension Chrome loads, and on Windows register the native host. Both
+/** Packaged only: refresh the extension Chrome loads, and on Windows and macOS register the native host. Both
  *  run every launch and neither can fail the boot. */
 function prepareExtension() {
   if (!app.isPackaged) return;
@@ -493,14 +497,15 @@ function prepareExtension() {
   } catch (error) {
     log('main', `extension not copied: ${error.message}`);
   }
-  if (process.platform !== 'win32') return;
-  registerHost({
+  const host = {
     stateDir: STATE_DIR,
     exe: process.execPath,
     script: path.join(process.resourcesPath, 'bridge', 'host.js'),
     bridgeFile: BRIDGE_FILE,
     log,
-  });
+  };
+  if (process.platform === 'win32') registerHost(host);
+  if (process.platform === 'darwin') registerHostMac({ ...host, home: app.getPath('home') });
 }
 
 /** Ask `auto` to load Playwright now, so the first browser action skips that cost. Fire and forget:
@@ -534,7 +539,7 @@ async function runBoot(before) {
       .catch((error) => log('main', `app load failed ${appUrl}: ${error.message}`));
     // After the window navigates, never before, so it stays off the path that decides whether the
     // app comes up — see docs/UPDATES.md.
-    startUpdater(log);
+    startUpdater(log, null, STATE_DIR);
     warmBrowser();
   } catch (error) {
     log('main', `boot failed: ${error.stack ?? error.message}`);
@@ -550,11 +555,15 @@ async function runBoot(before) {
     publishBoot();
     // The one visible update surface: a failed boot may be a bad install the next release fixes.
     // `error` guards the listener from a later successful retry, whose launch must stay silent.
-    startUpdater(log, (phase) => {
-      if (!bootState.error) return;
-      bootState.update = phase;
-      publishBoot();
-    });
+    startUpdater(
+      log,
+      (phase) => {
+        if (!bootState.error) return;
+        bootState.update = phase;
+        publishBoot();
+      },
+      STATE_DIR,
+    );
   } finally {
     booting = false;
   }

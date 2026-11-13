@@ -11,7 +11,7 @@
 4. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
    sit inline in the boot path, so each has to be cheap — no network, no spawn, no real disk work —
    and their duration is logged to catch one that stops being so.
-5. Packaged, the extension's stable copy is refreshed and, on Windows, the native host is registered
+5. Packaged, the extension's stable copy is refreshed and, on Windows and macOS, the native host is registered
    — both logged, neither able to fail the boot ([`EXTENSION.md`](EXTENSION.md)).
 6. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below. It opens
    centred at the last launch's normal size, maximized if it closed maximized; the size is fitted to
@@ -137,8 +137,9 @@ while the app runs reaches each service through its own `POST /config` — the r
 after the store write, except the error-reports switch, which main sends itself
 ([`RENDERER.md`](RENDERER.md#error-reporting-sentry)) — so main never re-spawns a child.
 
-The state root is `.state/` at the repo root in dev and `%LOCALAPPDATA%\FastStudy` packaged, and it
-is always passed explicitly rather than left to each service's fallback, so main's own log lands
+The state root is `.state/` at the repo root in dev, `%LOCALAPPDATA%\FastStudy` packaged on Windows
+and `~/Library/Application Support/FastStudy` packaged on macOS — `userData` itself there, which is
+already named for the app, so settings and state share one folder. It is always passed explicitly rather than left to each service's fallback, so main's own log lands
 beside the state the children write.
 
 ## Dev and packaged spawns
@@ -161,7 +162,8 @@ Packaged, the Node services run on **Electron's own binary as node** because no 
 ships; it is also yt-dlp's player JS runtime, whose flags live in `server/`
 ([`DOWNLOAD.md`](../../downloader/server/docs/DOWNLOAD.md#the-js-runtime)).
 
-The packaged tree main assumes, staged by the build as `electron`'s `extraResources`:
+The packaged tree main assumes, staged by the build as `electron`'s `extraResources`. `resources/`
+is `process.resourcesPath`: beside the exe on Windows, `FastStudy.app/Contents/Resources/` on macOS.
 
 ```
 resources/services/faststudy-services(.exe)  the PyInstaller one-dir bundle, service picked by argv[1]
@@ -172,7 +174,7 @@ resources/frontend/                 the built frontend, served over app://bundle
 resources/bin/                      ffmpeg, pandoc, tectonic, yt-dlp → FASTSTUDY_BIN_DIR
 resources/latex/                    the primed tectonic cache → TECTONIC_CACHE_DIR
 resources/extension/                the Chrome extension, copied to <state root>/extension
-resources/bridge/host.js            the native host script, run on Electron-as-node by a generated .bat
+resources/bridge/host.js            the native host script, run on Electron-as-node by a generated .bat (Windows) or .sh (macOS)
 ```
 
 The bundle is never named `services.exe`: that is the image name of Windows' Service Control Manager,

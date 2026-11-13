@@ -210,3 +210,113 @@ test('a failed auto-download does not surface as an unhandled rejection', async 
   await flush();
   assert.deepEqual(unhandled, []);
 });
+
+// The macOS install step: the same fake autoUpdater, a fake `macUpdate`, and `process.platform` held
+// at darwin while `updater.js` loads, since it reads the platform once.
+function loadMac(t, stage = async () => '/state/update/staged/FastStudy.app') {
+  const platform = Object.getOwnPropertyDescriptor(process, 'platform');
+  Object.defineProperty(process, 'platform', { ...platform, value: 'darwin' });
+  const mac = { staged: [], helpers: [], quits: 0, onQuit: [] };
+  const lib = require.resolve('../macUpdate');
+  require.cache[lib] = {
+    id: lib,
+    filename: lib,
+    loaded: true,
+    exports: {
+      bundlePath: () => '/Applications/FastStudy.app',
+      stageUpdate: (options) => {
+        mac.staged.push(options);
+        return stage();
+      },
+      launchHelper: (options) => {
+        mac.helpers.push(options);
+        return 4242;
+      },
+    },
+  };
+  app.once = (event, listener) => event === 'quit' && mac.onQuit.push(listener);
+  app.quit = () => (mac.quits += 1);
+  t.after(() => {
+    Object.defineProperty(process, 'platform', platform);
+    delete require.cache[lib];
+    delete app.once;
+    delete app.quit;
+  });
+  const loaded = load(t);
+  const { fake } = loaded;
+  fake.updateInfoAndProvider = { provider: { resolveFiles: (info) => info.files } };
+  fake.downloadUpdate = () => assert.fail('electron-updater downloaded');
+  fake.quitAndInstall = () => assert.fail('electron-updater installed');
+  const info = { version: '9.9.9', files: ['the zip'] };
+  fake.next = async () => {
+    fake.emit('update-available', info);
+    return { isUpdateAvailable: true, updateInfo: info, downloadPromise: null };
+  };
+  return { ...loaded, mac };
+}
+
+test('macOS stages the update itself and leaves electron-updater neither download nor install', async (t) => {
+  const { fake, startUpdater, updateState, log, lines, shown, mac } = loadMac(t);
+  startUpdater(log, null, '/state');
+  assert.equal(fake.autoDownload, false);
+  assert.equal(fake.autoInstallOnAppQuit, false);
+  await flush();
+  assert.deepEqual(mac.staged, [
+    { files: ['the zip'], dir: '/state/update', bundle: '/Applications/FastStudy.app' },
+  ]);
+  assert.deepEqual(shown, ['downloading', 'downloaded']);
+  assert.equal(updateState(), 'downloaded');
+  assert.ok(lines.includes('version 9.9.9 downloaded — it installs when the app quits'));
+  t.mock.timers.tick(60 * MINUTE);
+  assert.equal(fake.checks, 1);
+  // Nothing is installed until the app's `quit`, which follows the `will-quit` kill.
+  assert.deepEqual(mac.helpers, []);
+  mac.onQuit[0]();
+  assert.deepEqual(mac.helpers, [
+    {
+      pid: process.pid,
+      bundle: '/Applications/FastStudy.app',
+      staged: '/state/update/staged/FastStudy.app',
+      relaunch: false,
+      logFile: '/state/logs/update.log',
+    },
+  ]);
+});
+
+test('macOS Restart now stops the services, then quits into a relaunching install', async (t) => {
+  const { startUpdater, restartToUpdate, log, mac } = loadMac(t);
+  startUpdater(log, null, '/state');
+  await flush();
+  const order = [];
+  const result = await restartToUpdate(
+    async () => order.push(`stopped, ${mac.quits} quits`),
+    () => assert.fail('recovered'),
+    log,
+  );
+  assert.equal(result, undefined);
+  assert.deepEqual(order, ['stopped, 0 quits']);
+  assert.equal(mac.quits, 1);
+  mac.onQuit[0]();
+  assert.equal(mac.helpers[0].relaunch, true);
+});
+
+test('a macOS download that fails is the error phase, and the next tick retries it', async (t) => {
+  let fail = true;
+  const stage = async () => {
+    if (fail) throw new Error('sha512 mismatch');
+    return '/state/update/staged/FastStudy.app';
+  };
+  const { fake, startUpdater, updateState, log, lines, phases, mac } = loadMac(t, stage);
+  startUpdater(log, (p) => phases.push(p), '/state');
+  await flush();
+  assert.deepEqual(phases, ['downloading', 'error']);
+  assert.ok(lines.includes('error: sha512 mismatch'));
+  assert.equal(updateState(), null);
+  assert.deepEqual(mac.onQuit, []);
+  fail = false;
+  t.mock.timers.tick(30 * MINUTE);
+  await flush();
+  assert.equal(fake.checks, 2);
+  assert.equal(updateState(), 'downloaded');
+  assert.equal(mac.onQuit.length, 1);
+});

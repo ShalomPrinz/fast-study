@@ -6,6 +6,9 @@
 `disableWebInstaller` makes it refuse web-installer packages, since the app ships only the full
 `nsis` installer.
 
+Windows and macOS share the check, the cadence, the phases and both surfaces below. Only the install
+step differs: NSIS on Windows, [the app's own bundle swap](#the-macos-install-step) on macOS.
+
 ## The sidebar row and the launch screen's failure view
 
 One check at launch, then one every 30 minutes while the app stays open, so a release published
@@ -71,12 +74,63 @@ install error, which is logged. Either of those puts the window back on the laun
 without updating and the user reopens it. The phase stays `downloaded`, so Restart now stays
 offered, and the `started` guard keeps the reboot from starting a second updater.
 
+## The macOS install step
+
+electron-updater installs on macOS through Squirrel.Mac, which refuses a build whose code signature
+differs from the running app's. The Mac build is ad-hoc signed, and no two ad-hoc builds match, so
+`updater.js` turns `autoDownload` and `autoInstallOnAppQuit` off there and never calls
+`downloadUpdate` or `quitAndInstall`. electron-updater still runs the check and parses
+`latest-mac.yml`; `macUpdate.js` does the rest:
+
+1. **Stage.** Refused up front when the bundle's folder is not writable — run from the dmg,
+   translocated by Gatekeeper, or in `/Applications` under a non-admin account — so nothing is
+   downloaded that could not be installed. Otherwise the feed's `.zip` streams to
+   `<state root>/update/update.zip` over Electron's `net.fetch` (the system proxy, as the check
+   uses), hashed as it arrives. A sha512 that is not the one `latest-mac.yml` gives deletes the file
+   and fails; a match is unpacked with `ditto -x -k` into `<state root>/update/staged/`. The folder
+   is cleared before each try and again when a try fails (download, hash, unpack, a zip with no
+   `.app`); only an app killed mid-stage leaves a partial one, until the next try. A file the app wrote itself carries no
+   `com.apple.quarantine`, so the swapped bundle does not meet Gatekeeper again.
+2. **Report.** `updater.js` emits `update-downloaded` (or `error`) on electron-updater's own
+   emitter, so the phases, the stopped timer, the retry on the next tick and the log line are the
+   Windows ones.
+3. **Install.** An `app.once('quit')` hook — after the `will-quit` kill, as on Windows — starts a
+   detached `/bin/sh` helper, handed its script as `-c` text so nothing it runs lives in the bundle
+   it replaces. It waits for main's pid to exit (a `kill -0` poll, five times a second for up to a
+   minute: two unrelated processes share no channel to push on), moves the staged build to a hidden
+   sibling `.FastStudy.app.new`, renames the installed bundle to `.FastStudy.app.old`, renames the
+   new one into place and deletes the old one. If the last rename fails, the old bundle is renamed
+   back; if that fails too, the log says the old build is left at `.FastStudy.app.old` and nothing
+   is relaunched. The slow, possibly cross-volume move comes first, while the installed build is
+   untouched. Every failure path deletes the staged build, so the next launch stages afresh.
+4. **Relaunch.** Restart now stops the services, sets the relaunch flag and calls `app.quit()`, so
+   the same hook installs and the helper ends with `open <bundle>` — also after a failed swap, which
+   reopens the old build. A plain quit installs without relaunching, as the silent NSIS run does.
+   A helper that gives up waiting never relaunches: the old app is still running, and `open` would
+   only focus it.
+
+The helper writes `<state root>/logs/update.log`, truncated per install — not `launch.log`, which
+the relaunch truncates. A good run reads, each line stamped `YYYY-MM-DD HH:MM:SS [update]`:
+
+```
+waiting for pid <n> to exit
+pid <n> exited
+swapping <bundle>
+swapped: <bundle> is the new build
+relaunching <bundle>          (or: not relaunching)
+```
+
+Failures read `gave up: pid <n> is still running, nothing swapped, not relaunching` or
+`swap failed: …`.
+`launch.log` carries `install helper started (pid <n>)` from the launch that quit.
+
 ## The installer replaces `resources/` wholesale
 
 Nothing that must survive an update lives there. Tectonic's prebuilt `formats/` ships in
 `resources/latex/` beside `bundles/` and is replaced with the rest of `resources/` on every update, and yt-dlp runs from its writable per-user copy under the state root so
 it can update itself ([`DOWNLOAD.md`](../../downloader/server/docs/DOWNLOAD.md#the-writable-copy-and-its-self-update)).
-Settings (`userData`) and the state root are both outside the install directory.
+Settings (`userData`) and the state root are both outside the install directory. On macOS the whole
+`.app` is replaced, under the same rule.
 
 ## Versions and publishing
 
@@ -91,5 +145,7 @@ the Releases API and the asset.
 ## Not proven
 
 The smoke suite proves the download and the quit-time install end to end, against a generic feed it
-serves itself ([`SMOKE.md`](../../delivery/docs/SMOKE.md)). The GitHub provider — `app-update.yml`
+serves itself ([`SMOKE.md`](../../delivery/docs/SMOKE.md)). No one on the team has a Mac: the macOS
+install step is proven by `tests/macUpdate.test.js` (the sha512 check and the helper's ordering,
+rollback and give-up, against real `sh`) and otherwise only by the macOS CI job. The GitHub provider — `app-update.yml`
 finding a real Release — is exercised by nothing until the first Release is published.

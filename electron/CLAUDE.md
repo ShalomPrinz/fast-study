@@ -17,6 +17,7 @@ everything on quit.
 | `teardown.js` | Stopping the children — SIGTERM, then SIGKILL after the grace (POSIX)           |
 | `updater.js`  | The update check — electron-updater against GitHub Releases; the app's update state and Restart now |
 | `updatePhases.js` | Mapping updater events to the phases the launch screen shows (pure, tested)   |
+| `macUpdate.js` | The macOS install step — the verified download, the staged bundle, the swap helper |
 | `extension.js` | The browser extension's shipped copy, the bridge file, the native host's registration |
 | `bridge/host.js` | The native host Chrome or Edge runs — staged to `resources/bridge/`, not in the asar |
 | `windowState.js` | The window's size and maximized flag across launches — `window-state.json` under `userData` |
@@ -31,7 +32,7 @@ everything on quit.
 | [BOOT.md](docs/BOOT.md)            | The launch sequence, launch screen, child env, spawns, teardown, the log |
 | [RENDERER.md](docs/RENDERER.md)    | `app://bundle`, `window.faststudy`, open, folder picker, Sentry, checks, settings store |
 | [UPDATES.md](docs/UPDATES.md)      | How a packaged app updates itself                                        |
-| [EXTENSION.md](docs/EXTENSION.md)  | The extension copy, `bridge.json`, the `com.faststudy.bridge` host and its registry key |
+| [EXTENSION.md](docs/EXTENSION.md)  | The extension copy, `bridge.json`, the `com.faststudy.bridge` host and its registration |
 
 ## Run
 
@@ -77,7 +78,7 @@ failure.
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
 covering `resolveWithin`'s path containment, the store's tables and refusal rules, the error-reports
 switch's env and its push to each service's `/config` (against local HTTP stubs), the window size's clamp and fallback, and the teardown's
-SIGTERM→SIGKILL escalation against real `sh` process groups and its expected-exit rule, and the native host driven over framed stdin/stdout with its registration and the extension copy. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
+SIGTERM→SIGKILL escalation against real `sh` process groups and its expected-exit rule, and the native host driven over framed stdin/stdout with its registration and the extension copy, and the macOS update's sha512 check and its swap helper run under real `sh`. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
 `electron` in the module cache before the module under test is required, which is also how the
 unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns a service is in it.
 
@@ -111,6 +112,19 @@ because a folder chosen under `C:\` inherits an ACL other local accounts can wri
 account could swap a shipped binary such as `resources/bin/ffmpeg.exe`. The whole configuration is
 the `build` block in `package.json`.
 
+`npm run dist:mac` builds the macOS arm64 app on a Mac: `FastStudy-mac-arm64.dmg` for the download,
+`FastStudy-mac-arm64.zip` and `latest-mac.yml` for the updater. The names carry no version, like
+`FastStudy-Setup.exe`, so `releases/latest/download/<name>` is a stable link.
+
+- **macOS is ad-hoc signed** (`mac.identity: "-"`), with no Developer ID and no notarization.
+  `hardenedRuntime` is off because under it library validation rejects ad-hoc signed libraries.
+  electron-builder signs every binary file under `Contents/`, the staged `extraResources` included,
+  then seals the bundle, so nothing inside may change after it runs.
+- **`dmg.writeUpdateInfo` is off**, so `latest-mac.yml` lists the zip alone and no dmg blockmap is
+  written. The zip's own `.blockmap` is still emitted and unused: the updater downloads the whole zip
+  ([`docs/UPDATES.md`](docs/UPDATES.md#the-macos-install-step)).
+- **`assets/icon.icns` comes from `assets/make_icon.py`**, like the `.ico`, inset to Apple's 824 of
+  1024 grid.
 - **The install-directory leaf is `name` (`faststudy`), not `productName`.** For a one-click
   per-user build `NsisTarget.js` calls `getWindowsInstallationDirName(appInfo, !oneClick ||
   isPerMachine)`, which returns `sanitizedName` when false. `userData` and the state root are named

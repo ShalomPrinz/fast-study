@@ -9,7 +9,9 @@ const {
   REG_KEYS,
   batchPath,
   hostBatch,
+  hostScript,
   registerHost,
+  registerHostMac,
   removeBridge,
   syncExtension,
   writeBridge,
@@ -28,9 +30,9 @@ afterEach(() => {
 });
 
 /** Run the host as Chrome would: one framed message on stdin, one framed reply read off stdout. */
-function askHost(bridgeFile, message = {}) {
+function askHost(bridgeFile, message = {}, command = process.execPath, args = [HOST, bridgeFile]) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [HOST, bridgeFile], {
+    const child = spawn(command, args, {
       stdio: ['pipe', 'pipe', 'inherit'],
     });
     const out = [];
@@ -220,4 +222,88 @@ test('syncExtension copies when the copy is missing, keeps a current one, replac
 test('syncExtension throws when nothing was shipped', () => {
   const root = tempDir();
   assert.throws(() => syncExtension(path.join(root, 'none'), path.join(root, 'ext')), /no shipped/);
+});
+
+test('registerHostMac writes an executable host script and one manifest per browser, once', () => {
+  const stateDir = tempDir();
+  const home = tempDir();
+  const lines = [];
+  const options = {
+    stateDir,
+    exe: '/Applications/FastStudy.app/Contents/MacOS/FastStudy',
+    script: '/Applications/FastStudy.app/Contents/Resources/bridge/host.js',
+    bridgeFile: path.join(stateDir, 'bridge.json'),
+    home,
+    log: (_source, line) => lines.push(line),
+  };
+  registerHostMac(options);
+  const script = path.join(stateDir, 'native-host', 'host.sh');
+  assert.equal(
+    fs.readFileSync(script, 'utf8'),
+    "#!/bin/sh\nELECTRON_RUN_AS_NODE=1 exec '/Applications/FastStudy.app/Contents/MacOS/FastStudy' " +
+      `'/Applications/FastStudy.app/Contents/Resources/bridge/host.js' '${options.bridgeFile}'\n`,
+  );
+  assert.equal(fs.statSync(script).mode & 0o777, 0o755);
+  const support = path.join(home, 'Library', 'Application Support');
+  const manifests = [
+    path.join(support, 'Google', 'Chrome', 'NativeMessagingHosts', 'com.faststudy.bridge.json'),
+    path.join(support, 'Microsoft Edge', 'NativeMessagingHosts', 'com.faststudy.bridge.json'),
+  ];
+  for (const file of manifests) {
+    const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+    assert.deepEqual(manifest, {
+      name: 'com.faststudy.bridge',
+      description: manifest.description,
+      path: script,
+      type: 'stdio',
+      allowed_origins: ['chrome-extension://hknnjgdhokbapjodjklfodhobjekjlnn/'],
+    });
+  }
+  assert.deepEqual(lines, [
+    `native host registered (Chrome): ${manifests[0]}`,
+    `native host registered (Edge): ${manifests[1]}`,
+  ]);
+  // Idempotent: a second launch rewrites nothing that did not change.
+  const files = [script, ...manifests];
+  const before = files.map((file) => fs.statSync(file).mtimeMs);
+  registerHostMac(options);
+  assert.deepEqual(
+    files.map((file) => fs.statSync(file).mtimeMs),
+    before,
+  );
+});
+
+test('registerHostMac logs one browser failing and still writes the other', () => {
+  const stateDir = tempDir();
+  const home = tempDir();
+  // A file where Chrome's folder would go, so its mkdir fails.
+  fs.mkdirSync(path.join(home, 'Library', 'Application Support'), { recursive: true });
+  fs.writeFileSync(path.join(home, 'Library', 'Application Support', 'Google'), '');
+  const lines = [];
+  registerHostMac({
+    stateDir,
+    exe: 'e',
+    script: 's',
+    bridgeFile: 'b',
+    home,
+    log: (_source, line) => lines.push(line),
+  });
+  assert.match(lines[0], /^native host manifest write failed \(Chrome\): /);
+  assert.match(lines[1], /^native host registered \(Edge\): /);
+});
+
+test('the macOS host script answers a framed request, whatever the paths and the browser pass', async () => {
+  // A quote and a space in the path: each must stay one sh word.
+  const dir = path.join(tempDir(), "it's a dir");
+  fs.mkdirSync(dir);
+  const bridgeFile = path.join(dir, 'bridge.json');
+  const bridge = { port: 41234, secret: 'ab'.repeat(32), extensionVersion: '1.0.0' };
+  writeBridge(bridgeFile, bridge);
+  const script = path.join(dir, 'host.sh');
+  fs.writeFileSync(script, hostScript({ exe: process.execPath, script: HOST, bridgeFile }), {
+    mode: 0o755,
+  });
+  // Chrome appends the calling origin as an argument; the script must not pass it on.
+  const origin = 'chrome-extension://hknnjgdhokbapjodjklfodhobjekjlnn/';
+  assert.deepEqual(await askHost(bridgeFile, {}, script, [origin]), { code: 0, reply: bridge });
 });
