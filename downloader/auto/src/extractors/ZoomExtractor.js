@@ -105,7 +105,7 @@ export class ZoomExtractor extends VideoExtractor {
     const gate = await this.#submitPasscode(page, passcode);
     const found = gate === 'captcha' ? 'frame' : await detectCaptcha(page);
     if (found) {
-      // On Windows a share with no player is shown too: it may be a captcha we cannot recognise.
+      // On Windows and macOS a share with no player is shown too: it may be a captcha we cannot recognise.
       requireCaptchaWindow(rec.pageUrl, found);
       // The solve can outlast firstWait's 30s: a sniff armed now catches an .mp4 fired right after
       // it, and still gets only MP4_WAIT_MS once the solve is done.

@@ -1,8 +1,9 @@
-// A captcha on a zoom share: on Windows the hidden zoom window comes on screen for the user to solve
-// it, mirroring the Moodle challenge window; elsewhere (Xvfb, no screen to show) it is refused.
+// A captcha on a zoom share: on Windows and macOS the hidden zoom window comes on screen for the user
+// to solve it, mirroring the Moodle challenge window; on Linux (Xvfb, no screen to show) it is refused.
 // See docs/ZOOM.md § Captcha.
 import { EventEmitter } from 'node:events';
 import { CodedError } from '../lib/errors.js';
+import { macHider } from './macHide.js';
 import { windowStyler } from './windowStyle.js';
 
 const OFF_SCREEN = { left: -32000, top: -32000 };
@@ -28,7 +29,8 @@ const CAPTCHA = visible(
 const deps = { platform: process.platform, detectMs: 30_000, solveMs: 10 * 60_000 };
 
 let shown = false;
-// The tool-style handle of the open zoom browser's window; null when not parked (FASTSTUDY_ZOOM_VISIBLE=1).
+// The `{ hide(), show() }` of the open zoom browser's window: the Win32 tool style, or on macOS the
+// hide by pid; null when not hidden (FASTSTUDY_ZOOM_VISIBLE=1).
 let style = null;
 // The page on screen for a captcha solve, so POST /window/show can raise it again.
 let waiting = null;
@@ -48,9 +50,12 @@ export function configureZoomCaptcha(overrides) {
   return () => Object.assign(deps, prev);
 }
 
-/** A zoom browser's page now exists: give its window a fresh styler and hide it from the taskbar. */
-export function zoomOpened() {
-  style = process.env.FASTSTUDY_ZOOM_VISIBLE === '1' ? null : windowStyler('zoom');
+const SHOWS_WINDOW = new Set(['win32', 'darwin']);
+
+/** A zoom browser's page now exists: give its window a fresh hider and hide it (macOS: the app, by pid; Windows: off the taskbar). */
+export function zoomOpened(browser) {
+  if (process.env.FASTSTUDY_ZOOM_VISIBLE === '1') style = null;
+  else style = deps.platform === 'darwin' ? macHider(browser) : windowStyler('zoom');
   void style?.hide();
 }
 
@@ -82,18 +87,18 @@ export async function detectCaptcha(page) {
 }
 
 /**
- * Off Windows there is no window to show: a captcha frame is refused, and a share with no player
+ * On Linux there is no window to show: a captcha frame is refused, and a share with no player
  * (expired, deleted, sign-in only, or a captcha we cannot see) is the plain no-media failure.
  * @param {string} url  the share
  * @param {'frame'|'noPlayer'} found  what detectCaptcha saw
  */
 export function requireCaptchaWindow(url, found) {
-  if (deps.platform === 'win32') return;
+  if (SHOWS_WINDOW.has(deps.platform)) return;
   if (found === 'noPlayer') throw noMediaRequest(url);
   throw new CodedError(
     'zoom_captcha_unsupported',
     { url },
-    `zoom share ${url} shows a captcha, which can only be solved in a visible window (Windows)`,
+    `zoom share ${url} shows a captcha, which can only be solved in a visible window (Windows and macOS)`,
   );
 }
 
@@ -131,12 +136,16 @@ export async function awaitCaptchaSolve(page, url, passGate) {
   } finally {
     if (waiting === page) waiting = null;
     setShown(false);
-    // FASTSTUDY_ZOOM_VISIBLE=1 keeps the window on screen for watching (zoomBrowser.js).
-    if (process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') {
-      await bounds(page, OFF_SCREEN);
-      void styler?.hide();
-    }
+    await hideWindow(page, styler);
   }
+}
+
+// Back out of sight: parked off-screen on Windows; macOS clamps a window on screen, so there the
+// hide by pid is all. FASTSTUDY_ZOOM_VISIBLE=1 keeps the window on screen for watching (zoomBrowser.js).
+async function hideWindow(page, styler) {
+  if (process.env.FASTSTUDY_ZOOM_VISIBLE === '1') return;
+  if (deps.platform !== 'darwin') await bounds(page, OFF_SCREEN);
+  void styler?.hide();
 }
 
 // The player visible and no captcha frame over it, before the deadline; false once it passes. A
@@ -161,6 +170,7 @@ async function solved(page, deadline, passGate) {
 }
 
 // On screen and in front: the minimize and restore gets past Windows' foreground lock, which a bare bringToFront does not.
+// On macOS `show` first unhides and activates the app.
 async function showWindow(page, styler) {
   await styler?.show();
   await bounds(page, ON_SCREEN, MINIMIZED, NORMAL);
@@ -174,10 +184,7 @@ export async function raiseZoomCaptcha() {
   const styler = style;
   await showWindow(page, styler);
   // The wait ended mid-raise: its move off-screen may have landed before ours, so park it again.
-  if (waiting !== page && process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') {
-    await bounds(page, OFF_SCREEN);
-    void styler?.hide();
-  }
+  if (waiting !== page) await hideWindow(page, styler);
   return true;
 }
 

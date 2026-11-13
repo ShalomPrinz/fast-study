@@ -12,7 +12,7 @@ const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 export class BrowserSession {
   /**
    * @param {() => Promise<import('playwright').Browser>} launch  profile-specific launcher
-   * @param {{ opened?: () => void }} [hooks]  `opened` runs once per launched browser, after its page exists
+   * @param {{ opened?: (browser: import('playwright').Browser) => void }} [hooks]  `opened` runs once per launched browser, after its page exists
    */
   constructor(launch, { opened } = {}) {
     this._launch = launch;
@@ -57,7 +57,7 @@ export class BrowserSession {
       this.browser = browser;
       this.context = context;
       this.page = page;
-      this._opened?.();
+      this._opened?.(browser);
     } catch (err) {
       await browser.close().catch(() => {});
       throw err;

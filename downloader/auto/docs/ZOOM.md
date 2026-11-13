@@ -34,6 +34,24 @@ The one platform-dependent part of `launchZoomBrowser()`.
 otherwise a batch of N lectures steals focus N times. `FASTSTUDY_ZOOM_VISIBLE=1` keeps it on-screen.
 It also carries the Win32 tool-window style, so it stays out of Alt+Tab, though a fresh launch can keep its taskbar button until the next captcha ([SESSIONS.md](SESSIONS.md#off-the-taskbar-windows-browserwindowstylejs), "A taskbar button can outlive the style"), cleared and re-applied around a captcha. It comes on screen only for a captcha ([below](#captcha-browserzoomcaptchajs)). The session closes an idle browser after 10 min.
 
+**macOS** — no Xvfb and no off-screen park: Chromium clamps a headed window back on screen
+(`constrainFrameRect:toScreen:` skips the clamp only for headless and child windows). Once the page
+exists the browser **app is hidden by pid**, as Cmd+H would (`browser/macHide.js`), so only this
+instance hides and the user's own Chrome is untouched. `FASTSTUDY_ZOOM_VISIBLE=1` skips the hide.
+
+- The pid is CDP `SystemInfo.getProcessInfo`'s `browser` entry: Playwright exposes no process for a
+  launched browser.
+- One `/usr/bin/osascript -l JavaScript` spawn per change, JXA calling
+  `NSRunningApplication.runningApplicationWithProcessIdentifier(pid)` `.hide`, or `.unhide` and
+  `activateWithOptions` — a route that needs no TCC consent, unlike `System Events`. Changes run one
+  at a time in call order; a failure is logged once per browser and never fails a call.
+- The launch carries `--disable-backgrounding-occluded-windows`, so the hidden window keeps
+  rendering the player.
+- **Accepted gaps:** the Dock icon and Cmd+Tab entry stay (`LSUIElement` is read from Chrome's own
+  signed `Info.plist`), and headed Chrome takes focus at each launch until the hide lands.
+- The unit tests (`test/macHide.test.js`) fake the `osascript` seam and prove the call order; they
+  do not prove the `osascript` call itself.
+
 **Linux** — a managed Xvfb virtual display, which under WSL also keeps the hardware D3D12 renderer
 (`/dev/dxg` is reached independent of the X display). Spawned lazily on the first zoom launch,
 reused, and killed by `stopXvfb()` on `closeAllSessions()` plus a `process.once('exit')` safety net.
@@ -60,8 +78,8 @@ A gate that outlasts its 2 attempts under a visible captcha frame is a captcha, 
 `incorrect`: the frame swallows the clicks, and a wrong code is not the cause.
 
 A share with no player and no captcha frame (expired, deleted, sign-in only — or a captcha the
-check cannot recognise) takes the same path on Windows, so the user can look and act; closing the
-window gives up early.
+check cannot recognise) takes the same path on Windows and macOS, so the user can look and act;
+closing the window gives up early.
 
 - **Windows** — the parked window moves on screen and to the front, as the Moodle challenge window
   does (CDP `Browser.setWindowBounds`), and `/auth/events` carries `zoomCaptcha: true` so the
@@ -74,6 +92,9 @@ window gives up early.
   `zoomCaptcha` clears however it ends. The first show and `POST /window/show` run the same
   sequence: on screen, minimize, restore, then `bringToFront` — Windows' foreground lock leaves a
   bare `bringToFront` behind the user's work, and the minimize and restore gets past it.
+- **macOS** — the same flow and answers as Windows, with the hide by pid in place of the park: the
+  app is unhidden and activated before the `Browser.setWindowBounds` raise (`POST /window/show`
+  included) and hidden again however the wait ends. No move to `-32000` is sent.
 - **Linux** — Xvfb has no screen to show it on, so a visible captcha frame answers `503
   zoom_captcha_unsupported {url}` at once, and no player answers `zoom_no_media_request {url}`.
 
