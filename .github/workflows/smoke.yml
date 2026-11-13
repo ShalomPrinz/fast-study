@@ -45,14 +45,16 @@ jobs:
             echo "::error::run $RUN_ID is a run of $path, not build.yml; pass the id of a build.yml run"
             exit 1
           fi
-          # The build job alone, since the run that needs a retry usually failed in smoke.
-          build=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.name == "build")][0].conclusion // empty')
-          if [ "$build" != success ]; then
-            echo "::error::run $RUN_ID's build job is ${build:-missing}, not success; dispatch build.yml on this ref instead"
-            exit 1
-          fi
+          # The build jobs alone, since the run that needs a retry usually failed in smoke.
+          for job in build build-mac; do
+            build=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --jq "[.jobs[] | select(.name == \"$job\")][0].conclusion // empty")
+            if [ "$build" != success ]; then
+              echo "::error::run $RUN_ID's $job job is ${build:-missing}, not success; dispatch build.yml on this ref instead"
+              exit 1
+            fi
+          done
           live=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/artifacts" --jq '[.artifacts[] | select(.expired | not) | .name]')
-          for name in installer installer-previous; do
+          for name in installer installer-previous installer-mac installer-mac-previous; do
             if ! jq -e --arg n "$name" 'index($n) != null' <<< "$live" > /dev/null; then
               echo "::error::run $RUN_ID has no unexpired $name artifact; dispatch build.yml on this ref instead"
               exit 1

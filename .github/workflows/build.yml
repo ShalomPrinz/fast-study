@@ -1,8 +1,9 @@
 name: Build and smoke-test
 
 # Every push to main or a claude/** branch, plus a dispatch to rebuild a commit.
-# Builds the installer once and smoke-tests those exact bytes on a fresh runner; it never publishes.
-# publish.yml takes main's newest green run's `installer` for the release commit.
+# Builds the Windows installer and the macOS arm64 app once each and smoke-tests those exact bytes
+# on fresh runners; it never publishes.
+# publish.yml takes main's newest green run's `installer` and `installer-mac` for the release commit.
 on:
   push:
     branches: [main, 'claude/**']
@@ -22,6 +23,11 @@ env:
   FFMPEG_VERSION: '9.0.2'
   # Pinned so the bootloader check below compares against the same version's stock wheel.
   PYINSTALLER_VERSION: '6.22.3'
+  # The macOS ffmpeg is built from source at FFMPEG_VERSION with this LAME, both tarballs pinned by
+  # sha256 — delivery/docs/RELEASE.md#the-macos-ffmpeg.
+  FFMPEG_SHA256: 8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e
+  LAME_VERSION: '3.100'
+  LAME_SHA256: ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e
   STAGE: delivery/stage
 
 jobs:
@@ -29,6 +35,11 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: read
+    # build-mac ships the same app version and the same extension version, so it reads both here.
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      previous: ${{ steps.version.outputs.previous }}
+      extension: ${{ steps.extension.outputs.version }}
     defaults:
       run:
         shell: bash
@@ -288,10 +299,301 @@ jobs:
             electron/dist/previous/latest.yml
           if-no-files-found: error
 
-  # The smoke job, in smoke-suite.yml so smoke.yml can re-run it on this run's installers.
+  # The macOS arm64 app: the same staged tree with darwin tools, ad-hoc signed — never notarized.
+  # After `build` only for its version outputs; every step traces (`set -x`) since no Mac can rerun one.
+  build-mac:
+    needs: build
+    runs-on: macos-14
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      APP: electron/dist/mac-arm64/FastStudy.app
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # The official darwin-arm64 releases at the Windows job's pins; curl ships with macOS too.
+      - name: Download tectonic and pandoc
+        run: |
+          set -eux
+          mkdir -p "$STAGE/bin" downloads/tectonic downloads/pandoc
+          base=https://github.com
+          curl -fsSL --retry 5 --retry-delay 10 -o downloads/tectonic.tar.gz "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-aarch64-apple-darwin.tar.gz"
+          curl -fsSL --retry 5 --retry-delay 10 -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-arm64-macOS.zip"
+          tar -xzf downloads/tectonic.tar.gz -C downloads/tectonic
+          unzip -q downloads/pandoc.zip -d downloads/pandoc
+          cp downloads/tectonic/tectonic "$STAGE/bin/"
+          cp "downloads/pandoc/pandoc-$PANDOC_VERSION-arm64/bin/pandoc" "$STAGE/bin/"
+          chmod +x "$STAGE/bin/tectonic" "$STAGE/bin/pandoc"
+          "$STAGE/bin/tectonic" --version
+          "$STAGE/bin/pandoc" --version | head -n 1
+
+      # Its own key through runner.os: the cache is primed per platform — delivery/docs/LATEX.md#across-runs.
+      - name: Restore the LaTeX cache
+        id: latex-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.STAGE }}/latex
+          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/probe.pdf', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/pipeline/pdf/**', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
+
+      # The Windows job's background prime, here beside the ffmpeg compile and the freeze.
+      - name: Start the LaTeX cache prime
+        working-directory: backend
+        env:
+          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
+          CACHE_HIT: ${{ steps.latex-cache.outputs.cache-hit }}
+        run: |
+          set -eux
+          echo "LaTeX cache hit: ${CACHE_HIT:-false}, $(find "../$STAGE/latex" -type f 2>/dev/null | wc -l) files restored"
+          uv sync
+          nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
+          echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
+
+      # Electron's own LSMinimumSystemVersion is the app's, and so the floor ffmpeg is built for;
+      # the built bundle's value is compared against it after the build.
+      - name: Install the launcher and read its minimum macOS
+        id: macos
+        working-directory: electron
+        run: |
+          set -eux
+          npm ci
+          min=$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' node_modules/electron/dist/Electron.app/Contents/Info.plist)
+          [[ $min =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || { echo "::error::Electron's LSMinimumSystemVersion reads '$min'"; exit 1; }
+          echo "min=$min" >> "$GITHUB_OUTPUT"
+
+      # Keyed by everything that shapes the binary: both versions, the deployment target and the script.
+      - name: Restore the ffmpeg build
+        id: ffmpeg-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ffmpeg-build/out
+          key: ffmpeg-macos-arm64-${{ env.FFMPEG_VERSION }}-lame${{ env.LAME_VERSION }}-min${{ steps.macos.outputs.min }}-${{ hashFiles('delivery/ffmpeg-mac.sh') }}
+
+      - name: Build ffmpeg
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        env:
+          MACOSX_DEPLOYMENT_TARGET: ${{ steps.macos.outputs.min }}
+        run: bash delivery/ffmpeg-mac.sh "$PWD/ffmpeg-build"
+
+      # A restored binary is checked too. It may load nothing but macOS itself, must run on the
+      # launcher's oldest macOS, and stays LGPL with the one encoder the pipeline needs.
+      - name: Check ffmpeg
+        env:
+          MIN: ${{ steps.macos.outputs.min }}
+        run: |
+          set -eux
+          ff=ffmpeg-build/out/ffmpeg
+          "$ff" -hide_banner -version
+          lipo -archs "$ff"
+          otool -L "$ff"
+          foreign=$(otool -L "$ff" | tail -n +2 | awk '{print $1}' | grep -Ev '^(/usr/lib/|/System/)' || true)
+          [ -z "$foreign" ] || { echo "::error::ffmpeg loads libraries outside /usr/lib and /System: $foreign"; exit 1; }
+          vtool -show-build "$ff"
+          minos=$(vtool -show-build "$ff" | awk '$1 == "minos" {print $2}')
+          [ -n "$minos" ] || { echo "::error::vtool reports no minos for ffmpeg"; exit 1; }
+          node -e '
+            const [minos, min] = process.argv.slice(1).map((v) => v.split(".").map(Number));
+            for (let i = 0; i < 3; i++) {
+              const d = (minos[i] || 0) - (min[i] || 0);
+              if (d) process.exit(d > 0 ? 1 : 0);
+            }
+          ' "$minos" "$MIN" || { echo "::error::ffmpeg's minos $minos is above the app's LSMinimumSystemVersion $MIN"; exit 1; }
+          [ "$(lipo -archs "$ff")" = arm64 ] || { echo "::error::ffmpeg is not an arm64 binary"; exit 1; }
+          if "$ff" -hide_banner -version | grep -E -- '--enable-(gpl|nonfree|version3)'; then
+            echo "::error::ffmpeg is configured beyond LGPL 2.1"; exit 1
+          fi
+          "$ff" -hide_banner -encoders | grep libmp3lame || { echo "::error::ffmpeg has no libmp3lame encoder"; exit 1; }
+          cp "$ff" "$STAGE/bin/ffmpeg"
+
+      # After the checks, so a binary that failed them is never the one a later run restores.
+      - name: Save the ffmpeg build
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ffmpeg-build/out
+          key: ${{ steps.ffmpeg-cache.outputs.cache-primary-key }}
+
+      # Unpinned, as on Windows. yt-dlp_macos is the universal single-file build.
+      - name: Download yt-dlp
+        run: |
+          set -eux
+          curl -fsSL --retry 5 --retry-delay 10 -o "$STAGE/bin/yt-dlp" https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos
+          chmod +x "$STAGE/bin/yt-dlp" "$STAGE/bin/ffmpeg"
+          ls -l "$STAGE/bin"
+          file "$STAGE"/bin/*
+
+      - name: Write credentials.json
+        env:
+          CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -z "$CREDENTIALS" ]; then
+            echo "::error::GOOGLE_CREDENTIALS_JSON secret is empty or unset — set it to the Google OAuth client JSON; a build without it cannot connect Google Drive"
+            exit 1
+          fi
+          printf '%s' "$CREDENTIALS" > backend/credentials.json
+          echo "credentials.json written"
+
+      # The stock wheel's bootloader: the Windows job compiles its own only because of Defender.
+      # PyInstaller ad-hoc signs what it collects; electron-builder signs the whole bundle again.
+      - name: Freeze backend and database
+        working-directory: backend
+        run: |
+          set -eux
+          uv run --with "pyinstaller==$PYINSTALLER_VERSION" pyinstaller ../delivery/services.spec
+          file dist/services/faststudy-services
+          [ "$(lipo -archs dist/services/faststudy-services)" = arm64 ] || { echo "::error::faststudy-services is not an arm64 binary"; exit 1; }
+
+      # Built again rather than passed from the Windows job, with the same inputs; on main both
+      # uploads land in the one faststudy@<version> release.
+      - name: Build the frontend
+        working-directory: frontend
+        env:
+          FASTSTUDY_VERSION: ${{ needs.build.outputs.version }}
+          SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          VITE_SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
+        run: npm ci && npm run build
+
+      - name: Install the Node services
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: (cd downloader && npm ci --omit=dev --no-audit --no-fund)
+
+      - name: Wait for the LaTeX cache prime
+        run: |
+          done="$RUNNER_TEMP/prime.exit"
+          deadline=$((SECONDS + 2400))
+          until [ -f "$done" ] || [ "$SECONDS" -ge "$deadline" ]; do sleep 5; done
+          cat "$RUNNER_TEMP/prime.log"
+          [ -f "$done" ] || { echo "::error::the LaTeX cache prime did not finish within 40 minutes"; exit 1; }
+          code=$(cat "$done")
+          [ "$code" = 0 ] || { echo "::error::the LaTeX cache prime exited $code"; exit 1; }
+
+      - name: Save the LaTeX cache
+        if: steps.latex-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ env.STAGE }}/latex
+          key: ${{ steps.latex-cache.outputs.cache-primary-key }}
+
+      - name: Assemble the resources tree
+        run: |
+          set -eux
+          node delivery/stage.mjs "$STAGE" "${{ needs.build.outputs.extension }}"
+          du -sh "$STAGE"/* "$STAGE"/bin/*
+
+      # Everything is staged before this: electron-builder seals the bundle, so a file changed
+      # afterwards breaks its signature. `${dsn[@]+...}` because macOS's bash 3.2 trips `set -u` on an empty array.
+      - name: Build the app
+        working-directory: electron
+        env:
+          SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
+        run: |
+          set -eu
+          dsn=()
+          [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
+          npm run dist:mac -- "-c.extraMetadata.version=${{ needs.build.outputs.version }}" ${dsn[@]+"${dsn[@]}"}
+          ls -l dist
+          cat dist/latest-mac.yml
+
+      # The dmg is what a user downloads; the zip and latest-mac.yml are the updater's feed.
+      - name: Check the build's files and its update feed config
+        env:
+          MIN: ${{ steps.macos.outputs.min }}
+        run: |
+          set -eux
+          for file in FastStudy-mac-arm64.dmg FastStudy-mac-arm64.zip latest-mac.yml; do
+            [ -f "electron/dist/$file" ] || { echo "::error::electron-builder wrote no dist/$file"; ls -l electron/dist; exit 1; }
+          done
+          grep -qx "version: ${{ needs.build.outputs.version }}" electron/dist/latest-mac.yml
+          grep -q 'FastStudy-mac-arm64\.zip' electron/dist/latest-mac.yml
+          yml="$APP/Contents/Resources/app-update.yml"
+          [ -f "$yml" ] || { echo "::error::electron-builder wrote no $yml"; exit 1; }
+          for line in "provider: github" "owner: ShalomPrinz" "repo: fast-study"; do
+            grep -qx "$line" "$yml" || { echo "::error::$yml has no '$line'"; cat "$yml"; exit 1; }
+          done
+          built=$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$APP/Contents/Info.plist")
+          [ "$built" = "$MIN" ] || { echo "::error::the built app's LSMinimumSystemVersion is $built, but ffmpeg was built for $MIN"; exit 1; }
+          for tool in bin/ffmpeg bin/pandoc bin/tectonic bin/yt-dlp services/faststudy-services; do
+            [ -x "$APP/Contents/Resources/$tool" ] || { echo "::error::$tool lost its exec bit in the bundle"; ls -l "$APP/Contents/Resources/$(dirname "$tool")"; exit 1; }
+          done
+
+      # Unsigned code does not run on arm64 macOS: the bundle's seal, then every Mach-O inside it.
+      - name: Check every signature
+        run: |
+          set -eux
+          codesign -dvv "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          node delivery/smoke/lib/macho.js "$APP"
+
+      # Measured sizes, in the run summary: what the macOS download and each tool in it weigh.
+      - name: Report sizes
+        run: |
+          {
+            echo '### macOS build sizes'
+            echo '```'
+            ls -l electron/dist/FastStudy-mac-arm64.dmg electron/dist/FastStudy-mac-arm64.zip
+            du -sh "$APP" "$APP"/Contents/Resources/* "$APP"/Contents/Resources/bin/*
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # The same staged tree at a lower version, for the smoke job's update check; only its zip is used.
+      - name: Build the previous-version app
+        working-directory: electron
+        env:
+          SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
+        run: |
+          set -eu
+          dsn=()
+          [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
+          npm run dist:mac -- "-c.extraMetadata.version=${{ needs.build.outputs.previous }}" -c.directories.output=dist/previous ${dsn[@]+"${dsn[@]}"}
+          ls -l dist/previous
+
+      # The zip's blockmap stays behind: the macOS updater downloads the zip whole.
+      - uses: actions/upload-artifact@v6
+        with:
+          name: installer-mac
+          path: |
+            electron/dist/FastStudy-mac-arm64.dmg
+            electron/dist/FastStudy-mac-arm64.zip
+            electron/dist/latest-mac.yml
+          if-no-files-found: error
+          retention-days: 90
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: installer-mac-previous
+          path: |
+            electron/dist/previous/FastStudy-mac-arm64.zip
+            electron/dist/previous/latest-mac.yml
+          if-no-files-found: error
+
+  # The smoke jobs, in smoke-suite.yml so smoke.yml can re-run them on this run's builds. Two calls,
+  # so neither platform's smoke waits on the other's build.
   smoke:
     needs: build
     permissions:
       actions: read
       contents: read
     uses: ./.github/workflows/smoke-suite.yml
+    with:
+      target: windows
+
+  smoke-mac:
+    needs: build-mac
+    permissions:
+      actions: read
+      contents: read
+    uses: ./.github/workflows/smoke-suite.yml
+    with:
+      target: mac

@@ -1,9 +1,10 @@
 # delivery/
 
-Build-time inputs that turn the repo into a Windows installer and prove it. Nothing here ships or
+Build-time inputs that turn the repo into a Windows installer and a macOS arm64 app and prove both. Nothing here ships or
 runs at runtime, and no dev command touches it. Owned by `delivery-dev`, together with
 `.github/workflows/{build,publish,smoke,smoke-suite}.yml`: `smoke-suite.yml` is the smoke job both
-`build.yml` and the dispatch-only `smoke.yml` call, the latter on an earlier run's installers.
+`build.yml` and the dispatch-only `smoke.yml` call — a Windows job and a macOS job — the latter on an
+earlier run's installers.
 
 | File                                | What it is                                                                   |
 | ----------------------------------- | ---------------------------------------------------------------------------- |
@@ -11,6 +12,7 @@ runs at runtime, and no dev command touches it. Owned by `delivery-dev`, togethe
 | `stage.mjs`                         | Assembles `stage/`, the tree electron-builder ships as `resources/`          |
 | `extension-version.mjs`             | Computes the packaged extension's version against the previous Release       |
 | `prune.mjs`                         | What a pruned copy drops, shared by the two above                            |
+| `ffmpeg-mac.sh`                     | Compiles the macOS ffmpeg with a static LAME; its flags are RELEASE.md's      |
 | `prime_cache.py`                    | Fills tectonic's LaTeX package cache with everything the app can render      |
 | `kitchen-sink.md` + `probe.{png,pdf}` | The document the prime renders and its two figures                         |
 | `cache-supplement.txt`              | Cache files the sink does not pull, added by name                            |
@@ -29,9 +31,10 @@ cd delivery/smoke && npm ci && npx playwright test --list                       
 node delivery/boot-timing.mjs [collect|view] [--repo owner/name]               # boot-time chart
 ```
 
-Only `.github/workflows/build.yml` on `windows-latest` produces an installer: neither PyInstaller nor
-electron-builder's NSIS target cross-compiles, so WSL can freeze a Linux bundle, prime and stage, but
-never build or run the release. A freeze needs `backend/credentials.json` on disk; a Linux freeze
+Only `.github/workflows/build.yml` produces a release, on `windows-latest` and `macos-14`: neither
+PyInstaller nor electron-builder's NSIS and dmg targets cross-compile, so WSL can freeze a Linux
+bundle, prime and stage, but never build or run either one. No Mac exists outside the runner, so a
+macOS failure is debugged from the job log alone. A freeze needs `backend/credentials.json` on disk; a Linux freeze
 is checked by running `backend/dist/services/faststudy-services database|backend` with
 `FASTSTUDY_PORT=0` for the port line and `/health`.
 
@@ -77,6 +80,6 @@ resolves through `resource_path()`** (`backend/services/resources.py`), never a 
 
 | Doc                                | Covers                                                                          |
 | ---------------------------------- | ------------------------------------------------------------------------------- |
-| [RELEASE.md](docs/RELEASE.md)      | The installer, build → test → publish, versions, pins, the frozen bundle, stage |
+| [RELEASE.md](docs/RELEASE.md)      | The installer, the macOS app and its ffmpeg, build → test → publish, versions, pins, the frozen bundle, stage |
 | [LATEX.md](docs/LATEX.md)          | Priming the shipped tectonic cache: the sink, the supplement, the baseline      |
-| [SMOKE.md](docs/SMOKE.md)          | The release smoke suite's scope, rules and what only a Windows run proves           |
+| [SMOKE.md](docs/SMOKE.md)          | The release smoke suite's scope, rules and the macOS suite, what only a runner proves          |

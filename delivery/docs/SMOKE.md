@@ -118,6 +118,39 @@ A new smoke test adds its row here, its file under `tests/` and its line in `rel
 - **Launched with `--lang=en-US`**, so a failure screenshot is readable.
 - **The first-run tour is pre-dismissed** by a context init script on every launch, so its overlay blocks no click; the tour is `tour.spec.mjs`'s.
 
+## The macOS suite
+
+`mac.spec.js`, run by `smoke-suite.yml`'s `smoke-mac` job with `playwright.mac.config.js`, holds
+only what is Mac-specific; everything above stays Windows-only. Its bodies are `tests/mac/`, and
+`lib/paths.js` answers the bundle's and the state root's macOS paths to the shared `lib/`. It sets up
+no firewall, since it runs no provider step.
+
+| Test               | The failure only the macOS packaging can cause                                                             |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 1. dmg install     | the dmg does not mount or holds no `FastStudy.app`; a tool lost its exec bit; the bundle is another version |
+| 2. signatures      | the bundle's seal, or any Mach-O inside it, fails `codesign --verify`; a native one has no arm64 slice     |
+| 3. boot and tools  | a service does not come up from the bundle; `GET /tools` reports a darwin tool unusable                    |
+| 4. ffmpeg          | the source-built ffmpeg cannot run the audio step: `ffmpeg.py`'s prefix and `strip_audio.py`'s arguments, on a tone it encodes itself, must write an MP3 that reads back 16 kHz mono |
+| 5. native host     | the Chrome manifest the running app registered names a script that does not answer one framed `{}` with the live port, secret and extension version |
+| 6. zoom            | the staged `auto`'s real zoom session, run on the app binary as node, does not report `NSRunningApplication.hidden`, hides a second browser launched beside it, or does not come back on `show()`; an Xvfb runs |
+| 7. update          | a lower-version build fed the candidate over loopback does not download it, swap the bundle and relaunch it |
+
+- **Evidence is written, not only asserted.** Each test appends what it observed to
+  `test-results/mac-evidence.md` — the `codesign` output, `/tools`, the native host's reply with the
+  secret masked, the zoom states, `update.log` — which the job puts in the run summary and uploads as
+  `smoke-mac-logs` on success too. A failed test also screenshots the desktop, since what blocks a
+  macOS boot is a system prompt no page shows.
+- **The update is driven as a user's.** The previous zip is unpacked into `/Applications`, its
+  `app-update.yml` pointed at the feed and the bundle re-signed, all before its one launch; Restart
+  now runs over `window.faststudy.updates`. The quitting launch's `launch.log` is kept as it grows,
+  because the relaunch truncates it. The relaunch is the helper's `open`, outside Playwright, so
+  `launch.log` and `update.log` are all the test reads.
+- **`safeStorage` across the update is reported, never asserted.** The ad-hoc signature differs on
+  every build and the Keychain item is tied to it, so test 7 clears the item first, then prints one
+  verdict — `SURVIVED`, `REGENERATED`, `UNAVAILABLE`, `HUNG` or `INCONCLUSIVE` — with `token_key`'s
+  hash before and after, as a warning annotation on the run. Only `HUNG` coincides with a failure,
+  and then because the relaunched app never loaded.
+
 ## Re-running against an existing build
 
 `gh workflow run smoke.yml --ref <ref> -f run-id=<build.yml run id>`, or Actions → "Smoke-test a
@@ -136,6 +169,12 @@ clock), `log_to_app_ms` (main's first `launch.log` line → that line) and each 
 from that first line, plus version, commit and run ids. A `smoke.yml` run uploads none ([RELEASE.md](RELEASE.md#re-running-smoke)). Numbers only, since it
 becomes a public Release asset ([RELEASE.md](RELEASE.md#boot-timing)). Report only: no threshold, and a
 value it cannot read is `null` with a warning, never a failure.
+
+## Unproven until a macOS run
+
+Playwright's `_electron` driving the bundle's binary; the runner's default keychain being unlocked
+for `safeStorage`; Chrome or Edge in `/Applications` and a GUI session `NSRunningApplication` can
+read; `/Applications` being writable to the runner's user, which the updater's stage step requires.
 
 ## Unproven until a Windows run
 

@@ -1,7 +1,7 @@
 name: Smoke suite
 
-# The release smoke job, once: build.yml calls it on its own run's installer, smoke.yml on an
-# earlier build.yml run's, after its guard has proven that run built the same app.
+# The release smoke jobs, once: build.yml calls it per platform on its own run's builds, smoke.yml
+# for both on an earlier build.yml run's, after its guard has proven that run built the same app.
 on:
   workflow_call:
     inputs:
@@ -9,11 +9,16 @@ on:
         description: The build.yml run whose installers to test; empty tests the calling run's.
         type: string
         default: ''
+      target:
+        description: Which platform's suite to run — windows, mac or all.
+        type: string
+        default: all
 
 jobs:
   # A fresh runner, so the install is a first install. It installs and tests the uploaded artifact,
   # which is byte for byte what publish.yml releases — and only a run this job passed counts as green.
   smoke:
+    if: inputs.target != 'mac'
     runs-on: windows-latest
     timeout-minutes: 150
     # actions: read is for the cross-run download only; a caller must grant it as well.
@@ -95,5 +100,85 @@ jobs:
         if: failure()
         with:
           name: smoke-traces
+          path: delivery/smoke/test-results/traces/
+          if-no-files-found: ignore
+
+  # The macOS suite: only what is Mac-specific, on the dmg and the updater's zip build-mac uploaded.
+  smoke-mac:
+    if: inputs.target != 'windows'
+    runs-on: macos-14
+    timeout-minutes: 60
+    permissions:
+      actions: read
+      contents: read
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: installer-mac
+          path: ${{ runner.temp }}/installer-mac
+          run-id: ${{ inputs.run-id || github.run_id }}
+          github-token: ${{ inputs.run-id != '' && github.token || '' }}
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: installer-mac-previous
+          path: ${{ runner.temp }}/installer-mac-previous
+          run-id: ${{ inputs.run-id || github.run_id }}
+          github-token: ${{ inputs.run-id != '' && github.token || '' }}
+
+      # What the first run's assumptions rest on: the image, its browsers and its default keychain.
+      - name: Describe the runner
+        run: |
+          set -x
+          sw_vers
+          ls -d "/Applications/Google Chrome.app" "/Applications/Microsoft Edge.app" || true
+          security default-keychain || true
+          security list-keychains || true
+          ls -l "$RUNNER_TEMP/installer-mac" "$RUNNER_TEMP/installer-mac-previous"
+
+      - name: Install the smoke suite
+        working-directory: delivery/smoke
+        run: npm ci --no-audit --no-fund
+
+      - name: Run the macOS smoke suite
+        working-directory: delivery/smoke
+        env:
+          SMOKE_CANDIDATE_DIR: ${{ runner.temp }}/installer-mac
+          SMOKE_PREVIOUS_DIR: ${{ runner.temp }}/installer-mac-previous
+        run: npx playwright test -c playwright.mac.config.js
+
+      # Every check's observed output, safeStorage's verdict included, whatever the outcome.
+      - name: Summarize the evidence
+        if: ${{ !cancelled() }}
+        run: cat delivery/smoke/test-results/mac-evidence.md >> "$GITHUB_STEP_SUMMARY" || echo "no evidence file was written"
+
+      - name: Collect the state root's logs
+        if: failure()
+        run: cp -R "$HOME/Library/Application Support/FastStudy/logs" delivery/smoke/test-results/state-logs || true
+
+      # Uploaded on success too: mac-evidence.md is what a release's verification quotes.
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-mac-logs
+          path: |
+            delivery/smoke/test-results/
+            !delivery/smoke/test-results/traces/**
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: smoke-mac-traces
           path: delivery/smoke/test-results/traces/
           if-no-files-found: ignore

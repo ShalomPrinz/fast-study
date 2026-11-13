@@ -1,8 +1,8 @@
 name: Publish
 
-# Manual only, no input, and it builds nothing: it releases the `installer` artifact of main's green
-# build.yml run for the dispatched commit, or the one below pages.yml's screenshot commits — the bytes
-# the smoke job tested — as Release v<version>, the version build.yml computed and wrote into its
+# Manual only, no input, and it builds nothing: it releases the `installer` and `installer-mac`
+# artifacts of main's green build.yml run for the dispatched commit, or the one below pages.yml's
+# screenshot commits — the bytes the smoke jobs tested — as Release v<version>, the version build.yml computed and wrote into its
 # latest.yml. That is the moment every installed copy's updater can see it.
 on:
   workflow_dispatch:
@@ -56,11 +56,14 @@ jobs:
             echo "::error::no successful main build.yml run for $TARGET_SHA; dispatch build.yml on main at this commit, then publish again"
             exit 1
           fi
-          if ! gh api "repos/$GH_REPO/actions/runs/$run/artifacts" --jq '.artifacts[] | select(.name == "installer" and (.expired | not)) | .id' | grep -q .; then
-            echo "::error::the installer artifact of build.yml run $run for $TARGET_SHA has expired; dispatch build.yml on main at this commit, then publish again"
-            exit 1
-          fi
+          for name in installer installer-mac; do
+            if ! gh api "repos/$GH_REPO/actions/runs/$run/artifacts" --jq ".artifacts[] | select(.name == \"$name\" and (.expired | not)) | .id" | grep -q .; then
+              echo "::error::the $name artifact of build.yml run $run for $TARGET_SHA has expired or is missing; dispatch build.yml on main at this commit, then publish again"
+              exit 1
+            fi
+          done
           gh run download "$run" -n installer -D installer
+          gh run download "$run" -n installer-mac -D installer-mac
 
           # build.yml computes the version, and latest.yml carries it — the same line installed copies read.
           version=$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\)[[:space:]]*$/\1/p' installer/latest.yml 2> /dev/null)
@@ -85,10 +88,18 @@ jobs:
 
           # The file name is fixed so releases/latest/download/FastStudy-Setup.exe stays a stable link.
           # extension-version.txt is what the next build bumps the packaged extension's version from.
-          files=(installer/FastStudy-Setup.exe installer/FastStudy-Setup.exe.blockmap installer/latest.yml installer/extension-version.txt)
+          # The macOS names are fixed the same way: the dmg is the download, the zip and latest-mac.yml the updater's feed.
+          files=(installer/FastStudy-Setup.exe installer/FastStudy-Setup.exe.blockmap installer/latest.yml installer/extension-version.txt
+            installer-mac/FastStudy-mac-arm64.dmg installer-mac/FastStudy-mac-arm64.zip installer-mac/latest-mac.yml)
           for file in "${files[@]}"; do
-            [ -f "$file" ] || { echo "::error::build.yml run $run's installer artifact has no ${file#installer/}"; ls -l installer; exit 1; }
+            [ -f "$file" ] || { echo "::error::build.yml run $run's ${file%%/*} artifact has no ${file#*/}"; ls -l installer installer-mac; exit 1; }
           done
+          # One Release, one version: both feeds must name the tag being created.
+          mac_version=$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\)[[:space:]]*$/\1/p' installer-mac/latest-mac.yml)
+          if [ "$mac_version" != "$version" ]; then
+            echo "::error::build.yml run $run built Windows $version but macOS ${mac_version:-with no version line}"
+            exit 1
+          fi
           # The smoke job's boot timings, for the cross-version graph; optional, since older runs have none.
           if gh run download "$run" -n boot-timing -D boot-timing && [ -f boot-timing/boot-timing.json ]; then
             files+=(boot-timing/boot-timing.json)
