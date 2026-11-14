@@ -18,6 +18,7 @@ everything on quit.
 | `updater.js`  | The update check — electron-updater against GitHub Releases; the app's update state and Restart now |
 | `updatePhases.js` | Mapping updater events to the phases the launch screen shows (pure, tested)   |
 | `macUpdate.js` | The macOS install step — the verified download, the staged bundle, the swap helper |
+| `macMove.js` | The macOS offer to move into an Applications folder at launch — the copy, the relaunch helper |
 | `extension.js` | The browser extension's shipped copy, the bridge file, the native host's registration |
 | `bridge/host.js` | The native host Chrome or Edge runs — staged to `resources/bridge/`, not in the asar |
 | `windowState.js` | The window's size and maximized flag across launches — `window-state.json` under `userData` |
@@ -78,7 +79,7 @@ failure.
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
 covering `resolveWithin`'s path containment, the store's tables and refusal rules, the error-reports
 switch's env and its push to each service's `/config` (against local HTTP stubs), the window size's clamp and fallback, and the teardown's
-SIGTERM→SIGKILL escalation against real `sh` process groups and its expected-exit rule, and the native host driven over framed stdin/stdout with its registration and the extension copy, and the macOS update's sha512 check and its swap helper run under real `sh`. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
+SIGTERM→SIGKILL escalation against real `sh` process groups and its expected-exit rule, and the native host driven over framed stdin/stdout with its registration and the extension copy, and the macOS update's sha512 check and its swap helper run under real `sh`, and the macOS move's decisions behind faked dialog, copy and folders. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
 `electron` in the module cache before the module under test is required, which is also how the
 unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns a service is in it.
 

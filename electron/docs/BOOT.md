@@ -8,27 +8,63 @@
    ignored and the scheme silently loses its origin. See [`RENDERER.md`](RENDERER.md).
 3. One secret is generated for the launch: 32 random bytes, hex. It goes into every child's
    environment as `FASTSTUDY_SECRET` and reaches the renderer through the preload bridge.
-4. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
+4. Packaged on macOS, an app outside an Applications folder offers to move itself there — see
+   [Moving into Applications](#moving-into-applications). On a yes this launch quits here, before
+   anything is served, registered or spawned, and the moved copy boots instead.
+5. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
    sit inline in the boot path, so each has to be cheap — no network, no spawn, no real disk work —
    and their duration is logged to catch one that stops being so.
-5. Packaged, the extension's stable copy is refreshed and, on Windows and macOS, the native host is registered
+6. Packaged, the extension's stable copy is refreshed and, on Windows and macOS, the native host is registered
    — both logged, neither able to fail the boot ([`EXTENSION.md`](EXTENSION.md)).
-6. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below. It opens
+7. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below. It opens
    centred at the last launch's normal size, maximized if it closed maximized; the size is fitted to
    the work area and the minimum, and saved on `close` and in the `exit` handler a signal still runs.
    It lives in its own `window-state.json`, so it never enters the settings store's read view or env.
-7. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
+8. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
    alongside them because it calls no peer. `server` starts once all three are healthy. Each child is
    spawned, its port read off stdout, and its `/health` waited on before anything that needs it
    starts. The first failure on either track fails the boot, and the other track spawns nothing
    more. Once `server` is healthy, main writes `bridge.json` for the native host.
-8. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
+9. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
    that: a renderer that loaded first would build its service clients at module scope against URLs
    that do not exist yet. The load is not awaited; when it finishes main logs `[main] app loaded
    app://bundle/` (or `app load failed app://bundle/: <reason>`), which `delivery/smoke/` times boot by.
-9. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
+10. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
    rather than on the user's first browser action; its result is one log line and a failure surfaces
    nowhere, since `auto` loads on demand anyway.
+
+## Moving into Applications
+
+The macOS update swaps the bundle in place, which needs a writable folder around it
+([`UPDATES.md`](UPDATES.md#the-macos-install-step)); a dmg mount and a Gatekeeper-translocated path
+are read-only. So a packaged macOS launch whose bundle is under neither `/Applications` nor
+`~/Applications` asks, in English like the launch screen and with no parent window:
+
+> **Move FastStudy to Applications?** FastStudy can only update itself from an Applications folder.
+> It will be moved to `<folder>` and reopened. — _Move to Applications_ / _Not Now_
+
+- **The target** is `/Applications` when this user can write it, else `~/Applications`, created on
+  the yes. Nothing asks for an admin password.
+- **Paths are compared resolved.** `process.execPath` is a real path while the home folder may be a
+  symlink, so both Applications folders are resolved before the test. A target that is the running
+  bundle itself is never asked about: replacing it with its own copy would end with the copy in the Trash.
+- **A yes** copies the bundle with `ditto --noqtn` to a hidden sibling of the target, renames it into
+  place over any copy already there, starts a detached `/bin/sh` helper, moves the original to the
+  Trash (a dmg or translocated original refuses, which is logged) and quits. A failure at any point
+  leaves an installed copy as it was.
+- **The helper** waits for main's pid to exit — a `kill -0` poll, five a second for up to a minute —
+  then runs `open <target>`. Opened sooner, the new copy would lose the single-instance lock and exit.
+- **`--noqtn` is load-bearing.** A copy that kept `com.apple.quarantine` and was not moved by the
+  Finder is translocated when opened, so it would land outside Applications and ask again.
+- **A copy running from the target** — another account's, since the lock rules out this user's — is
+  not replaced: a second alert says so (_FastStudy was not moved_) and the boot goes on.
+- **A no, or any failure,** is one `launch.log` line and the boot continues from where the app is.
+  Nothing is remembered, so the next launch asks again.
+
+The native host needs no step of its own: the moved copy's boot rewrites `host.sh` with its own
+executable path ([`EXTENSION.md`](EXTENSION.md)). Electron's `app.moveToApplicationsFolder` is not
+used: it asks for an admin password when `/Applications` is not writable and never targets
+`~/Applications`.
 
 ## The launch screen
 

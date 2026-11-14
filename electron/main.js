@@ -22,6 +22,8 @@ const store = require('./store');
 const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
 const { exitKind, reapChildren, signalChildren } = require('./teardown');
 const windowState = require('./windowState');
+const { bundlePath } = require('./macUpdate');
+const { offerMove } = require('./macMove');
 const { dataFilePath, openDataFileWith, revealDataFile } = require('./dataFiles');
 const {
   registerHost,
@@ -508,6 +510,23 @@ function prepareExtension() {
   if (process.platform === 'darwin') registerHostMac({ ...host, home: app.getPath('home') });
 }
 
+/** Packaged macOS only: offer the move into an Applications folder, where an update can swap the
+ *  bundle (docs/BOOT.md). True when it moved and the relaunch is pending; never fails the boot. */
+async function movedToApplications() {
+  if (!app.isPackaged || process.platform !== 'darwin') return false;
+  try {
+    return await offerMove({
+      bundle: bundlePath(process.execPath),
+      home: app.getPath('home'),
+      pid: process.pid,
+      log: (line) => log('main', line),
+    });
+  } catch (error) {
+    log('main', `not moved to Applications: ${error.message}`);
+    return false;
+  }
+}
+
 /** Ask `auto` to load Playwright now, so the first browser action skips that cost. Fire and forget:
  *  a failure only means the load happens on demand, so it is logged and never surfaced. */
 function warmBrowser() {
@@ -826,6 +845,8 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     openLog();
+    // Before anything is registered or spawned against this bundle's path; the moved copy boots instead.
+    if (await movedToApplications()) return app.quit();
     serveBundle();
     // Timed because they run inline in the boot path: a check that stops being cheap shows up here.
     const started = process.hrtime.bigint();

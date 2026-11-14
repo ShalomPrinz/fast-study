@@ -82,9 +82,11 @@ differs from the running app's. The Mac build is ad-hoc signed, and no two ad-ho
 `downloadUpdate` or `quitAndInstall`. electron-updater still runs the check and parses
 `latest-mac.yml`; `macUpdate.js` does the rest:
 
-1. **Stage.** Refused up front when the bundle's folder is not writable — run from the dmg,
-   translocated by Gatekeeper, or in `/Applications` under a non-admin account — so nothing is
-   downloaded that could not be installed. Otherwise the feed's `.zip` streams to
+1. **Stage.** Refused up front when the bundle's folder is not writable, so nothing is downloaded
+   that could not be installed. The launch's offer to move into an Applications folder
+   ([`BOOT.md`](BOOT.md#moving-into-applications)) leaves that to a user who declined it while
+   running from the dmg or translocated by Gatekeeper, or whose app sits in `/Applications` under a
+   non-admin account, where nothing is offered. Otherwise the feed's `.zip` streams to
    `<state root>/update/update.zip` over Electron's `net.fetch` (the system proxy, as the check
    uses), hashed as it arrives. A sha512 that is not the one `latest-mac.yml` gives deletes the file
    and fails; a match is unpacked with `ditto -x -k` into `<state root>/update/staged/`. The folder

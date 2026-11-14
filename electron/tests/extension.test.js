@@ -273,6 +273,36 @@ test('registerHostMac writes an executable host script and one manifest per brow
   );
 });
 
+test('registerHostMac points the host script at the bundle the app moved to', () => {
+  const stateDir = tempDir();
+  const home = tempDir();
+  const at = (bundle) => ({
+    stateDir,
+    exe: `${bundle}/Contents/MacOS/FastStudy`,
+    script: `${bundle}/Contents/Resources/bridge/host.js`,
+    bridgeFile: path.join(stateDir, 'bridge.json'),
+    home,
+    log: () => {},
+  });
+  registerHostMac(at('/Volumes/FastStudy/FastStudy.app'));
+  registerHostMac(at('/Applications/FastStudy.app'));
+  const script = path.join(stateDir, 'native-host', 'host.sh');
+  const text = fs.readFileSync(script, 'utf8');
+  assert.match(text, / exec '\/Applications\/FastStudy\.app\/Contents\/MacOS\/FastStudy' /);
+  assert.doesNotMatch(text, /Volumes/);
+  // The manifests name the script, whose path the move does not change.
+  const manifest = path.join(
+    home,
+    'Library',
+    'Application Support',
+    'Google',
+    'Chrome',
+    'NativeMessagingHosts',
+    'com.faststudy.bridge.json',
+  );
+  assert.equal(JSON.parse(fs.readFileSync(manifest, 'utf8')).path, script);
+});
+
 test('registerHostMac logs one browser failing and still writes the other', () => {
   const stateDir = tempDir();
   const home = tempDir();
