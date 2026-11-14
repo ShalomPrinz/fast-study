@@ -541,6 +541,22 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$APP"
           node delivery/smoke/lib/macho.js "$APP"
 
+      # What codesign judges a nested bundle by: each one's root and Versions/, and every absolute
+      # symlink, in the stage and in the built app.
+      - name: Show the bundle layouts after a failure
+        if: failure()
+        run: |
+          for root in "$STAGE" "$APP"; do
+            [ -d "$root" ] || continue
+            echo "::group::$root"
+            find "$root" -type d \( -name '*.framework' -o -name '*.app' \) | while read -r dir; do
+              ls -la "$dir" "$dir/Versions" 2>/dev/null || true
+            done
+            echo "absolute symlinks:"
+            find "$root" -type l -lname '/*' -exec ls -l {} +
+            echo "::endgroup::"
+          done
+
       # Measured sizes, in the run summary: what the macOS download and each tool in it weigh.
       - name: Report sizes
         run: |

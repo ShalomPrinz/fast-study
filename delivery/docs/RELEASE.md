@@ -266,6 +266,15 @@ packages are dropped. It refuses to finish if a `@faststudy/*` dependency is a s
 install as links by default, and a link into `lib/` dangles once the tree leaves the repo — so
 `downloader/.npmrc` sets `install-links`.
 
+Symlinks are copied verbatim (`verbatimSymlinks`): `cpSync` otherwise rewrites each relative link
+into an absolute path back into the build output, and electron-builder ships a link as written. On
+macOS PyInstaller's `_internal/` is built on relative links — `Python.framework`'s `Python`,
+`Resources` and `Versions/Current`, plus one top-level link per nested library — and `codesign`
+rejects a framework whose root links do not point into `Versions/` ("unsealed contents present in
+the root directory of an embedded framework"). So the stage refuses to finish on any link that is
+absolute, dangling or leaves the tree, and a failed `build-mac` prints every nested `.framework` and
+`.app` layout in the stage and the built app.
+
 It also stages the Chrome extension (`downloader/extension/`, minus its `CLAUDE.md`) as `extension/`,
 stamped with [the extension version](#the-extension-version) when one is passed as its second argument,
 and the native host script `electron/bridge/host.js` as `bridge/host.js`, both read by main at launch
