@@ -216,8 +216,10 @@ configure line, each flag a decision — **a codec or protocol the app comes to 
 
 Every native decoder, encoder, muxer and filter stays on by default. `--enable-gpl`,
 `--enable-nonfree` and `--enable-version3` are absent, so the binary is LGPL 2.1.
-`MACOSX_DEPLOYMENT_TARGET` is the `LSMinimumSystemVersion` of Electron's own `Info.plist`, read after
-`npm ci` and compared with the built app's afterwards.
+`MACOSX_DEPLOYMENT_TARGET` is the `LSMinimumSystemVersion` of Electron's own `Info.plist`, compared
+with the built app's afterwards. The `electron` npm package has no install script, so `npm ci` leaves
+no binary: the step runs the package's `install.js`, which fetches the locked version's
+checksum-verified zip — the same release zip `electron-builder` downloads and packs.
 
 The build fails unless the binary, cached or fresh, passes: `otool -L` lists only `/usr/lib/` and
 `/System/` paths; `vtool -show-build` reports a `minos` no higher than that version; it is arm64;

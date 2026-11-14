@@ -359,15 +359,18 @@ jobs:
           nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
           echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
 
-      # Electron's own LSMinimumSystemVersion is the app's, and so the floor ffmpeg is built for;
-      # the built bundle's value is compared against it after the build.
+      # Electron's own LSMinimumSystemVersion is the app's, and so the floor ffmpeg is built for. The npm
+      # package has no install script, so install.js fetches the locked version's zip — the one electron-builder packs.
       - name: Install the launcher and read its minimum macOS
         id: macos
         working-directory: electron
         run: |
           set -eux
           npm ci
-          min=$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' node_modules/electron/dist/Electron.app/Contents/Info.plist)
+          node node_modules/electron/install.js
+          plist=node_modules/electron/dist/Electron.app/Contents/Info.plist
+          [ -f "$plist" ] || { echo "::error::Electron's install.js left no $plist"; ls -la node_modules/electron node_modules/electron/dist || true; exit 1; }
+          min=$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$plist") || { echo "::error::$plist has no LSMinimumSystemVersion"; exit 1; }
           [[ $min =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || { echo "::error::Electron's LSMinimumSystemVersion reads '$min'"; exit 1; }
           echo "min=$min" >> "$GITHUB_OUTPUT"
 
