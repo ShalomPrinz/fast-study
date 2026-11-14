@@ -121,6 +121,9 @@ the `build` block in `package.json`.
   `hardenedRuntime` is off because under it library validation rejects ad-hoc signed libraries.
   electron-builder signs every binary file under `Contents/`, the staged `extraResources` included,
   then seals the bundle, so nothing inside may change after it runs.
+- **`mac.signIgnore` skips `puppeteer-extra-plugin-stealth/evasions/chrome.app`**, a folder of JS
+  the signer takes for an app bundle by its suffix; under `Contents/Resources` the seal covers its
+  files as plain resources.
 - **`dmg.writeUpdateInfo` is off**, so `latest-mac.yml` lists the zip alone and no dmg blockmap is
   written. The zip's own `.blockmap` is still emitted and unused: the updater downloads the whole zip
   ([`docs/UPDATES.md`](docs/UPDATES.md#the-macos-install-step)).

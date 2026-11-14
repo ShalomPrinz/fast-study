@@ -62,6 +62,7 @@
       "icon": "assets/icon.icns",
       "identity": "-",
       "hardenedRuntime": false,
+      "signIgnore": "/node_modules/puppeteer-extra-plugin-stealth/evasions/chrome\\.app$",
       "artifactName": "FastStudy-mac-${arch}.${ext}"
     },
     "dmg": {
