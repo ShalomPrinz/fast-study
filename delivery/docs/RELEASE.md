@@ -207,8 +207,10 @@ configure line, each flag a decision — **a codec or protocol the app comes to 
 
 | Flag                                 | Why                                                                                         |
 | ------------------------------------ | ------------------------------------------------------------------------------------------- |
-| `--disable-autodetect`               | Nothing on the runner (Homebrew, the SDK's optional libraries) is linked by accident. It also turns off zlib, the TLS backend and VideoToolbox, so this ffmpeg reads no `https://` input |
+| `--disable-autodetect`               | Nothing on the runner (Homebrew, the SDK's optional libraries) is linked by accident. It also turns off zlib, the TLS backend and VideoToolbox, so the two the app needs are named below |
 | `--enable-libmp3lame`                | The pipeline writes `audio.mp3` and ffmpeg has no native MP3 encoder                        |
+| `--enable-securetransport`           | TLS through macOS's own `Security.framework`, so `https://` inputs open as on Windows with no OpenSSL or GnuTLS to ship |
+| `--enable-zlib`                      | The system `/usr/lib/libz.1.dylib`: compressed HTTP responses, `mov`/`matroska` compressed headers and the zlib-backed decoders (PNG among them) |
 | `--extra-cflags` / `--extra-ldflags` | Point at the static LAME's prefix; with no shared LAME there, the link is static            |
 | `--disable-shared`                   | One self-contained binary                                                                   |
 | `--disable-ffprobe`, `--disable-ffplay`, `--disable-doc` | Nothing spawns them                                                     |
@@ -223,7 +225,8 @@ checksum-verified zip — the same release zip `electron-builder` downloads and 
 
 The build fails unless the binary, cached or fresh, passes: `otool -L` lists only `/usr/lib/` and
 `/System/` paths; `vtool -show-build` reports a `minos` no higher than that version; it is arm64;
-its configuration names none of the three licence flags; and `-encoders` lists `libmp3lame`.
+its configuration names none of the three licence flags; `-encoders` lists `libmp3lame`; `-protocols` lists `https`; and `-decoders` lists `zlib`, which
+configure builds only with zlib found.
 
 ## The frozen bundle
 

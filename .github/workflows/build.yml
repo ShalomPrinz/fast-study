@@ -389,7 +389,7 @@ jobs:
         run: bash delivery/ffmpeg-mac.sh "$PWD/ffmpeg-build"
 
       # A restored binary is checked too. It may load nothing but macOS itself, must run on the
-      # launcher's oldest macOS, and stays LGPL with the one encoder the pipeline needs.
+      # launcher's oldest macOS, and stays LGPL with the encoder, TLS and zlib the app needs.
       - name: Check ffmpeg
         env:
           MIN: ${{ steps.macos.outputs.min }}
@@ -416,6 +416,8 @@ jobs:
             echo "::error::ffmpeg is configured beyond LGPL 2.1"; exit 1
           fi
           "$ff" -hide_banner -encoders | grep libmp3lame || { echo "::error::ffmpeg has no libmp3lame encoder"; exit 1; }
+          "$ff" -hide_banner -protocols | grep -x '[[:space:]]*https' || { echo "::error::ffmpeg has no https protocol"; exit 1; }
+          "$ff" -hide_banner -decoders | grep -E '^ [A-Z.]{6} zlib ' || { echo "::error::ffmpeg is built without zlib"; exit 1; }
           cp "$ff" "$STAGE/bin/ffmpeg"
 
       # After the checks, so a binary that failed them is never the one a later run restores.

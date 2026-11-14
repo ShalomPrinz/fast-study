@@ -31,6 +31,8 @@ cd "$work/src/ffmpeg-$FFMPEG_VERSION"
 ./configure \
   --disable-autodetect \
   --enable-libmp3lame \
+  --enable-securetransport \
+  --enable-zlib \
   --extra-cflags="-I$prefix/include" \
   --extra-ldflags="-L$prefix/lib" \
   --disable-shared \
