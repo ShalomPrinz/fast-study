@@ -1,3 +1,4 @@
+const fs = require('node:fs');
 const path = require('node:path');
 const { app } = require('electron');
 // Safe at module scope: `autoUpdater` is a lazy getter that builds the platform updater on first
@@ -5,6 +6,9 @@ const { app } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { wirePhases } = require('./updatePhases');
 const { bundlePath, launchHelper, stageUpdate } = require('./macUpdate');
+const { encode } = require('./macHandoff');
+const pending = require('./macPending');
+const store = require('./store');
 
 // macOS installs by its own bundle swap: Squirrel.Mac refuses an ad-hoc signed build (docs/UPDATES.md).
 const MAC = process.platform === 'darwin';
@@ -20,11 +24,11 @@ const listeners = new Set();
 let shown = null;
 let onShown = () => {};
 let restarting = null;
-// macOS only: the unpacked update awaiting the swap, and whether the helper relaunches after it.
-let staged = null;
-let relaunch = false;
+// macOS only: the update Restart now swaps in — `{bundle, staged, stateDir}`.
+let macStaged = null;
 
-/** Check GitHub Releases at launch and every 30 minutes, download in the background, install on quit. `log` is main's
+/** Check GitHub Releases at launch and every 30 minutes, download in the background, install on quit
+ *  (Windows) or at the next launch (macOS). `log` is main's
  *  `log(source, line)`; `onPhase` (optional, may arrive on a later call, replayed with the current
  *  phase) feeds the launch screen's failure view — see docs/UPDATES.md. `stateDir` is the state
  *  root, where macOS stages the download and logs the swap. */
@@ -76,7 +80,8 @@ function startUpdater(log, onPhase, stateDir) {
   autoUpdater.on('update-downloaded', ({ version }) => {
     // A later check could re-download and replace the pending installer.
     clearInterval(timer);
-    log('updater', `version ${version} downloaded — it installs when the app quits`);
+    const when = MAC ? 'at the next launch, or on Restart now' : 'when the app quits';
+    log('updater', `version ${version} downloaded — it installs ${when}`);
   });
 
   // Checks never overlap: a tick that lands on a running check is skipped.
@@ -112,25 +117,103 @@ function startUpdater(log, onPhase, stateDir) {
  *  so the phases, the timer and the log line are the ones Windows gets. Never throws. */
 async function stageMacUpdate(info, stateDir, log) {
   try {
+    const dir = path.join(stateDir, 'update');
+    const last = pending.read(dir);
+    // One launch-time install per version: a release that failed it waits for the next one.
+    if (last?.state === 'failed' && last.version === info.version) {
+      log('updater', `version ${info.version} is not downloaded again: ${last.reason}`);
+      return autoUpdater.emit('update-not-available', info);
+    }
     const bundle = bundlePath(process.execPath);
-    staged = await stageUpdate({
+    const staged = await stageUpdate({
       files: autoUpdater.updateInfoAndProvider.provider.resolveFiles(info),
-      dir: path.join(stateDir, 'update'),
+      version: info.version,
+      dir,
       bundle,
     });
-    // `quit` follows main's `will-quit` kill, so the helper starts once every service is dead.
-    app.once('quit', () => {
-      const logFile = path.join(stateDir, 'logs', 'update.log');
-      try {
-        const pid = launchHelper({ pid: process.pid, bundle, staged, relaunch, logFile });
-        log('updater', `install helper started (pid ${pid}) — it logs to ${logFile}`);
-      } catch (error) {
-        log('updater', `install helper not started: ${error.message}`);
-      }
-    });
+    macStaged = { bundle, staged, stateDir };
     autoUpdater.emit('update-downloaded', info);
   } catch (error) {
     autoUpdater.emit('error', error);
+  }
+}
+
+/** macOS: start the helper that swaps `staged` over `bundle` once this process is gone and starts
+ *  the new build with every stored key, decrypted here, on its handoff pipe. Throws if it cannot start. */
+function startSwap({ bundle, staged, stateDir }, log) {
+  const logFile = path.join(stateDir, 'logs', 'update.log');
+  let handoff = null;
+  try {
+    handoff = encode(store.secrets());
+  } catch (error) {
+    // No handoff: the helper reopens with `open`, and the new build leaves the old item alone.
+    log(
+      'updater',
+      `installing without a key handoff, the stored keys are left as they were: ${error.message}`,
+    );
+  }
+  const pid = launchHelper({ pid: process.pid, bundle, staged, logFile, handoff });
+  log('updater', `install helper started (pid ${pid}) — it logs to ${logFile}`);
+}
+
+/** macOS, at launch and before anything is spawned: install the update an earlier run staged. True
+ *  when the helper is started and the caller must quit; false to boot this build. One try per
+ *  version, and never a throw — docs/UPDATES.md. */
+async function installPending(stateDir, log) {
+  const dir = path.join(stateDir, 'update');
+  const say = (line) => log('updater', line);
+  try {
+    const record = pending.read(dir);
+    const action = pending.decide(record, app.getVersion());
+    if (action === 'clear') {
+      fs.rmSync(dir, { recursive: true, force: true });
+      say(
+        `pending update cleared: ${record.version ?? 'an unreadable record'} is not newer than this build`,
+      );
+    }
+    if (action === 'fail') {
+      pending.fail(dir, record.version, 'its install at an earlier launch did not complete');
+      say(
+        `version ${record.version} did not install at the last launch and is not tried again — see logs/update.log`,
+      );
+    }
+    if (action !== 'install') return false;
+    return await swapPending(record, dir, stateDir, log);
+  } catch (error) {
+    say(`pending update not installed: ${error.message}`);
+    return false;
+  }
+}
+
+/** Verify the staged build against its recorded digest and hand it to the helper. The record turns
+ *  `attempted` before the helper starts, so no later launch of this build starts a second swap. */
+async function swapPending(record, dir, stateDir, log) {
+  const { version } = record;
+  const say = (line) => log('updater', line);
+  const bundle = bundlePath(process.execPath);
+  try {
+    // A copy on a read-only mount leaves the update to the copy that staged it.
+    fs.accessSync(path.dirname(bundle), fs.constants.W_OK);
+  } catch {
+    say(`version ${version} stays pending: ${path.dirname(bundle)} is not writable`);
+    return false;
+  }
+  try {
+    const staged = path.join(dir, 'staged', path.basename(String(record.app)));
+    const began = Date.now();
+    if ((await pending.treeDigest(staged)) !== record.digest) {
+      throw new Error('the staged build changed on disk after it was downloaded');
+    }
+    say(
+      `version ${version} verified in ${Date.now() - began}ms — installing it before this launch`,
+    );
+    pending.write(dir, { ...record, state: 'attempted' });
+    startSwap({ bundle, staged, stateDir }, log);
+    return true;
+  } catch (error) {
+    pending.fail(dir, version, error.message);
+    say(`version ${version} not installed and not tried again: ${error.message}`);
+    return false;
   }
 }
 
@@ -155,8 +238,16 @@ function restartToUpdate(stop, recover, log) {
       await stop();
       autoUpdater.on('error', onError);
       if (MAC) {
-        // The `quit` hook does the install; this only asks its helper to reopen the app.
-        relaunch = true;
+        // `quit` follows main's `will-quit` kill, so the helper starts once every service is dead.
+        app.once('quit', () => {
+          try {
+            // Installed now, so nothing is left for the next launch to find.
+            pending.remove(path.join(macStaged.stateDir, 'update'));
+            startSwap(macStaged, log);
+          } catch (error) {
+            log('updater', `install helper not started: ${error.message}`);
+          }
+        });
         app.quit();
       } else {
         autoUpdater.quitAndInstall(false, true);
@@ -176,4 +267,4 @@ function restartToUpdate(stop, recover, log) {
   return restarting;
 }
 
-module.exports = { startUpdater, updateState, onUpdateState, restartToUpdate };
+module.exports = { installPending, startUpdater, updateState, onUpdateState, restartToUpdate };

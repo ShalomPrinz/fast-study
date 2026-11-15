@@ -8,28 +8,32 @@
    ignored and the scheme silently loses its origin. See [`RENDERER.md`](RENDERER.md).
 3. One secret is generated for the launch: 32 random bytes, hex. It goes into every child's
    environment as `FASTSTUDY_SECRET` and reaches the renderer through the preload bridge.
-4. Packaged on macOS, an app outside an Applications folder offers to move itself there — see
+4. Packaged on macOS, an update an earlier run downloaded is installed: the launch verifies it,
+   starts the swap helper and quits here, and the new build boots instead
+   ([`UPDATES.md`](UPDATES.md#installing-at-the-next-launch)). It runs ahead of the next step, so
+   one launch never does both.
+5. Packaged on macOS, an app outside an Applications folder offers to move itself there — see
    [Moving into Applications](#moving-into-applications). On a yes this launch quits here, before
    anything is served, registered or spawned, and the moved copy boots instead.
-5. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
+6. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
    sit inline in the boot path, so each has to be cheap — no network, no spawn, no real disk work —
    and their duration is logged to catch one that stops being so.
-6. Packaged, the extension's stable copy is refreshed and, on Windows and macOS, the native host is registered
+7. Packaged, the extension's stable copy is refreshed and, on Windows and macOS, the native host is registered
    — both logged, neither able to fail the boot ([`EXTENSION.md`](EXTENSION.md)).
-7. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below. It opens
+8. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below. It opens
    centred at the last launch's normal size, maximized if it closed maximized; the size is fitted to
    the work area and the minimum, and saved on `close` and in the `exit` handler a signal still runs.
    It lives in its own `window-state.json`, so it never enters the settings store's read view or env.
-8. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
+9. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
    alongside them because it calls no peer. `server` starts once all three are healthy. Each child is
    spawned, its port read off stdout, and its `/health` waited on before anything that needs it
    starts. The first failure on either track fails the boot, and the other track spawns nothing
    more. Once `server` is healthy, main writes `bridge.json` for the native host.
-9. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
+10. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
    that: a renderer that loaded first would build its service clients at module scope against URLs
    that do not exist yet. The load is not awaited; when it finishes main logs `[main] app loaded
    app://bundle/` (or `app load failed app://bundle/: <reason>`), which `delivery/smoke/` times boot by.
-10. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
+11. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
    rather than on the user's first browser action; its result is one log line and a failure surfaces
    nowhere, since `auto` loads on demand anyway.
 

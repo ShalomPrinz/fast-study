@@ -4,26 +4,35 @@ const { createHash } = require('node:crypto');
 const { execFile, spawn } = require('node:child_process');
 const { Readable } = require('node:stream');
 const { pipeline } = require('node:stream/promises');
+const { FD_ENV, HANDOFF_FD } = require('./macHandoff');
+const pending = require('./macPending');
 
 // The install step, run by /bin/sh once main is gone: $1 pid, $2 the installed .app, $3 the staged
-// .app, $4 `1` to relaunch, $5 the 0.2 s polls to wait for the pid. Its lines: docs/UPDATES.md.
+// .app, $4 the 0.2 s polls to wait for the pid, $5 the binary's name, $6 the app's own PATH. Stdin
+// is the handoff, kept in a shell variable only (no heredoc: sh backs it with a temp file).
 const HELPER = `
 pid=$1
 app=$2
 staged=$3
-relaunch=$4
-polls=$5
+polls=$4
+exe=$5
+apppath=$6
+handoff=$(cat)
 dir=$(dirname "$app")
 name=$(basename "$app")
 incoming="$dir/.$name.new"
 previous="$dir/.$name.old"
 say() { echo "$(date '+%Y-%m-%d %H:%M:%S') [update] $*"; }
+hand_over() {
+  printf '%s' "$handoff" | PATH="$apppath" ${FD_ENV}=${HANDOFF_FD} "$app/Contents/MacOS/$exe" ${HANDOFF_FD}<&0 </dev/null >/dev/null 2>&1 &
+  say "started $app/Contents/MacOS/$exe with the handoff on fd ${HANDOFF_FD}"
+}
 finish() {
-  if [ "$relaunch" = 1 ]; then
-    say "relaunching $app"
-    open "$app" || say "relaunch failed"
+  say "relaunching $app"
+  if [ "$1" = 0 ] && [ -n "$handoff" ]; then
+    hand_over
   else
-    say "not relaunching"
+    open "$app" || say "relaunch failed"
   fi
   exit "$1"
 }
@@ -103,10 +112,12 @@ const ditto = (zip, target) =>
     );
   });
 
-/** Download, verify and unpack one update into `dir`, replacing whatever an earlier try left there.
- *  Answers the staged `.app`. Refuses before downloading when the installed bundle cannot be swapped. */
+/** Download, verify and unpack update `version` into `dir`, replacing whatever an earlier try left
+ *  there, and record it as pending for the next launch. Answers the staged `.app`. Refuses before
+ *  downloading when the installed bundle cannot be swapped. */
 async function stageUpdate({
   files,
+  version,
   dir,
   bundle,
   // Electron's fetch, so the download follows the system proxy as the check does.
@@ -126,7 +137,11 @@ async function stageUpdate({
     fs.rmSync(archive, { force: true });
     const app = fs.readdirSync(staged).find((entry) => entry.endsWith('.app'));
     if (!app) throw new Error('the update zip holds no .app');
-    return path.join(staged, app);
+    const target = path.join(staged, app);
+    // Written last, so a record always names a build that was verified and unpacked whole.
+    const digest = await pending.treeDigest(target);
+    pending.write(dir, { version, app, digest, state: 'pending' });
+    return target;
   } catch (error) {
     // A failed try keeps no partial zip or half-unpacked bundle until the next check.
     fs.rmSync(dir, { recursive: true, force: true });
@@ -135,35 +150,38 @@ async function stageUpdate({
 }
 
 /** Start the detached helper that waits up to `polls` × 0.2 s for `pid`, swaps `staged` over `bundle`
- *  and relaunches when asked. Its output is `logFile`, truncated per install. Returns the helper's pid. */
+ *  and relaunches. Its output is `logFile`, truncated per install. Returns the helper's pid.
+ *  `handoff` is text for the new build: written to the helper's stdin, which starts `exe` with it on
+ *  an inherited pipe after a good swap. */
 function launchHelper({
   pid,
   bundle,
   staged,
-  relaunch,
   logFile,
+  handoff = null,
+  exe = path.basename(process.execPath),
   polls = 300,
-  env = { PATH: '/usr/bin:/bin' },
+  // The app's own environment, so a build the helper starts directly gets what `open` would give
+  // it; only the helper's tools are pinned, and the app's PATH rides as an argument.
+  env = { ...process.env, PATH: '/usr/bin:/bin' },
+  appPath = process.env.PATH ?? '',
 }) {
   fs.mkdirSync(path.dirname(logFile), { recursive: true });
   const out = fs.openSync(logFile, 'w');
   try {
     const child = spawn(
       '/bin/sh',
-      [
-        '-c',
-        HELPER,
-        'faststudy-update',
-        String(pid),
-        bundle,
-        staged,
-        relaunch ? '1' : '0',
-        String(polls),
-      ],
-      { detached: true, stdio: ['ignore', out, out], env },
+      ['-c', HELPER, 'faststudy-update', String(pid), bundle, staged, String(polls), exe, appPath],
+      // Stdin is mapped only when there is something to hand over; an unmapped fd is close-on-exec.
+      { detached: true, stdio: [handoff ? 'pipe' : 'ignore', out, out], env },
     );
-    // An unlistened `error` would throw inside the quit handler.
+    // An unlistened `error` would throw in the caller long after it returned.
     child.on('error', () => {});
+    if (handoff) {
+      child.stdin.on('error', () => {});
+      // A short write to a fresh pipe reaches the kernel inside this call, before the process exits.
+      child.stdin.end(handoff);
+    }
     child.unref();
     return child.pid;
   } finally {

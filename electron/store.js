@@ -42,6 +42,8 @@ const INT_FIELDS = {
 const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed'];
 // Write-only: these are held as safeStorage ciphertext and reported to the renderer as set/unset.
 const SECRET_FIELDS = { gemini_api_key: 'GEMINI_API_KEY', groq_api_key: 'GROQ_API_KEY' };
+// Every field held as safeStorage ciphertext: what a macOS update carries across (docs/UPDATES.md).
+const CIPHER_FIELDS = [...Object.keys(SECRET_FIELDS), 'token_key'];
 
 // The renderer's camelCase patch keys → stored fields. Anything else is refused, so a typo in a
 // save is an error rather than a silently ignored setting.
@@ -273,4 +275,49 @@ function tokenKey() {
   return { key, regenerated: Boolean(stored.token_key) };
 }
 
-module.exports = { file, read, serviceEnv, tokenKey, write };
+/** Every safeStorage-held field in plaintext by field name; empty with nothing stored. Throws when a
+ *  stored field will not decrypt (a denied prompt, no key store): that is not "nothing stored". */
+function secrets() {
+  const stored = load();
+  const plain = {};
+  const failed = [];
+  for (const field of CIPHER_FIELDS) {
+    if (!text(stored[field])) continue;
+    const value = decrypt(stored[field]);
+    if (value) plain[field] = value;
+    else failed.push(field);
+  }
+  if (failed.length) throw new Error(`stored ${failed.join(', ')} will not decrypt`);
+  return plain;
+}
+
+/** Throw unless `adopt` can start: the settings file is absent or parses, and its folder is writable.
+ *  `load()` reads a corrupt file as empty, which `adopt` would then overwrite. Touches no Keychain item. */
+function checkAdoptable() {
+  try {
+    JSON.parse(fs.readFileSync(file(), 'utf8'));
+  } catch (error) {
+    if (error.code !== 'ENOENT')
+      throw new Error(`the settings file is unreadable: ${error.message}`);
+  }
+  const dir = path.dirname(file());
+  fs.mkdirSync(dir, { recursive: true });
+  fs.accessSync(dir, fs.constants.W_OK);
+}
+
+/** Re-encrypt handed-over plaintext under this build's key store in one save, and answer the fields
+ *  kept. A ciphertext field the handoff lacks is removed: its key is gone, so it can never be read. */
+function adopt(plain) {
+  const stored = load();
+  const kept = [];
+  for (const field of CIPHER_FIELDS) {
+    delete stored[field];
+    if (!text(plain[field])) continue;
+    stored[field] = encrypt(plain[field]);
+    kept.push(field);
+  }
+  save(stored);
+  return kept;
+}
+
+module.exports = { adopt, checkAdoptable, file, read, secrets, serviceEnv, tokenKey, write };

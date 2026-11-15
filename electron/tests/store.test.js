@@ -434,3 +434,61 @@ test('the token key is not a settings env var', () => {
   store.tokenKey();
   assert.equal('FASTSTUDY_TOKEN_KEY' in store.serviceEnv(), false);
 });
+
+test('secrets() answers every stored key in plaintext, and adopt() re-encrypts them under a new key store', () => {
+  store.write({ geminiApiKey: 'gemini-secret', groqApiKey: 'groq-secret', dataRoot: '/data/root' });
+  const { key } = store.tokenKey();
+  const plain = store.secrets();
+  assert.deepEqual(plain, {
+    gemini_api_key: 'gemini-secret',
+    groq_api_key: 'groq-secret',
+    token_key: key,
+  });
+
+  // The new build's key store: it cannot read what the old one wrote.
+  stub.safeStorage.encryptString = (value) => Buffer.from('new:' + value, 'utf8');
+  stub.safeStorage.decryptString = (buffer) => {
+    const text = buffer.toString('utf8');
+    if (!text.startsWith('new:')) throw new Error('cannot decrypt');
+    return text.slice(4);
+  };
+  assert.throws(() => store.secrets(), /will not decrypt/);
+  assert.deepEqual(store.adopt(plain), ['gemini_api_key', 'groq_api_key', 'token_key']);
+  assert.deepEqual(store.secrets(), plain);
+  assert.deepEqual(store.tokenKey(), { key, regenerated: false });
+  assert.equal(store.read().dataRoot, '/data/root');
+  assert.equal(fs.readFileSync(store.file(), 'utf8').includes('gemini-secret'), false);
+});
+
+test('adopt() removes a ciphertext field the handoff does not carry', () => {
+  store.write({ geminiApiKey: 'gemini-secret', groqApiKey: 'groq-secret' });
+  assert.deepEqual(store.adopt({ groq_api_key: 'groq-secret' }), ['groq_api_key']);
+  const view = store.read();
+  assert.equal(view.geminiApiKeySet, false);
+  assert.equal(view.groqApiKeySet, true);
+});
+
+test('secrets() is empty with nothing stored, and throws for a stored field that will not decrypt', () => {
+  assert.deepEqual(store.secrets(), {});
+  store.write({ geminiApiKey: 'gemini-secret' });
+  stub.safeStorage.decryptString = () => {
+    throw new Error('denied');
+  };
+  assert.throws(() => store.secrets(), /gemini_api_key will not decrypt/);
+});
+
+test('checkAdoptable() passes on no file and a good one, and throws on a corrupt one', () => {
+  store.checkAdoptable();
+  store.write({ geminiApiKey: 'gemini-secret' });
+  store.checkAdoptable();
+  fs.writeFileSync(store.file(), '{ not json');
+  assert.throws(() => store.checkAdoptable(), /unreadable/);
+});
+
+test('adopt() with no key store throws before the file changes', () => {
+  store.write({ geminiApiKey: 'gemini-secret' });
+  const before = fs.readFileSync(store.file(), 'utf8');
+  stub.safeStorage.isEncryptionAvailable = () => false;
+  assert.throws(() => store.adopt({ gemini_api_key: 'gemini-secret' }), /secure storage/);
+  assert.equal(fs.readFileSync(store.file(), 'utf8'), before);
+});

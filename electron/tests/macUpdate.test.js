@@ -6,6 +6,7 @@ const { createHash } = require('node:crypto');
 const { spawn } = require('node:child_process');
 const { afterEach, test } = require('node:test');
 
+const { read, treeDigest } = require('../macPending');
 const {
   bundlePath,
   downloadVerified,
@@ -85,18 +86,27 @@ test('stageUpdate verifies before it unpacks, clears an earlier try, and answers
   const order = [];
   const staged = await stageUpdate({
     files: feed(),
+    version: '9.9.9',
     dir,
     bundle: path.join(root, 'FastStudy.app'),
     fetch: serve(requests),
     unzip: async (zip, target) => {
       order.push(`unzip ${fs.readFileSync(zip).equals(BODY)}`);
       fs.mkdirSync(path.join(target, 'FastStudy.app'));
+      fs.writeFileSync(path.join(target, 'FastStudy.app', 'build'), 'new');
     },
   });
   assert.deepEqual(requests, ['https://feed.test/FastStudy-mac-arm64.zip']);
   assert.deepEqual(order, ['unzip true']);
   assert.equal(staged, path.join(dir, 'staged', 'FastStudy.app'));
-  assert.deepEqual(fs.readdirSync(dir), ['staged']);
+  assert.deepEqual(fs.readdirSync(dir).sort(), ['pending.json', 'staged']);
+  // The record a later launch installs from: written last, with the unpacked tree's digest.
+  assert.deepEqual(read(dir), {
+    version: '9.9.9',
+    app: 'FastStudy.app',
+    digest: await treeDigest(staged),
+    state: 'pending',
+  });
   assert.deepEqual(fs.readdirSync(path.join(dir, 'staged')), ['FastStudy.app']);
 });
 
@@ -181,22 +191,35 @@ function install(fakes = {}) {
   const bin = path.join(root, 'bin');
   fs.mkdirSync(bin);
   const opened = path.join(root, 'opened');
-  const tools = { open: `#!/bin/sh\necho "$1" > '${opened}'\n`, ...fakes };
+  const { binary: _binary, ...tools } = { open: `#!/bin/sh\necho "$1" > '${opened}'\n`, ...fakes };
   for (const [name, script] of Object.entries(tools)) {
     fs.writeFileSync(path.join(bin, name), script, { mode: 0o755 });
   }
   const running = spawn('sleep', ['60'], { stdio: 'ignore' });
   const exited = new Promise((resolve) => running.on('exit', resolve));
   const logFile = path.join(root, 'state', 'logs', 'update.log');
-  const start = (relaunch, polls) =>
+  // The new build's binary: it records the fd it was told, what that fd held, and its own stdin.
+  const received = path.join(root, 'received');
+  const binary = path.join(staged, 'Contents', 'MacOS', 'FastStudy');
+  fs.mkdirSync(path.dirname(binary), { recursive: true });
+  fs.writeFileSync(
+    binary,
+    fakes.binary ??
+      `#!/bin/sh\necho "$FASTSTUDY_HANDOFF_FD" > '${received}.fd'\ncat > '${received}.stdin'\n` +
+        `cat <&3 > '${received}.tmp'\nmv '${received}.tmp' '${received}'\n`,
+    { mode: 0o755 },
+  );
+  const start = (polls, handoff) =>
     launchHelper({
       pid: running.pid,
       bundle,
       staged,
-      relaunch,
       logFile,
       polls,
+      ...handoff,
+      exe: 'FastStudy',
       env: { PATH: `${bin}:${process.env.PATH}` },
+      appPath: process.env.PATH,
     });
   const build = () => fs.readFileSync(path.join(bundle, 'build'), 'utf8');
   // The log without its timestamps, once the helper has written `last`.
@@ -216,12 +239,19 @@ function install(fakes = {}) {
     running.kill('SIGKILL');
     return exited;
   };
-  return { bundle, staged, opened, running, start, build, lines, stop };
+  return { root, bundle, staged, opened, received, running, start, build, lines, stop };
 }
+
+const appeared = async (file) => {
+  for (let waited = 0; !fs.existsSync(file) && waited < 5000; waited += 20) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  return fs.existsSync(file);
+};
 
 test('the helper swaps only after the app has exited, then relaunches it', async () => {
   const { bundle, staged, opened, running, start, build, lines, stop } = install();
-  start(true);
+  start();
   assert.deepEqual(await lines('waiting'), [`waiting for pid ${running.pid} to exit`]);
   // Several of the helper's polls later the app is still up, and nothing has moved.
   await new Promise((resolve) => setTimeout(resolve, 700));
@@ -244,21 +274,11 @@ test('the helper swaps only after the app has exited, then relaunches it', async
   assert.equal(fs.readFileSync(opened, 'utf8').trim(), bundle);
 });
 
-test('a quit-time install swaps without relaunching', async () => {
-  const { bundle, opened, start, build, lines, stop } = install();
-  start(false);
-  await stop();
-  const log = await lines('not relaunching');
-  assert.deepEqual(log.slice(-2), [`swapped: ${bundle} is the new build`, 'not relaunching']);
-  assert.equal(build(), 'new');
-  assert.equal(fs.existsSync(opened), false);
-});
-
 test('a swap that fails half way puts the previous build back and still relaunches', async () => {
   // Fails the one move that puts the new build in place: its source is the hidden `.new` sibling.
   const mv = '#!/bin/sh\ncase "$1" in *.app.new) exit 1 ;; esac\nexec /bin/mv "$@"\n';
   const { bundle, start, build, lines, stop } = install({ mv });
-  start(true);
+  start();
   await stop();
   const log = await lines('relaunching');
   assert.deepEqual(log.slice(-2), [
@@ -274,7 +294,7 @@ test('a previous build that cannot be put back is reported where it was left, wi
   const mv = '#!/bin/sh\ncase "$1" in *.app.new|*.app.old) exit 1 ;; esac\nexec /bin/mv "$@"\n';
   const { bundle, staged, opened, start, lines, stop } = install({ mv });
   const previous = path.join(path.dirname(bundle), '.FastStudy.app.old');
-  start(true);
+  start();
   await stop();
   const log = await lines('swap failed');
   assert.deepEqual(log.slice(-1), [
@@ -290,7 +310,7 @@ test('a previous build that cannot be put back is reported where it was left, wi
 
 test('a helper whose app never exits gives up, drops the staged build and does not relaunch', async () => {
   const { staged, opened, running, start, build, lines, stop } = install();
-  start(true, 2);
+  start(2);
   const log = await lines('gave up');
   assert.deepEqual(log, [
     `waiting for pid ${running.pid} to exit`,
@@ -303,4 +323,64 @@ test('a helper whose app never exits gives up, drops the staged build and does n
   assert.equal(build(), 'old');
   assert.equal(fs.existsSync(opened), false);
   await stop();
+});
+
+const HANDOFF = '{"secrets":{"gemini_api_key":"g $HOME `x` \\"q\\" \\\\n %s"}}';
+
+test('a good swap starts the new binary directly with the handoff on fd 3, not through open', async () => {
+  const { bundle, opened, received, start, build, lines, stop } = install();
+  start(undefined, { handoff: HANDOFF });
+  await stop();
+  const log = await lines('started');
+  assert.deepEqual(log.slice(-3), [
+    `swapped: ${bundle} is the new build`,
+    `relaunching ${bundle}`,
+    `started ${bundle}/Contents/MacOS/FastStudy with the handoff on fd 3`,
+  ]);
+  assert.equal(await appeared(received), true);
+  assert.equal(fs.readFileSync(received, 'utf8'), HANDOFF);
+  assert.equal(fs.readFileSync(`${received}.fd`, 'utf8').trim(), '3');
+  // The pipe is fd 3 alone: stdin is empty, as it is for an app `open` starts.
+  assert.equal(fs.readFileSync(`${received}.stdin`, 'utf8'), '');
+  assert.equal(build(), 'new');
+  assert.equal(fs.existsSync(opened), false);
+  // Nothing of the handoff reaches the log.
+  assert.equal(log.join('\n').includes('gemini'), false);
+});
+
+test('a failed swap reopens the old build through open and hands nothing over', async () => {
+  const mv = '#!/bin/sh\ncase "$1" in *.app.new) exit 1 ;; esac\nexec /bin/mv "$@"\n';
+  const { bundle, opened, received, start, build, lines, stop } = install({ mv });
+  start(undefined, { handoff: HANDOFF });
+  await stop();
+  const log = await lines('relaunching');
+  assert.deepEqual(log.slice(-2), [
+    'swap failed: restored the previous build',
+    `relaunching ${bundle}`,
+  ]);
+  assert.equal(await appeared(opened), true);
+  assert.equal(build(), 'old');
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  assert.equal(fs.existsSync(received), false);
+});
+
+test('the handoff reaches the helper even when the app exits the instant it has started it', async () => {
+  const { root, bundle, staged, received, lines, stop } = install();
+  await stop();
+  // A process that calls launchHelper and exits at once, as the quit hook's does.
+  const script = `
+    require(${JSON.stringify(path.join(__dirname, '..', 'macUpdate.js'))}).launchHelper({
+      pid: process.pid,
+      bundle: ${JSON.stringify(bundle)},
+      staged: ${JSON.stringify(staged)},
+      logFile: ${JSON.stringify(path.join(root, 'state', 'logs', 'update.log'))},
+      handoff: ${JSON.stringify(HANDOFF)},
+      exe: 'FastStudy',
+    });
+    process.exit(0);
+  `;
+  require('node:child_process').execFileSync(process.execPath, ['-e', script]);
+  await lines('started');
+  assert.equal(await appeared(received), true);
+  assert.equal(fs.readFileSync(received, 'utf8'), HANDOFF);
 });

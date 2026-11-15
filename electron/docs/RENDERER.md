@@ -196,6 +196,7 @@ written from both processes would put two writers on one file.
   the file reads like the settings screen rather than like a service's environment.
 - **The two API keys are `safeStorage` ciphertext**, base64 in the same fields. DPAPI on Windows,
   the platform that ships.
+- **A macOS update re-encrypts all three**, handed over in memory by the build it replaces — see [`UPDATES.md`](UPDATES.md#carrying-the-keys-across).
 - **`token_key` is the same ciphertext, a launcher-made key for `auto`'s token file** — never in `read()`, never to the renderer; see [`BOOT.md`](BOOT.md#the-child-environment).
 - **A stored key never travels to the renderer.** `read()` reports `geminiApiKeySet` /
   `groqApiKeySet` booleans, and nothing else ever returns the value.

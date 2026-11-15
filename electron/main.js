@@ -19,11 +19,18 @@ const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const { reportsOn, sentryEnv, writeSettings } = require('./reports');
 const store = require('./store');
-const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
+const {
+  installPending,
+  startUpdater,
+  updateState,
+  onUpdateState,
+  restartToUpdate,
+} = require('./updater');
 const { exitKind, reapChildren, signalChildren } = require('./teardown');
 const windowState = require('./windowState');
 const { bundlePath } = require('./macUpdate');
 const { offerMove } = require('./macMove');
+const { adoptHandoff: adoptReceived, receive } = require('./macHandoff');
 const { dataFilePath, openDataFileWith, revealDataFile } = require('./dataFiles');
 const {
   registerHost,
@@ -76,6 +83,10 @@ const LOG_TAIL_BYTES = 200_000;
 // The values the scrub reads from env that main holds elsewhere: the secret in a constant, the
 // rest in the settings store.
 const SCRUB_ENV = ['DATA_ROOT', 'GROQ_API_KEY', 'GEMINI_API_KEY'];
+
+// macOS: what the build this one replaced handed over, read and closed before anything is spawned
+// that could inherit the pipe. Null on every launch that is not an update's relaunch (docs/UPDATES.md).
+let handoff = process.platform === 'darwin' ? receive(process.env) : null;
 
 const children = [];
 // In-flight SIGTERM→SIGKILL escalations; every exit path waits on them, or the timer dies with main.
@@ -527,6 +538,22 @@ async function movedToApplications() {
   }
 }
 
+/** An update's relaunch on macOS only: drop the replaced build's Safe Storage item, then re-encrypt
+ *  what it handed over under this build's own. Runs before the first `safeStorage` call, which
+ *  would otherwise ask for the old item; never fails the boot. */
+function adoptHandoff() {
+  if (!handoff) return;
+  const received = handoff;
+  // The plaintext lives no longer than this call.
+  handoff = null;
+  adoptReceived({
+    handoff: received,
+    store,
+    service: `${app.getName()} Safe Storage`,
+    log: (line) => log('main', line),
+  });
+}
+
 /** Ask `auto` to load Playwright now, so the first browser action skips that cost. Fire and forget:
  *  a failure only means the load happens on demand, so it is logged and never surfaced. */
 function warmBrowser() {
@@ -845,6 +872,11 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     openLog();
+    adoptHandoff();
+    // macOS installs a downloaded update here, never on quit, so the new build is started with the
+    // keys (docs/UPDATES.md). Ahead of the move offer: the new build asks that on its own launch.
+    const mac = app.isPackaged && process.platform === 'darwin';
+    if (mac && (await installPending(STATE_DIR, log))) return app.quit();
     // Before anything is registered or spawned against this bundle's path; the moved copy boots instead.
     if (await movedToApplications()) return app.quit();
     serveBundle();
