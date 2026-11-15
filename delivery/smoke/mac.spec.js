@@ -3,6 +3,9 @@ import { abandon } from './lib/app.js';
 import { run, screenshot } from './lib/mac.js';
 import * as paths from './lib/paths.js';
 import { forget, session } from './lib/session.js';
+import quit from './tests/11-quit.js';
+import launcherCrash from './tests/12-launcher-crash.js';
+import backendDeath from './tests/13-backend-death.js';
 import dmgInstall from './tests/mac/01-install.js';
 import signatures from './tests/mac/02-signatures.js';
 import boot from './tests/mac/03-boot.js';
@@ -37,5 +40,9 @@ test('5. the native host answers through the manifest Chrome reads', nativeHost)
 test('6. the zoom browser hides by pid and comes back', zoomHidden);
 test('7. the data folder is chosen and a lecture is ready to render', lectureState);
 test('8. the PDF, for real', pdf);
+test('9. quitting leaves no process or port behind', quit);
+test('10. a backend death leaves no tool behind, and the restart works', backendDeath);
+// Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
+test('11. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('9. the updater swaps a previous build for the candidate and relaunches', update);
+test('12. the updater swaps a previous build for the candidate and relaunches', update);

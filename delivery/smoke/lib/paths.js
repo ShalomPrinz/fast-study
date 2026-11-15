@@ -35,7 +35,8 @@ export const resourcesDir = () =>
 export const binDir = () => path.join(resourcesDir(), 'bin');
 /** A bundled tool's path: `.exe` on Windows only. */
 export const toolPath = (name) => path.join(binDir(), MAC ? name : `${name}.exe`);
-export const servicesExe = () => path.join(resourcesDir(), 'services', 'faststudy-services.exe');
+export const servicesExe = () =>
+  path.join(resourcesDir(), 'services', MAC ? 'faststudy-services' : 'faststudy-services.exe');
 export const formatsDir = () => path.join(resourcesDir(), 'latex', 'formats');
 export const nativeHost = () => path.join(resourcesDir(), 'bridge', 'host.js');
 export const appUpdateYml = () => path.join(resourcesDir(), 'app-update.yml');

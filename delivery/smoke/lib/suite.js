@@ -18,6 +18,7 @@ export const TOOLS = ['ffmpeg', 'pandoc', 'tectonic', 'yt-dlp'];
 export const INSTALL_TIMEOUT_MS = 5 * 60_000;
 
 // What only a Windows run can prove, named in the failure wherever one of them breaks.
+const mac = process.platform === 'darwin';
 export const ASSUMPTION = {
   nsis: 'NSIS /S performs the per-user install with no prompt',
   rename:
@@ -25,8 +26,11 @@ export const ASSUMPTION = {
   updater:
     'electron-updater installs an unsigned build over an unsigned build from a generic provider',
   wholesale: 'an electron-updater install preserves nothing in the install directory',
-  launcherJob:
-    "libuv's kill-on-close job takes main's spawned services with it when main is terminated",
-  backendJob: "the frozen backend's own kill-on-close job takes its tools with it when it dies",
+  launcherJob: mac
+    ? "main's death takes its services with it, though they are spawned detached in their own process groups"
+    : "libuv's kill-on-close job takes main's spawned services with it when main is terminated",
+  backendJob: mac
+    ? "a killed backend's tools die with it, through main's process-group teardown on a child's exit"
+    : "the frozen backend's own kill-on-close job takes its tools with it when it dies",
 };
 export const failed = (assumption) => `assumption failed: ${assumption}`;

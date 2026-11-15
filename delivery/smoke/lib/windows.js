@@ -140,6 +140,14 @@ export async function processesNamed(patterns) {
   return Array.isArray(parsed) ? parsed : [parsed];
 }
 
+/** End one process by pid with no tree walk, as a crash would: `{ code, output }`. */
+export function forceKill(pid) {
+  return runToExit('taskkill', ['/F', '/PID', String(pid)], { timeoutMs: 30_000 });
+}
+
+/** Evidence is a macOS suite artifact; Windows has no run summary to put it in. */
+export const evidence = () => {};
+
 export async function stopProcesses(names) {
   await powershell(
     `Stop-Process -Name ${names.map(psq).join(', ')} -Force -ErrorAction SilentlyContinue`,

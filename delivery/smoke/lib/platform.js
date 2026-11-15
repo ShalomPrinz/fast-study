@@ -20,3 +20,5 @@ export const stopProcesses = need('stopProcesses');
 export const productVersion = need('productVersion');
 export const holdExclusive = need('holdExclusive');
 export const renameAside = need('renameAside');
+export const forceKill = need('forceKill');
+export const evidence = need('evidence');
