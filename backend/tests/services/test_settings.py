@@ -10,8 +10,8 @@ class TestGeminiModel:
         assert settings.gemini_model() == settings.GEMINI_MODELS[0]
 
     def test_a_listed_model_is_kept(self, monkeypatch):
-        monkeypatch.setenv("GEMINI_MODEL", "gemini-3.6-flash")
-        assert settings.gemini_model() == "gemini-3.6-flash"
+        monkeypatch.setenv("GEMINI_MODEL", settings.GEMINI_MODELS[-1])
+        assert settings.gemini_model() == settings.GEMINI_MODELS[-1]
 
     def test_an_unlisted_model_falls_back(self, monkeypatch):
         monkeypatch.setenv("GEMINI_MODEL", "gemini-3.5-flash")
@@ -64,9 +64,9 @@ class TestApplyConfig:
         assert settings.drive_enabled() is True
 
     def test_none_and_unknown_fields_are_ignored(self, monkeypatch):
-        monkeypatch.setenv("GEMINI_MODEL", "gemini-3.6-flash")
+        monkeypatch.setenv("GEMINI_MODEL", settings.GEMINI_MODELS[-1])
         assert settings.apply_config({"gemini_model": None, "nope": "x"}) == []
-        assert settings.gemini_model() == "gemini-3.6-flash"
+        assert settings.gemini_model() == settings.GEMINI_MODELS[-1]
 
 
 class TestAutoRemove:
