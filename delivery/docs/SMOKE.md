@@ -133,7 +133,7 @@ no firewall, since it runs no provider step.
 | 4. ffmpeg          | the source-built ffmpeg cannot run the audio step: `ffmpeg.py`'s prefix and `strip_audio.py`'s arguments, on a tone it encodes itself, must write an MP3 that reads back 16 kHz mono |
 | 5. native host     | the Chrome manifest the running app registered names a script that does not answer one framed `{}` with the live port, secret and extension version |
 | 6. zoom            | the staged `auto`, run on the app binary as node, cannot open its real zoom session or reach `osascript`; the session's browser does not report `NSRunningApplication.hidden`, hides a second browser launched beside it, or does not come back on `show()` |
-| 7. update          | a lower-version build fed the candidate over loopback does not download it, swap the bundle and relaunch it |
+| 7. update          | a lower-version build fed the candidate over loopback does not download it, carry its keys across the swap in memory, or install it only on Restart now or its next launch |
 
 - **Test 6 also holds a flow check.** Hiding the zoom browser and `show()` are `downloader/auto`
   behaviour, kept here because no harness spec can cover them: the harness runs on Linux and
@@ -143,16 +143,30 @@ no firewall, since it runs no provider step.
   secret masked, the zoom states, `update.log` — which the job puts in the run summary and uploads as
   `smoke-mac-logs` on success too. A failed test also screenshots the desktop, since what blocks a
   macOS boot is a system prompt no page shows.
-- **The update is driven as a user's.** The previous zip is unpacked into `/Applications`, its
-  `app-update.yml` pointed at the feed and the bundle re-signed, all before its one launch; Restart
-  now runs over `window.faststudy.updates`. The quitting launch's `launch.log` is kept as it grows,
-  because the relaunch truncates it. The relaunch is the helper's `open`, outside Playwright, so
-  `launch.log` and `update.log` are all the test reads.
-- **`safeStorage` across the update is reported, never asserted.** The ad-hoc signature differs on
-  every build and the Keychain item is tied to it, so test 7 clears the item first, then prints one
-  verdict — `SURVIVED`, `REGENERATED`, `UNAVAILABLE`, `HUNG` or `INCONCLUSIVE` — with `token_key`'s
-  hash before and after, as a warning annotation on the run. Only `HUNG` coincides with a failure,
-  and then because the relaunched app never loaded.
+- **The update is driven as a user's, twice.** The previous zip is unpacked into `/Applications`,
+  its `app-update.yml` pointed at the feed and the bundle re-signed, all before its one launch, which
+  stores two API keys through `window.faststudy.settings.write`. Scenario A runs Restart now over
+  `window.faststudy.updates`; the quitting launch's `launch.log` is kept as it grows, because the
+  new build truncates it. Scenario B quits the previous build plainly after the download, asserts the
+  bundle is still the old version with no `update.log`, then starts the old binary directly (it quits
+  before any window, so Playwright cannot drive it) and reads its `launch.log` as it appears. The
+  helper starts the new build directly with the keys on fd 3, outside Playwright, so `launch.log` and
+  `update.log` are all the test reads there.
+- **Both scenarios assert the key handoff.** `update.log` reads `started <bundle>/Contents/MacOS/FastStudy
+  with the handoff on fd 3`; the new build's `launch.log` reads `handoff: deleted 1 "FastStudy Safe
+  Storage" Keychain item(s)` and `handoff: re-encrypted gemini_api_key, groq_api_key, token_key`, and
+  never the token key's regeneration line. The candidate is then launched under Playwright, where both
+  `…ApiKeySet` flags read true, and exactly one "FastStudy Safe Storage" item remains (counted from
+  `security dump-keychain`, else by deleting it twice: the second exits 44). B adds the old build's
+  `version <v> verified in <n>ms — installing it before this launch` and the new build's `pending
+  update cleared`. The flags show a stored ciphertext, not a decrypt; `token_key` is re-encrypted, so
+  it is not compared.
+- **One verdict per scenario, as a warning annotation.** `ADOPTED`, `KEYCHAIN-PROMPT` (the delete timed
+  out on a prompt, which decides the fallback), `NOT-ADOPTED` (a `handoff not adopted`, `handoff
+  unreadable` or `installing without a key handoff` line), `REGENERATED`, `UNAVAILABLE` (no key store),
+  `HUNG` (the new build never loaded; also what a previous build older than the handoff gives, since
+  its helper uses `open`) or `INCONCLUSIVE`. The line assertions fail on everything but `ADOPTED`.
+  `build.yml` builds the previous version from the same checkout, so it carries the handoff.
 
 ## Re-running against an existing build
 
