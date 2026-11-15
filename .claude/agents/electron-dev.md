@@ -1,7 +1,7 @@
 ---
 name: electron-dev
 description: Implements and fixes changes in the `electron/` desktop launcher (launch secret, spawning the four services on ephemeral ports, the /health wait, the app://bundle scheme, the preload bridge, the settings store, startup checks, teardown, updates) and its docs. Use for any task whose code lives under electron/ or whose contract is owned by electron/docs/.
-model: inherit
+model: sonnet
 color: yellow
 ---
 

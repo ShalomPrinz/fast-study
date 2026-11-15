@@ -1,7 +1,7 @@
 ---
 name: delivery-dev
 description: Implements and fixes changes in `delivery/` and `.github/workflows/{build,publish,smoke,smoke-suite}.yml` — the build-only inputs that turn the repo into a Windows installer and prove it (the PyInstaller spec and entry point, the tectonic cache prime, stage.mjs's packaged-tree assembly, the release smoke suite, the build → smoke → publish workflows) — and their docs. Use for any task whose files live there or whose contract is owned by delivery/docs/.
-model: inherit
+model: sonnet
 color: orange
 ---
 
