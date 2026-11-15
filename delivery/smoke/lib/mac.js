@@ -188,6 +188,18 @@ export async function stopProcesses(names) {
   for (const name of names) await run('/usr/bin/pkill', ['-KILL', '-x', name]);
 }
 
+/** Rename `dir` to a sibling the caller restores, answering the new path. A directory entry rename
+ *  needs write on the parent; App Management (TCC) may still refuse it for a signed `.app`, which throws here. */
+export async function renameAside(dir) {
+  const aside = `${dir}.faststudy-smoke`;
+  try {
+    fs.renameSync(dir, aside);
+  } catch (error) {
+    throw new Error(`could not rename ${dir} aside: ${error.message}`);
+  }
+  return aside;
+}
+
 /** SIGKILL one process by pid, in the shape of `lib/windows.js`'s: exit code 0 on success. */
 export async function forceKill(pid) {
   try {

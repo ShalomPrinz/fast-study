@@ -1,11 +1,13 @@
 import { test } from '@playwright/test';
 import { abandon } from './lib/app.js';
+import { restoreBrowsers } from './lib/browsers.js';
 import { run, screenshot } from './lib/mac.js';
 import * as paths from './lib/paths.js';
 import { forget, session } from './lib/session.js';
 import quit from './tests/11-quit.js';
 import launcherCrash from './tests/12-launcher-crash.js';
 import backendDeath from './tests/13-backend-death.js';
+import browserChain from './tests/mac/14-browser-chain.js';
 import dmgInstall from './tests/mac/01-install.js';
 import signatures from './tests/mac/02-signatures.js';
 import boot from './tests/mac/03-boot.js';
@@ -32,6 +34,7 @@ test.afterEach(async ({}, testInfo) => {
 test.afterAll(async () => {
   await abandon(session);
   forget();
+  restoreBrowsers();
   await run('/usr/bin/pkill', ['-KILL', '-f', paths.macBundle()]);
 });
 
@@ -53,7 +56,8 @@ test('11. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlp);
 test('12. quitting leaves no process or port behind', quit);
 test('13. a backend death leaves no tool behind, and the restart works', backendDeath);
 test('14. every Mach-O links only inside the bundle or the system', linkage);
+test('15. the browser chain, both ends', browserChain);
 // Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
-test('15. a launcher crash leaves no service or tool behind', launcherCrash);
+test('16. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('16. the updater swaps a previous build for the candidate and relaunches', update);
+test('17. the updater swaps a previous build for the candidate and relaunches', update);
