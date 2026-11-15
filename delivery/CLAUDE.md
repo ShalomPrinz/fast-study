@@ -2,7 +2,7 @@
 
 Build-time inputs that turn the repo into a Windows installer and a macOS arm64 app and prove both. Nothing here ships or
 runs at runtime, and no dev command touches it. Owned by `delivery-dev`, together with
-`.github/workflows/{build,publish,smoke,smoke-suite}.yml`: `smoke-suite.yml` is the smoke job both
+`.github/workflows/{build,publish,smoke,smoke-suite}.yml`: `smoke-suite.yml` holds the `smoke-win` and `smoke-mac` jobs both
 `build.yml` and the dispatch-only `smoke.yml` call — a Windows job and a macOS job — the latter on an
 earlier run's installers.
 

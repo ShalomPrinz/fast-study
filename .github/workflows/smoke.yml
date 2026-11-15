@@ -46,7 +46,7 @@ jobs:
             exit 1
           fi
           # The build jobs alone, since the run that needs a retry usually failed in smoke.
-          for job in build build-mac; do
+          for job in build-win build-mac; do
             build=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/jobs" --jq "[.jobs[] | select(.name == \"$job\")][0].conclusion // empty")
             if [ "$build" != success ]; then
               echo "::error::run $RUN_ID's $job job is ${build:-missing}, not success; dispatch build.yml on this ref instead"

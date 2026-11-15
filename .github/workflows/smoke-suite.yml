@@ -17,7 +17,7 @@ on:
 jobs:
   # A fresh runner, so the install is a first install. It installs and tests the uploaded artifact,
   # which is byte for byte what publish.yml releases — and only a run this job passed counts as green.
-  smoke:
+  smoke-win:
     if: inputs.target != 'mac'
     runs-on: windows-latest
     timeout-minutes: 150

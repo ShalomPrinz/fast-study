@@ -1,7 +1,7 @@
 # The release smoke suite
 
 `smoke/` is `@playwright/test` driving the installed exe through `_electron`, run by `smoke-suite.yml`
-against the uploaded installer — as `build.yml`'s smoke job, or by `smoke.yml` against an earlier run's
+against the uploaded installer — as `build.yml`'s `smoke-win` job, or by `smoke.yml` against an earlier run's
 ([RELEASE.md](RELEASE.md#build-test-publish)). One ordered
 file on one worker, since each check builds on the machine state the last one left: install, the
 installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, quit, a launcher crash, a backend death and restart, the tools under a Hebrew temp

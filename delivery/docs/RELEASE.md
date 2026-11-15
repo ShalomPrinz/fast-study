@@ -2,10 +2,9 @@
 
 ## The installer
 
-One unsigned per-user NSIS `.exe`, built by `.github/workflows/build.yml` on `windows-latest` in
+One unsigned per-user NSIS `.exe`, built by `.github/workflows/build.yml`'s `build-win` job on `windows-latest` in
 under 10 minutes — most of it the LaTeX prime, the freeze and the two installer builds — before the
-smoke job. The prime is network-bound, so it starts first — tectonic and pandoc download ahead of the
-GitHub API version steps — and runs in the background beside the freeze and the frontend build; a
+smoke job. The prime is network-bound, so it starts first, and runs in the background beside the freeze and the frontend build; a
 wait step collects its log and exit code before staging. It tops up a cache restored by exact key
 and always runs; only a passed wait saves it ([LATEX.md](LATEX.md#across-runs)). The installer's own
 configuration (one-click, per-user, the install directory) is electron's:
@@ -28,8 +27,8 @@ Mach-O inside it, each native one (`MacOS/`, `bin/`, `services/`) carrying an ar
 Mac with Rosetta runs an x86_64 one, a user's Mac may have none. Everything is staged before `npm run dist:mac`, which seals
 the bundle; a file changed afterwards breaks the signature.
 
-It runs after `build` only to read its outputs — the app version, the previous version and the
-extension version — so both platforms ship one version and `extension-version.txt` stays one file.
+Both builds `need` the small `version` job (ubuntu) and nothing else: it reads the app version, the previous version and the
+extension version once, so both platforms ship one version and `extension-version.txt` stays one file, and neither build waits on the other.
 The frontend is built again there with the same inputs, the freeze uses PyInstaller's stock
 bootloader (the Windows job compiles its own only for Defender), and the LaTeX cache is primed on
 the runner under its own key ([LATEX.md](LATEX.md#across-runs)). Its summary lists the measured size of the dmg, the
@@ -51,14 +50,14 @@ Two workflows, neither taking an input, and a third that only re-tests
   `installer-mac-previous` (a lower version's zip and `latest-mac.yml`) the same way. Each build
   fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
   smoke job rewrites that file, so it cannot check it. The smoke job — `smoke-suite.yml`, called as
-  `smoke / smoke` — installs the artifact on a fresh runner and runs
+  `smoke / smoke-win` — installs the artifact on a fresh runner and runs
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
-  the outcome `boot-timing` (90 days). `smoke-mac / smoke-mac` is the same workflow's macOS job on
+  the outcome `boot-timing` (90 days). `smoke / smoke-mac` is the same workflow's macOS job on
   `installer-mac` ([SMOKE.md](SMOKE.md#the-macos-suite)), uploading `smoke-mac-logs` whatever the
   outcome and `smoke-mac-traces` on failure; `build.yml` calls the workflow once per platform
-  (`target`), so neither smoke waits on the other platform's build. The run is
-  green only when all four jobs pass. It writes nothing to Releases. A branch run's artifact never
+  (`target`), so the lanes build-win → smoke-win and build-mac → smoke-mac run in parallel and neither waits on the other. The run is
+  green only when `version` and both lanes' jobs pass. It writes nothing to Releases. A branch run's artifact never
   reaches a Release: publish.yml takes only `main`'s runs, so a commit fast-forwarded from a branch
   releases once `main`'s own `build.yml` run of it is green.
 - **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It first walks back
@@ -81,7 +80,7 @@ the launcher's side is [`electron/docs/UPDATES.md`](../../electron/docs/UPDATES.
 and smoke-tests a fresh one.
 
 A branch other than `main` or `claude/**` builds only on dispatch:
-`gh workflow run build.yml --ref <branch>` runs all four jobs at that branch's workflow files and
+`gh workflow run build.yml --ref <branch>` runs all five jobs at that branch's workflow files and
 publishes nothing, since `publish.yml` reads `main`'s runs only.
 
 ### Re-running smoke
@@ -89,7 +88,7 @@ publishes nothing, since `publish.yml` reads `main`'s runs only.
 `smoke.yml`, dispatch only, runs `smoke-suite.yml` at the dispatched ref against the installers of
 the `build.yml` run named by its required `run-id`, so a fix to `smoke/` is retried without the
 ~8 minute build. A guard job first refuses, naming the fix, a run that is not `build.yml`'s, whose
-`build` or `build-mac` job did not succeed (the run itself may have failed in smoke), or one of whose
+`build-win` or `build-mac` job did not succeed (the run itself may have failed in smoke), or one of whose
 four installer artifacts has expired — and any run whose commit's tree differs from the ref's outside
 `delivery/smoke/`, listing the differing paths. Tree equality, not ancestry: nothing under
 `delivery/smoke/` reaches the installer, so only then is the old installer the app this ref builds;

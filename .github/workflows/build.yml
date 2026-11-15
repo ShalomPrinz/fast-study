@@ -31,11 +31,11 @@ env:
   STAGE: delivery/stage
 
 jobs:
-  build:
-    runs-on: windows-latest
+  # The versions both builds stamp, read once so neither build waits on the other.
+  version:
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
-    # build-mac ships the same app version and the same extension version, so it reads both here.
     outputs:
       version: ${{ steps.version.outputs.version }}
       previous: ${{ steps.version.outputs.previous }}
@@ -47,63 +47,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v7
-
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-
-      # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
-      # curl is the one exception and ships with Windows, so it is not here.
-      # The prime's two come first so it starts ahead of the GitHub API steps.
-      # The msvc tectonic build, never gnu: the gnu binary imports six MinGW DLLs its own zip does
-      # not contain.
-      - name: Download tectonic and pandoc
-        run: |
-          mkdir -p "$STAGE/bin" downloads
-          base=https://github.com
-          curl -fsSL --retry 5 --retry-delay 10 -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
-          curl -fsSL --retry 5 --retry-delay 10 -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
-          for zip in tectonic pandoc; do 7z x -y -o"downloads/$zip" "downloads/$zip.zip" > /dev/null; done
-          cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
-          cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
-
-      # Exact key over every prime input, no restore-keys — delivery/docs/LATEX.md#across-runs.
-      - name: Restore the LaTeX cache
-        id: latex-cache
-        uses: actions/cache/restore@v5
-        with:
-          path: ${{ env.STAGE }}/latex
-          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/probe.pdf', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/pipeline/pdf/**', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
-
-      # Network-bound, ~7.5 minutes cold; over a restored cache a top-up, run anyway as the strict proof.
-      # tectonic fetches each LaTeX package on first use and the shipped app renders --only-cached,
-      # so anything missing here is an unfixable failed render on a user's machine. It runs in the
-      # background beside the CPU-bound freeze and frontend build, writing its exit code to a file
-      # last, since a later step's shell cannot `wait` on it.
-      # The foreground sync keeps the freeze's own `uv run` off a .venv still being built.
-      - name: Start the LaTeX cache prime
-        working-directory: backend
-        env:
-          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
-          CACHE_HIT: ${{ steps.latex-cache.outputs.cache-hit }}
-        run: |
-          echo "LaTeX cache hit: ${CACHE_HIT:-false}, $(find "../$STAGE/latex" -type f 2>/dev/null | wc -l) files restored"
-          uv sync
-          nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
-          echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
-
-      # Nothing spawns ffprobe, so the ffmpeg zip's second binary — 105MB unpacked — stays behind.
-      - name: Download ffmpeg and yt-dlp
-        run: |
-          base=https://github.com
-          curl -fsSL --retry 5 --retry-delay 10 -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
-          # Unpinned on purpose: yt-dlp rots as YouTube changes signatures, so a build ships the
-          # newest one and the app self-updates from there.
-          curl -fsSL --retry 5 --retry-delay 10 -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
-          7z x -y -o"downloads/ffmpeg" "downloads/ffmpeg.zip" > /dev/null
-          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
-          ls -l "$STAGE/bin"
 
       # The tag, the installer's file name and what app.getVersion() reports; the update check's
       # second installer needs any version below it, so this refuses a version with nothing below.
@@ -159,6 +105,75 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "shipping extension $version against ${latest:-no previous release}"
 
+  build-win:
+    needs: version
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
+      # curl is the one exception and ships with Windows, so it is not here.
+      # The msvc tectonic build, never gnu: the gnu binary imports six MinGW DLLs its own zip does
+      # not contain.
+      - name: Download tectonic and pandoc
+        run: |
+          mkdir -p "$STAGE/bin" downloads
+          base=https://github.com
+          curl -fsSL --retry 5 --retry-delay 10 -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
+          curl -fsSL --retry 5 --retry-delay 10 -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
+          for zip in tectonic pandoc; do 7z x -y -o"downloads/$zip" "downloads/$zip.zip" > /dev/null; done
+          cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
+          cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
+
+      # Exact key over every prime input, no restore-keys — delivery/docs/LATEX.md#across-runs.
+      - name: Restore the LaTeX cache
+        id: latex-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.STAGE }}/latex
+          key: latex-${{ runner.os }}-tectonic${{ env.TECTONIC_VERSION }}-pandoc${{ env.PANDOC_VERSION }}-${{ hashFiles('delivery/prime_cache.py', 'delivery/kitchen-sink.md', 'delivery/probe.png', 'delivery/probe.pdf', 'delivery/cache-supplement.txt', 'backend/pipeline/to_pdf.py', 'backend/pipeline/pdf/**', 'backend/assets/templates/**', 'backend/assets/filters/**', 'backend/assets/fonts/**') }}
+
+      # Network-bound, ~7.5 minutes cold; over a restored cache a top-up, run anyway as the strict proof.
+      # tectonic fetches each LaTeX package on first use and the shipped app renders --only-cached,
+      # so anything missing here is an unfixable failed render on a user's machine. It runs in the
+      # background beside the CPU-bound freeze and frontend build, writing its exit code to a file
+      # last, since a later step's shell cannot `wait` on it.
+      # The foreground sync keeps the freeze's own `uv run` off a .venv still being built.
+      - name: Start the LaTeX cache prime
+        working-directory: backend
+        env:
+          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
+          CACHE_HIT: ${{ steps.latex-cache.outputs.cache-hit }}
+        run: |
+          echo "LaTeX cache hit: ${CACHE_HIT:-false}, $(find "../$STAGE/latex" -type f 2>/dev/null | wc -l) files restored"
+          uv sync
+          nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
+          echo "prime started as pid $!, logging to $RUNNER_TEMP/prime.log"
+
+      # Nothing spawns ffprobe, so the ffmpeg zip's second binary — 105MB unpacked — stays behind.
+      - name: Download ffmpeg and yt-dlp
+        run: |
+          base=https://github.com
+          curl -fsSL --retry 5 --retry-delay 10 -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
+          # Unpinned on purpose: yt-dlp rots as YouTube changes signatures, so a build ships the
+          # newest one and the app self-updates from there.
+          curl -fsSL --retry 5 --retry-delay 10 -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+          7z x -y -o"downloads/ffmpeg" "downloads/ffmpeg.zip" > /dev/null
+          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
+          ls -l "$STAGE/bin"
+
       # The one build input that is not committed: it is gitignored so the client secret never
       # faces GitHub's secret scanning. Required — an installer without it cannot connect Drive.
       - name: Write credentials.json
@@ -198,7 +213,7 @@ jobs:
       - name: Build the frontend
         working-directory: frontend
         env:
-          FASTSTUDY_VERSION: ${{ steps.version.outputs.version }}
+          FASTSTUDY_VERSION: ${{ needs.version.outputs.version }}
           SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           VITE_SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
@@ -236,7 +251,7 @@ jobs:
           key: ${{ steps.latex-cache.outputs.cache-primary-key }}
 
       - name: Assemble the resources tree
-        run: node delivery/stage.mjs "$STAGE" "${{ steps.extension.outputs.version }}"
+        run: node delivery/stage.mjs "$STAGE" "${{ needs.version.outputs.extension }}"
 
       # `dist` lives in electron/package.json with the publish block that writes app-update.yml and
       # latest.yml; --publish never is in the script, so this step can upload nothing.
@@ -249,12 +264,12 @@ jobs:
         run: |
           dsn=()
           [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
-          npm ci && npm run dist -- "-c.extraMetadata.version=${{ steps.version.outputs.version }}" "${dsn[@]}"
+          npm ci && npm run dist -- "-c.extraMetadata.version=${{ needs.version.outputs.version }}" "${dsn[@]}"
 
       # Rides in the installer artifact so publish.yml records it on the Release, where the next
       # build's extension version step reads it back.
       - name: Record the extension version
-        run: printf '%s\n' "${{ steps.extension.outputs.version }}" > electron/dist/extension-version.txt
+        run: printf '%s\n' "${{ needs.version.outputs.extension }}" > electron/dist/extension-version.txt
 
       # The smoke job rewrites app-update.yml to a loopback feed, so this is the only check that the
       # shipped copy points installed apps at this repo's Releases.
@@ -275,7 +290,7 @@ jobs:
         run: |
           dsn=()
           [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
-          npm run dist -- "-c.extraMetadata.version=${{ steps.version.outputs.previous }}" -c.directories.output=dist/previous "${dsn[@]}"
+          npm run dist -- "-c.extraMetadata.version=${{ needs.version.outputs.previous }}" -c.directories.output=dist/previous "${dsn[@]}"
 
       - uses: actions/upload-artifact@v6
         with:
@@ -300,9 +315,9 @@ jobs:
           if-no-files-found: error
 
   # The macOS arm64 app: the same staged tree with darwin tools, ad-hoc signed — never notarized.
-  # After `build` only for its version outputs; every step traces (`set -x`) since no Mac can rerun one.
+  # Independent of build-win; every step traces (`set -x`) since no Mac can rerun one.
   build-mac:
-    needs: build
+    needs: version
     runs-on: macos-15
     timeout-minutes: 90
     permissions:
@@ -463,7 +478,7 @@ jobs:
       - name: Build the frontend
         working-directory: frontend
         env:
-          FASTSTUDY_VERSION: ${{ needs.build.outputs.version }}
+          FASTSTUDY_VERSION: ${{ needs.version.outputs.version }}
           SENTRY_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.SENTRY_AUTH_TOKEN || '' }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           VITE_SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
@@ -494,7 +509,7 @@ jobs:
       - name: Assemble the resources tree
         run: |
           set -eux
-          node delivery/stage.mjs "$STAGE" "${{ needs.build.outputs.extension }}"
+          node delivery/stage.mjs "$STAGE" "${{ needs.version.outputs.extension }}"
           du -sh "$STAGE"/* "$STAGE"/bin/*
 
       # Everything is staged before this: electron-builder seals the bundle, so a file changed
@@ -507,7 +522,7 @@ jobs:
           set -eu
           dsn=()
           [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
-          npm run dist:mac -- "-c.extraMetadata.version=${{ needs.build.outputs.version }}" ${dsn[@]+"${dsn[@]}"}
+          npm run dist:mac -- "-c.extraMetadata.version=${{ needs.version.outputs.version }}" ${dsn[@]+"${dsn[@]}"}
           ls -l dist
           cat dist/latest-mac.yml
 
@@ -520,7 +535,7 @@ jobs:
           for file in FastStudy-mac-arm64.dmg FastStudy-mac-arm64.zip latest-mac.yml; do
             [ -f "electron/dist/$file" ] || { echo "::error::electron-builder wrote no dist/$file"; ls -l electron/dist; exit 1; }
           done
-          grep -qx "version: ${{ needs.build.outputs.version }}" electron/dist/latest-mac.yml
+          grep -qx "version: ${{ needs.version.outputs.version }}" electron/dist/latest-mac.yml
           grep -q 'FastStudy-mac-arm64\.zip' electron/dist/latest-mac.yml
           yml="$APP/Contents/Resources/app-update.yml"
           [ -f "$yml" ] || { echo "::error::electron-builder wrote no $yml"; exit 1; }
@@ -577,7 +592,7 @@ jobs:
           set -eu
           dsn=()
           [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
-          npm run dist:mac -- "-c.extraMetadata.version=${{ needs.build.outputs.previous }}" -c.directories.output=dist/previous ${dsn[@]+"${dsn[@]}"}
+          npm run dist:mac -- "-c.extraMetadata.version=${{ needs.version.outputs.previous }}" -c.directories.output=dist/previous ${dsn[@]+"${dsn[@]}"}
           ls -l dist/previous
 
       # The zip's blockmap stays behind: the macOS updater downloads the zip whole.
@@ -600,9 +615,10 @@ jobs:
           if-no-files-found: error
 
   # The smoke jobs, in smoke-suite.yml so smoke.yml can re-run them on this run's builds. Two calls,
-  # so neither platform's smoke waits on the other's build.
-  smoke:
-    needs: build
+  # so neither platform's smoke waits on the other's build; both show as `smoke / <id>`.
+  smoke-win:
+    name: smoke
+    needs: build-win
     permissions:
       actions: read
       contents: read
@@ -611,6 +627,7 @@ jobs:
       target: windows
 
   smoke-mac:
+    name: smoke
     needs: build-mac
     permissions:
       actions: read
