@@ -1,4 +1,4 @@
-const fs = require('node:fs');
+const fs = require('./appFs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
 

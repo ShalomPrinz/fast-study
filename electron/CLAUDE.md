@@ -19,6 +19,7 @@ everything on quit.
 | `updatePhases.js` | Mapping updater events to the phases the launch screen shows (pure, tested)   |
 | `macUpdate.js` | The macOS install step — the verified download, the staged bundle, the swap helper |
 | `macPending.js` | The staged macOS update's record across a quit — its tree digest, the launch-time install decision |
+| `appFs.js` | `fs` for any `.app` tree — `original-fs` inside Electron, since the patched `fs` reads `app.asar` as a directory |
 | `macHandoff.js` | The keys' way across a macOS update — the framing, the inherited pipe, the Safe Storage delete |
 | `macMove.js` | The macOS offer to move into an Applications folder at launch — the copy, the relaunch helper |
 | `extension.js` | The browser extension's shipped copy, the bridge file, the native host's registration |

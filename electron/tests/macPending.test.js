@@ -91,3 +91,28 @@ test('the tree digest is stable and moves with content, mode, a link target and 
   }
   await assert.rejects(treeDigest(path.join(app, 'missing')), /ENOENT/);
 });
+
+test('appFs picks original-fs only inside Electron', () => {
+  const load = (electron) => {
+    const saved = process.versions.electron;
+    if (electron) process.versions.electron = '1';
+    delete require.cache[require.resolve('../appFs')];
+    try {
+      return require('../appFs');
+    } finally {
+      if (saved === undefined) delete process.versions.electron;
+      else process.versions.electron = saved;
+      delete require.cache[require.resolve('../appFs')];
+    }
+  };
+  assert.equal(load(false), fs);
+  const Module = require('node:module');
+  const orig = Module._load;
+  Module._load = (request, ...rest) =>
+    request === 'original-fs' ? { marker: true } : orig(request, ...rest);
+  try {
+    assert.deepEqual(load(true), { marker: true });
+  } finally {
+    Module._load = orig;
+  }
+});

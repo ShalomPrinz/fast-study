@@ -1,4 +1,4 @@
-const fs = require('node:fs');
+const fs = require('./appFs');
 const path = require('node:path');
 const { app } = require('electron');
 // Safe at module scope: `autoUpdater` is a lazy getter that builds the platform updater on first
