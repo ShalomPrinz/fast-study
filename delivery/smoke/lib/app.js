@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { _electron as electron } from '@playwright/test';
 import { appExe, launchLog, resultsDir } from './paths.js';
+import { offlineAppLauncher } from './platform.js';
 
 const BOOT_TIMEOUT_MS = 180_000;
 let launches = 0;
@@ -18,7 +19,8 @@ export async function launch(env = {}) {
   let app;
   try {
     app = await electron.launch({
-      executablePath: appExe(),
+      // On macOS the app starts under the offline group, as the premise check proved.
+      executablePath: process.platform === 'darwin' ? offlineAppLauncher() : appExe(),
       args: ['--lang=en-US'],
       // Playwright's `env` replaces the environment rather than extending it.
       env: { ...process.env, ...env },

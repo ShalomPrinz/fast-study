@@ -57,6 +57,36 @@ jobs:
         working-directory: delivery/smoke
         run: npm ci --no-audit --no-fund
 
+      # Offline at the OS: pf blocks outbound TCP/UDP for primary group no_inet, loopback skipped. The suite
+      # runs the app as the runner under that group, so the runner's own traffic keeps its staff gid.
+      - name: Keep the app offline
+        run: |
+          set -eux
+          user="$(id -un)"
+          sudo dseditgroup -o create no_inet
+          dscl . -read /Groups/no_inet PrimaryGroupID
+          # sudo refuses -g unless the runas spec names the group, and -E needs SETENV.
+          printf '%s\n' \
+            "$user ALL=($user : no_inet) NOPASSWD: SETENV: ALL" \
+            "Defaults:$user !use_pty" | sudo tee /etc/sudoers.d/faststudy-smoke
+          sudo chmod 440 /etc/sudoers.d/faststudy-smoke
+          sudo visudo -cf /etc/sudoers.d/faststudy-smoke
+          sudo tee /etc/pf.anchors/faststudy >/dev/null <<'RULES'
+          block return out quick proto { tcp udp } from any to any group no_inet
+          RULES
+          # `set skip on lo0` keeps 127.0.0.1 IPC out of every rule below it.
+          { echo 'set skip on lo0'; cat /etc/pf.conf
+            echo 'anchor "faststudy"'
+            echo 'load anchor "faststudy" from "/etc/pf.anchors/faststudy"'; } | sudo tee /etc/pf.faststudy.conf >/dev/null
+          sudo pfctl -nf /etc/pf.faststudy.conf
+          sudo pfctl -f /etc/pf.faststudy.conf
+          sudo pfctl -E
+          sudo pfctl -s info | head -3
+          sudo pfctl -a faststudy -sr
+          sudo -n -u "$user" -g no_inet -- id
+          # The runner itself must still reach the internet.
+          curl -sS -m 20 -o /dev/null -w 'runner -> github.com: %{http_code}\n' https://github.com/
+
       - name: Run the macOS smoke suite
         working-directory: delivery/smoke
         env:

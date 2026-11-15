@@ -9,6 +9,7 @@ const need = (name) =>
   });
 
 export const runToExit = need('runToExit');
+export const offlineAppLauncher = need('offlineAppLauncher');
 export const enableFirewall = need('enableFirewall');
 export const blockOutbound = need('blockOutbound');
 export const strayProcesses = need('strayProcesses');

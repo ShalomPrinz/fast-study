@@ -4,7 +4,7 @@ import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { readLaunchLog } from '../../lib/app.js';
 import { serveFiles } from '../../lib/fileServer.js';
-import { evidence, run, screenshot, shown } from '../../lib/mac.js';
+import { evidence, offlineArgv, run, screenshot, shown } from '../../lib/mac.js';
 import * as paths from '../../lib/paths.js';
 import { forget, session, start, stop } from '../../lib/session.js';
 import { pointUpdaterAt } from '../../lib/updateServer.js';
@@ -352,7 +352,10 @@ async function scenarioQuitThenRelaunch({ candidate, previous, bundle }) {
 
   // The old build quits before any window, so Playwright cannot drive this launch.
   const staleFirstLine = readLaunchLog().split('\n')[0];
-  const old = spawn(paths.appExe(), ['--lang=en-US'], { detached: true, stdio: 'ignore' });
+  const old = spawn(...offlineArgv(paths.appExe(), ['--lang=en-US']), {
+    detached: true,
+    stdio: 'ignore',
+  });
   old.unref();
   // Lines open with a timestamp, and the log still holds this build's earlier Playwright launch.
   const oldVersion = `FastStudy ${previous.version} `;

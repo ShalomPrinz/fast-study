@@ -125,11 +125,11 @@ A new smoke test adds its row here, its file under `tests/` and its line in `rel
 `mac.spec.js`, run by `smoke-suite-mac.yml`'s `smoke-mac` job with `playwright.mac.config.js`, holds
 only what is Mac-specific; everything above stays Windows-only. Its bodies are `tests/mac/`, and
 `lib/paths.js` answers the bundle's and the state root's macOS paths to the shared `lib/`. It sets up
-no firewall, since it runs no provider step.
+no firewall of its own; the OS keeps it offline, below.
 
 | Test               | The failure it catches — only the macOS packaging can cause it, test 6 aside                                                            |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- |
-| 1. dmg install     | the dmg does not mount or holds no `FastStudy.app`; a tool lost its exec bit; the bundle is another version |
+| 1. dmg install     | the dmg does not mount or holds no `FastStudy.app`; a tool lost its exec bit; the bundle is another version; the run is not offline (its premise check, below) |
 | 2. signatures      | the bundle's seal, or any Mach-O inside it, fails `codesign --verify`; a native one has no arm64 slice     |
 | 3. boot and tools  | a service does not come up from the bundle; `GET /tools` reports a darwin tool unusable                    |
 | 4. ffmpeg          | the source-built ffmpeg cannot run the audio step: `ffmpeg.py`'s prefix and `strip_audio.py`'s arguments, on a tone it encodes itself, must write an MP3 that reads back 16 kHz mono |
@@ -140,6 +140,18 @@ no firewall, since it runs no provider step.
 - **Test 6 also holds a flow check.** Hiding the zoom browser and `show()` are `downloader/auto`
   behaviour, kept here because no harness spec can cover them: the harness runs on Linux and
   `auto`'s unit tests fake the `osascript` call. Its packaging fact is the first clause alone.
+- **Offline at the OS, by group.** `smoke-suite-mac.yml` creates group `no_inet` and loads a pf anchor,
+  `block return out quick proto { tcp udp } from any to any group no_inet`, under a main ruleset
+  that opens with `set skip on lo0`. Every suite-driven launch of the app, every `ELECTRON_RUN_AS_NODE` probe and
+  the zoom probe runs through `sudo -u <runner> -g no_inet` (`lib/mac.js`'s `offlineArgv`; Playwright's
+  `executablePath` is a generated script that bakes it in), so the services and tools inherit the
+  gid while the runner's own traffic (checkout, uploads) stays staff. Test 1 ends with the premise
+  check, `lib/offline.js`: as the app, loopback answers and `https://github.com/` fails to connect
+  (DNS still resolves, through `mDNSResponder`), while the runner reaches it. A GID, not a UID: a
+  second user would leave the Aqua/WindowServer session a `BrowserWindow` needs. Not `sandbox-exec`:
+  Seatbelt forbids a nested `sandbox_init`, which Chromium's own sandbox makes.
+  Known gap: the updater helper relaunches the new build with `open "$app"` (`electron/macUpdate.js`), so
+  that build runs under the runner's normal group and is online.
 - **Evidence is written, not only asserted.** Each test appends what it observed to
   `test-results/mac-evidence.md` — the `codesign` output, `/tools`, the native host's reply with the
   secret masked, the zoom states, `update.log` — which the job puts in the run summary and uploads as
@@ -191,7 +203,12 @@ value it cannot read is `null` with a warning, never a failure.
 
 ## Unproven until a macOS run
 
-Playwright's `_electron` driving the bundle's binary; the runner's default keychain being unlocked
+That pf's `group` match reads the socket owner's effective gid and the services and tools inherit the
+`sudo -g` primary gid; that `block return` fails a connect fast; that sudo's `-E` and the drop-in
+carry the app's environment and that a user cannot signal the root-owned `sudo` parent (quit goes
+through the window; the hooks `pkill` the bundle), so a timed-out probe's group kill reaches the app only
+because sudo without a pty keeps it in sudo's own process group; that the Playwright-launched app still gets its
+Aqua session under sudo; Playwright's `_electron` driving the bundle's binary; the runner's default keychain being unlocked
 for `safeStorage`; Chrome or Edge in `/Applications` and a GUI session `NSRunningApplication` can
 read; `/Applications` being writable to the runner's user, which the updater's stage step requires.
 

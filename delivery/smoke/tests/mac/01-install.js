@@ -1,7 +1,9 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { expect } from '@playwright/test';
-import { evidence, run, shown } from '../../lib/mac.js';
+import { proveOfflineEnforcement } from '../../lib/offline.js';
+import { OFFLINE_GROUP, evidence, offlineArgv, run, shown } from '../../lib/mac.js';
 import * as paths from '../../lib/paths.js';
 
 export default async function dmgInstall() {
@@ -46,4 +48,42 @@ export default async function dmgInstall() {
     fs.accessSync(path.join(paths.binDir(), tool), fs.constants.X_OK);
   }
   fs.accessSync(paths.appExe(), fs.constants.X_OK);
+
+  await proveOffline();
+}
+
+// The run's premise, checked before any test depends on it: loopback reaches, nothing else does.
+async function proveOffline() {
+  const as = (file, args) => shown(...offlineArgv(file, args));
+  const identity = await as('/usr/bin/id', ['-un']);
+  const group = await as('/usr/bin/id', ['-gn']);
+  const rules = await shown('/usr/bin/sudo', ['-n', '/sbin/pfctl', '-a', 'faststudy', '-sr']);
+  expect(
+    [identity.text, group.text].join('\n'),
+    `assumption failed: sudo -u <runner> -g ${OFFLINE_GROUP} does not run the command as the runner under that primary group (sudoers drop-in missing?)`,
+  ).toMatch(new RegExp(`${os.userInfo().username}[\\s\\S]*${OFFLINE_GROUP}`));
+
+  // A grandchild: the group must survive a shell's own spawn, as the services' tools do.
+  const child = await as('/bin/sh', [
+    '-c',
+    "/usr/bin/curl -sS -m 20 -o /dev/null -w '%{http_code}' https://github.com/",
+  ]);
+  let seen;
+  try {
+    seen = await proveOfflineEnforcement();
+  } finally {
+    evidence(
+      '1. offline premise (pf group rule)',
+      [identity.text, group.text, rules.text, child.text].join('\n'),
+    );
+  }
+  evidence(
+    '1. offline premise: what each probe saw',
+    [
+      `app as node, loopback:  ${seen.loopback}`,
+      `runner, github.com:     ${seen.unblocked}`,
+      `app as node, github.com: ${seen.blocked}`,
+    ].join('\n'),
+  );
+  expect(child.code, `a child of the offline app reached github.com: ${child.text}`).not.toBe(0);
 }

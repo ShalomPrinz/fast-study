@@ -4,6 +4,8 @@ import path from 'node:path';
 import { appExe, workDir } from './paths.js';
 import { runToExit } from './platform.js';
 
+const MAC = process.platform === 'darwin';
+
 // Run by the installed FastStudy.exe as node, so the request leaves through the program the
 // outbound rule names. One line out: the status, or the error the connect died on.
 const PROBE = `
@@ -23,21 +25,27 @@ async function fetchAsApp(url) {
   const { output } = await runToExit(appExe(), [script, url], {
     timeoutMs: 60_000,
     env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+    offline: true,
   });
   return output.trim();
 }
 
 /** Prove the two facts the offline run rests on, each failing under its own name: a program the
- *  rules block still reaches loopback, and it reaches nothing else. */
+ *  rules block still reaches loopback, and it reaches nothing else. Answers what each probe saw. */
 export async function proveOfflineEnforcement() {
+  const program = MAC ? 'the app run under group no_inet' : 'the blocked FastStudy.exe';
   const server = http.createServer((req, res) => res.end('ok'));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  let loopback;
   try {
-    const loopback = await fetchAsApp(`http://127.0.0.1:${server.address().port}/`);
+    loopback = await fetchAsApp(`http://127.0.0.1:${server.address().port}/`);
     if (!loopback.startsWith('STATUS 200')) {
       throw new Error(
-        'assumption failed: Windows Firewall leaves loopback traffic unfiltered under per-program ' +
-          `outbound blocks — the blocked FastStudy.exe could not reach 127.0.0.1 (${loopback})`,
+        MAC
+          ? 'assumption failed: the pf anchor passes loopback (`set skip on lo0`) and sudo -u runner ' +
+              `-g no_inet runs the app — ${program} could not reach 127.0.0.1 (${loopback})`
+          : 'assumption failed: Windows Firewall leaves loopback traffic unfiltered under per-program ' +
+              `outbound blocks — ${program} could not reach 127.0.0.1 (${loopback})`,
       );
     }
   } finally {
@@ -58,9 +66,13 @@ export async function proveOfflineEnforcement() {
   const blocked = await fetchAsApp(external);
   if (!blocked.startsWith('ERROR')) {
     throw new Error(
-      `the outbound block on FastStudy.exe did not stop a request to ${external} (${blocked}), ` +
-        'so the run is not offline and a provider could be reached',
+      MAC
+        ? 'assumption failed: pf filters outbound by the socket owner group (block return out ' +
+            `quick proto { tcp udp } group no_inet) — ${program} was not stopped from ${external} ` +
+            `(${blocked}), so the run is not offline and a provider could be reached`
+        : `the outbound block on FastStudy.exe did not stop a request to ${external} (${blocked}), ` +
+            'so the run is not offline and a provider could be reached',
     );
   }
-  return { blocked };
+  return { loopback, unblocked, blocked };
 }

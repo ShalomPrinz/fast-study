@@ -20,7 +20,7 @@ export default async function zoomHidden() {
   const probe = await run(
     paths.appExe(),
     [PROBE, path.join(paths.resourcesDir(), 'downloader', 'auto'), paths.workDir()],
-    { timeoutMs: 5 * 60_000, env },
+    { timeoutMs: 5 * 60_000, env, offline: true },
   );
   evidence(
     '6. zoom browser hidden state',
