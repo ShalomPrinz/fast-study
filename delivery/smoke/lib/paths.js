@@ -54,7 +54,7 @@ export const stateRoot = () =>
 export const launchLog = () => path.join(stateRoot(), 'logs', 'launch.log');
 export const updateLog = () => path.join(stateRoot(), 'logs', 'update.log');
 export const bridgeFile = () => path.join(stateRoot(), 'bridge.json');
-export const ytdlpCopy = () => path.join(stateRoot(), 'bin', 'yt-dlp.exe');
+export const ytdlpCopy = () => path.join(stateRoot(), 'bin', MAC ? 'yt-dlp' : 'yt-dlp.exe');
 export const userData = () => (MAC ? stateRoot() : path.join(env('APPDATA'), PRODUCT));
 export const settingsFile = () => path.join(userData(), 'settings.json');
 

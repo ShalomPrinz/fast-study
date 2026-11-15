@@ -12,6 +12,7 @@ import boot from './tests/mac/03-boot.js';
 import ffmpegAudio from './tests/mac/04-ffmpeg.js';
 import nativeHost from './tests/mac/05-native-host.js';
 import zoomHidden from './tests/mac/06-zoom.js';
+import ytdlp from './tests/mac/12-ytdlp-download.js';
 import pdf from './tests/mac/08-pdf.js';
 import linkage from './tests/mac/09-linkage.js';
 import firstRun from './tests/mac/10-first-run.js';
@@ -46,10 +47,11 @@ test(
 );
 test('8. the provider steps fail on the network, and only there', providerSteps);
 test('9. the PDF, for real', pdf);
-test('10. quitting leaves no process or port behind', quit);
-test('11. a backend death leaves no tool behind, and the restart works', backendDeath);
-test('12. every Mach-O links only inside the bundle or the system', linkage);
+test('10. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlp);
+test('11. quitting leaves no process or port behind', quit);
+test('12. a backend death leaves no tool behind, and the restart works', backendDeath);
+test('13. every Mach-O links only inside the bundle or the system', linkage);
 // Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
-test('13. a launcher crash leaves no service or tool behind', launcherCrash);
+test('14. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('14. the updater swaps a previous build for the candidate and relaunches', update);
+test('15. the updater swaps a previous build for the candidate and relaunches', update);
