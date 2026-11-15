@@ -5,9 +5,9 @@ import { COURSE, LECTURE } from '../lib/suite.js';
 import { delay, waitFor } from '../lib/wait.js';
 import { holdExclusive, stopProcesses } from '../lib/platform.js';
 
-export default async function openingPdf() {
+// The open control's half, for a platform wrapper that asserts what the shell then did.
+export async function clickOpenPdf() {
   const { page } = session;
-  const { db, api } = services;
   await openLecture(page, COURSE, LECTURE);
 
   await test.step('the open control resolves through the IPC path without an error toast', async () => {
@@ -23,7 +23,11 @@ export default async function openingPdf() {
       'opening summary.pdf raised an error toast; a runner with no .pdf handler fails here too',
     ).toHaveCount(0);
   });
+}
 
+export async function lockedPdf() {
+  const { page } = session;
+  const { db, api } = services;
   await test.step('a PDF held exclusively renders the locked-file message', async () => {
     // Whatever the shell opened the PDF in would hold its own handle and block ours.
     await stopProcesses(['msedge', 'AcroRd32', 'Acrobat']);
@@ -44,4 +48,9 @@ export default async function openingPdf() {
       await lock.release();
     }
   });
+}
+
+export default async function openingPdf() {
+  await clickOpenPdf();
+  await lockedPdf();
 }
