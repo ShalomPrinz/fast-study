@@ -76,11 +76,22 @@ jobs:
           fi
           echo "run $RUN_ID built $HEAD_SHA, the same app as $GITHUB_SHA"
 
-  smoke:
+  smoke-win:
+    name: smoke
     needs: guard
     permissions:
       actions: read
       contents: read
-    uses: ./.github/workflows/smoke-suite.yml
+    uses: ./.github/workflows/smoke-suite-win.yml
+    with:
+      run-id: ${{ inputs.run-id }}
+
+  smoke-mac:
+    name: smoke
+    needs: guard
+    permissions:
+      actions: read
+      contents: read
+    uses: ./.github/workflows/smoke-suite-mac.yml
     with:
       run-id: ${{ inputs.run-id }}

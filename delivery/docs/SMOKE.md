@@ -1,6 +1,6 @@
 # The release smoke suite
 
-`smoke/` is `@playwright/test` driving the installed exe through `_electron`, run by `smoke-suite.yml`
+`smoke/` is `@playwright/test` driving the installed exe through `_electron`, run by `smoke-suite-win.yml`
 against the uploaded installer — as `build.yml`'s `smoke-win` job, or by `smoke.yml` against an earlier run's
 ([RELEASE.md](RELEASE.md#build-test-publish)). One ordered
 file on one worker, since each check builds on the machine state the last one left: install, the
@@ -120,7 +120,7 @@ A new smoke test adds its row here, its file under `tests/` and its line in `rel
 
 ## The macOS suite
 
-`mac.spec.js`, run by `smoke-suite.yml`'s `smoke-mac` job with `playwright.mac.config.js`, holds
+`mac.spec.js`, run by `smoke-suite-mac.yml`'s `smoke-mac` job with `playwright.mac.config.js`, holds
 only what is Mac-specific; everything above stays Windows-only. Its bodies are `tests/mac/`, and
 `lib/paths.js` answers the bundle's and the state root's macOS paths to the shared `lib/`. It sets up
 no firewall, since it runs no provider step.

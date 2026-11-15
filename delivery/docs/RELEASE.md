@@ -49,14 +49,13 @@ Two workflows, neither taking an input, and a third that only re-tests
   Actions. `build-mac` uploads `installer-mac` (the dmg, the zip, `latest-mac.yml`; 90 days) and
   `installer-mac-previous` (a lower version's zip and `latest-mac.yml`) the same way. Each build
   fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
-  smoke job rewrites that file, so it cannot check it. The smoke job — `smoke-suite.yml`, called as
+  smoke job rewrites that file, so it cannot check it. The smoke job — `smoke-suite-win.yml`, called as
   `smoke / smoke-win` — installs the artifact on a fresh runner and runs
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
-  the outcome `boot-timing` (90 days). `smoke / smoke-mac` is the same workflow's macOS job on
+  the outcome `boot-timing` (90 days). `smoke / smoke-mac` is `smoke-suite-mac.yml`'s job on
   `installer-mac` ([SMOKE.md](SMOKE.md#the-macos-suite)), uploading `smoke-mac-logs` whatever the
-  outcome and `smoke-mac-traces` on failure; `build.yml` calls the workflow once per platform
-  (`target`), so the lanes build-win → smoke-win and build-mac → smoke-mac run in parallel and neither waits on the other. The run is
+  outcome and `smoke-mac-traces` on failure; `build.yml` calls each platform's file from its own lane, so the lanes build-win → smoke-win and build-mac → smoke-mac run in parallel and neither waits on the other. The run is
   green only when `version` and both lanes' jobs pass. It writes nothing to Releases. A branch run's artifact never
   reaches a Release: publish.yml takes only `main`'s runs, so a commit fast-forwarded from a branch
   releases once `main`'s own `build.yml` run of it is green.
@@ -85,7 +84,7 @@ publishes nothing, since `publish.yml` reads `main`'s runs only.
 
 ### Re-running smoke
 
-`smoke.yml`, dispatch only, runs `smoke-suite.yml` at the dispatched ref against the installers of
+`smoke.yml`, dispatch only, runs `smoke-suite-win.yml` and `smoke-suite-mac.yml` at the dispatched ref against the installers of
 the `build.yml` run named by its required `run-id`, so a fix to `smoke/` is retried without the
 ~8 minute build. A guard job first refuses, naming the fix, a run that is not `build.yml`'s, whose
 `build-win` or `build-mac` job did not succeed (the run itself may have failed in smoke), or one of whose

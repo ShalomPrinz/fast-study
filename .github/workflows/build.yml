@@ -614,17 +614,15 @@ jobs:
             electron/dist/previous/latest-mac.yml
           if-no-files-found: error
 
-  # The smoke jobs, in smoke-suite.yml so smoke.yml can re-run them on this run's builds. Two calls,
-  # so neither platform's smoke waits on the other's build; both show as `smoke / <id>`.
+  # The smoke jobs, one file per platform so smoke.yml can re-run them on this run's builds and neither
+  # draws a skipped twin; neither waits on the other's build, and both show as `smoke / <id>`.
   smoke-win:
     name: smoke
     needs: build-win
     permissions:
       actions: read
       contents: read
-    uses: ./.github/workflows/smoke-suite.yml
-    with:
-      target: windows
+    uses: ./.github/workflows/smoke-suite-win.yml
 
   smoke-mac:
     name: smoke
@@ -632,6 +630,4 @@ jobs:
     permissions:
       actions: read
       contents: read
-    uses: ./.github/workflows/smoke-suite.yml
-    with:
-      target: mac
+    uses: ./.github/workflows/smoke-suite-mac.yml
