@@ -1,7 +1,7 @@
 ---
 name: lib-dev
 description: Implements and fixes changes in the `lib/` shared packages every service depends on at build time (`lib/runtime/` launch contract, `lib/tools/` external-binary resolution and version probe, `lib/logging/` setup_logging(), `lib/sentry/` Sentry policy), each split into `py/` and `js/` halves, and their docs. Use for any task whose code lives under lib/ or whose contract is owned by a lib CLAUDE.md.
-model: inherit
+model: sonnet
 color: cyan
 ---
 
