@@ -123,12 +123,12 @@ A new smoke test adds its row here, its file under `tests/` and its line in `rel
 ## The macOS suite
 
 `mac.spec.js`, run by `smoke-suite-mac.yml`'s `smoke-mac` job with `playwright.mac.config.js`, holds
-only what is Mac-specific plus the shared bodies ported so far (first run, the PDF, quit, launcher crash and backend death); the rest above stays
+only what is Mac-specific plus the shared bodies ported so far (first run, the provider steps, the PDF, quit, launcher crash and backend death); the rest above stays
 Windows-only until ported. Its bodies are `tests/mac/` and `tests/`, and
 `lib/paths.js` answers the bundle's and the state root's macOS paths to the shared `lib/`. It sets up
 no firewall of its own; the OS keeps it offline, below.
 
-| Test               | The failure it catches — only the macOS packaging can cause it, tests 6 and 8 aside                                                            |
+| Test               | The failure it catches — only the macOS packaging can cause it, the zoom test aside                                                         |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- |
 | 1. dmg install     | the dmg does not mount or holds no `FastStudy.app`; a tool lost its exec bit; the bundle is another version; the run is not offline (its premise check, below) |
 | 2. signatures      | the bundle's seal, or any Mach-O inside it, fails `codesign --verify`; a native one has no arm64 slice     |
@@ -137,7 +137,7 @@ no firewall of its own; the OS keeps it offline, below.
 | 5. native host     | the Chrome manifest the running app registered names a script that does not answer one framed `{}` with the live port, secret and extension version |
 | 6. zoom            | the staged `auto`, run on the app binary as node, cannot open its real zoom session or reach `osascript`; the session's browser does not report `NSRunningApplication.hidden`, hides a second browser launched beside it, or does not come back on `show()` |
 | 7. first run | shared `tests/04-first-run.js` on the Mac bundle: the wall does not show, a key or the university probe reaches a provider offline instead of ending `unverified`, the folder dialog does not open at the launcher's default, or `safeStorage` (Keychain) stores a key in the clear or refuses it; evidence is the wall, each probe's result and the stored field names, file only |
-| 8. lecture state | the lecture the PDF renders cannot be seeded (setup for 9, not a packaging fact; replaced by shared test 5 when ported) |
+| 8. provider steps | shared `tests/05-provider-steps.js` on the Mac bundle: the audio step does not run for real, or a frozen SDK (Groq, Gemini) fails to import or build a request instead of failing on the network; leaves the lecture the PDF test renders (audio.mp3 and the fixed transcript). Evidence is each step's code and detail and the files left, file only |
 | 9. the PDF         | shared `tests/06-pdf.js` on the Mac bundle: Mac pandoc or tectonic fails, the primed cache's `.fmt` is rebuilt rather than reused, Hebrew glyphs drop, a PDF or PNG figure misses the cache or its filter (pdfium, Pillow); evidence is the formats listing and the PDF text check |
 | 10. quit            | shared `tests/11-quit.js`: after the window closes, a process under the bundle or the state root, or a service port, outlives the app (the process group teardown of `electron/teardown.js`); a relaunch does not show the init wall again |
 | 11. backend death | shared `tests/13-backend-death.js`: a hard-killed backend leaves its ffmpeg running (main's group `SIGKILL` on a child's exit), or the restart does not reboot four services on fresh ports and rewrite `bridge.json` |

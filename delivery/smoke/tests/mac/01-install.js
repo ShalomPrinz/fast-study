@@ -42,7 +42,7 @@ export default async function dmgInstall() {
   const read = (key) => shown('/usr/libexec/PlistBuddy', ['-c', `Print :${key}`, plist]);
   const installed = await read('CFBundleShortVersionString');
   const minimum = await read('LSMinimumSystemVersion');
-  evidence('1. dmg install', [attach.text, copy.text, installed.text, minimum.text].join('\n'));
+  evidence('dmg install', [attach.text, copy.text, installed.text, minimum.text].join('\n'));
   expect(installed.text, 'the installed bundle is not the candidate version').toContain(version);
   for (const tool of ['ffmpeg', 'pandoc', 'tectonic', 'yt-dlp']) {
     fs.accessSync(path.join(paths.binDir(), tool), fs.constants.X_OK);
@@ -73,12 +73,12 @@ async function proveOffline() {
     seen = await proveOfflineEnforcement();
   } finally {
     evidence(
-      '1. offline premise (pf group rule)',
+      'offline premise (pf group rule)',
       [identity.text, group.text, rules.text, child.text].join('\n'),
     );
   }
   evidence(
-    '1. offline premise: what each probe saw',
+    'offline premise: what each probe saw',
     [
       `app as node, loopback:  ${seen.loopback}`,
       `runner, github.com:     ${seen.unblocked}`,

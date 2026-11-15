@@ -57,7 +57,7 @@ export default async function ffmpegAudio() {
   // No output file, so ffmpeg exits 1 after printing what the input is.
   const probed = await shown(ffmpeg, ['-hide_banner', '-i', audio]);
   evidence(
-    '4. ffmpeg strip_audio',
+    'ffmpeg strip_audio',
     [made.text, stripped.text, `audio.mp3: ${size} bytes`, probed.text].join('\n'),
   );
   expect(stripped.code, stripped.text).toBe(0);

@@ -13,6 +13,6 @@ export default async function firstRun() {
     }
     if (observed.privacy) lines.push(`privacy policy: ${observed.privacy}`);
     if (observed.settings) lines.push(`settings.json fields: ${JSON.stringify(observed.settings)}`);
-    evidence('7. first run', lines.join('\n'), { print: false });
+    evidence('first run', lines.join('\n'), { print: false });
   }
 }

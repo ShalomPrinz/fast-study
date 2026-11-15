@@ -65,7 +65,7 @@ export default async function nativeHost() {
     secret: reply.secret === services.secret ? '<the launch secret>' : '<NOT the launch secret>',
   };
   evidence(
-    '5. native host',
+    'native host',
     [
       `${MANIFEST}:`,
       JSON.stringify(manifest, null, 2),

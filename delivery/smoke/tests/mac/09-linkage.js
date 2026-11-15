@@ -6,7 +6,7 @@ import * as paths from '../../lib/paths.js';
 export default function linkage() {
   // A stray /opt/homebrew link loads on this runner, which has Homebrew, and nowhere else.
   const found = checkLinkage(paths.macBundle());
-  evidence('12. every Mach-O links only inside the bundle or the system', describe(found), {
+  evidence('every Mach-O links only inside the bundle or the system', describe(found), {
     print: false,
   });
   expect(found.checked, 'no Mach-O parsed; the load-command reader is broken').toBeGreaterThan(0);

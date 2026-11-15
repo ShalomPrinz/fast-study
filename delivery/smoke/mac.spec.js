@@ -12,10 +12,10 @@ import boot from './tests/mac/03-boot.js';
 import ffmpegAudio from './tests/mac/04-ffmpeg.js';
 import nativeHost from './tests/mac/05-native-host.js';
 import zoomHidden from './tests/mac/06-zoom.js';
-import lectureState from './tests/mac/07-lecture.js';
 import pdf from './tests/mac/08-pdf.js';
 import linkage from './tests/mac/09-linkage.js';
 import firstRun from './tests/mac/10-first-run.js';
+import providerSteps from './tests/mac/11-provider-steps.js';
 import update from './tests/mac/99-update.js';
 
 test.describe.configure({ mode: 'serial' });
@@ -44,7 +44,7 @@ test(
   '7. first run: the keys are stored encrypted, the data folder is picked, the probes fail offline',
   firstRun,
 );
-test('8. the lecture the PDF renders is ready', lectureState);
+test('8. the provider steps fail on the network, and only there', providerSteps);
 test('9. the PDF, for real', pdf);
 test('10. quitting leaves no process or port behind', quit);
 test('11. a backend death leaves no tool behind, and the restart works', backendDeath);

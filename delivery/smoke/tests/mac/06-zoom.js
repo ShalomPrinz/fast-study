@@ -23,7 +23,7 @@ export default async function zoomHidden() {
     { timeoutMs: 5 * 60_000, env, offline: true },
   );
   evidence(
-    '6. zoom browser hidden state',
+    'zoom browser hidden state',
     [`probe exit ${probe.code}`, probe.stdout.trim(), probe.stderr.trim()].join('\n'),
   );
   expect(probe.code, `${probe.stdout}\n${probe.stderr}`).toBe(0);

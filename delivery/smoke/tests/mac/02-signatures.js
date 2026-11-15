@@ -23,5 +23,5 @@ export async function verifyBundle(title) {
 }
 
 export default async function signatures() {
-  await verifyBundle('2. codesign --verify');
+  await verifyBundle('codesign --verify');
 }

@@ -24,6 +24,6 @@ export default async function pdf() {
     } catch (error) {
       lines.push(`summary.pdf unreadable: ${error.message}`);
     }
-    evidence('9. the PDF, for real', lines.join('\n'));
+    evidence('the PDF, for real', lines.join('\n'));
   }
 }

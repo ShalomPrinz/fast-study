@@ -24,7 +24,7 @@ export default async function boot() {
   const health = await healthOf(services.urls);
   const tools = await toolsOf(services);
   evidence(
-    '3. boot, /health and GET /tools',
+    'boot, /health and GET /tools',
     [
       log.split('\n')[0],
       ...log.split('\n').filter((line) => /ready on|token key|native host/.test(line)),

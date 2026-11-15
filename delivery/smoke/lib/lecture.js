@@ -18,8 +18,9 @@ export async function openLecture(page, course, lecture) {
 
 /** Run one provider step alone and prove it died on the network: not a crash, not an import
  *  error, not a missing key, and the backend still up. Only that step ran, so the error is its own. */
-export async function expectNetworkFailure(page, course, lecture, step) {
+export async function expectNetworkFailure(page, course, lecture, step, observed = {}) {
   const entry = await services.api.runStep(course, lecture, step);
+  observed[step] = { code: entry?.code, detail: entry?.params?.detail ?? entry?.message };
   const error = entry?.message ?? null;
   expect(error, `${step} succeeded, so a provider answered`).not.toBeNull();
   expect(error, `${step} failed, but not on the network`).toMatch(NETWORK_FAILURE);
