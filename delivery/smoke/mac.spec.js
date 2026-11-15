@@ -22,6 +22,7 @@ import pdf from './tests/mac/08-pdf.js';
 import linkage from './tests/mac/09-linkage.js';
 import firstRun from './tests/mac/10-first-run.js';
 import providerSteps from './tests/mac/11-provider-steps.js';
+import hebrewTempMac from './tests/mac/15-hebrew-temp.js';
 import update from './tests/mac/99-update.js';
 
 test.describe.configure({ mode: 'serial' });
@@ -60,8 +61,9 @@ test('13. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlp);
 test('14. quitting leaves no process or port behind', quit);
 test('15. a backend death leaves no tool behind, and the restart works', backendDeath);
 test('16. every Mach-O links only inside the bundle or the system', linkage);
-test('17. the browser chain, both ends', browserChain);
+test('17. the tools run under a Hebrew temp path', hebrewTempMac);
+test('18. the browser chain, both ends', browserChain);
 // Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
-test('18. a launcher crash leaves no service or tool behind', launcherCrash);
+test('19. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('19. the updater swaps a previous build for the candidate and relaunches', update);
+test('20. the updater swaps a previous build for the candidate and relaunches', update);
