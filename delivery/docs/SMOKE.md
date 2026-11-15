@@ -123,11 +123,12 @@ A new smoke test adds its row here, its file under `tests/` and its line in `rel
 ## The macOS suite
 
 `mac.spec.js`, run by `smoke-suite-mac.yml`'s `smoke-mac` job with `playwright.mac.config.js`, holds
-only what is Mac-specific; everything above stays Windows-only. Its bodies are `tests/mac/`, and
+only what is Mac-specific plus the shared bodies ported so far (the PDF, test 8); the rest above stays
+Windows-only until ported. Its bodies are `tests/mac/` and `tests/`, and
 `lib/paths.js` answers the bundle's and the state root's macOS paths to the shared `lib/`. It sets up
 no firewall of its own; the OS keeps it offline, below.
 
-| Test               | The failure it catches — only the macOS packaging can cause it, test 6 aside                                                            |
+| Test               | The failure it catches — only the macOS packaging can cause it, tests 6 and 7 aside                                                            |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- |
 | 1. dmg install     | the dmg does not mount or holds no `FastStudy.app`; a tool lost its exec bit; the bundle is another version; the run is not offline (its premise check, below) |
 | 2. signatures      | the bundle's seal, or any Mach-O inside it, fails `codesign --verify`; a native one has no arm64 slice     |
@@ -135,7 +136,9 @@ no firewall of its own; the OS keeps it offline, below.
 | 4. ffmpeg          | the source-built ffmpeg cannot run the audio step: `ffmpeg.py`'s prefix and `strip_audio.py`'s arguments, on a tone it encodes itself, must write an MP3 that reads back 16 kHz mono |
 | 5. native host     | the Chrome manifest the running app registered names a script that does not answer one framed `{}` with the live port, secret and extension version |
 | 6. zoom            | the staged `auto`, run on the app binary as node, cannot open its real zoom session or reach `osascript`; the session's browser does not report `NSRunningApplication.hidden`, hides a second browser launched beside it, or does not come back on `show()` |
-| 7. update          | a lower-version build fed the candidate over loopback does not download it, carry its keys across the swap in memory, or install it only on Restart now or its next launch |
+| 7. lecture state   | the init wall does not pass onto a data folder offline, or the lecture the PDF renders cannot be seeded (setup for 8, not a packaging fact; replaced by shared tests 4 and 5 when ported) |
+| 8. the PDF         | shared `tests/06-pdf.js` on the Mac bundle: Mac pandoc or tectonic fails, the primed cache's `.fmt` is rebuilt rather than reused, Hebrew glyphs drop, a PDF or PNG figure misses the cache or its filter (pdfium, Pillow); evidence is the formats listing and the PDF text check |
+| 9. update          | a lower-version build fed the candidate over loopback does not download it, carry its keys across the swap in memory, or install it only on Restart now or its next launch |
 
 - **Test 6 also holds a flow check.** Hiding the zoom browser and `show()` are `downloader/auto`
   behaviour, kept here because no harness spec can cover them: the harness runs on Linux and

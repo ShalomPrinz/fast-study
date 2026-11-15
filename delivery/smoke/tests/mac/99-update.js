@@ -90,7 +90,7 @@ async function reset(label) {
     );
   }
   evidence(
-    `7${label}. Keychain reset before the update`,
+    `9${label}. Keychain reset before the update`,
     [...removed, `"${KEYCHAIN_SERVICE}" present afterwards: ${await keychainItem()}`].join('\n'),
   );
 }
@@ -199,11 +199,11 @@ async function expectOneKeychainItem(label) {
       KEYCHAIN_SERVICE,
     ]);
     lines.push(first.text, `second delete exit: ${second.code}`);
-    evidence(`7${label}. Keychain items after the update`, lines.join('\n'));
+    evidence(`9${label}. Keychain items after the update`, lines.join('\n'));
     expect(first.text, 'the first delete found no item').toContain('(exit 0)');
     expect(second.code, 'a second Keychain item remained').toBe(44);
   } else {
-    evidence(`7${label}. Keychain items after the update`, lines.join('\n'));
+    evidence(`9${label}. Keychain items after the update`, lines.join('\n'));
     expect(count, 'not exactly one "FastStudy Safe Storage" item after the update').toBe(1);
   }
   expect(found, 'no "FastStudy Safe Storage" item after the update').toBe(true);
@@ -274,7 +274,7 @@ async function scenarioRestartNow({ candidate, previous, bundle }) {
   ]);
   const verdict = verdictOf({ previousLog, candidateLog, booted });
   evidence(
-    '7a. Restart now',
+    '9a. Restart now',
     [
       verdict,
       `launch.log of ${previous.version}, updater lines:`,
@@ -307,7 +307,7 @@ async function scenarioRestartNow({ candidate, previous, bundle }) {
   expect(candidateLog, 'the stored keys were not re-encrypted').toContain(REENCRYPTED);
   expect(candidateLog, 'token_key was regenerated, not carried').not.toContain(REGENERATED);
   expect(candidateLog, 'the Keychain delete hit a prompt').not.toContain(PROMPT_TIMEOUT);
-  await verifyBundle('7a. codesign --verify on the swapped bundle');
+  await verifyBundle('9a. codesign --verify on the swapped bundle');
 
   const { flags, log } = await keysSetInCandidate(candidate);
   expect(flags.geminiApiKeySet, 'the Gemini key did not survive the update').toBe(true);
@@ -339,7 +339,7 @@ async function scenarioQuitThenRelaunch({ candidate, previous, bundle }) {
     `${bundle}/Contents/Info.plist`,
   ]);
   evidence(
-    '7b. after a plain quit',
+    '9b. after a plain quit',
     [
       quitPlist.text,
       `update.log present: ${fs.existsSync(paths.updateLog())}`,
@@ -388,7 +388,7 @@ async function scenarioQuitThenRelaunch({ candidate, previous, bundle }) {
   ]);
   const verdict = verdictOf({ previousLog, candidateLog, booted });
   evidence(
-    '7b. quit, then relaunch',
+    '9b. quit, then relaunch',
     [
       verdict,
       `launch.log of ${previous.version}'s relaunch:`,

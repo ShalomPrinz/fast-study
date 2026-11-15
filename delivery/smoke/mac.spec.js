@@ -9,7 +9,9 @@ import boot from './tests/mac/03-boot.js';
 import ffmpegAudio from './tests/mac/04-ffmpeg.js';
 import nativeHost from './tests/mac/05-native-host.js';
 import zoomHidden from './tests/mac/06-zoom.js';
-import update from './tests/mac/07-update.js';
+import lectureState from './tests/mac/07-lecture.js';
+import pdf from './tests/mac/08-pdf.js';
+import update from './tests/mac/99-update.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -33,4 +35,7 @@ test('3. boot, four services healthy, every bundled tool working', boot);
 test('4. the bundled ffmpeg writes audio.mp3 with the audio step’s arguments', ffmpegAudio);
 test('5. the native host answers through the manifest Chrome reads', nativeHost);
 test('6. the zoom browser hides by pid and comes back', zoomHidden);
-test('7. the updater swaps a previous build for the candidate and relaunches', update);
+test('7. the data folder is chosen and a lecture is ready to render', lectureState);
+test('8. the PDF, for real', pdf);
+// Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
+test('9. the updater swaps a previous build for the candidate and relaunches', update);

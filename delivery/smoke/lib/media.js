@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { binDir, workDir } from './paths.js';
+import { toolPath, workDir } from './paths.js';
 import { runToExit } from './platform.js';
 
-const ffmpeg = () => path.join(binDir(), 'ffmpeg.exe');
+const ffmpeg = () => toolPath('ffmpeg');
 
 // One video-only and one audio-only representation and no progressive format, so yt-dlp's default
 // `bv*+ba/b` can only satisfy it by merging the two with ffmpeg.

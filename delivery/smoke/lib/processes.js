@@ -105,9 +105,7 @@ const JOB_TOOLS = ['ffmpeg', 'pandoc', 'tectonic'];
 
 /** A bundled tool the backend's job holds, by image path under `resources/bin/`. */
 export function isJobTool(p) {
-  return JOB_TOOLS.some(
-    (tool) => p.exe.toLowerCase() === path.join(paths.binDir(), `${tool}.exe`).toLowerCase(),
-  );
+  return JOB_TOOLS.some((tool) => p.exe.toLowerCase() === paths.toolPath(tool).toLowerCase());
 }
 
 /** Start the audio step on the six-hour tone and wait until its ffmpeg runs under `backendProcess`.
@@ -126,7 +124,7 @@ export async function longAudioRunning(backendProcess) {
         (p) =>
           p.ppid === backendProcess.pid &&
           p.created >= backendProcess.created &&
-          p.exe.toLowerCase() === path.join(paths.binDir(), 'ffmpeg.exe').toLowerCase() &&
+          p.exe.toLowerCase() === paths.toolPath('ffmpeg').toLowerCase() &&
           p.commandLine.includes('-vn'),
       );
       return ffmpeg ? { ffmpeg, table } : null;
