@@ -315,7 +315,7 @@ jobs:
           if-no-files-found: error
 
   # The macOS arm64 app: the same staged tree with darwin tools, ad-hoc signed — never notarized.
-  # Independent of build-win; every step traces (`set -x`) since no Mac can rerun one.
+  # Independent of build-win.
   build-mac:
     needs: version
     runs-on: macos-15
@@ -340,7 +340,7 @@ jobs:
       # The official darwin-arm64 releases at the Windows job's pins; curl ships with macOS too.
       - name: Download tectonic and pandoc
         run: |
-          set -eux
+          set -eu
           mkdir -p "$STAGE/bin" downloads/tectonic downloads/pandoc
           base=https://github.com
           curl -fsSL --retry 5 --retry-delay 10 -o downloads/tectonic.tar.gz "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-aarch64-apple-darwin.tar.gz"
@@ -368,7 +368,7 @@ jobs:
           FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
           CACHE_HIT: ${{ steps.latex-cache.outputs.cache-hit }}
         run: |
-          set -eux
+          set -eu
           echo "LaTeX cache hit: ${CACHE_HIT:-false}, $(find "../$STAGE/latex" -type f 2>/dev/null | wc -l) files restored"
           uv sync
           nohup bash -c 'uv run python ../delivery/prime_cache.py "../$STAGE/latex"; echo $? > "$RUNNER_TEMP/prime.exit.tmp"; mv "$RUNNER_TEMP/prime.exit.tmp" "$RUNNER_TEMP/prime.exit"' > "$RUNNER_TEMP/prime.log" 2>&1 < /dev/null &
@@ -380,7 +380,7 @@ jobs:
         id: macos
         working-directory: electron
         run: |
-          set -eux
+          set -eu
           npm ci
           node node_modules/electron/install.js
           plist=node_modules/electron/dist/Electron.app/Contents/Info.plist
@@ -409,14 +409,10 @@ jobs:
         env:
           MIN: ${{ steps.macos.outputs.min }}
         run: |
-          set -eux
+          set -eu
           ff=ffmpeg-build/out/ffmpeg
-          "$ff" -hide_banner -version
-          lipo -archs "$ff"
-          otool -L "$ff"
           foreign=$(otool -L "$ff" | tail -n +2 | awk '{print $1}' | grep -Ev '^(/usr/lib/|/System/)' || true)
           [ -z "$foreign" ] || { echo "::error::ffmpeg loads libraries outside /usr/lib and /System: $foreign"; exit 1; }
-          vtool -show-build "$ff"
           minos=$(vtool -show-build "$ff" | awk '$1 == "minos" {print $2}')
           [ -n "$minos" ] || { echo "::error::vtool reports no minos for ffmpeg"; exit 1; }
           node -e '
@@ -446,11 +442,9 @@ jobs:
       # Unpinned, as on Windows. yt-dlp_macos is the universal single-file build.
       - name: Download yt-dlp
         run: |
-          set -eux
+          set -eu
           curl -fsSL --retry 5 --retry-delay 10 -o "$STAGE/bin/yt-dlp" https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos
           chmod +x "$STAGE/bin/yt-dlp" "$STAGE/bin/ffmpeg"
-          ls -l "$STAGE/bin"
-          file "$STAGE"/bin/*
 
       - name: Write credentials.json
         env:
@@ -468,9 +462,8 @@ jobs:
       - name: Freeze backend and database
         working-directory: backend
         run: |
-          set -eux
+          set -eu
           uv run --with "pyinstaller==$PYINSTALLER_VERSION" pyinstaller ../delivery/services.spec
-          file dist/services/faststudy-services
           [ "$(lipo -archs dist/services/faststudy-services)" = arm64 ] || { echo "::error::faststudy-services is not an arm64 binary"; exit 1; }
 
       # Built again rather than passed from the Windows job, with the same inputs; on main both
@@ -508,9 +501,8 @@ jobs:
 
       - name: Assemble the resources tree
         run: |
-          set -eux
+          set -eu
           node delivery/stage.mjs "$STAGE" "${{ needs.version.outputs.extension }}"
-          du -sh "$STAGE"/* "$STAGE"/bin/*
 
       # Everything is staged before this: electron-builder seals the bundle, so a file changed
       # afterwards breaks its signature. `${dsn[@]+...}` because macOS's bash 3.2 trips `set -u` on an empty array.
@@ -523,15 +515,13 @@ jobs:
           dsn=()
           [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
           npm run dist:mac -- "-c.extraMetadata.version=${{ needs.version.outputs.version }}" ${dsn[@]+"${dsn[@]}"}
-          ls -l dist
-          cat dist/latest-mac.yml
 
       # The dmg is what a user downloads; the zip and latest-mac.yml are the updater's feed.
       - name: Check the build's files and its update feed config
         env:
           MIN: ${{ steps.macos.outputs.min }}
         run: |
-          set -eux
+          set -eu
           for file in FastStudy-mac-arm64.dmg FastStudy-mac-arm64.zip latest-mac.yml; do
             [ -f "electron/dist/$file" ] || { echo "::error::electron-builder wrote no dist/$file"; ls -l electron/dist; exit 1; }
           done
@@ -551,9 +541,8 @@ jobs:
       # Unsigned code does not run on arm64 macOS: the bundle's seal, then every Mach-O inside it.
       - name: Check every signature
         run: |
-          set -eux
-          codesign -dvv "$APP"
-          codesign --verify --deep --strict --verbose=2 "$APP"
+          set -eu
+          codesign --verify --deep --strict "$APP"
           node delivery/smoke/lib/macho.js "$APP"
 
       # What codesign judges a nested bundle by: each one's root and Versions/, and every absolute
@@ -593,7 +582,6 @@ jobs:
           dsn=()
           [ -n "$SENTRY_DSN" ] && dsn=("-c.extraMetadata.sentryDsn=$SENTRY_DSN")
           npm run dist:mac -- "-c.extraMetadata.version=${{ needs.version.outputs.previous }}" -c.directories.output=dist/previous ${dsn[@]+"${dsn[@]}"}
-          ls -l dist/previous
 
       # The zip's blockmap stays behind: the macOS updater downloads the zip whole.
       - uses: actions/upload-artifact@v6

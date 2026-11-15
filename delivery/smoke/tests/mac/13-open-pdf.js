@@ -37,7 +37,6 @@ export default async function openingPdf() {
     evidence(
       'opening a PDF',
       `${file}\nPDFs Preview held when last sampled: ${JSON.stringify(open)}`,
-      { print: false },
     );
   }
 }

@@ -287,7 +287,6 @@ async function scenarioRestartNow({ candidate, previous, bundle }) {
       candidateLog.trim(),
     ].join('\n'),
   );
-  console.log(`::warning title=macOS update, Restart now::${verdict}`);
   await killBundle();
 
   expect(previousLog, 'the quitting launch logged no install helper').toContain(
@@ -400,7 +399,6 @@ async function scenarioQuitThenRelaunch({ candidate, previous, bundle }) {
       candidateLog.trim(),
     ].join('\n'),
   );
-  console.log(`::warning title=macOS update, quit then relaunch::${verdict}`);
   await killBundle();
 
   expect(previousLog, 'the relaunched old build did not verify the staged update').toMatch(

@@ -50,9 +50,7 @@ export default async function ytdlp() {
     } catch (error) {
       lines.push(`video.mp4 unreadable: ${error.message}`);
     }
-    evidence('the yt-dlp download merges with the bundled ffmpeg', lines.join('\n'), {
-      print: false,
-    });
+    evidence('the yt-dlp download merges with the bundled ffmpeg', lines.join('\n'));
   }
   expect(
     [...seen.ytdlp],

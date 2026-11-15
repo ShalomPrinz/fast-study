@@ -195,7 +195,7 @@ no firewall of its own; the OS keeps it offline, below.
   `version <v> verified in <n>ms — installing it before this launch` and the new build's `pending
   update cleared`. The flags show a stored ciphertext, not a decrypt; `token_key` is re-encrypted, so
   it is not compared.
-- **One verdict per scenario, as a warning annotation.** `ADOPTED`, `KEYCHAIN-PROMPT` (the delete timed
+- **One verdict per scenario, in the evidence file.** `ADOPTED`, `KEYCHAIN-PROMPT` (the delete timed
   out on a prompt, which decides the fallback), `NOT-ADOPTED` (a `handoff not adopted`, `handoff
   unreadable` or `installing without a key handoff` line), `REGENERATED`, `UNAVAILABLE` (no key store),
   `HUNG` (the new build never loaded; also what a previous build older than the handoff gives, since

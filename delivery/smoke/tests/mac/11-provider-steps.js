@@ -23,6 +23,6 @@ export default async function providers() {
     } catch (error) {
       lines.push(`lecture state unreadable: ${error.message}`);
     }
-    evidence('the provider steps fail on the network', lines.join('\n'), { print: false });
+    evidence('the provider steps fail on the network', lines.join('\n'));
   }
 }

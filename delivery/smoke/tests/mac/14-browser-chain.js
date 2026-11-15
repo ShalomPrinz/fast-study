@@ -8,6 +8,6 @@ export default async function browserChainMac() {
     await passBrowserChain(observed);
   } finally {
     const lines = Object.entries(observed).map(([leg, seen]) => `${leg}: ${seen}`);
-    evidence('the browser chain', lines.join('\n') || 'no leg completed', { print: false });
+    evidence('the browser chain', lines.join('\n') || 'no leg completed');
   }
 }

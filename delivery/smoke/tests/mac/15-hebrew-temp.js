@@ -20,6 +20,6 @@ export default async function hebrewTempMac() {
       .split('\n')
       .filter((line) => observed.temp && line.includes(observed.temp));
     lines.push(`launch.log lines naming it: ${log.length ? '\n' + log.join('\n') : 'none'}`);
-    evidence('the tools run under a Hebrew temp path', lines.join('\n'), { print: false });
+    evidence('the tools run under a Hebrew temp path', lines.join('\n'));
   }
 }

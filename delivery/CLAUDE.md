@@ -33,7 +33,7 @@ node delivery/boot-timing.mjs [collect|view] [--repo owner/name]               #
 Only `.github/workflows/build.yml` produces a release, on `windows-latest` and `macos-15`: neither
 PyInstaller nor electron-builder's NSIS and dmg targets cross-compile, so WSL can freeze a Linux
 bundle, prime and stage, but never build or run either one. No Mac exists outside the runner, so a
-macOS failure is debugged from the job log alone. A freeze needs `backend/credentials.json` on disk; a Linux freeze
+macOS failure is debugged from the job log and the evidence in the step summary. A freeze needs `backend/credentials.json` on disk; a Linux freeze
 is checked by running `backend/dist/services/faststudy-services database|backend` with
 `FASTSTUDY_PORT=0` for the port line and `/health`.
 
