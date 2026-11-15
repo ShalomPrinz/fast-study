@@ -7,7 +7,7 @@ import * as paths from './paths.js';
 import { services } from './session.js';
 import { COURSE } from './suite.js';
 import { delay, waitFor } from './wait.js';
-import { listeners, processTable, strayProcesses } from './windows.js';
+import { listeners, processTable, strayProcesses } from './platform.js';
 
 const LONG_LECTURE = 'Long Tone Lecture';
 

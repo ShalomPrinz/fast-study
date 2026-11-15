@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium, expect } from '@playwright/test';
 import { ASSUMPTION, failed } from './suite.js';
-import { renameAside, stopProcesses } from './windows.js';
+import { renameAside, stopProcesses } from './platform.js';
 
 const asides = [];
 

@@ -18,7 +18,7 @@ import { healthOf } from '../lib/services.js';
 import { bind, services, session, start } from '../lib/session.js';
 import { ASSUMPTION, COURSE, failed, LECTURE } from '../lib/suite.js';
 import { waitFor } from '../lib/wait.js';
-import { listeners, processTable } from '../lib/windows.js';
+import { listeners, processTable } from '../lib/platform.js';
 
 export default async function backendDeath() {
   if (!session) await start();

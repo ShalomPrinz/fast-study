@@ -3,7 +3,7 @@ import { openLecture } from '../lib/lecture.js';
 import { services, session } from '../lib/session.js';
 import { COURSE, LECTURE } from '../lib/suite.js';
 import { delay, waitFor } from '../lib/wait.js';
-import { holdExclusive, stopProcesses } from '../lib/windows.js';
+import { holdExclusive, stopProcesses } from '../lib/platform.js';
 
 export default async function openingPdf() {
   const { page } = session;

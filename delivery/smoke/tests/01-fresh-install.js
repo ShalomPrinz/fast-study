@@ -6,7 +6,7 @@ import { recordShippedFormats, shippedFormats } from '../lib/formats.js';
 import { proveOfflineEnforcement } from '../lib/offline.js';
 import * as paths from '../lib/paths.js';
 import { ASSUMPTION, failed, INSTALL_TIMEOUT_MS, TOOLS } from '../lib/suite.js';
-import { blockOutbound, enableFirewall, runToExit } from '../lib/windows.js';
+import { blockOutbound, enableFirewall, runToExit } from '../lib/platform.js';
 
 /** Send the shipped native host one framed `{}` the way Chrome does, and return its framed reply. */
 function askNativeHost(bridgeFile) {

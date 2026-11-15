@@ -14,7 +14,7 @@ import { services, session, start, stop } from '../lib/session.js';
 import { ASSUMPTION, failed, fixture, INSTALL_TIMEOUT_MS, LECTURE } from '../lib/suite.js';
 import { pointUpdaterAt } from '../lib/updateServer.js';
 import { waitFor } from '../lib/wait.js';
-import { processesNamed, productVersion, runToExit } from '../lib/windows.js';
+import { processesNamed, productVersion, runToExit } from '../lib/platform.js';
 
 const UPDATE_COURSE = 'Update Course';
 

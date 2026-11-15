@@ -12,7 +12,9 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
 `test()` lines in order, each given the body `tests/NN-<name>.js` exports. What two or more tests
 share lives in `lib/` — the running app in `lib/session.js`, whose `session` and `services` importers
 read as live bindings and only its own functions reassign; a helper or constant one test uses stays
-in that test's file.
+in that test's file. Shared bodies and `lib/` modules reach OS primitives only through `lib/platform.js`,
+which re-exports `lib/windows.js` or `lib/mac.js` by host under the same names; a name the macOS side
+has not implemented throws "not implemented on macOS".
 
 ## Scope
 

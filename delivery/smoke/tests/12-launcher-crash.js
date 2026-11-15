@@ -16,7 +16,7 @@ import {
 import { forget, session, start } from '../lib/session.js';
 import { ASSUMPTION, failed } from '../lib/suite.js';
 import { delay } from '../lib/wait.js';
-import { runToExit } from '../lib/windows.js';
+import { runToExit } from '../lib/platform.js';
 
 export default async function launcherCrash() {
   if (!session) await start();

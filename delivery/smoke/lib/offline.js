@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { appExe, workDir } from './paths.js';
-import { runToExit } from './windows.js';
+import { runToExit } from './platform.js';
 
 // Run by the installed FastStudy.exe as node, so the request leaves through the program the
 // outbound rule names. One line out: the status, or the error the connect died on.

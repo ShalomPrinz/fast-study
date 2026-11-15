@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { binDir, workDir } from './paths.js';
-import { runToExit } from './windows.js';
+import { runToExit } from './platform.js';
 
 const ffmpeg = () => path.join(binDir(), 'ffmpeg.exe');
 
