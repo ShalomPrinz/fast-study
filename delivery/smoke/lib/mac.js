@@ -89,8 +89,8 @@ export async function shown(file, args, options) {
 
 /** Record what a check observed: printed to the job log, and appended to `mac-evidence.md`, which
  *  the workflow puts in the run summary whatever the outcome. */
-export function evidence(title, text) {
-  console.log(`\n=== ${title} ===\n${text}\n`);
+export function evidence(title, text, { print = true } = {}) {
+  if (print) console.log(`\n=== ${title} ===\n${text}\n`);
   fs.mkdirSync(resultsDir(), { recursive: true });
   fs.appendFileSync(
     path.join(resultsDir(), 'mac-evidence.md'),

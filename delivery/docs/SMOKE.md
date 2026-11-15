@@ -140,8 +140,9 @@ no firewall of its own; the OS keeps it offline, below.
 | 8. the PDF         | shared `tests/06-pdf.js` on the Mac bundle: Mac pandoc or tectonic fails, the primed cache's `.fmt` is rebuilt rather than reused, Hebrew glyphs drop, a PDF or PNG figure misses the cache or its filter (pdfium, Pillow); evidence is the formats listing and the PDF text check |
 | 9. quit            | shared `tests/11-quit.js`: after the window closes, a process under the bundle or the state root, or a service port, outlives the app (the process group teardown of `electron/teardown.js`); a relaunch does not show the init wall again |
 | 10. backend death | shared `tests/13-backend-death.js`: a hard-killed backend leaves its ffmpeg running (main's group `SIGKILL` on a child's exit), or the restart does not reboot four services on fresh ports and rewrite `bridge.json` |
-| 11. launcher crash | shared `tests/12-launcher-crash.js`: after `SIGKILL` of main, a service or a bundled ffmpeg/pandoc/tectonic outlives it. Strict: macOS has no job object, so main's death leaving its detached process groups running is a product finding for `electron/`. A failure skips only test 12 |
-| 12. update         | a lower-version build fed the candidate over loopback does not download it, carry its keys across the swap in memory, or install it only on Restart now or its next launch |
+| 11. linkage        | a Mach-O in the bundle (frozen Python, ffmpeg, pandoc, tectonic, Electron) has a load command or `LC_RPATH` that does not resolve inside the bundle or to `/usr/lib/`, `/System/` — a Homebrew link loads on this runner and nowhere else. Read in-process by `lib/linkage.js`; evidence is the count, link roots, rpaths and offender list |
+| 12. launcher crash | shared `tests/12-launcher-crash.js`: after `SIGKILL` of main, a service or a bundled ffmpeg/pandoc/tectonic outlives it. Strict: macOS has no job object, so main's death leaving its detached process groups running is a product finding for `electron/`. A failure skips only test 13 |
+| 13. update         | a lower-version build fed the candidate over loopback does not download it, carry its keys across the swap in memory, or install it only on Restart now or its next launch |
 
 - **Test 6 also holds a flow check.** Hiding the zoom browser and `show()` are `downloader/auto`
   behaviour, kept here because no harness spec can cover them: the harness runs on Linux and
@@ -161,9 +162,9 @@ no firewall of its own; the OS keeps it offline, below.
 - **Process primitives on macOS.** `lib/mac.js` answers `processTable` from `ps -axww` (`comm` for the
   executable path, `lstart` as `created`, zombies dropped), `listeners` from `lsof -iTCP -sTCP:LISTEN`,
   and `strayProcesses` by executable path, never command line, since the root `sudo` parent names the
-  bundle in its arguments. Under the offline `sudo` wrapper `app.process().pid` is sudo's, so tests 10-11
+  bundle in its arguments. Under the offline `sudo` wrapper `app.process().pid` is sudo's, so tests 10 and 12
   find main as the four ready ports' owners' one parent; `forceKill` is a plain `SIGKILL` of that pid.
-  Test 11 runs just before the update, so its expected failure skips only that; ported tests go above it.
+  Test 12 runs just before the update, so its expected failure skips only that; ported tests go above it.
 - **Evidence is written, not only asserted.** Each test appends what it observed to
   `test-results/mac-evidence.md` — the `codesign` output, `/tools`, the native host's reply with the
   secret masked, the zoom states, `update.log` — which the job puts in the run summary and uploads as
@@ -219,7 +220,7 @@ That `ps -o comm=` prints the full executable path (so `exe` matches `appExe()` 
 the frozen backend's ffmpeg is a direct child of the pid listening on its port, that `lsof` shows the
 runner's listeners, that a service killed leaves main's group `SIGKILL` reaping its ffmpeg inside
 five seconds, that Playwright's `app.close()` on a dead main under a root `sudo` returns, and that
-test 11 fails today: `electron/docs/BOOT.md` says only a `SIGKILL` of main escapes teardown.
+test 12 fails today: `electron/docs/BOOT.md` says only a `SIGKILL` of main escapes teardown.
 
 That pf's `group` match reads the socket owner's effective gid and the services and tools inherit the
 `sudo -g` primary gid; that `block return` fails a connect fast; that sudo's `-E` and the drop-in

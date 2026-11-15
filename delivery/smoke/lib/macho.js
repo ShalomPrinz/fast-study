@@ -10,7 +10,7 @@ const NATIVE = ['Contents/MacOS/', 'Contents/Resources/bin/', 'Contents/Resource
 
 /** Is `file` a Mach-O, thin or fat, by its magic? A Java class shares the fat magic, told apart by
  *  the count that follows it. */
-function isMachO(file) {
+export function isMachO(file) {
   const head = Buffer.alloc(8);
   const fd = fs.openSync(file, 'r');
   try {
@@ -23,7 +23,7 @@ function isMachO(file) {
   return (magic === 0xcafebabe || magic === 0xcafebabf) && head.readUInt32BE(4) < 30;
 }
 
-function* files(dir) {
+export function* files(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) yield* files(full);

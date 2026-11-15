@@ -14,6 +14,7 @@ import nativeHost from './tests/mac/05-native-host.js';
 import zoomHidden from './tests/mac/06-zoom.js';
 import lectureState from './tests/mac/07-lecture.js';
 import pdf from './tests/mac/08-pdf.js';
+import linkage from './tests/mac/09-linkage.js';
 import update from './tests/mac/99-update.js';
 
 test.describe.configure({ mode: 'serial' });
@@ -42,7 +43,8 @@ test('7. the data folder is chosen and a lecture is ready to render', lectureSta
 test('8. the PDF, for real', pdf);
 test('9. quitting leaves no process or port behind', quit);
 test('10. a backend death leaves no tool behind, and the restart works', backendDeath);
+test('11. every Mach-O links only inside the bundle or the system', linkage);
 // Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
-test('11. a launcher crash leaves no service or tool behind', launcherCrash);
+test('12. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('12. the updater swaps a previous build for the candidate and relaunches', update);
+test('13. the updater swaps a previous build for the candidate and relaunches', update);
