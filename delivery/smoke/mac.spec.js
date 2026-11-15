@@ -4,6 +4,7 @@ import { restoreBrowsers } from './lib/browsers.js';
 import { run, screenshot } from './lib/mac.js';
 import * as paths from './lib/paths.js';
 import { forget, session } from './lib/session.js';
+import liveSse from './tests/07-live-sse.js';
 import quit from './tests/11-quit.js';
 import launcherCrash from './tests/12-launcher-crash.js';
 import backendDeath from './tests/13-backend-death.js';
@@ -51,13 +52,14 @@ test(
 );
 test('8. the provider steps fail on the network, and only there', providerSteps);
 test('9. the PDF, for real', pdf);
-test('10. opening the PDF launches Preview on it', openPdf);
-test('11. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlp);
-test('12. quitting leaves no process or port behind', quit);
-test('13. a backend death leaves no tool behind, and the restart works', backendDeath);
-test('14. every Mach-O links only inside the bundle or the system', linkage);
-test('15. the browser chain, both ends', browserChain);
+test('10. a live SSE update flips the audio step to done with no reload', liveSse);
+test('11. opening the PDF launches Preview on it', openPdf);
+test('12. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlp);
+test('13. quitting leaves no process or port behind', quit);
+test('14. a backend death leaves no tool behind, and the restart works', backendDeath);
+test('15. every Mach-O links only inside the bundle or the system', linkage);
+test('16. the browser chain, both ends', browserChain);
 // Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
-test('16. a launcher crash leaves no service or tool behind', launcherCrash);
+test('17. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('17. the updater swaps a previous build for the candidate and relaunches', update);
+test('18. the updater swaps a previous build for the candidate and relaunches', update);
