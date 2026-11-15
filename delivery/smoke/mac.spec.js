@@ -15,6 +15,7 @@ import zoomHidden from './tests/mac/06-zoom.js';
 import lectureState from './tests/mac/07-lecture.js';
 import pdf from './tests/mac/08-pdf.js';
 import linkage from './tests/mac/09-linkage.js';
+import firstRun from './tests/mac/10-first-run.js';
 import update from './tests/mac/99-update.js';
 
 test.describe.configure({ mode: 'serial' });
@@ -39,12 +40,16 @@ test('3. boot, four services healthy, every bundled tool working', boot);
 test('4. the bundled ffmpeg writes audio.mp3 with the audio step’s arguments', ffmpegAudio);
 test('5. the native host answers through the manifest Chrome reads', nativeHost);
 test('6. the zoom browser hides by pid and comes back', zoomHidden);
-test('7. the data folder is chosen and a lecture is ready to render', lectureState);
-test('8. the PDF, for real', pdf);
-test('9. quitting leaves no process or port behind', quit);
-test('10. a backend death leaves no tool behind, and the restart works', backendDeath);
-test('11. every Mach-O links only inside the bundle or the system', linkage);
+test(
+  '7. first run: the keys are stored encrypted, the data folder is picked, the probes fail offline',
+  firstRun,
+);
+test('8. the lecture the PDF renders is ready', lectureState);
+test('9. the PDF, for real', pdf);
+test('10. quitting leaves no process or port behind', quit);
+test('11. a backend death leaves no tool behind, and the restart works', backendDeath);
+test('12. every Mach-O links only inside the bundle or the system', linkage);
 // Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
-test('12. a launcher crash leaves no service or tool behind', launcherCrash);
+test('13. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('13. the updater swaps a previous build for the candidate and relaunches', update);
+test('14. the updater swaps a previous build for the candidate and relaunches', update);

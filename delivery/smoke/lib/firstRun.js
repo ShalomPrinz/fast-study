@@ -77,13 +77,16 @@ async function confirmPrivacy(modal) {
 /** Fill the init wall — both placeholder keys through their blocked probe, `dataRoot` picked
  *  through the stubbed folder dialog, the university, and the privacy policy confirmed — and get
  *  past it. With `cancelFirst`, a canceled dialog must first leave the launcher's default in the
- *  field; with `requirePrivacy` off, a release whose wall saves on the first click passes too. */
+ *  field; with `requirePrivacy` off, a release whose wall saves on the first click passes too.
+ *  `observed` is filled as the wall is passed, so a caller can report how far it got. */
 export async function completeInitWall(
   { app, page },
   dataRoot,
-  { cancelFirst = false, requirePrivacy = true } = {},
+  { cancelFirst = false, requirePrivacy = true, observed = {} } = {},
 ) {
   await expect(page.getByTestId('init-wall')).toBeVisible({ timeout: 60_000 });
+  observed.wall = 'shown';
+  observed.probes = {};
   for (const [provider, value] of Object.entries(PLACEHOLDER_KEYS)) {
     const input = key(page, 'api-key-input', provider);
     await input.fill(value);
@@ -95,6 +98,7 @@ export async function completeInitWall(
       'unverified',
       { timeout: 60_000 },
     );
+    observed.probes[`${provider} key`] = 'unverified';
   }
   const field = page.getByTestId('data-root-input');
   const prefilled = await page.evaluate(() => window.faststudy.defaultDataRoot ?? '');
@@ -134,6 +138,7 @@ export async function completeInitWall(
     page.locator('#moodle-site'),
     'the university probe did not end unverified',
   ).toHaveClass(/(^|\s)moodle-site--unverified(\s|$)/, { timeout: 60_000 });
+  observed.probes.university = 'unverified';
   const submit = page.getByTestId('init-wall-submit');
   await expect(submit).toBeEnabled();
   await submit.click();
@@ -142,6 +147,7 @@ export async function completeInitWall(
   if (requirePrivacy) {
     await expect(modal, 'the first save did not ask for the privacy policy').toBeVisible();
     await confirmPrivacy(modal);
+    observed.privacy = 'asked and confirmed';
   } else {
     // A release from before the policy saves straight away, so either outcome ends this wait.
     await expect
@@ -152,4 +158,5 @@ export async function completeInitWall(
     if (await modal.count()) await confirmPrivacy(modal);
   }
   await expect(wall).toHaveCount(0, { timeout: 60_000 });
+  observed.wall = 'passed';
 }
