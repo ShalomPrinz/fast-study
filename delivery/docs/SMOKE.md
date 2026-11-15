@@ -123,35 +123,39 @@ A new smoke test adds its row here, its file under `tests/` and its line in `rel
 ## The macOS suite
 
 `mac.spec.js`, run by `smoke-suite-mac.yml`'s `smoke-mac` job with `playwright.mac.config.js`, holds
-only what is Mac-specific plus the shared bodies ported so far (first run, the provider steps, the PDF, the open-PDF control, drive off, a yt-dlp download, quit, the browser chain, launcher crash, backend death and the Hebrew temp path); the rest above stays
-Windows-only until ported. Its bodies are `tests/mac/` and `tests/`, and
-`lib/paths.js` answers the bundle's and the state root's macOS paths to the shared `lib/`. It sets up
-no firewall of its own; the OS keeps it offline, below.
+20 tests on one worker, in order, each building on the state the last left. Mac-only bodies are in
+`tests/mac/`; the rest of the Windows suite's bodies run here unchanged from `tests/`, either
+directly (live SSE, drive off, quit, launcher crash, backend death) or wrapped by a `tests/mac/` file
+that adds evidence (first run, provider steps, the PDF, open PDF, yt-dlp, Hebrew temp, browser chain).
+The fresh install, boot, update and binary-linkage tests have a body per platform (linkage reads PE
+on Windows, Mach-O here). `lib/paths.js` answers
+the bundle's and the state root's macOS paths to the shared `lib/`. The suite sets up no firewall of
+its own; the OS keeps it offline, below.
 
-| Test               | The failure it catches — only the macOS packaging can cause it, the zoom test aside                                                         |
-| ------------------ | ---------------------------------------------------------------------------------------------------------- |
-| 1. dmg install     | the dmg does not mount or holds no `FastStudy.app`; a tool lost its exec bit; the bundle is another version; the run is not offline (its premise check, below) |
-| 2. signatures      | the bundle's seal, or any Mach-O inside it, fails `codesign --verify`; a native one has no arm64 slice     |
-| 3. boot and tools  | a service does not come up from the bundle; `GET /tools` reports a darwin tool unusable                    |
-| 4. ffmpeg          | the source-built ffmpeg cannot run the audio step: `ffmpeg.py`'s prefix and `strip_audio.py`'s arguments, on a tone it encodes itself, must write an MP3 that reads back 16 kHz mono |
-| 5. native host     | the Chrome manifest the running app registered names a script that does not answer one framed `{}` with the live port, secret and extension version |
-| 6. zoom            | the staged `auto`, run on the app binary as node, cannot open its real zoom session or reach `osascript`; the session's browser does not report `NSRunningApplication.hidden`, hides a second browser launched beside it, or does not come back on `show()` |
-| 7. first run | shared `tests/04-first-run.js` on the Mac bundle: the wall does not show, a key or the university probe reaches a provider offline instead of ending `unverified`, the folder dialog does not open at the launcher's default, or `safeStorage` (Keychain) stores a key in the clear or refuses it; evidence is the wall, each probe's result and the stored field names, file only |
-| 8. provider steps | shared `tests/05-provider-steps.js` on the Mac bundle: the audio step does not run for real, or a frozen SDK (Groq, Gemini) fails to import or build a request instead of failing on the network; leaves the lecture the PDF test renders (audio.mp3 and the fixed transcript). Evidence is each step's code and detail and the files left, file only |
-| 9. the PDF         | shared `tests/06-pdf.js` on the Mac bundle: Mac pandoc or tectonic fails, the primed cache's `.fmt` is rebuilt rather than reused, Hebrew glyphs drop, a PDF or PNG figure misses the cache or its filter (pdfium, Pillow); evidence is the formats listing and the PDF text check |
-| 10. live SSE | shared `tests/07-live-sse.js` on the Mac bundle: the packaged SPA under `app://bundle` with the launch secret never receives `database/`'s SSE `/events` (frozen database or the secret query param), so the audio step does not flip pending → done in the same document; the lecture is its own, built from the bundled ffmpeg's tone, so the PDF lecture stays untouched for the next test |
-| 11. drive off | shared `tests/08-drive-off.js` on the Mac bundle: a fresh install's defaults run a step past the PDF or upload to Drive (a `drive_url.txt`, a Drive consent modal), here on the frozen Mac backend and the packaged SPA. It reads only the service API and `database/`'s routes, so it needs no Mac bundle path for the Google client JSON. Runs right after live SSE, as on Windows; it reuses the PDF lecture, which it needs complete, and changes no file in it |
-| 12. opening a PDF | the open-control half of shared `tests/09-open-pdf.js` on the Mac bundle: `open-pdf` fails through the preload bridge and `shell.openPath` (error toast), or Preview never ends up holding `summary.pdf`. LaunchServices starts Preview under launchd, so it is neither the app's child nor in `no_inet`, and hands the document over by Apple Event, not argv; the observation is `lsof -c Preview` listing the PDF's real path, which needs no TCC consent (`osascript`/System Events would). Preview is killed before and after. The Windows half, a `file_locked` for an exclusively held PDF, has no Mac counterpart: macOS holds no mandatory file locks, so another process's open handle never makes the PDF step fail. Evidence is the path and the PDFs Preview held, file only |
-| 13. yt-dlp download | shared `tests/10-ytdlp-download.js` on the Mac bundle: yt-dlp does not merge the DASH fixture's streams, or the state root's yt-dlp copy is not seeded. Homebrew's ffmpeg is on this runner's PATH, so a merge alone does not show the bundled one ran: the process table sampled during the download must show yt-dlp handed `--ffmpeg-location` at `Contents/Resources/bin/ffmpeg` and no other ffmpeg running. Evidence is the arguments seen, the ffmpeg processes seen (sampled, may miss a short merge) and `video.mp4`'s size and stream dump |
-| 14. quit            | shared `tests/11-quit.js`: after the window closes, a process under the bundle or the state root, or a service port, outlives the app (the process group teardown of `electron/teardown.js`); a relaunch does not show the init wall again |
-| 15. backend death | shared `tests/13-backend-death.js`: a hard-killed backend leaves its ffmpeg running (main's group `SIGKILL` on a child's exit), or the restart does not reboot four services on fresh ports and rewrite `bridge.json` |
-| 16. linkage        | a Mach-O in the bundle (frozen Python, ffmpeg, pandoc, tectonic, Electron) has a load command or `LC_RPATH` that does not resolve inside the bundle or to `/usr/lib/`, `/System/` — a Homebrew link loads on this runner and nowhere else. Read in-process by `lib/linkage.js`; evidence is the count, link roots, rpaths and offender list |
-| 17. Hebrew temp | shared `tests/14-hebrew-temp.js` on the Mac bundle: a bundled tool (ffmpeg, pandoc, tectonic) or the frozen backend breaks under a non-ASCII `TMPDIR`, or the frozen services do not write UTF-8 to `launch.log`. The body also reads `TMPDIR` off the launcher's main process, so the offline `sudo -E` wrapper dropping or rewriting it fails the check rather than passing under the default one. Evidence is the `TMPDIR` the app saw, each step's workspaces in it and the `launch.log` lines naming it, file only |
-| 18. browser chain | shared `tests/15-browser-chain.js` on the Mac bundle: with `/Applications/Google Chrome.app` renamed aside (Playwright resolves a channel by that fixed path, not bundle id, so the rename is what the app sees) the prerequisite does not resolve Edge, or with both gone settings does not show the missing state and the install link, or the PDF step needs a browser. Both `.app`s are restored in `finally` and again in `afterAll`. The rename needs write on `/Applications` (the runner is an admin); the native-host leg stays with test 5. Evidence is each leg's prerequisite status and channel, file only |
-| 19. launcher crash | shared `tests/12-launcher-crash.js`: after `SIGKILL` of main, a service or a bundled ffmpeg/pandoc/tectonic outlives it. Strict: macOS has no job object, so main's death leaving its detached process groups running is a product finding for `electron/`. A failure skips only the update test |
-| 20. update         | a lower-version build fed the candidate over loopback does not download it, carry its keys across the swap in memory, or install it only on Restart now or its next launch |
+| Test | The failure it catches — only the macOS packaging can cause it, the zoom test aside |
+| --- | --- |
+| dmg install | the dmg does not mount or holds no `FastStudy.app`; a tool lost its exec bit; the bundle is another version; the run is not offline (its premise check, below) |
+| signatures | the bundle's seal, or any Mach-O inside it, fails `codesign --verify`; a native one has no arm64 slice |
+| boot | a service does not come up from the bundle; `GET /tools` reports a darwin tool unusable |
+| ffmpeg | the source-built ffmpeg cannot run the audio step: `ffmpeg.py`'s prefix and `strip_audio.py`'s arguments, on a tone it encodes itself, must write an MP3 that reads back 16 kHz mono |
+| native host | the Chrome manifest the running app registered names a script that does not answer one framed `{}` with the live port, secret and extension version |
+| zoom | the staged `auto`, run on the app binary as node, cannot open its real zoom session or reach `osascript`; the session's browser does not report `NSRunningApplication.hidden`, hides a second browser launched beside it, or does not come back on `show()` |
+| first run | shared `tests/04-first-run.js`: the wall does not show, a key or the university probe reaches a provider offline instead of ending `unverified`, the folder dialog does not open at the launcher's default, or `safeStorage` (Keychain) stores a key in the clear or refuses it. Evidence is the wall, each probe's result and the stored field names |
+| provider steps | shared `tests/05-provider-steps.js`: the audio step does not run for real, or a frozen SDK (Groq, Gemini) fails to import or build a request instead of failing on the network. Leaves the lecture the PDF test renders (audio.mp3 and the fixed transcript). Evidence is each step's code and detail and the files left |
+| PDF | shared `tests/06-pdf.js`: Mac pandoc or tectonic fails, the primed cache's `.fmt` is rebuilt rather than reused, Hebrew glyphs drop, a PDF or PNG figure misses the cache or its filter (pdfium, Pillow). Evidence is the formats listing and the PDF text check |
+| live SSE | shared `tests/07-live-sse.js`: the packaged SPA under `app://bundle` with the launch secret never receives `database/`'s SSE `/events` (frozen database or the secret query param), so the audio step does not flip pending to done in the same document. The lecture is its own, built from the bundled ffmpeg's tone, so the PDF lecture stays untouched |
+| drive off | shared `tests/08-drive-off.js`: a fresh install's defaults run a step past the PDF or upload to Drive (a `drive_url.txt`, a Drive consent modal). It reads only the service API and `database/`'s routes, so it needs no Mac bundle path for the Google client JSON. It reuses the complete PDF lecture and changes no file in it |
+| open PDF | the open-control half of shared `tests/09-open-pdf.js`: `open-pdf` fails through the preload bridge and `shell.openPath` (error toast), or Preview never ends up holding `summary.pdf`. LaunchServices starts Preview under launchd, so it is neither the app's child nor in `no_inet`, and hands the document over by Apple Event, not argv; the observation is `lsof -c Preview` listing the PDF's real path, which needs no TCC consent (`osascript`/System Events would). Preview is killed before and after. The Windows half, a `file_locked` for an exclusively held PDF, has no Mac counterpart: macOS holds no mandatory file locks. Evidence is the path and the PDFs Preview held |
+| yt-dlp download | shared `tests/10-ytdlp-download.js`: yt-dlp does not merge the DASH fixture's streams, or the state root's yt-dlp copy is not seeded. Homebrew's ffmpeg is on this runner's PATH, so a merge alone does not show the bundled one ran: the process table sampled during the download must show yt-dlp handed `--ffmpeg-location` at `Contents/Resources/bin/ffmpeg` and no other ffmpeg running. Evidence is the arguments seen, the ffmpeg processes seen (sampled, may miss a short merge) and `video.mp4`'s size and stream dump |
+| quit | shared `tests/11-quit.js`: after the window closes, a process under the bundle or the state root, or a service port, outlives the app (the process group teardown of `electron/teardown.js`); a relaunch does not show the init wall again |
+| backend death | shared `tests/13-backend-death.js`: a hard-killed backend leaves its ffmpeg running (main's group `SIGKILL` on a child's exit), or the restart does not reboot four services on fresh ports and rewrite `bridge.json` |
+| Mach-O linkage | a Mach-O in the bundle (frozen Python, ffmpeg, pandoc, tectonic, Electron) has a load command or `LC_RPATH` that does not resolve inside the bundle or to `/usr/lib/`, `/System/` — a Homebrew link loads on this runner and nowhere else. Read in-process by `lib/linkage.js`; evidence is the count, link roots, rpaths and offender list |
+| Hebrew temp | shared `tests/14-hebrew-temp.js`: a bundled tool (ffmpeg, pandoc, tectonic) or the frozen backend breaks under a non-ASCII `TMPDIR`, or the frozen services do not write UTF-8 to `launch.log`. The body also reads `TMPDIR` off the launcher's main process, so the offline `sudo -E` wrapper dropping or rewriting it fails the check. Evidence is the `TMPDIR` the app saw, each step's workspaces in it and the `launch.log` lines naming it |
+| browser chain | shared `tests/15-browser-chain.js`: with `/Applications/Google Chrome.app` renamed aside (Playwright resolves a channel by that fixed path, not bundle id, so the rename is what the app sees) the prerequisite does not resolve Edge, or with both gone settings does not show the missing state and the install link, or the PDF step needs a browser. Both `.app`s are restored in `finally` and again in `afterAll`. The rename needs write on `/Applications` (the runner is an admin); the native-host leg stays with the native host test. Evidence is each leg's prerequisite status and channel |
+| launcher crash | shared `tests/12-launcher-crash.js`: after `SIGKILL` of main, a service or a bundled ffmpeg/pandoc/tectonic outlives it. Strict: macOS has no job object, so main's death leaving its detached process groups running is a product finding for `electron/` (spawns are `detached`, `electron/main.js`); the test is expected to fail until that changes, and a failure skips only the update test |
+| update | a lower-version build fed the candidate over loopback does not download it, carry its keys across the swap in memory, or install it only on Restart now or its next launch |
 
-- **Test 6 also holds a flow check.** Hiding the zoom browser and `show()` are `downloader/auto`
+- **The zoom test also holds a flow check.** Hiding the zoom browser and `show()` are `downloader/auto`
   behaviour, kept here because no harness spec can cover them: the harness runs on Linux and
   `auto`'s unit tests fake the `osascript` call. Its packaging fact is the first clause alone.
 - **Offline at the OS, by group.** `smoke-suite-mac.yml` creates group `no_inet` and loads a pf anchor,
@@ -159,7 +163,7 @@ no firewall of its own; the OS keeps it offline, below.
   that opens with `set skip on lo0`. Every suite-driven launch of the app, every `ELECTRON_RUN_AS_NODE` probe and
   the zoom probe runs through `sudo -u <runner> -g no_inet` (`lib/mac.js`'s `offlineArgv`; Playwright's
   `executablePath` is a generated script that bakes it in), so the services and tools inherit the
-  gid while the runner's own traffic (checkout, uploads) stays staff. Test 1 ends with the premise
+  gid while the runner's own traffic (checkout, uploads) stays staff. The dmg install test ends with the premise
   check, `lib/offline.js`: as the app, loopback answers and `https://github.com/` fails to connect
   (DNS still resolves, through `mDNSResponder`), while the runner reaches it. A GID, not a UID: a
   second user would leave the Aqua/WindowServer session a `BrowserWindow` needs. Not `sandbox-exec`:
@@ -171,7 +175,7 @@ no firewall of its own; the OS keeps it offline, below.
   and `strayProcesses` by executable path, never command line, since the root `sudo` parent names the
   bundle in its arguments. Under the offline `sudo` wrapper `app.process().pid` is sudo's, so the backend-death and
   launcher-crash tests find main as the four ready ports' owners' one parent; `forceKill` is a plain `SIGKILL` of that pid.
-  The launcher-crash test runs just before the update, so its expected failure skips only that; ported tests go above it.
+  The launcher-crash test runs just before the update, so its expected failure skips only that.
 - **Evidence is written, not only asserted.** Each test appends what it observed to
   `test-results/mac-evidence.md` — the `codesign` output, `/tools`, the native host's reply with the
   secret masked, the zoom states, `update.log` — which the job puts in the run summary and uploads as
@@ -212,8 +216,8 @@ dispatch, only once the file is on the default branch.
 
 ## Boot timing
 
-Two boots are timed, never an extra launch: test 3's (the fresh install's first) and test 16's last
-step (the candidate's first after the update). `lib/bootTiming.js` writes them to
+The Windows suite times two boots, never an extra launch: the boot test's (the fresh install's first)
+and the update test's last step (the candidate's first after the update). The macOS suite times none. `lib/bootTiming.js` writes them to
 `test-results/boot-timing.json` — `launch_to_app_ms` (`electron.launch` → main's `app loaded`
 `launch.log` line, the launcher's own mark of `app://bundle` finishing its load; same machine, same
 clock), `log_to_app_ms` (main's first `launch.log` line → that line) and each service's `ready_ms`
