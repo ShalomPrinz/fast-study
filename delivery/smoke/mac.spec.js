@@ -5,6 +5,7 @@ import { run, screenshot } from './lib/mac.js';
 import * as paths from './lib/paths.js';
 import { forget, session } from './lib/session.js';
 import liveSse from './tests/07-live-sse.js';
+import driveOff from './tests/08-drive-off.js';
 import quit from './tests/11-quit.js';
 import launcherCrash from './tests/12-launcher-crash.js';
 import backendDeath from './tests/13-backend-death.js';
@@ -53,13 +54,14 @@ test(
 test('8. the provider steps fail on the network, and only there', providerSteps);
 test('9. the PDF, for real', pdf);
 test('10. a live SSE update flips the audio step to done with no reload', liveSse);
-test('11. opening the PDF launches Preview on it', openPdf);
-test('12. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlp);
-test('13. quitting leaves no process or port behind', quit);
-test('14. a backend death leaves no tool behind, and the restart works', backendDeath);
-test('15. every Mach-O links only inside the bundle or the system', linkage);
-test('16. the browser chain, both ends', browserChain);
+test('11. drive off: a fresh install runs nothing past the PDF and uploads nothing', driveOff);
+test('12. opening the PDF launches Preview on it', openPdf);
+test('13. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlp);
+test('14. quitting leaves no process or port behind', quit);
+test('15. a backend death leaves no tool behind, and the restart works', backendDeath);
+test('16. every Mach-O links only inside the bundle or the system', linkage);
+test('17. the browser chain, both ends', browserChain);
 // Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
-test('17. a launcher crash leaves no service or tool behind', launcherCrash);
+test('18. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('18. the updater swaps a previous build for the candidate and relaunches', update);
+test('19. the updater swaps a previous build for the candidate and relaunches', update);
