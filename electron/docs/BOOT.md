@@ -153,7 +153,7 @@ dead child.
 
 ## The child environment
 
-Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, `FASTSTUDY_VERSION`
+Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_LIFELINE=1` (POSIX only), `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, `FASTSTUDY_VERSION`
 (`app.getVersion()`, each Sentry init's release), `SENTRY_ENVIRONMENT` (`production` packaged, else
 `development`, main's own too), `FASTSTUDY_SENTRY_DSN` (main's resolved DSN, empty when there is none),
 `FASTSTUDY_ERROR_REPORTS` (`1` when the stored switch is on, else `0` — never absent, so a value in
@@ -240,7 +240,13 @@ kill removes `bridge.json`, so the native host answers `{ "running": false }` on
 The kill runs from `will-quit`, `process.on('exit')`, `SIGINT`/`SIGTERM`, a failed boot before its
 retry, and an uncaught exception, because an orphaned service keeps a port and keeps writing
 `DATA_ROOT` after the app is gone, and the next launch would run a second backend against the same
-`timing.db`. Only a `SIGKILL` of main escapes it.
+`timing.db`. A `SIGKILL` of main runs none of those handlers, so on POSIX every child also gets `FASTSTUDY_LIFELINE=1`
+and a stdin pipe main never writes or closes: when main dies the pipe hits EOF and the service kills its
+own process group — otherwise the detached groups, ffmpeg included, would be orphaned. Windows gets
+stdin `ignore` and no variable: libuv's kill-on-close job already ends the children with main, and a
+thread blocked reading an inherited stdin handle can stall subprocess startup.
+The `process.on('exit')` path sends only `SIGTERM` and then main exits, so the lifeline's kill can cut that
+grace short; every other path waits out the reap before exiting.
 
 The `will-quit` kill also has to stay where it is for a packaged update to install — see
 [`UPDATES.md`](UPDATES.md).

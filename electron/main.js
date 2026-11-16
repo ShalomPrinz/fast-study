@@ -328,11 +328,13 @@ function spawnFailure(spec, error) {
 /** Spawn one child and resolve the port it reports on stdout. */
 function startChild(spec, env) {
   let child;
+  const posix = process.platform !== 'win32';
   try {
     child = spawn(spec.command, spec.args, {
       cwd: spec.cwd,
-      env: { ...process.env, ...env, ...spec.env },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, ...env, ...spec.env, ...(posix && { FASTSTUDY_LIFELINE: '1' }) },
+      // POSIX only: stdin is the lifeline, never written or closed, so it hits EOF only when main dies, even by SIGKILL.
+      stdio: [posix ? 'pipe' : 'ignore', 'pipe', 'pipe'],
       // Its own process group, so the kill on quit reaches the tools it spawned (ffmpeg, chrome)
       // and not just the service. Windows has no groups; `taskkill /T` is the equivalent there.
       detached: process.platform !== 'win32',
@@ -343,6 +345,8 @@ function startChild(spec, env) {
     return Promise.reject(spawnFailure(spec, error));
   }
   children.push(child);
+  // A child dying first can EPIPE the pipe; it carries no data, so the error is moot.
+  child.stdin?.on('error', () => {});
   let reported = false;
   return new Promise((resolve, reject) => {
     readline.createInterface({ input: child.stdout }).on('line', (line) => {

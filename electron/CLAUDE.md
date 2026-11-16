@@ -101,7 +101,7 @@ Electron's own default. `eslint.config.js` gives `electron/**/*.js` its own
   that owns it. Main is a launcher and a window.
 - **No second writer of the on-disk layout.** Main never touches `DATA_ROOT`; the services reach
   disk through `database/`, and main only passes the root down as an env var.
-- **No spelling of its own for the launch contract.** `FASTSTUDY_PORT`, `FASTSTUDY_SECRET`,
+- **No spelling of its own for the launch contract.** `FASTSTUDY_PORT`, `FASTSTUDY_SECRET`, `FASTSTUDY_LIFELINE` (POSIX only: Windows' kill-on-close job already reaps children),
   `FASTSTUDY_STATE_DIR`, `FASTSTUDY_BIN_DIR`, `X-FastStudy-Secret`, `app://bundle` and the
   `^FASTSTUDY_PORT=(\d+)$` line are the same names `lib/runtime/` implements on the service side, and
   the native host `com.faststudy.bridge` is spelled independently by the extension. A change to any
