@@ -40,6 +40,7 @@ Every service carries its own module named `runtime` (`runtime.py` / `runtime.js
 | Launch secret, in env    | `FASTSTUDY_SECRET` — unset means no enforcement, which is dev                   |
 | Secret header            | `X-FastStudy-Secret`                                                            |
 | Secret query param       | `secret`, for `EventSource`, which cannot set a header                          |
+| Launcher lifeline, env   | `FASTSTUDY_LIFELINE=1` — POSIX only: stdin is a pipe the launcher holds, and its EOF SIGKILLs the service's group. Unset means no watch, which is dev |
 | Writable state root, env | `FASTSTUDY_STATE_DIR` — unset falls back to `.state/` at the repo root          |
 | State join               | `statePath(...parts)` / `state_path(*parts)` — a pure join that creates nothing |
 | Bundled binary dir, env  | `FASTSTUDY_BIN_DIR` — unset means resolve off PATH, which is dev                |
