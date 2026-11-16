@@ -27,10 +27,10 @@ export const ASSUMPTION = {
     'electron-updater installs an unsigned build over an unsigned build from a generic provider',
   wholesale: 'an electron-updater install preserves nothing in the install directory',
   launcherJob: mac
-    ? "main's death takes its services with it, though they are spawned detached in their own process groups"
+    ? "main's death closes each service's lifeline stdin pipe, and a service reading EOF kills its own process group"
     : "libuv's kill-on-close job takes main's spawned services with it when main is terminated",
   backendJob: mac
-    ? "a killed backend's tools die with it, through main's process-group teardown on a child's exit"
+    ? "the backend's tools share its process group, which it kills on lifeline EOF when main dies"
     : "the frozen backend's own kill-on-close job takes its tools with it when it dies",
 };
 export const failed = (assumption) => `assumption failed: ${assumption}`;
