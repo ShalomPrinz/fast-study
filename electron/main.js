@@ -88,6 +88,9 @@ const SCRUB_ENV = ['DATA_ROOT', 'GROQ_API_KEY', 'GEMINI_API_KEY'];
 // that could inherit the pipe. Null on every launch that is not an update's relaunch (docs/UPDATES.md).
 let handoff = process.platform === 'darwin' ? receive(process.env) : null;
 
+// False until `adoptHandoff()` returns: decrypting before then can raise the Keychain prompt the handoff avoids.
+let adopted = false;
+
 const children = [];
 // In-flight SIGTERM→SIGKILL escalations; every exit path waits on them, or the timer dies with main.
 const reaping = new Set();
@@ -161,9 +164,10 @@ function beforeSend(event, hint) {
 }
 
 /** Run `fn` with the values the scrub reads from env set on `process.env`, then restore it: main
- *  holds the secret and the stored settings outside its env. Synchronous, so no spawn sees the swap. */
+ *  holds the secret and the stored settings outside its env. Synchronous, so no spawn sees the swap.
+ *  Before the handoff is adopted the stored API keys are skipped: reading them decrypts. */
 function withScrubEnv(fn) {
-  const stored = store.serviceEnv();
+  const stored = adopted ? store.serviceEnv() : { DATA_ROOT: store.read().dataRoot };
   const values = { FASTSTUDY_SECRET: SECRET };
   for (const name of SCRUB_ENV) values[name] = stored[name];
   const saved = {};
@@ -546,6 +550,14 @@ async function movedToApplications() {
  *  what it handed over under this build's own. Runs before the first `safeStorage` call, which
  *  would otherwise ask for the old item; never fails the boot. */
 async function adoptHandoff() {
+  try {
+    await adoptReceivedHandoff();
+  } finally {
+    adopted = true;
+  }
+}
+
+async function adoptReceivedHandoff() {
   if (!handoff) return;
   const received = handoff;
   // The plaintext lives no longer than this call.

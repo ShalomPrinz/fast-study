@@ -156,7 +156,7 @@ privileges to call order. The renderer sends over IPC, not `fetch`, so no CSP `c
   from a renderer `service=electron`; a renderer event keeps the `service=frontend` it arrived with.
 - **Scrubs** with the policy's `scrub`, after putting the launch secret and the stored `DATA_ROOT`
   and API keys on `process.env` for the synchronous call — the policy reads only env, and main holds
-  those elsewhere. A renderer, which has neither, gets its `DATA_ROOT` paths redacted here.
+  those elsewhere. A renderer, which has neither, gets its `DATA_ROOT` paths redacted here. Before the macOS handoff is adopted, the stored API keys are skipped ([UPDATES.md](UPDATES.md)).
 - **Attaches** the tail of `launch.log` (the last 200KB) as `launch.log`, run through the same scrub
   first — it carries every child's output, Hebrew paths included.
 
