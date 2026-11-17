@@ -229,8 +229,9 @@ heredoc, which `sh` backs with a temp file, and the only variable is the fd numb
 - **The residual key loss.** `isEncryptionAvailable()` is not called before the delete, since it is
   not known to leave the Keychain alone on macOS. So if encrypting or saving fails after the old item
   is deleted, the plaintext is dropped and the stored keys cannot be read, and `auto`'s Moodle token is
-  orphaned. Main then shows a one-button alert (awaited: the boot waits for OK, so the alert never sits behind the window) asking the user to
-  re-enter the Gemini and Groq keys and sign in to Moodle again.
+  orphaned. Main then shows a one-button alert (awaited: the boot waits for OK, so the alert never
+  sits behind the window) asking the user to re-enter the Gemini and Groq keys and sign in to Moodle
+  again.
 - **Every handoff failure reaches Sentry** (`receive`, `check`, `delete`, `adopt`): tags
   `handoff_step` and `handoff_keys_lost`, context `handoff` `{step, error, lost, fields}` where `fields`
   are the key names only. `adoptHandoff` returns that outcome; `main.js` does the alert and the report.
