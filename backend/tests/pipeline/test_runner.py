@@ -796,6 +796,44 @@ def test_run_step_keeps_provider_conditions_below_error(caplog, code, level):
     assert record.levelname == level
 
 
+@pytest.mark.parametrize(
+    "step, file, level",
+    [
+        ("summarize", "summary.md", "WARNING"),
+        ("intuition", "intuition.md", "WARNING"),
+        ("solution", "solution.md", "WARNING"),
+        ("figures", "summary.md", "ERROR"),
+        ("pdf", "summary.md", "ERROR"),
+        ("intuition_pdf", "intuition.md", "ERROR"),
+        ("audio", "audio.mp3", "ERROR"),
+        ("transcript", "transcript.txt", "ERROR"),
+        ("summarize", "transcript.txt", "ERROR"),
+    ],
+)
+def test_run_step_empty_file_warns_only_for_the_gemini_write(caplog, step, file, level):
+    async def fake_call(course, lecture, kind, step, **_opts):
+        return {
+            "status": "error",
+            "message": "empty",
+            "code": "empty_file",
+            "params": {"file": file},
+        }
+
+    async def go():
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            await runner._run_step_unlocked("C1", "L1", "lecture", step)
+
+    with caplog.at_level("WARNING", logger="runner"):
+        asyncio.run(go())
+    runner._errors.pop(runner._skey("C1", "L1", "lecture"), None)
+
+    [record] = [r for r in caplog.records if f"step {step} failed" in r.getMessage()]
+    assert record.levelname == level
+
+
 # ---- lecture deleted mid-run ----
 
 
