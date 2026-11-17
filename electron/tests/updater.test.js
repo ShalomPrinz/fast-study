@@ -256,13 +256,20 @@ function loadMac(t, stage, platform = 'darwin') {
     },
   };
   app.once = (event, listener) => event === 'quit' && mac.onQuit.push(listener);
-  app.quit = () => (mac.quits += 1);
+  app.off = (event, listener) => {
+    if (event === 'quit') mac.onQuit = mac.onQuit.filter((hook) => hook !== listener);
+  };
+  app.quit = () => {
+    if (mac.quitError) throw mac.quitError;
+    mac.quits += 1;
+  };
   app.getVersion = () => '1.0.0';
   t.after(() => {
     Object.defineProperty(process, 'platform', real);
     delete require.cache[lib];
     delete app.once;
     delete app.quit;
+    delete app.off;
     delete app.getVersion;
     fs.rmSync(root, { recursive: true, force: true });
   });
@@ -425,6 +432,31 @@ test('macOS Restart now whose kill throws leaves the record pending and a retry 
   assert.equal(second, undefined);
   assert.equal(mac.quits, 1);
   assert.equal(pending.read(mac.dir).state, 'attempted');
+});
+
+test('macOS Restart now whose quit throws leaves one quit hook after a retry', async (t) => {
+  const { startUpdater, restartToUpdate, log, mac, leave } = loadMac(t);
+  await leave();
+  startUpdater(log, null, mac.state);
+  await flush();
+  mac.quitError = new Error('quit failed');
+  const first = await restartToUpdate(
+    async () => {},
+    () => {},
+    log,
+  );
+  assert.deepEqual(first, { error: 'quit failed' });
+  assert.deepEqual(mac.onQuit, []);
+  mac.quitError = null;
+  const second = await restartToUpdate(
+    async () => {},
+    () => assert.fail('recovered'),
+    log,
+  );
+  assert.equal(second, undefined);
+  assert.equal(mac.onQuit.length, 1);
+  mac.onQuit[0]();
+  assert.equal(mac.helpers.length, 1);
 });
 
 test('macOS Restart now whose helper cannot start fails the version', async (t) => {

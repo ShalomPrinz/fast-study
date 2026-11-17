@@ -262,13 +262,14 @@ function restartToUpdate(stop, recover, log) {
     }
     // Only a synchronous `error` event is caught; a failed installer launch arrives after quit is scheduled.
     let failure = null;
+    let quitHook = null;
     const onError = (error) => (failure ??= error);
     try {
       await stop();
       autoUpdater.on('error', onError);
       if (MAC) {
         // `quit` follows main's `will-quit` kill, so the helper starts once every service is dead.
-        app.once('quit', () => {
+        quitHook = () => {
           try {
             startSwap(macStaged, log);
           } catch (error) {
@@ -276,13 +277,16 @@ function restartToUpdate(stop, recover, log) {
             pending.fail(path.join(macStaged.stateDir, 'update'), swapVersion, error.message);
             log('updater', `install helper not started: ${error.message}`);
           }
-        });
+        };
+        app.once('quit', quitHook);
         app.quit();
       } else {
         autoUpdater.quitAndInstall(false, true);
       }
     } catch (error) {
       failure = error;
+      // A retry registers its own hook; a stale one would start a second helper.
+      if (quitHook) app.off('quit', quitHook);
     } finally {
       autoUpdater.off('error', onError);
     }
