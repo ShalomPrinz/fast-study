@@ -7,9 +7,8 @@ const { pipeline } = require('node:stream/promises');
 const { FD_ENV, HANDOFF_FD } = require('./macHandoff');
 const pending = require('./macPending');
 
-// The install step, run by /bin/sh once main is gone: $1 pid, $2 the installed .app, $3 the staged
-// .app, $4 the 0.2 s polls to wait for the pid, $5 the binary's name, $6 the app's own PATH. Stdin
-// is the handoff, kept in a shell variable only (no heredoc: sh backs it with a temp file).
+// The install step, run by /bin/sh once main is gone (args in docs/UPDATES.md). Stdin is the handoff,
+// kept in a shell variable only: no heredoc, sh backs it with a temp file.
 const HELPER = `
 pid=$1
 app=$2

@@ -104,7 +104,9 @@ differs from the running app's. The Mac build is ad-hoc signed, and no two ad-ho
    emitter, so the phases, the stopped timer, the retry on the next tick and the log line are the
    Windows ones.
 3. **Install.** A detached `/bin/sh` helper, handed its script as `-c` text so nothing it runs lives
-   in the bundle it replaces. It waits for main's pid to exit (a `kill -0` poll, five times a second
+   in the bundle it replaces (positional args: `$1` pid, `$2` installed .app, `$3` staged .app,
+   `$4` 0.2 s polls to wait for the pid, `$5` binary name, `$6` the app's own PATH; stdin is the
+   handoff). It waits for main's pid to exit (a `kill -0` poll, five times a second
    for up to a minute: two unrelated processes share no channel to push on), moves the staged build
    to a hidden sibling `.FastStudy.app.new`, renames the installed bundle to `.FastStudy.app.old`,
    renames the new one into place and deletes the old one. If the last rename fails, the old bundle
