@@ -147,7 +147,10 @@ nothing to order against. It reads `pending.json` and decides (`macPending.decid
 
 - **Verified against the recorded digest**, not the feed: the launch may be offline, and the zip the
   feed's sha512 covers was deleted after unpacking. The tree is hashed again — paths, modes, link
-  targets, contents — so a staged build that lost or gained a file between the runs is not installed.
+  targets, contents — so a staged build that lost or gained a file between the runs is not installed. No window opens
+  while the tree hashes (only the Dock icon bounces) and the cost scales with disk speed; `verified in <n>ms`
+  in `launch.log` is the figure to watch. Accepted over hashing only at staging or checking paths,
+  modes and sizes: a tree damaged between runs would install a broken app the helper cannot roll back.
 - **One try per version, from either caller.** A digest mismatch, a helper that cannot start and a swap that did not
   land all leave `{version, state: "failed", reason}` and nothing staged. The old build boots
   normally and skips that version at every check; the next release replaces the record.
