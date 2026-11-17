@@ -16,11 +16,22 @@ _INLINE_CODE_RE = re.compile(
 # A possessive after a sibilant ("Bayes' Rule") glues across the space; the s/x/z lookbehind
 # keeps a closing quote between Latin words ("’word’ here") outside the run.
 _POSSESSIVE = r"(?<=[sxzSXZ])['’](?=[ \t]+[" + _LATIN + r"])"
+# A `#` glued after a letter stays in the token (PKCS#5, C#); a lone or heading `#` never matches.
+_HASH = r"(?<=[" + _LATIN + r"])#(?![#])"
 # One Latin token: optional numeric prefix / leading slash glued to a letter, then word chars
 # with separators only when more follow. Why each piece is shaped so: docs/BIDI.md.
 _WORD = (
-    r"(?:[0-9]+(?:[.,][0-9]+)*-?)?(?:(?<![" + _HEBREW + r"])/)?[" + _LATIN + r"]"
-    r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r"0-9])|" + _POSSESSIVE + r")*"
+    r"(?:[0-9]+(?:[.,][0-9]+)*(?:/[0-9]+(?:[.,][0-9]+)*)?(?:-|['’](?=[sS]\b))?)?"
+    r"(?:(?<![" + _HEBREW + r"])/)?[" + _LATIN + r"]"
+    r"(?:["
+    + _LATIN
+    + r"0-9_]|[\-/.'’](?=["
+    + _LATIN
+    + r"0-9])|"
+    + _POSSESSIVE
+    + r"|"
+    + _HASH
+    + r")*"
 )
 # A bare URL is one token, so its `:`/`?`/`=`/`&` stay in the LTR run; it never takes `*` or ends on
 # `_`/punctuation, so emphasis markers stay outside. A balanced `(…)` joins it (Foo_(bar)).

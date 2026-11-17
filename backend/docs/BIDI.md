@@ -75,7 +75,8 @@ Math **and** code compose into one splitter, `split_protected` over `_PROTECTED_
 Wraps Latin runs in `\LR{}` (LaTeX-escaped — `x86_64` carries special chars) so they don't reorder inside the RTL paragraph. The regex is deliberately fussy:
 
 - **Latin includes accented forms** (Latin-1 Supplement + Extended-A/B, minus `×`/`÷`), else "Scheffé" orphans its `é`.
-- **A numeric prefix glued to a letter joins the run** (`4KB`, `0.5ms`, `3-way`); "4 שקלים", with a space, does not.
+- **A numeric prefix glued to a letter joins the run** (`4KB`, `0.5ms`, `3-way`); "4 שקלים", with a space, does not. The prefix may be a fraction (`3/2-Approximation`) and a digit possessive joins (`1's complement`); a plain `3/4` not glued to a word stays untouched.
+- **A `#` glued after a letter stays in the token** (`PKCS#5`, `C#`, `F#`; LaTeX-escaped to `\#`); a lone `#` or a heading marker is never part of one.
 - **A number alone is a continuation, never an anchor** — "Software 1.0" is one run, "5 שקלים" stays untouched.
 - **Separators (space, `, `, `-`, `. ` after a listed abbreviation) glue only when another Latin token follows**, so a sentence-final period or a dash before Hebrew stays RTL. `. ` glues only right after `e.g`, `i.e`, `vs`, `cf`, `Fig`, `Eq`, `approx`, `resp`; any other period ends the sentence, so `(Reliability). TCP` and `ACK. TCP` stay two runs.
 - **A soft line break is a separator** (a space in markdown), so `merge\nsort` is one run; not when the next line opens a block (`#`, `>`, `|`, list marker, `:::`, fence, rule, blank line), nor across a line that is a heading or holds a table `|` on either side of the break (judged on the whole line, not the chunk left after splitting on code/math/links).

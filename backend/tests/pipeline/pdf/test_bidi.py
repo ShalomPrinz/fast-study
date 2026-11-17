@@ -1,3 +1,4 @@
+import pytest
 from pipeline.pdf.bidi import force_ltr_inline_code, wrap_english_phrases
 
 # ---------------------------------------------------------------------------
@@ -326,6 +327,26 @@ class TestWrapEnglishPhrases:
         result = wrap_english_phrases("ראה Foo, עברית")
         assert r"\LR{Foo}" in result
         assert r"\RL{,}" in result
+
+    # --- Token alphabet: fraction prefix, digit possessive, glued '#' ---
+    @pytest.mark.parametrize(
+        "text, expected",
+        [
+            (
+                "### אלגוריתם כריסטופידס (3/2-Approximation)",
+                r"### אלגוריתם כריסטופידס \LR{(3/2-Approximation)}",
+            ),
+            ("**PKCS#5**", r"**\LR{PKCS\#5}**"),
+            ("(1's complement addition)", r"\LR{(1's complement addition)}"),
+            ("שפת C# ו-F# טובות", r"שפת \LR{C\#} ו-\LR{F\#} טובות"),
+            ("ה-3-way כאן", r"ה-\LR{3-way} כאן"),
+            ("שלום # וגם 3/4 כן", "שלום # וגם 3/4 כן"),
+            ("# כותרת", "# כותרת"),
+            ("Dijkstra's אלגוריתם", r"\LR{Dijkstra's} אלגוריתם"),
+        ],
+    )
+    def test_glued_token_parts(self, text, expected):
+        assert wrap_english_phrases(text) == expected
 
     # --- Number glued directly to a Latin unit (4KB) ---
 
