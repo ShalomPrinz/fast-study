@@ -92,3 +92,17 @@ one-line comment pointing at this file.
   removal, an install that never answered keeps its older model until the user changes it in
   Settings. Remove `hydrogen_prompted` from the store's field list in the same change; a key left
   in a user's settings.json is then ignored and needs no cleanup.
+
+## Mac-less release gate
+
+- **Code:** `site/stamp.sh`, the gate block before the release checks; the `<!--mac-only-->`
+  markers, `<!--win-only:…:win-only-->` comments and `data-win-content` attributes in
+  `site/index.html` and `site/code-signing.html`; the gate section of `site/CLAUDE.md`.
+- **Old state:** the latest GitHub Release predates the macOS build and has no
+  `FastStudy-mac-arm64.dmg`, so a Mac download link on the page would 404.
+- **What it does:** at deploy, a latest release without the dmg (or no release) strips every Mac
+  button, link, section and claim and swaps in the Windows-only copy; with the dmg the markers are
+  just removed.
+- **Remove when:** the latest release carries `FastStudy-mac-arm64.dmg` — `publish.yml` requires it
+  on every release, so the first macOS release makes the gate permanently idle. Delete the gate and
+  the markers, keep the dmg size read in `stamp.sh`, and re-run prettier on both pages.

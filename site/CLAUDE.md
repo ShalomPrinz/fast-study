@@ -10,7 +10,7 @@ on Windows and Apple Silicon Macs. Plain HTML/CSS/JS with no build step and no d
 | `code-signing.html` | The code signing policy SignPath Foundation requires: its title and team roles on top, the full privacy policy as the last section (`#privacy`) — also the privacy URL Google OAuth brand verification holds, so it keeps the Drive scope, token and Limited Use lines |
 | `style.css`   | The app's own tokens, light only, logical properties for both directions        |
 | `main.js`     | The visitor's OS (`html[data-os="mac"]`, set first; Windows without it) and the language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>`. Also the demo player (below), the journey carousel, and the zoom overlay every `main img` but the demo poster opens (a `<dialog>`; Esc or a click anywhere but the arrows closes, focus returns). A journey shot's zoom also steps the four shots (edge arrows, ←/→ by reading direction, N of 4 counter, wrapping) by driving the carousel's `show()`, and the carousel and focus end on the last one viewed |
-| `stamp.sh`    | Writes the latest release's version and both installers' sizes into a staged `index.html` |
+| `stamp.sh`    | Writes the latest release's version and both installers' sizes into a staged `index.html`, and applies the Mac-less release gate (below) |
 | `capture.mjs` | Recaptures the eleven app screenshots on a live app-harness stack, using the showcase dataset and helpers in `.claude/harness/showcase/` |
 | `img/captured-version` | Release tag whose becoming latest triggered the last capture, taken from main at that time (`v1.2.3`); `pages.yml`'s `capture` job compares it with the latest release and never deploys it |
 | `img/`        | The app screenshots (a 1280×800 layout at 2×, 2560×1600 JPEG, sharp at the carousel's 925px (85% of the 1088px slide) on high-DPI screens: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps (no Gatekeeper images, see below) |
@@ -50,6 +50,10 @@ OS line, version size, "other OS" link and install hint. `main.js` sets `data-os
 (not iPadOS) and CSS hides the other half; with no JS, Windows shows. Mac minimum is Electron 44.2.0's
 `LSMinimumSystemVersion`, 13.0 (read from its darwin-arm64 zip; re-derive when `electron` is bumped).
 The Mac build is ad-hoc signed, never notarized, and not SignPath-signed (SignPath signs Windows only).
+
+## The Mac-less release gate
+
+Temporary, removed per `docs/MIGRATIONS.md` ("Mac-less release gate"). Until the latest release carries `FastStudy-mac-arm64.dmg` (no release or an unreadable one counts as none), `stamp.sh` strips the stage down to the Windows-only page: it deletes every `<!--mac-only-->…<!--/mac-only-->` block (Mac buttons, links, `#install-mac`, size span), swaps each `<!--win-only:…:win-only-->` comment's copy in (needs, keys encryption, the FAQ answers) and each `<meta data-win-content>` over its `content` (both pages' descriptions), and drops the ` for-win` class so `data-os="mac"` can never hide a Windows element. With the dmg it only removes the markers and the Windows copy. The unstamped source shows the Mac content.
 
 ## The version line
 

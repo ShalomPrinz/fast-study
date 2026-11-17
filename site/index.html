@@ -10,6 +10,7 @@
     <meta
       name="description"
       content="FastStudy is a free desktop app for Windows and macOS (Apple Silicon) that turns recorded Hebrew lectures into written summaries, as a PDF with optional Google Drive upload. Open source on GitHub (ShalomPrinz/fast-study)."
+      data-win-content="FastStudy is a free Windows desktop app that turns recorded Hebrew lectures into written summaries, as a PDF with optional Google Drive upload. Open source on GitHub (ShalomPrinz/fast-study)."
     />
     <meta name="google-site-verification" content="AWqRb_hP9wZdD1Zeel_KImE-Bljz8TksBfFk0E4Oy_k" />
     <link rel="icon" href="img/icon.svg" type="image/svg+xml" />
@@ -51,13 +52,13 @@
         >
           <span class="he">הורדה</span><span class="en">Download</span>
         </a>
-        <a
+        <!--mac-only--><a
           class="btn btn--small for-mac"
           href="https://github.com/ShalomPrinz/fast-study/releases/latest/download/FastStudy-mac-arm64.dmg"
           data-goatcounter-click="download"
         >
-          <span class="he">הורדה</span><span class="en">Download</span>
-        </a>
+          <span class="he">הורדה</span><span class="en">Download</span> </a
+        ><!--/mac-only-->
       </div>
     </header>
 
@@ -92,7 +93,7 @@
                 </svg>
                 <span class="he">הורדה ל־Windows</span><span class="en">Download for Windows</span>
               </a>
-              <a
+              <!--mac-only--><a
                 class="btn btn--large for-mac"
                 href="https://github.com/ShalomPrinz/fast-study/releases/latest/download/FastStudy-mac-arm64.dmg"
                 data-goatcounter-click="download"
@@ -100,19 +101,25 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
                 </svg>
-                <span class="he">הורדה ל־Mac</span><span class="en">Download for Mac</span>
-              </a>
+                <span class="he">הורדה ל־Mac</span><span class="en">Download for Mac</span> </a
+              ><!--/mac-only-->
               <p class="download-os for-win">
                 Windows 10/11 · <span class="he">חינם</span><span class="en">Free</span>
               </p>
+              <!--mac-only-->
               <p class="download-os for-mac">
                 macOS 13+ · Apple Silicon · <span class="he">חינם</span><span class="en">Free</span>
               </p>
+              <!--/mac-only-->
               <p class="version" hidden data-stamp>
                 <span class="he">גרסה __VERSION__</span><span class="en">Version __VERSION__</span
-                ><span class="size for-win"> · __SIZE__ MB</span
-                ><span class="size for-mac"> · __SIZE_MAC__ MB</span>
+                ><span class="size for-win"> · __SIZE__ MB</span><!--mac-only--><span
+                  class="size for-mac"
+                >
+                  · __SIZE_MAC__ MB</span
+                ><!--/mac-only-->
               </p>
+              <!--mac-only-->
               <p class="download-other for-win">
                 <span class="he"
                   >משתמשים ב־Mac?
@@ -131,6 +138,8 @@
                   ></span
                 >
               </p>
+              <!--/mac-only-->
+              <!--mac-only-->
               <p class="download-other for-mac">
                 <span class="he"
                   >משתמשים ב־Windows?
@@ -149,6 +158,7 @@
                   ></span
                 >
               </p>
+              <!--/mac-only-->
               <p class="install-hint for-win">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 3.5 2.5 20h19L12 3.5zM12 10v4.5M12 17.4v.1" />
@@ -156,6 +166,7 @@
                 <span class="he">ראו <a href="#install">הוראות התקנה</a> בהמשך</span>
                 <span class="en">See <a href="#install">installation instructions</a> below</span>
               </p>
+              <!--mac-only-->
               <p class="install-hint for-mac">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 3.5 2.5 20h19L12 3.5zM12 10v4.5M12 17.4v.1" />
@@ -165,6 +176,7 @@
                   >See <a href="#install-mac">installation instructions for Mac</a> below</span
                 >
               </p>
+              <!--/mac-only-->
             </div>
           </div>
           <figure class="shot shot--hero">
@@ -633,10 +645,11 @@
             <h2><span class="he">מה צריך</span><span class="en">What you'll need</span></h2>
             <ul class="checklist">
               <li>
-                <span class="he">Windows 10/11, או Mac עם שבב Apple Silicon (macOS 13 ומעלה).</span
+                <!--mac-only--><span class="he"
+                  >Windows 10/11, או Mac עם שבב Apple Silicon (macOS 13 ומעלה).</span
                 ><span class="en"
                   >Windows 10/11, or a Mac with Apple Silicon (macOS 13 or later).</span
-                >
+                ><!--/mac-only--><!--win-only:<span class="he">Windows</span><span class="en">Windows</span>:win-only-->
               </li>
               <li>
                 <span class="he"
@@ -715,16 +728,16 @@
               <span class="he"
                 >על מנת לשלוח ולקבל מידע מ- Groq ומ- Gemini, האפליקציה FastStudy משתמשת ב "מפתחות
                 API" - שורת תווים סודית ואישית לשימוש אישי שלכם (באפליקציה יש מדריך קצר איך לקבל
-                מפתחות כאלה). המפתחות נשמרים במחשב ומוצפנים על ידי מערכת ההפעלה (Windows, או מחזיק
-                המפתחות של macOS) - אף אחד לא יוכל לקרוא אותם או להשתמש בהם בלי גישה למחשב
-                שלכם.</span
+                מפתחות כאלה). המפתחות נשמרים במחשב ומוצפנים על ידי
+                <!--mac-only-->מערכת ההפעלה (Windows, או מחזיק המפתחות של macOS)<!--/mac-only--><!--win-only:Windows:win-only-->
+                - אף אחד לא יוכל לקרוא אותם או להשתמש בהם בלי גישה למחשב שלכם.</span
               >
               <span class="en"
                 >To send data to and receive it from Groq and Gemini, FastStudy uses "API keys" — a
                 secret string of characters that is yours alone (the app has a short guide on how to
-                get them). The keys are stored on your computer and encrypted by your operating
-                system (Windows, or the macOS Keychain), so no one can read or use them without
-                access to your computer.</span
+                get them). The keys are stored on your computer and encrypted by
+                <!--mac-only-->your operating system (Windows, or the macOS Keychain)<!--/mac-only--><!--win-only:Windows:win-only-->,
+                so no one can read or use them without access to your computer.</span
               >
             </li>
             <li>
@@ -847,6 +860,7 @@
         </div>
       </section>
 
+      <!--mac-only-->
       <section class="band" id="install-mac">
         <div class="wrap">
           <h2>
@@ -934,6 +948,7 @@
           </p>
         </div>
       </section>
+      <!--/mac-only-->
 
       <section class="section" id="faq">
         <div class="wrap narrow">
@@ -960,14 +975,14 @@
               <span class="he">יש גרסה ל־Mac?</span><span class="en">Is there a Mac version?</span>
             </summary>
             <p>
-              <span class="he"
+              <!--mac-only--><span class="he"
                 >כן, ל־Mac עם שבב Apple Silicon (M1 ומעלה) ועם macOS 13 ומעלה. אין גרסה ל־Mac עם
                 מעבד Intel. ראו <a href="#install-mac">הוראות התקנה ל־Mac</a>.</span
               ><span class="en"
                 >Yes, for Macs with Apple Silicon (M1 or later) running macOS 13 or later. There's
                 no version for Intel Macs. See
                 <a href="#install-mac">installation instructions for Mac</a>.</span
-              >
+              ><!--/mac-only--><!--win-only:<span class="he">לא, FastStudy עובדת רק על Windows.</span><span class="en">No, FastStudy runs on Windows only.</span>:win-only-->
             </p>
           </details>
           <details>
@@ -976,7 +991,7 @@
               ><span class="en">How do updates work?</span>
             </summary>
             <p>
-              <span class="he"
+              <!--mac-only--><span class="he"
                 >עדכונים יורדים ברקע. ב־Windows הם מותקנים כשסוגרים את האפליקציה. ב־Mac הם מותקנים
                 בפתיחה הבאה, עם הפעלה מחדש אחת שנראית לעין (סמל ה־Dock עשוי להופיע פעמיים). אם
                 התיקייה של האפליקציה לא ניתנת לכתיבה, למשל כשלא הסכמתם להעביר אותה ל־Applications,
@@ -989,7 +1004,7 @@
                 icon may appear twice). If the app's folder isn't writable, for example you declined
                 the move to Applications, or it's in Applications and you're not an admin, nothing
                 installs, and you can download the new version from this page.</span
-              >
+              ><!--/mac-only--><!--win-only:<span class="he">עדכונים יורדים ברקע ומותקנים בשקט כשסוגרים את האפליקציה. לא צריך לעשות כלום.</span><span class="en">Updates download in the background and install silently when you close the app. There's nothing to do.</span>:win-only-->
             </p>
           </details>
           <details>
@@ -997,14 +1012,14 @@
               <span class="he">איפה היא מותקנת?</span><span class="en">Where does it install?</span>
             </summary>
             <p>
-              <span class="he"
+              <!--mac-only--><span class="he"
                 >ב־Windows: בתיקייה <code dir="ltr">%LOCALAPPDATA%\Programs\faststudy</code>, בלי
                 צורך בהרשאות מנהל. ב־Mac: בתיקיית Applications.</span
               >
               <span class="en"
                 >On Windows: in <code>%LOCALAPPDATA%\Programs\faststudy</code>, no admin rights
                 needed. On Mac: in the Applications folder.</span
-              >
+              ><!--/mac-only--><!--win-only:<span class="he">בתיקייה <code dir="ltr">%LOCALAPPDATA%\Programs\faststudy</code>. לא צריך הרשאות מנהל.</span><span class="en">In <code>%LOCALAPPDATA%\Programs\faststudy</code>. No admin rights needed.</span>:win-only-->
             </p>
           </details>
           <details>
@@ -1012,14 +1027,14 @@
               <span class="he">איך מסירים אותה?</span><span class="en">How do I uninstall it?</span>
             </summary>
             <p>
-              <span class="he"
+              <!--mac-only--><span class="he"
                 >ב־Windows: בהגדרות ← אפליקציות, בוחרים את FastStudy ולוחצים "הסר התקנה". ב־Mac:
                 גוררים את FastStudy מתיקיית Applications לפח.</span
               >
               <span class="en"
                 >On Windows: Settings → Apps, pick FastStudy and choose Uninstall. On Mac: drag
                 FastStudy from the Applications folder to the Trash.</span
-              >
+              ><!--/mac-only--><!--win-only:<span class="he">בהגדרות של Windows ← אפליקציות, בוחרים את FastStudy ולוחצים "הסר התקנה".</span><span class="en">In Windows Settings → Apps, pick FastStudy and choose Uninstall.</span>:win-only-->
             </p>
           </details>
           <details>

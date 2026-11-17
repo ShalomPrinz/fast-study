@@ -1,21 +1,33 @@
 #!/usr/bin/env bash
 # Stamps the latest release's version and each installer's size into a staged index.html and unhides the line.
 # No release or no installer asset leaves it hidden; one missing asset hides only its size.
+# Without a release carrying FastStudy-mac-arm64.dmg the staged pages also lose every Mac block (see the gate).
 #   bash site/stamp.sh <staged site dir> [<GitHub releases/latest JSON>]
 set -euo pipefail
 
-page="$1/index.html"
+dir="$1"
+page="$dir/index.html"
 release="${2:-}"
+
+asset_size() { jq -r --arg n "$1" '[.assets[]? | select(.name == $n) | .size][0] // empty' "$release" 2>/dev/null || true; }
+mac_bytes=""
+if [ -n "$release" ] && [ -s "$release" ]; then mac_bytes="$(asset_size FastStudy-mac-arm64.dmg)"; fi
+
+# Mac-less release gate: temporary, removed per docs/MIGRATIONS.md. Drops <!--mac-only--> blocks, swaps in each <!--win-only:…:win-only--> and data-win-content copy, and frees the Windows elements from the OS toggle.
+if [ -z "$mac_bytes" ]; then
+  perl -0pi -e 's/<!--mac-only-->.*?<!--\/mac-only-->//gs; s/<!--win-only:(.*?):win-only-->/$1/gs; s/ content="[^"]*"(\s+)data-win-content="([^"]*)"/ content="$2"/g; s/ for-win\b//g' "$page" "$dir/code-signing.html"
+  echo "stamp: no FastStudy-mac-arm64.dmg — pages are Windows only"
+else
+  perl -0pi -e 's/<!--\/?mac-only-->//g; s/<!--win-only:.*?:win-only-->//gs; s/\s+data-win-content="[^"]*"//g' "$page" "$dir/code-signing.html"
+fi
 
 if [ -z "$release" ] || [ ! -s "$release" ]; then
   echo "stamp: no release — version line stays hidden"
   exit 0
 fi
 
-tag="$(jq -r '.tag_name // empty' "$release")"
-asset_size() { jq -r --arg n "$1" '[.assets[]? | select(.name == $n) | .size][0] // empty' "$release"; }
+tag="$(jq -r '.tag_name // empty' "$release" 2>/dev/null || true)"
 win_bytes="$(asset_size FastStudy-Setup.exe)"
-mac_bytes="$(asset_size FastStudy-mac-arm64.dmg)"
 if [ -z "$tag" ] || { [ -z "$win_bytes" ] && [ -z "$mac_bytes" ]; }; then
   echo "stamp: release '${tag:-none}' has no installer asset — version line stays hidden"
   exit 0
