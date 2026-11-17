@@ -208,9 +208,9 @@ def write(path, lines):
 def roster(lines, path):
     """Saves the job's test roster and returns the lines worth printing, or [] when it has none."""
     # Playwright's list reporter prints a roster worth having whole; every other runner here
-    # only gets its failure lines pulled out, or its pass summary when nothing failed.
+    # only gets failure lines, or its pass summary. Marks: ok/x on Windows, ✓/✘ on macOS.
     for pat in (
-        r"^\s*(ok|x|-|°)\s+\d+\s+\S+\.spec\.[jt]s",
+        r"^\s*(ok|x|✓|✘|-|°)\s+\d+\s+\S+\.spec\.[jt]s",
         r"^(not ok \d|FAILED |# fail [1-9])",
         r"^(\d+ passed.* in [\d.]+s|\s*Tests\s+\d+ .*|# (pass|fail) \d+)$",
     ):
@@ -222,7 +222,7 @@ def roster(lines, path):
     write(path, found)
     if len(found) <= 40:
         return found
-    passing = [line for line in found if re.match(r"\s*ok\s", line)]
+    passing = [line for line in found if re.match(r"\s*(ok|✓)\s", line)]
     return [line for line in found if line not in passing] + [
         "  (%d passing tests omitted — full roster at %s)" % (len(passing), path)
     ]
