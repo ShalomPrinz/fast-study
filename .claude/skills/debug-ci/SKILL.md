@@ -24,7 +24,7 @@ is a case-insensitive substring of the workflow name (`CI`, `Build and smoke-tes
 ### `run` — one run, by state
 
 ```
-python3 <repo-root>/.claude/skills/debug-ci/ci.py run [<id>] [--workflow W] [--failed] --out <scratchpad>/ci
+python3 <repo-root>/.claude/skills/debug-ci/ci.py run [<id>] [--workflow W] [--failed] [--job J] [--watch] --out <scratchpad>/ci
 ```
 
 No id takes the newest run (of W), `--failed` the newest failed one. The header says whether the
@@ -36,6 +36,13 @@ run contains local `HEAD` and `origin/main`; then every job with its failed or c
 - **failure or cancelled** — the digest: the failing job and step, the `##[error]` lines and the
   diagnostic block around the first one, the roster, annotations, the artifact inventory, and — for
   the release smoke job — the failing test's `error-context.md` and the tail of the last app launch.
+
+`--job J` narrows the jobs to one — its id, or a case-insensitive substring of its name
+(`smoke-mac`) that must match exactly one — and digests it once it finishes, even while the rest of
+the run is still going. Artifacts stay run-wide. Never fetch a single job's log by hand.
+
+`--watch` waits until the run — or the `--job` — completes, then prints the digest above. Start it
+with `run_in_background` and you are woken once when it exits; don't re-run a snapshot to poll.
 
 `--out` defaults to `$TMPDIR/faststudy-ci/<run-id>`; pass your scratchpad so nothing lands near the
 repo. Do not re-derive any of the output with your own `gh` commands; read it and answer.

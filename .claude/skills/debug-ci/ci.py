@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
@@ -22,6 +23,7 @@ MARK = {
 }
 # Placeholders gh fills from the git remote locally, saving a `gh repo view` round trip.
 REPO = "repos/{owner}/{repo}"
+WATCH_SECONDS = 30
 
 
 def die(msg):
@@ -398,16 +400,29 @@ def cmd_run(args):
             )
         run_id = runs[0]["id"]
 
-    base = "%s/actions/runs/%s" % (REPO, run_id)
-    run, jobs, arts = parallel(
-        (gh_json, base), (gh_json, base + "/jobs"), (gh_json, base + "/artifacts")
-    )
+    run, jobs, arts = fetch_run(run_id)
     if run is None:
         die_gh("no run %s in this repo — 'ci.py runs' shows the recent ones" % run_id)
     if jobs is None:
         die_gh("cannot read the jobs of run %s" % run_id)
-    jobs = jobs["jobs"]
-    arts = (arts or {}).get("artifacts", [])
+    job = (
+        pick_job(jobs, args.job, args.watch and run["status"] != "completed")
+        if args.job
+        else None
+    )
+    if job and job["id"] != "?":
+        args.job = job["name"]
+    # GitHub offers gh no push channel, so --watch polls; run it in the background to be woken once.
+    while args.watch and (job or run)["status"] != "completed":
+        time.sleep(WATCH_SECONDS)
+        fresh = fetch_run(run_id)
+        if fresh[0] and fresh[1] is not None:
+            run, jobs, arts = fresh
+            if args.job:
+                # A job behind `needs` appears late, and a re-run gives it a new id under the same name.
+                job = pick_job(jobs, args.job, run["status"] != "completed")
+                if job["id"] != "?":
+                    args.job = job["name"]
 
     out = args.out or os.path.join(
         os.environ.get("TMPDIR", "/tmp"), "faststudy-ci", str(run_id)
@@ -451,17 +466,52 @@ def cmd_run(args):
             elif s["status"] == "in_progress":
                 print("          running step %s: %s" % (s["number"], s["name"]))
 
+    if job:
+        status, conclusion, jobs = job["status"], job["conclusion"], [job]
+        print("\nJOB %s (id %s) only" % (job["name"], job["id"]))
     if status != "completed":
         print(
-            "\nStill %s — the above is a snapshot; run this again for a later one."
+            "\nStill %s — the above is a snapshot; run this again for a later one, or pass --watch."
             % status
         )
+        return
+    if conclusion == "skipped":
+        print("\nSkipped — nothing to digest.")
         return
     if conclusion == "success":
         success(run_id, jobs, arts, out, args)
     else:
         digest(run_id, url, jobs, arts, out, args)
+        # The smoke section reads the Windows smoke job's artifact, so another --job must not show it.
+        if not job or ("smoke" in job["name"] and "mac" not in job["name"]):
+            smoke_section(out)
     saved(out)
+
+
+def fetch_run(run_id):
+    base = "%s/actions/runs/%s" % (REPO, run_id)
+    run, jobs, arts = parallel(
+        (gh_json, base),
+        (gh_json, base + "/jobs?per_page=100"),
+        (gh_json, base + "/artifacts"),
+    )
+    return run, jobs and jobs["jobs"], (arts or {}).get("artifacts", [])
+
+
+def pick_job(jobs, query, waiting):
+    """The one job whose id equals `query` or whose name contains it, case-insensitively.
+    While waiting, no match yet is a placeholder still queued rather than an error."""
+    hits = [j for j in jobs if query in (str(j["id"]), j["name"])] or [
+        j for j in jobs if query.lower() in j["name"].lower()
+    ]
+    if waiting and not hits:
+        return {"status": "queued", "name": query, "id": "?"}
+    if len(hits) != 1:
+        die(
+            "--job '%s' matches %d jobs; this run has: %s"
+            % (query, len(hits), ", ".join(j["name"] for j in jobs))
+        )
+    return hits[0]
 
 
 def success(run_id, jobs, arts, out, args):
@@ -553,7 +603,6 @@ def digest(run_id, url, jobs, arts, out, args):
         for name, dl in zip(picked, downloads):
             if not dl.result():
                 print("  !! failed to download " + name)
-    smoke_section(out)
 
 
 # ---------------------------------------------------------------- artifacts
@@ -627,6 +676,15 @@ def main():
     )
     r.add_argument(
         "--max-mb", type=float, default=25, help="artifact size cap in MB (default 25)"
+    )
+    r.add_argument(
+        "--job",
+        help="digest only this job: its id or a case-insensitive substring of its name",
+    )
+    r.add_argument(
+        "--watch",
+        action="store_true",
+        help="wait until the run (or the --job) completes, then print the digest",
     )
 
     r = sub.add_parser(
