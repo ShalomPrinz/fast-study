@@ -185,8 +185,19 @@ async function installPending(stateDir, log) {
   }
 }
 
-/** Verify the staged build against its recorded digest and hand it to the helper. The record turns
- *  `attempted` before the helper starts, so no later launch of this build starts a second swap. */
+/** Check the staged build against its recorded digest and turn the record `attempted`, so no later
+ *  launch of this build starts a second swap. Throws on a mismatch; answers the staged path. */
+async function verifyAndMark(record, dir) {
+  const staged = path.join(dir, 'staged', path.basename(String(record.app)));
+  const began = Date.now();
+  if ((await pending.treeDigest(staged)) !== record.digest) {
+    throw new Error('the staged build changed on disk after it was downloaded');
+  }
+  pending.write(dir, { ...record, state: 'attempted' });
+  return { staged, ms: Date.now() - began };
+}
+
+/** Verify the staged build, mark it attempted and hand it to the helper. */
 async function swapPending(record, dir, stateDir, log) {
   const { version } = record;
   const say = (line) => log('updater', line);
@@ -199,15 +210,8 @@ async function swapPending(record, dir, stateDir, log) {
     return false;
   }
   try {
-    const staged = path.join(dir, 'staged', path.basename(String(record.app)));
-    const began = Date.now();
-    if ((await pending.treeDigest(staged)) !== record.digest) {
-      throw new Error('the staged build changed on disk after it was downloaded');
-    }
-    say(
-      `version ${version} verified in ${Date.now() - began}ms — installing it before this launch`,
-    );
-    pending.write(dir, { ...record, state: 'attempted' });
+    const { staged, ms } = await verifyAndMark(record, dir);
+    say(`version ${version} verified in ${ms}ms — installing it before this launch`);
     startSwap({ bundle, staged, stateDir }, log);
     return true;
   } catch (error) {
@@ -231,6 +235,31 @@ function restartToUpdate(stop, recover, log) {
   if (shown !== 'downloaded') return Promise.resolve({ error: 'no update is downloaded' });
   // A second click while the first is still killing joins it rather than installing twice.
   restarting ??= (async () => {
+    let swapVersion = null;
+    let marked = null;
+    const dir = MAC ? path.join(macStaged.stateDir, 'update') : null;
+    if (MAC) {
+      // Before the kill: a staged build that fails here leaves the services running.
+      const record = pending.read(dir);
+      try {
+        if (record?.state !== 'pending') throw new Error('no staged update is waiting to install');
+        const { ms } = await verifyAndMark(record, dir);
+        swapVersion = record.version;
+        marked = record;
+        log('updater', `version ${record.version} verified in ${ms}ms — installing it on restart`);
+      } catch (error) {
+        if (record?.state === 'pending') pending.fail(dir, record.version, error.message);
+        restarting = null;
+        // The version is failed or has nothing staged: no click can succeed, so the button goes.
+        shown = null;
+        onShown(null);
+        const which = record?.version
+          ? `version ${record.version} is not tried again`
+          : 'no update';
+        log('updater', `restart not started, ${which}: ${error.message}`);
+        return { error: error.message };
+      }
+    }
     // Only a synchronous `error` event is caught; a failed installer launch arrives after quit is scheduled.
     let failure = null;
     const onError = (error) => (failure ??= error);
@@ -241,10 +270,10 @@ function restartToUpdate(stop, recover, log) {
         // `quit` follows main's `will-quit` kill, so the helper starts once every service is dead.
         app.once('quit', () => {
           try {
-            // Installed now, so nothing is left for the next launch to find.
-            pending.remove(path.join(macStaged.stateDir, 'update'));
             startSwap(macStaged, log);
           } catch (error) {
+            // The record is `attempted`; the reopened build must not offer this version again.
+            pending.fail(path.join(macStaged.stateDir, 'update'), swapVersion, error.message);
             log('updater', `install helper not started: ${error.message}`);
           }
         });
@@ -260,6 +289,8 @@ function restartToUpdate(stop, recover, log) {
     if (!failure) return;
     restarting = null;
     log('updater', `restart failed: ${failure.message}`);
+    // No swap ran: a retry click or the next launch must still find the record `pending`.
+    if (marked) pending.write(dir, marked);
     // The services may already be dead; `shown` stays `downloaded`, so Restart now stays offered.
     recover();
     return { error: failure.message };

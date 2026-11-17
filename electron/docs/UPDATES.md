@@ -116,10 +116,14 @@ differs from the running app's. The Mac build is ad-hoc signed, and no two ad-ho
    runs `open <bundle>`, which reopens the old build. A helper that gives up waiting never
    relaunches: the old app is still running, and `open` would only focus it.
 
-The helper has two callers and no third. **Restart now** stops the services, registers an
-`app.once('quit')` hook and calls `app.quit()`; the hook — after the `will-quit` kill, as on Windows
-— removes `pending.json` and starts the helper. A failed swap there reopens the old build, which
-stages the release again and offers Restart now again. The other caller is the next launch.
+The helper has two callers and no third. **Restart now** first verifies the staged tree against its
+recorded digest and turns the record `attempted` — before the kill, so a mismatch fails the version,
+logs it, answers `{error}` with the services still running and drops the Restart now button (the
+state goes to `null`; no click could succeed). It then stops the services, registers
+an `app.once('quit')` hook and calls `app.quit()`; the hook — after the `will-quit` kill, as on
+Windows — starts the helper, and marks the version `failed` if that throws. A kill that throws writes the
+record back to `pending`, so a retry click or the next launch can still install it. A failed swap reopens the
+old build, which finds `attempted` and fails the version. The other caller is the next launch.
 
 ### Installing at the next launch
 
@@ -144,10 +148,10 @@ nothing to order against. It reads `pending.json` and decides (`macPending.decid
 - **Verified against the recorded digest**, not the feed: the launch may be offline, and the zip the
   feed's sha512 covers was deleted after unpacking. The tree is hashed again — paths, modes, link
   targets, contents — so a staged build that lost or gained a file between the runs is not installed.
-- **One try per version.** A digest mismatch, a helper that cannot start and a swap that did not
+- **One try per version, from either caller.** A digest mismatch, a helper that cannot start and a swap that did not
   land all leave `{version, state: "failed", reason}` and nothing staged. The old build boots
   normally and skips that version at every check; the next release replaces the record.
-- **The record turns `attempted` before the helper starts**, so the same build launched again — a
+- **The record turns `attempted` before the helper starts** (one shared verify-and-mark step), so the same build launched again — a
   second instance once the first has quit, the old build reopened after a failed swap — never starts
   a second swap. A second instance while the first still runs never gets this far: it exits on the
   single-instance lock.

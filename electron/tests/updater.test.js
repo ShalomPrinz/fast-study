@@ -360,8 +360,87 @@ test('macOS Restart now stops the services, then quits into a relaunching instal
       handoff: '{"secrets":{}}',
     },
   ]);
-  // Installed now: the next launch must find nothing pending.
-  assert.equal(pending.read(mac.dir), null);
+  // The helper may not land: the record stays `attempted`, so the reopened build fails the version.
+  assert.equal(pending.read(mac.dir).state, 'attempted');
+});
+
+test('macOS Restart now marks the version attempted before it stops the services', async (t) => {
+  const { startUpdater, restartToUpdate, log, mac, leave } = loadMac(t);
+  await leave();
+  startUpdater(log, null, mac.state);
+  await flush();
+  let seen = null;
+  await restartToUpdate(
+    async () => (seen = pending.read(mac.dir).state),
+    () => assert.fail('recovered'),
+    log,
+  );
+  assert.equal(seen, 'attempted');
+});
+
+test('macOS Restart now with a changed staged build fails the version and keeps the services running', async (t) => {
+  const { startUpdater, restartToUpdate, onUpdateState, updateState, log, lines, mac, leave } =
+    loadMac(t);
+  await leave();
+  startUpdater(log, null, mac.state);
+  await flush();
+  fs.writeFileSync(path.join(mac.stagedApp, 'build'), 'tampered');
+  const pushed = [];
+  onUpdateState((state) => pushed.push(state));
+  const result = await restartToUpdate(
+    async () => assert.fail('stopped the services'),
+    () => assert.fail('recovered'),
+    log,
+  );
+  assert.deepEqual(result, { error: 'the staged build changed on disk after it was downloaded' });
+  assert.equal(mac.quits, 0);
+  assert.deepEqual(mac.onQuit, []);
+  assert.equal(pending.read(mac.dir).state, 'failed');
+  assert.deepEqual(pushed, [null]);
+  assert.equal(updateState(), null);
+  assert.ok(lines.some((line) => line.includes('is not tried again')));
+});
+
+test('macOS Restart now whose kill throws leaves the record pending and a retry proceeds', async (t) => {
+  const { startUpdater, restartToUpdate, log, mac, leave } = loadMac(t);
+  await leave();
+  startUpdater(log, null, mac.state);
+  await flush();
+  let recovered = 0;
+  const first = await restartToUpdate(
+    async () => {
+      throw new Error('kill failed');
+    },
+    () => recovered++,
+    log,
+  );
+  assert.deepEqual(first, { error: 'kill failed' });
+  assert.equal(recovered, 1);
+  assert.equal(pending.read(mac.dir).state, 'pending');
+  const second = await restartToUpdate(
+    async () => {},
+    () => assert.fail('recovered'),
+    log,
+  );
+  assert.equal(second, undefined);
+  assert.equal(mac.quits, 1);
+  assert.equal(pending.read(mac.dir).state, 'attempted');
+});
+
+test('macOS Restart now whose helper cannot start fails the version', async (t) => {
+  const { startUpdater, restartToUpdate, log, mac, leave } = loadMac(t);
+  await leave();
+  startUpdater(log, null, mac.state);
+  await flush();
+  mac.helperError = new Error('spawn failed');
+  await restartToUpdate(
+    async () => {},
+    () => assert.fail('recovered'),
+    log,
+  );
+  mac.onQuit[0]();
+  const record = pending.read(mac.dir);
+  assert.deepEqual([record.state, record.version], ['failed', '9.9.9']);
 });
 
 test('macOS Restart now hands the stored keys to the helper in plaintext', async (t) => {
@@ -369,7 +448,8 @@ test('macOS Restart now hands the stored keys to the helper in plaintext', async
   stub.useTempUserData();
   t.after(() => stub.cleanup());
   require('../store').write({ geminiApiKey: 'gemini-secret' });
-  const { startUpdater, restartToUpdate, log, mac } = loadMac(t);
+  const { startUpdater, restartToUpdate, log, mac, leave } = loadMac(t);
+  await leave();
   startUpdater(log, null, mac.state);
   await flush();
   await restartToUpdate(
@@ -389,7 +469,8 @@ test('macOS Restart now installs with no handoff when a stored key will not decr
   stub.safeStorage.decryptString = () => {
     throw new Error('denied');
   };
-  const { startUpdater, restartToUpdate, log, lines, mac } = loadMac(t);
+  const { startUpdater, restartToUpdate, log, lines, mac, leave } = loadMac(t);
+  await leave();
   startUpdater(log, null, mac.state);
   await flush();
   await restartToUpdate(
