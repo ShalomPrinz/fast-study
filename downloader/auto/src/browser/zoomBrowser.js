@@ -7,6 +7,7 @@ import path from 'node:path';
 import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
 import { resolveBrowserChannel } from './browserChannel.js';
 import { windowMarker } from './windowStyle.js';
+import { zoomPlatform } from './zoomCaptcha.js';
 import { CodedError } from '../lib/errors.js';
 
 // Stealth minus 'user-agent-override' on playwright-extra's chromium only, loaded and registered
@@ -176,13 +177,14 @@ export function zoomLaunchArgs(platform, visible) {
 export async function launchZoomBrowser() {
   const { channel } = await resolveBrowserChannel();
   const chromium = await loadStealthChromium();
+  const platform = zoomPlatform();
   const opts = {
     headless: false,
     channel,
     ignoreDefaultArgs: ['--enable-automation'],
-    args: zoomLaunchArgs(process.platform, process.env.FASTSTUDY_ZOOM_VISIBLE === '1'),
+    args: zoomLaunchArgs(platform, process.env.FASTSTUDY_ZOOM_VISIBLE === '1'),
   };
-  if (!usesXvfb(process.platform)) return chromium.launch(opts);
+  if (!usesXvfb(platform)) return chromium.launch(opts);
 
   const { display, authFile } = await ensureXvfb();
   // Point the browser at the virtual display AND its auth cookie so it can connect.

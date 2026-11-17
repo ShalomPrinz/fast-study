@@ -59,6 +59,9 @@ export function zoomOpened(browser) {
   void style?.hide();
 }
 
+/** The platform the zoom window code targets; the one source zoomBrowser launches by too. */
+export const zoomPlatform = () => deps.platform;
+
 /** The solve budget, so the caller can keep its .mp4 sniff armed across it. */
 export const captchaSolveMs = () => deps.solveMs;
 
