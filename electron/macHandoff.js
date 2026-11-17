@@ -17,7 +17,13 @@ function encode(secrets) {
 
 /** The secrets in a received handoff, string values only; throws on anything `encode` did not write. */
 function decode(text) {
-  const parsed = JSON.parse(text);
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    // V8's own message quotes part of the input, which here is a key.
+    throw new Error('the handoff is not valid JSON');
+  }
   const secrets = parsed?.secrets;
   if (!secrets || typeof secrets !== 'object' || Array.isArray(secrets)) {
     throw new Error('the handoff carries no secrets object');
