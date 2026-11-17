@@ -45,7 +45,7 @@ _URL = (
 _LINK_TARGET_RE = re.compile(r"(\]\([^)\n]*\)|<(?:https?://|www\.)[^>\s]*>)")
 # A number joins a phrase as a CONTINUATION only, never an anchor — so a lone
 # Hebrew-adjacent number ("5 שקלים") stays untouched in the RTL run.
-_NUM = r"[0-9]+(?:[.,][0-9]+)*"
+_NUM = r"[0-9]+(?:[.,][0-9]+)*(?:/[0-9]+(?:[.,][0-9]+)*)*"
 # A markdown soft line break is a space, so a Latin phrase wraps across it — unless the next line
 # opens a block (heading, quote, table, list, fence, rule, blank line).
 _SOFT_BREAK = r"[ \t]*\n(?![ \t]*(?:[#>|]|[-*+][ \t]|[0-9]+[.)][ \t]|:::|```|~~~|---|===|\n))[ \t]*"

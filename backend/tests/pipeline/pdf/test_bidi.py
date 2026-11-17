@@ -342,10 +342,34 @@ class TestWrapEnglishPhrases:
             ("ה-3-way כאן", r"ה-\LR{3-way} כאן"),
             ("שלום # וגם 3/4 כן", "שלום # וגם 3/4 כן"),
             ("# כותרת", "# כותרת"),
+            ("C##", r"\LR{C}##"),
+            ("C#.", r"\LR{C\#}\RL{.}"),
             ("Dijkstra's אלגוריתם", r"\LR{Dijkstra's} אלגוריתם"),
         ],
     )
     def test_glued_token_parts(self, text, expected):
+        assert wrap_english_phrases(text) == expected
+
+    @pytest.mark.parametrize(
+        "text, expected",
+        [
+            ("Software 3/4", r"\LR{Software 3/4}"),
+            ("Software 3/4.", r"\LR{Software 3/4}\RL{.}"),
+            ("Software 3/4 Design", r"\LR{Software 3/4 Design}"),
+            ("Python 3.10/3.11", r"\LR{Python 3.10/3.11}"),
+            ("Windows 10/11", r"\LR{Windows 10/11}"),
+            ("3/4", "3/4"),
+            ("בערך 3/4 מהזמן", "בערך 3/4 מהזמן"),
+            ("17/11/2026", "17/11/2026"),
+            ("3/4.", "3/4."),
+            ("1/2-Approximation", r"\LR{1/2-Approximation}"),
+            ("x/y", r"\LR{x/y}"),
+            ("TCP/IP", r"\LR{TCP/IP}"),
+            ("שלום/hello", r"שלום/\LR{hello}"),
+            ("hello/שלום", r"\LR{hello}/שלום"),
+        ],
+    )
+    def test_slash_number_continuation(self, text, expected):
         assert wrap_english_phrases(text) == expected
 
     # --- Number glued directly to a Latin unit (4KB) ---
