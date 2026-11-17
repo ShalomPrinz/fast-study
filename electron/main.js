@@ -545,17 +545,43 @@ async function movedToApplications() {
 /** An update's relaunch on macOS only: drop the replaced build's Safe Storage item, then re-encrypt
  *  what it handed over under this build's own. Runs before the first `safeStorage` call, which
  *  would otherwise ask for the old item; never fails the boot. */
-function adoptHandoff() {
+async function adoptHandoff() {
   if (!handoff) return;
   const received = handoff;
   // The plaintext lives no longer than this call.
   handoff = null;
-  adoptReceived({
+  const outcome = adoptReceived({
     handoff: received,
     store,
     service: `${app.getName()} Safe Storage`,
     log: (line) => log('main', line),
   });
+  if (outcome.step) reportHandoff(outcome);
+  if (outcome.lost) await tellKeysLost();
+}
+
+/** Send a failed handoff to Sentry (a no-op when it is off): the step, the message and the carried
+ *  key names, never a value. */
+function reportHandoff({ step, error, lost, fields }) {
+  sentry?.captureException(new Error(`macOS update key handoff failed at ${step}`), {
+    tags: { handoff_step: step, handoff_keys_lost: String(lost) },
+    contexts: { handoff: { step, error, lost, fields } },
+  });
+}
+
+/** Tell the user the update could not carry the keys over. Awaited: the boot waits for OK, so the
+ *  alert never sits behind the main window (a parentless macOS alert may block anyway). */
+async function tellKeysLost() {
+  app.focus({ steal: true });
+  await dialog
+    .showMessageBox({
+      type: 'warning',
+      message: 'FastStudy could not keep your saved keys',
+      detail:
+        'The update could not carry over your saved keys. Enter your Gemini and Groq API keys again in Settings, and sign in to Moodle again.',
+      buttons: ['OK'],
+    })
+    .catch((error) => log('main', `keys-lost dialog failed: ${error.message}`));
 }
 
 /** Ask `auto` to load Playwright now, so the first browser action skips that cost. Fire and forget:
@@ -876,7 +902,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     openLog();
-    adoptHandoff();
+    await adoptHandoff();
     // macOS installs a downloaded update here, never on quit, so the new build is started with the
     // keys (docs/UPDATES.md). Ahead of the move offer: the new build asks that on its own launch.
     const mac = app.isPackaged && process.platform === 'darwin';

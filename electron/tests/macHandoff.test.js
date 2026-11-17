@@ -135,7 +135,7 @@ test('the delete reports no item, a failure, a timeout, and stops at its limit',
 const adoptWith = ({ run, checkAdoptable = () => {}, adopt = () => ['gemini_api_key'] }) => {
   const calls = [];
   const lines = [];
-  adoptHandoff({
+  const outcome = adoptHandoff({
     handoff: { secrets: { gemini_api_key: 'g' } },
     store: {
       checkAdoptable: () => (calls.push('check'), checkAdoptable()),
@@ -145,7 +145,7 @@ const adoptWith = ({ run, checkAdoptable = () => {}, adopt = () => ['gemini_api_
     log: (line) => lines.push(line),
     run: (...args) => (calls.push('delete'), run(...args)),
   });
-  return { calls, lines };
+  return { calls, lines, outcome };
 };
 
 test('adopt runs only after every item is gone', () => {
@@ -180,4 +180,78 @@ test('a failed precheck deletes nothing and adopts nothing', () => {
   });
   assert.deepEqual(calls, ['check']);
   assert.deepEqual(lines, ['handoff not adopted: the settings file is unreadable']);
+});
+
+test('the outcome names the failed step, and only an adopt after a good delete is lost', () => {
+  const done = { step: null, error: null, lost: false, fields: ['gemini_api_key'] };
+  assert.deepEqual(adoptWith({ run: () => ({ status: 44 }) }).outcome, done);
+
+  const { outcome: check } = adoptWith({
+    run: () => ({ status: 44 }),
+    checkAdoptable: () => {
+      throw new Error('unreadable');
+    },
+  });
+  assert.deepEqual(check, { ...done, step: 'check', error: 'unreadable' });
+
+  const { outcome: del } = adoptWith({ run: () => ({ status: 36, stderr: 'denied' }) });
+  assert.equal(del.step, 'delete');
+  assert.match(del.error, /then the delete failed: denied/);
+  assert.equal(del.lost, false);
+
+  const { outcome: limit } = adoptWith({ run: () => ({ status: 0 }) });
+  assert.deepEqual([limit.step, limit.lost], ['delete', false]);
+
+  const { outcome: adopt } = adoptWith({
+    run: () => ({ status: 44 }),
+    adopt: () => {
+      throw new Error('encryption unavailable');
+    },
+  });
+  assert.deepEqual(adopt, {
+    step: 'adopt',
+    error: 'encryption unavailable',
+    lost: true,
+    fields: ['gemini_api_key'],
+  });
+});
+
+test('an unreadable handoff is a receive failure that keeps the keys', () => {
+  const outcome = adoptHandoff({
+    handoff: { error: 'fd 3 is not a pipe' },
+    store: {},
+    service: 'X',
+    log: () => {},
+  });
+  assert.deepEqual(outcome, {
+    step: 'receive',
+    error: 'fd 3 is not a pipe',
+    lost: false,
+    fields: [],
+  });
+});
+
+test('no secret value reaches the outcome', () => {
+  const { outcome } = adoptWith({
+    run: () => ({ status: 44 }),
+    adopt: () => {
+      throw new Error('save failed');
+    },
+  });
+  assert.equal(JSON.stringify(outcome).includes('"g"'), false);
+  assert.deepEqual(outcome.fields, ['gemini_api_key']);
+});
+
+test('a malformed handoff never echoes its content into the outcome or the log', async () => {
+  const secret = 'gsk_FAKESECRET123';
+  const { result } = await receiveOver(`{"secrets": {"groq": ${secret}}}`);
+  assert.equal(result.error, 'the handoff is not valid JSON');
+  const lines = [];
+  const outcome = adoptHandoff({
+    handoff: result,
+    store: {},
+    service: 'X',
+    log: (l) => lines.push(l),
+  });
+  assert.ok(!JSON.stringify([result, outcome, lines]).includes(secret));
 });

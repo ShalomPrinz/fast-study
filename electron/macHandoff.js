@@ -90,24 +90,37 @@ function deleteSafeStorage(service, { run = security, limit = 20 } = {}) {
   }
 }
 
-/** Apply a received handoff: check what `store.adopt` can without the old item, delete every item
- *  named `service`, and adopt only when none can survive. Never throws; every step is logged. */
+/** Apply a received handoff: check, delete every item named `service`, adopt only when none can survive.
+ *  Never throws; answers `{step, error, lost, fields}` (docs/UPDATES.md), `fields` key names only. */
 function adoptHandoff({ handoff, store, service, log, run }) {
   const { secrets, error } = handoff;
-  if (error) return log(`handoff unreadable, the stored keys are left as they were: ${error}`);
+  const fields = Object.keys(secrets ?? {});
+  const outcome = (step, detail, lost = false) => ({ step, error: detail, lost, fields });
+  if (error) {
+    log(`handoff unreadable, the stored keys are left as they were: ${error}`);
+    return outcome('receive', error);
+  }
+  let step = 'check';
+  let deleted = false;
   try {
     store.checkAdoptable();
+    step = 'delete';
     const { ok, line } = deleteSafeStorage(service, { run });
     log(`handoff: ${line}`);
     if (!ok) {
-      return log(
+      log(
         'handoff not adopted: an old Keychain item may remain, the stored keys are left as they were',
       );
+      return outcome('delete', line);
     }
+    deleted = true;
+    step = 'adopt';
     const kept = store.adopt(secrets);
     log(`handoff: re-encrypted ${kept.join(', ') || 'nothing — no key was stored'}`);
+    return outcome(null, null);
   } catch (failure) {
     log(`handoff not adopted: ${failure.message}`);
+    return outcome(step, failure.message, deleted);
   }
 }
 
