@@ -14,7 +14,12 @@ client = TestClient(backend_main.app)
 class TestConfigOptions:
     def test_lists_providers_without_their_base_url_or_probe(self):
         body = client.get("/config/options").json()
-        assert body["gemini_models"] == settings.GEMINI_MODELS
+        assert body["gemini_models"] == [
+            {"id": "gemini-4-hydrogen", "name": "Gemini Hydrogen 4"},
+            {"id": "gemini-3.8-flash", "name": "Gemini Flash 3.8"},
+            {"id": "gemini-3.6-flash", "name": "Gemini Flash 3.6"},
+        ]
+        assert [m["id"] for m in body["gemini_models"]] == settings.GEMINI_MODELS
         assert {p["id"] for p in body["providers"]} == set(providers.PROVIDERS)
         for p in body["providers"]:
             assert not {"base_url", "probe_path"} & set(p)

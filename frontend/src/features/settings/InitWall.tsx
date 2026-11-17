@@ -115,7 +115,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
       try {
         const opts = await fetchConfigOptions()
         setOptions(opts)
-        setForm((f) => ({ ...f, geminiModel: f.geminiModel || (opts.geminiModels[0] ?? '') }))
+        setForm((f) => ({ ...f, geminiModel: f.geminiModel || (opts.geminiModels[0]?.id ?? '') }))
       } catch {
         // A downed service is already toasted centrally by the http client.
       }

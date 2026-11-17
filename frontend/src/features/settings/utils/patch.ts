@@ -38,7 +38,7 @@ export interface SettingsForm {
 function formModel(stored: Settings, options: ConfigOptions | null): string {
   const model = stored.geminiModel
   if (!options) return model ?? ''
-  const models = options.geminiModels
+  const models = options.geminiModels.map((m) => m.id)
   return model !== null && models.includes(model) ? model : (models[0] ?? '')
 }
 
@@ -73,7 +73,7 @@ export function withOptions(
   stored: Settings,
   options: ConfigOptions,
 ): SettingsForm {
-  if (options.geminiModels.includes(form.geminiModel)) return form
+  if (options.geminiModels.some((m) => m.id === form.geminiModel)) return form
   return { ...form, geminiModel: formModel(stored, options) }
 }
 

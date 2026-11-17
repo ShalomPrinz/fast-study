@@ -304,16 +304,24 @@ export interface Provider {
 
 export interface ConfigOptions {
   providers: Provider[]
-  geminiModels: string[]
+  geminiModels: GeminiModel[]
+}
+
+/** `id` is what is stored and sent; `name` is what the user reads. */
+export interface GeminiModel {
+  id: string
+  name: string
 }
 
 interface RawOptions {
   providers: { id: string; display_name: string; key_prefix: string; console_url: string }[]
-  gemini_models: string[]
+  gemini_models: { id: string; name: string }[]
 }
 
 export async function fetchConfigOptions(): Promise<ConfigOptions> {
   const raw = await backend.get<RawOptions>('/config/options')
+  const geminiModels = raw.gemini_models.map((m) => ({ id: m.id, name: m.name }))
+  modelNames = new Map(geminiModels.map((m) => [m.id, m.name]))
   return {
     providers: raw.providers.map((p) => ({
       id: p.id,
@@ -321,8 +329,16 @@ export async function fetchConfigOptions(): Promise<ConfigOptions> {
       keyPrefix: p.key_prefix,
       consoleUrl: p.console_url,
     })),
-    geminiModels: raw.gemini_models,
+    geminiModels,
   }
+}
+
+// Filled by every options fetch (InitGate runs one at boot) so error and notice text, which renders
+// outside React, can show a model's name; an id the backend does not map reads as itself.
+let modelNames = new Map<string, string>()
+
+export function modelDisplayName(id: string): string {
+  return modelNames.get(id) ?? id
 }
 
 export type ProbeResult = 'valid' | 'rejected' | 'unverified'

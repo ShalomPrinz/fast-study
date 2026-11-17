@@ -25,7 +25,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | AI chat provider  | Claude                                    | ChatGPT, Gemini       | `electron/`, renderer-only |
 | Course structure  | lectures and recitations (`split`)        | lectures only: every course, chosen courses | `database/`, live |
 
-The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
+The model list comes from `GET /config/options` as `{id, name}` (dropdown shows the name, stores the id; `modelDisplayName`, filled by every options fetch incl. `InitGate`'s at boot, swaps ids for names in `serviceErrors.ts` error params and `model_fallback` notices, an unmapped id staying raw), so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
 
 **Auto retry** (`AutoRetryField`, rules in `utils/autoRetry.ts`) is its own section: a switch plus "Number of

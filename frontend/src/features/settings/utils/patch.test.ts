@@ -182,7 +182,10 @@ describe('buildPatch', () => {
 
 const OPTIONS: ConfigOptions = {
   providers: [],
-  geminiModels: ['gemini-3.5-flash', 'gemini-3.5-pro'],
+  geminiModels: [
+    { id: 'gemini-3.5-flash', name: 'Gemini Flash 3.5' },
+    { id: 'gemini-3.5-pro', name: 'Gemini Pro 3.5' },
+  ],
 }
 
 describe('formFromStore', () => {

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchSettings } from '@/services/settings'
+import { fetchConfigOptions, fetchSettings } from '@/services/settings'
 import type { Settings } from '@/services/settings'
 import InitWall from '@/features/settings/InitWall'
 import { isInitialized } from '@/features/settings/utils/required'
@@ -22,6 +22,8 @@ export default function InitGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function load() {
       try {
+        // Best effort: it only teaches error and notice text the models' display names.
+        void fetchConfigOptions().catch(() => {})
         const settings = await fetchSettings()
         setStored(settings)
         setSettings(settings)

@@ -412,8 +412,8 @@ export default function SettingsView() {
                       onChange={(e) => setForm({ ...form, geminiModel: e.target.value })}
                     >
                       {options.geminiModels.map((model) => (
-                        <option key={model} value={model}>
-                          {model}
+                        <option key={model.id} value={model.id}>
+                          {model.name}
                         </option>
                       ))}
                     </select>

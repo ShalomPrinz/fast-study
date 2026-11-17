@@ -1,6 +1,7 @@
 import { msg } from '@lingui/core/macro'
 import { i18n } from '@lingui/core'
 import type { MessageDescriptor } from '@lingui/core'
+import { modelDisplayName } from '@/services/settings'
 
 // A flat bag of named values; the protocol allows no nesting and no prose (docs/ERROR-CODES.md).
 export type ErrorParams = Record<string, string | number | boolean | null>
@@ -436,7 +437,7 @@ const isolate = (value: string) => `\u2068${value}\u2069`
 export function failedRunSentence(failure: ServiceFailure, run: FailedRun): string | null {
   const reasonRow = failure.code ? TOAST_REASONS[failure.code] : undefined
   if (!reasonRow) return null
-  const params = present(failure.params ?? {})
+  const params = present(failure.params ?? {}, failure.code)
   if (typeof params.model === 'string') params.model = isolate(params.model)
   const reason = i18n._(reasonRow.id, params, { message: reasonRow.message })
   const names =
@@ -490,8 +491,16 @@ function detailOf(code: string, params: ErrorParams): string | null {
 
 // A null param must fall to a message's `undefined` branch like an absent one, so both spellings
 // of "nothing to say" pick the same clause.
-function present(params: ErrorParams): ErrorParams {
-  return Object.fromEntries(Object.entries(params).filter(([, v]) => v != null))
+function present(params: ErrorParams, code?: string | null): ErrorParams {
+  const modelKeys = code === 'model_fallback' ? ['from', 'to'] : ['model']
+  return Object.fromEntries(
+    Object.entries(params)
+      .filter(([, v]) => v != null)
+      .map(([k, v]) => [
+        k,
+        modelKeys.includes(k) && typeof v === 'string' ? modelDisplayName(v) : v,
+      ]),
+  )
 }
 
 // The sentence a failure reads as. An unknown code — or none at all — gets the translated generic
@@ -510,7 +519,7 @@ export function resolveServiceError(failure: ServiceFailure): ResolvedFailure {
   // The id/values form, not `_(descriptor)`: the descriptor carries no values of its own, and the
   // ones it does carry would win over the failure's (`@lingui/core`'s `_`).
   return {
-    headline: i18n._(row.id, present(params), { message: row.message }),
+    headline: i18n._(row.id, present(params, failure.code), { message: row.message }),
     detail: detailOf(failure.code as string, params),
     hint: hintRow ? i18n._(hintRow) : null,
   }
