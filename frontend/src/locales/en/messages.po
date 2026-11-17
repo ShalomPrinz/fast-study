@@ -1380,7 +1380,7 @@ msgstr "Downloading {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
-#: src/features/settings/InitWall.tsx:315
+#: src/features/settings/InitWall.tsx:312
 #: src/features/settings/SettingsView.tsx:491
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
@@ -1458,7 +1458,7 @@ msgid "Enter the zoom passcode for this recording"
 msgstr "Enter the zoom passcode for this recording"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:171
-#: src/features/settings/InitWall.tsx:292
+#: src/features/settings/InitWall.tsx:289
 #: src/features/settings/SettingsView.tsx:611
 msgid "Error reports"
 msgstr "Error reports"
@@ -1589,7 +1589,7 @@ msgstr "FastStudy signs in to <0>{host}</0> with this account to find and fetch 
 msgid "FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 
-#: src/features/settings/InitWall.tsx:221
+#: src/features/settings/InitWall.tsx:218
 msgid "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 
@@ -1609,11 +1609,11 @@ msgstr "Files that are switched on are sent to Gemini."
 msgid "Files you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary."
 msgstr "Files you can attach to any lecture or recitation. They wait until its recording is downloaded or you run the summary."
 
-#: src/features/settings/InitWall.tsx:327
+#: src/features/settings/InitWall.tsx:324
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/settings/InitWall.tsx:330
+#: src/features/settings/InitWall.tsx:327
 #: src/features/settings/SettingsView.tsx:328
 msgid "Fill in the required fields first"
 msgstr "Fill in the required fields first"
@@ -1681,6 +1681,10 @@ msgstr "Gemini is writing…"
 msgid "Gemini will write it again."
 msgstr "Gemini will write it again."
 
+#: src/app/HydrogenPrompt.tsx:49
+msgid "gemini-4-hydrogen is now the default model. You can change the model any time in Settings."
+msgstr "gemini-4-hydrogen is now the default model. You can change the model any time in Settings."
+
 #: src/shared/i18n/serviceErrors.ts:80
 msgid "Gemini's daily quota is used up. It resets at midnight Pacific time."
 msgstr "Gemini's daily quota is used up. It resets at midnight Pacific time."
@@ -1726,7 +1730,7 @@ msgstr "Give the project any name and click \"Create project\"."
 msgid "Google account"
 msgstr "Google account"
 
-#: src/features/settings/InitWall.tsx:278
+#: src/features/settings/InitWall.tsx:275
 #: src/features/settings/SettingsView.tsx:476
 msgid "Google Drive"
 msgstr "Google Drive"
@@ -1921,7 +1925,7 @@ msgstr "Lectures you marked done"
 msgid "Lemida is responding slowly. Restart could help."
 msgstr "Lemida is responding slowly. Restart could help."
 
-#: src/features/settings/InitWall.tsx:196
+#: src/features/settings/InitWall.tsx:193
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
@@ -2695,7 +2699,7 @@ msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
 #: src/features/downloads/components/EditSourcePanel.tsx:97
-#: src/features/settings/InitWall.tsx:337
+#: src/features/settings/InitWall.tsx:334
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -2863,7 +2867,7 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:337
+#: src/features/settings/InitWall.tsx:334
 msgid "Start using FastStudy"
 msgstr "Start using FastStudy"
 
@@ -2949,6 +2953,10 @@ msgstr "summary with {name}"
 #: src/features/lectures/components/AssignmentDocCard.tsx:129
 msgid "Switch on a file or choose course material first"
 msgstr "Switch on a file or choose course material first"
+
+#: src/app/HydrogenPrompt.tsx:46
+msgid "Switch to the new Gemini model?"
+msgstr "Switch to the new Gemini model?"
 
 #. placeholder {0}: formatDuration(elapsed)
 #. placeholder {1}: formatDuration(longest)
@@ -3357,7 +3365,7 @@ msgstr "This lecture's video isn't a downloadable MP4 file."
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 
-#: src/features/settings/InitWall.tsx:199
+#: src/features/settings/InitWall.tsx:196
 msgid "This only needs to be done once."
 msgstr "This only needs to be done once."
 
@@ -3575,7 +3583,7 @@ msgstr "When to remove"
 msgid "Where \"Study with AI\" opens a lecture's summary."
 msgstr "Where \"Study with AI\" opens a lecture's summary."
 
-#: src/features/settings/InitWall.tsx:245
+#: src/features/settings/InitWall.tsx:242
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
@@ -3611,7 +3619,7 @@ msgstr "Yes"
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
 
-#: src/features/settings/InitWall.tsx:302
+#: src/features/settings/InitWall.tsx:299
 msgid "You must read the privacy policy before you continue."
 msgstr "You must read the privacy policy before you continue."
 
@@ -3623,7 +3631,7 @@ msgstr "You're logged in to {foreignName}. Connecting here logs you out of it."
 msgid "You've finished this assignment."
 msgstr "You've finished this assignment."
 
-#: src/features/settings/InitWall.tsx:227
+#: src/features/settings/InitWall.tsx:224
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
 
@@ -3631,11 +3639,11 @@ msgstr "Your keys are kept only on this computer, encrypted by Windows. FastStud
 msgid "Your lectures"
 msgstr "Your lectures"
 
-#: src/features/settings/InitWall.tsx:218
+#: src/features/settings/InitWall.tsx:215
 msgid "Your two API keys"
 msgstr "Your two API keys"
 
-#: src/features/settings/InitWall.tsx:256
+#: src/features/settings/InitWall.tsx:253
 msgid "Your university"
 msgstr "Your university"
 

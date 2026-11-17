@@ -72,6 +72,11 @@ On `/settings` an answer is a form edit that Save stores. The wall stores `error
 on every save, and while the policy is unanswered its Start opens the modal instead, whose answer saves
 and starts in one go (`wallMustAskPrivacy`); closing it saves nothing.
 
+**The Gemini model offer** (`HydrogenPrompt`, mounted in `Layout` so it never meets the wall) asks once whether to switch
+a stored non-`gemini-4-hydrogen` model; Yes saves the model and the launcher-only `hydrogenPrompted` together; No, Esc
+or a click outside (the backdrop calls `onCancel`) all count as No and save only the flag. The init wall's save sets
+the flag too (`wallPatch`), so a new install never sees the offer. An unset model or an answered flag shows nothing, and browser dev reads the flag as answered.
+
 **The AI chat provider** is the chat "Study with AI" opens ([LECTURES.md](LECTURES.md)), read through
 `useAiProvider`, where unset or unknown is Claude. It is renderer-only: no service reads it, so a save writes
 it to the store alone, the launcher's in the packaged app and the database's `.env` in browser dev.

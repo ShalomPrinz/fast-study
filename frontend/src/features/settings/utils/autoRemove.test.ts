@@ -30,6 +30,7 @@ const BASE: Settings = {
   moodleSite: null,
   errorReports: null,
   privacyConfirmed: false,
+  hydrogenPrompted: true,
   aiProvider: null,
   courseStructure: null,
 }

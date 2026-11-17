@@ -118,6 +118,21 @@ export function buildPatch(
   return patch
 }
 
+/** The init wall's save: the changed fields, `errorReports` stored explicitly, and `hydrogenPrompted`
+ *  so a new install never gets the Gemini model offer. Both launcher-only fields wait on the launcher. */
+export function wallPatch(
+  form: SettingsForm,
+  stored: Settings,
+  canSetErrorReports: boolean,
+): SettingsPatch {
+  const patch = buildPatch(form, stored, canSetErrorReports)
+  if (canSetErrorReports) {
+    patch.errorReports = form.errorReports
+    patch.hydrogenPrompted = true
+  }
+  return patch
+}
+
 /** The form once a site was saved on its own: every other edit kept, the site taken from the store,
  *  so the next Save does not send it again. */
 export function withSavedSite(form: SettingsForm, saved: Settings): SettingsForm {

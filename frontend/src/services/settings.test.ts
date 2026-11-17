@@ -92,9 +92,14 @@ describe('ownerBodies', () => {
   })
 
   // Launcher-only: the launcher itself pushes the switch to every service.
-  it('gives error reports, the privacy answer and the AI chat provider no owner', () => {
+  it('gives error reports, the launcher answers and the AI chat provider no owner', () => {
     expect(
-      ownerBodies({ errorReports: false, privacyConfirmed: true, aiProvider: 'chatgpt' }),
+      ownerBodies({
+        errorReports: false,
+        privacyConfirmed: true,
+        hydrogenPrompted: true,
+        aiProvider: 'chatgpt',
+      }),
     ).toEqual({
       backend: null,
       database: null,

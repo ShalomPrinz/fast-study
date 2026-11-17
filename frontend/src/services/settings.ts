@@ -69,6 +69,8 @@ export interface Settings {
   errorReports: boolean | null
   // Whether the user answered the privacy policy, either way.
   privacyConfirmed: boolean
+  // Whether the one-time offer to switch to the new default Gemini model was answered, either way.
+  hydrogenPrompted: boolean
   // Launcher-only too: the "Study with AI" chat. The launcher reads an unknown value as null.
   aiProvider: string | null
 }
@@ -100,6 +102,7 @@ export interface SettingsPatch {
   courseStructure?: CourseStructure
   errorReports?: boolean
   privacyConfirmed?: boolean
+  hydrogenPrompted?: boolean
   aiProvider?: AiProvider
 }
 
@@ -124,13 +127,14 @@ const WIRE: Record<SettingsField, string> = {
   courseStructure: 'course_structure',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
+  hydrogenPrompted: 'hydrogen_prompted',
   aiProvider: 'ai_provider',
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
-// never another. Every field the store holds is named in one of them, bar three no service owns:
+// never another. Every field the store holds is named in one of them, bar four no service owns:
 // `errorReports`, which the launcher itself pushes to every service, and the renderer-only
-// `privacyConfirmed` and `aiProvider`.
+// `privacyConfirmed`, `hydrogenPrompted` and `aiProvider`.
 const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
@@ -188,9 +192,11 @@ function normalize(raw: RawSettings): Settings {
     moodleSite: raw.moodle_site ?? null,
     courseStructure: raw.course_structure ?? null,
     aiProvider: raw.ai_provider ?? null,
-    // The browser-dev store has neither; the switch and its privacy answer are Electron-only.
+    // The browser-dev store has none of these; the switch and the two answers are Electron-only.
+    // The Gemini offer reads as already answered there, so dev never shows it.
     errorReports: null,
     privacyConfirmed: false,
+    hydrogenPrompted: true,
   }
 }
 

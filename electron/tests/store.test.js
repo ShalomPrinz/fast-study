@@ -31,6 +31,7 @@ const full = {
   autoRetryMinutes: 15,
   errorReports: false,
   privacyConfirmed: true,
+  hydrogenPrompted: true,
   aiProvider: 'gemini',
   geminiApiKey: 'gemini-secret',
   groqApiKey: 'groq-secret',
@@ -260,6 +261,7 @@ test('echoing a read back blanks nothing', () => {
     moodleSite: written.moodleSite,
     errorReports: written.errorReports,
     privacyConfirmed: written.privacyConfirmed,
+    hydrogenPrompted: written.hydrogenPrompted,
     aiProvider: written.aiProvider,
   };
 
@@ -305,6 +307,7 @@ const unset = {
   moodleSite: null,
   errorReports: null,
   privacyConfirmed: false,
+  hydrogenPrompted: false,
   aiProvider: null,
 };
 
@@ -322,6 +325,14 @@ test('privacyConfirmed round-trips as a boolean and never reaches a child env', 
   assert.equal(store.write({ privacyConfirmed: false }).privacyConfirmed, false);
   assertRefused(store.write({ privacyConfirmed: 'true' }), /privacyConfirmed must be a boolean/);
   assert.equal(store.read().privacyConfirmed, false);
+});
+
+test('hydrogenPrompted round-trips as a boolean and never reaches a child env', () => {
+  assert.equal(store.write({ hydrogenPrompted: true }).hydrogenPrompted, true);
+  assert.equal(store.read().hydrogenPrompted, true);
+  assert.deepEqual(store.serviceEnv(), {});
+  assertRefused(store.write({ hydrogenPrompted: 'true' }), /hydrogenPrompted must be a boolean/);
+  assert.equal(store.read().hydrogenPrompted, true);
 });
 
 test('aiProvider round-trips one of three providers and never reaches a child env', () => {

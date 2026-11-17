@@ -74,6 +74,7 @@ const STORE: Settings = {
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: null,
   privacyConfirmed: false,
+  hydrogenPrompted: true,
   aiProvider: null,
   courseStructure: null,
 }

@@ -231,6 +231,8 @@ written from both processes would put two writers on one file.
   env. Main turns `error_reports` into each process's Sentry flag itself; `privacy_confirmed`
   (`privacyConfirmed`, unset reads `false`) is the renderer's record that the privacy notice was
   answered, and main only stores it.
+- **`hydrogen_prompted` (`hydrogenPrompted`, unset reads `false`) is launcher-only** too: the renderer's
+  record that it asked once about switching to gemini-4-hydrogen; main only stores it.
 - **`ai_provider` (`aiProvider`) is launcher-only too**: `claude` | `chatgpt` | `gemini`, any other
   write refused; unset or unknown reads `null` and the renderer applies the `claude` default.
 - **`auto_remove` (`autoRemove`: `off` | `video` | `audio`) and `auto_remove_after`
