@@ -1,10 +1,13 @@
 import type { Course } from '@/types'
 import type { ReportOnce } from '@/shared/hooks/useReportOnce'
+import { pdfWarningText } from '@/shared/utils/pdfWarningText'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
 
 // A PDF that rendered despite LaTeX errors carries a one-line `warning` on its summary.pdf tree entry.
-export function collectPdfWarnings(courses: Course[]): Map<string, string> {
-  const out = new Map<string, string>()
+export function collectPdfWarnings(
+  courses: Course[],
+): Map<string, { lecture: string; warning: string }> {
+  const out = new Map<string, { lecture: string; warning: string }>()
   for (const course of courses) {
     for (const [kind, lectures] of [
       ['lecture', course.lectures],
@@ -13,7 +16,7 @@ export function collectPdfWarnings(courses: Course[]): Map<string, string> {
       for (const lecture of lectures) {
         const warning = lecture.files?.['summary.pdf']?.warning
         if (warning)
-          out.set(inFlightKey(course.name, lecture.name, kind), `${lecture.name}: ${warning}`)
+          out.set(inFlightKey(course.name, lecture.name, kind), { lecture: lecture.name, warning })
       }
     }
   }
@@ -25,6 +28,9 @@ export function collectPdfWarnings(courses: Course[]): Map<string, string> {
 export function announcePdfWarnings(courses: Course[], api: ReportOnce, primed: boolean): void {
   const warnings = collectPdfWarnings(courses)
   api.prune(new Set(warnings.keys()))
-  const announce = primed ? api.report : api.seed
-  for (const [key, message] of warnings) announce(key, message)
+  // The raw warning is the dedupe id, so a locale switch (no reload) never re-toasts; only the shown text is translated.
+  for (const [key, { lecture, warning }] of warnings) {
+    if (primed) api.report(key, warning, `${lecture}: ${pdfWarningText(warning)}`)
+    else api.seed(key, warning)
+  }
 }

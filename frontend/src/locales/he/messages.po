@@ -456,7 +456,7 @@ msgstr "+ הוספת קורס"
 msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
 msgstr "<0>אתר האוניברסיטה</0> — גישה לתוכן הקורסים שנבחרו בלבד, והגישה מוגבלת לקריאת תוכן בלבד."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:58
+#: src/features/lectures/components/AssignmentDocCard.tsx:59
 msgid "A complete, step-by-step solution to every question"
 msgstr "פתרון מלא, צעד אחר צעד, לכל שאלה"
 
@@ -571,7 +571,7 @@ msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-A
 msgid "All Generated"
 msgstr "הכול נוצר"
 
-#: src/features/course-overview/constants/overview.ts:28
+#: src/features/course-overview/constants/overview.ts:29
 msgid "All Lectures"
 msgstr "כל ההרצאות"
 
@@ -595,7 +595,7 @@ msgstr "כבר נוצר."
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
-#: src/features/course-overview/constants/overview.ts:16
+#: src/features/course-overview/constants/overview.ts:17
 msgid "Analyze"
 msgstr "ניתוח"
 
@@ -766,7 +766,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/CourseUrlPaste.tsx:69
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
-#: src/features/lectures/components/AssignmentDocCard.tsx:202
+#: src/features/lectures/components/AssignmentDocCard.tsx:205
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -961,11 +961,11 @@ msgstr "סגור"
 msgid "Close the course list to change the language"
 msgstr "סגרו את רשימת הקורסים כדי להחליף שפה"
 
-#: src/features/course-overview/constants/overview.ts:17
+#: src/features/course-overview/constants/overview.ts:18
 msgid "Collect"
 msgstr "איסוף"
 
-#: src/features/course-overview/constants/overview.ts:18
+#: src/features/course-overview/constants/overview.ts:19
 msgid "Compile"
 msgstr "הרכבה"
 
@@ -1208,15 +1208,15 @@ msgstr "יצירה"
 msgid "Create {input} first"
 msgstr "צור קודם את {input}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:61
+#: src/features/lectures/components/AssignmentDocCard.tsx:62
 msgid "Create guide"
 msgstr "יצירת מדריך"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:151
+#: src/features/lectures/components/AssignmentDocCard.tsx:152
 msgid "Create PDF"
 msgstr "יצירת PDF"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:61
+#: src/features/lectures/components/AssignmentDocCard.tsx:62
 msgid "Create solution"
 msgstr "יצירת פתרון"
 
@@ -1432,7 +1432,7 @@ msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה חדשה."
 
 #: src/features/downloads/components/CourseCheckFailure.tsx:28
-#: src/features/lectures/components/AssignmentDocCard.tsx:167
+#: src/features/lectures/components/AssignmentDocCard.tsx:168
 msgid "Edit"
 msgstr "עריכה"
 
@@ -1487,7 +1487,7 @@ msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. 
 msgid "Everything stays on this computer. FastStudy has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "הכול נשאר במחשב הזה. ל-FastStudy אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלך."
 
-#: src/features/course-overview/constants/overview.ts:24
+#: src/features/course-overview/constants/overview.ts:25
 msgid "Exam Hints"
 msgstr "רמזים למבחן"
 
@@ -1499,7 +1499,7 @@ msgstr "טען קודם כל פלייליסט ביחידה הזו"
 msgid "Expand this playlist first"
 msgstr "טען קודם את הפלייליסט"
 
-#: src/features/course-overview/constants/overview.ts:19
+#: src/features/course-overview/constants/overview.ts:20
 #: src/features/lectures/constants/pipeline.ts:48
 msgid "Export PDF"
 msgstr "ייצוא PDF"
@@ -1512,7 +1512,7 @@ msgstr "מייצא PDF"
 msgid "Extension"
 msgstr "תוסף"
 
-#: src/features/course-overview/constants/overview.ts:15
+#: src/features/course-overview/constants/overview.ts:16
 msgid "Extract"
 msgstr "חילוץ"
 
@@ -1528,7 +1528,7 @@ msgstr "לחלץ רק את השמע"
 msgid "Extracting audio"
 msgstr "מחלץ שמע"
 
-#: src/features/course-overview/constants/overview.ts:116
+#: src/features/course-overview/constants/overview.ts:117
 #: src/features/course-overview/CourseView.tsx:73
 msgid "failed"
 msgstr "נכשל"
@@ -1643,7 +1643,7 @@ msgstr "מפנה מקום במחשב אחרי שהרצאה הושלמה. התמ�
 msgid "From now on, each lecture's files are removed the same way once it reaches that point."
 msgstr "מעכשיו, הקבצים של כל הרצאה יוסרו באותו אופן ברגע שהיא תגיע לשלב הזה."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:54
+#: src/features/lectures/components/AssignmentDocCard.tsx:55
 #: src/features/runner/utils/assignmentSteps.ts:7
 msgid "Full Solution"
 msgstr "פתרון מלא"
@@ -1677,11 +1677,11 @@ msgstr "Gemini מקבל את התמלול ואת כל החומרים שתוסי�
 msgid "Gemini Hydrogen 4 is now the default model. You can change the model any time in Settings."
 msgstr "Gemini Hydrogen 4 הוא כעת מודל ברירת המחדל. אפשר להחליף מודל בכל עת בהגדרות."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:109
+#: src/features/lectures/components/AssignmentDocCard.tsx:110
 msgid "Gemini is writing…"
 msgstr "‏Gemini כותב…"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:200
+#: src/features/lectures/components/AssignmentDocCard.tsx:203
 msgid "Gemini will write it again."
 msgstr "‏Gemini יכתוב אותו מחדש."
 
@@ -1767,7 +1767,7 @@ msgstr "האוניברסיטה העברית"
 msgid "Hide past courses"
 msgstr "הסתרת קורסים קודמים"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:57
+#: src/features/lectures/components/AssignmentDocCard.tsx:58
 msgid "Hints and a direction of thought for each question, without solving it"
 msgstr "רמזים וכיוון חשיבה לכל שאלה, בלי לפתור"
 
@@ -1828,7 +1828,7 @@ msgstr "בחלונית הצד של הדף, הפעל את המתג \"מצב מפ�
 msgid "Install Chrome"
 msgstr "התקנת Chrome"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:54
+#: src/features/lectures/components/AssignmentDocCard.tsx:55
 #: src/features/runner/utils/assignmentSteps.ts:6
 msgid "Intuition Guide"
 msgstr "מדריך לאינטואיציה"
@@ -2291,7 +2291,7 @@ msgstr "פתח את Microsoft Edge, הדבק את הכתובת הזו בשורת
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:98
 #: src/features/course-overview/components/ExtractorHeader.tsx:101
-#: src/features/lectures/components/AssignmentDocCard.tsx:159
+#: src/features/lectures/components/AssignmentDocCard.tsx:160
 #: src/features/lectures/components/PdfHero.tsx:192
 #: src/features/lectures/components/PdfViewer.tsx:131
 #: src/features/lectures/components/PdfViewer.tsx:132
@@ -2436,7 +2436,7 @@ msgstr "ההרצאה כבר בעיבוד"
 msgid "Pipeline steps"
 msgstr "שלבי העיבוד"
 
-#: src/features/course-overview/constants/overview.ts:26
+#: src/features/course-overview/constants/overview.ts:27
 msgid "Pitfalls"
 msgstr "טעויות נפוצות"
 
@@ -2471,7 +2471,7 @@ msgstr "יצירה מחדש של {title}"
 msgid "Re-generate from {stepLabel}"
 msgstr "יצירה מחדש משלב {stepLabel}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:99
+#: src/features/lectures/components/AssignmentDocCard.tsx:100
 msgid "Ready"
 msgstr "מוכן"
 
@@ -2535,13 +2535,13 @@ msgstr "הקלטות. הורדת הקלטה מתחילה מיד את יצירת 
 msgid "Recordings. Downloading one starts nothing; you run the summary yourself."
 msgstr "הקלטות. הורדת הקלטה לא מפעילה דבר, ואת הסיכום תריץ בעצמך."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:169
-#: src/features/lectures/components/AssignmentDocCard.tsx:172
-#: src/features/lectures/components/AssignmentDocCard.tsx:201
+#: src/features/lectures/components/AssignmentDocCard.tsx:170
+#: src/features/lectures/components/AssignmentDocCard.tsx:173
+#: src/features/lectures/components/AssignmentDocCard.tsx:204
 msgid "Regenerate"
 msgstr "יצירה מחדש"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:60
+#: src/features/lectures/components/AssignmentDocCard.tsx:61
 msgid "Regenerate {doc}?"
 msgstr "ליצור מחדש את {doc}?"
 
@@ -2834,7 +2834,7 @@ msgstr "דילוג"
 msgid "Skip all"
 msgstr "דילוג על הכול"
 
-#: src/features/course-overview/constants/overview.ts:90
+#: src/features/course-overview/constants/overview.ts:91
 msgid "skipped"
 msgstr "דולג"
 
@@ -2877,7 +2877,7 @@ msgstr "להתחיל להשתמש ב-FastStudy"
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:79
+#: src/features/lectures/components/AssignmentDocCard.tsx:80
 #: src/features/lectures/DocEditor.tsx:220
 #: src/features/lectures/DocEditor.tsx:279
 #: src/features/lectures/MainView.tsx:197
@@ -2889,7 +2889,7 @@ msgstr "השלב כבר רץ"
 msgid "Storage"
 msgstr "אחסון"
 
-#: src/features/course-overview/constants/overview.ts:25
+#: src/features/course-overview/constants/overview.ts:26
 msgid "Student QA"
 msgstr "שאלות סטודנטים"
 
@@ -2950,7 +2950,7 @@ msgstr "הסיכום מוכן"
 msgid "summary with {name}"
 msgstr "סיכום עם {name}"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:129
+#: src/features/lectures/components/AssignmentDocCard.tsx:130
 msgid "Switch on a file or choose course material first"
 msgstr "קודם סמן קובץ או בחר חומר מהקורס"
 
@@ -3133,15 +3133,15 @@ msgstr "החלק של FastStudy שמוריד הקלטות לא מגיב. הפע�
 msgid "The PDF could not be created."
 msgstr "לא ניתן ליצור את ה-PDF."
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:120
+#: src/features/lectures/components/AssignmentDocCard.tsx:121
 msgid "The PDF is missing."
 msgstr "ה-PDF חסר."
 
-#: src/features/course-overview/constants/overview.ts:131
+#: src/features/course-overview/constants/overview.ts:132
 msgid "The PDF is older than an earlier step's output. Re-generate it."
 msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור אותו מחדש."
 
-#: src/features/lectures/utils/pdfBadge.ts:24
+#: src/features/lectures/utils/pdfBadge.ts:25
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
 
@@ -3212,6 +3212,10 @@ msgstr "האתר סירב להורדה. הקישור הזה דורש התחבר�
 #: src/shared/i18n/serviceErrors.ts:203
 msgid "The site refused this file."
 msgstr "האתר סירב לקובץ הזה."
+
+#: src/shared/utils/pdfWarningText.ts:13
+msgid "The summary contains invalid characters Gemini wrote"
+msgstr "הסיכום מכיל תווים לא חוקיים ש- Gemini כתב"
 
 #: src/features/lectures/DocEditor.tsx:281
 msgid "The summary is empty"
@@ -3389,7 +3393,7 @@ msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש.
 msgid "Three ways to download"
 msgstr "שלוש דרכים להוריד"
 
-#: src/features/course-overview/constants/overview.ts:27
+#: src/features/course-overview/constants/overview.ts:28
 msgid "Topics"
 msgstr "נושאים"
 

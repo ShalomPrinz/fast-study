@@ -1,6 +1,16 @@
-import { describe, it, expect } from 'vitest'
+// @vitest-environment jsdom
+import { describe, it, expect, vi } from 'vitest'
+import { renderHook } from '@testing-library/react'
+import { useReportOnce } from '@/shared/hooks/useReportOnce'
+import { MISSING_CHARS_WARNING } from '@/shared/utils/pdfWarningText'
 import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
 import type { ReportOnce } from '@/shared/hooks/useReportOnce'
+let shown = 'English'
+vi.mock('@/shared/utils/pdfWarningText', async (orig) => ({
+  ...(await orig<object>()),
+  pdfWarningText: (w: string) => (w === MISSING_CHARS_WARNING ? shown : w),
+}))
+
 import { announcePdfWarnings, collectPdfWarnings } from './pdfWarnings'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
@@ -46,7 +56,7 @@ describe('collectPdfWarnings', () => {
     const warnings = collectPdfWarnings(
       tree(lecture('L1'), lecture('L2', 'LaTeX error: bad macro')),
     )
-    expect([...warnings.values()]).toEqual(['L2: LaTeX error: bad macro'])
+    expect([...warnings.values()]).toEqual([{ lecture: 'L2', warning: 'LaTeX error: bad macro' }])
     expect([...warnings.keys()]).toEqual(['Algebra||L2||lecture'])
   })
 
@@ -63,8 +73,8 @@ describe('announcePdfWarnings', () => {
   function harness() {
     const calls = { reported: [] as string[], seeded: [] as string[], pruned: [] as string[][] }
     const api: ReportOnce = {
-      report: (_key, msg) => calls.reported.push(msg),
-      seed: (_key, msg) => calls.seeded.push(msg),
+      report: (_key, id, payload = id) => calls.reported.push(payload),
+      seed: (_key, id) => calls.seeded.push(id),
       prune: (validKeys) => calls.pruned.push([...validKeys]),
     }
     return { calls, api }
@@ -73,7 +83,7 @@ describe('announcePdfWarnings', () => {
   it('only seeds on the first tree, so a warning predating page load never toasts', () => {
     const { calls, api } = harness()
     announcePdfWarnings(tree(lecture('L1', 'old warning')), api, false)
-    expect(calls.seeded).toEqual(['L1: old warning'])
+    expect(calls.seeded).toEqual(['old warning'])
     expect(calls.reported).toEqual([])
   })
 
@@ -89,5 +99,28 @@ describe('announcePdfWarnings', () => {
     announcePdfWarnings(tree(lecture('L1', 'flaky'), lecture('L2')), api, true)
     announcePdfWarnings(tree(lecture('L1'), lecture('L2')), api, true)
     expect(calls.pruned).toEqual([['Algebra||L1||lecture'], []])
+  })
+})
+
+describe('announcePdfWarnings across a locale switch', () => {
+  it('does not re-toast a marker warning once the shown text changes', () => {
+    const send = vi.fn()
+    const { result } = renderHook(() => useReportOnce<string>(send))
+    const t1 = tree(lecture('L1', MISSING_CHARS_WARNING), lecture('L2', MISSING_CHARS_WARNING))
+    shown = 'English'
+    announcePdfWarnings(t1, result.current, false)
+    announcePdfWarnings(
+      tree(lecture('L1', MISSING_CHARS_WARNING), lecture('L3', MISSING_CHARS_WARNING)),
+      result.current,
+      true,
+    )
+    expect(send.mock.calls).toEqual([['L3: English']])
+    shown = 'Hebrew'
+    announcePdfWarnings(
+      tree(lecture('L1', MISSING_CHARS_WARNING), lecture('L3', MISSING_CHARS_WARNING)),
+      result.current,
+      true,
+    )
+    expect(send).toHaveBeenCalledTimes(1)
   })
 })

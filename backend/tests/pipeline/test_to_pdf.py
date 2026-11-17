@@ -306,7 +306,7 @@ class TestTypedCharactersRender:
 
     def test_a_glyph_the_font_lacks_warns(self):
         _, warning = self._render("מיון מהיר \u2192 מיון מיזוג\n")
-        assert warning and "U+2192" in warning
+        assert warning == to_pdf.MISSING_CHARS_WARNING
 
 
 @pytest.mark.skipif(
@@ -874,17 +874,15 @@ class TestMissingCharactersWarn:
     """A glyph the loaded font lacks is drawn as an empty box while the run exits 0, so only the
     log says the page shows the wrong content."""
 
-    def test_each_missing_character_is_named_once(self):
+    def test_each_missing_character_is_logged_once(self, caplog):
         fake = FakeRun(tectonic_rc=0, log_text=MISSING_CHAR_LOG)
         with _render(fake) as md_path:
             pdf_path, warning = convert_to_pdf(md_path)
             assert Path(pdf_path).exists()
-        assert warning == (
-            "characters the font lacks render as empty boxes: "
-            "\u2192 (U+2192), \u2264 (U+2264)"
-        )
+        assert warning == to_pdf.MISSING_CHARS_WARNING
+        assert "font lacks 2 characters: U+2192, U+2264" in caplog.text
 
-    def test_a_long_list_is_capped(self):
+    def test_a_long_list_is_capped(self, caplog):
         log = "".join(
             f"Missing character: There is no {chr(c)} (U+{c:04X}) in font [x]\n"
             for c in range(0x2190, 0x2198)
@@ -892,14 +890,19 @@ class TestMissingCharactersWarn:
         fake = FakeRun(tectonic_rc=0, log_text=log)
         with _render(fake) as md_path:
             _, warning = convert_to_pdf(md_path)
-        assert warning.endswith("(U+2194) and 3 more")
+        assert warning == to_pdf.MISSING_CHARS_WARNING
+        assert (
+            "font lacks 8 characters: U+2190, U+2191, U+2192, U+2193, U+2194"
+            in caplog.text
+        )
+        assert "U+2195" not in caplog.text
 
     def test_it_rides_beside_a_latex_error(self):
         fake = FakeRun(tectonic_rc=0, log_text=ERROR_LOG + MISSING_CHAR_LOG)
         with _render(fake) as md_path:
             _, warning = convert_to_pdf(md_path)
         assert warning.startswith("LaTeX error: Undefined control sequence")
-        assert "U+2264" in warning
+        assert warning.endswith("; " + to_pdf.MISSING_CHARS_WARNING)
 
 
 @pytest.mark.usefixtures("no_bin_dir")

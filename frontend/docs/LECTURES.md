@@ -234,6 +234,7 @@ A render warning is the database service's `.pdf_warning` inlined onto the tree'
 the tree, not `/status`, so it is announced as each tree applies (`announcePdfWarnings`): the first tree only
 seeds, and a vanished warning is pruned so it can fire again. Deleting `summary.pdf` drops the dotfile
 server-side, so no frontend path clears it.
+Every display site renders it through `pdfWarningText`, which swaps the backend's missing-character marker (`MISSING_CHARS_WARNING`) for a Lingui message by exact text; other warnings stay verbatim, and `pdfWarningDrift.test.ts` fails if `to_pdf.py`'s literal changes.
 
 ## Sidebar
 

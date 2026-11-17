@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shutil
@@ -29,6 +30,8 @@ from pipeline.pdf.text import (
     ensure_space_after_heading_hashes,
     normalize_dashes,
 )
+
+_logger = logging.getLogger("pdf")
 
 FONTS_DIR = resource_path("assets", "fonts")
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
@@ -124,6 +127,8 @@ _MISSING_CHAR_RE = re.compile(
     r"^Missing character: There is no .*?\(U\+([0-9A-F]+)\)", re.MULTILINE
 )
 _MISSING_CHARS_SHOWN = 5
+# The frontend matches this verbatim (frontend/src/shared/utils/pdfWarningText.ts): edit both.
+MISSING_CHARS_WARNING = "summary contains characters the font lacks"
 
 # A render is seconds against a complete cache, so a minute is already wedged. Bounded because the
 # caller holds a per-lecture lock across it — a hang would leave that lecture permanently `busy`.
@@ -203,18 +208,15 @@ def _tectonic_errors(stderr: str) -> str:
     return "\n".join(m.group(0) for m in _TECTONIC_ERROR_RE.finditer(stderr))
 
 
-def _missing_characters(log: str) -> str | None:
-    """One warning line naming each distinct character the fonts lack, or None when none is."""
+def _missing_characters(tex_log: str) -> str | None:
+    """The fixed missing-glyph warning, or None when none is; the characters go to the log."""
 
-    codes = list(dict.fromkeys(m.group(1) for m in _MISSING_CHAR_RE.finditer(log)))
+    codes = list(dict.fromkeys(m.group(1) for m in _MISSING_CHAR_RE.finditer(tex_log)))
     if not codes:
         return None
-    shown = ", ".join(
-        f"{chr(int(c, 16))} (U+{c})" for c in codes[:_MISSING_CHARS_SHOWN]
-    )
-    rest = len(codes) - _MISSING_CHARS_SHOWN
-    more = f" and {rest} more" if rest > 0 else ""
-    return f"characters the font lacks render as empty boxes: {shown}{more}"
+    shown = ", ".join(f"U+{c}" for c in codes[:_MISSING_CHARS_SHOWN])
+    _logger.warning("font lacks %d characters: %s", len(codes), shown)
+    return MISSING_CHARS_WARNING
 
 
 def _render(build: Path, tex_source: str):

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
+import { pdfWarningText } from '@/shared/utils/pdfWarningText'
 import type { AssignmentDocInfo, AssignmentDocName, InFlightEntry, RunError } from '@/types'
 import { cancelRetry, runRetryNow, runAssignmentStep } from '@/services/backend'
 import { openAssignmentGenerated } from '@/services/open'
@@ -177,7 +178,9 @@ export default function AssignmentDocCard({
               </button>
             </Tooltip>
             {info.pdf_warning && (
-              <PdfWarningBadge badge={{ kind: 'warning', title: info.pdf_warning }} />
+              <PdfWarningBadge
+                badge={{ kind: 'warning', title: pdfWarningText(info.pdf_warning) }}
+              />
             )}
           </>
         )}

@@ -503,7 +503,8 @@ to any service.
 - **A PDF render warning carries no code.** `.pdf_warning` is a file `database/` inlines into the
   tree as a plain string, not one of the four channels above, so `tectonic exited N with no
   reported error` and a recovered render's `LaTeX error: …` stay English prose. Giving the marker a
-  code would mean changing its on-disk format in three services at once.
+  code would mean changing its on-disk format in three services at once. The one exception is
+  `to_pdf.MISSING_CHARS_WARNING`, which the frontend matches verbatim and translates, guarded by a drift test.
 - **The drift test greps; it does not parse.** `frontend/src/shared/i18n/errorCodeDrift.test.ts`
   holds the codes the services emit, the tables above and `serviceErrors.ts`'s rows to one
   vocabulary — but it finds a code by the shapes one is written in: a literal in a known argument

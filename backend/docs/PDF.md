@@ -63,13 +63,13 @@ Also in the suite: an instrumented copy of `text_direction.lua` wraps every top-
 | a `! Font …` in the log                   | `PdfRenderError` — never a warning, see below                   |
 | any other `! …`, PDF exists and non-empty | accepted, returned with the classified warning                  |
 | no `! …` but non-zero exit                | accepted, warned with tectonic's own `error:` lines             |
-| a `Missing character` in the log          | accepted, warned with each distinct character (first five)      |
+| a `Missing character` in the log          | accepted, warned with a fixed marker; characters go to the log |
 | no PDF, or a 0-byte PDF                   | `PdfRenderError`; `_require_nonempty` agrees                    |
 | either tool times out                     | `PdfRenderError`, carrying the `.tex` if pandoc produced one    |
 
 A damaged region renders wrong or blank while the rest is fine — far more robust than guessing which source line to excise.
 
-A missing character warning joins any other warning with `; `. It is a glyph a *loaded* font lacks (`→`, `≤`, emoji, CJK), drawn as an empty box: the damage is visible on the page, so unlike a missing font it warns rather than refuses. The fix is a font covering it, which costs installer size, so none ships.
+The missing character warning is the fixed `to_pdf.MISSING_CHARS_WARNING` (no characters in it); the first five codepoints and the count go to the `pdf` log, and the frontend translates it by exact match (`pdfWarningText.ts`), so editing it needs the frontend too. It joins any other warning with `; `. It is a glyph a *loaded* font lacks (`→`, `≤`, emoji, CJK), drawn as an empty box: the damage is visible on the page, so unlike a missing font it warns rather than refuses. The fix is a font covering it, which costs installer size, so none ships.
 
 ### A missing font is a hard failure
 

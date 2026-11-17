@@ -1,6 +1,7 @@
 import { msg, t } from '@lingui/core/macro'
 import { i18n } from '@lingui/core'
 import type { MessageDescriptor } from '@lingui/core'
+import { pdfWarningText } from '@/shared/utils/pdfWarningText'
 import type { CoursePhase, CourseStatus, CourseExtractorState, CourseFile, PdfBadge } from '@/types'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 
@@ -147,7 +148,7 @@ export function branchBadge(
   slug: string,
   phases: CoursePhase[],
 ): PdfBadge | null {
-  if (bs.warning) return { kind: 'warning', title: bs.warning }
+  if (bs.warning) return { kind: 'warning', title: pdfWarningText(bs.warning) }
   if (isBranchStale(files, slug, phases)) return { kind: 'stale', title: staleBranchTitle() }
   return null
 }

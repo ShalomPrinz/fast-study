@@ -1,4 +1,5 @@
 import { t } from '@lingui/core/macro'
+import { pdfWarningText } from '@/shared/utils/pdfWarningText'
 import type { FileStatus, PdfBadge } from '@/types'
 
 // What the stale rule and the badge read of a document and its PDF, whichever kind of document it is.
@@ -33,7 +34,7 @@ export function isStatePdfStale(s: PdfState): boolean {
 // One badge per PDF. A render warning describes THIS pdf and outranks staleness,
 // which resurfaces on its own once the warning clears.
 export function statePdfBadge(s: PdfState): PdfBadge | null {
-  if (s.warning) return { kind: 'warning', title: s.warning }
+  if (s.warning) return { kind: 'warning', title: pdfWarningText(s.warning) }
   if (isStatePdfStale(s)) return { kind: 'stale', title: stalePdfTitle() }
   return null
 }
