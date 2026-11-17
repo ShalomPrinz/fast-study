@@ -140,9 +140,8 @@ def _watch_lifeline() -> None:
         return
 
     def watch() -> None:
-        # Blocks in read(), so it costs nothing until the launcher is gone. Only a 0-byte read or EBADF is
-        # EOF. Tools share this pipe's file description and may set O_NONBLOCK on it: wait for readiness
-        # on EAGAIN. Any other error is not proof the launcher died, so stop watching rather than self-kill.
+        # Only a 0-byte read or EBADF is EOF; tools share the pipe and may set O_NONBLOCK, so wait on EAGAIN.
+        # Any other error is no proof the launcher died: stop watching rather than self-kill.
         while True:
             try:
                 if not os.read(0, 4096):
