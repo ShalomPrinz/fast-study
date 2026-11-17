@@ -244,6 +244,18 @@ export async function fetchSummaryContent(
   )
 }
 
+// The names in the lecture's `figures/` folder, the only images the PDF render keeps.
+export async function fetchFigureNames(
+  course: string,
+  lecture: string,
+  kind?: Kind,
+): Promise<string[]> {
+  const res = await database.get<{ figures: string[] }>(
+    `${lectureBase(course, lecture)}/figures${kindQuery(kind)}`,
+  )
+  return res.figures
+}
+
 export async function saveSummaryContent(
   course: string,
   lecture: string,

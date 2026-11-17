@@ -40,6 +40,8 @@ export default function DocEditor({ source }: { source: DocSource }) {
   // What is on disk, so the toolbar and the editor pane can tell an edited buffer from a clean one.
   const [savedContent, setSavedContent] = useState('')
   const [hasOriginal, setHasOriginal] = useState(false)
+  // The figure names for link suggestions; null until fetched or when the fetch failed.
+  const [figures, setFigures] = useState<string[] | null>(null)
   const [loading, setLoading] = useState(true)
   // The first read failed; `loading` stays true so every edit gate holds, and the pane shows this instead of the spinner.
   const [loadError, setLoadError] = useState<{ failure: ServiceFailure; report: boolean } | null>(
@@ -98,6 +100,23 @@ export default function DocEditor({ source }: { source: DocSource }) {
   useEffect(() => {
     loadContent()
   }, [source.id])
+
+  // A refetch on mdMtime keeps the old list meanwhile; only a new document drops it.
+  useEffect(() => {
+    setFigures(null)
+  }, [source.id])
+
+  useEffect(() => {
+    let current = true
+    source.fetchFigures?.().then(
+      (names) => current && setFigures(names),
+      () => {}, // a failed list means no suggestions and no flags; connection errors are toasted centrally
+    )
+    return () => {
+      current = false
+    }
+    // mdMtime: the figures step or a re-summarize rewrites summary.md and the figures together.
+  }, [source.id, mdMtime])
 
   // A failed load retries on the next tree refresh, so a service that came back recovers without a click.
   useEffect(() => {
@@ -378,7 +397,7 @@ export default function DocEditor({ source }: { source: DocSource }) {
               <div className="spinner" />
             </div>
           ) : (
-            <MarkdownEditor value={content} onChange={setContent} />
+            <MarkdownEditor value={content} onChange={setContent} figures={figures} />
           )}
         </div>
       </div>

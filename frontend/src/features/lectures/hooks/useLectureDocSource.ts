@@ -3,6 +3,7 @@ import {
   saveSummaryContent,
   revertSummary,
   fileUrl,
+  fetchFigureNames,
 } from '@/services/database'
 import { runStep } from '@/services/backend'
 import { openLectureFile } from '@/services/open'
@@ -24,6 +25,7 @@ export function useLectureDocSource(): DocSource {
     // The lecture, not history: the editor is often reached from a fresh tab or another page.
     backRoute: lectureRoute(course, lecture, kind),
     fetch: () => fetchSummaryContent(course, lecture, kind),
+    fetchFigures: () => fetchFigureNames(course, lecture, kind),
     save: (content) => saveSummaryContent(course, lecture, content, kind),
     restore: () => revertSummary(course, lecture, kind),
     pdf: files && lecturePdfState(files),

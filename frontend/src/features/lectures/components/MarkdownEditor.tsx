@@ -1,14 +1,19 @@
 import { useEffect, useRef } from 'react'
-import { EditorState, Transaction } from '@codemirror/state'
+import { useLingui } from '@lingui/react/macro'
+import { Compartment, EditorState, Transaction } from '@codemirror/state'
 import type { Range, Text } from '@codemirror/state'
 import { EditorView, ViewPlugin, Decoration, keymap } from '@codemirror/view'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { markdown } from '@codemirror/lang-markdown'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
+import { autocompletion } from '@codemirror/autocomplete'
+import type { CompletionContext } from '@codemirror/autocomplete'
+import { linter } from '@codemirror/lint'
 import { tags } from '@lezer/highlight'
 import { scanCallouts, scanCodeFences, scanMath } from '@/features/lectures/utils/mdDecorations'
 import type { CalloutClass } from '@/features/lectures/utils/mdDecorations'
+import { figureSuggestions, missingImageLinks } from '@/features/lectures/utils/imageLinks'
 import './MarkdownEditor.css'
 
 // Hebrew markdown is prose with marks in it, so the surface keeps the UI font and the wide leading
@@ -113,12 +118,44 @@ const dialectDecorations = ViewPlugin.fromClass(
   { decorations: (plugin) => plugin.decorations },
 )
 
+// Suggestions and underlines for image links, rebuilt when the figure list arrives. A null list
+// (not fetched, or the fetch failed) yields neither, so a failure never flags every link.
+function imageLinkExtensions(figures: string[] | null, message: string) {
+  const complete = (context: CompletionContext) => {
+    const line = context.state.doc.lineAt(context.pos)
+    const found = figureSuggestions(line.text.slice(0, context.pos - line.from), line.from, figures)
+    if (!found) return null
+    return {
+      from: found.from,
+      options: found.options.map((label) => ({ label, type: 'file' })),
+      validFor: /^[^)\s]*$/,
+    }
+  }
+  return [
+    autocompletion({ override: [complete] }),
+    linter(
+      (view) =>
+        missingImageLinks(view.state.doc.toString(), figures).map((link) => ({
+          from: link.from,
+          to: link.to,
+          severity: 'warning',
+          message,
+        })),
+      { delay: 300 },
+    ),
+  ]
+}
+
 interface Props {
   value: string
   onChange: (value: string) => void
+  figures: string[] | null
 }
 
-export default function MarkdownEditor({ value, onChange }: Props) {
+export default function MarkdownEditor({ value, onChange, figures }: Props) {
+  const { t } = useLingui()
+  const imageLinks = useRef(new Compartment())
+  const imageMessage = t`This image won't appear in the PDF. Use a figure from the figures/ folder.`
   const hostRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
   const onChangeRef = useRef(onChange)
@@ -141,6 +178,7 @@ export default function MarkdownEditor({ value, onChange }: Props) {
           // Lines set their own direction (`autoDirLine`); this tells cursor motion to follow each one.
           EditorView.perLineTextDirection.of(true),
           contentDir,
+          imageLinks.current.of(imageLinkExtensions(figures, imageMessage)),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onChangeRef.current(update.state.doc.toString())
           }),
@@ -153,6 +191,12 @@ export default function MarkdownEditor({ value, onChange }: Props) {
       viewRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: imageLinks.current.reconfigure(imageLinkExtensions(figures, imageMessage)),
+    })
+  }, [figures, imageMessage])
 
   useEffect(() => {
     const view = viewRef.current

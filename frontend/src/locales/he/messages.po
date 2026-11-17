@@ -563,7 +563,7 @@ msgstr "הכול"
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
-#: src/features/lectures/DocEditor.tsx:388
+#: src/features/lectures/DocEditor.tsx:407
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-AI ישוחזר."
 
@@ -591,7 +591,7 @@ msgstr "כל הסוגים מופיעים"
 msgid "Already generated."
 msgstr "כבר נוצר."
 
-#: src/features/lectures/DocEditor.tsx:283
+#: src/features/lectures/DocEditor.tsx:302
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
@@ -710,7 +710,7 @@ msgstr "זמין אחרי יצירת הסיכום."
 msgid "Available once you choose course material or generate a guide."
 msgstr "זמין אחרי שתבחר חומר מהקורס או תיצור מדריך."
 
-#: src/features/lectures/DocEditor.tsx:249
+#: src/features/lectures/DocEditor.tsx:268
 #: src/features/tour/TourCallout.tsx:81
 msgid "Back"
 msgstr "חזרה"
@@ -1130,7 +1130,7 @@ msgstr "לא ניתן לטעון את ההקלטות של \"{name}\". נסה ש�
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/lectures/DocEditor.tsx:371
+#: src/features/lectures/DocEditor.tsx:390
 msgid "Couldn't load the summary"
 msgstr "לא הצלחנו לטעון את הסיכום"
 
@@ -1262,7 +1262,7 @@ msgstr "סירוב"
 msgid "Delete {name}"
 msgstr "מחיקת {name}"
 
-#: src/features/lectures/DocEditor.tsx:266
+#: src/features/lectures/DocEditor.tsx:285
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
@@ -1537,15 +1537,15 @@ msgstr "נכשל"
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
-#: src/features/lectures/DocEditor.tsx:225
+#: src/features/lectures/DocEditor.tsx:244
 msgid "Failed to generate PDF"
 msgstr "יצירת ה-PDF נכשלה"
 
-#: src/features/lectures/DocEditor.tsx:199
+#: src/features/lectures/DocEditor.tsx:218
 msgid "Failed to restore the original summary"
 msgstr "שחזור הסיכום המקורי נכשל"
 
-#: src/features/lectures/DocEditor.tsx:182
+#: src/features/lectures/DocEditor.tsx:201
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
@@ -1841,7 +1841,7 @@ msgstr "מדריך לאינטואיציה — {assignment}"
 msgid "just this lecture"
 msgstr "רק להרצאה הזו"
 
-#: src/features/lectures/DocEditor.tsx:322
+#: src/features/lectures/DocEditor.tsx:341
 msgid "Keep my edits"
 msgstr "שמירה על השינויים שלי"
 
@@ -1929,7 +1929,7 @@ msgstr "למדה מגיבה לאט. הורדה מחדש יכולה לעזור."
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
-#: src/features/lectures/DocEditor.tsx:319
+#: src/features/lectures/DocEditor.tsx:338
 msgid "Load new version"
 msgstr "טעינת הגרסה החדשה"
 
@@ -2096,7 +2096,7 @@ msgstr "אף חומר לא יישלח"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/DocEditor.tsx:266
+#: src/features/lectures/DocEditor.tsx:285
 msgid "No original saved"
 msgstr "אין גרסה מקורית שמורה"
 
@@ -2411,11 +2411,11 @@ msgstr "הדבק את תוכן ההרצאה עם Ctrl+V בחלון שייפתח,
 msgid "PDF"
 msgstr "PDF"
 
-#: src/features/lectures/DocEditor.tsx:260
+#: src/features/lectures/DocEditor.tsx:279
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/DocEditor.tsx:261
+#: src/features/lectures/DocEditor.tsx:280
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -2613,7 +2613,7 @@ msgstr "הפעלה מחדש"
 msgid "Restore"
 msgstr "שחזור"
 
-#: src/features/lectures/DocEditor.tsx:272
+#: src/features/lectures/DocEditor.tsx:291
 msgid "Restore original"
 msgstr "שחזור המקור"
 
@@ -2622,7 +2622,7 @@ msgid "Results"
 msgstr "תוצאות"
 
 #: src/features/lectures/components/FiguresWarning.tsx:59
-#: src/features/lectures/DocEditor.tsx:364
+#: src/features/lectures/DocEditor.tsx:383
 #: src/features/settings/SettingsView.tsx:183
 msgid "Retry"
 msgstr "ניסיון חוזר"
@@ -2678,7 +2678,7 @@ msgstr "עיבוד הרצאות"
 msgid "Save"
 msgstr "שמירה"
 
-#: src/features/lectures/DocEditor.tsx:298
+#: src/features/lectures/DocEditor.tsx:317
 msgid "Save & update PDF"
 msgstr "שמירה ועדכון PDF"
 
@@ -2878,8 +2878,8 @@ msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:80
-#: src/features/lectures/DocEditor.tsx:220
-#: src/features/lectures/DocEditor.tsx:279
+#: src/features/lectures/DocEditor.tsx:239
+#: src/features/lectures/DocEditor.tsx:298
 #: src/features/lectures/MainView.tsx:197
 #: src/features/lectures/MainView.tsx:208
 msgid "Step already running"
@@ -3217,7 +3217,7 @@ msgstr "האתר סירב לקובץ הזה."
 msgid "The summary contains invalid characters Gemini wrote"
 msgstr "הסיכום מכיל תווים לא חוקיים ש- Gemini כתב"
 
-#: src/features/lectures/DocEditor.tsx:281
+#: src/features/lectures/DocEditor.tsx:300
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
@@ -3319,7 +3319,7 @@ msgstr "שירותי צד שלישי"
 msgid "This applies only to work that starts on its own: a video you drop in or a video that finishes downloading. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת או וידאו שסיים לרדת. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
-#: src/features/lectures/DocEditor.tsx:389
+#: src/features/lectures/DocEditor.tsx:408
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
 
@@ -3348,6 +3348,10 @@ msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 #: src/shared/i18n/serviceErrors.ts:303
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
+
+#: src/features/lectures/components/MarkdownEditor.tsx:158
+msgid "This image won't appear in the PDF. Use a figure from the figures/ folder."
+msgstr "התמונה הזו לא תופיע ב-PDF. השתמש בתמונה מתיקיית figures/."
 
 #: src/features/settings/components/MoodleSiteField.tsx:102
 msgid "This isn't a web address. Copy the address from your browser's address bar."
@@ -3385,7 +3389,7 @@ msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 msgid "This source can't be downloaded automatically."
 msgstr "לא ניתן להוריד את המקור הזה אוטומטית."
 
-#: src/features/lectures/DocEditor.tsx:307
+#: src/features/lectures/DocEditor.tsx:326
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש. טען את הגרסה החדשה, או השאר את השינויים שלך ושמור אותם במקומה."
 
@@ -3468,7 +3472,7 @@ msgstr "האוניברסיטה נשמרה"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/DocEditor.tsx:349
+#: src/features/lectures/DocEditor.tsx:368
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
@@ -3488,7 +3492,7 @@ msgstr "עדכונים"
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "העדכונים מגיעים עם האפליקציה: כש־FastStudy מתעדכנת, גם התוסף מתעדכן מעצמו, כך שמגדירים אותו פעם אחת בלבד."
 
-#: src/features/lectures/DocEditor.tsx:298
+#: src/features/lectures/DocEditor.tsx:317
 msgid "Updating PDF…"
 msgstr "מעדכן PDF…"
 

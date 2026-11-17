@@ -42,3 +42,10 @@
   text-align: start;
   font-family: var(--font-mono);
 }
+
+/* An image link the PDF render would drop; the warning underline is CodeMirror's own. */
+.cm-lintRange-warning {
+  background-image: none;
+  text-decoration: underline wavy var(--warn);
+  text-underline-offset: 3px;
+}

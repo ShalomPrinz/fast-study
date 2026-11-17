@@ -12,6 +12,8 @@ export interface DocSource {
   title: string
   backRoute: string
   fetch(): Promise<{ content: string; hasOriginal: boolean }>
+  // The image names the PDF render can resolve; absent for a document with no figures.
+  fetchFigures?(): Promise<string[]>
   save(content: string): Promise<void>
   restore(): Promise<void>
   // The tree's view of the md and its PDF; null until the tree has the document.

@@ -82,8 +82,8 @@ position while restores are still pending (a fast second zoom, or a zoom during 
 
 ## `MarkdownEditor`
 
-CodeMirror 6 composed extension by extension — no `basicSetup`, so no autocomplete, search, lint or line
-numbers. It does install `history()` and `defaultKeymap` + `historyKeymap` (`@codemirror/commands`):
+CodeMirror 6 composed extension by extension — no `basicSetup`, so no search or line
+numbers, and autocomplete and lint only for the image links below. It does install `history()` and `defaultKeymap` + `historyKeymap` (`@codemirror/commands`):
 unbound, keys fall to contenteditable, whose Ctrl+Home/End only reach the lines CodeMirror has rendered.
 A pushed `value` (load, Restore) stays out of undo history, so Ctrl+Z never brings discarded text back.
 It is rich-styled _source_: markers stay in the buffer and the document is never re-serialized.
@@ -104,3 +104,10 @@ title like `# Big-O בפייתון` reads LTR while the Hebrew lines under it st
 `ltr`, so an English summary reads LTR throughout. The view is built
 once and an incoming `value` is pushed only when it differs from `view.state.doc`, which stops the
 editor's own edits echoing back.
+
+**Image links.** The PDF build copies only the lecture's `figures/` folder and silently drops any other
+image, so `DocEditor` fetches the names (`DocSource.fetchFigures`, the database's `GET …/figures`; the
+assignment docs have none) and `MarkdownEditor` takes them as `figures`. Inside `![caption](` it offers
+`figures/<name>`, and underlines any image link that is not a listed one (URLs and absolute paths
+included; `<…>` and `./` targets count as the path they name; code, math and fences are skipped) with a tooltip — a warning, never a save block. A null list (not yet fetched, or the fetch
+failed) gives neither, so a failed fetch never flags every link. The list is refetched on a new `mdMtime`, as the figures step and a re-summarize rewrite it with the text. The logic is pure, in `utils/imageLinks.ts`.

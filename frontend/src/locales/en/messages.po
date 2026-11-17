@@ -563,7 +563,7 @@ msgstr "All"
 msgid "All caught up — every lecture is finished."
 msgstr "All caught up — every lecture is finished."
 
-#: src/features/lectures/DocEditor.tsx:388
+#: src/features/lectures/DocEditor.tsx:407
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "All edits will be discarded and the original AI summary restored."
 
@@ -591,7 +591,7 @@ msgstr "All types are displayed"
 msgid "Already generated."
 msgstr "Already generated."
 
-#: src/features/lectures/DocEditor.tsx:283
+#: src/features/lectures/DocEditor.tsx:302
 msgid "Already up to date"
 msgstr "Already up to date"
 
@@ -710,7 +710,7 @@ msgstr "Available once the summary is generated."
 msgid "Available once you choose course material or generate a guide."
 msgstr "Available once you choose course material or generate a guide."
 
-#: src/features/lectures/DocEditor.tsx:249
+#: src/features/lectures/DocEditor.tsx:268
 #: src/features/tour/TourCallout.tsx:81
 msgid "Back"
 msgstr "Back"
@@ -1130,7 +1130,7 @@ msgstr "Couldn't load recordings for \"{name}\". Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/lectures/DocEditor.tsx:371
+#: src/features/lectures/DocEditor.tsx:390
 msgid "Couldn't load the summary"
 msgstr "Couldn't load the summary"
 
@@ -1262,7 +1262,7 @@ msgstr "Decline"
 msgid "Delete {name}"
 msgstr "Delete {name}"
 
-#: src/features/lectures/DocEditor.tsx:266
+#: src/features/lectures/DocEditor.tsx:285
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
@@ -1537,15 +1537,15 @@ msgstr "failed"
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
-#: src/features/lectures/DocEditor.tsx:225
+#: src/features/lectures/DocEditor.tsx:244
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
-#: src/features/lectures/DocEditor.tsx:199
+#: src/features/lectures/DocEditor.tsx:218
 msgid "Failed to restore the original summary"
 msgstr "Failed to restore the original summary"
 
-#: src/features/lectures/DocEditor.tsx:182
+#: src/features/lectures/DocEditor.tsx:201
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
@@ -1841,7 +1841,7 @@ msgstr "Intuition Guide — {assignment}"
 msgid "just this lecture"
 msgstr "just this lecture"
 
-#: src/features/lectures/DocEditor.tsx:322
+#: src/features/lectures/DocEditor.tsx:341
 msgid "Keep my edits"
 msgstr "Keep my edits"
 
@@ -1929,7 +1929,7 @@ msgstr "Lemida is responding slowly. Restart could help."
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
-#: src/features/lectures/DocEditor.tsx:319
+#: src/features/lectures/DocEditor.tsx:338
 msgid "Load new version"
 msgstr "Load new version"
 
@@ -2096,7 +2096,7 @@ msgstr "no material will be sent"
 msgid "No materials found."
 msgstr "No materials found."
 
-#: src/features/lectures/DocEditor.tsx:266
+#: src/features/lectures/DocEditor.tsx:285
 msgid "No original saved"
 msgstr "No original saved"
 
@@ -2411,11 +2411,11 @@ msgstr "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgid "PDF"
 msgstr "PDF"
 
-#: src/features/lectures/DocEditor.tsx:260
+#: src/features/lectures/DocEditor.tsx:279
 msgid "PDF is older than this summary"
 msgstr "PDF is older than this summary"
 
-#: src/features/lectures/DocEditor.tsx:261
+#: src/features/lectures/DocEditor.tsx:280
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
@@ -2613,7 +2613,7 @@ msgstr "Restart now"
 msgid "Restore"
 msgstr "Restore"
 
-#: src/features/lectures/DocEditor.tsx:272
+#: src/features/lectures/DocEditor.tsx:291
 msgid "Restore original"
 msgstr "Restore original"
 
@@ -2622,7 +2622,7 @@ msgid "Results"
 msgstr "Results"
 
 #: src/features/lectures/components/FiguresWarning.tsx:59
-#: src/features/lectures/DocEditor.tsx:364
+#: src/features/lectures/DocEditor.tsx:383
 #: src/features/settings/SettingsView.tsx:183
 msgid "Retry"
 msgstr "Retry"
@@ -2678,7 +2678,7 @@ msgstr "Running pipelines"
 msgid "Save"
 msgstr "Save"
 
-#: src/features/lectures/DocEditor.tsx:298
+#: src/features/lectures/DocEditor.tsx:317
 msgid "Save & update PDF"
 msgstr "Save & update PDF"
 
@@ -2878,8 +2878,8 @@ msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:80
-#: src/features/lectures/DocEditor.tsx:220
-#: src/features/lectures/DocEditor.tsx:279
+#: src/features/lectures/DocEditor.tsx:239
+#: src/features/lectures/DocEditor.tsx:298
 #: src/features/lectures/MainView.tsx:197
 #: src/features/lectures/MainView.tsx:208
 msgid "Step already running"
@@ -3217,7 +3217,7 @@ msgstr "The site refused this file."
 msgid "The summary contains invalid characters Gemini wrote"
 msgstr "The summary contains invalid characters Gemini wrote"
 
-#: src/features/lectures/DocEditor.tsx:281
+#: src/features/lectures/DocEditor.tsx:300
 msgid "The summary is empty"
 msgstr "The summary is empty"
 
@@ -3319,7 +3319,7 @@ msgstr "Third-party services"
 msgid "This applies only to work that starts on its own: a video you drop in or a video that finishes downloading. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in or a video that finishes downloading. Runs you start yourself are not affected."
 
-#: src/features/lectures/DocEditor.tsx:389
+#: src/features/lectures/DocEditor.tsx:408
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
@@ -3348,6 +3348,10 @@ msgstr "This error was reported automatically. Reference: <0>{eventId}</0>"
 #: src/shared/i18n/serviceErrors.ts:303
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
+
+#: src/features/lectures/components/MarkdownEditor.tsx:158
+msgid "This image won't appear in the PDF. Use a figure from the figures/ folder."
+msgstr "This image won't appear in the PDF. Use a figure from the figures/ folder."
 
 #: src/features/settings/components/MoodleSiteField.tsx:102
 msgid "This isn't a web address. Copy the address from your browser's address bar."
@@ -3385,7 +3389,7 @@ msgstr "This recording type can't be downloaded."
 msgid "This source can't be downloaded automatically."
 msgstr "This source can't be downloaded automatically."
 
-#: src/features/lectures/DocEditor.tsx:307
+#: src/features/lectures/DocEditor.tsx:326
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 
@@ -3468,7 +3472,7 @@ msgstr "University saved"
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/features/lectures/DocEditor.tsx:349
+#: src/features/lectures/DocEditor.tsx:368
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -3488,7 +3492,7 @@ msgstr "Updates"
 msgid "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 msgstr "Updates arrive with the app: when FastStudy updates, the extension updates itself, so you set it up only once."
 
-#: src/features/lectures/DocEditor.tsx:298
+#: src/features/lectures/DocEditor.tsx:317
 msgid "Updating PDF…"
 msgstr "Updating PDF…"
 
