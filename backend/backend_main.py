@@ -526,11 +526,13 @@ async def config_update(update: ConfigUpdate):
 @app.get("/config/options")
 def config_options():
     """The choices the settings screens render: the provider table (minus its internal
-    base URL and probe) and the curated Gemini model list."""
+    base URL and probe) and the curated Gemini models as `{id, name}`."""
 
     return {
         "providers": providers.public_providers(),
-        "gemini_models": settings.GEMINI_MODELS,
+        "gemini_models": [
+            {"id": i, "name": n} for i, n in settings.GEMINI_MODEL_NAMES.items()
+        ],
     }
 
 

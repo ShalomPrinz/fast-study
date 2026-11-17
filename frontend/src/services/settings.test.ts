@@ -7,6 +7,8 @@ import {
   pickBacking,
   probeMoodleSite,
   probeDataRoot,
+  fetchConfigOptions,
+  modelDisplayName,
 } from './settings'
 
 const STORED = {
@@ -92,9 +94,14 @@ describe('ownerBodies', () => {
   })
 
   // Launcher-only: the launcher itself pushes the switch to every service.
-  it('gives error reports, the privacy answer and the AI chat provider no owner', () => {
+  it('gives error reports, the launcher answers and the AI chat provider no owner', () => {
     expect(
-      ownerBodies({ errorReports: false, privacyConfirmed: true, aiProvider: 'chatgpt' }),
+      ownerBodies({
+        errorReports: false,
+        privacyConfirmed: true,
+        hydrogenPrompted: true,
+        aiProvider: 'chatgpt',
+      }),
     ).toEqual({
       backend: null,
       database: null,
@@ -347,5 +354,29 @@ describe('probeDataRoot', () => {
       }),
     )
     expect(await probeDataRoot('x')).toEqual({ kind: 'unknown' })
+  })
+})
+
+describe('fetchConfigOptions model names', () => {
+  it('parses {id, name} models and maps ids to names, leaving an unmapped id as itself', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        ok({
+          providers: [],
+          gemini_models: [
+            { id: 'gemini-4-hydrogen', name: 'Gemini Hydrogen 4' },
+            { id: 'gemini-3.8-flash', name: 'Gemini Flash 3.8' },
+          ],
+        }),
+      ),
+    )
+    const opts = await fetchConfigOptions()
+    expect(opts.geminiModels).toEqual([
+      { id: 'gemini-4-hydrogen', name: 'Gemini Hydrogen 4' },
+      { id: 'gemini-3.8-flash', name: 'Gemini Flash 3.8' },
+    ])
+    expect(modelDisplayName('gemini-3.8-flash')).toBe('Gemini Flash 3.8')
+    expect(modelDisplayName('gemini-flash-latest')).toBe('gemini-flash-latest')
   })
 })

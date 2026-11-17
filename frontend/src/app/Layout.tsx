@@ -12,6 +12,7 @@ import { toastCaptchaSolved } from '@/features/downloads/utils/zoomCaptcha'
 import { toastSiteCaptchaSolved } from '@/features/downloads/utils/captchaBanner'
 import Sidebar from '@/shared/sidebar'
 import DriveConsentPrompt from './DriveConsentPrompt'
+import HydrogenPrompt from './HydrogenPrompt'
 import { warnBrokenTools } from './toolWarnings'
 import { loadSupportedMaterials } from './supportedMaterials'
 import { SupportedMaterialsProvider } from '@/shared/contexts/SupportedMaterialsContext'
@@ -53,6 +54,8 @@ export default function Layout() {
                     {/* Route-independent by design: the run that needs consent is not the screen the
                       user is on. */}
                     <DriveConsentPrompt />
+                    {/* Under the gate, so never over the init wall or its privacy modal. */}
+                    <HydrogenPrompt />
                     <Tour />
                   </div>
                 </SectionRunsProvider>

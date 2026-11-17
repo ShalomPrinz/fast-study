@@ -20,6 +20,18 @@ def test_fallback_hook_records_notice_under_scope_and_notifies(monkeypatch):
     assert notices.recent("other") == []
 
 
+def test_fallback_pair_raises_once_per_block(monkeypatch):
+    monkeypatch.setattr(notices.db_client, "notify", lambda: None)
+    with notices.record_fallbacks("s-dedupe"):
+        llm_mod.fallback_hook.get()("a", "b")
+        llm_mod.fallback_hook.get()("a", "b")
+        llm_mod.fallback_hook.get()("b", "c")
+    assert len(notices.recent("s-dedupe")) == 2
+    with notices.record_fallbacks("s-dedupe"):
+        llm_mod.fallback_hook.get()("a", "b")
+    assert len(notices.recent("s-dedupe")) == 3
+
+
 def test_notices_expire(monkeypatch):
     monkeypatch.setattr(notices.db_client, "notify", lambda: None)
     notices.add("s-exp", "model_fallback", {})

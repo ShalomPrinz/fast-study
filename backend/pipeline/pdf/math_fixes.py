@@ -168,9 +168,25 @@ def _lr_block_end(text: str, start: int) -> int:
     return i
 
 
+_GREEK_MACRO = (
+    r"\\(?:var)?(?:alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi"
+    r"|rho|sigma|tau|upsilon|ell|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega)"
+    r"(?![A-Za-z])"
+)
+_MACRO_NAME_RE = re.compile(r"\\[A-Za-z]+")
+
+
+def _is_symbol_only(span: str) -> bool:
+    """True for `$\\leftarrow$`-style math: no letter or digit outside macro names. Greek
+    macros count as letters (a variable), so `$\\alpha$` still merges."""
+
+    body = re.sub(_GREEK_MACRO, "x", span[1:-1])
+    return not re.search(r"[A-Za-z0-9]", _MACRO_NAME_RE.sub("", body))
+
+
 def merge_ltr_math(text: str) -> str:
-    """Merge an adjacent \\LR{...} and inline $...$ (either order) into one run —
-    as two separate LTR islands, RTL bidi would order them right-to-left."""
+    """Merge an adjacent \\LR{...} and inline $...$ (either order) into one LTR run.
+    A symbol-only span (`$\\leftarrow$`) separated by whitespace is left alone: merged, it flips sides."""
 
     out = []
     i = 0
@@ -197,7 +213,7 @@ def merge_ltr_math(text: str) -> str:
                 if k < n and text[k] == "$"
                 else None
             )
-            if m:
+            if m and not (k > end and _is_symbol_only(m.group(0))):
                 out.append(text[last:i])
                 out.append(r"\LR{" + inner + " " + m.group(0) + "}")
                 i = last = m.end()
@@ -210,7 +226,9 @@ def merge_ltr_math(text: str) -> str:
                 k = m.end()
                 while k < n and text[k] in " \t":
                     k += 1
-                if text.startswith(r"\LR{", k):
+                if text.startswith(r"\LR{", k) and not (
+                    k > m.end() and _is_symbol_only(m.group(0))
+                ):
                     end = _lr_block_end(text, k)
                     inner = text[k + 4 : end - 1]
                     out.append(text[last:i])

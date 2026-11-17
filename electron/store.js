@@ -39,7 +39,8 @@ const INT_FIELDS = {
 };
 // Booleans no service gets as a settings env var: `error_reports` main turns into each process's
 // Sentry flag itself; `privacy_confirmed` is the renderer's record that the privacy notice was answered.
-const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed'];
+// `hydrogen_prompted`: temporary, see docs/MIGRATIONS.md ("Gemini hydrogen prompt").
+const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed', 'hydrogen_prompted'];
 // Write-only: these are held as safeStorage ciphertext and reported to the renderer as set/unset.
 const SECRET_FIELDS = { gemini_api_key: 'GEMINI_API_KEY', groq_api_key: 'GROQ_API_KEY' };
 // Every field held as safeStorage ciphertext: what a macOS update carries across (docs/UPDATES.md).
@@ -64,6 +65,7 @@ const FIELDS = {
   autoRetryMinutes: 'auto_retry_minutes',
   errorReports: 'error_reports',
   privacyConfirmed: 'privacy_confirmed',
+  hydrogenPrompted: 'hydrogen_prompted',
   aiProvider: 'ai_provider',
   geminiApiKey: 'gemini_api_key',
   groqApiKey: 'groq_api_key',
@@ -160,6 +162,7 @@ function read() {
     errorReports: bool(stored.error_reports),
     // Unset reads false: nothing was confirmed until the renderer says so.
     privacyConfirmed: stored.privacy_confirmed === true,
+    hydrogenPrompted: stored.hydrogen_prompted === true,
     aiProvider: choice('ai_provider', stored.ai_provider),
   };
 }

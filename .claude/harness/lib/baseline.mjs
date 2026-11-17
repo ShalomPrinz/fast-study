@@ -34,7 +34,7 @@ export const SETTINGS = {
 
 /** The model the running backend offers first — read live, so the baseline never names one it lacks. */
 export async function backendGeminiModel() {
-  return (await call(`${BACKEND}/config/options`)).body.gemini_models[0];
+  return (await call(`${BACKEND}/config/options`)).body.gemini_models[0].id;
 }
 
 /** The baseline settings, as ENV name → text. With no model (before boot), the backend's default applies. */

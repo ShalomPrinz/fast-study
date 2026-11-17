@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { storeBody, type ConfigOptions, type Settings } from '@/services/settings'
-import { buildPatch, formFromStore, withOptions, withSavedSite, type SettingsForm } from './patch'
+import {
+  buildPatch,
+  formFromStore,
+  wallPatch,
+  withOptions,
+  withSavedSite,
+  type SettingsForm,
+} from './patch'
 
 const STORED: Settings = {
   dataRoot: '/data',
@@ -20,6 +27,7 @@ const STORED: Settings = {
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: null,
   privacyConfirmed: false,
+  hydrogenPrompted: true,
   aiProvider: null,
   courseStructure: null,
 }
@@ -174,7 +182,10 @@ describe('buildPatch', () => {
 
 const OPTIONS: ConfigOptions = {
   providers: [],
-  geminiModels: ['gemini-3.5-flash', 'gemini-3.5-pro'],
+  geminiModels: [
+    { id: 'gemini-3.5-flash', name: 'Gemini Flash 3.5' },
+    { id: 'gemini-3.5-pro', name: 'Gemini Pro 3.5' },
+  ],
 }
 
 describe('formFromStore', () => {
@@ -252,5 +263,19 @@ describe('withSavedSite', () => {
   it('reverts the site to the store, for a cancelled switch', () => {
     const picked = { ...UNCHANGED, geminiModel: 'other', moodleSite: '' }
     expect(withSavedSite(picked, STORED)).toEqual({ ...picked, moodleSite: STORED.moodleSite })
+  })
+})
+
+describe('wallPatch', () => {
+  it('stores errorReports explicitly and marks the Gemini offer answered', () => {
+    const patch = wallPatch({ ...UNCHANGED, errorReports: true }, STORED, true)
+    expect(patch.errorReports).toBe(true)
+    expect(patch.hydrogenPrompted).toBe(true)
+  })
+
+  it('sends neither launcher-only field without the launcher', () => {
+    const patch = wallPatch(UNCHANGED, STORED, false)
+    expect('errorReports' in patch).toBe(false)
+    expect('hydrogenPrompted' in patch).toBe(false)
   })
 })

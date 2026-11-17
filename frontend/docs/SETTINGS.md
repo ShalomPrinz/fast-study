@@ -25,7 +25,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | AI chat provider  | Claude                                    | ChatGPT, Gemini       | `electron/`, renderer-only |
 | Course structure  | lectures and recitations (`split`)        | lectures only: every course, chosen courses | `database/`, live |
 
-The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
+The model list comes from `GET /config/options` as `{id, name}` (dropdown shows the name, stores the id; `modelDisplayName`, filled by every options fetch incl. `InitGate`'s at boot, swaps ids for names in `serviceErrors.ts` error params and `model_fallback` notices, an unmapped id staying raw), so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
 
 **Auto retry** (`AutoRetryField`, rules in `utils/autoRetry.ts`) is its own section: a switch plus "Number of
@@ -71,6 +71,11 @@ set the launcher-only `privacyConfirmed`, shown as the box's mark. Esc or a clic
 On `/settings` an answer is a form edit that Save stores. The wall stores `errorReports` explicitly
 on every save, and while the policy is unanswered its Start opens the modal instead, whose answer saves
 and starts in one go (`wallMustAskPrivacy`); closing it saves nothing.
+
+**The Gemini model offer** (`HydrogenPrompt`, mounted in `Layout` so it never meets the wall) asks once whether to switch
+a stored non-`gemini-4-hydrogen` model; Yes saves the model and the launcher-only `hydrogenPrompted` together; No, Esc
+or a click outside (the backdrop calls `onCancel`) all count as No and save only the flag. The init wall's save sets
+the flag too (`wallPatch`), so a new install never sees the offer. An unset model or an answered flag shows nothing, and browser dev reads the flag as answered.
 
 **The AI chat provider** is the chat "Study with AI" opens ([LECTURES.md](LECTURES.md)), read through
 `useAiProvider`, where unset or unknown is Claude. It is renderer-only: no service reads it, so a save writes

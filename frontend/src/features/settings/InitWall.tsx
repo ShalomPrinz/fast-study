@@ -24,7 +24,7 @@ import Tooltip from '@/shared/components/Tooltip'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
-import { buildPatch, type SettingsForm } from './utils/patch'
+import { wallPatch, type SettingsForm } from './utils/patch'
 import { autoRemoveFromStore } from './utils/autoRemove'
 import { autoRetryFromStore } from './utils/autoRetry'
 import { privacyAnswer, wallMustAskPrivacy } from './utils/privacy'
@@ -115,7 +115,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
       try {
         const opts = await fetchConfigOptions()
         setOptions(opts)
-        setForm((f) => ({ ...f, geminiModel: f.geminiModel || (opts.geminiModels[0] ?? '') }))
+        setForm((f) => ({ ...f, geminiModel: f.geminiModel || (opts.geminiModels[0]?.id ?? '') }))
       } catch {
         // A downed service is already toasted centrally by the http client.
       }
@@ -146,10 +146,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     try {
       // A site save still in flight lands first; resending the same site is a no-op for its owner.
       await siteSaves.current
-      const patch = buildPatch(answered, stored, canSetErrorReports)
-      // Always explicit here, so the checked default is stored as the user's own yes or no.
-      if (canSetErrorReports) patch.errorReports = answered.errorReports
-      onDone(await saveSettings(patch))
+      onDone(await saveSettings(wallPatch(answered, stored, canSetErrorReports)))
     } catch (err) {
       // Shown in place, not toasted: a rejected data folder is the one thing standing in the way.
       setFailure(failureNode(err))

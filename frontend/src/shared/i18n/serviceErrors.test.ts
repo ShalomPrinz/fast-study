@@ -7,6 +7,8 @@ import {
   serviceErrorRow,
   serviceErrorText,
 } from './serviceErrors'
+import { fetchConfigOptions } from '@/services/settings'
+import { vi } from 'vitest'
 
 // Codes, never copy: what a row says is the catalogs' business and changes with every translation.
 describe('serviceErrorRow', () => {
@@ -353,5 +355,40 @@ describe('failedRunSentence', () => {
         failedRunSentence(fail(code, {}, retry), lecture),
       )
     }
+  })
+})
+
+describe('model display names', () => {
+  async function load() {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({
+          providers: [],
+          gemini_models: [{ id: 'gemini-3.8-flash', name: 'Gemini Flash 3.8' }],
+        }),
+      })),
+    )
+    await fetchConfigOptions()
+    vi.unstubAllGlobals()
+  }
+
+  it('shows the name in an error and the fallback notice, and the raw id when unmapped', async () => {
+    await load()
+    const err = (model: string) =>
+      resolveServiceError({ message: 'x', code: 'gemini_overloaded', params: { model } }).headline
+    expect(err('gemini-3.8-flash')).toContain('Gemini Flash 3.8')
+    expect(err('gemini-3.8-flash')).not.toContain('gemini-3.8-flash')
+    expect(err('gemini-exp-alias')).toContain('gemini-exp-alias')
+    const notice = resolveServiceError({
+      message: 'x',
+      code: 'model_fallback',
+      params: { from: 'gemini-3.8-flash', to: 'gemini-exp-alias' },
+    }).headline
+    expect(notice).toContain('Gemini Flash 3.8')
+    expect(notice).toContain('gemini-exp-alias')
   })
 })

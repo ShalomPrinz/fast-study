@@ -1,3 +1,4 @@
+import pytest
 from pipeline.pdf.bidi import force_ltr_inline_code, wrap_english_phrases
 
 # ---------------------------------------------------------------------------
@@ -255,6 +256,25 @@ class TestWrapEnglishPhrases:
         assert r"\LR{SMP vs. AMP}" in result
         assert r"\RL{.}" not in result
 
+    def test_sentence_end_period_does_not_glue_runs(self):
+        for src, glued in [
+            (
+                "ופורט יעד (Destination Port). 1,024 הפורטים",
+                "(Destination Port). 1,024",
+            ),
+            ("מציע אמינות מלאה (Reliability). TCP לוקח", "(Reliability). TCP"),
+            ("עבור ה-ACK. TCP מאפשר", "ACK. TCP"),
+        ]:
+            result = wrap_english_phrases(src)
+            assert glued not in result
+        assert r"\LR{TCP}" in wrap_english_phrases("עבור ה-ACK. TCP מאפשר")
+        assert r"\LR{ACK}\RL{.}" in wrap_english_phrases("עבור ה-ACK. TCP מאפשר")
+
+    def test_abbreviation_period_still_glues(self):
+        assert r"\LR{e.g. x}" in wrap_english_phrases("כמו e.g. x כאן")
+        assert r"\LR{i.e. y}" in wrap_english_phrases("כלומר i.e. y כאן")
+        assert r"\LR{Fig. 3}" in wrap_english_phrases("ראו Fig. 3 כאן")
+
     def test_sentence_final_period_before_hebrew_stays_rl(self):
         # The abbreviation rule must NOT absorb a real sentence period that is
         # followed by Hebrew — it stays RTL so it renders in reading order.
@@ -307,6 +327,26 @@ class TestWrapEnglishPhrases:
         result = wrap_english_phrases("ראה Foo, עברית")
         assert r"\LR{Foo}" in result
         assert r"\RL{,}" in result
+
+    # --- Token alphabet: fraction prefix, digit possessive, glued '#' ---
+    @pytest.mark.parametrize(
+        "text, expected",
+        [
+            (
+                "### אלגוריתם כריסטופידס (3/2-Approximation)",
+                r"### אלגוריתם כריסטופידס \LR{(3/2-Approximation)}",
+            ),
+            ("**PKCS#5**", r"**\LR{PKCS\#5}**"),
+            ("(1's complement addition)", r"\LR{(1's complement addition)}"),
+            ("שפת C# ו-F# טובות", r"שפת \LR{C\#} ו-\LR{F\#} טובות"),
+            ("ה-3-way כאן", r"ה-\LR{3-way} כאן"),
+            ("שלום # וגם 3/4 כן", "שלום # וגם 3/4 כן"),
+            ("# כותרת", "# כותרת"),
+            ("Dijkstra's אלגוריתם", r"\LR{Dijkstra's} אלגוריתם"),
+        ],
+    )
+    def test_glued_token_parts(self, text, expected):
+        assert wrap_english_phrases(text) == expected
 
     # --- Number glued directly to a Latin unit (4KB) ---
 

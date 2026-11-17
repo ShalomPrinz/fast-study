@@ -3,9 +3,14 @@ time, never at import, so an update applies with no restart."""
 
 import os
 
-# Curated: a model id the free tier does not serve fails minutes into a run, so the
-# frontend picks from this list instead of accepting free text.
-GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash"]
+# Curated, in fallback order: a model id the free tier does not serve fails minutes into a
+# run, so the frontend picks from this table. API id -> the name the user sees.
+GEMINI_MODEL_NAMES = {
+    "gemini-4-hydrogen": "Gemini Hydrogen 4",
+    "gemini-3.8-flash": "Gemini Flash 3.8",
+    "gemini-3.6-flash": "Gemini Flash 3.6",
+}
+GEMINI_MODELS = list(GEMINI_MODEL_NAMES)
 
 # How much of the pipeline an automatic trigger may run. A ceiling, not a schedule: it caps
 # a new video's arrival, and never the user's own run.

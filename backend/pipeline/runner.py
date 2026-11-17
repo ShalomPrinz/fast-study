@@ -439,6 +439,23 @@ def _require_nonempty(filename: str, data: bytes) -> None:
         )
 
 
+# The one file each step's Gemini call writes; an empty one is an HTTP 200 with no text.
+_GEMINI_STEP_FILES = {
+    "summarize": "summary.md",
+    "intuition": "intuition.md",
+    "solution": "solution.md",
+}
+
+
+def _is_condition(step: str, code: str | None, params: dict) -> bool:
+    """A provider/user condition, not a bug: a CONDITION_CODES code, or the empty file the
+    step's own Gemini call wrote. The same file empty in another step is our bug."""
+
+    return code in CONDITION_CODES or (
+        code == "empty_file" and _GEMINI_STEP_FILES.get(step) == params.get("file")
+    )
+
+
 # ---- db_workspace ----
 
 
@@ -1522,7 +1539,9 @@ async def _run_step_unlocked(
         _errors[skey] = _error_record(step, msg, code=result.get("code"), params=params)
         # ERROR becomes a Sentry event; a provider's availability or the user's setup is not ours to report.
         level = (
-            logging.WARNING if result.get("code") in CONDITION_CODES else logging.ERROR
+            logging.WARNING
+            if _is_condition(step, result.get("code"), params)
+            else logging.ERROR
         )
         # One Sentry issue per (step, code): the shared template alone would merge every failure.
         with sentry_sdk.new_scope() as scope:

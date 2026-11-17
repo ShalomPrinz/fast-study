@@ -5,7 +5,9 @@ from pipeline.pdf.text import (
     DIV_MARKER_RE,
     _latex_escape,
     apply_outside_fences,
+    ensure_blank_before_divs,
     ensure_blank_before_lists,
+    ensure_space_after_heading_hashes,
     normalize_dashes,
     split_protected,
 )
@@ -303,6 +305,74 @@ class TestCalloutDivMarkers:
         # and pandoc treats an unmatched fence as literal text.
         out = apply_outside_fences("abc\n:::\ndef\n", str.upper)
         assert out == "ABC\n:::\nDEF\n"
+
+
+# ---------------------------------------------------------------------------
+# ensure_space_after_heading_hashes / ensure_blank_before_divs
+# ---------------------------------------------------------------------------
+
+
+class TestSpacelessHeading:
+    def test_reported_heading_gets_space(self):
+        line = "##Store and Forward וחלוקת מידע לחבילות (Pipelining)\n"
+        assert ensure_space_after_heading_hashes(line) == "## " + line[2:]
+
+    def test_through_chain_and_fences(self):
+        out = apply_outside_fences("##כותרת\n```\n##code\n```\n", preprocess_markdown)
+        assert out == "## כותרת\n```\n##code\n```\n"
+
+    def test_neighbours_unchanged(self):
+        for t in [
+            "## Heading\n",
+            "####\n",
+            "#5 issue\n",
+            "###### \n",
+            "C# is a language\n",
+            "text #hashtag\n",
+            "  ##x\n",
+        ]:
+            assert ensure_space_after_heading_hashes(t) == t
+
+
+REPORTED_FENCE = (
+    "- **אזהרה חמורה לקראת הבחינה – Store and Forward לעומת Stop and Wait:**\n"
+    "  ::: warning\n"
+    "  המרצה הדגיש!\n"
+    "  - **Store and Forward** הוא מנגנון\n"
+    "  - **Stop and Wait** הוא פרוטוקול\n"
+    "  חוסר הבחנה.\n"
+    "  :::\n"
+    "- הבא\n"
+)
+
+
+class TestBlankBeforeDivs:
+    def test_reported_shape_gets_one_blank_before_open_only(self):
+        lines = REPORTED_FENCE.splitlines(keepends=True)
+        expected = "".join(lines[:1] + ["\n"] + lines[1:])
+        assert ensure_blank_before_divs(REPORTED_FENCE) == expected
+
+    def test_crlf_close_is_not_taken_for_open(self):
+        text = "a\r\n:::\r\nb\r\n"
+        assert ensure_blank_before_divs(text) == text
+
+    def test_unchanged_cases(self):
+        for t in [
+            "x\n\n::: note\nb\n:::\n",
+            "::: note\nb\n:::\ny\n",
+            "::: a\n::: b\nx\n:::\n:::\n",
+            "```\ntext\n::: note\n```\n",
+            "- item\n\n  ::: note\n  b\n  :::\n",
+        ]:
+            assert ensure_blank_before_divs(t) == t
+
+    def test_top_level_fence_after_prose_also_gets_blank(self):
+        assert ensure_blank_before_divs("p\n::: note\n") == "p\n\n::: note\n"
+
+    def test_reported_shape_parses_as_div_in_item_body_list_nested(self):
+        out = apply_outside_fences(REPORTED_FENCE, preprocess_markdown)
+        assert out.count("\n\n  ::: warning\n") == 1
+        assert "\n\n  - " in out
 
 
 # ---------------------------------------------------------------------------

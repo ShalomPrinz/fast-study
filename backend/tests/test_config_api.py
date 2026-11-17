@@ -14,7 +14,12 @@ client = TestClient(backend_main.app)
 class TestConfigOptions:
     def test_lists_providers_without_their_base_url_or_probe(self):
         body = client.get("/config/options").json()
-        assert body["gemini_models"] == settings.GEMINI_MODELS
+        assert body["gemini_models"] == [
+            {"id": "gemini-4-hydrogen", "name": "Gemini Hydrogen 4"},
+            {"id": "gemini-3.8-flash", "name": "Gemini Flash 3.8"},
+            {"id": "gemini-3.6-flash", "name": "Gemini Flash 3.6"},
+        ]
+        assert [m["id"] for m in body["gemini_models"]] == settings.GEMINI_MODELS
         assert {p["id"] for p in body["providers"]} == set(providers.PROVIDERS)
         for p in body["providers"]:
             assert not {"base_url", "probe_path"} & set(p)
@@ -34,9 +39,11 @@ class TestPostConfig:
             monkeypatch.setenv(var, "before")
 
     def test_applies_only_the_fields_sent(self):
-        body = client.post("/config", json={"gemini_model": "gemini-3.6-flash"}).json()
+        body = client.post(
+            "/config", json={"gemini_model": settings.GEMINI_MODELS[-1]}
+        ).json()
         assert body == {"status": "ok", "applied": ["gemini_model"]}
-        assert settings.gemini_model() == "gemini-3.6-flash"
+        assert settings.gemini_model() == settings.GEMINI_MODELS[-1]
         assert os.environ["GEMINI_API_KEY"] == "before"
 
     def test_a_key_is_never_echoed_back(self):

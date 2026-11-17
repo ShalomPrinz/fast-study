@@ -191,7 +191,7 @@ connection); `detail` is the transport's own text. It can also end an assignment
 ([`backend/docs/PIPELINE.md`](../backend/docs/PIPELINE.md#auto-retry)); the record keeps its code while the retry waits.
 `model_fallback` is not a failure but a notice: with `GEMINI_AUTO_FALLBACK` on, a 503 retried on the
 next model raises it in the `notices` list of `GET /status` and of the overview status, `from`/`to`
-naming the models. It toasts once per `id` and never lands in `errors`.
+naming the models, once per `from`/`to` pair per step (per course phase). It toasts once per `id` and never lands in `errors`.
 `drive_unreachable` is a Drive token refresh that never reached Google (a `TransportError`: offline,
 DNS, refused connection); `detail` is the transport's own text. Unlike `drive_not_connected` it leaves
 `consent_needed` alone, since being offline says nothing about the grant, and it is not auto-retried.

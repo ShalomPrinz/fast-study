@@ -1,6 +1,8 @@
 import re
 
 _LIST_ITEM_RE = re.compile(r"^(\s*(?:[-*+]|\d+\.)\s)")
+# An ATX heading missing its space (`##Title`). A digit after the hashes (`#5`) stays prose.
+_HEADING_NO_SPACE_RE = re.compile(r"^(#{1,6})(?=[^\s#\d])")
 # A callout div marker line (`::: definition` opens, `:::` closes; `attr` empty on a close).
 # Here rather than in course/ because pipeline/ may not import course/.
 DIV_MARKER_RE = re.compile(r"^ {0,3}:{3,}[ \t]*(?P<attr>.*?)[ \t]*$")
@@ -79,11 +81,11 @@ def _latex_escape(s: str) -> str:
 
 
 def apply_outside_fences(text: str, transform):
-    """Run `transform` on prose only, passing fenced code blocks and callout div markers
-    through verbatim — see docs/BIDI.md."""
+    """Run `transform` on prose only; fenced code and callout div markers pass through verbatim
+    (see docs/BIDI.md). Prose right above an opening marker gets a blank line first."""
 
     out, buf, in_fence = [], [], False
-    for line in text.splitlines(keepends=True):
+    for line in ensure_blank_before_divs(text).splitlines(keepends=True):
         stripped = line.lstrip()
         is_fence = stripped.startswith("```") or stripped.startswith("~~~")
         if is_fence:
@@ -93,7 +95,7 @@ def apply_outside_fences(text: str, transform):
                 buf = []
             out.append(line)
             in_fence = not in_fence
-        elif not in_fence and DIV_MARKER_RE.match(line.rstrip("\n")):
+        elif not in_fence and DIV_MARKER_RE.match(line.rstrip("\r\n")):
             if buf:
                 out.append(transform("".join(buf)))
                 buf = []
@@ -123,3 +125,30 @@ def ensure_blank_before_lists(text: str) -> str:
         if sum(map(bool, _DISPLAY_DELIM_RE.findall(line))) % 2:
             in_display_math = not in_display_math
     return "".join(result)
+
+
+def ensure_space_after_heading_hashes(text: str) -> str:
+    """`##Title` -> `## Title`; pandoc reads the spaceless form as a plain paragraph."""
+
+    return "".join(
+        _HEADING_NO_SPACE_RE.sub(r"\1 ", line)
+        for line in text.splitlines(keepends=True)
+    )
+
+
+def ensure_blank_before_divs(text: str) -> str:
+    """Blank line before an opening `:::` marker that follows prose (pandoc reads it as lazy
+    continuation). Only there, since blank lines inside a list item make the list loose."""
+
+    out, in_fence = [], False
+    for line in text.splitlines(keepends=True):
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+        m = None if in_fence else DIV_MARKER_RE.match(line.rstrip("\r\n"))
+        if m and m.group("attr") and out:
+            prev = out[-1]
+            if prev.strip() and not DIV_MARKER_RE.match(prev.rstrip("\r\n")):
+                out.append("\n")
+        out.append(line)
+    return "".join(out)

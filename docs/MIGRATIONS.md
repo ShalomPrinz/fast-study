@@ -77,3 +77,18 @@ one-line comment pointing at this file.
 - **Remove when:** every install has listed its courses once on a version that carries this code.
   After removal, a still-present `.archived` file is an inert hidden file: it never becomes a tree
   row and changes no behaviour.
+
+## Gemini hydrogen prompt
+
+- **Code:** `frontend/` — the one-time hydrogen confirm modal — and the `hydrogen_prompted` field
+  in `electron/store.js`.
+- **Old state:** an install set up before `gemini-4-hydrogen` became the first listed model saved
+  an older model (usually `gemini-3.8-flash`) at the init wall, so it keeps using that model.
+- **What it does:** once per user, when the saved model is not `gemini-4-hydrogen` and
+  `hydrogen_prompted` is unset, a confirm modal offers the switch. Yes saves `gemini-4-hydrogen`;
+  No, Esc or a click outside keeps the model. Any answer sets `hydrogen_prompted`, so it never asks
+  again. The init wall sets it too, so a new install never sees the offer.
+- **Remove when:** most installs have launched once on a version that carries this code. After
+  removal, an install that never answered keeps its older model until the user changes it in
+  Settings. Remove `hydrogen_prompted` from the store's field list in the same change; a key left
+  in a user's settings.json is then ignored and needs no cleanup.

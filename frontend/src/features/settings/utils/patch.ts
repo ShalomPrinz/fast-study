@@ -38,7 +38,7 @@ export interface SettingsForm {
 function formModel(stored: Settings, options: ConfigOptions | null): string {
   const model = stored.geminiModel
   if (!options) return model ?? ''
-  const models = options.geminiModels
+  const models = options.geminiModels.map((m) => m.id)
   return model !== null && models.includes(model) ? model : (models[0] ?? '')
 }
 
@@ -73,7 +73,7 @@ export function withOptions(
   stored: Settings,
   options: ConfigOptions,
 ): SettingsForm {
-  if (options.geminiModels.includes(form.geminiModel)) return form
+  if (options.geminiModels.some((m) => m.id === form.geminiModel)) return form
   return { ...form, geminiModel: formModel(stored, options) }
 }
 
@@ -114,6 +114,21 @@ export function buildPatch(
   if (form.aiProvider !== toAiProvider(stored.aiProvider)) patch.aiProvider = form.aiProvider
   if (form.courseStructure !== toCourseStructure(stored.courseStructure)) {
     patch.courseStructure = form.courseStructure
+  }
+  return patch
+}
+
+/** The init wall's save: the changed fields, `errorReports` stored explicitly, and `hydrogenPrompted`
+ *  so a new install never gets the Gemini model offer. Both launcher-only fields wait on the launcher. */
+export function wallPatch(
+  form: SettingsForm,
+  stored: Settings,
+  canSetErrorReports: boolean,
+): SettingsPatch {
+  const patch = buildPatch(form, stored, canSetErrorReports)
+  if (canSetErrorReports) {
+    patch.errorReports = form.errorReports
+    patch.hydrogenPrompted = true
   }
   return patch
 }

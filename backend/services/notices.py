@@ -50,9 +50,14 @@ def recent(scope: str) -> list[dict]:
 @contextmanager
 def record_fallbacks(scope: str, **where) -> Iterator[None]:
     """Within the block (a worker thread), a Gemini model fallback raises a `model_fallback`
-    notice under `scope`; `where` rides on the notice."""
+    notice under `scope`, once per (from, to) pair per block; `where` rides on the notice."""
+
+    seen: set[tuple[str, str]] = set()
 
     def hook(from_model: str, to_model: str) -> None:
+        if (from_model, to_model) in seen:
+            return
+        seen.add((from_model, to_model))
         add(scope, "model_fallback", {"from": from_model, "to": to_model}, **where)
 
     token = llm_client.fallback_hook.set(hook)
