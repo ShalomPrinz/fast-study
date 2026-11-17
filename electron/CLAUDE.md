@@ -17,6 +17,11 @@ everything on quit.
 | `teardown.js` | Stopping the children — SIGTERM, then SIGKILL after the grace (POSIX)           |
 | `updater.js`  | The update check — electron-updater against GitHub Releases; the app's update state and Restart now |
 | `updatePhases.js` | Mapping updater events to the phases the launch screen shows (pure, tested)   |
+| `macUpdate.js` | The macOS install step — the verified download, the staged bundle, the swap helper |
+| `macPending.js` | The staged macOS update's record across a quit — its tree digest, the launch-time install decision |
+| `appFs.js` | `fs` for any `.app` tree — `original-fs` inside Electron, since the patched `fs` reads `app.asar` as a directory |
+| `macHandoff.js` | The keys' way across a macOS update — the framing, the inherited pipe, the Safe Storage delete |
+| `macMove.js` | The macOS offer to move into an Applications folder at launch — the copy, the relaunch helper |
 | `extension.js` | The browser extension's shipped copy, the bridge file, the native host's registration |
 | `bridge/host.js` | The native host Chrome or Edge runs — staged to `resources/bridge/`, not in the asar |
 | `windowState.js` | The window's size and maximized flag across launches — `window-state.json` under `userData` |
@@ -31,7 +36,7 @@ everything on quit.
 | [BOOT.md](docs/BOOT.md)            | The launch sequence, launch screen, child env, spawns, teardown, the log |
 | [RENDERER.md](docs/RENDERER.md)    | `app://bundle`, `window.faststudy`, open, folder picker, Sentry, checks, settings store |
 | [UPDATES.md](docs/UPDATES.md)      | How a packaged app updates itself                                        |
-| [EXTENSION.md](docs/EXTENSION.md)  | The extension copy, `bridge.json`, the `com.faststudy.bridge` host and its registry key |
+| [EXTENSION.md](docs/EXTENSION.md)  | The extension copy, `bridge.json`, the `com.faststudy.bridge` host and its registration |
 
 ## Run
 
@@ -77,7 +82,7 @@ failure.
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
 covering `resolveWithin`'s path containment, the store's tables and refusal rules, the error-reports
 switch's env and its push to each service's `/config` (against local HTTP stubs), the window size's clamp and fallback, and the teardown's
-SIGTERM→SIGKILL escalation against real `sh` process groups and its expected-exit rule, and the native host driven over framed stdin/stdout with its registration and the extension copy. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
+SIGTERM→SIGKILL escalation against real `sh` process groups and its expected-exit rule, and the native host driven over framed stdin/stdout with its registration and the extension copy, and the macOS update's sha512 check and its swap helper run under real `sh`, and the pending update's launch decision and tree digest, and the key handoff's framing, pipe and delete loop, and the macOS move's decisions behind faked dialog, copy and folders. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
 `electron` in the module cache before the module under test is required, which is also how the
 unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns a service is in it.
 
@@ -96,7 +101,7 @@ Electron's own default. `eslint.config.js` gives `electron/**/*.js` its own
   that owns it. Main is a launcher and a window.
 - **No second writer of the on-disk layout.** Main never touches `DATA_ROOT`; the services reach
   disk through `database/`, and main only passes the root down as an env var.
-- **No spelling of its own for the launch contract.** `FASTSTUDY_PORT`, `FASTSTUDY_SECRET`,
+- **No spelling of its own for the launch contract.** `FASTSTUDY_PORT`, `FASTSTUDY_SECRET`, `FASTSTUDY_LIFELINE` (POSIX only: Windows' kill-on-close job already reaps children),
   `FASTSTUDY_STATE_DIR`, `FASTSTUDY_BIN_DIR`, `X-FastStudy-Secret`, `app://bundle` and the
   `^FASTSTUDY_PORT=(\d+)$` line are the same names `lib/runtime/` implements on the service side, and
   the native host `com.faststudy.bridge` is spelled independently by the extension. A change to any
@@ -111,6 +116,22 @@ because a folder chosen under `C:\` inherits an ACL other local accounts can wri
 account could swap a shipped binary such as `resources/bin/ffmpeg.exe`. The whole configuration is
 the `build` block in `package.json`.
 
+`npm run dist:mac` builds the macOS arm64 app on a Mac: `FastStudy-mac-arm64.dmg` for the download,
+`FastStudy-mac-arm64.zip` and `latest-mac.yml` for the updater. The names carry no version, like
+`FastStudy-Setup.exe`, so `releases/latest/download/<name>` is a stable link.
+
+- **macOS is ad-hoc signed** (`mac.identity: "-"`), with no Developer ID and no notarization.
+  `hardenedRuntime` is off because under it library validation rejects ad-hoc signed libraries.
+  electron-builder signs every binary file under `Contents/`, the staged `extraResources` included,
+  then seals the bundle, so nothing inside may change after it runs.
+- **`mac.signIgnore` skips `puppeteer-extra-plugin-stealth/evasions/chrome.app`**, a folder of JS
+  the signer takes for an app bundle by its suffix; under `Contents/Resources` the seal covers its
+  files as plain resources.
+- **`dmg.writeUpdateInfo` is off**, so `latest-mac.yml` lists the zip alone and no dmg blockmap is
+  written. The zip's own `.blockmap` is still emitted and unused: the updater downloads the whole zip
+  ([`docs/UPDATES.md`](docs/UPDATES.md#the-macos-install-step)).
+- **`assets/icon.icns` comes from `assets/make_icon.py`**, like the `.ico`, inset to Apple's 824 of
+  1024 grid.
 - **The install-directory leaf is `name` (`faststudy`), not `productName`.** For a one-click
   per-user build `NsisTarget.js` calls `getWindowsInstallationDirName(appInfo, !oneClick ||
   isPerMachine)`, which returns `sanitizedName` when false. `userData` and the state root are named

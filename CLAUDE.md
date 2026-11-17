@@ -40,6 +40,7 @@ Every service carries its own module named `runtime` (`runtime.py` / `runtime.js
 | Launch secret, in env    | `FASTSTUDY_SECRET` — unset means no enforcement, which is dev                   |
 | Secret header            | `X-FastStudy-Secret`                                                            |
 | Secret query param       | `secret`, for `EventSource`, which cannot set a header                          |
+| Launcher lifeline, env   | `FASTSTUDY_LIFELINE=1` — POSIX only: stdin is a pipe the launcher holds, and its EOF SIGKILLs the service's group. Unset means no watch, which is a service run by hand |
 | Writable state root, env | `FASTSTUDY_STATE_DIR` — unset falls back to `.state/` at the repo root          |
 | State join               | `statePath(...parts)` / `state_path(*parts)` — a pure join that creates nothing |
 | Bundled binary dir, env  | `FASTSTUDY_BIN_DIR` — unset means resolve off PATH, which is dev                |
@@ -116,7 +117,7 @@ A service agent reports in 300 words or fewer: files changed, docs updated and w
 
 `reviewer` is the exception: read-only, owning nothing, it reviews a task's uncommitted diff before the main session commits it.
 
-`lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish,smoke,smoke-suite}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
+`lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish,smoke,smoke-suite-win,smoke-suite-mac}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
 
 `site-dev` owns `site/` and `.github/workflows/pages.yml` under the same rule: the page describes what `electron/`, `delivery/` and the services own, so a claim or a name that needs changing there is reported, not edited.
 

@@ -1,6 +1,6 @@
-name: Smoke suite
+name: Smoke suite (Windows)
 
-# The release smoke job, once: build.yml calls it on its own run's installer, smoke.yml on an
+# The Windows release smoke job: build.yml calls it on its own run's installer, smoke.yml on an
 # earlier build.yml run's, after its guard has proven that run built the same app.
 on:
   workflow_call:
@@ -13,7 +13,7 @@ on:
 jobs:
   # A fresh runner, so the install is a first install. It installs and tests the uploaded artifact,
   # which is byte for byte what publish.yml releases — and only a run this job passed counts as green.
-  smoke:
+  smoke-win:
     runs-on: windows-latest
     timeout-minutes: 150
     # actions: read is for the cross-run download only; a caller must grant it as well.

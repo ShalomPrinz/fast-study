@@ -5,12 +5,17 @@ import { readLaunchLog } from '../lib/app.js';
 import { tone } from '../lib/media.js';
 import * as paths from '../lib/paths.js';
 import { carriesPhrase, pdfText } from '../lib/pdf.js';
-import { services, start, stop } from '../lib/session.js';
+import { services, session, start, stop } from '../lib/session.js';
 import { COURSE, fixture, PDF_PHRASE } from '../lib/suite.js';
 
 const TEMP_LECTURE = 'Hebrew Temp Lecture';
 
 export default async function hebrewTemp() {
+  await checkHebrewTemp({});
+}
+
+// `observed` collects what the check saw, for a caller that records evidence even on failure.
+export async function checkHebrewTemp(observed) {
   await stop();
   // Hebrew and a space in the dir every service spawns its tools in, as a Windows username can put in %TEMP%.
   const folder = 'טמפ עברי';
@@ -19,12 +24,20 @@ export default async function hebrewTemp() {
   // TMPDIR too: Python's tempfile reads it ahead of TEMP, and a runner shell may set it.
   await start({ TEMP: temp, TMP: temp, TMPDIR: temp });
   const { db, api } = services;
+  observed.temp = temp;
+  if (process.platform === 'darwin') {
+    // macOS launches through the offline sudo wrapper, which must not drop or rewrite TMPDIR unnoticed.
+    observed.mainSaw = await session.app.evaluate(() => process.env.TMPDIR);
+    expect(observed.mainSaw, 'the app did not receive the Hebrew temp dir').toBe(temp);
+  }
+  observed.steps = {};
   const broke = `a tool breaks on the non-ASCII temp path ${temp}`;
 
   /** Run one step while watching the temp folder: each step's workspace is a tempdir made directly in it. */
   async function runInTemp(step) {
     const entries = new Set();
     const watcher = fs.watch(temp, (_, name) => name && entries.add(name));
+    observed.steps[step] = entries;
     try {
       expect(
         await api.runStep(COURSE, TEMP_LECTURE, step),

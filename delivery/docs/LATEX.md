@@ -27,6 +27,8 @@ never saved and a later failure or a cancelled run does not lose a good one.
   `backend/assets/{templates,filters,fonts}/`. There are no `restore-keys`: the
   prime only adds files, so a partial match would carry files no input pulls any more into every
   installer from then on.
+- **One cache per platform.** `<os>` is `runner.os`, so the Windows and macOS jobs each prime and
+  save their own, with the tectonic binary that platform ships.
 - **The prime runs on a hit too.** Restored, it is a top-up of reused files, but its strict render
   is still the proof the shipped cache renders the sink; skipping it would ship a cache that fails
   offline whenever an input changed without changing the key. What a hit's top-up adds is not

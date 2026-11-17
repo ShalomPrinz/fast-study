@@ -1,9 +1,12 @@
 import asyncio
+import contextlib
 import os
 import re
+import signal
 import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -407,3 +410,100 @@ def test_cors_origins_with_the_secret_unset_also_allows_any_localhost_port(
 
 def test_cors_origins_treats_a_blank_secret_as_dev(monkeypatch):
     assert _allowed(_cors_client(monkeypatch, ""), "http://localhost:5174")
+
+
+# The lifeline: a child that leads its own group (as a detached service does) with a grandchild in it.
+_LIFELINE_CHILD = (
+    "import subprocess, sys, time, runtime;"
+    "g = subprocess.Popen(['sleep', '60']);"
+    "print(g.pid, flush=True);"
+    "runtime._watch_lifeline();"
+    "time.sleep(60)"
+)
+
+
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    return True
+
+
+def _lifeline_child(env: dict) -> tuple[subprocess.Popen, int]:
+    process = subprocess.Popen(
+        [sys.executable, "-c", _LIFELINE_CHILD],
+        cwd=_PACKAGE_DIR,
+        env={**os.environ, **env},
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        start_new_session=True,
+        text=True,
+    )
+    return process, int(process.stdout.readline())
+
+
+@pytest.mark.skipif(os.name == "nt", reason="process groups are POSIX")
+def test_lifeline_eof_kills_the_service_and_its_group():
+    """Closing the launcher's end of stdin takes the child and everything it spawned down."""
+
+    process, grandchild = _lifeline_child({"FASTSTUDY_LIFELINE": "1"})
+    try:
+        process.stdin.close()
+        process.wait(timeout=10)
+        deadline = time.monotonic() + 10
+        while _alive(grandchild) and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert process.returncode == -signal.SIGKILL
+        assert not _alive(grandchild)
+    finally:
+        for pid in (process.pid, grandchild):
+            with contextlib.suppress(ProcessLookupError):
+                os.kill(pid, signal.SIGKILL)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="process groups are POSIX")
+@pytest.mark.parametrize("value", [None, "0", "true"])
+def test_lifeline_off_unless_exactly_one(value):
+    """Unset, or anything but "1", leaves stdin EOF harmless: dev and manual runs keep today's behaviour."""
+
+    env = {} if value is None else {"FASTSTUDY_LIFELINE": value}
+    process, grandchild = _lifeline_child({"FASTSTUDY_LIFELINE": "", **env})
+    try:
+        process.stdin.close()
+        time.sleep(1)
+        assert process.poll() is None
+        assert _alive(grandchild)
+    finally:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait(timeout=10)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="process groups are POSIX")
+def test_lifeline_survives_nonblocking_stdin_until_real_eof():
+    """A tool setting O_NONBLOCK on the shared pipe makes read() raise EAGAIN: that is not EOF."""
+
+    code = _LIFELINE_CHILD.replace(
+        "runtime._watch_lifeline();",
+        "os.set_blocking(0, False); runtime._watch_lifeline();",
+    ).replace("import subprocess", "import os, subprocess")
+    process = subprocess.Popen(
+        [sys.executable, "-c", code],
+        cwd=_PACKAGE_DIR,
+        env={**os.environ, "FASTSTUDY_LIFELINE": "1"},
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        start_new_session=True,
+        text=True,
+    )
+    grandchild = int(process.stdout.readline())
+    try:
+        time.sleep(1)
+        assert process.poll() is None
+        process.stdin.close()
+        process.wait(timeout=10)
+        assert process.returncode == -signal.SIGKILL
+    finally:
+        for pid in (process.pid, grandchild):
+            with contextlib.suppress(ProcessLookupError):
+                os.kill(pid, signal.SIGKILL)

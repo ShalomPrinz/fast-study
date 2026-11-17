@@ -8,27 +8,71 @@
    ignored and the scheme silently loses its origin. See [`RENDERER.md`](RENDERER.md).
 3. One secret is generated for the launch: 32 random bytes, hex. It goes into every child's
    environment as `FASTSTUDY_SECRET` and reaches the renderer through the preload bridge.
-4. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
+4. Packaged on macOS, an update an earlier run downloaded is installed: the launch verifies it,
+   starts the swap helper and quits here, and the new build boots instead
+   ([`UPDATES.md`](UPDATES.md#installing-at-the-next-launch)). It runs ahead of the next step, so
+   one launch never does both.
+5. Packaged on macOS, an app outside an Applications folder offers to move itself there — see
+   [Moving into Applications](#moving-into-applications). On a yes this launch quits here, before
+   anything is served, registered or spawned, and the moved copy boots instead.
+6. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
    sit inline in the boot path, so each has to be cheap — no network, no spawn, no real disk work —
    and their duration is logged to catch one that stops being so.
-5. Packaged, the extension's stable copy is refreshed and, on Windows, the native host is registered
+7. Packaged, the extension's stable copy is refreshed and, on Windows and macOS, the native host is registered
    — both logged, neither able to fail the boot ([`EXTENSION.md`](EXTENSION.md)).
-6. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below. It opens
+8. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below. It opens
    centred at the last launch's normal size, maximized if it closed maximized; the size is fitted to
    the work area and the minimum, and saved on `close` and in the `exit` handler a signal still runs.
    It lives in its own `window-state.json`, so it never enters the settings store's read view or env.
-7. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
+9. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
    alongside them because it calls no peer. `server` starts once all three are healthy. Each child is
    spawned, its port read off stdout, and its `/health` waited on before anything that needs it
    starts. The first failure on either track fails the boot, and the other track spawns nothing
    more. Once `server` is healthy, main writes `bridge.json` for the native host.
-8. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
+10. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
    that: a renderer that loaded first would build its service clients at module scope against URLs
    that do not exist yet. The load is not awaited; when it finishes main logs `[main] app loaded
    app://bundle/` (or `app load failed app://bundle/: <reason>`), which `delivery/smoke/` times boot by.
-9. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
+11. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
    rather than on the user's first browser action; its result is one log line and a failure surfaces
    nowhere, since `auto` loads on demand anyway.
+
+## Moving into Applications
+
+The macOS update swaps the bundle in place, which needs a writable folder around it
+([`UPDATES.md`](UPDATES.md#the-macos-install-step)); a dmg mount and a Gatekeeper-translocated path
+are read-only. So a packaged macOS launch whose bundle is under neither `/Applications` nor
+`~/Applications` asks, in English like the launch screen and with no parent window:
+
+> **Move FastStudy to Applications?** FastStudy can only update itself from an Applications folder.
+> It will be moved to `<folder>` and reopened. — _Move to Applications_ / _Not Now_
+
+- **The target** is `/Applications` when this user can write it, else `~/Applications`, created on
+  the yes. Nothing asks for an admin password.
+- **A newer installed copy is never replaced.** When the target exists and its
+  `CFBundleShortVersionString` (read with `plutil`) is newer than the running app's, no offer is made:
+  the installed copy is opened by the relaunch helper, one `launch.log` line says so, and this launch
+  quits. An equal or older copy, or a version that cannot be read (logged), keeps the offer.
+- **Paths are compared resolved.** `process.execPath` is a real path while the home folder may be a
+  symlink, so both Applications folders are resolved before the test. A target that is the running
+  bundle itself is never asked about: replacing it with its own copy would end with the copy in the Trash.
+- **A yes** copies the bundle with `ditto --noqtn` to a hidden sibling of the target, renames it into
+  place over any copy already there, starts a detached `/bin/sh` helper, moves the original to the
+  Trash (a dmg or translocated original refuses, which is logged) and quits. A failure at any point
+  leaves an installed copy as it was.
+- **The helper** waits for main's pid to exit — a `kill -0` poll, five a second for up to a minute —
+  then runs `open <target>`. Opened sooner, the new copy would lose the single-instance lock and exit.
+- **`--noqtn` is load-bearing.** A copy that kept `com.apple.quarantine` and was not moved by the
+  Finder is translocated when opened, so it would land outside Applications and ask again.
+- **A copy running from the target** — another account's, since the lock rules out this user's — is
+  not replaced: a second alert says so (_FastStudy was not moved_) and the boot goes on.
+- **A no, or any failure,** is one `launch.log` line and the boot continues from where the app is.
+  Nothing is remembered, so the next launch asks again.
+
+The native host needs no step of its own: the moved copy's boot rewrites `host.sh` with its own
+executable path ([`EXTENSION.md`](EXTENSION.md)). Electron's `app.moveToApplicationsFolder` is not
+used: it asks for an admin password when `/Applications` is not writable and never targets
+`~/Applications`.
 
 ## The launch screen
 
@@ -113,7 +157,7 @@ dead child.
 
 ## The child environment
 
-Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, `FASTSTUDY_VERSION`
+Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_LIFELINE=1` (POSIX only), `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, `FASTSTUDY_VERSION`
 (`app.getVersion()`, each Sentry init's release), `SENTRY_ENVIRONMENT` (`production` packaged, else
 `development`, main's own too), `FASTSTUDY_SENTRY_DSN` (main's resolved DSN, empty when there is none),
 `FASTSTUDY_ERROR_REPORTS` (`1` when the stored switch is on, else `0` — never absent, so a value in
@@ -137,8 +181,9 @@ while the app runs reaches each service through its own `POST /config` — the r
 after the store write, except the error-reports switch, which main sends itself
 ([`RENDERER.md`](RENDERER.md#error-reporting-sentry)) — so main never re-spawns a child.
 
-The state root is `.state/` at the repo root in dev and `%LOCALAPPDATA%\FastStudy` packaged, and it
-is always passed explicitly rather than left to each service's fallback, so main's own log lands
+The state root is `.state/` at the repo root in dev, `%LOCALAPPDATA%\FastStudy` packaged on Windows
+and `~/Library/Application Support/FastStudy` packaged on macOS — `userData` itself there, which is
+already named for the app, so settings and state share one folder. It is always passed explicitly rather than left to each service's fallback, so main's own log lands
 beside the state the children write.
 
 ## Dev and packaged spawns
@@ -161,7 +206,8 @@ Packaged, the Node services run on **Electron's own binary as node** because no 
 ships; it is also yt-dlp's player JS runtime, whose flags live in `server/`
 ([`DOWNLOAD.md`](../../downloader/server/docs/DOWNLOAD.md#the-js-runtime)).
 
-The packaged tree main assumes, staged by the build as `electron`'s `extraResources`:
+The packaged tree main assumes, staged by the build as `electron`'s `extraResources`. `resources/`
+is `process.resourcesPath`: beside the exe on Windows, `FastStudy.app/Contents/Resources/` on macOS.
 
 ```
 resources/services/faststudy-services(.exe)  the PyInstaller one-dir bundle, service picked by argv[1]
@@ -172,7 +218,7 @@ resources/frontend/                 the built frontend, served over app://bundle
 resources/bin/                      ffmpeg, pandoc, tectonic, yt-dlp → FASTSTUDY_BIN_DIR
 resources/latex/                    the primed tectonic cache → TECTONIC_CACHE_DIR
 resources/extension/                the Chrome extension, copied to <state root>/extension
-resources/bridge/host.js            the native host script, run on Electron-as-node by a generated .bat
+resources/bridge/host.js            the native host script, run on Electron-as-node by a generated .bat (Windows) or .sh (macOS)
 ```
 
 The bundle is never named `services.exe`: that is the image name of Windows' Service Control Manager,
@@ -198,7 +244,13 @@ kill removes `bridge.json`, so the native host answers `{ "running": false }` on
 The kill runs from `will-quit`, `process.on('exit')`, `SIGINT`/`SIGTERM`, a failed boot before its
 retry, and an uncaught exception, because an orphaned service keeps a port and keeps writing
 `DATA_ROOT` after the app is gone, and the next launch would run a second backend against the same
-`timing.db`. Only a `SIGKILL` of main escapes it.
+`timing.db`. A `SIGKILL` of main runs none of those handlers, so on POSIX every child also gets `FASTSTUDY_LIFELINE=1`
+and a stdin pipe main never writes or closes: when main dies the pipe hits EOF and the service kills its
+own process group — otherwise the detached groups, ffmpeg included, would be orphaned. Windows gets
+stdin `ignore` and no variable: libuv's kill-on-close job already ends the children with main, and a
+thread blocked reading an inherited stdin handle can stall subprocess startup.
+The `process.on('exit')` path sends only `SIGTERM` and then main exits, so the lifeline's kill can cut that
+grace short; every other path waits out the reap before exiting.
 
 The `will-quit` kill also has to stay where it is for a packaged update to install — see
 [`UPDATES.md`](UPDATES.md).

@@ -3,6 +3,7 @@ import { readLaunchLog, readyPorts } from '../lib/app.js';
 import { openLecture } from '../lib/lecture.js';
 import * as paths from '../lib/paths.js';
 import { refusesConnection, strayAfter } from '../lib/processes.js';
+import { evidence } from '../lib/platform.js';
 import { session, start, stop } from '../lib/session.js';
 import { COURSE, LECTURE } from '../lib/suite.js';
 
@@ -12,10 +13,16 @@ export default async function quitNoOrphans() {
   await stop();
 
   const strays = await strayAfter([paths.installDir(), paths.stateRoot()], 30_000);
-  expect(strays, 'processes outlived the app').toEqual([]);
+  const held = [];
   for (const { service, port } of ports) {
-    expect(await refusesConnection(port), `${service} still holds port ${port}`).toBe(true);
+    if (!(await refusesConnection(port))) held.push(`${service} still holds port ${port}`);
   }
+  evidence(
+    'quit: what outlived the window closing',
+    `ports ${ports.map((p) => `${p.service}:${p.port}`).join(' ')}\nstray processes: ${JSON.stringify(strays)}\nports still held: ${JSON.stringify(held)}`,
+  );
+  expect(strays, 'processes outlived the app').toEqual([]);
+  expect(held, 'a service port outlived the app').toEqual([]);
 
   await test.step('a relaunch skips the init wall', async () => {
     await start();

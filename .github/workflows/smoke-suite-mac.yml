@@ -1,0 +1,124 @@
+name: Smoke suite (macOS)
+
+# The macOS release smoke job: build.yml calls it on its own run's dmg, smoke.yml on an
+# earlier build.yml run's, after its guard has proven that run built the same app.
+on:
+  workflow_call:
+    inputs:
+      run-id:
+        description: The build.yml run whose installers to test; empty tests the calling run's.
+        type: string
+        default: ''
+
+jobs:
+  # The macOS suite: only what is Mac-specific, on the dmg and the updater's zip build-mac uploaded.
+  smoke-mac:
+    runs-on: macos-15
+    timeout-minutes: 60
+    permissions:
+      actions: read
+      contents: read
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: installer-mac
+          path: ${{ runner.temp }}/installer-mac
+          run-id: ${{ inputs.run-id || github.run_id }}
+          github-token: ${{ inputs.run-id != '' && github.token || '' }}
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: installer-mac-previous
+          path: ${{ runner.temp }}/installer-mac-previous
+          run-id: ${{ inputs.run-id || github.run_id }}
+          github-token: ${{ inputs.run-id != '' && github.token || '' }}
+
+      # What the first run's assumptions rest on, in the run summary rather than the log.
+      - name: Describe the runner
+        run: |
+          {
+            echo '### Runner'
+            echo '```'
+            sw_vers
+            ls -d "/Applications/Google Chrome.app" "/Applications/Microsoft Edge.app" || true
+            security default-keychain || true
+            security list-keychains || true
+            ls -l "$RUNNER_TEMP/installer-mac" "$RUNNER_TEMP/installer-mac-previous"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY" 2>&1
+
+      - name: Install the smoke suite
+        working-directory: delivery/smoke
+        run: npm ci --no-audit --no-fund
+
+      # Offline at the OS: pf blocks outbound TCP/UDP for primary group no_inet, loopback skipped. The suite
+      # runs the app as the runner under that group, so the runner's own traffic keeps its staff gid.
+      - name: Keep the app offline
+        run: |
+          set -eu
+          user="$(id -un)"
+          # pfctl warns about -f and ALTQ on every call; its output shows only when it fails.
+          quiet() { local out; out="$("$@" 2>&1)" || { echo "$out"; return 1; }; }
+          quiet sudo dseditgroup -o create no_inet
+          # sudo refuses -g unless the runas spec names the group, and -E needs SETENV.
+          printf '%s\n' \
+            "$user ALL=($user : no_inet) NOPASSWD: SETENV: ALL" \
+            "Defaults:$user !use_pty" | sudo tee /etc/sudoers.d/faststudy-smoke >/dev/null
+          sudo chmod 440 /etc/sudoers.d/faststudy-smoke
+          quiet sudo visudo -cf /etc/sudoers.d/faststudy-smoke
+          sudo tee /etc/pf.anchors/faststudy >/dev/null <<'RULES'
+          block return out quick proto { tcp udp } from any to any group no_inet
+          RULES
+          # `set skip on lo0` keeps 127.0.0.1 IPC out of every rule below it.
+          { echo 'set skip on lo0'; cat /etc/pf.conf
+            echo 'anchor "faststudy"'
+            echo 'load anchor "faststudy" from "/etc/pf.anchors/faststudy"'; } | sudo tee /etc/pf.faststudy.conf >/dev/null
+          quiet sudo pfctl -nf /etc/pf.faststudy.conf
+          quiet sudo pfctl -f /etc/pf.faststudy.conf
+          quiet sudo pfctl -E
+          quiet sudo -n -u "$user" -g no_inet -- id
+          # The runner itself must still reach the internet; the suite proves the app does not.
+          curl -sS -m 20 -o /dev/null -w 'pf on; runner -> github.com: %{http_code}\n' https://github.com/
+
+      - name: Run the macOS smoke suite
+        working-directory: delivery/smoke
+        env:
+          SMOKE_CANDIDATE_DIR: ${{ runner.temp }}/installer-mac
+          SMOKE_PREVIOUS_DIR: ${{ runner.temp }}/installer-mac-previous
+        run: npx playwright test -c playwright.mac.config.js
+
+      # Every check's observed output, safeStorage's verdict included, whatever the outcome.
+      - name: Summarize the evidence
+        if: ${{ !cancelled() }}
+        run: cat delivery/smoke/test-results/mac-evidence.md >> "$GITHUB_STEP_SUMMARY" || echo "no evidence file was written"
+
+      - name: Collect the state root's logs
+        if: failure()
+        run: cp -R "$HOME/Library/Application Support/FastStudy/logs" delivery/smoke/test-results/state-logs || true
+
+      # Uploaded on success too: mac-evidence.md is what a release's verification quotes.
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-mac-logs
+          path: |
+            delivery/smoke/test-results/
+            !delivery/smoke/test-results/traces/**
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: smoke-mac-traces
+          path: delivery/smoke/test-results/traces/
+          if-no-files-found: ignore

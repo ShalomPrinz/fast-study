@@ -1,8 +1,11 @@
 import errno
 import os
 import secrets
+import select
+import signal
 import socket
 import sys
+import threading
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -128,11 +131,42 @@ def _error_code(error: OSError) -> str:
     return errno.errorcode.get(error.errno, str(error.errno)).removeprefix("WSA")
 
 
+def _watch_lifeline() -> None:
+    """With FASTSTUDY_LIFELINE=1 on POSIX, die the moment stdin reaches EOF: the launcher holds the write end, so EOF means it died."""
+
+    # Windows: a thread blocked reading the inherited stdin can stall child-process startup, and the
+    # launcher's kill-on-close job already reaps services there.
+    if os.environ.get("FASTSTUDY_LIFELINE") != "1" or os.name == "nt":
+        return
+
+    def watch() -> None:
+        # Only a 0-byte read or EBADF is EOF; tools share the pipe and may set O_NONBLOCK, so wait on EAGAIN.
+        # Any other error is no proof the launcher died: stop watching rather than self-kill.
+        while True:
+            try:
+                if not os.read(0, 4096):
+                    break
+            except BlockingIOError:
+                select.select([0], [], [])
+            except OSError as error:
+                if error.errno != errno.EBADF:
+                    return
+                break
+        # Only a group we lead is ours to kill: SIGKILL there takes ffmpeg/chrome along, while a dev
+        # shell's group must survive.
+        if os.getpgid(0) == os.getpid():
+            os.killpg(os.getpid(), signal.SIGKILL)
+        os._exit(1)
+
+    threading.Thread(target=watch, name="lifeline", daemon=True).start()
+
+
 def serve(app, default_port: int) -> None:
     """Serve app on loopback at FASTSTUDY_PORT (0 asks for an ephemeral one), reporting the bound port on stdout."""
 
     # Bound by hand because uvicorn never reports what `port=0` resolved to, and the launcher has
     # to read the real port back to reach this service.
+    _watch_lifeline()
     host = "127.0.0.1"
     port = int(os.environ.get("FASTSTUDY_PORT", default_port))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

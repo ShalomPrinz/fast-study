@@ -5,11 +5,17 @@ import * as paths from '../lib/paths.js';
 import { services, session } from '../lib/session.js';
 
 export default async function firstRun() {
+  await passFirstRun({});
+}
+
+/** The test body; `observed` fills as it goes, and the stored settings' field names land in it. */
+export async function passFirstRun(observed) {
   const root = paths.dataRoot('data');
-  await completeInitWall(session, root, { cancelFirst: true });
+  await completeInitWall(session, root, { cancelFirst: true, observed });
 
   const text = fs.readFileSync(paths.settingsFile(), 'utf8');
   const stored = JSON.parse(text);
+  observed.settings = Object.keys(stored).sort();
   for (const [provider, key] of Object.entries(PLACEHOLDER_KEYS)) {
     expect(text.includes(key), `the ${provider} key sits in settings.json in the clear`).toBe(
       false,

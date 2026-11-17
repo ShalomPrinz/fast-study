@@ -4,7 +4,8 @@ import { tone } from '../lib/media.js';
 import { services, session } from '../lib/session.js';
 import { COURSE, fixture, LECTURE } from '../lib/suite.js';
 
-export default async function providerSteps() {
+// `observed` collects each provider step's code and detail for a platform wrapper's evidence.
+export async function passProviderSteps(observed = {}) {
   const { page } = session;
   const { db, api } = services;
   await db.createCourse(COURSE);
@@ -16,8 +17,10 @@ export default async function providerSteps() {
     expect(await db.exists(COURSE, LECTURE, 'audio.mp3')).toBe(true);
   });
   await test.step('transcribe fails on the network', () =>
-    expectNetworkFailure(page, COURSE, LECTURE, 'transcribe'));
+    expectNetworkFailure(page, COURSE, LECTURE, 'transcribe', observed));
   await db.putFile(COURSE, LECTURE, 'transcript.txt', fixture('transcript.txt'));
   await test.step('summarize fails on the network over the fixed transcript', () =>
-    expectNetworkFailure(page, COURSE, LECTURE, 'summarize'));
+    expectNetworkFailure(page, COURSE, LECTURE, 'summarize', observed));
 }
+
+export default () => passProviderSteps();

@@ -2,10 +2,9 @@
 
 ## The installer
 
-One unsigned per-user NSIS `.exe`, built by `.github/workflows/build.yml` on `windows-latest` in
+One unsigned per-user NSIS `.exe`, built by `.github/workflows/build.yml`'s `build-win` job on `windows-latest` in
 under 10 minutes — most of it the LaTeX prime, the freeze and the two installer builds — before the
-smoke job. The prime is network-bound, so it starts first — tectonic and pandoc download ahead of the
-GitHub API version steps — and runs in the background beside the freeze and the frontend build; a
+smoke job. The prime is network-bound, so it starts first, and runs in the background beside the freeze and the frontend build; a
 wait step collects its log and exit code before staging. It tops up a cache restored by exact key
 and always runs; only a passed wait saves it ([LATEX.md](LATEX.md#across-runs)). The installer's own
 configuration (one-click, per-user, the install directory) is electron's:
@@ -15,6 +14,25 @@ Unsigned means **SmartScreen blocks the first run** on every machine: "Windows p
 with only Don't run, and the installer starts from **More info → Run anyway**. Nothing short of an
 OV/EV certificate avoids it. The LaTeX cache ships with tectonic's prebuilt format
 ([LATEX.md](LATEX.md#the-prime)), so no render writes under the install directory.
+
+### The macOS app
+
+`build-mac` builds the same staged tree on `macos-15` as an arm64-only `FastStudy.app`: a `.dmg` to
+download, and a `.zip` plus `latest-mac.yml` for the launcher's own updater
+([`electron/docs/UPDATES.md`](../../electron/docs/UPDATES.md#the-macos-install-step)). It is
+**ad-hoc signed, never notarized**, so Gatekeeper blocks the first run until the user picks Open
+Anyway in System Settings. Unsigned code does not run at all on arm64 macOS, so the job fails unless
+`codesign --verify --deep --strict` passes on the bundle and `smoke/lib/macho.js` verifies every
+Mach-O inside it, each native one (`MacOS/`, `bin/`, `services/`) carrying an arm64 slice — a
+Mac with Rosetta runs an x86_64 one, a user's Mac may have none. Everything is staged before `npm run dist:mac`, which seals
+the bundle; a file changed afterwards breaks the signature.
+
+Both builds `need` the small `version` job (ubuntu) and nothing else: it reads the app version, the previous version and the
+extension version once, so both platforms ship one version and `extension-version.txt` stays one file, and neither build waits on the other.
+The frontend is built again there with the same inputs, the freeze uses PyInstaller's stock
+bootloader (the Windows job compiles its own only for Defender), and the LaTeX cache is primed on
+the runner under its own key ([LATEX.md](LATEX.md#across-runs)). Its summary lists the measured size of the dmg, the
+zip and each tool.
 
 ## Build, test, publish
 
@@ -28,20 +46,26 @@ Two workflows, neither taking an input, and a third that only re-tests
   `extension-version.txt` ([the extension version](#the-extension-version)) as the
   `installer` artifact (90 days), plus `installer-previous`, the same staged tree at a lower version
   with its own `latest.yml`, which exists only for the smoke suite's update check and never leaves
-  Actions. It fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
-  smoke job rewrites that file, so it cannot check it. The smoke job — `smoke-suite.yml`, called as
-  `smoke / smoke` — installs the artifact on a fresh runner and runs
+  Actions. `build-mac` uploads `installer-mac` (the dmg, the zip, `latest-mac.yml`; 90 days) and
+  `installer-mac-previous` (a lower version's zip and `latest-mac.yml`) the same way. Each build
+  fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
+  smoke job rewrites that file, so it cannot check it. The smoke job — `smoke-suite-win.yml`, called as
+  `smoke / smoke-win` — installs the artifact on a fresh runner and runs
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
-  the outcome `boot-timing` (90 days). The run is
-  green only when both jobs pass. It writes nothing to Releases. A branch run's artifact never
+  the outcome `boot-timing` (90 days). `smoke / smoke-mac` is `smoke-suite-mac.yml`'s job on
+  `installer-mac` ([SMOKE.md](SMOKE.md#the-macos-suite)), uploading `smoke-mac-logs` whatever the
+  outcome and `smoke-mac-traces` on failure; `build.yml` calls each platform's file from its own lane, so the lanes build-win → smoke-win and build-mac → smoke-mac run in parallel and neither waits on the other. The run is
+  green only when `version` and both lanes' jobs pass. It writes nothing to Releases. A branch run's artifact never
   reaches a Release: publish.yml takes only `main`'s runs, so a commit fast-forwarded from a branch
   releases once `main`'s own `build.yml` run of it is green.
 - **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It first walks back
   over `github-actions[bot]` commits that touch only `site/img/` — `pages.yml`'s screenshot refresh,
   which no build runs on — to the first other commit, and releases that one. It takes the
   `installer` artifact of `build.yml`'s newest green `main` run for that commit, reads the version off its
-  `latest.yml`, refuses if Release or tag `v<version>` exists, checks all four files are there and
+  `latest.yml`, refuses if Release or tag `v<version>` exists, takes the same run's `installer-mac`,
+  checks all seven files are there (the four Windows ones, `FastStudy-mac-arm64.dmg`,
+  `FastStudy-mac-arm64.zip`, `latest-mac.yml`) and that both feeds name one version, and
   creates Release `v<version>`, published and targeted at that commit, with the same run's
   `boot-timing.json` attached when it has one — a notice, not a failure, when it does not. It ends by dispatching
   `pages.yml` to refresh the landing page's version line: a `release: published` trigger cannot, as
@@ -54,13 +78,17 @@ the launcher's side is [`electron/docs/UPDATES.md`](../../electron/docs/UPDATES.
 `installer` artifact makes `publish.yml` fail naming the commit; dispatching `build.yml` on it builds
 and smoke-tests a fresh one.
 
+A branch other than `main` or `claude/**` builds only on dispatch:
+`gh workflow run build.yml --ref <branch>` runs all five jobs at that branch's workflow files and
+publishes nothing, since `publish.yml` reads `main`'s runs only.
+
 ### Re-running smoke
 
-`smoke.yml`, dispatch only, runs `smoke-suite.yml` at the dispatched ref against the installers of
+`smoke.yml`, dispatch only, runs `smoke-suite-win.yml` and `smoke-suite-mac.yml` at the dispatched ref against the installers of
 the `build.yml` run named by its required `run-id`, so a fix to `smoke/` is retried without the
 ~8 minute build. A guard job first refuses, naming the fix, a run that is not `build.yml`'s, whose
-`build` job did not succeed (the run itself may have failed in smoke), or whose `installer` or
-`installer-previous` has expired — and any run whose commit's tree differs from the ref's outside
+`build-win` or `build-mac` job did not succeed (the run itself may have failed in smoke), or one of whose
+four installer artifacts has expired — and any run whose commit's tree differs from the ref's outside
 `delivery/smoke/`, listing the differing paths. Tree equality, not ancestry: nothing under
 `delivery/smoke/` reaches the installer, so only then is the old installer the app this ref builds;
 any other change means dispatching `build.yml` instead. A green `smoke.yml` run publishes nothing:
@@ -99,7 +127,8 @@ picks another repo):
 ignored), patch one past the highest non-draft Release `v<major>.<minor>.<n>`, else 0 — so bumping
 the minor starts a new series. It is injected with `-c.extraMetadata.version` and becomes the tag,
 `latest.yml`'s version and `app.getVersion()`. The installer is always `FastStudy-Setup.exe`, so
-`releases/latest/download/FastStudy-Setup.exe` is a stable link; a differential update still needs
+`releases/latest/download/FastStudy-Setup.exe` is a stable link, as are `FastStudy-mac-arm64.dmg`
+and the updater's `FastStudy-mac-arm64.zip`; a differential update still needs
 the tag to be `v<version>`, since electron-updater finds the old blockmap by swapping the version in
 its download URL. Two builds before a publish compute the same version, so publishing the second
 refuses on the existing Release; re-dispatch `build.yml` for a fresh one.
@@ -129,12 +158,14 @@ Two optional secrets; a fork or a build without them still produces an installer
   ([`lib/sentry/CLAUDE.md`](../../lib/sentry/CLAUDE.md)).
 - **`SENTRY_AUTH_TOKEN`** (an org token, so org and region route themselves; `vars.SENTRY_ORG` is
   optional) makes the frontend build upload hidden source maps to `faststudy@<version>`, with
-  `FASTSTUDY_VERSION` set from the computed version. The frontend builds once, so the
-  previous-version installer reuses the same bundle and there is one upload per run. Only `main`'s
+  `FASTSTUDY_VERSION` set from the computed version. The frontend builds once per platform, so each
+  previous-version build reuses its bundle and a run uploads twice into the one release. Only `main`'s
   runs get the token: a branch computes the version `main`'s next build will, so its maps would
   land in that release; without it vite loads no plugin and emits no maps, and the DSN is still baked.
 
-The smoke run's installs carry the DSN, but the per-program firewall blocks every event they send.
+The smoke run's installs carry the DSN, but the per-program firewall blocks every event they send —
+on Windows only: the macOS suite sets up no firewall and never turns reports on, which are off until
+the privacy policy is confirmed.
 
 ## Pinned tool versions
 
@@ -159,9 +190,45 @@ moving one re-opens that measurement, so surface it rather than bump it:
 
 `lib/tools/` only probes that a binary spawns; it never checks a version.
 
+macOS takes the same pins as official darwin-arm64 releases —
+`tectonic-0.17.0-aarch64-apple-darwin.tar.gz`, `pandoc-3.13-arm64-macOS.zip` and the unpinned,
+universal `yt-dlp_macos` — except ffmpeg.
+
+### The macOS ffmpeg
+
+No official arm64 macOS build exists, so `ffmpeg-mac.sh` compiles `FFMPEG_VERSION` from
+`ffmpeg.org`'s tarball with LAME 3.100, both pinned by sha256 in `build.yml`'s `env`. The result is
+cached under `ffmpeg-macos-arm64-<ffmpeg>-lame<lame>-min<deployment target>-<hash of the script>`
+and saved only after the checks pass. LAME is configured `--enable-static --disable-shared
+--disable-frontend`, so there is only a static library to link and no `lame` program. ffmpeg's
+configure line, each flag a decision — **a codec or protocol the app comes to need is added here**:
+
+| Flag                                 | Why                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `--disable-autodetect`               | Nothing on the runner (Homebrew, the SDK's optional libraries) is linked by accident. It also turns off zlib, the TLS backend and VideoToolbox, so the two the app needs are named below |
+| `--enable-libmp3lame`                | The pipeline writes `audio.mp3` and ffmpeg has no native MP3 encoder                        |
+| `--enable-securetransport`           | TLS through macOS's own `Security.framework`, so `https://` inputs open as on Windows with no OpenSSL or GnuTLS to ship |
+| `--enable-zlib`                      | The system `/usr/lib/libz.1.dylib`: compressed HTTP responses, `mov`/`matroska` compressed headers and the zlib-backed decoders (PNG among them) |
+| `--extra-cflags` / `--extra-ldflags` | Point at the static LAME's prefix; with no shared LAME there, the link is static            |
+| `--disable-shared`                   | One self-contained binary                                                                   |
+| `--disable-ffprobe`, `--disable-ffplay`, `--disable-doc` | Nothing spawns them                                                     |
+| `--disable-debug`                    | No debug symbols in a shipped binary                                                        |
+
+Every native decoder, encoder, muxer and filter stays on by default. `--enable-gpl`,
+`--enable-nonfree` and `--enable-version3` are absent, so the binary is LGPL 2.1.
+`MACOSX_DEPLOYMENT_TARGET` is the `LSMinimumSystemVersion` of Electron's own `Info.plist`, compared
+with the built app's afterwards. The `electron` npm package has no install script, so `npm ci` leaves
+no binary: the step runs the package's `install.js`, which fetches the locked version's
+checksum-verified zip — the same release zip `electron-builder` downloads and packs.
+
+The build fails unless the binary, cached or fresh, passes: `otool -L` lists only `/usr/lib/` and
+`/System/` paths; `vtool -show-build` reports a `minos` no higher than that version; it is arm64;
+its configuration names none of the three licence flags; `-encoders` lists `libmp3lame`; `-protocols` lists `https`; and `-decoders` lists `zlib`, which
+configure builds only with zlib found.
+
 ## The frozen bundle
 
-`services.spec` builds `services/faststudy-services.exe`, one one-dir bundle picked by `argv[1]` through `entry.py`. Its
+`services.spec` builds `services/faststudy-services.exe` (no suffix on macOS), one one-dir bundle picked by `argv[1]` through `entry.py`. Its
 rules are [`delivery/CLAUDE.md`](../CLAUDE.md#the-frozen-bundles-invariants); the spec's own decisions:
 
 - **One Drive discovery document.** Of googleapiclient's 582 the bundle keeps `drive.v3.json`, the
@@ -188,13 +255,23 @@ rules are [`delivery/CLAUDE.md`](../CLAUDE.md#the-frozen-bundles-invariants); th
 [`electron/docs/BOOT.md`](../../electron/docs/BOOT.md#dev-and-packaged-spawns) lists, which
 `electron/package.json`'s single `extraResources` entry ships as `resources/`. `bin/` and `latex/`
 are not its business: the workflow downloads the binaries and primes the cache straight into
-`stage/`, so nothing is copied twice.
+`stage/`, so nothing is copied twice. On macOS the tree lands in `FastStudy.app/Contents/Resources/`,
+and the build fails if a tool or `faststudy-services` lost its exec bit on the way.
 
 `auto` and `server` stage under `downloader/` beside the workspace's one hoisted `node_modules`, so
 the installer carries a single copy of their shared dependencies; the workspace's links to its own
 packages are dropped. It refuses to finish if a `@faststudy/*` dependency is a symlink: `file:` deps
 install as links by default, and a link into `lib/` dangles once the tree leaves the repo — so
 `downloader/.npmrc` sets `install-links`.
+
+Symlinks are copied verbatim (`verbatimSymlinks`): `cpSync` otherwise rewrites each relative link
+into an absolute path back into the build output, and electron-builder ships a link as written. On
+macOS PyInstaller's `_internal/` is built on relative links — `Python.framework`'s `Python`,
+`Resources` and `Versions/Current`, plus one top-level link per nested library — and `codesign`
+rejects a framework whose root links do not point into `Versions/` ("unsealed contents present in
+the root directory of an embedded framework"). So the stage refuses to finish on any link that is
+absolute, dangling or leaves the tree, and a failed `build-mac` prints every nested `.framework` and
+`.app` layout in the stage and the built app.
 
 It also stages the Chrome extension (`downloader/extension/`, minus its `CLAUDE.md`) as `extension/`,
 stamped with [the extension version](#the-extension-version) when one is passed as its second argument,

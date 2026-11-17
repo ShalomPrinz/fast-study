@@ -35,6 +35,7 @@ not itself a secret.
 
 ## Nuances
 
+- **`FASTSTUDY_LIFELINE=1` makes `serve()` die when its stdin hits EOF, POSIX only** (`_watch_lifeline` / `watchLifeline`; a no-op on Windows, where a blocked stdin read can stall child startup and the kill-on-close job already reaps tools). The launcher spawns the service with a stdin pipe it never writes to; when it dies, even by SIGKILL, the OS closes the write end. `SIGKILL` goes to our own process group, but only if we lead it (a detached service does; a dev shell's group must survive), which takes ffmpeg/chrome along; otherwise a hard exit. Only a real EOF fires: tools inherit the pipe and may set `O_NONBLOCK`, so Python waits in `select` on EAGAIN and stops watching on any other error besides EBADF, and JS dies on `end` alone, swallowing `error`. Exactly `"1"` is on; unset or anything else is off, so tests and a service run by hand are untouched. JS has no `getpgid`, so it proves leadership with `kill(-pid, 0)`.
 - **`GET /health` is the only exemption**, so the launcher's boot screen can tell a wrong secret
   from a dead child. GET only: nothing else bypasses the check.
 - **An unset `FASTSTUDY_SECRET` installs no enforcement at all.** That is dev.

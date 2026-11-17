@@ -7,6 +7,7 @@ import path from 'node:path';
 import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
 import { resolveBrowserChannel } from './browserChannel.js';
 import { windowMarker } from './windowStyle.js';
+import { zoomPlatform } from './zoomCaptcha.js';
 import { CodedError } from '../lib/errors.js';
 
 // Stealth minus 'user-agent-override' on playwright-extra's chromium only, loaded and registered
@@ -29,8 +30,8 @@ export function loadStealthChromium() {
   return stealthChromium;
 }
 
-// Managed Xvfb virtual display, Linux only (Windows parks the window off-screen, so this stays
-// null there). Spawned lazily on the first zoom launch; killed on session close / process exit.
+// Managed Xvfb virtual display, Linux only (Windows parks the window off-screen and macOS hides the
+// app by pid, so this stays null there). Spawned lazily on the first zoom launch; killed on session close / process exit.
 let xvfb = null; // { proc: ChildProcess, display: ':N', authFile: string }
 
 // Every way the virtual display fails to come up is one code; whatever Xvfb itself said rides in
@@ -137,7 +138,7 @@ async function ensureXvfb() {
   return startXvfb();
 }
 
-/** Kill the managed Xvfb and remove its auth file, if any. No-op on Windows; safe to repeat. */
+/** Kill the managed Xvfb and remove its auth file, if any. No-op off Linux; safe to repeat. */
 export function stopXvfb() {
   if (xvfb) {
     xvfb.proc.kill('SIGTERM');
@@ -146,29 +147,44 @@ export function stopXvfb() {
   }
 }
 
+/** Does the zoom browser on `platform` run on the managed Xvfb display? */
+export const usesXvfb = (platform) => platform !== 'win32' && platform !== 'darwin';
+
+/**
+ * The zoom launch's args on `platform`; `visible` (FASTSTUDY_ZOOM_VISIBLE=1) keeps the window on
+ * screen to watch a capture.
+ * @param {string} platform
+ * @param {boolean} visible
+ */
+export function zoomLaunchArgs(platform, visible) {
+  const args = [...COMMON_LAUNCH_ARGS, '--disable-blink-features=AutomationControlled'];
+  // Windows has no Xvfb, so the window is parked off-screen instead — otherwise a batch of N
+  // lectures steals focus N times.
+  if (platform === 'win32' && !visible) {
+    args.push('--window-position=-32000,-32000', windowMarker('zoom'));
+  }
+  // macOS clamps a window on screen, so the app is hidden by pid once its page exists
+  // (zoomCaptcha.js); a hidden window counts as occluded and must keep rendering the player.
+  if (platform === 'darwin') args.push('--disable-backgrounding-occluded-windows');
+  return args;
+}
+
 /**
  * Launch the browser the zoom player needs: the user's Chrome or Edge, stealth-cloaked, HEADED
  * but hidden per platform, with no bundled fallback. Hard constraints in docs/ZOOM.md.
  * @returns {Promise<import('playwright').Browser>}
  */
 export async function launchZoomBrowser() {
-  const windows = process.platform === 'win32';
-  const args = [...COMMON_LAUNCH_ARGS, '--disable-blink-features=AutomationControlled'];
-  // Windows has no Xvfb, so the window is parked off-screen instead — otherwise a batch of N
-  // lectures steals focus N times. FASTSTUDY_ZOOM_VISIBLE=1 keeps it on-screen to watch a capture.
-  if (windows && process.env.FASTSTUDY_ZOOM_VISIBLE !== '1') {
-    args.push('--window-position=-32000,-32000', windowMarker('zoom'));
-  }
-
   const { channel } = await resolveBrowserChannel();
   const chromium = await loadStealthChromium();
+  const platform = zoomPlatform();
   const opts = {
     headless: false,
     channel,
     ignoreDefaultArgs: ['--enable-automation'],
-    args,
+    args: zoomLaunchArgs(platform, process.env.FASTSTUDY_ZOOM_VISIBLE === '1'),
   };
-  if (windows) return chromium.launch(opts);
+  if (!usesXvfb(platform)) return chromium.launch(opts);
 
   const { display, authFile } = await ensureXvfb();
   // Point the browser at the virtual display AND its auth cookie so it can connect.
@@ -179,5 +195,5 @@ export async function launchZoomBrowser() {
 }
 
 // Kill Xvfb on process exit as a safety net (the registry also stops it on /close and signal
-// shutdown; a no-op on Windows). Sync-only work is allowed in an 'exit' handler.
+// shutdown; a no-op off Linux). Sync-only work is allowed in an 'exit' handler.
 process.once('exit', stopXvfb);

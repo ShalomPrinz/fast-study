@@ -16,7 +16,7 @@ import {
 import { forget, session, start } from '../lib/session.js';
 import { ASSUMPTION, failed } from '../lib/suite.js';
 import { delay } from '../lib/wait.js';
-import { runToExit } from '../lib/windows.js';
+import { evidence, forceKill } from '../lib/platform.js';
 
 export default async function launcherCrash() {
   if (!session) await start();
@@ -32,11 +32,9 @@ export default async function launcherCrash() {
     isJobTool(p);
   const tracked = withDescendants(table, old).filter(covered);
 
-  // No /T: a crash takes main alone, so whatever dies with it dies of a job, not a tree walk.
-  const { code, output } = await runToExit('taskkill', ['/F', '/PID', String(main.pid)], {
-    timeoutMs: 30_000,
-  });
-  expect(code, `taskkill /F /PID ${main.pid} exited ${code}: ${output}`).toBe(0);
+  // No tree walk: a crash takes main alone, so whatever dies with it dies of a job or a group, not a walk.
+  const { code, output } = await forceKill(main.pid);
+  expect(code, `force-killing pid ${main.pid} exited ${code}: ${output}`).toBe(0);
   const tools = await jobToolsAfterKill(tracked);
   const crashed = session;
   forget();
@@ -50,6 +48,14 @@ export default async function launcherCrash() {
       30_000,
     )
   ).filter(covered);
+  evidence(
+    'launcher crash: what outlived a hard kill of main',
+    `main ${named(main)} found as the one parent of the four ready ports' owners\n` +
+      `killed pid ${main.pid}; ffmpeg running: ${named(ffmpeg)}\n` +
+      `tracked: ${tracked.map(named).join('; ')}\n` +
+      `tools alive ${JOB_TOOL_GRACE_MS} ms after: ${JSON.stringify(tools.map(named))}\n` +
+      `survivors after 30 s: ${JSON.stringify(left.map(named))}`,
+  );
   expect(
     left.filter((p) => !isJobTool(p)).map(named),
     `${failed(ASSUMPTION.launcherJob)}: services outlived main`,

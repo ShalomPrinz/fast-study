@@ -18,7 +18,7 @@ import { healthOf } from '../lib/services.js';
 import { bind, services, session, start } from '../lib/session.js';
 import { ASSUMPTION, COURSE, failed, LECTURE } from '../lib/suite.js';
 import { waitFor } from '../lib/wait.js';
-import { listeners, processTable } from '../lib/windows.js';
+import { evidence, listeners, processTable } from '../lib/platform.js';
 
 export default async function backendDeath() {
   if (!session) await start();
@@ -32,10 +32,17 @@ export default async function backendDeath() {
   // Each service's process is the one listening on its ready port; what it spawned is tracked too.
   const tracked = withDescendants(table, old);
 
-  // Task Manager's End task: TerminateProcess, which is what Node's kill is on Windows.
+  // Task Manager's End task: TerminateProcess, which is what Node's kill is on Windows; SIGKILL elsewhere.
   process.kill(victim.pid, 'SIGKILL');
+  const toolsLeft = await jobToolsAfterKill(tracked);
+  evidence(
+    'backend death: what outlived a hard kill of the backend',
+    `killed ${named(victim)} (found as the owner of its ready port; main is pid ${mainPid})\n` +
+      `ffmpeg running: ${named(ffmpeg)}\n` +
+      `tools alive ${JOB_TOOL_GRACE_MS} ms after: ${JSON.stringify(toolsLeft.map(named))}`,
+  );
   expect(
-    (await jobToolsAfterKill(tracked)).map(named),
+    toolsLeft.map(named),
     `${failed(ASSUMPTION.backendJob)}: a tool outlived the killed backend by ${JOB_TOOL_GRACE_MS} ms (${named(ffmpeg)} was running)`,
   ).toEqual([]);
   await waitFor(() => readLaunchLog().includes(`[main] ${killed} stopped unexpectedly`), {

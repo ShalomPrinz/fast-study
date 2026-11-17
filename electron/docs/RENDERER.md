@@ -156,7 +156,7 @@ privileges to call order. The renderer sends over IPC, not `fetch`, so no CSP `c
   from a renderer `service=electron`; a renderer event keeps the `service=frontend` it arrived with.
 - **Scrubs** with the policy's `scrub`, after putting the launch secret and the stored `DATA_ROOT`
   and API keys on `process.env` for the synchronous call — the policy reads only env, and main holds
-  those elsewhere. A renderer, which has neither, gets its `DATA_ROOT` paths redacted here.
+  those elsewhere. A renderer, which has neither, gets its `DATA_ROOT` paths redacted here. Before the macOS handoff is adopted, the stored API keys are skipped ([UPDATES.md](UPDATES.md)).
 - **Attaches** the tail of `launch.log` (the last 200KB) as `launch.log`, run through the same scrub
   first — it carries every child's output, Hebrew paths included.
 
@@ -196,6 +196,7 @@ written from both processes would put two writers on one file.
   the file reads like the settings screen rather than like a service's environment.
 - **The two API keys are `safeStorage` ciphertext**, base64 in the same fields. DPAPI on Windows,
   the platform that ships.
+- **A macOS update re-encrypts all three**, handed over in memory by the build it replaces — see [`UPDATES.md`](UPDATES.md#carrying-the-keys-across).
 - **`token_key` is the same ciphertext, a launcher-made key for `auto`'s token file** — never in `read()`, never to the renderer; see [`BOOT.md`](BOOT.md#the-child-environment).
 - **A stored key never travels to the renderer.** `read()` reports `geminiApiKeySet` /
   `groqApiKeySet` booleans, and nothing else ever returns the value.

@@ -21,7 +21,8 @@
       ".github/workflows/build.yml",
       ".github/workflows/publish.yml",
       ".github/workflows/smoke.yml",
-      ".github/workflows/smoke-suite.yml"
+      ".github/workflows/smoke-suite-win.yml",
+      ".github/workflows/smoke-suite-mac.yml"
     ],
     "site-dev": ["site/", ".github/workflows/pages.yml"],
     "harness-dev": [".claude/harness/", ".claude/skills/app-harness/", ".github/workflows/e2e.yml"],

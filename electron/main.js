@@ -19,12 +19,22 @@ const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const { reportsOn, sentryEnv, writeSettings } = require('./reports');
 const store = require('./store');
-const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
+const {
+  installPending,
+  startUpdater,
+  updateState,
+  onUpdateState,
+  restartToUpdate,
+} = require('./updater');
 const { exitKind, reapChildren, signalChildren } = require('./teardown');
 const windowState = require('./windowState');
+const { bundlePath } = require('./macUpdate');
+const { offerMove } = require('./macMove');
+const { adoptHandoff: adoptReceived, receive } = require('./macHandoff');
 const { dataFilePath, openDataFileWith, revealDataFile } = require('./dataFiles');
 const {
   registerHost,
+  registerHostMac,
   removeBridge,
   syncExtension,
   writeBridge,
@@ -48,9 +58,12 @@ const SENTRY_ENVIRONMENT = app.isPackaged ? 'production' : 'development';
 
 // Per-user writable state: what `statePath`/`state_path` join onto in every service. Passed
 // explicitly rather than left to their fallback, so main's log lands beside the children's state.
-const STATE_DIR = app.isPackaged
-  ? path.join(process.env.LOCALAPPDATA || app.getPath('userData'), 'FastStudy')
-  : path.join(REPO_ROOT, '.state');
+const STATE_DIR = !app.isPackaged
+  ? path.join(REPO_ROOT, '.state')
+  : process.platform === 'darwin'
+    ? // Already `~/Library/Application Support/FastStudy`; a second leaf would nest it.
+      app.getPath('userData')
+    : path.join(process.env.LOCALAPPDATA || app.getPath('userData'), 'FastStudy');
 
 const LOG_FILE = path.join(STATE_DIR, 'logs', 'launch.log');
 // The init wall's prefilled data folder: a suggestion only — nothing creates it until the user saves.
@@ -70,6 +83,15 @@ const LOG_TAIL_BYTES = 200_000;
 // The values the scrub reads from env that main holds elsewhere: the secret in a constant, the
 // rest in the settings store.
 const SCRUB_ENV = ['DATA_ROOT', 'GROQ_API_KEY', 'GEMINI_API_KEY'];
+
+// macOS: what the build this one replaced handed over, read and closed before anything is spawned
+// that could inherit the pipe. Null on every launch that is not an update's relaunch (docs/UPDATES.md).
+let handoff = process.platform === 'darwin' ? receive(process.env) : null;
+
+// False until `adoptHandoff()` returns: decrypting before then can raise the Keychain prompt the handoff avoids.
+let adopted = false;
+// An update's relaunch is started from a background shell, so its first window opens unfocused.
+let stealFocus = false;
 
 const children = [];
 // In-flight SIGTERM→SIGKILL escalations; every exit path waits on them, or the timer dies with main.
@@ -144,9 +166,10 @@ function beforeSend(event, hint) {
 }
 
 /** Run `fn` with the values the scrub reads from env set on `process.env`, then restore it: main
- *  holds the secret and the stored settings outside its env. Synchronous, so no spawn sees the swap. */
+ *  holds the secret and the stored settings outside its env. Synchronous, so no spawn sees the swap.
+ *  Before the handoff is adopted the stored API keys are skipped: reading them decrypts. */
 function withScrubEnv(fn) {
-  const stored = store.serviceEnv();
+  const stored = adopted ? store.serviceEnv() : { DATA_ROOT: store.read().dataRoot };
   const values = { FASTSTUDY_SECRET: SECRET };
   for (const name of SCRUB_ENV) values[name] = stored[name];
   const saved = {};
@@ -311,11 +334,13 @@ function spawnFailure(spec, error) {
 /** Spawn one child and resolve the port it reports on stdout. */
 function startChild(spec, env) {
   let child;
+  const posix = process.platform !== 'win32';
   try {
     child = spawn(spec.command, spec.args, {
       cwd: spec.cwd,
-      env: { ...process.env, ...env, ...spec.env },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, ...env, ...spec.env, ...(posix && { FASTSTUDY_LIFELINE: '1' }) },
+      // POSIX only: stdin is the lifeline, never written or closed, so it hits EOF only when main dies, even by SIGKILL.
+      stdio: [posix ? 'pipe' : 'ignore', 'pipe', 'pipe'],
       // Its own process group, so the kill on quit reaches the tools it spawned (ffmpeg, chrome)
       // and not just the service. Windows has no groups; `taskkill /T` is the equivalent there.
       detached: process.platform !== 'win32',
@@ -326,6 +351,8 @@ function startChild(spec, env) {
     return Promise.reject(spawnFailure(spec, error));
   }
   children.push(child);
+  // A child dying first can EPIPE the pipe; it carries no data, so the error is moot.
+  child.stdin?.on('error', () => {});
   let reported = false;
   return new Promise((resolve, reject) => {
     readline.createInterface({ input: child.stdout }).on('line', (line) => {
@@ -484,7 +511,7 @@ function publishBridge(port) {
   }
 }
 
-/** Packaged only: refresh the extension Chrome loads, and on Windows register the native host. Both
+/** Packaged only: refresh the extension Chrome loads, and on Windows and macOS register the native host. Both
  *  run every launch and neither can fail the boot. */
 function prepareExtension() {
   if (!app.isPackaged) return;
@@ -493,14 +520,83 @@ function prepareExtension() {
   } catch (error) {
     log('main', `extension not copied: ${error.message}`);
   }
-  if (process.platform !== 'win32') return;
-  registerHost({
+  const host = {
     stateDir: STATE_DIR,
     exe: process.execPath,
     script: path.join(process.resourcesPath, 'bridge', 'host.js'),
     bridgeFile: BRIDGE_FILE,
     log,
+  };
+  if (process.platform === 'win32') registerHost(host);
+  if (process.platform === 'darwin') registerHostMac({ ...host, home: app.getPath('home') });
+}
+
+/** Packaged macOS only: offer the move into an Applications folder, where an update can swap the
+ *  bundle (docs/BOOT.md). True when it moved and the relaunch is pending; never fails the boot. */
+async function movedToApplications() {
+  if (!app.isPackaged || process.platform !== 'darwin') return false;
+  try {
+    return await offerMove({
+      bundle: bundlePath(process.execPath),
+      home: app.getPath('home'),
+      pid: process.pid,
+      log: (line) => log('main', line),
+    });
+  } catch (error) {
+    log('main', `not moved to Applications: ${error.message}`);
+    return false;
+  }
+}
+
+/** An update's relaunch on macOS only: drop the replaced build's Safe Storage item, then re-encrypt
+ *  what it handed over under this build's own. Runs before the first `safeStorage` call, which
+ *  would otherwise ask for the old item; never fails the boot. */
+async function adoptHandoff() {
+  try {
+    await adoptReceivedHandoff();
+  } finally {
+    adopted = true;
+  }
+}
+
+async function adoptReceivedHandoff() {
+  if (!handoff) return;
+  stealFocus = true;
+  const received = handoff;
+  // The plaintext lives no longer than this call.
+  handoff = null;
+  const outcome = adoptReceived({
+    handoff: received,
+    store,
+    service: `${app.getName()} Safe Storage`,
+    log: (line) => log('main', line),
   });
+  if (outcome.step) reportHandoff(outcome);
+  if (outcome.lost) await tellKeysLost();
+}
+
+/** Send a failed handoff to Sentry (a no-op when it is off): the step, the message and the carried
+ *  key names, never a value. */
+function reportHandoff({ step, error, lost, fields }) {
+  sentry?.captureException(new Error(`macOS update key handoff failed at ${step}`), {
+    tags: { handoff_step: step, handoff_keys_lost: String(lost) },
+    contexts: { handoff: { step, error, lost, fields } },
+  });
+}
+
+/** Tell the user the update could not carry the keys over. Awaited: the boot waits for OK, so the
+ *  alert never sits behind the main window (a parentless macOS alert may block anyway). */
+async function tellKeysLost() {
+  app.focus({ steal: true });
+  await dialog
+    .showMessageBox({
+      type: 'warning',
+      message: 'FastStudy could not keep your saved keys',
+      detail:
+        'The update could not carry over your saved keys. Enter your Gemini and Groq API keys again in Settings, and sign in to Moodle again.',
+      buttons: ['OK'],
+    })
+    .catch((error) => log('main', `keys-lost dialog failed: ${error.message}`));
 }
 
 /** Ask `auto` to load Playwright now, so the first browser action skips that cost. Fire and forget:
@@ -534,7 +630,7 @@ async function runBoot(before) {
       .catch((error) => log('main', `app load failed ${appUrl}: ${error.message}`));
     // After the window navigates, never before, so it stays off the path that decides whether the
     // app comes up — see docs/UPDATES.md.
-    startUpdater(log);
+    startUpdater(log, null, STATE_DIR);
     warmBrowser();
   } catch (error) {
     log('main', `boot failed: ${error.stack ?? error.message}`);
@@ -550,11 +646,15 @@ async function runBoot(before) {
     publishBoot();
     // The one visible update surface: a failed boot may be a bad install the next release fixes.
     // `error` guards the listener from a later successful retry, whose launch must stay silent.
-    startUpdater(log, (phase) => {
-      if (!bootState.error) return;
-      bootState.update = phase;
-      publishBoot();
-    });
+    startUpdater(
+      log,
+      (phase) => {
+        if (!bootState.error) return;
+        bootState.update = phase;
+        publishBoot();
+      },
+      STATE_DIR,
+    );
   } finally {
     booting = false;
   }
@@ -773,6 +873,7 @@ function createWindow(checks) {
   mainWindow.once('ready-to-show', () => {
     if (size.maximized) mainWindow.maximize();
     mainWindow.show();
+    if (stealFocus) app.focus({ steal: true });
     captureState();
   });
   // Nulled so every `mainWindow?.` guard holds: a boot that fails after a close, as quitting
@@ -817,6 +918,13 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     openLog();
+    await adoptHandoff();
+    // macOS installs a downloaded update here, never on quit, so the new build is started with the
+    // keys (docs/UPDATES.md). Ahead of the move offer: the new build asks that on its own launch.
+    const mac = app.isPackaged && process.platform === 'darwin';
+    if (mac && (await installPending(STATE_DIR, log))) return app.quit();
+    // Before anything is registered or spawned against this bundle's path; the moved copy boots instead.
+    if (await movedToApplications()) return app.quit();
     serveBundle();
     // Timed because they run inline in the boot path: a check that stops being cheap shows up here.
     const started = process.hrtime.bigint();

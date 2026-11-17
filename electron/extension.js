@@ -10,6 +10,9 @@ const REG_KEYS = {
   Chrome: `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\${HOST_NAME}`,
   Edge: `HKCU\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\${HOST_NAME}`,
 };
+// macOS has no registry: each browser reads a manifest out of its own profile root, under
+// `~/Library/Application Support`.
+const MAC_BROWSER_DIRS = { Chrome: ['Google', 'Chrome'], Edge: ['Microsoft Edge'] };
 // Rewritten to a variable reference in the generated .bat, so a non-ASCII user name never has to
 // survive cmd's codepage — env values expand as UTF-16 inside cmd, file bytes do not.
 const PREFIX_VARS = ['LOCALAPPDATA', 'APPDATA', 'USERPROFILE'];
@@ -49,6 +52,27 @@ function hostBatch({ exe, script, bridgeFile, env }) {
   return ['@echo off', 'setlocal', 'set ELECTRON_RUN_AS_NODE=1', command, ''].join('\r\n');
 }
 
+/** The host manifest a browser reads, naming the file it runs as `path`. */
+function hostManifest(hostPath) {
+  const host = {
+    name: HOST_NAME,
+    description: 'FastStudy: the running app’s download server port and launch secret',
+    path: hostPath,
+    type: 'stdio',
+    // The trailing slash is required; Chrome matches the origin string exactly.
+    allowed_origins: [`chrome-extension://${EXTENSION_ID}/`],
+  };
+  return `${JSON.stringify(host, null, 2)}\n`;
+}
+
+/** The macOS host script: the app binary as node on the host script, handed the bridge file. The
+ *  browser's own arguments are dropped; each path is one single-quoted sh word. */
+function hostScript({ exe, script, bridgeFile }) {
+  const quote = (value) => `'${value.replaceAll("'", "'\\''")}'`;
+  const command = [exe, script, bridgeFile].map(quote).join(' ');
+  return `#!/bin/sh\nELECTRON_RUN_AS_NODE=1 exec ${command}\n`;
+}
+
 /** Write only on a change: cmd reads a running .bat line by line, so rewriting it under a live
  *  host could break that run. */
 function writeIfChanged(file, content) {
@@ -78,15 +102,7 @@ function registerHost({
   try {
     fs.mkdirSync(dir, { recursive: true });
     writeIfChanged(batch, hostBatch({ exe, script, bridgeFile, env }));
-    const host = {
-      name: HOST_NAME,
-      description: 'FastStudy: the running app’s download server port and launch secret',
-      path: batch,
-      type: 'stdio',
-      // The trailing slash is required; Chrome matches the origin string exactly.
-      allowed_origins: [`chrome-extension://${EXTENSION_ID}/`],
-    };
-    writeIfChanged(manifest, `${JSON.stringify(host, null, 2)}\n`);
+    writeIfChanged(manifest, hostManifest(batch));
   } catch (error) {
     log('main', `native host not registered: ${error.message}`);
     return;
@@ -104,6 +120,32 @@ function registerHost({
             : `native host registered (${browser}): ${manifest}`,
         ),
     );
+  }
+}
+
+/** Register the native host on macOS: the host script under `<state>/native-host`, then one host
+ *  manifest in each browser's per-user `NativeMessagingHosts` folder. Idempotent; every failure is
+ *  logged, never thrown, and one browser's failure never skips the other. */
+function registerHostMac({ stateDir, exe, script, bridgeFile, home, log }) {
+  const host = path.join(stateDir, 'native-host', 'host.sh');
+  try {
+    fs.mkdirSync(path.dirname(host), { recursive: true });
+    writeIfChanged(host, hostScript({ exe, script, bridgeFile }));
+    fs.chmodSync(host, 0o755);
+  } catch (error) {
+    log('main', `native host not registered: ${error.message}`);
+    return;
+  }
+  for (const [browser, parts] of Object.entries(MAC_BROWSER_DIRS)) {
+    const dir = path.join(home, 'Library', 'Application Support', ...parts, 'NativeMessagingHosts');
+    const manifest = path.join(dir, `${HOST_NAME}.json`);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      writeIfChanged(manifest, hostManifest(host));
+      log('main', `native host registered (${browser}): ${manifest}`);
+    } catch (error) {
+      log('main', `native host manifest write failed (${browser}): ${error.message}`);
+    }
   }
 }
 
@@ -154,8 +196,10 @@ module.exports = {
   REG_KEYS,
   batchPath,
   hostBatch,
+  hostScript,
   manifestVersion,
   registerHost,
+  registerHostMac,
   removeBridge,
   syncExtension,
   writeBridge,

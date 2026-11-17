@@ -33,6 +33,9 @@ function copy(from, to, prune) {
   const modules = path.basename(from) === 'node_modules';
   fs.cpSync(from, to, {
     recursive: true,
+    // cpSync otherwise rewrites a relative link into an absolute path back into the build output,
+    // which dangles on a user's machine and makes a .framework's root unsignable.
+    verbatimSymlinks: true,
     // node_modules is exempt from the name prune: a dependency of its own named `docs` or `test` is not ours to drop.
     filter: (src) => {
       if (!prune) return true;
@@ -41,6 +44,32 @@ function copy(from, to, prune) {
       return !pruned(path.relative(from, src));
     },
   });
+}
+
+// Every symlink under `dir`, as absolute paths.
+function* links(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isSymbolicLink()) yield full;
+    else if (entry.isDirectory()) yield* links(full);
+  }
+}
+
+// A link ships as written, so it must be relative and land on something inside the tree.
+function checkLinks(stage) {
+  const bad = [];
+  for (const link of links(stage)) {
+    const target = fs.readlinkSync(link);
+    const inside = path.resolve(path.dirname(link), target).startsWith(stage + path.sep);
+    if (path.isAbsolute(target) || !inside || !fs.existsSync(link)) {
+      bad.push(`${path.relative(stage, link)} -> ${target}`);
+    }
+  }
+  if (bad.length) {
+    throw new Error(
+      `staged symlinks that are absolute, dangling or leave the tree:\n${bad.join('\n')}`,
+    );
+  }
 }
 
 function main([dir, extensionVersion]) {
@@ -62,6 +91,8 @@ function main([dir, extensionVersion]) {
       throw new Error(`@faststudy/${name} is a symlink — install with install-links`);
     }
   }
+
+  checkLinks(stage);
 
   // The staged copy alone takes build.yml's computed version; the committed patch means nothing.
   if (extensionVersion !== undefined) {
