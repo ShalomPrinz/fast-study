@@ -430,6 +430,15 @@ class TestWrapMathTextDir:
 
 
 class TestMergeLtrMath:
+    def test_glued_symbol_span_merges(self):
+        assert merge_ltr_math(r"\LR{C}$^{*}$") == r"\LR{C $^{*}$}"
+
+    def test_glued_symbol_span_before_lr_merges(self):
+        assert merge_ltr_math(r"$'$\LR{x}") == r"\LR{$'$ x}"
+
+    def test_lone_ell_merges(self):
+        assert merge_ltr_math(r"\LR{abc} $\ell$") == r"\LR{abc $\ell$}"
+
     def test_span_ending_in_escaped_dollar_is_not_display_math(self):
         # Regression: the `\$$` closing the first span was read as a `$$` opener, so the
         # walk skipped to the next one and the pair between them never merged.
@@ -457,8 +466,25 @@ class TestMergeLtrMath:
         )
 
     def test_word_lr_then_math_merged(self):
-        text = r"\LR{RDI} $\oplus$"
-        assert merge_ltr_math(text) == r"\LR{RDI $\oplus$}"
+        text = r"\LR{RDI} $\oplus k$"
+        assert merge_ltr_math(text) == r"\LR{RDI $\oplus k$}"
+
+    def test_symbol_only_math_after_lr_not_merged(self):
+        # Regression: `כ-IP $\leftarrow$ מעבר` became `\LR{IP $\leftarrow$}`, printing the arrow before IP.
+        text = r"כ-\LR{IP} $\leftarrow$ מעבר לרלקסציית \LR{LP} $\leftarrow$ פתרון"
+        assert merge_ltr_math(text) == text
+
+    def test_symbol_only_math_before_lr_not_merged(self):
+        text = r"$\to$ \LR{abc} ו-$=$ \LR{x} $\cdot$ \LR{y}"
+        assert merge_ltr_math(text) == text
+
+    def test_greek_macro_math_still_merged(self):
+        assert merge_ltr_math(r"\LR{abc} $\alpha$") == r"\LR{abc $\alpha$}"
+        assert merge_ltr_math(r"$\varphi$ \LR{abc}") == r"\LR{$\varphi$ abc}"
+
+    def test_digit_or_letter_math_still_merged(self):
+        assert merge_ltr_math(r"\LR{abc} $O(n)$") == r"\LR{abc $O(n)$}"
+        assert merge_ltr_math(r"$x$ \LR{abc}") == r"\LR{$x$ abc}"
 
     def test_no_space_between_still_merged(self):
         text = r"\LR{\textenglish{\texttt{x}}}$+1$"
