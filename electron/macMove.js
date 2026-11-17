@@ -1,5 +1,6 @@
 const fs = require('./appFs');
 const path = require('node:path');
+const { newer } = require('./macPending');
 const { execFile, execFileSync, spawn } = require('node:child_process');
 
 /** The two folders that count as Applications: the machine's and the user's own. */
@@ -117,6 +118,27 @@ async function install({ bundle, target, copy = ditto }) {
   }
 }
 
+/** `CFBundleShortVersionString` of the app at `bundle`, or null when it cannot be read. */
+function installedVersion(bundle) {
+  try {
+    const out = execFileSync(
+      '/usr/bin/plutil',
+      [
+        '-extract',
+        'CFBundleShortVersionString',
+        'raw',
+        '-o',
+        '-',
+        path.join(bundle, 'Contents', 'Info.plist'),
+      ],
+      { encoding: 'utf8' },
+    );
+    return out.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Start the detached helper that opens `target` once `pid` is gone — before that, the new copy
  *  would lose the single-instance lock to this one and exit. It gives up after `polls` checks, five
  *  a second, opening nothing. Returns the helper's pid. */
@@ -152,6 +174,8 @@ async function offerMove({
   copy = ditto,
   running = isRunning,
   relaunch = relaunchFrom,
+  readVersion = installedVersion,
+  version = () => require('electron').app.getVersion(),
   trash = (item) => require('electron').shell.trashItem(item),
 }) {
   // Resolved on both sides: a symlinked home would otherwise hide that the app is already there.
@@ -165,6 +189,17 @@ async function offerMove({
     if (sameItem(target, bundle)) {
       log(`not moved to Applications: ${target} is the running app`);
       return false;
+    }
+    if (fs.existsSync(target)) {
+      const installed = readVersion(target);
+      if (installed === null) {
+        log(`version of the copy at ${target} is unreadable — offering the move as usual`);
+      } else if (newer(installed, version())) {
+        // Opening an old dmg must never downgrade a newer installed build.
+        relaunch({ pid, target });
+        log(`${target} is version ${installed}, newer than this ${version()} — opening it instead`);
+        return true;
+      }
     }
     if (!(await ask(dir))) {
       log(`move to Applications declined — running from ${bundle}`);

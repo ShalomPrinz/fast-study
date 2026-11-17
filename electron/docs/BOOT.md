@@ -49,6 +49,10 @@ are read-only. So a packaged macOS launch whose bundle is under neither `/Applic
 
 - **The target** is `/Applications` when this user can write it, else `~/Applications`, created on
   the yes. Nothing asks for an admin password.
+- **A newer installed copy is never replaced.** When the target exists and its
+  `CFBundleShortVersionString` (read with `plutil`) is newer than the running app's, no offer is made:
+  the installed copy is opened by the relaunch helper, one `launch.log` line says so, and this launch
+  quits. An equal or older copy, or a version that cannot be read (logged), keeps the offer.
 - **Paths are compared resolved.** `process.execPath` is a real path while the home folder may be a
   symlink, so both Applications folders are resolved before the test. A target that is the running
   bundle itself is never asked about: replacing it with its own copy would end with the copy in the Trash.

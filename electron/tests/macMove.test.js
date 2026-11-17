@@ -55,6 +55,8 @@ function machine(over = {}) {
       copy: async (source, dest) => fs.cpSync(source, dest, { recursive: true }),
       running: () => false,
       relaunch: (options) => void calls.relaunched.push(options),
+      readVersion: () => '0.0.1',
+      version: () => '1.0.0',
       trash: async (item) => void calls.trashed.push(item),
       ...over,
     });
@@ -326,4 +328,46 @@ test('the relaunch helper gives up on a process that never exits, opening nothin
   }
   assert.equal(gone(), true);
   assert.equal(fs.existsSync(opened), false);
+});
+
+const installedCopy = (root, folders) => {
+  const target = path.join(folders.system, 'FastStudy.app');
+  makeBundle(target, 'installed');
+  return target;
+};
+
+test('a newer installed copy is opened instead, with no offer and no copy', async () => {
+  const { folders, calls, run } = machine({
+    ask: () => assert.fail('asked'),
+    copy: () => assert.fail('copied'),
+    readVersion: () => '2.0.0',
+    version: () => '1.0.0',
+  });
+  const target = installedCopy(null, folders);
+  assert.equal(await run(), true);
+  assert.deepEqual(calls.relaunched, [{ pid: 4242, target }]);
+  assert.equal(build(target), 'installed');
+  assert.equal(calls.lines.length, 1);
+});
+
+test('an equal or older installed copy is offered the move as before', async () => {
+  for (const installed of ['1.0.0', '0.9.0']) {
+    const { folders, bundle, calls, run } = machine({
+      readVersion: () => installed,
+      version: () => '1.0.0',
+    });
+    const target = installedCopy(null, folders);
+    assert.equal(await run(), true, installed);
+    assert.deepEqual(calls.asked, [folders.system]);
+    assert.equal(build(target), 'new');
+    assert.deepEqual(calls.trashed, [bundle]);
+  }
+});
+
+test('an unreadable installed version keeps the offer and is logged', async () => {
+  const { folders, calls, run } = machine({ readVersion: () => null, version: () => '1.0.0' });
+  installedCopy(null, folders);
+  assert.equal(await run(), true);
+  assert.equal(calls.asked.length, 1);
+  assert.ok(calls.lines.some((line) => line.includes('unreadable')));
 });
