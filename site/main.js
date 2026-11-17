@@ -1,3 +1,11 @@
+// The visitor's OS picks the main download button (Windows stays the default, and what a page without JS shows).
+// iPadOS reports a Mac user agent but has touch points; a real Mac has none.
+(function () {
+  const platform = navigator.userAgentData?.platform || navigator.platform || '';
+  if (/mac/i.test(platform) && !navigator.maxTouchPoints)
+    document.documentElement.dataset.os = 'mac';
+})();
+
 // The language toggle: ?lang= wins, then the remembered choice, then Hebrew. Both languages' copy is in the
 // markup, so this only flips the root's lang/dir, the title, the image alts and the demo player's version.
 (function () {

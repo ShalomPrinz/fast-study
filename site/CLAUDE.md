@@ -1,7 +1,7 @@
 # site/
 
 The public download page at `https://shalomprinz.github.io/fast-study/`, for Hebrew-speaking students
-on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
+on Windows and Apple Silicon Macs. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 `.github/workflows/pages.yml`. Owned by `site-dev`.
 
 | File          | What it is                                                                       |
@@ -9,11 +9,11 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | `index.html`  | Every section, both languages' copy side by side as `.he` / `.en` spans          |
 | `code-signing.html` | The code signing policy SignPath Foundation requires: its title and team roles on top, the full privacy policy as the last section (`#privacy`) — also the privacy URL Google OAuth brand verification holds, so it keeps the Drive scope, token and Limited Use lines |
 | `style.css`   | The app's own tokens, light only, logical properties for both directions        |
-| `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>`. Also the demo player (below), the journey carousel, and the zoom overlay every `main img` but the demo poster opens (a `<dialog>`; Esc or a click anywhere but the arrows closes, focus returns). A journey shot's zoom also steps the four shots (edge arrows, ←/→ by reading direction, N of 4 counter, wrapping) by driving the carousel's `show()`, and the carousel and focus end on the last one viewed |
-| `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
+| `main.js`     | The visitor's OS (`html[data-os="mac"]`, set first; Windows without it) and the language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>`. Also the demo player (below), the journey carousel, and the zoom overlay every `main img` but the demo poster opens (a `<dialog>`; Esc or a click anywhere but the arrows closes, focus returns). A journey shot's zoom also steps the four shots (edge arrows, ←/→ by reading direction, N of 4 counter, wrapping) by driving the carousel's `show()`, and the carousel and focus end on the last one viewed |
+| `stamp.sh`    | Writes the latest release's version and both installers' sizes into a staged `index.html` |
 | `capture.mjs` | Recaptures the eleven app screenshots on a live app-harness stack, using the showcase dataset and helpers in `.claude/harness/showcase/` |
 | `img/captured-version` | Release tag whose becoming latest triggered the last capture, taken from main at that time (`v1.2.3`); `pages.yml`'s `capture` job compares it with the latest release and never deploys it |
-| `img/`        | The app screenshots (a 1280×800 layout at 2×, 2560×1600 JPEG, sharp at the carousel's 925px (85% of the 1088px slide) on high-DPI screens: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps |
+| `img/`        | The app screenshots (a 1280×800 layout at 2×, 2560×1600 JPEG, sharp at the carousel's 925px (85% of the 1088px slide) on high-DPI screens: `hero`, six `feature-*`, four `journey-*`), the logo (`icon.svg`, plus `logo-120.png` rendered from it for Google OAuth brand verification), the SmartScreen steps (no Gatekeeper images, see below) |
 | `demo/`       | The demo video's source, never deployed: a Remotion project (`src/`), its footage (`public/footage/`), the music cut and `capture.mjs` |
 | `video/`      | The rendered demo: `demo-he.mp4`, `demo-en.mp4` and a `poster-*.jpg` for each |
 | `sitemap.xml` | Both page URLs, for Search Console; a new page gets a `<url>` here               |
@@ -25,30 +25,40 @@ shows; it names what sets the app apart from the other "FastStudy"s. No `robots.
 page it would sit at `/fast-study/robots.txt`, which crawlers never read.
 
 Both pages load GoatCounter (site code `faststudy`, dashboard https://faststudy.goatcounter.com) for
-visits, no cookies; both download buttons carry `data-goatcounter-click="download"`, one shared click count.
+visits, no cookies; every download link (both buttons, both OSes, the "other OS" links) carries `data-goatcounter-click="download"`, one shared click count.
 
 ## What the page covers
 
 Hero, the demo video (`#demo`), how it works, the lecture journey (`#journey`: a four-step carousel, one `journey-*` shot at a time, wrapping both ways; without JS the four steps stack), six features, universities, what you'll need, privacy (error reports included),
-the SmartScreen install steps and a short FAQ. The footer links `code-signing.html`, which carries the
+the SmartScreen install steps (`#install`), the macOS Gatekeeper steps (`#install-mac`) and a short FAQ. The footer links `code-signing.html`, which carries the
 policy title and the roles SignPath's conditions require. Its role names (Committers and reviewers, Approvers) and the term "Code signing policy" — shown
 in English in the Hebrew view too — follow [SignPath's conditions](https://signpath.org/terms.html) verbatim. Every claim is the app's current behaviour, checked
 against the owning service's docs. `index.html`'s privacy section is the short version and links the
 full policy, whose text mirrors the app's in-app policy plus one website-only GoatCounter line; its one contact channel is the repo's GitHub issues.
 
-## The download link is frozen
+## The download links are frozen
 
 `https://github.com/ShalomPrinz/fast-study/releases/latest/download/FastStudy-Setup.exe` — GitHub's
 latest-release redirect onto the one name `electron/package.json`'s `artifactName` gives the
 installer. Renaming the installer breaks every copy of this link.
 
+`https://github.com/ShalomPrinz/fast-study/releases/latest/download/FastStudy-mac-arm64.dmg` — the
+same for the `mac` block's `artifactName` (`FastStudy-mac-${arch}.${ext}`); Apple Silicon only, no Intel build.
+
+Every download spot is a pair of elements, `.for-win` and `.for-mac`: the nav button, the hero button, its
+OS line, version size, "other OS" link and install hint. `main.js` sets `data-os="mac"` on `<html>` for a Mac
+(not iPadOS) and CSS hides the other half; with no JS, Windows shows. Mac minimum is Electron 44.2.0's
+`LSMinimumSystemVersion`, 13.0 (read from its darwin-arm64 zip; re-derive when `electron` is bumped).
+The Mac build is ad-hoc signed, never notarized, and not SignPath-signed (SignPath signs Windows only).
+
 ## The version line
 
-`<p class="version" hidden data-stamp>` holds `__VERSION__` / `__SIZE__` in both languages. At deploy
+`<p class="version" hidden data-stamp>` holds `__VERSION__` in both languages; the sizes `__SIZE__` (Windows) and `__SIZE_MAC__` sit in `.size.for-win` / `.size.for-mac` spans outside the `.he`/`.en` spans. At deploy
 `pages.yml` copies `site/` to `_site/`, reads `gh api repos/…/releases/latest`, and `stamp.sh` fills
-both from its `tag_name` and the `FastStudy-Setup.exe` asset's `size` (MB), sets `data-version` /
-`data-size`, and drops `hidden`. No release, or no such asset, leaves the line hidden and the deploy
-goes on. `publish.yml` dispatches `pages.yml` after each release, so the line follows every publish;
+both from its `tag_name` and the `FastStudy-Setup.exe` / `FastStudy-mac-arm64.dmg` assets' `size`
+(MB), sets `data-version` / `data-size` / `data-size-mac`, and drops `hidden`; the visitor's OS shows its own size.
+A missing asset omits its `data-size*` attribute, adds `data-nowin` / `data-nomac`, and only that size hides; no release, or neither asset,
+leaves the line hidden and the deploy goes on. `publish.yml` dispatches `pages.yml` after each release, so the line follows every publish;
 the page never calls the GitHub API itself.
 
 ```bash
@@ -77,6 +87,10 @@ main so it ships the new images, and drops the marker from `_site`. Heebo comes 
 `@fontsource/heebo` npm package (Hebrew subset included), so the runner needs no system Hebrew font.
 
 The SmartScreen steps come from a real Windows install and cannot be captured here.
+
+The Gatekeeper steps (`#install-mac`) are text only: no image licensed for reuse exists (Wikimedia
+Commons holds no macOS Gatekeeper or Privacy & Security screenshot, and Apple's UI is its copyright), so
+none is used. Add one only with source URL, licence and attribution recorded here and shown beside it.
 
 ## Demo video
 

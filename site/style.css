@@ -1001,3 +1001,27 @@ details p {
 .nowrap {
   white-space: nowrap;
 }
+
+/* The visitor's OS (main.js sets data-os; without it Windows is the default). */
+:root:not([data-os='mac']) .for-mac,
+:root[data-os='mac'] .for-win {
+  display: none;
+}
+
+.version[data-nowin] .size.for-win,
+.version[data-nomac] .size.for-mac {
+  display: none;
+}
+
+.download-other {
+  margin-block-start: 6px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.download-other a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
