@@ -90,6 +90,8 @@ let handoff = process.platform === 'darwin' ? receive(process.env) : null;
 
 // False until `adoptHandoff()` returns: decrypting before then can raise the Keychain prompt the handoff avoids.
 let adopted = false;
+// An update's relaunch is started from a background shell, so its first window opens unfocused.
+let stealFocus = false;
 
 const children = [];
 // In-flight SIGTERM→SIGKILL escalations; every exit path waits on them, or the timer dies with main.
@@ -559,6 +561,7 @@ async function adoptHandoff() {
 
 async function adoptReceivedHandoff() {
   if (!handoff) return;
+  stealFocus = true;
   const received = handoff;
   // The plaintext lives no longer than this call.
   handoff = null;
@@ -870,6 +873,7 @@ function createWindow(checks) {
   mainWindow.once('ready-to-show', () => {
     if (size.maximized) mainWindow.maximize();
     mainWindow.show();
+    if (stealFocus) app.focus({ steal: true });
     captureState();
   });
   // Nulled so every `mainWindow?.` guard holds: a boot that fails after a close, as quitting

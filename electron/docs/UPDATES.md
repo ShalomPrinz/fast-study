@@ -240,6 +240,8 @@ heredoc, which `sh` backs with a temp file, and the only variable is the fd numb
   are the key names only. `adoptHandoff` returns that outcome; `main.js` does the alert and the report.
 - **Until `adoptHandoff` returns**, the Sentry scrub skips the stored API keys: reading them
   decrypts, and a report raised mid-adopt would prompt for the old build's Keychain item. `DATA_ROOT` is still scrubbed.
+- **The handoff relaunch steals focus** when its first window shows (`app.focus({ steal: true })`): the
+  helper starts it from a background shell, which would otherwise open it behind other windows.
 - **A launch with no `FASTSTUDY_HANDOFF_FD`** — a first run, a normal start, the relaunch after a
   move into Applications — reads nothing and deletes nothing.
 - **Nothing installs without a relaunch**, since only a process the helper starts can take the
