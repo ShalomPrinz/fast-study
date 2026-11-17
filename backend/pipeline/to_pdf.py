@@ -26,6 +26,7 @@ from pipeline.pdf.tex_errors import classify, format_tex_errors, parse_tex_error
 from pipeline.pdf.text import (
     apply_outside_fences,
     ensure_blank_before_lists,
+    ensure_space_after_heading_hashes,
     normalize_dashes,
 )
 
@@ -241,6 +242,7 @@ def preprocess_markdown(text: str) -> str:
     text = normalize_math_text_spaces(text)
     text = wrap_math_text_dir(text)
     text = normalize_math_spans(text)
+    text = ensure_space_after_heading_hashes(text)
     text = ensure_blank_before_lists(text)
     text = wrap_english_phrases(text)
     text = force_ltr_inline_code(text)
