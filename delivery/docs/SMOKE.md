@@ -168,8 +168,10 @@ its own; the OS keeps it offline, below.
   (DNS still resolves, through `mDNSResponder`), while the runner reaches it. A GID, not a UID: a
   second user would leave the Aqua/WindowServer session a `BrowserWindow` needs. Not `sandbox-exec`:
   Seatbelt forbids a nested `sandbox_init`, which Chromium's own sandbox makes.
-  Known gap: the updater helper relaunches the new build with `open "$app"` (`electron/macUpdate.js`), so
-  that build runs under the runner's normal group and is online.
+  The update test's relaunch stays offline: the old build runs under the wrapper, so its detached
+  `/bin/sh` helper has the gid, and on a swap with a key handoff it execs `"$app/Contents/MacOS/$exe"`
+  directly (`electron/macUpdate.js`). Only the `open "$app"` fallback (failed swap, no handoff) goes
+  through launchd and runs online.
 - **Process primitives on macOS.** `lib/mac.js` answers `processTable` from `ps -axww` (`comm` for the
   executable path, `lstart` as `created`, zombies dropped), `listeners` from `lsof -iTCP -sTCP:LISTEN`,
   and `strayProcesses` by executable path, never command line, since the root `sudo` parent names the
