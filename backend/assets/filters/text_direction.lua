@@ -51,3 +51,33 @@ function Table(el)
   end
   if changed then return el end
 end
+
+-- Plain text of a bidi-made `\LR{...}` / `\RL{...}` run, or nil when it holds TeX beyond bidi's escapes.
+local function lr_plain(tex)
+  local body = tex:match('^\\LR{(.*)}$') or tex:match('^\\RL{(.*)}$')
+  if not body then return nil end
+  body = body:gsub('^\\textenglish{\\texttt{(.*)}}$', '%1'):gsub('^\\textenglish{(.*)}$', '%1')
+  body = body:gsub('\\textbackslash{}', '\1'):gsub('\\textasciitilde{}', '\2'):gsub('\\textasciicircum{}', '\3')
+  -- Only bidi's own `\{`-style escapes may remain; any other TeX leaves the run alone.
+  if body:gsub('\\[_&%%#${}]', ''):find('[\\{}$]') then return nil end
+  body = body:gsub('\\([_&%%#${}])', '%1')
+  return (body:gsub('\1', '\\'):gsub('\2', '~'):gsub('\3', '^'))
+end
+
+-- pandoc builds a heading's PDF bookmark from the AST and drops raw TeX, so a `\LR{X}` run vanishes
+-- from it. Pair each run with its plain text in a nested \texorpdfstring.
+function Header(el)
+  el.content = el.content:walk {
+    RawInline = function(raw)
+      if raw.format ~= 'tex' and raw.format ~= 'latex' then return nil end
+      local plain = lr_plain(raw.text)
+      if not plain then return nil end
+      return {
+        pandoc.RawInline('latex', '\\texorpdfstring{' .. raw.text .. '}{'),
+        pandoc.Str(plain),
+        pandoc.RawInline('latex', '}'),
+      }
+    end,
+  }
+  return el
+end

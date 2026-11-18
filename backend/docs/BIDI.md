@@ -36,6 +36,10 @@ Tried and failed: `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\p
 
 A pipe table with a source line over 72 columns, or any grid table (its `p{}` widths always come from the dash counts), gets pandoc's relative widths and wraps; every `AlignDefault` column becomes `AlignRight`. bidi already reverses column order, but pandoc emits `l` for an unaligned column, leaving cell contents flush left. An explicit alignment (`:---`, `---:`) is the author's and is kept — which is why this is an AST rewrite rather than a global redefinition of `l`. The filter edits `el.colspecs[i][1]`: pandoc 2.10 replaced the table AST's `aligns` field with `colspecs`, and the old name is `nil` on 3.x ([PDF.md](PDF.md#the-pandoc-pin-and-the-template)).
 
+### Heading bookmarks
+
+Pandoc builds a heading's PDF bookmark from the AST and drops raw TeX, so a bidi `\LR{X}` run would vanish from the outline. `Header` pairs each `\LR{X}` / `\RL{X}` run (plain text, `\textenglish{}` or `\textenglish{\texttt{}}` inline code, bidi's own escapes) with `\texorpdfstring{\LR{X}}{X}`; the visible heading renders the same. A run holding any other TeX (math, a nested macro) stays out of the bookmark.
+
 ### Callout boxes
 
 `summarize.md` may mark a passage as a fenced div — `::: definition` … `:::` — in a **closed set**: `definition`, `warning`, `insight`. The filter maps each to a `tcolorbox` environment (`callout<class>`) from `LATEX_HEADER` and drops the `Div` node itself. An unmapped class falls through as plain prose, so a hallucinated class degrades instead of failing. `fenced_divs` is on by default in pandoc's markdown reader.

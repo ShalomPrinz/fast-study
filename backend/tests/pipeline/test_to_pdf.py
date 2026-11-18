@@ -160,6 +160,47 @@ class TestLuaFilterLtrCodeBlock:
 
 
 @pytest.mark.skipif(not _pandoc_available(), reason="pandoc not installed")
+class TestLuaFilterHeadingBookmark:
+    """pandoc's bookmark half of a heading drops raw TeX, so an `\\LR{}` run needs its plain text."""
+
+    def test_lr_run_reaches_the_plain_half(self):
+        latex = _run_pandoc_latex("## רשת (\\LR{Hub} ו\\LR{a\\_b})\n")
+        assert r"\texorpdfstring{\LR{Hub}}{Hub}" in latex
+        assert r"\texorpdfstring{\LR{a\_b}}{a\_b}" in latex
+
+    def test_inline_code_run_keeps_only_its_text(self):
+        latex = _run_pandoc_latex("## רשת \\LR{\\textenglish{\\texttt{x\\_y}}}\n")
+        assert r"\texorpdfstring{\LR{\textenglish{\texttt{x\_y}}}}{x\_y}" in latex
+
+    def test_punctuation_run_between_islands_is_kept(self):
+        latex = _run_pandoc_latex("## מנגנון \\LR{Ports}\\RL{,} \\LR{MAC}\n")
+        assert r"\texorpdfstring{\RL{,}}{,}" in latex
+
+    def test_caret_and_tilde_escapes_are_unescaped(self):
+        latex = _run_pandoc_latex(
+            "## רשת \\LR{a\\textasciicircum{}b\\textasciitilde{}c}\n"
+        )
+        assert r"}{a\^{}b\textasciitilde c}" in latex
+
+    def test_textenglish_without_texttt_and_escaped_braces(self):
+        latex = _run_pandoc_latex(
+            "## רשת \\LR{\\textenglish{raise(SIGUSR1)}} \\LR{\\textenglish{\\texttt{f\\{x\\}}}}\n"
+        )
+        assert (
+            r"\texorpdfstring{\LR{\textenglish{raise(SIGUSR1)}}}{raise(SIGUSR1)}"
+            in latex
+        )
+        assert r"}{f\{x\}}" in latex
+
+    def test_run_with_math_is_left_alone(self):
+        latex = _run_pandoc_latex("## רשת \\LR{$x$}\n")
+        assert r"\LR{$x$}" in latex and r"\texorpdfstring{\LR{$x$}" not in latex
+
+    def test_body_paragraph_untouched(self):
+        assert r"\texorpdfstring{\LR{Hub}" not in _run_pandoc_latex("שלום \\LR{Hub}\n")
+
+
+@pytest.mark.skipif(not _pandoc_available(), reason="pandoc not installed")
 class TestLuaFilterTableAlignment:
     """Column alignment is what makes a table read RTL — bidi already reverses the
     column order, but pandoc's `l` for an unaligned column leaves cells flush left."""
