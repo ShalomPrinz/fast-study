@@ -49,10 +49,44 @@ _NUM = r"[0-9]+(?:[.,][0-9]+)*(?:/[0-9]+(?:[.,][0-9]+)*)*"
 # A markdown soft line break is a space, so a Latin phrase wraps across it — unless the next line
 # opens a block (heading, quote, table, list, fence, rule, blank line).
 _SOFT_BREAK = r"[ \t]*\n(?![ \t]*(?:[#>|]|[-*+][ \t]|[0-9]+[.)][ \t]|:::|```|~~~|---|===|\n))[ \t]*"
-# `. ` glues only right after one of these abbreviations; any other period ends a sentence.
+# `. ` glues after an abbreviation shape, never after other words (Python. Java); lookbehinds are fixed-width, so one per length.
+_NB = r"(?<![" + _LATIN + r"0-9_.])"
+_LOWER_NEXT = r"(?<=[A-Za-z])\.[ \t]+(?=[a-z])"
+_DOTTED = [
+    rf"(?<={_NB}" + r"\.".join(f"[A-Za-z]{{{n}}}" for n in segs) + ")"
+    for segs in ([1, 1], [1, 1, 1], [2, 1], [1, 2], [2, 2])
+]
+_TITLES = [
+    rf"(?<={_NB}{t})"
+    for t in (
+        "[Dd]r",
+        "[Mm]r",
+        "[Mm]rs",
+        "[Mm]s",
+        "[Pp]rof",
+        "[Ss]t",
+        "approx",
+        "vs",
+        "cf",
+        "resp",
+        "Fig",
+        "Eq",
+    )
+]
+# Before a digit or a lone capital only, so `sort. Then` and `data. TCP` split.
+_NUM_OR_CAP = r"(?=[0-9]|[A-Z](?![" + _LATIN + r"]))"
+_SHORT_LOWER = [rf"(?<={_NB}[a-z]{{{n}}})" for n in range(1, 5)]
+_TITLE_NUM = [rf"(?<={_NB}[A-Z][a-z]{{{n}}})" for n in range(0, 4)]
 _ABBREV_DOT = (
-    r"(?:(?<=\be\.g)|(?<=\bi\.e)|(?<=\bvs)|(?<=\bcf)|(?<=\bFig)|(?<=\bEq)"
-    r"|(?<=\bapprox)|(?<=\bresp))\.[ \t]+"
+    r"(?:"
+    + _LOWER_NEXT
+    + r"|(?:"
+    + "|".join(_DOTTED + _TITLES)
+    + r")\.[ \t]+|(?:"
+    + "|".join(_SHORT_LOWER + _TITLE_NUM)
+    + r")\.[ \t]+"
+    + _NUM_OR_CAP
+    + ")"
 )
 # Separators kept INSIDE one \LR run, but only when another Latin token follows —
 # a sentence-final period/comma is left for the trailing \RL{} group.

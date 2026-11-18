@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from pipeline.pdf.bidi import force_ltr_inline_code, wrap_english_phrases
 
@@ -274,6 +276,33 @@ class TestWrapEnglishPhrases:
         assert r"\LR{e.g. x}" in wrap_english_phrases("כמו e.g. x כאן")
         assert r"\LR{i.e. y}" in wrap_english_phrases("כלומר i.e. y כאן")
         assert r"\LR{Fig. 3}" in wrap_english_phrases("ראו Fig. 3 כאן")
+
+    @pytest.mark.parametrize(
+        "phrase",
+        [
+            "E.g. x", "fig. 3", "Figs. 3", "Sec. 3", "Smith et al. 2020", "U.S. Army",
+            "p. 5", "cf. Knuth", "Eq. 2", "Eq. A", "Fig. A", "resp. C", "approx. 3",
+            "vs. AMP", "Dr. Smith", "Prof. Knuth", "Thm. 2", "Ph.D. Thesis", "al. 2020",
+            "resp. TCP", "Fig. Foo",
+        ],
+    )  # fmt: skip
+    def test_abbreviation_shapes_glue(self, phrase):
+        assert rf"\LR{{{phrase}}}" in wrap_english_phrases(f"ראו {phrase} כאן")
+
+    @pytest.mark.parametrize(
+        "src",
+        [
+            "ACK. 3 חבילות", "Python. Java", "TCP. UDP", "C. Java", "Python 3. Java",
+            "www.x.com. Next", "main.c. Then", "wait... Then", "use merge sort. Then",
+            "the data. TCP",
+        ],
+    )  # fmt: skip
+    def test_non_abbreviation_period_splits(self, src):
+        result = wrap_english_phrases(f"ראו {src} כאן")
+        assert r"\LR{" in result
+        assert not [
+            run for run in re.findall(r"\\LR\{([^{}]*)\}", result) if ". " in run
+        ]
 
     def test_sentence_final_period_before_hebrew_stays_rl(self):
         # The abbreviation rule must NOT absorb a real sentence period that is
