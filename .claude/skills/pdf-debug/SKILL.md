@@ -10,7 +10,7 @@ Data (read-only — never write here): `/mnt/c/Users/shalo/AppData/Local/FastStu
 Scripts (run from `backend/` with `uv run python`, so they use the current backend code):
 
 - `../.claude/skills/pdf-debug/scripts/rerender.py <summary.md> <out_dir>` — fresh `summary.pdf` + the generated `build.tex` + `warning.txt`.
-- `../.claude/skills/pdf-debug/scripts/crop.py <summary.pdf> "<anchor>" <out_dir>` — 200dpi PNG of the region around the anchor.
+- `../.claude/skills/pdf-debug/scripts/crop.py <summary.pdf> "<anchor>" <out_dir>` — 200dpi PNG of the region around the anchor; it warns when other blocks match as well, so read that crop with care.
 
 Work in the session scratchpad: `<scratchpad>/pdf-debug/` holding `fresh/<key>/`, `crops/<n>/` and `issues.md`.
 
