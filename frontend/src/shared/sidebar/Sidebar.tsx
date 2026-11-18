@@ -10,6 +10,7 @@ import { versionTag } from '@/services/runtime'
 import LanguageSwitcher from './LanguageSwitcher'
 import SidebarLink, { rowClass } from './SidebarLink'
 import UpdateRow from './UpdateRow'
+import brandIcon from './brand-icon.svg'
 import './Sidebar.css'
 
 // How many downloads are running right now, for the Downloads badge.
@@ -40,7 +41,9 @@ function NavBody({
 }) {
   return (
     <>
-      <Icon icon={icon} />
+      <span className="sidebar-nav-icon">
+        <Icon icon={icon} />
+      </span>
       <span className="sidebar-nav-label">{label}</span>
       {badge ? <span className="sidebar-nav-badge">{badge}</span> : null}
     </>
@@ -64,6 +67,12 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
+      <div className="sidebar-brand">
+        <img className="sidebar-brand-icon" src={brandIcon} alt="" />
+        <span className="sidebar-brand-name" dir="ltr">
+          FastStudy
+        </span>
+      </div>
       <nav className="sidebar-nav-block">
         <button
           className={rowClass(onLectures)}

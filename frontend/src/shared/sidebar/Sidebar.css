@@ -1,38 +1,63 @@
 .sidebar {
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
-  background: var(--sidebar-bg);
-  color: var(--sidebar-fg);
+  background: var(--nav-bg);
+  color: var(--nav-text);
   display: flex;
   flex-direction: column;
   /* Sidebar itself doesn't scroll — its nav region does, so the footer stays put. */
   overflow: hidden;
-  border-inline-end: 1px solid var(--sidebar-line);
+  border-inline-end: 1px solid var(--nav-line);
+}
+
+/* The product name is a brand mark, not a control: no link, no hover. */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-5) var(--space-4);
+  flex-shrink: 0;
+}
+
+.sidebar-brand-icon {
+  inline-size: 34px;
+  block-size: 34px;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-name {
+  color: var(--text);
+  font-size: var(--fs-row);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 /* The five destinations, each a route with its own active state. */
 .sidebar-nav-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  /* Top matches the tree pane's first course row, so the two columns start on one line. */
-  padding: var(--space-6) var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--sidebar-line);
-  flex-shrink: 0;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4) var(--space-5);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .sidebar-nav-row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   width: 100%;
-  padding: var(--space-3) var(--space-4);
+  height: 42px;
+  flex-shrink: 0;
+  padding-inline: var(--space-3);
   background: none;
   border: none;
-  border-radius: var(--r-sm);
-  color: var(--sidebar-muted);
+  border-radius: 11px;
+  color: var(--nav-text);
   font: inherit;
-  font-size: var(--fs-body);
+  font-size: 13.5px;
   font-weight: 500;
   text-align: start;
   text-decoration: none;
@@ -42,16 +67,49 @@
     color 0.1s;
 }
 
-.sidebar-nav-row:hover {
-  background: var(--sidebar-raise);
-  color: var(--sidebar-fg);
+/* A 2px rounded rule in the gap above every row but the first, inset from both edges. */
+.sidebar-nav-row + .sidebar-nav-row::before {
+  content: '';
+  position: absolute;
+  inset-inline: var(--space-3);
+  top: calc(-1 * var(--space-1) / 2 - 1px);
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: var(--nav-divider);
 }
 
-/* Keep below `.sidebar-nav-row:hover`: the active row keeps its fill while the pointer is over it. */
+.sidebar-nav-row:hover {
+  background: var(--nav-track);
+}
+
+.sidebar-nav-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Keep below `.sidebar-nav-row:hover`: the active row keeps its card while the pointer is over it. */
 .sidebar-nav-row.active,
 .sidebar-nav-row.active:hover {
-  background: var(--sidebar-raise);
-  color: var(--surface);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sidebar-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  color: var(--nav-icon);
+}
+
+.sidebar-nav-row.active .sidebar-nav-icon {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 .sidebar-nav-label {
@@ -60,23 +118,21 @@
 }
 
 .sidebar-nav-badge {
-  padding: 1px var(--space-2);
+  padding: 1px var(--space-3);
   border-radius: var(--r-pill);
-  background: var(--accent);
-  color: var(--surface);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
   font-size: var(--fs-fine);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-/* `margin-top: auto` pins the footer to the bottom when the nav regions don't fill the sidebar. */
+/* The footer sits under the nav list, which takes whatever height is left. */
 .sidebar-footer {
-  margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-4);
-  border-top: 1px solid var(--sidebar-line);
   flex-shrink: 0;
 }
 
@@ -90,6 +146,6 @@
 
 .sidebar-version {
   font-size: var(--fs-fine);
-  color: var(--sidebar-dim);
+  color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }

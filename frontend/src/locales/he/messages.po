@@ -1396,7 +1396,7 @@ msgid "Downloading…"
 msgstr "מוריד…"
 
 #: src/features/downloads/DownloadsView.tsx:230
-#: src/shared/sidebar/Sidebar.tsx:78
+#: src/shared/sidebar/Sidebar.tsx:87
 msgid "Downloads"
 msgstr "הורדות"
 
@@ -1896,7 +1896,7 @@ msgid "Lecture name…"
 msgstr "שם ההרצאה…"
 
 #: src/features/search/SearchView.tsx:205
-#: src/shared/sidebar/Sidebar.tsx:72
+#: src/shared/sidebar/Sidebar.tsx:81
 msgid "Lectures"
 msgstr "הרצאות"
 
@@ -1955,7 +1955,7 @@ msgid "Loading your data…"
 msgstr "טוען את הנתונים שלך…"
 
 #: src/features/downloads/DownloadsView.tsx:222
-#: src/shared/sidebar/UpdateRow.tsx:46
+#: src/shared/sidebar/UpdateRow.tsx:44
 msgid "Loading…"
 msgstr "טוען…"
 
@@ -2610,7 +2610,7 @@ msgstr "התחל מחדש"
 msgid "Restart FastStudy?"
 msgstr "להפעיל מחדש את FastStudy?"
 
-#: src/shared/sidebar/UpdateRow.tsx:46
+#: src/shared/sidebar/UpdateRow.tsx:44
 msgid "Restart now"
 msgstr "הפעלה מחדש"
 
@@ -2674,7 +2674,7 @@ msgid "Running · lecture {0} of {1}"
 msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 
 #: src/features/runner/RunnerView.tsx:306
-#: src/shared/sidebar/Sidebar.tsx:75
+#: src/shared/sidebar/Sidebar.tsx:84
 msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
 
@@ -2724,7 +2724,7 @@ msgstr "גלול קודם עד סוף המדיניות"
 msgid "Scroll to the end to confirm."
 msgstr "גלול עד הסוף כדי לאשר."
 
-#: src/shared/sidebar/Sidebar.tsx:81
+#: src/shared/sidebar/Sidebar.tsx:90
 msgid "Search"
 msgstr "חיפוש"
 
@@ -2793,7 +2793,7 @@ msgstr "תוקף החיבור פג"
 
 #: src/features/settings/SettingsView.tsx:174
 #: src/features/settings/SettingsView.tsx:340
-#: src/shared/sidebar/Sidebar.tsx:84
+#: src/shared/sidebar/Sidebar.tsx:93
 msgid "Settings"
 msgstr "הגדרות"
 
@@ -3485,9 +3485,9 @@ msgstr "שינויים שלא נשמרו"
 msgid "Unsupported"
 msgstr "לא נתמך"
 
-#: src/shared/sidebar/UpdateRow.tsx:38
-msgid "Updated. Restart to update"
-msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את העדכון"
+#: src/shared/sidebar/UpdateRow.tsx:37
+msgid "Update ready"
+msgstr "עדכון מוכן"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:190
 msgid "Updates"
@@ -3616,7 +3616,7 @@ msgstr "בלי אחד מהם, FastStudy לא תוכל להוריד הקלטות 
 msgid "Work in progress will be stopped."
 msgstr "עבודה שרצה כעת תיעצר."
 
-#: src/shared/sidebar/UpdateRow.tsx:50
+#: src/shared/sidebar/UpdateRow.tsx:48
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "עבודה שבתהליך תיעצר. להפעיל מחדש בכל זאת?"
 

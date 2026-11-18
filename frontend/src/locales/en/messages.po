@@ -1396,7 +1396,7 @@ msgid "Downloading…"
 msgstr "Downloading…"
 
 #: src/features/downloads/DownloadsView.tsx:230
-#: src/shared/sidebar/Sidebar.tsx:78
+#: src/shared/sidebar/Sidebar.tsx:87
 msgid "Downloads"
 msgstr "Downloads"
 
@@ -1896,7 +1896,7 @@ msgid "Lecture name…"
 msgstr "Lecture name…"
 
 #: src/features/search/SearchView.tsx:205
-#: src/shared/sidebar/Sidebar.tsx:72
+#: src/shared/sidebar/Sidebar.tsx:81
 msgid "Lectures"
 msgstr "Lectures"
 
@@ -1955,7 +1955,7 @@ msgid "Loading your data…"
 msgstr "Loading your data…"
 
 #: src/features/downloads/DownloadsView.tsx:222
-#: src/shared/sidebar/UpdateRow.tsx:46
+#: src/shared/sidebar/UpdateRow.tsx:44
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -2610,7 +2610,7 @@ msgstr "Restart"
 msgid "Restart FastStudy?"
 msgstr "Restart FastStudy?"
 
-#: src/shared/sidebar/UpdateRow.tsx:46
+#: src/shared/sidebar/UpdateRow.tsx:44
 msgid "Restart now"
 msgstr "Restart now"
 
@@ -2674,7 +2674,7 @@ msgid "Running · lecture {0} of {1}"
 msgstr "Running · lecture {0} of {1}"
 
 #: src/features/runner/RunnerView.tsx:306
-#: src/shared/sidebar/Sidebar.tsx:75
+#: src/shared/sidebar/Sidebar.tsx:84
 msgid "Running pipelines"
 msgstr "Running pipelines"
 
@@ -2724,7 +2724,7 @@ msgstr "Scroll to the end of the policy first"
 msgid "Scroll to the end to confirm."
 msgstr "Scroll to the end to confirm."
 
-#: src/shared/sidebar/Sidebar.tsx:81
+#: src/shared/sidebar/Sidebar.tsx:90
 msgid "Search"
 msgstr "Search"
 
@@ -2793,7 +2793,7 @@ msgstr "session expired"
 
 #: src/features/settings/SettingsView.tsx:174
 #: src/features/settings/SettingsView.tsx:340
-#: src/shared/sidebar/Sidebar.tsx:84
+#: src/shared/sidebar/Sidebar.tsx:93
 msgid "Settings"
 msgstr "Settings"
 
@@ -3485,9 +3485,9 @@ msgstr "Unsaved changes"
 msgid "Unsupported"
 msgstr "Unsupported"
 
-#: src/shared/sidebar/UpdateRow.tsx:38
-msgid "Updated. Restart to update"
-msgstr "Updated. Restart to update"
+#: src/shared/sidebar/UpdateRow.tsx:37
+msgid "Update ready"
+msgstr "Update ready"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:190
 msgid "Updates"
@@ -3616,7 +3616,7 @@ msgstr "Without one, FastStudy can't fetch recordings from your course site and 
 msgid "Work in progress will be stopped."
 msgstr "Work in progress will be stopped."
 
-#: src/shared/sidebar/UpdateRow.tsx:50
+#: src/shared/sidebar/UpdateRow.tsx:48
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "Work in progress will stop. Restart anyway?"
 

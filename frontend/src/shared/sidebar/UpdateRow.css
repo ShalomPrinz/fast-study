@@ -1,44 +1,43 @@
+/* One white card row: the status, and the Restart action once the update is ready. */
 .sidebar-update {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  font-size: var(--fs-meta);
-  color: var(--sidebar-fg);
-}
-
-.sidebar-update--downloading,
-.sidebar-update-line {
-  flex-direction: row;
   display: flex;
   align-items: center;
   gap: var(--space-3);
-}
-
-/* The shared spinner's track is drawn for light surfaces; on the sidebar it takes the sidebar line. */
-.sidebar-update .spinner {
-  border-color: var(--sidebar-line);
-  border-top-color: var(--accent);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  font-size: var(--fs-meta);
+  color: var(--text);
 }
 
 .sidebar-update-done {
   display: inline-flex;
-  color: var(--ok-dot);
+  align-items: center;
+  justify-content: center;
+  inline-size: 24px;
+  block-size: 24px;
   flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ok-soft);
+  color: var(--ok);
 }
 
 .sidebar-update-text {
+  flex: 1;
   min-width: 0;
   line-height: 1.4;
+  font-weight: 600;
 }
 
-.sidebar-update-restart {
-  align-self: flex-start;
-}
-
-/* `--ink` vanishes on the dark sidebar, so the one action here fills with the accent instead. */
+/* Beats `.btn--primary`'s ink fill: on this card the one action takes the accent. */
 .sidebar-update .sidebar-update-restart:not(:disabled) {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--r-sm);
   background: var(--accent);
   border-color: var(--accent);
+  font-size: var(--fs-meta);
 }
 
 .sidebar-update .sidebar-update-restart:hover:not(:disabled) {

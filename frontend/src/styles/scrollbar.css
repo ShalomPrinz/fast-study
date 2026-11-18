@@ -1,0 +1,8 @@
+/* The shell's scrollers share one thin, quiet thumb: the nav list, the tree's course list and the main column. */
+.sidebar-nav-block,
+.sidebar-nav,
+.main-view,
+.page-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}

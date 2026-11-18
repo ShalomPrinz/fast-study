@@ -30,14 +30,12 @@ export default function UpdateRow({ busy }: { busy: boolean }) {
 
   return (
     <div className="sidebar-update sidebar-update--downloaded">
-      <div className="sidebar-update-line">
-        <span className="sidebar-update-done">
-          <Icon icon="check" />
-        </span>
-        <span className="sidebar-update-text">
-          <Trans>Updated. Restart to update</Trans>
-        </span>
-      </div>
+      <span className="sidebar-update-done">
+        <Icon icon="check" />
+      </span>
+      <span className="sidebar-update-text">
+        <Trans>Update ready</Trans>
+      </span>
       <button
         className="btn btn--primary sidebar-update-restart"
         disabled={restarting}

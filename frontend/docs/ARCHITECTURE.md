@@ -132,11 +132,10 @@ a segment without losing the choice. A mode names a zero-prop `Component`, or th
 `children(mode, selectMode)` — `selectMode` lets the body switch segments itself (the paused-runs banner).
 A mode may carry a `count` and an `icon` (an `IconName`, drawn above the label). `wrap(toggle)` places the segmented control inside a caller's layout (the Downloads control row).
 
-`.mode-toggle` is styled for the dark sidebar; `.mode-toggle--light` is the same control on a light
-surface, shared by the Downloads page tabs, the manual download and each recording's kind toggle so they
+`.mode-toggle` is the language switcher's light control (a `--nav-track` track, a white raised active segment); `.mode-toggle--light` is the same control on a page surface, shared by the Downloads page tabs, the manual download and each recording's kind toggle so they
 read as one family.
 `.mode-toggle--cards` turns the segments into equal-width icon cards, the chosen one filled with the
-accent — the downloads media switch. `LanguageSwitcher` reuses the dark CSS without the component.
+accent — the downloads media switch. `LanguageSwitcher` reuses the base CSS without the component.
 
 ## Styling
 
@@ -152,9 +151,9 @@ absence of a root `index.css`.
 
 Every colour, size and space step resolves to a `tokens.css` property, whose comments give each its role.
 The accent never fills a control on a light surface, where it fails contrast: a filled button is `--ink`,
-the accent is text, border or tint, and `--accent-on-dark` serves the two dark surfaces. Fonts are
+the accent is text, border or tint, and `--accent-on-dark` serves the dark tree pane. The filled-accent exceptions are the nav's Restart button and the active segment of `.mode-toggle--cards`. Fonts are
 self-hosted through `@fontsource` so the app renders offline; Heebo is Hebrew-first, JetBrains Mono carries
-filenames, counts and durations.
+filenames, counts and durations. The shell scrollers (nav list, tree course list, main column) take one thin thumb from `styles/scrollbar.css`, imported by `Layout`.
 
 `.btn` + `--primary`/`--ghost`/`--danger` is the whole button vocabulary, `.chip` + five colour variants
 the whole state-label vocabulary, and `StatusNode` the seven row states (`done`, `running`, `pending`,

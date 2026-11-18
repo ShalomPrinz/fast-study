@@ -20,6 +20,7 @@ import type { SupportedExtensions } from '@/features/lectures/utils/materials'
 import { useGeneralFolderPicker } from '@/features/downloads/hooks/useGeneralFolderPicker'
 import { TourProvider } from '@/shared/contexts/TourContext'
 import Tour from '@/features/tour/Tour'
+import '@/styles/scrollbar.css'
 import './Layout.css'
 
 export default function Layout() {

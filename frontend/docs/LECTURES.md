@@ -241,12 +241,12 @@ Every display site renders it through `pdfWarningText`, which swaps the backend'
 Five route rows — Lectures, Running pipelines, Downloads, Search, Settings — exactly one
 active per page ([ARCHITECTURE.md](ARCHITECTURE.md) §Routes). Running pipelines shows `current/total`
 while the runner is on; Downloads counts running jobs. Every glyph is inline SVG from `Icon`.
-The link rows render through `SidebarLink`.
+The link rows render through `SidebarLink`. The nav is light (`--nav-*` tokens): a brand block (app icon and name, not a link) over the rows, each in a 28px icon tile with a 2px divider between rows, and the active row a white card.
 
 The footer is `UpdateRow` above a row with `LanguageSwitcher` at the inline start and the version tag at the
 end — the bridge's `version` when `packaged`, else `dev`. `UpdateRow` follows the launcher's update phase
 (`hooks/useAppUpdate.ts`: a snapshot, then pushes; hidden for `null` and without the bridge):
-`downloading` is a spinner, `downloaded` offers Restart now. That asks first while the runner or a download
+`downloading` is a spinner, `downloaded` is a white card reading "Update ready" with an accent Restart now. That asks first while the runner or a download
 runs, then grays the window until the app quits; a refusal that arrives drops the gray
 ([electron/docs/UPDATES.md](../../electron/docs/UPDATES.md)).
 

@@ -1,12 +1,11 @@
-/* Compact segmented switch. The base is the dark sidebar's — its mode toggle and the language
-   switcher; `--light` is the same control on a light surface (DownloadsTabs, ManualDownload, each
-   recording's kind toggle); `--cards` is the downloads media switch. */
+/* Compact segmented switch: the language switcher's light track and white raised active segment (styled here).
+   `--light` sits on a page surface (downloads tabs, kind toggles); `--cards` is the downloads media switch. */
 .mode-toggle {
   display: flex;
   gap: 2px;
   margin: var(--space-3) var(--space-5) var(--space-1);
   padding: 2px;
-  background: var(--sidebar-line);
+  background: var(--nav-track);
   border-radius: var(--r-sm);
   flex-shrink: 0;
 }
@@ -19,7 +18,7 @@
   background: none;
   border: none;
   border-radius: var(--r-sm);
-  color: var(--sidebar-muted);
+  color: var(--text-2);
   font: inherit;
   font-size: var(--fs-fine);
   font-weight: 600;
@@ -30,12 +29,13 @@
 }
 
 .mode-toggle-btn:hover {
-  color: var(--sidebar-fg);
+  color: var(--text);
 }
 
 .mode-toggle-btn.active {
-  background: var(--sidebar-raise);
-  color: var(--surface);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
 }
 
 /* On a light surface the track sinks into the page and the active segment is a raised white pill.
