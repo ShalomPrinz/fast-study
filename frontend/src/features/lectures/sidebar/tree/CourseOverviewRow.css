@@ -1,14 +1,18 @@
-/* Holds the glyph in the 6px box a lecture row's dot takes, so the label lines up with the lecture
-   names below; the wider glyph overflows it evenly on both sides. */
+/* Holds the glyph in the 16px box a lecture row's mark takes, so the label lines up with the lecture names below. */
 .course-overview-icon {
   display: flex;
   justify-content: center;
-  width: 6px;
+  width: 16px;
   flex-shrink: 0;
-  color: var(--sidebar-muted);
+  color: var(--text-2);
 }
 
-/* Keep the glyph at its own size; as a flex item it would otherwise shrink to the 6px box. */
 .course-overview-icon svg {
   flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.course-overview-row {
+  color: var(--text-2);
 }

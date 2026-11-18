@@ -257,7 +257,7 @@ page) while the tree still has it, else `/`.
 
 `LecturesTreePane` renders beside `/`, the overview, an assignment and `/:course/:lecture` only. It holds the
 `CourseGroup`s and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
-lecture row can prompt. With no course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. Before the first load settles, `isCourseTreeLoading` centres a labelled `.spinner` there instead. Only one course is open: it sits at the top with its header (name and chevron, "N of M studied" and a 4px progress bar of the lectures marked done) and an Overview row first; every other course is a button in the flat "Other courses" list (`.other-courses`) with its `done/total`. Clicking one swaps it to the top and the previous one drops into the list. The pane owns the choice (`utils/openCourse.ts`): remembered in `localStorage` (`fastStudyOpenCourse`, every access in try/catch) and resolved against the tree, falling back to the first course when the remembered one is gone. Navigating into a course by route (search, deep link) opens it; a rename keeps the course open under its new name. The chevron collapses the open course's lists only until it is swapped out. Creating a course with `New course` opens it (remembered too) and drops the previous one into the list; drag-and-drop leaves the open course alone (rows exist only in the open course). A rename keeps its old name as a fallback until the tree holds the new one, so no other course jumps up meanwhile.
+lecture row can prompt. With no course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, a `--danger-soft` card) whenever the latest load failed. Before the first load settles, `isCourseTreeLoading` centres a labelled `.spinner` there instead. Only one course is open: it sits at the top with its header (name and chevron, "N of M studied" and a 4px progress bar of the lectures marked done) and an Overview row first; every other course is a button in the flat "Other courses" list (`.other-courses`) with its `done/total`. Clicking one swaps it to the top and the previous one drops into the list. The pane owns the choice (`utils/openCourse.ts`): remembered in `localStorage` (`fastStudyOpenCourse`, every access in try/catch) and resolved against the tree, falling back to the first course when the remembered one is gone. Navigating into a course by route (search, deep link) opens it; a rename keeps the course open under its new name. The chevron collapses the open course's lists only until it is swapped out. Creating a course with `New course` opens it (remembered too) and drops the previous one into the list; drag-and-drop leaves the open course alone (rows exist only in the open course). A rename keeps its old name as a fallback until the tree holds the new one, so no other course jumps up meanwhile.
 
 The home route `/` is an `EmptyCard` asking to pick a lecture. With no course, `courseLoadNotice`
 (`shared/utils/`, shared with Search) swaps it for a hint to add one (`.main-view--no-courses`) once a load
@@ -271,9 +271,12 @@ when the latest load failed, since a stale or empty tree can't prove the target 
 `final_output()`, whatever earlier file is gone) reads `Complete` on the lecture page; the tree shows study
 progress instead. Lectures, recitations and assignments are three tracks, and `utils/studyProgress.ts`'s `trackProgress`
 reads one in the tree's order: the user's manual `done` marks count toward `done/total`, and its current item
-is the first not done, strictly — an earlier gap stays current. Each row's mark is a ✓ when done, an arrow
-on its track's current item and empty otherwise; a running or queued row shows a spinner in its place.
-Marks are display-only. The course header counts lectures, the Recitations header recitations, the Assignments header assignments
+is the first not done, strictly — an earlier gap stays current. The pane is light, each track a timeline: a 2px line
+runs through the 16px marks, green from the first row to the current one (`timelineSegments`; every row's `.tl`
+class paints its two halves). A mark is a green ✓ circle when done, a white circle ringed in `--accent` on the
+current item, a hollow circle otherwise and a dashed one for a download placeholder; a running or queued row shows a
+spinner in its place, and a running one (not a queued one) also reads "Processing" (`isLectureRunning`). The open page is a white
+`--shadow-card` row. Marks are display-only. The course header counts lectures, the Recitations header recitations, the Assignments header assignments
 (`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. All three draw the shared `TreeProgress` (4px, `--line` track): the header always, a section only while expanded, each with its own fill (`--ok-dot` lectures, `--accent` recitations, `--progress-assignment` assignments) and none when its total is 0.
 
 **A lectures-only course** (the tree's resolved `lectures_only`, never the setting — [SETTINGS.md](SETTINGS.md))
@@ -292,8 +295,8 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
   course. It opens the Recitations/Assignments group holding the open route (deep links).
 - `AssignmentsGroup` lists the course's `assignments` after the recitations, styled like them, whatever
   `lectures_only` says and never folded into the lectures. Nothing creates one by hand, so the group
-  shows only once one is listed or downloading, the latter's loading row inside it. Rows carry ✓/arrow
-  marks; the header's done/total count is hidden while none is listed.
+  shows only once one is listed or downloading, the latter's loading row inside it. Rows carry the same marks (✓ done,
+  ringed current, hollow otherwise); the header's done/total count is hidden while none is listed.
 - The pane unmounts on other routes; only each course's Recitations/Assignments expansion (a module map in
   `utils/courseExpansion.ts`, moved to the new name on a course rename), the open course and the nav's scroll position
   survive, the latter saved on each scroll because a detached nav reads 0. The open course is read from `localStorage`.

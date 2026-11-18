@@ -1,6 +1,6 @@
 import Tooltip from '@/shared/components/Tooltip'
 import { useState } from 'react'
-import { useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { toast } from '@/services/toaster'
 import { useLectureRename } from '@/features/lectures/hooks/useLectureRename'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
@@ -11,6 +11,8 @@ import {
   recitationTrack,
   type TrackItem,
 } from '@/features/lectures/utils/courseTree'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { isLectureRunning } from '@/features/lectures/utils/renameLock'
 import { holdsFile } from '@/features/lectures/utils/lectureProgress'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import Icon from '@/shared/components/Icon'
@@ -21,7 +23,13 @@ import { useLectureListKind } from './LectureListContext'
 import '@/styles/spinner.css'
 import '@/styles/sidebar-tree.css'
 
-export default function LectureItem({ lecture }: { lecture: TrackItem }) {
+export default function LectureItem({
+  lecture,
+  timeline = '',
+}: {
+  lecture: TrackItem
+  timeline?: string
+}) {
   const { t } = useLingui()
   const { course } = useCourseGroup()
   const list = useLectureListKind()
@@ -29,6 +37,7 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
   const { selected, onSelect } = useSelection()
   const { courses } = useCourseTreeContext()
   const upload = usePendingUpload()
+  const { status } = useRunnerStatus()
 
   const [dragOver, setDragOver] = useState(false)
 
@@ -41,6 +50,8 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
   // The same set that locks a rename is the one the mark gives way to a spinner for.
   const renameLocked = rename.locked
   const pendingName = rename.pendingName
+  // Only a lecture being worked on is labelled; one waiting in line shows the spinner alone.
+  const processing = isLectureRunning(status, course.name, lecture.name, kind)
   const current = trackProgress(
     list === 'recitation' ? recitationTrack(course) : lectureTrack(course),
   ).current
@@ -75,7 +86,7 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
 
   if (rename.renaming) {
     return (
-      <li>
+      <li className={timeline}>
         <InlineEditInput
           edit={rename.edit}
           onCommit={rename.actions.commit}
@@ -86,7 +97,7 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
   }
 
   return (
-    <li>
+    <li className={timeline}>
       <Tooltip
         content={
           renameLocked ? t`Can't rename while it's being processed or waiting in line` : undefined
@@ -117,13 +128,16 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
               <span className="spinner lecture-mark-spinner" />
             ) : mark === 'done' ? (
               <Icon icon="check" />
-            ) : mark === 'current' ? (
-              <Icon icon="arrow-end" />
             ) : null}
           </span>
           <span className="lecture-name" dir="auto">
             {pendingName ?? lecture.name}
           </span>
+          {processing && (
+            <span className="lecture-status">
+              <Trans>Processing</Trans>
+            </span>
+          )}
         </button>
       </Tooltip>
     </li>

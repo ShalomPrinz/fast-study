@@ -1,5 +1,5 @@
 .sidebar-nav {
-  padding: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
   flex: 1;
   overflow-y: auto;
   min-height: 0; /* let the flex child shrink so overflow-y actually scrolls */
@@ -15,48 +15,48 @@
   background: none;
   border: none;
   border-radius: var(--r-sm);
-  color: var(--sidebar-muted);
+  color: var(--text-2);
   font-size: var(--fs-section);
   cursor: pointer;
   transition: background 0.1s;
 }
 
-.course-add-btn:hover {
-  background: var(--sidebar-raise);
-  color: var(--sidebar-fg);
+.course-add-btn:hover,
+.course-add-btn:focus-visible {
+  background: var(--nav-track);
+  color: var(--text);
 }
 
 .course-toggle {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   flex: 1;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-4);
   background: none;
   border: none;
-  color: var(--sidebar-fg);
+  color: var(--text);
   font: inherit;
   font-size: var(--fs-body);
   font-weight: 600;
   text-align: start;
   cursor: pointer;
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
 }
 
 .course-toggle:hover {
-  background: var(--sidebar-raise);
+  background: var(--nav-bg);
 }
 
 .chevron {
   font-size: var(--fs-fine);
-  color: var(--sidebar-muted);
+  color: var(--nav-icon);
   flex-shrink: 0;
 }
 
 .lecture-list {
   list-style: none;
-  padding-inline-start: var(--space-3);
 }
 
 .course-name {
@@ -71,41 +71,109 @@
   margin-inline-start: auto;
   flex-shrink: 0;
   font-size: var(--fs-fine);
-  font-weight: 400;
-  color: var(--sidebar-dim);
+  font-weight: 500;
+  color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
 
-/* A lecture's study mark: a check once marked done, an arrow on its track's current item, empty
-   otherwise; a spinner replaces it while the lecture runs or waits in line. Display-only. */
+/* One row of a track: the line halves through its mark. A half is `--nav-line` grey, or `--ok-dot`
+   green from the first row down to the current one. The line sits over the row's background and under
+   the mark (z-index 2), so a hovered or selected row stays continuous. */
+.tl {
+  position: relative;
+}
+
+.tl::before,
+.tl::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: 17px;
+  inline-size: 2px;
+  background: var(--nav-line);
+  pointer-events: none;
+}
+
+.tl::before {
+  top: 0;
+  height: 50%;
+}
+
+.tl::after {
+  top: 50%;
+  bottom: 0;
+}
+
+.tl-top-none::before,
+.tl-bottom-none::after {
+  display: none;
+}
+
+.tl-top-done::before,
+.tl-bottom-done::after {
+  background: var(--ok-dot);
+}
+
+/* A lecture's study mark, 16px: a check once marked done, a ringed circle on its track's current item,
+   a hollow circle otherwise; a spinner replaces it while the lecture runs or waits in line. Display-only. */
 .lecture-mark {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
+.lecture-mark::before {
+  content: '';
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--tree-mark);
+  background: var(--tree-pane-bg);
+}
+
+.lecture-mark--done::before,
+.lecture-mark--busy::before {
+  display: none;
+}
+
 .lecture-mark--done {
-  color: var(--ok-dot);
+  border-radius: 50%;
+  background: var(--ok-dot);
+  color: var(--surface);
 }
 
-.lecture-mark--current {
-  color: var(--accent-on-dark);
+.lecture-mark--done svg {
+  width: 10px;
+  height: 10px;
 }
 
-[dir='rtl'] .lecture-mark--current svg {
-  transform: scaleX(-1);
+.lecture-mark--current::before {
+  width: 16px;
+  height: 16px;
+  border: 4px solid var(--accent);
+  background: var(--surface);
+}
+
+/* A download that is not a lecture yet. */
+.lecture-mark--download::before {
+  border-style: dashed;
+  border-color: var(--text-4);
 }
 
 /* Two classes, so it outweighs `.spinner`'s size and colours whatever order the sheets load in. */
 .spinner.lecture-mark-spinner {
-  width: 11px;
-  height: 11px;
+  width: 14px;
+  height: 14px;
   border-width: 2px;
-  border-color: var(--sidebar-dim);
-  border-top-color: var(--accent-on-dark);
+  border-color: var(--control-line);
+  border-top-color: var(--accent);
+  background: var(--tree-pane-bg);
 }
 
 .lecture-name {
@@ -116,62 +184,79 @@
   white-space: nowrap;
 }
 
+/* "Processing" beside a lecture a run is working on. */
+.lecture-status {
+  flex-shrink: 0;
+  font-size: var(--fs-fine);
+  font-weight: 400;
+  color: var(--text-2);
+}
+
 .lecture-btn {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  width: calc(100% - var(--space-3));
-  margin: 1px var(--space-1);
-  padding: var(--space-2) var(--space-4);
+  gap: var(--space-4);
+  width: 100%;
+  height: 34px;
+  padding: 0 var(--space-4);
   background: none;
   border: none;
-  color: var(--sidebar-fg);
+  color: var(--text);
   font: inherit;
   font-size: var(--fs-body);
   text-align: start;
   cursor: pointer;
-  border-radius: var(--r-sm);
-  opacity: 0.85;
+  border-radius: var(--r);
+}
+
+.lecture-btn:has(.lecture-mark--done) {
+  color: var(--text-2);
 }
 
 .lecture-btn:hover {
-  background: var(--sidebar-raise);
-  opacity: 1;
+  background: var(--nav-bg);
 }
 
+/* The open page: a white card, a notch taller than its neighbours. */
 .lecture-btn.selected {
-  background: var(--sidebar-raise);
-  color: var(--surface);
-  opacity: 1;
+  height: 38px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .lecture-btn.drag-over {
-  background: var(--sidebar-raise);
-  opacity: 1;
-  outline: 1px solid var(--accent-on-dark);
+  background: var(--accent-soft);
+  outline: 1px solid var(--accent);
 }
 
 /* Keep below .course-toggle: RecitationsGroup puts both on one button and they
    collide on padding at equal specificity, so order decides. */
 .recitations-toggle {
-  opacity: 0.9;
-  padding: var(--space-1) var(--space-4);
+  height: 32px;
+  padding: 0 var(--space-4);
+  font-size: var(--fs-meta);
+  color: var(--text-2);
 }
 
 /* Keep below .lecture-list: the recitations <ul> carries both and they collide
    on padding-inline-start at equal specificity. */
 .recitation-list {
-  padding-inline-start: var(--space-4);
+  padding-inline-start: var(--space-3);
 }
 
 /* A downloading lecture that is not in the tree yet: not clickable, with its ETA bar under the name. */
 .lecture-placeholder {
+  height: auto;
+  min-height: 34px;
+  padding-block: var(--space-2);
+  color: var(--text-2);
   cursor: default;
 }
 
 .lecture-placeholder:hover {
   background: none;
-  opacity: 0.85;
 }
 
 .lecture-placeholder-body {
@@ -183,5 +268,5 @@
 }
 
 .lecture-placeholder .progress-label {
-  color: var(--sidebar-muted);
+  color: var(--text-2);
 }

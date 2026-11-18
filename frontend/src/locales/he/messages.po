@@ -647,11 +647,11 @@ msgstr "פתרון המטלה"
 
 #: src/features/downloads/components/NewView.tsx:143
 #: src/features/downloads/DownloadsView.tsx:200
-#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:43
+#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:49
 msgid "Assignments"
 msgstr "מטלות"
 
-#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
+#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:52
 msgid "Assignments you marked done"
 msgstr "מטלות שסיימת"
 
@@ -754,7 +754,7 @@ msgid "Can't download while this lecture is being processed or waiting in line"
 msgstr "אי אפשר להוריד כשההרצאה הזו בעיבוד או ממתינה בתור"
 
 #: src/features/lectures/components/RenamableTitle.tsx:36
-#: src/features/lectures/sidebar/tree/LectureItem.tsx:92
+#: src/features/lectures/sidebar/tree/LectureItem.tsx:103
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "אי אפשר לשנות את השם בזמן עיבוד או המתנה בתור"
 
@@ -763,7 +763,7 @@ msgid "Can't rename while something in this course is being processed, downloade
 msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הורדה או יצירה של תוכן בו"
 
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:39
-#: src/features/lectures/sidebar/tree/LectureItem.tsx:60
+#: src/features/lectures/sidebar/tree/LectureItem.tsx:71
 msgid "Can't replace the video while it's being processed or waiting in line"
 msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או המתנה בתור"
 
@@ -2231,7 +2231,7 @@ msgstr "מספר ניסיונות חוזרים"
 msgid "Once a lecture is processed, its summary appears on this page."
 msgstr "לאחר עיבוד ההרצאה, הסיכום שלה נמצא בעמוד הזה."
 
-#: src/features/lectures/sidebar/tree/LectureItem.tsx:64
+#: src/features/lectures/sidebar/tree/LectureItem.tsx:75
 msgid "Only .mp4 files are allowed"
 msgstr "מותרים קבצי .mp4 בלבד"
 
@@ -2458,6 +2458,10 @@ msgstr "ההתאמה הקודמת"
 #: src/features/settings/components/ErrorReportsField.tsx:49
 msgid "Privacy policy"
 msgstr "מדיניות פרטיות"
+
+#: src/features/lectures/sidebar/tree/LectureItem.tsx:138
+msgid "Processing"
+msgstr "מעבד"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:200
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { InFlightEntry, Kind, QueueEntry } from '@/types'
-import { isCourseRenameLocked, isLectureRenameLocked } from './renameLock'
+import { isCourseRenameLocked, isLectureRenameLocked, isLectureRunning } from './renameLock'
 
 const queued = (course: string, lecture: string, kind: Kind = 'lecture'): QueueEntry => ({
   course,
@@ -75,5 +75,18 @@ describe('isCourseRenameLocked', () => {
   it("leaves a lecture unlocked by its course's overview generation", () => {
     const status = { inFlight: [], queue: [], overviewRunning: ['c'] }
     expect(isLectureRenameLocked(status, 'c', 'L1', 'lecture')).toBe(false)
+  })
+})
+
+describe('isLectureRunning', () => {
+  it('is true for a running lecture, false for a queued one', () => {
+    const status = {
+      inFlight: [running('c', 'L1')],
+      queue: [queued('c', 'L2')],
+      overviewRunning: [],
+    }
+    expect(isLectureRunning(status, 'c', 'L1', 'lecture')).toBe(true)
+    expect(isLectureRunning(status, 'c', 'L2', 'lecture')).toBe(false)
+    expect(isLectureRunning(null, 'c', 'L1', 'lecture')).toBe(false)
   })
 })

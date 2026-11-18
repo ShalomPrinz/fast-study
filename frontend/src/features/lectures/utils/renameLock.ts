@@ -26,3 +26,14 @@ export function isCourseRenameLocked(status: RunSnapshot, course: string): boole
     !!status?.overviewRunning.includes(course) || spokenFor(status).some((e) => e.course === course)
   )
 }
+
+/** Whether a run is executing this lecture/recitation now, as opposed to waiting in the queue. */
+export function isLectureRunning(
+  status: RunSnapshot,
+  course: string,
+  lecture: string,
+  kind: Kind,
+): boolean {
+  const key = inFlightKey(course, lecture, kind)
+  return (status?.inFlight ?? []).some((e) => inFlightKey(e.course, e.lecture, e.kind) === key)
+}

@@ -151,7 +151,7 @@ absence of a root `index.css`.
 
 Every colour, size and space step resolves to a `tokens.css` property, whose comments give each its role.
 The accent never fills a control on a light surface, where it fails contrast: a filled button is `--ink`,
-the accent is text, border or tint, and `--accent-on-dark` serves the dark tree pane. The filled-accent exceptions are the nav's Restart button and the active segment of `.mode-toggle--cards`. Fonts are
+the accent is text, border or tint (the tree pane's current-lecture ring is a border). The filled-accent exceptions are the nav's Restart button and the active segment of `.mode-toggle--cards`. Fonts are
 self-hosted through `@fontsource` so the app renders offline; Heebo is Hebrew-first, JetBrains Mono carries
 filenames, counts and durations. The shell scrollers (nav list, tree course list, main column) take one thin thumb from `styles/scrollbar.css`, imported by `Layout`.
 

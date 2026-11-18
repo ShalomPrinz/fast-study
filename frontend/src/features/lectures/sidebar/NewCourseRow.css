@@ -4,16 +4,17 @@
   min-width: 0;
 }
 
-/* The button and the input share one box — padding, border width, font size and line height — so
+/* The button and the input share one box — height, border width, radius and font — so
    toggling between them doesn't move the row. */
 .new-course-btn,
 .new-course-input {
   display: flex;
   box-sizing: border-box;
   inline-size: 100%;
-  padding-block: var(--space-2);
+  height: 38px;
+  padding-block: 0;
   padding-inline: var(--space-4);
-  border-radius: var(--r-sm);
+  border-radius: var(--r);
   font: inherit;
   font-size: var(--fs-body);
   line-height: 1.5;
@@ -23,23 +24,23 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-3);
-  background: none;
-  border: 1px dashed var(--sidebar-dim);
-  color: var(--sidebar-muted);
+  background: var(--surface);
+  border: 1px solid var(--control-line);
+  color: var(--text);
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   transition:
     background 0.1s,
-    border-color 0.1s,
-    color 0.1s;
+    border-color 0.1s;
 }
 
-.new-course-btn:hover,
+.new-course-btn:hover {
+  background: var(--nav-bg);
+}
+
 .new-course-btn:focus-visible {
-  background: var(--sidebar-raise);
-  border-style: solid;
-  border-color: var(--sidebar-muted);
-  color: var(--sidebar-fg);
+  border-color: var(--accent);
   outline: none;
 }
 
@@ -50,8 +51,8 @@
 }
 
 .new-course-input {
-  background: var(--sidebar-raise);
-  border: 1px solid var(--accent-on-dark);
-  color: var(--sidebar-fg);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--text);
   outline: none;
 }

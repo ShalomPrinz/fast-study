@@ -1,22 +1,24 @@
 /* The pane doesn't scroll — the course list scrolls on its own, so the footer stays put. The block-start
    inset sits outside the scroller, so a scrolled list still never runs flush against the window's top edge. */
 .tree-pane {
+  /* Where a progress bar starts inside its row, so the header's and the sections' line up. */
+  --tree-bar-inset: 6px;
   padding-block-start: var(--space-4);
   width: var(--tree-pane-width);
   min-width: var(--tree-pane-width);
   background: var(--tree-pane-bg);
-  color: var(--sidebar-fg);
+  color: var(--text);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-inline-end: 1px solid var(--sidebar-line);
+  border-inline-end: 1px solid var(--line);
 }
 
 .tree-pane-footer {
   display: flex;
   align-items: center;
   padding: var(--space-4);
-  border-top: 1px solid var(--sidebar-line);
+  border-top: 1px solid var(--line);
   flex-shrink: 0;
 }
 
@@ -30,11 +32,11 @@
 .tree-pane-empty {
   margin: 0;
   text-align: center;
-  color: var(--sidebar-muted);
+  color: var(--text-2);
   font-size: var(--fs-body);
 }
 
-/* Bordered on --danger-soft: --danger text straight on the dark pane is under 3:1. */
+/* A tinted card, so the --danger text keeps its contrast on --danger-soft rather than on the pane. */
 .tree-pane-empty.tree-pane-empty--failed {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--danger);
@@ -43,19 +45,19 @@
   color: var(--danger);
 }
 
-/* Two classes, so it outweighs `.spinner`'s colours whatever order the sheets load in. */
+/* Two classes, so it outweighs `.spinner`'s size whatever order the sheets load in; the colours are the default. */
 .spinner.tree-pane-spinner {
   width: 27px;
   height: 27px;
   border-width: 3px;
-  border-color: var(--sidebar-dim);
-  border-top-color: var(--accent-on-dark);
 }
 
 .other-courses-title {
-  margin: var(--space-4) var(--space-3) var(--space-2);
+  margin: var(--space-5) var(--space-2) var(--space-2);
   font-size: var(--fs-fine);
   font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-2);
 }
 
 .other-courses-list {
@@ -67,13 +69,21 @@
 .other-course {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   inline-size: 100%;
-  padding: var(--space-2) var(--space-3);
+  height: 34px;
+  padding: 0 var(--space-4);
   background: none;
   border: none;
-  color: inherit;
+  border-radius: var(--r);
+  color: var(--text);
   font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
   text-align: start;
   cursor: pointer;
+}
+
+.other-course:hover {
+  background: var(--nav-bg);
 }

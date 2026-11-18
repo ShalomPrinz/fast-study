@@ -1,6 +1,10 @@
 import Tooltip from '@/shared/components/Tooltip'
 import Icon from '@/shared/components/Icon'
-import { trackProgress } from '@/features/lectures/utils/studyProgress'
+import {
+  timelineClass,
+  timelineCurrentIndex,
+  trackProgress,
+} from '@/features/lectures/utils/studyProgress'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useMatch, useNavigate } from 'react-router-dom'
 import type { ExpandHandle } from '@/types'
@@ -31,6 +35,8 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
 
   if (!course.assignments.length && !pending.length) return null
   const progress = trackProgress(course.assignments)
+  const count = course.assignments.length + pending.length
+  const currentIndex = timelineCurrentIndex(course.assignments)
 
   return (
     <li className="recitations-group">
@@ -56,8 +62,8 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
       )}
       {expand.isOpen && (
         <ul className="lecture-list recitation-list">
-          {course.assignments.map((a) => (
-            <li key={a.name}>
+          {course.assignments.map((a, i) => (
+            <li key={a.name} className={timelineClass(i, count, currentIndex)}>
               <button
                 className={`lecture-btn${open === a.name ? ' selected' : ''}`}
                 data-testid="assignment"
@@ -68,11 +74,7 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
                 <span
                   className={`lecture-mark lecture-mark--${a.done ? 'done' : progress.current?.name === a.name ? 'current' : 'todo'}`}
                 >
-                  {a.done ? (
-                    <Icon icon="check" />
-                  ) : progress.current?.name === a.name ? (
-                    <Icon icon="arrow-end" />
-                  ) : null}
+                  {a.done ? <Icon icon="check" /> : null}
                 </span>
                 <span className="lecture-name" dir="auto">
                   {a.name}
@@ -80,8 +82,12 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
               </button>
             </li>
           ))}
-          {pending.map((job) => (
-            <PlaceholderLectureItem key={job.lecture} job={job} />
+          {pending.map((job, i) => (
+            <PlaceholderLectureItem
+              key={job.lecture}
+              job={job}
+              timeline={timelineClass(course.assignments.length + i, count, currentIndex)}
+            />
           ))}
         </ul>
       )}

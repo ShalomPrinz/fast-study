@@ -124,11 +124,11 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             }}
           >
             <span className="course-head-title">
-              <span className="course-name" dir="auto">
-                {pendingName ?? course.name}
-              </span>
               <span className="chevron">
                 <Chevron open={expand.isOpen} />
+              </span>
+              <span className="course-name" dir="auto">
+                {pendingName ?? course.name}
               </span>
             </span>
             {progress.total > 0 && (

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { trackProgress } from './studyProgress'
+import {
+  timelineClass,
+  timelineCurrentIndex,
+  timelineSegments,
+  trackProgress,
+} from './studyProgress'
 
 const item = (name: string, done: boolean) => ({ name, done })
 
@@ -29,5 +34,24 @@ describe('trackProgress', () => {
 
   it('has no current and 0/0 for an empty track', () => {
     expect(trackProgress([])).toEqual({ current: null, done: 0, total: 0 })
+  })
+})
+
+describe('timeline', () => {
+  it('points at the first not-done item, or the last when all are done', () => {
+    expect(timelineCurrentIndex([item('a', true), item('b', false), item('c', true)])).toBe(1)
+    expect(timelineCurrentIndex([item('a', true), item('b', true)])).toBe(1)
+    expect(timelineCurrentIndex([])).toBe(-1)
+  })
+
+  it('greens the line down to the current row and no further', () => {
+    expect(timelineSegments(0, 4, 2)).toEqual({ top: 'none', bottom: 'done' })
+    expect(timelineSegments(2, 4, 2)).toEqual({ top: 'done', bottom: 'todo' })
+    expect(timelineSegments(3, 4, 2)).toEqual({ top: 'todo', bottom: 'none' })
+  })
+
+  it('has no segment past a lone row, and names the classes', () => {
+    expect(timelineSegments(0, 1, 0)).toEqual({ top: 'none', bottom: 'none' })
+    expect(timelineClass(1, 3, 1)).toBe('tl tl-top-done tl-bottom-todo')
   })
 })

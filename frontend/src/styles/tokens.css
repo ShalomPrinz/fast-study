@@ -30,8 +30,6 @@
   --accent-ink: #4453c4;
   /* Border for a tinted card: the soft fill carries no edge of its own, so the outline steps darker. */
   --accent-line: #d5daf7;
-  /* Light enough to read on the tree pane, which is still dark. */
-  --accent-on-dark: #98b0ff;
 
   --ok: #2f7d54;
   --ok-soft: #e7f4ec;
@@ -61,17 +59,11 @@
   /* Every shell scroller's thumb. */
   --scrollbar-thumb: #c9ccd8;
 
-  /* The tree pane's dark palette. */
-  --sidebar-bg: #1b1b26;
-  --sidebar-raise: #2c2c3d;
-  --sidebar-line: #2a2a38;
-  --sidebar-fg: #d7d9e6;
-  --sidebar-muted: #8a8fa3;
-  --sidebar-dim: #6f7488;
   --sidebar-width: 268px;
-  /* A step lighter than --sidebar-bg, so the tree pane reads apart from --sidebar-raise rows on it. */
-  --tree-pane-bg: #222230;
+  /* The tree pane: a cool near-white, with the hollow lecture marks a step darker than --line. */
+  --tree-pane-bg: #fafbfd;
   --tree-pane-width: 268px;
+  --tree-mark: #c9ccd8;
   /* Wide enough for a sentence, narrow enough that a long hint wraps instead of spanning the window. */
   --tooltip-max-width: 260px;
 
@@ -95,6 +87,7 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --fs-title: 26px;
   --fs-section: 17px;
+  --fs-course: 15px;
   --fs-row: 14px;
   --fs-body: 13px;
   --fs-meta: 12px;

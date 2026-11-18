@@ -1,13 +1,16 @@
 .lecture-add-input {
   display: block;
-  width: calc(100% - var(--space-3));
-  margin: 1px var(--space-1);
-  padding: var(--space-1) var(--space-4);
-  background: var(--sidebar-raise);
-  border: 1px solid var(--accent-on-dark);
-  border-radius: var(--r-sm);
-  color: var(--sidebar-fg);
+  width: 100%;
+  height: 34px;
+  padding: 0 var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--r);
+  color: var(--text);
   font: inherit;
   font-size: var(--fs-body);
   outline: none;
+  /* Above the timeline line a .tl row paints over its first characters. */
+  position: relative;
+  z-index: 2;
 }
