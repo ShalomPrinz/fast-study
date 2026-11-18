@@ -32,8 +32,16 @@ def test_create_course_refuses_existing_and_keeps_its_source_url(client, data_ro
 
 def test_create_course_new_name_still_works(client, data_root):
     r = client.post("/courses", json={"name": "Algo", "source_url": "https://x"})
-    assert r.status_code == 204
+    assert r.status_code == 200
+    assert r.json() == {"name": "Algo"}
     assert (data_root / "Algo" / SOURCE_URL_MARKER).read_text() == "https://x"
+
+
+def test_create_course_answers_the_sanitized_folder_name(client, data_root):
+    r = client.post("/courses", json={"name": "Lecture 34: intro?"})
+    assert r.status_code == 200
+    assert r.json() == {"name": "Lecture 34 intro"}
+    assert (data_root / "Lecture 34 intro").is_dir()
 
 
 @pytest.mark.parametrize(

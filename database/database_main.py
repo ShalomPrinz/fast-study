@@ -154,15 +154,15 @@ def get_tree():
 
 @app.post("/courses")
 async def post_course(request: Request):
-    """Create a new course directory, optionally with a source_url."""
+    """Create a new course directory, optionally with a source_url, answering the sanitized folder name actually created."""
 
     name = None
     try:
         body = await request.json()
         name = body["name"]
-        crud.create_course(name, body.get("source_url"))
+        effective = crud.create_course(name, body.get("source_url"))
         broadcast_notify()
-        return Response(status_code=204)
+        return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "create_dir_failed", {"path": name})
 

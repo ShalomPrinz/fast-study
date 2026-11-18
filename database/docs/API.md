@@ -45,7 +45,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | ---------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `GET    /health`                                           | launcher liveness; `200 {status: ok}` even with no data root configured   |
 | `GET    /tree`                                             | full course tree; each course carries the resolved `lectures_only` bool; `video.mp4` entries carry `duration` (seconds; omitted when unknown) |
-| `POST   /courses`                                          | create course (`{name}`, optional `{source_url}`)                         |
+| `POST   /courses`                                          | create course (`{name}`, optional `{source_url}`); `200 {name}` with the sanitized folder name |
 | `PATCH  /courses/{course}`                                 | rename course (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file under it is open elsewhere |
 | `PATCH  /courses/{course}/source_url`                      | set/clear source_url; empty or null clears                                |
 | `PATCH  /courses/{course}/lectures_only`                   | pick/unpick as lectures-only (`{lectures_only}`, toggles `.lectures_only`); 404 if the course is missing; `400` `setting_must_be_boolean` on a non-bool |

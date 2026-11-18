@@ -97,4 +97,4 @@ def test_a_course_may_be_named_overview(client, data_root):
     # Course dirs sit alone at the data root, so no reserved folder exists for one to collide with.
     r = client.post("/courses", json={"name": "overview"})
 
-    assert r.status_code == 204
+    assert r.status_code == 200

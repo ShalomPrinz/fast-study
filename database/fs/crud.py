@@ -71,12 +71,14 @@ def _rename_dir(old: Path, new: Path, old_name: str) -> None:
         raise
 
 
-def create_course(name: str, source_url: str | None = None) -> None:
-    """Create a new course directory under DATA_ROOT, optionally seeding its source_url."""
+def create_course(name: str, source_url: str | None = None) -> str:
+    """Create a new course directory under DATA_ROOT, optionally seeding its source_url; return the folder name actually created."""
 
-    _mkdir_new(course_dir(name))
+    target = course_dir(name)
+    _mkdir_new(target)
     if source_url:
         set_course_source_url(name, source_url)
+    return target.name
 
 
 def set_course_source_url(name: str, source_url: str | None) -> None:
