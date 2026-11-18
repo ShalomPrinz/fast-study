@@ -1,0 +1,28 @@
+.tree-progress {
+  display: block;
+  block-size: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.tree-progress-fill {
+  display: block;
+  block-size: 100%;
+}
+
+.tree-progress-fill--lecture {
+  background: var(--ok-dot);
+}
+
+.tree-progress-fill--recitation {
+  background: var(--accent);
+}
+
+.tree-progress-fill--assignment {
+  background: var(--progress-assignment);
+}
+
+.recitations-group > .tree-progress {
+  margin: 2px 4px 4px;
+}

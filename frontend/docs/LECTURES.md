@@ -274,7 +274,7 @@ reads one in the tree's order: the user's manual `done` marks count toward `done
 is the first not done, strictly — an earlier gap stays current. Each row's mark is a ✓ when done, an arrow
 on its track's current item and empty otherwise; a running or queued row shows a spinner in its place.
 Marks are display-only. The course header counts lectures, the Recitations header recitations, the Assignments header assignments
-(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header.
+(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. All three draw the shared `TreeProgress` (4px, `--line` track): the header always, a section only while expanded, each with its own fill (`--ok-dot` lectures, `--accent` recitations, `--progress-assignment` assignments) and none when its total is 0.
 
 **A lectures-only course** (the tree's resolved `lectures_only`, never the setting — [SETTINGS.md](SETTINGS.md))
 has one track: `utils/courseTree.ts`'s `lectureTrack` merges its recitations into the lecture list with no

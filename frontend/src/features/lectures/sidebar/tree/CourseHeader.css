@@ -20,17 +20,3 @@
   font-size: var(--fs-fine);
   font-weight: 400;
 }
-
-.course-progress {
-  display: block;
-  block-size: 4px;
-  border-radius: 2px;
-  background: var(--sidebar-line);
-  overflow: hidden;
-}
-
-.course-progress-fill {
-  display: block;
-  block-size: 100%;
-  background: var(--accent-on-dark);
-}

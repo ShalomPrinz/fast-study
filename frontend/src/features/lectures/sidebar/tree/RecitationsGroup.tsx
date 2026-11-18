@@ -4,6 +4,7 @@ import type { ExpandHandle } from '@/types'
 import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import { useCourseGroup } from './CourseGroupContext'
+import TreeProgress from './TreeProgress'
 import { LectureListProvider } from './LectureListContext'
 import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
@@ -50,6 +51,9 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
           </Tooltip>
         )}
       </div>
+      {expand.isOpen && (
+        <TreeProgress kind="recitation" done={progress.done} total={progress.total} />
+      )}
       {expand.isOpen && (
         <ul className="lecture-list recitation-list">
           <LectureListProvider kind="recitation">

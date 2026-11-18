@@ -20,6 +20,7 @@ import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobs
 import { ROUTES, routeParam } from '@/shared/utils/routes'
 import { assignmentRoute, courseRoute } from '@/shared/utils/url'
 import { useCourseGroup } from './CourseGroupContext'
+import TreeProgress from './TreeProgress'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
 import Chevron from '@/shared/components/Chevron'
@@ -142,12 +143,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
                     </Trans>
                   </span>
                 </Tooltip>
-                <span className="course-progress" aria-hidden="true">
-                  <span
-                    className="course-progress-fill"
-                    style={{ inlineSize: `${(progress.done / progress.total) * 100}%` }}
-                  />
-                </span>
+                <TreeProgress kind="lecture" done={progress.done} total={progress.total} />
               </>
             )}
           </button>

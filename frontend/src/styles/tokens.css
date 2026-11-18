@@ -39,6 +39,8 @@
   --ok-surface: #f5fbf7;
   --ok-line: #cfe7d9;
   --ok-dot: #3f9f6a;
+  /* Fill of the assignments progress bar; lectures use --ok-dot, recitations --accent. */
+  --progress-assignment: #d4891c;
   --warn: #b45309;
   --warn-soft: #fdf4e7;
   --danger: #c0392f;

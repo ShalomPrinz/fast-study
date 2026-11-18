@@ -8,6 +8,7 @@ import Chevron from '@/shared/components/Chevron'
 import { ROUTES, routeParam } from '@/shared/utils/routes'
 import { assignmentRoute } from '@/shared/utils/url'
 import { useCourseGroup } from './CourseGroupContext'
+import TreeProgress from './TreeProgress'
 import PlaceholderLectureItem from './PlaceholderLectureItem'
 import { useCourseJobs } from '@/features/downloads/contexts/DownloadJobsContext'
 import { placeholderJobs } from '@/features/downloads/utils/placeholders'
@@ -50,6 +51,9 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
           )}
         </button>
       </div>
+      {expand.isOpen && (
+        <TreeProgress kind="assignment" done={progress.done} total={progress.total} />
+      )}
       {expand.isOpen && (
         <ul className="lecture-list recitation-list">
           {course.assignments.map((a) => (
