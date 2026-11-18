@@ -144,8 +144,12 @@ export async function updateSkipped(
   return refs
 }
 
-export async function createCourse(name: string, source_url?: string | null): Promise<void> {
-  await database.post('/courses', { json: { name, source_url: source_url || null } })
+/** Answers the folder name the create made, which the database may have sanitized. */
+export async function createCourse(name: string, source_url?: string | null): Promise<string> {
+  const res = await database.post<{ name: string }>('/courses', {
+    json: { name, source_url: source_url || null },
+  })
+  return res.name
 }
 
 export async function setCourseSourceUrl(course: string, source_url: string | null): Promise<void> {

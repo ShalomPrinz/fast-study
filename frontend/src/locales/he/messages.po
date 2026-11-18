@@ -147,6 +147,12 @@ msgstr "נמצאו {0}"
 msgid "{0} is installed — downloading is ready to use."
 msgstr "{0} מותקן — אפשר להוריד הקלטות."
 
+#. placeholder {0}: progress.done
+#. placeholder {1}: progress.total
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:140
+msgid "{0} of {1} studied"
+msgstr "{0} מתוך {1} נלמדו"
+
 #. placeholder {0}: provider.displayName
 #: src/features/settings/components/ApiKeyField.tsx:127
 msgid "{0} rejected this key. Generate a new one in its console."
@@ -533,8 +539,8 @@ msgstr "הוספת הרצאה או תרגול"
 msgid "Add figures to the summary"
 msgstr "הוספת איורים לסיכום"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:144
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:145
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:157
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:158
 msgid "Add lecture"
 msgstr "הוספת הרצאה"
 
@@ -752,7 +758,7 @@ msgstr "אי אפשר להוריד כשההרצאה הזו בעיבוד או מ�
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "אי אפשר לשנות את השם בזמן עיבוד או המתנה בתור"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:112
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הורדה או יצירה של תוכן בו"
 
@@ -1169,7 +1175,7 @@ msgid "Course material"
 msgstr "חומר מהקורס"
 
 #: src/features/downloads/components/AddCoursePanel.tsx:92
-#: src/features/lectures/sidebar/NewCourseRow.tsx:44
+#: src/features/lectures/sidebar/NewCourseRow.tsx:49
 msgid "Course name…"
 msgstr "שם הקורס…"
 
@@ -1195,7 +1201,7 @@ msgstr "קורסים והרצאות"
 
 #: src/App.tsx:39
 #: src/features/downloads/DownloadsView.tsx:366
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:51
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:87
 #: src/features/search/SearchView.tsx:237
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1918,7 +1924,7 @@ msgstr "הרצאות בלבד, בכל הקורסים"
 msgid "Lectures only, in the courses I choose"
 msgstr "הרצאות בלבד, בקורסים שאבחר"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:132
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:136
 msgid "Lectures you marked done"
 msgstr "הרצאות שסיימת"
 
@@ -1938,7 +1944,7 @@ msgstr "טעינת הגרסה החדשה"
 msgid "Load the FastStudy folder"
 msgstr "טעינת התיקייה של FastStudy"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:47
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:83
 msgid "Loading courses…"
 msgstr "טוען קורסים…"
 
@@ -2005,7 +2011,7 @@ msgstr "דורש את אפליקציית שולחן העבודה"
 msgid "New"
 msgstr "חדשים"
 
-#: src/features/lectures/sidebar/NewCourseRow.tsx:54
+#: src/features/lectures/sidebar/NewCourseRow.tsx:59
 msgid "New course"
 msgstr "קורס חדש"
 
@@ -2073,7 +2079,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet"
 msgstr "אין עדיין הרצאות"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:55
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:91
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
@@ -2341,6 +2347,10 @@ msgstr "לא חובה"
 #: src/features/downloads/utils/sections.ts:25
 msgid "Other"
 msgstr "אחר"
+
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:107
+msgid "Other courses"
+msgstr "קורסים נוספים"
 
 #: src/features/downloads/components/NewView.tsx:210
 #: src/features/downloads/components/SectionGroup.tsx:49

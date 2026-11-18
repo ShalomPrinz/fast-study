@@ -257,7 +257,7 @@ page) while the tree still has it, else `/`.
 
 `LecturesTreePane` renders beside `/`, the overview, an assignment and `/:course/:lecture` only. It holds the
 `CourseGroup`s and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
-lecture row can prompt. With no course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. Before the first load settles, `isCourseTreeLoading` centres a labelled `.spinner` there instead. An expanded course opens with an Overview row; the course header only toggles.
+lecture row can prompt. With no course, `courseLoadNotice` centres a `.tree-pane-empty` note in the nav: one pointing at Downloads and `New course` once a load succeeds, or "Courses failed to load." (`.tree-pane-empty--failed`, on `--danger-soft` since `--danger` text on the dark pane is unreadable) whenever the latest load failed. Before the first load settles, `isCourseTreeLoading` centres a labelled `.spinner` there instead. Only one course is open: it sits at the top with its header (name and chevron, "N of M studied" and a 4px progress bar of the lectures marked done) and an Overview row first; every other course is a button in the flat "Other courses" list (`.other-courses`) with its `done/total`. Clicking one swaps it to the top and the previous one drops into the list. The pane owns the choice (`utils/openCourse.ts`): remembered in `localStorage` (`fastStudyOpenCourse`, every access in try/catch) and resolved against the tree, falling back to the first course when the remembered one is gone. Navigating into a course by route (search, deep link) opens it; a rename keeps the course open under its new name. The chevron collapses the open course's lists only until it is swapped out. Creating a course with `New course` opens it (remembered too) and drops the previous one into the list; drag-and-drop leaves the open course alone (rows exist only in the open course). A rename keeps its old name as a fallback until the tree holds the new one, so no other course jumps up meanwhile.
 
 The home route `/` is an `EmptyCard` asking to pick a lecture. With no course, `courseLoadNotice`
 (`shared/utils/`, shared with Search) swaps it for a hint to add one (`.main-view--no-courses`) once a load
@@ -288,16 +288,15 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
   on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through
   `sortLectures`. Everything reads it directly, no props
   or outlet context.
-- `CourseGroup` owns `expanded`, `recExpanded` and `assignExpanded`, so the sub-groups survive collapsing the
-  course. It auto-expands when one of its lectures, its overview or an assignment is the open route (deep links).
+- `CourseGroup` renders only the open course and owns `expanded` (reset on each swap), `recExpanded` and `assignExpanded`, so the sub-groups survive collapsing the
+  course. It opens the Recitations/Assignments group holding the open route (deep links).
 - `AssignmentsGroup` lists the course's `assignments` after the recitations, styled like them, whatever
   `lectures_only` says and never folded into the lectures. Nothing creates one by hand, so the group
   shows only once one is listed or downloading, the latter's loading row inside it. Rows carry ✓/arrow
   marks; the header's done/total count is hidden while none is listed.
-- The pane unmounts on other routes; only each course's expansion (a module map in
-  `utils/courseExpansion.ts`, moved to the new name on a course rename) and the nav's scroll position
-  survive, the latter saved on each scroll because a detached nav reads 0. The auto-expand re-runs on
-  remount: keeping the open page's course visible deliberately beats restoring an explicit collapse.
+- The pane unmounts on other routes; only each course's Recitations/Assignments expansion (a module map in
+  `utils/courseExpansion.ts`, moved to the new name on a course rename), the open course and the nav's scroll position
+  survive, the latter saved on each scroll because a detached nav reads 0. The open course is read from `localStorage`.
 - `CourseGroupContext` and `LectureListContext` reach the recursive rows without prop-drilling;
   `AddLectureInput` renders only in the list being added to.
 - New course/lecture/recitation inputs stay open with the typed text until the create succeeds

@@ -74,7 +74,7 @@ describe('AddCoursePanel', () => {
   it('checks a pasted URL once however often Enter is pressed, then creates once', async () => {
     let answer!: () => void
     checkCourseUrl.mockReturnValue(new Promise<void>((r) => (answer = r)))
-    createCourse.mockResolvedValue(undefined)
+    createCourse.mockResolvedValue('Algebra')
     const { view, paste } = await pasteUrl()
     fireEvent.keyDown(paste, { key: 'Enter' })
     fireEvent.keyDown(paste, { key: 'Enter' })
@@ -93,7 +93,7 @@ describe('AddCoursePanel', () => {
 
   it('saves a refused paste anyway and creates unchecked', async () => {
     checkCourseUrl.mockRejectedValue(new Error('refused'))
-    createCourse.mockResolvedValue(undefined)
+    createCourse.mockResolvedValue('Algebra')
     const { view, paste } = await pasteUrl()
     await act(async () => fireEvent.keyDown(paste, { key: 'Enter' }))
     const saveAnyway = view.container.querySelector('.course-check-save-anyway') as HTMLElement

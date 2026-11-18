@@ -147,6 +147,12 @@ msgstr "{0} found"
 msgid "{0} is installed — downloading is ready to use."
 msgstr "{0} is installed — downloading is ready to use."
 
+#. placeholder {0}: progress.done
+#. placeholder {1}: progress.total
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:140
+msgid "{0} of {1} studied"
+msgstr "{0} of {1} studied"
+
 #. placeholder {0}: provider.displayName
 #: src/features/settings/components/ApiKeyField.tsx:127
 msgid "{0} rejected this key. Generate a new one in its console."
@@ -533,8 +539,8 @@ msgstr "Add a lecture or recitation"
 msgid "Add figures to the summary"
 msgstr "Add figures to the summary"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:144
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:145
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:157
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:158
 msgid "Add lecture"
 msgstr "Add lecture"
 
@@ -752,7 +758,7 @@ msgstr "Can't download while this lecture is being processed or waiting in line"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "Can't rename while it's being processed or waiting in line"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:112
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "Can't rename while something in this course is being processed, downloaded or generated"
 
@@ -1169,7 +1175,7 @@ msgid "Course material"
 msgstr "Course material"
 
 #: src/features/downloads/components/AddCoursePanel.tsx:92
-#: src/features/lectures/sidebar/NewCourseRow.tsx:44
+#: src/features/lectures/sidebar/NewCourseRow.tsx:49
 msgid "Course name…"
 msgstr "Course name…"
 
@@ -1195,7 +1201,7 @@ msgstr "Courses and lectures"
 
 #: src/App.tsx:39
 #: src/features/downloads/DownloadsView.tsx:366
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:51
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:87
 #: src/features/search/SearchView.tsx:237
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1918,7 +1924,7 @@ msgstr "Lectures only, in every course"
 msgid "Lectures only, in the courses I choose"
 msgstr "Lectures only, in the courses I choose"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:132
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:136
 msgid "Lectures you marked done"
 msgstr "Lectures you marked done"
 
@@ -1938,7 +1944,7 @@ msgstr "Load new version"
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:47
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:83
 msgid "Loading courses…"
 msgstr "Loading courses…"
 
@@ -2005,7 +2011,7 @@ msgstr "Needs the desktop app"
 msgid "New"
 msgstr "New"
 
-#: src/features/lectures/sidebar/NewCourseRow.tsx:54
+#: src/features/lectures/sidebar/NewCourseRow.tsx:59
 msgid "New course"
 msgstr "New course"
 
@@ -2073,7 +2079,7 @@ msgstr "No Lectures"
 msgid "No lectures yet"
 msgstr "No lectures yet"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:55
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:91
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
@@ -2341,6 +2347,10 @@ msgstr "Optional"
 #: src/features/downloads/utils/sections.ts:25
 msgid "Other"
 msgstr "Other"
+
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:107
+msgid "Other courses"
+msgstr "Other courses"
 
 #: src/features/downloads/components/NewView.tsx:210
 #: src/features/downloads/components/SectionGroup.tsx:49

@@ -8,7 +8,7 @@ import CreateStatus from '@/features/lectures/components/CreateStatus'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import './NewCourseRow.css'
 
-export default function NewCourseRow() {
+export default function NewCourseRow({ onCreated }: { onCreated: (name: string) => void }) {
   const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
   const [addingCourse, setAddingCourse] = useState(false)
@@ -18,8 +18,13 @@ export default function NewCourseRow() {
   async function commit() {
     const name = addCourseEdit.value.trim()
     if (!name) return cancel()
-    if (!(await attempt.run(() => createCourse(name)))) return
+    let created = ''
+    const ok = await attempt.run(async () => {
+      created = await createCourse(name)
+    })
+    if (!ok) return
     close()
+    onCreated(created)
     await refreshCourses()
   }
 

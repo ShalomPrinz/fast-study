@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMatch, useNavigate } from 'react-router-dom'
-import { useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import type { ExpandHandle } from '@/types'
 import { renameCourse } from '@/services/database'
 import { toastFailure } from '@/shared/utils/failure'
@@ -27,7 +27,7 @@ import Chevron from '@/shared/components/Chevron'
 // Reflects and mutates the expand state: toggle on click, open when adding a lecture.
 export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { t } = useLingui()
-  const { course, add } = useCourseGroup()
+  const { course, add, onRenamed } = useCourseGroup()
   const { selected, onSelect } = useSelection()
   const { refreshUntil } = useCourseTreeContext()
   const { status } = useRunnerStatus()
@@ -66,6 +66,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           const effective = await renameCourse(course.name, name)
           // Before the refreshed tree remounts the group under its new name.
           moveSavedExpansion(course.name, effective)
+          onRenamed(course.name, effective)
           return effective
         },
         refresh: (effective) => refreshUntil((tree) => !courseNotFound(tree, effective)),
@@ -113,7 +114,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           }
         >
           <button
-            className="course-toggle"
+            className="course-toggle course-toggle--head"
             onClick={(e) => {
               if (e.shiftKey) {
                 if (!renameLocked) startRenaming(e)
@@ -121,21 +122,33 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
               } else expand.toggle()
             }}
           >
-            <span className="chevron">
-              <Chevron open={expand.isOpen} />
-            </span>
-            <span className="course-name" dir="auto">
-              {pendingName ?? course.name}
+            <span className="course-head-title">
+              <span className="course-name" dir="auto">
+                {pendingName ?? course.name}
+              </span>
+              <span className="chevron">
+                <Chevron open={expand.isOpen} />
+              </span>
             </span>
             {progress.total > 0 && (
-              <Tooltip
-                content={renameLocked ? undefined : t`Lectures you marked done`}
-                placement="inline-end"
-              >
-                <span className="course-count">
-                  {progress.done}/{progress.total}
+              <>
+                <Tooltip
+                  content={renameLocked ? undefined : t`Lectures you marked done`}
+                  placement="inline-end"
+                >
+                  <span className="course-head-sub">
+                    <Trans>
+                      {progress.done} of {progress.total} studied
+                    </Trans>
+                  </span>
+                </Tooltip>
+                <span className="course-progress" aria-hidden="true">
+                  <span
+                    className="course-progress-fill"
+                    style={{ inlineSize: `${(progress.done / progress.total) * 100}%` }}
+                  />
                 </span>
-              </Tooltip>
+              </>
             )}
           </button>
         </Tooltip>
