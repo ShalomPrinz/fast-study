@@ -24,6 +24,8 @@ const listeners = new Set();
 let shown = null;
 let onShown = () => {};
 let restarting = null;
+// The version `update-downloaded` reported; read through `updateVersion()`, which hides it unless `shown` is `downloaded`.
+let downloadedVersion = null;
 // macOS only: the update Restart now swaps in — `{bundle, staged, stateDir}`.
 let macStaged = null;
 
@@ -56,6 +58,11 @@ function startUpdater(log, onPhase, stateDir) {
   autoUpdater.autoInstallOnAppQuit = !MAC;
   // The app ships only the full `nsis` installer, never `nsis-web`.
   autoUpdater.disableWebInstaller = true;
+
+  // Registered before `wirePhases` so the version is set by the time the `downloaded` push reaches the window.
+  autoUpdater.on('update-downloaded', (info) => {
+    downloadedVersion = info?.version ?? null;
+  });
 
   // The launch screen's phases describe the launch check only; once a recheck has run they freeze.
   let rechecked = false;
@@ -225,6 +232,10 @@ async function swapPending(record, dir, stateDir, log) {
 function updateState() {
   return shown;
 }
+/** The downloaded update's version while `updateState()` is `'downloaded'`, otherwise `null`. */
+function updateVersion() {
+  return shown === 'downloaded' ? downloadedVersion : null;
+}
 function onUpdateState(listener) {
   onShown = listener;
 }
@@ -302,4 +313,11 @@ function restartToUpdate(stop, recover, log) {
   return restarting;
 }
 
-module.exports = { installPending, startUpdater, updateState, onUpdateState, restartToUpdate };
+module.exports = {
+  installPending,
+  startUpdater,
+  updateState,
+  updateVersion,
+  onUpdateState,
+  restartToUpdate,
+};

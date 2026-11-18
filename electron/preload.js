@@ -50,6 +50,8 @@ const api = {
   // installs a downloaded update and relaunches, or rejects — see docs/UPDATES.md.
   updates: {
     snapshot: () => ipcRenderer.invoke('faststudy:update-state'),
+    // The downloaded update's version, `null` unless the state is `'downloaded'`; set before that push, so read it on the push.
+    version: () => ipcRenderer.invoke('faststudy:update-version'),
     // Returns the unsubscribe, for an effect's cleanup.
     subscribe: (callback) => {
       const listener = (_event, state) => callback(state);

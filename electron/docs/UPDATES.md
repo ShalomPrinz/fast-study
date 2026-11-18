@@ -23,7 +23,7 @@ app quits, and macOS at the next launch.
 Every check, rechecks included, feeds the app window through `window.faststudy.updates`: only
 `downloading` and `downloaded` cross the bridge, everything else is `null`, and the frontend's
 sidebar shows "Downloading update…" or "Restart now" from them. Main pushes each change on
-`faststudy:update`, and `snapshot()` answers a listener that subscribed late. An unpackaged run never
+`faststudy:update`, and `snapshot()` answers a listener that subscribed late. `version()` answers the downloaded release's version (`'1.2.3'`), `null` in any other state; it is set before the `downloaded` push, so a subscriber reads it on that push. An unpackaged run never
 starts the updater, so it stays `null`, and `packaged: false` tells the frontend so.
 
 The recheck timer is `unref`'d, skips a tick while a check is still running or an update is downloading (a mid-download check

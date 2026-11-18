@@ -23,6 +23,7 @@ const {
   installPending,
   startUpdater,
   updateState,
+  updateVersion,
   onUpdateState,
   restartToUpdate,
 } = require('./updater');
@@ -851,6 +852,7 @@ function createWindow(checks) {
   // The app's update row; a snapshot first, since a push can land before the frontend subscribes.
   onUpdateState((state) => mainWindow?.webContents.send('faststudy:update', state));
   ipcMain.handle('faststudy:update-state', () => updateState());
+  ipcMain.handle('faststudy:update-version', () => updateVersion());
   // The same for a dead service: a page that loads after the push reads what it missed here.
   ipcMain.handle('faststudy:services-stopped', () => [...stopped]);
   // A failed install has already stopped the services: back to the launch screen and boot them again.

@@ -42,7 +42,7 @@ frontend's initial language when the profile holds no pick ([`I18N.md`](../../fr
 result is current ([error reporting](#error-reporting-sentry)).
 
 `packaged` is `app.isPackaged`; `updates` is the sidebar's update row —
-`snapshot()`, `subscribe(callback)` (returns its unsubscribe) and `restart()` ([`UPDATES.md`](UPDATES.md)).
+`snapshot()`, `version()`, `subscribe(callback)` (returns its unsubscribe) and `restart()` ([`UPDATES.md`](UPDATES.md)).
 
 `power` is `{ subscribe(callback) }`, returning its unsubscribe: `powerMonitor`'s `'suspend'` and
 `'resume'` pushed on `faststudy:power`, so the frontend can hold back the service banner Chromium's

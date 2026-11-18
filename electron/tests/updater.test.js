@@ -120,6 +120,21 @@ test('the app window sees every check, rechecks included, and only its two phase
   assert.equal(updateState(), 'downloaded');
 });
 
+test('the downloaded version is readable on the downloaded push and null before', async (t) => {
+  const { fake, startUpdater, updateVersion, onUpdateState, log } = load(t);
+  const seen = [];
+  onUpdateState((state) => seen.push([state, updateVersion()]));
+  startUpdater(log);
+  assert.equal(updateVersion(), null);
+  fake.emit('update-available', { version: '9.9.9' });
+  fake.emit('update-downloaded', { version: '9.9.9' });
+  assert.deepEqual(seen, [
+    ['downloading', null],
+    ['downloaded', '9.9.9'],
+  ]);
+  assert.equal(updateVersion(), '9.9.9');
+});
+
 test('restart refuses before an update is downloaded', async (t) => {
   const { fake, startUpdater, restartToUpdate, log } = load(t);
   let stopped = false;
