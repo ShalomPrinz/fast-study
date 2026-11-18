@@ -96,7 +96,7 @@ let stealFocus = false;
 const children = [];
 // In-flight SIGTERM→SIGKILL escalations; every exit path waits on them, or the timer dies with main.
 const reaping = new Set();
-let logStream = null;
+let logFd = null;
 let mainWindow = null;
 // The window's latest normal size and maximized flag, kept current so the `exit` path can save it
 // without touching a window that may already be going away.
@@ -196,7 +196,15 @@ function log(source, line) {
     `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
     `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
   const text = `${stamp} [${source}] ${line}`;
-  logStream?.write(`${text}\n`);
+  // Synchronous: a line written at quit (the updater's `install helper started`) must be on disk
+  // before the process exits, which a buffered stream does not guarantee.
+  if (logFd !== null) {
+    try {
+      fs.writeSync(logFd, `${text}\n`);
+    } catch {
+      // A full disk or a closed fd must not take the launcher down with it.
+    }
+  }
   if (!app.isPackaged) console.log(text);
 }
 
@@ -204,7 +212,7 @@ function log(source, line) {
 // the whole story — appending would grow without bound across a machine's lifetime.
 function openLog() {
   fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
-  logStream = fs.createWriteStream(LOG_FILE, { flags: 'w' });
+  logFd = fs.openSync(LOG_FILE, 'w');
   log('main', `FastStudy ${app.getVersion()} — electron ${process.versions.electron}`);
 }
 
