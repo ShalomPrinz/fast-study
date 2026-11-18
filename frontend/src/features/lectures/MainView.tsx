@@ -44,6 +44,7 @@ import { lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import FiguresWarning from '@/features/lectures/components/FiguresWarning'
 import { figuresWarning } from '@/features/lectures/utils/figuresWarning'
+import RenamableTitle from '@/features/lectures/components/RenamableTitle'
 import StudyDoneButton from '@/features/lectures/components/StudyDoneButton'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import StudyWithAiCard, {
@@ -521,7 +522,14 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
     >
       <PageHeader
         eyebrow={course}
-        title={lecture}
+        title={
+          <RenamableTitle
+            key={`${course}/${lecture}/${kind}`}
+            course={course}
+            lecture={lecture}
+            kind={kind}
+          />
+        }
         meta={metaItems.map((item, i) => (
           <Fragment key={i}>
             {i > 0 && <PageHeaderDot />}

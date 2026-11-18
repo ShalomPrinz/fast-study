@@ -303,7 +303,9 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
 - New course/lecture/recitation inputs stay open with the typed text until the create succeeds
   (`useCreateAttempt`): `CreateStatus` shows "Creating…" and blocks a second submit, then the refusal in place.
 
-Shift-click renames a row inline. A running
+Shift-click on a sidebar row, or a click on the lecture page's title (or the pencil beside it), renames it
+inline through one hook (`useLectureRename`); `MainView` keys the title by `course/lecture/kind`, so
+navigating away discards an open box. A running
 or queued lecture, and a course holding one, a generating overview (`/status`'s `overview_running`) or a
 non-terminal download job or a `running`/`paused` section run (`useCourseDownloading`, extension jobs
 included), refuse the rename

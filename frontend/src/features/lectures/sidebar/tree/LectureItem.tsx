@@ -1,13 +1,10 @@
 import Tooltip from '@/shared/components/Tooltip'
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { renameLecture } from '@/services/database'
-import { toastFailure } from '@/shared/utils/failure'
 import { toast } from '@/services/toaster'
+import { useLectureRename } from '@/features/lectures/hooks/useLectureRename'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
-import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import {
   findLecture,
   lectureTrack,
@@ -17,9 +14,6 @@ import {
 import { holdsFile } from '@/features/lectures/utils/lectureProgress'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import Icon from '@/shared/components/Icon'
-import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
-import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
-import { lectureNotFound } from '@/shared/utils/notFound'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { usePendingUpload } from '@/features/lectures/sidebar/PendingUploadModal'
 import { useCourseGroup } from './CourseGroupContext'
@@ -33,22 +27,20 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
   const list = useLectureListKind()
   const { kind } = lecture
   const { selected, onSelect } = useSelection()
-  const { courses, refreshUntil } = useCourseTreeContext()
-  const { status } = useRunnerStatus()
+  const { courses } = useCourseTreeContext()
   const upload = usePendingUpload()
 
-  const [renaming, setRenaming] = useState(false)
-  const [pendingName, setPendingName] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
-  const renameEdit = useInlineEdit(renaming ? lecture.name : null)
 
   const isSelected =
     selected?.course === course.name &&
     selected?.lecture === lecture.name &&
     selected?.kind === kind
 
-  // Running or queued: the same set that locks a rename, and the one the mark gives way to a spinner for.
-  const renameLocked = isLectureRenameLocked(status, course.name, lecture.name, kind)
+  const rename = useLectureRename(course.name, lecture.name, kind, isSelected)
+  // The same set that locks a rename is the one the mark gives way to a spinner for.
+  const renameLocked = rename.locked
+  const pendingName = rename.pendingName
   const current = trackProgress(
     list === 'recitation' ? recitationTrack(course) : lectureTrack(course),
   ).current
@@ -57,35 +49,6 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
     : current?.name === lecture.name && current.kind === kind
       ? 'current'
       : 'todo'
-
-  function startRenaming(e: React.MouseEvent) {
-    e.preventDefault()
-    setRenaming(true)
-    renameEdit.setValue(lecture.name)
-  }
-
-  async function commitRename() {
-    const name = renameEdit.value.trim()
-    setRenaming(false)
-    renameEdit.setValue('')
-    // A run may have started while the input was open.
-    if (!name || name === lecture.name || renameLocked) return
-    try {
-      await renameAndFollow({
-        typed: name,
-        rename: () => renameLecture(course.name, lecture.name, name, kind),
-        refresh: (effective) =>
-          refreshUntil((tree) => !lectureNotFound(tree, course.name, effective, kind)),
-        // The database may sanitize the typed name, so the page follows the folder it answers with.
-        follow: (effective) => {
-          if (isSelected) onSelect(course.name, effective, kind, { replace: true })
-        },
-        show: setPendingName,
-      })
-    } catch (e) {
-      toastFailure(e)
-    }
-  }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
@@ -110,16 +73,13 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
     }
   }
 
-  if (renaming) {
+  if (rename.renaming) {
     return (
       <li>
         <InlineEditInput
-          edit={renameEdit}
-          onCommit={commitRename}
-          onCancel={() => {
-            setRenaming(false)
-            renameEdit.setValue('')
-          }}
+          edit={rename.edit}
+          onCommit={rename.actions.commit}
+          onCancel={rename.actions.cancel}
         />
       </li>
     )
@@ -141,8 +101,8 @@ export default function LectureItem({ lecture }: { lecture: TrackItem }) {
           data-kind={kind}
           onClick={(e) => {
             if (e.shiftKey) {
-              if (!renameLocked) startRenaming(e)
-              else e.preventDefault()
+              e.preventDefault()
+              rename.actions.start()
             } else onSelect(course.name, lecture.name, kind)
           }}
           onDragOver={(e) => {

@@ -4,7 +4,7 @@ import './PageHeader.css'
 interface Props {
   // Breadcrumb line above the title — the course a lecture belongs to, and the like.
   eyebrow?: ReactNode
-  title: string
+  title: ReactNode
   // Inline facts about what the page shows; the caller separates them with `<PageHeaderDot />`.
   meta?: ReactNode
   actions?: ReactNode
