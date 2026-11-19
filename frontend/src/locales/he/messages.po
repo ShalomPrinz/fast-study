@@ -149,7 +149,9 @@ msgstr "{0} מותקן — אפשר להוריד הקלטות."
 
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
+#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:138
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:40
 msgid "{0} of {1} studied"
 msgstr "{0} מתוך {1} נלמדו"
 

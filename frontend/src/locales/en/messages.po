@@ -149,7 +149,9 @@ msgstr "{0} is installed — downloading is ready to use."
 
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
+#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:138
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:40
 msgid "{0} of {1} studied"
 msgstr "{0} of {1} studied"
 

@@ -35,6 +35,13 @@ export default function RecitationsGroup() {
           </Tooltip>
         )}
       </div>
+      {progress.total > 0 && (
+        <div className="course-head-sub">
+          <Trans>
+            {progress.done} of {progress.total} studied
+          </Trans>
+        </div>
+      )}
       <TreeProgress kind="recitation" done={progress.done} total={progress.total} />
       <ul className="lecture-list recitation-list">
         <LectureListProvider kind="recitation">

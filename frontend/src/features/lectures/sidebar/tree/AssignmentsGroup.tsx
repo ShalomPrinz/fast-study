@@ -41,6 +41,13 @@ export default function AssignmentsGroup() {
           <Trans>Assignments</Trans>
         </span>
       </div>
+      {progress.total > 0 && (
+        <div className="course-head-sub">
+          <Trans>
+            {progress.done} of {progress.total} studied
+          </Trans>
+        </div>
+      )}
       <TreeProgress kind="assignment" done={progress.done} total={progress.total} />
       <ul className="lecture-list recitation-list">
         {course.assignments.map((a, i) => (

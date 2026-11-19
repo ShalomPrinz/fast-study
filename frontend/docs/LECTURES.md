@@ -279,7 +279,7 @@ class paints its two halves). A mark is a ✓ circle in that colour when done, a
 current item, a hollow circle otherwise and a dashed one for a download placeholder; a running or queued row shows a
 spinner in its place, and a running one (not a queued one) also reads "Processing" (`isLectureRunning`). The open page is a white
 `--shadow-card` row. Marks are display-only. The course header counts lectures, the Recitations section recitations, the Assignments section assignments
-(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. All three draw the shared `TreeProgress` (4px, `--line` track) under their title, always, each with its own fill (`--ok-dot` lectures, `--accent` recitations, `--progress-assignment` assignments) and none when its total is 0.
+(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. All three draw the shared `TreeProgress` (4px, `--line` track) under their title, below the same "N of M studied" line the course header shows (same message and `.course-head-sub`), always, each with its own fill (`--ok-dot` lectures, `--accent` recitations, `--progress-assignment` assignments) and none when its total is 0.
 
 **A lectures-only course** (the tree's resolved `lectures_only`, never the setting — [SETTINGS.md](SETTINGS.md))
 has one track: `utils/courseTree.ts`'s `lectureTrack` merges its recitations into the lecture list with no
