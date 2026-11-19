@@ -1203,7 +1203,7 @@ msgstr "Courses and lectures"
 
 #: src/App.tsx:39
 #: src/features/downloads/DownloadsView.tsx:366
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:87
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:86
 #: src/features/search/SearchView.tsx:237
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1946,7 +1946,7 @@ msgstr "Load new version"
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:83
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:82
 msgid "Loading courses…"
 msgstr "Loading courses…"
 
@@ -2000,6 +2000,10 @@ msgstr "Moodle refused the request."
 #: src/shared/components/OverflowMenu.tsx:72
 msgid "More actions"
 msgstr "More actions"
+
+#: src/features/lectures/sidebar/MoreCourses.tsx:33
+msgid "More courses ({count})"
+msgstr "More courses ({count})"
 
 #: src/features/downloads/components/ManualDownload.tsx:174
 msgid "Name in the course"
@@ -2081,7 +2085,7 @@ msgstr "No Lectures"
 msgid "No lectures yet"
 msgstr "No lectures yet"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:91
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:90
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
@@ -2349,10 +2353,6 @@ msgstr "Optional"
 #: src/features/downloads/utils/sections.ts:25
 msgid "Other"
 msgstr "Other"
-
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:107
-msgid "Other courses"
-msgstr "Other courses"
 
 #: src/features/downloads/components/NewView.tsx:210
 #: src/features/downloads/components/SectionGroup.tsx:49

@@ -60,7 +60,7 @@
   white-space: nowrap;
 }
 
-/* Right-aligned `done/total` of a course in the "Other courses" list. */
+/* Right-aligned `done/total` of a course in the More courses panel. */
 .course-count {
   margin-inline-start: auto;
   flex-shrink: 0;

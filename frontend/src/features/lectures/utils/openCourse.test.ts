@@ -2,8 +2,10 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   firstCourseName,
   nextWanted,
+  readMoreOpen,
   readOpenCourse,
   resolveOpenCourse,
+  writeMoreOpen,
   writeOpenCourse,
 } from './openCourse'
 
@@ -53,6 +55,36 @@ describe('open course memory', () => {
     })
     expect(() => writeOpenCourse('b')).not.toThrow()
     expect(readOpenCourse()).toBeNull()
+  })
+})
+
+describe('more courses memory', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('starts collapsed and round-trips', () => {
+    const store = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+    })
+    expect(readMoreOpen()).toBe(false)
+    writeMoreOpen(true)
+    expect(readMoreOpen()).toBe(true)
+    writeMoreOpen(false)
+    expect(readMoreOpen()).toBe(false)
+  })
+
+  it('survives blocked storage', () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new Error('blocked')
+      },
+      setItem: () => {
+        throw new Error('blocked')
+      },
+    })
+    expect(() => writeMoreOpen(true)).not.toThrow()
+    expect(readMoreOpen()).toBe(false)
   })
 })
 

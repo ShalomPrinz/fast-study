@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'fastStudyOpenCourse'
+const MORE_KEY = 'fastStudyMoreCoursesOpen'
 
 // Remembers the course the tree shows open; storage failures are ignored.
 export function writeOpenCourse(name: string): void {
@@ -14,6 +15,23 @@ export function readOpenCourse(): string | null {
     return localStorage.getItem(STORAGE_KEY)
   } catch {
     return null
+  }
+}
+
+// Whether the "More courses" panel is expanded; collapsed on first run or when storage fails.
+export function readMoreOpen(): boolean {
+  try {
+    return localStorage.getItem(MORE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function writeMoreOpen(open: boolean): void {
+  try {
+    localStorage.setItem(MORE_KEY, open ? '1' : '0')
+  } catch {
+    // best effort
   }
 }
 

@@ -1203,7 +1203,7 @@ msgstr "קורסים והרצאות"
 
 #: src/App.tsx:39
 #: src/features/downloads/DownloadsView.tsx:366
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:87
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:86
 #: src/features/search/SearchView.tsx:237
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1946,7 +1946,7 @@ msgstr "טעינת הגרסה החדשה"
 msgid "Load the FastStudy folder"
 msgstr "טעינת התיקייה של FastStudy"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:83
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:82
 msgid "Loading courses…"
 msgstr "טוען קורסים…"
 
@@ -2000,6 +2000,10 @@ msgstr "Moodle דחה את הבקשה."
 #: src/shared/components/OverflowMenu.tsx:72
 msgid "More actions"
 msgstr "פעולות נוספות"
+
+#: src/features/lectures/sidebar/MoreCourses.tsx:33
+msgid "More courses ({count})"
+msgstr "קורסים נוספים ({count})"
 
 #: src/features/downloads/components/ManualDownload.tsx:174
 msgid "Name in the course"
@@ -2081,7 +2085,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet"
 msgstr "אין עדיין הרצאות"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:91
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:90
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
@@ -2349,10 +2353,6 @@ msgstr "לא חובה"
 #: src/features/downloads/utils/sections.ts:25
 msgid "Other"
 msgstr "אחר"
-
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:107
-msgid "Other courses"
-msgstr "קורסים נוספים"
 
 #: src/features/downloads/components/NewView.tsx:210
 #: src/features/downloads/components/SectionGroup.tsx:49
