@@ -43,7 +43,8 @@ export default function DataRootField({ value, onChange, onUnusableChange }: Pro
     return () => clearTimeout(timer)
   }, [value, onUnusableChange])
 
-  const invalid = !!onUnusableChange && (!value.trim() || probe.kind === 'unusable')
+  const blank = !value.trim()
+  const invalid = onUnusableChange ? blank || probe.kind === 'unusable' : blank
 
   return (
     <div className="settings-field">
@@ -51,6 +52,12 @@ export default function DataRootField({ value, onChange, onUnusableChange }: Pro
         <label htmlFor="data-root">
           <Trans>Data folder</Trans>
         </label>
+        {/* The wall's section mark already says Required; on /settings this explains the disabled Approve. */}
+        {blank && !onUnusableChange && (
+          <span className="settings-required">
+            <Trans>Required</Trans>
+          </span>
+        )}
       </div>
       <p className="settings-hint">
         <Trans>

@@ -140,7 +140,7 @@ the auto-retry switch, error reports and the privacy answer, the Drive toggle, a
 (`utils/autosave.ts`) is `buildPatch` minus the held entries, so a patch holds only what changed. Typed or sensitive
 entries save through their own **Approve** (`ApproveRow`, hidden until the entry has an unsaved edit; Enter in its text box
 approves too): each API key, the data folder, the Drive folder, the two auto-retry numbers and a pasted university address. `approvePatch`
-stays empty while the entry is blank or invalid, so that field alone waits (Approve disabled, its hint shown) while every
+stays empty while the entry is blank or invalid, so that field alone waits (Approve disabled, its hint shown; a blank data folder shows the red `Required` chip) while every
 other change still saves: Drive turned on with no stored folder waits, and approving the folder stores both together.
 Approving the data folder while runs are in flight opens the split-runs `ConfirmModal` (`runsAtRisk`); Cancel leaves the
 edit unsaved. Auto-remove keeps its own Apply and confirm.
