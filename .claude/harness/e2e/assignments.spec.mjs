@@ -61,10 +61,11 @@ test('assignments are listed by section, downloaded into the tree and opened by 
 
   // The tree's group lists the assignment, and its view lists both files.
   await page.goto('/');
-  await page.locator('.course-toggle', { hasText: COURSE }).first().click();
-  const group = page.locator('.recitations-toggle', { hasText: 'Assignments' });
-  await expect(group).toBeVisible();
-  await group.click();
+  // Only one course is open at a time; the rest are rows under "Other courses".
+  await page.locator('.other-course').first().waitFor();
+  const other = page.locator('.other-course', { has: page.getByText(COURSE, { exact: true }) });
+  if (await other.count()) await other.click();
+  await expect(page.locator('.recitations-title', { hasText: 'Assignments' })).toBeVisible();
   await expect(page.getByTestId('assignment')).toHaveText([FIRST.name]);
   await page.getByTestId('assignment').click();
   const view = page.getByTestId('assignment-view');

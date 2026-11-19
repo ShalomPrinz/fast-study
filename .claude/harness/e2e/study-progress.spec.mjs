@@ -45,8 +45,15 @@ test('lectures marked done move the current arrow, the counts and the overview b
   const row = (name, kind = 'lecture') =>
     group.locator(`[data-testid="lecture"][data-lecture="${name}"][data-kind="${kind}"]`);
   const mark = (name, kind) => row(name, kind).locator('.lecture-mark');
-  const lectureCount = group.locator('.course-header .course-count');
-  const recitationCount = group.locator('.recitations-header .course-count');
+  const lectureCount = group.locator('.course-header .course-head-sub');
+  const studied = (done, total) => `${done} of ${total} studied`;
+  // The bars are aria-hidden spans whose fill width is the done/total ratio.
+  const fillPct = (selector) =>
+    group.locator(selector).evaluate((el) => parseFloat(el.style.inlineSize));
+  const lectureFill = '.tree-progress-fill--lecture';
+  const recitationFill = '.recitations-group .tree-progress-fill--recitation';
+  const expectFill = (selector, ratio) =>
+    expect.poll(() => fillPct(selector)).toBeCloseTo(ratio * 100, 1);
 
   async function toggleDone(name, kind, to) {
     await expect(view).toHaveAttribute('data-lecture', name);
@@ -58,7 +65,8 @@ test('lectures marked done move the current arrow, the counts and the overview b
 
   await page.goto(lecturePath('שיעור 1'));
   await expect(mark('שיעור 1')).toHaveClass(/lecture-mark--current/);
-  await expect(lectureCount).toHaveText(`0/${LECTURES}`);
+  await expect(lectureCount).toHaveText(studied(0, LECTURES));
+  await expectFill(lectureFill, 0);
   await toggleDone('שיעור 1', 'lecture', true);
   await row('שיעור 3').click();
   await toggleDone('שיעור 3', 'lecture', true);
@@ -67,9 +75,12 @@ test('lectures marked done move the current arrow, the counts and the overview b
   await expect(mark('שיעור 3')).toHaveClass(/lecture-mark--done/);
   await expect(mark('שיעור 2')).toHaveClass(/lecture-mark--current/);
   // Strict: only the first gap carries the arrow, never a later not-done lecture.
-  await expect(group.locator('.lecture-mark--current')).toHaveCount(1);
+  await expect(
+    group.locator('[data-testid="lecture"][data-kind="lecture"] .lecture-mark--current'),
+  ).toHaveCount(1);
   await expect(mark('שיעור 4')).toHaveClass(/lecture-mark--todo/);
-  await expect(lectureCount).toHaveText(`2/${LECTURES}`);
+  await expect(lectureCount).toHaveText(studied(2, LECTURES));
+  await expectFill(lectureFill, 2 / LECTURES);
 
   await group.locator('.course-overview-row').click();
   await page.getByRole('button', { name: 'Current lecture' }).click();
@@ -77,10 +88,10 @@ test('lectures marked done move the current arrow, the counts and the overview b
   await expect(view).toHaveAttribute('data-kind', 'lecture');
 
   await page.goto(lecturePath(RECITATION, 'recitation'));
-  await expect(recitationCount).toHaveText('0/1');
+  await expectFill(recitationFill, 0);
   await toggleDone(RECITATION, 'recitation', true);
   await expect(mark(RECITATION, 'recitation')).toHaveClass(/lecture-mark--done/);
-  await expect(recitationCount).toHaveText('1/1');
+  await expectFill(recitationFill, 1);
 
   await group.locator('.course-overview-row').click();
   const recitationButton = page.getByRole('button', { name: 'Current recitation' });
@@ -95,7 +106,8 @@ test('lectures marked done move the current arrow, the counts and the overview b
   await toggleDone('שיעור 3', 'lecture', false);
   await expect(mark('שיעור 3')).toHaveClass(/lecture-mark--todo/);
   await expect(mark('שיעור 2')).toHaveClass(/lecture-mark--current/);
-  await expect(lectureCount).toHaveText(`1/${LECTURES}`);
+  await expect(lectureCount).toHaveText(studied(1, LECTURES));
+  await expectFill(lectureFill, 1 / LECTURES);
   await expect(page.locator('.Toastify__toast--error')).toHaveCount(0);
 
   // A lecture in flight shows a spinner in place of its mark, then its mark again once it settles.

@@ -12,7 +12,10 @@ test.afterEach(async () => {
   await reset();
 });
 
-const courseNames = (page) => page.locator('.course-group .course-header .course-name');
+// The open course's header name, or the name span inside any other course's button under "Other courses".
+const courseNames = (page) =>
+  page.locator('.course-group .course-header .course-name, .other-course .course-name');
+const PIPELINE = /^hb-pipeline$/;
 
 test('the first-run wall takes both keys and a data folder, then opens the app', async ({
   page,
@@ -50,7 +53,7 @@ test('the first-run wall takes both keys and a data folder, then opens the app',
   await submit.click();
 
   await expect(wallView).toHaveCount(0);
-  await expect(courseNames(page).filter({ hasText: /^hb-pipeline$/ })).toBeVisible();
+  await expect(courseNames(page).filter({ hasText: PIPELINE })).toBeVisible();
   const { body: settings } = await call(`${DATABASE}/settings`);
   expect(settings).toMatchObject({
     data_root: harness.data,
@@ -63,7 +66,7 @@ test('switching the data folder in settings re-points the tree without a reload'
   page,
 }) => {
   await page.goto('/');
-  await expect(courseNames(page).filter({ hasText: /^hb-pipeline$/ })).toBeVisible();
+  await expect(courseNames(page).filter({ hasText: PIPELINE })).toBeVisible();
   // Settings and Lectures are the sidebar's own rows: client-side navigation, never a reload.
   const switchTo = async (root) => {
     await page.locator('.sidebar-nav-block a[href="/settings"]').click();
@@ -79,6 +82,6 @@ test('switching the data folder in settings re-points the tree without a reload'
   await expect(courseNames(page)).toHaveCount(0);
 
   await switchTo(harness.data);
-  await expect(courseNames(page).filter({ hasText: /^hb-pipeline$/ })).toBeVisible();
+  await expect(courseNames(page).filter({ hasText: PIPELINE })).toBeVisible();
   await expect(page.locator('.tree-pane-empty')).toHaveCount(0);
 });
