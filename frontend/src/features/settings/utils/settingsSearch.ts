@@ -1,4 +1,4 @@
-// One searchable piece of the page: a text node, or a `<select>` whose option text counts as one hit.
+// One searchable piece of the page: a text node, or a dropdown whose option text counts as one hit.
 export interface SearchSource {
   text: string
   whole?: boolean

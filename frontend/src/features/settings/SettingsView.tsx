@@ -24,6 +24,7 @@ import { AI_PROVIDER_IDS, AI_PROVIDERS, type AiProvider } from '@/features/lectu
 import { useNotify } from '@/shared/hooks/useNotify'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
+import Select from '@/shared/components/Select'
 import ApiKeyField from './components/ApiKeyField'
 import SummaryModelsField from './components/SummaryModelsField'
 import BrowserPrereqField from './components/BrowserPrereqField'
@@ -517,16 +518,16 @@ export default function SettingsView() {
                     <Trans>When a new video arrives</Trans>
                   </label>
                 </div>
-                <select
+                <Select
                   id="auto-run"
-                  className="settings-select"
                   value={form.autoRun}
-                  onChange={(e) => setForm({ ...form, autoRun: e.target.value as AutoRun })}
-                >
-                  <option value="full">{t`Run the whole pipeline`}</option>
-                  <option value="audio">{t`Extract the audio only`}</option>
-                  <option value="off">{t`Do nothing — I'll start runs myself`}</option>
-                </select>
+                  onChange={(v) => setForm({ ...form, autoRun: v as AutoRun })}
+                  options={[
+                    { value: 'full', label: t`Run the whole pipeline` },
+                    { value: 'audio', label: t`Extract the audio only` },
+                    { value: 'off', label: t`Do nothing — I'll start runs myself` },
+                  ]}
+                />
                 <span className="settings-hint">
                   <Trans>
                     This applies only to work that starts on its own: a video you drop in or a video
@@ -540,18 +541,15 @@ export default function SettingsView() {
                     <Trans>AI chat provider</Trans>
                   </label>
                 </div>
-                <select
+                <Select
                   id="ai-provider"
-                  className="settings-select"
                   value={form.aiProvider}
-                  onChange={(e) => setForm({ ...form, aiProvider: e.target.value as AiProvider })}
-                >
-                  {AI_PROVIDER_IDS.map((id) => (
-                    <option key={id} value={id}>
-                      {AI_PROVIDERS[id].name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setForm({ ...form, aiProvider: v as AiProvider })}
+                  options={AI_PROVIDER_IDS.map((id) => ({
+                    value: id,
+                    label: AI_PROVIDERS[id].name,
+                  }))}
+                />
                 <span className="settings-hint">
                   <Trans>Where "Study with AI" opens a lecture's summary.</Trans>
                 </span>

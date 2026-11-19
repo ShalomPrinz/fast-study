@@ -5,6 +5,7 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import EmptyCard from '@/shared/components/EmptyCard'
 import Icon from '@/shared/components/Icon'
 import PageHeader from '@/shared/components/PageHeader'
+import Select from '@/shared/components/Select'
 import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
 import type { CourseSummary } from '@/types'
 import { useCourseSummaries } from './hooks/useCourseSummaries'
@@ -170,28 +171,13 @@ export default function SearchView() {
               autoFocus
             />
             {hasCourses && (
-              <>
-                <span className="search-field-divider" />
-                <span className="search-course">
-                  {/* The select keeps the page's direction so its reserved padding-inline-end and the
-                  chevron's inset-inline-end land on the same edge; `dir="auto"` per option instead. */}
-                  <select
-                    className="search-course-select"
-                    value={course ?? ''}
-                    onChange={(e) => selectCourse(e.target.value)}
-                    aria-label={t`Course`}
-                  >
-                    {courses.map((c) => (
-                      <option key={c.name} value={c.name} dir="auto">
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="search-course-chevron" aria-hidden="true">
-                    ▾
-                  </span>
-                </span>
-              </>
+              <Select
+                variant="chip"
+                label={t`Course`}
+                value={course ?? ''}
+                onChange={selectCourse}
+                options={courses.map((c) => ({ value: c.name, label: c.name }))}
+              />
             )}
           </div>
 

@@ -22,7 +22,7 @@
   grid-column: 1 / -1;
 }
 
-/* A dropdown whose option text matches the search: the whole control takes the match tint. */
+/* A dropdown whose option text matches the search: the whole trigger takes the match tint. */
 .settings-page .settings-search-hit {
   outline: 2px solid var(--find-tint);
   outline-offset: 2px;
@@ -44,7 +44,7 @@
    label row above it, so a trailing "Get a key" or "Required" stays over the control's end edge. */
 .settings-page .settings-label,
 .settings-page .settings-input,
-.settings-page .settings-select {
+.settings-page .select {
   max-width: 520px;
 }
 

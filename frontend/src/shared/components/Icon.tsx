@@ -26,6 +26,7 @@ export type IconName =
   | 'sparkle'
   | 'info'
   | 'question'
+  | 'book'
 
 const ExternalLinkIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -280,6 +281,19 @@ const ChevronDownIcon = () => (
   </svg>
 )
 
+// An open book; labels a course.
+const BookIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M2 3.5C3.6 3 5.9 3 8 4.2c2.1-1.2 4.4-1.2 6-.7v8.5c-1.6-.5-3.9-.5-6 .7-2.1-1.2-4.4-1.2-6-.7V3.5zM8 4.2v8.5"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 // Warning triangle — labels a non-fatal state, never a failure.
 const WarningIcon = () => (
   <svg width="11" height="11" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -393,6 +407,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   sparkle: SparkleIcon,
   info: InfoIcon,
   question: QuestionIcon,
+  book: BookIcon,
 }
 
 export default function Icon({ icon }: { icon: IconName }) {

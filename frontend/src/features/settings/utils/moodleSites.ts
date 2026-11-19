@@ -20,7 +20,7 @@ export const MOODLE_SITE_PRESETS: MoodleSitePreset[] = [
 
 export const OTHER_SITE = 'other'
 
-/** The `<select>` value a stored site opens on: its preset, "Other…" for any other root, or the
+/** The dropdown value a stored site opens on: its preset, "Other…" for any other root, or the
  *  empty "no university" entry when nothing is stored — the wall preselects no university. */
 export function choiceForSite(site: string | null): string {
   if (!site) return ''

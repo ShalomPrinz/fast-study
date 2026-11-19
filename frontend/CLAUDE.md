@@ -23,7 +23,7 @@ back to those overrides, then the dev ports — see
 
 | Doc                                        | Covers                                                                            |
 | ------------------------------------------ | --------------------------------------------------------------------------------- |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)    | layering, SSE refresh, routes, error boundary, mode toggles, styling, test ids    |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)    | layering, SSE refresh, routes, error boundary, Combobox/Select, mode toggles, styling, test ids    |
 | [SERVICES.md](docs/SERVICES.md)            | the boundary rule, http client and errors, each service, the bridge, URL encoding |
 | [LECTURES.md](docs/LECTURES.md)            | pipeline constants, lecture view, materials, Study with AI, runner state, sidebar, tree pane |
 | [EDITOR.md](docs/EDITOR.md)                | the summary editor: save cycle, `PdfViewer`, `MarkdownEditor`                     |

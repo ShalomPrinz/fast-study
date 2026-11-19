@@ -1,4 +1,4 @@
-/* The page's subject: one raised field carrying the query and, behind a divider, the course it is
+/* The page's subject: one raised field carrying the query and, at its end, the course chip it is
    scoped to. */
 .search-field {
   display: flex;
@@ -30,44 +30,6 @@
   font: inherit;
   font-size: var(--fs-section);
   outline: none;
-}
-
-.search-field-divider {
-  flex-shrink: 0;
-  align-self: stretch;
-  width: 1px;
-  background: var(--line);
-}
-
-.search-course {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* Native chrome off so the picker reads as a label inside the field; the chevron below replaces the
-   dropdown arrow it drops. */
-.search-course-select {
-  appearance: none;
-  max-width: 180px;
-  padding-inline: 0 var(--space-6);
-  border: none;
-  background: none;
-  color: var(--text-2);
-  font: inherit;
-  font-size: var(--fs-meta);
-  cursor: pointer;
-  /* No focus ring of its own: `.search-field:focus-within` already accents the whole field's border. */
-  outline: none;
-}
-
-.search-course-chevron {
-  position: absolute;
-  inset-inline-end: 0;
-  color: var(--text-4);
-  font-size: var(--fs-fine);
-  pointer-events: none;
 }
 
 .search-pills {

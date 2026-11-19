@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import type { CourseStructure } from '@/services/settings'
 import { setCourseLecturesOnly } from '@/services/database'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import Select from '@/shared/components/Select'
 import { toastFailure } from '@/shared/utils/failure'
 import { checklistState } from '../utils/courseStructure'
 import '@/styles/settings-form.css'
@@ -28,16 +29,16 @@ export default function CourseStructureField({
           <Trans>Course structure</Trans>
         </label>
       </div>
-      <select
+      <Select
         id="course-structure"
-        className="settings-select"
         value={value}
-        onChange={(e) => onChange(e.target.value as CourseStructure)}
-      >
-        <option value="split">{t`Lectures and recitations`}</option>
-        <option value="lectures_all">{t`Lectures only, in every course`}</option>
-        <option value="lectures_some">{t`Lectures only, in the courses I choose`}</option>
-      </select>
+        onChange={(v) => onChange(v as CourseStructure)}
+        options={[
+          { value: 'split', label: t`Lectures and recitations` },
+          { value: 'lectures_all', label: t`Lectures only, in every course` },
+          { value: 'lectures_some', label: t`Lectures only, in the courses I choose` },
+        ]}
+      />
       <span className="settings-hint">
         <Trans>
           A lectures-only course lists its recitations among its lectures, and everything you add to

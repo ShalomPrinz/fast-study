@@ -5,8 +5,8 @@ const CURRENT_HIGHLIGHT = 'settings-search-current'
 export const SELECT_HIT = 'settings-search-hit'
 export const SELECT_CURRENT = 'settings-search-hit--current'
 
-// A match placed in the DOM: a range inside one text node, or a whole `<select>`.
-export type DomMatch = { range: Range } | { select: HTMLSelectElement }
+// A match placed in the DOM: a range inside one text node, or a whole dropdown trigger.
+export type DomMatch = { range: Range } | { select: HTMLElement }
 
 // The CSS Custom Highlight API paints Ranges without touching React's DOM; absent, only selects mark.
 const highlights = () => (typeof CSS !== 'undefined' && 'highlights' in CSS ? CSS.highlights : null)
@@ -14,16 +14,16 @@ const highlights = () => (typeof CSS !== 'undefined' && 'highlights' in CSS ? CS
 // Everything rendered under `root` as search sources, in DOM order; input values never appear.
 function collect(root: HTMLElement): {
   sources: SearchSource[]
-  nodes: (Text | HTMLSelectElement)[]
+  nodes: (Text | HTMLElement)[]
 } {
   const sources: SearchSource[] = []
-  const nodes: (Text | HTMLSelectElement)[] = []
+  const nodes: (Text | HTMLElement)[] = []
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT)
   for (let n = walker.nextNode(); n;) {
-    if (n instanceof HTMLSelectElement) {
-      sources.push({ text: Array.from(n.options, (o) => o.text).join(' '), whole: true })
+    if (n instanceof HTMLElement && n.dataset.options !== undefined) {
+      sources.push({ text: n.dataset.options.replace(/\n/g, ' '), whole: true })
       nodes.push(n)
-      // Its option text is the select's own source; do not also walk into it.
+      // Its option text is the trigger's own source; do not also walk into it.
       let last: Node = n
       while (last.lastChild) last = last.lastChild
       walker.currentNode = last
@@ -44,7 +44,7 @@ export function scan(root: HTMLElement, query: string): DomMatch[] {
   const { sources, nodes } = collect(root)
   return findMatches(sources, query).map((m: SearchMatch) => {
     const node = nodes[m.source]
-    if (node instanceof HTMLSelectElement) return { select: node }
+    if (node instanceof HTMLElement) return { select: node }
     const range = document.createRange()
     range.setStart(node, m.start)
     range.setEnd(node, m.start + m.length)
@@ -57,7 +57,9 @@ export function paint(root: HTMLElement | null, matches: DomMatch[], current: nu
   const registry = highlights()
   const ranges: Range[] = []
   const now: Range[] = []
-  root?.querySelectorAll('select').forEach((s) => s.classList.remove(SELECT_HIT, SELECT_CURRENT))
+  root
+    ?.querySelectorAll('[data-options]')
+    .forEach((s) => s.classList.remove(SELECT_HIT, SELECT_CURRENT))
   matches.forEach((m, i) => {
     if ('select' in m) {
       m.select.classList.add(SELECT_HIT)

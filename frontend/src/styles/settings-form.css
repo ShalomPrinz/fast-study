@@ -47,8 +47,7 @@
   color: var(--text-2);
 }
 
-.settings-input,
-.settings-select {
+.settings-input {
   width: 100%;
   min-width: 0;
   padding: var(--space-3) var(--space-5);
@@ -61,15 +60,8 @@
   outline: none;
 }
 
-.settings-input:focus,
-.settings-select:focus {
+.settings-input:focus {
   border-color: var(--accent);
-}
-
-/* A field switched off by the checkbox above it stays readable but visibly inert. */
-.settings-select:disabled {
-  color: var(--text-4);
-  cursor: not-allowed;
 }
 
 /* A path and a key are LTR strings whatever the UI language is, and they must not be reordered. */

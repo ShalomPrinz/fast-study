@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { filterOptions } from '@/shared/utils/filterOptions'
+import { nextIndex } from '@/shared/utils/listbox'
 import './Combobox.css'
 
 interface Props {
@@ -69,10 +70,7 @@ export default function Combobox({
       if (shown.length === 0) return
       e.preventDefault()
       if (!open) return show()
-      const step = e.key === 'ArrowDown' ? 1 : -1
-      setActive((i) =>
-        i < 0 && step < 0 ? shown.length - 1 : (i + step + shown.length) % shown.length,
-      )
+      setActive((i) => nextIndex(e.key, i, shown.length) ?? i)
     } else if (e.key === 'Enter' && expanded && active >= 0 && active < shown.length) {
       e.preventDefault()
       pick(shown[active])

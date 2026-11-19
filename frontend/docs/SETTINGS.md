@@ -146,9 +146,9 @@ Appearance and behaviour, Disk space, Error reports. Each column stacks independ
 another grows; below two 440px columns the grid collapses to one, left above right. DOM order is left then right, so match order
 reads column 1 then column 2. A search bar pinned between the header and the
 scrolling body (`SettingsSearchBar`, `useSettingsSearch`, matcher in `utils/settingsSearch.ts`) highlights every
-case-insensitive match of the text rendered in the columns: titles, labels, hints, notes, buttons and every `<select>`'s option
+case-insensitive match of the text rendered in the columns: titles, labels, hints, notes, buttons and every dropdown's option
 text, never input values, placeholders or modals. It is highlight only, nothing hides. Text is painted with the CSS Custom
-Highlight API (no `<mark>`, React's DOM untouched); a select with a matching option counts once and the whole control is
+Highlight API (no `<mark>`, React's DOM untouched); a dropdown with a matching option counts once (its trigger's `data-options`) and the whole trigger is
 outlined. The first match scrolls to centre per keystroke; a match inside a closed `<details>` (the key guide, a
 screenshot) opens it first, like the browser's find, and it stays open. A `MutationObserver` (childList/characterData,
 not attributes, so opening never re-scans) re-scans while a query stands. Enter or
@@ -218,7 +218,7 @@ prefixes are convention, not contract, so it never blocks.
 
 ## The university — `components/MoodleSiteField.tsx`
 
-A `<select>` of presets (`utils/moodleSites.ts`, frontend-only) plus "Other…", which reveals a URL input
+A `Select` of presets (`utils/moodleSites.ts`, frontend-only) plus "Other…", under a greyed "Choose your university…" row, which reveals a URL input
 and a plain-words hint on copying the address from the browser.
 Picking a preset or blurring the input calls `probeMoodleSite` (`POST /site/probe` on the auto-downloader),
 with `ApiKeyField`'s sequence-number and last-probed-value discipline (`utils/siteStatus.ts`). The status

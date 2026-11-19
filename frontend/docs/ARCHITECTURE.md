@@ -121,7 +121,20 @@ reports are sent (`isReporting()`); browser dev, a DSN-less build and a switched
 is the one free-text ARIA combobox: unedited since focus it lists every option (a prefilled value never hides
 the others), typed text filters (`shared/utils/filterOptions`); arrows, Enter and click pick, Escape closes.
 `onPick` fires only for a chosen option. The host passes the input's look (`inputClassName`) and layout
-(`className` on the wrapper). Native `<select>`s are not it.
+(`className` on the wrapper).
+
+## Select
+
+`shared/components/Select({ value, options, onChange, id?, label?, variant? })` is the one fixed-set dropdown, replacing
+every native `<select>`; the free-text `Combobox` is the other pattern. Options are `{ value, label, lang?,
+placeholder?, dividerBefore? }`; `placeholder` greys the closed trigger on its empty-value row. It is a select-only
+ARIA listbox: focus stays on the trigger (`aria-activedescendant`), the panel is a `popover="manual"` top-layer
+div placed from the trigger's rect (flipping above near the bottom, dividing by an ancestor's CSS `zoom`, as on the
+init wall) and closes on Escape, Tab or an outside pointerdown (`isOutsidePress` against trigger and panel).
+Arrows, Home/End (`nextIndex`) and type-ahead (`typeAheadIndex`) live in `shared/utils/listbox.ts`. `id` lets a
+`<label htmlFor>` name it. `variant="chip"` is the tinted pill Search puts at the end of its field; its panel is
+240px, aligned to the trigger's inline-end edge, headed by `label`. The trigger's `data-options` carries every
+option label for the settings-page search.
 
 ## Mode toggles
 

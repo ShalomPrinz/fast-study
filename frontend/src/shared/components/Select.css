@@ -1,0 +1,184 @@
+/* A button trigger and a top-layer listbox panel; the panel wears the same surface as `.combobox-listbox`. */
+.select {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.select--chip {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.select-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-body);
+  text-align: start;
+  cursor: pointer;
+  outline: none;
+}
+
+.select-trigger:hover {
+  border-color: var(--text-4);
+}
+
+.select-trigger:focus-visible,
+.select-trigger[aria-expanded='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.select-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-value--placeholder {
+  color: var(--text-3);
+}
+
+.select-chevron,
+.select-lead {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.select-chevron {
+  color: var(--text-3);
+  transition: transform 0.15s ease;
+}
+
+.select-trigger[aria-expanded='true'] .select-chevron {
+  transform: rotate(180deg);
+}
+
+/* The chip: a tinted pill at the end of the search field; the field's own focus ring already shows. */
+.select--chip .select-trigger {
+  width: auto;
+  max-inline-size: 200px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-color: transparent;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+}
+
+.select--chip .select-trigger:hover,
+.select--chip .select-trigger:focus-visible,
+.select--chip .select-trigger[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.select--chip .select-trigger:focus-visible,
+.select--chip .select-trigger[aria-expanded='true'] {
+  box-shadow: none;
+}
+
+.select--chip .select-chevron {
+  color: var(--accent-ink);
+}
+
+/* `inset: auto; margin: 0` clears the UA's centring so the script's top/left place it. */
+.select-panel {
+  inset: auto;
+  margin: 0;
+  box-sizing: border-box;
+  max-block-size: 260px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--text-2);
+  box-shadow: var(--shadow-md);
+  font-size: var(--fs-body);
+  animation: select-in 0.12s ease-out;
+}
+
+@keyframes select-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .select-panel {
+    animation: none;
+  }
+
+  .select-chevron {
+    transition: none;
+  }
+}
+
+.select-heading {
+  padding: var(--space-2) var(--space-5);
+  color: var(--text-3);
+  font-size: var(--fs-fine);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.select-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.select-option--divided {
+  margin-block-start: var(--space-2);
+}
+
+.select-option--divided::before {
+  content: '';
+  position: absolute;
+  inset-block-start: calc(-1 * var(--space-1) - 0.5px);
+  inset-inline: var(--space-3);
+  height: 1px;
+  background: var(--line);
+}
+
+.select-option--active {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.select-option--selected {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+
+.select-option-label {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.select-check {
+  display: flex;
+  flex-shrink: 0;
+}

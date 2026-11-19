@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { probeMoodleSite } from '@/services/settings'
+import Select from '@/shared/components/Select'
 import ServiceError from '@/shared/components/ServiceError'
 import { useWithMoodleLock } from '@/features/downloads/contexts/MoodleLockContext'
 import { choiceForSite, choosesNoSite, MOODLE_SITE_PRESETS, OTHER_SITE } from '../utils/moodleSites'
@@ -115,21 +116,21 @@ export default function MoodleSiteField({
           <Trans>University</Trans>
         </label>
       </div>
-      <select
+      <Select
         id="moodle-site-select"
-        className="settings-select"
         value={choice}
-        onChange={(e) => pick(e.target.value)}
-      >
-        {/* Selectable: it is how a user without a Moodle site, or one who picked by mistake, says none. */}
-        <option value="">{t`Choose your university…`}</option>
-        {MOODLE_SITE_PRESETS.map((preset) => (
-          <option key={preset.id} value={preset.id}>
-            {t(preset.name)}
-          </option>
-        ))}
-        <option value={OTHER_SITE}>{t`Other…`}</option>
-      </select>
+        onChange={pick}
+        options={[
+          // Selectable: it is how a user without a Moodle site, or one who picked by mistake, says none.
+          { value: '', label: t`Choose your university…`, placeholder: true },
+          ...MOODLE_SITE_PRESETS.map((preset, i) => ({
+            value: preset.id,
+            label: t(preset.name),
+            dividerBefore: i === 0,
+          })),
+          { value: OTHER_SITE, label: t`Other…`, dividerBefore: true },
+        ]}
+      />
       {choice === OTHER_SITE && (
         <>
           <span className="settings-hint">
