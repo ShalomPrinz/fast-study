@@ -59,8 +59,10 @@
   --line: #e8e9ef;
   --line-soft: #f0f1f5;
   --control-line: #dcdee7;
-  --ink: #17171f;
   --accent: #4f5bd5;
+  --accent-hover: #4049b8;
+  --accent-soft: #eef1fd;
+  --accent-line: #d5daf7;
   --ok: #2f7d54;
   --danger: #c0392f;
   --space-1: 4px;
@@ -274,22 +276,28 @@ input[dir='auto']:placeholder-shown {
 
 .btn--primary {
   padding: var(--space-4) var(--space-6);
-  border-color: var(--ink);
+  border-color: var(--accent);
   border-radius: var(--r);
-  background: var(--ink);
+  background: var(--accent);
   color: var(--surface);
   font-size: var(--fs-body);
   font-weight: 600;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: var(--text-2);
-  border-color: var(--text-2);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn--primary:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
 }
 
 .btn--primary:disabled {
-  border-color: var(--text-4);
-  background: var(--text-4);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--text-4);
   cursor: not-allowed;
 }
 
