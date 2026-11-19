@@ -35,6 +35,12 @@ SECRET_FIELDS = {
     "groq_api_key": "GROQ_API_KEY",
 }
 
+# Wire: a JSON list of model ids; env `GEMINI_FALLBACK_MODELS` joins them with `,`.
+FALLBACK_MODELS_FIELD = "gemini_fallback_models"
+FALLBACK_MODELS_ENV = "GEMINI_FALLBACK_MODELS"
+# The empty list is stored as this literal: a blank would read as unset through `_text`.
+_NO_FALLBACK = "none"
+
 PROBE_NAME = ".faststudy_write_test"
 
 # The `export ` prefix and the value text are captured so a rewritten line keeps both.
@@ -94,6 +100,33 @@ def _int(value) -> int | None:
         return int(text)
     except ValueError:
         return None
+
+
+def _models(value) -> list[str] | None:
+    """Read the stored fallback list: None when absent, `[]` for the `none` literal, else the ids."""
+
+    text = _text(value)
+    if text is None:
+        return None
+    if text.lower() == _NO_FALLBACK:
+        return []
+    return [part.strip() for part in text.split(",") if part.strip()]
+
+
+def _incoming_models(field: str, value) -> str:
+    """Validate a list of non-empty model-id strings and return the env text; ids are not checked."""
+
+    ok = isinstance(value, list) and all(
+        isinstance(item, str) and item.strip() and not any(c in item for c in ",'\n\r")
+        for item in value
+    )
+    if not ok:
+        raise CodedValueError(
+            f"{field} must be a list of non-empty model id strings",
+            "setting_must_be_string_list",
+            field=field,
+        )
+    return ",".join(item.strip() for item in value) or _NO_FALLBACK
 
 
 def _comment(rest: str) -> str:
@@ -305,6 +338,7 @@ def read_settings() -> dict:
         field: _choice(values.get(env), choices)
         for field, (env, choices) in CHOICE_FIELDS.items()
     }
+    stored[FALLBACK_MODELS_FIELD] = _models(values.get(FALLBACK_MODELS_ENV))
     stored |= {
         f"{field}_set": _text(values.get(env)) is not None
         for field, env in SECRET_FIELDS.items()
@@ -325,6 +359,8 @@ def write_settings(patch: dict) -> dict:
         elif field == "auto_run":
             # The backend silently runs an unknown mode as `full`, so a typo must be refused here.
             updates["AUTO_RUN"] = _incoming_choice("auto_run", value, AUTO_RUN_MODES)
+        elif field == FALLBACK_MODELS_FIELD:
+            updates[FALLBACK_MODELS_ENV] = _incoming_models(field, value)
         elif field in CHOICE_FIELDS:
             env, choices = CHOICE_FIELDS[field]
             updates[env] = _incoming_choice(field, value, choices)

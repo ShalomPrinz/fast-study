@@ -20,6 +20,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `gemini_api_key_set` / `groq_api_key_set` (bool)   | `GEMINI_API_KEY` / `GROQ_API_KEY`                 |
 | `gemini_model`                                     | `GEMINI_MODEL`                                    |
 | `gemini_auto_fallback` (bool)                      | `GEMINI_AUTO_FALLBACK`                            |
+| `gemini_fallback_models` (list of model ids)       | `GEMINI_FALLBACK_MODELS`                          |
 | `auto_retry` (bool), `auto_retry_count`, `auto_retry_minutes` (ints) | `AUTO_RETRY`, `AUTO_RETRY_COUNT`, `AUTO_RETRY_MINUTES` |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
 | `auto_run`                                         | `AUTO_RUN`                                        |
@@ -31,7 +32,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 
 Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` (the two `auto_retry_*` counts) — which is
 all the store knows about a value. It validates the _type_ and nothing else: an integer is stored as
-any integer, and clamping it to a meaningful range is the owning service's job. The backend owns the `auto_retry*` defaults (on, 3, 10) and ranges; the store holds no default and reads `null` when unset. Meaning belongs to the owning service;
+any integer, and clamping it to a meaningful range is the owning service's job. The backend owns the `auto_retry*` defaults (on, 3, 10) and ranges; the store holds no default and reads `null` when unset. `gemini_fallback_models` is the one list: JSON array on the wire, `,`-joined in the env, `[]` stored as the literal `none` (a blank would read as unset), absent reads `null`; ids must be non-empty strings without `,` or quotes (else `setting_must_be_string_list`), never checked against a catalog. Meaning belongs to the owning service;
 the store stays generic. The one exception is `auto_run`, stored lowercased and refused
 (`setting_invalid_choice`) unless `off`/`audio`/`full`, because the backend silently runs an unknown
 mode as `full`; the list is a deliberate copy of the backend's `AUTO_RUN_MODES`. `ai_provider` follows

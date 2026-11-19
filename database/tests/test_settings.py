@@ -670,3 +670,31 @@ def test_summary_figures_defaults_null_and_round_trips(client, env_file):
         is False
     )
     assert client.put("/settings", json={"summary_figures": "false"}).status_code == 400
+
+
+def test_fallback_models_round_trip_as_a_comma_joined_env_value(env_file):
+    stored = settings.write_settings({"gemini_fallback_models": ["a", "b"]})
+    assert stored["gemini_fallback_models"] == ["a", "b"]
+    assert dotenv_values(env_file)["GEMINI_FALLBACK_MODELS"] == "a,b"
+
+
+def test_an_empty_fallback_list_is_stored_as_none_and_reads_back_empty(env_file):
+    stored = settings.write_settings({"gemini_fallback_models": []})
+    assert stored["gemini_fallback_models"] == []
+    assert dotenv_values(env_file)["GEMINI_FALLBACK_MODELS"] == "none"
+
+
+def test_an_absent_fallback_list_reads_null_and_null_leaves_it_alone(env_file):
+    assert settings.read_settings()["gemini_fallback_models"] is None
+    settings.write_settings({"gemini_fallback_models": ["a"]})
+    stored = settings.write_settings({"gemini_fallback_models": None})
+    assert stored["gemini_fallback_models"] == ["a"]
+
+
+@pytest.mark.parametrize(
+    "bad", ["a,b", ["a", 1], ["a", ""], [" "], ["a,b"], ["a'"], {"a": 1}, True, 3]
+)
+def test_invalid_fallback_models_are_rejected(env_file, bad):
+    code, params = _rejected({"gemini_fallback_models": bad})
+    assert code == "setting_must_be_string_list"
+    assert params == {"field": "gemini_fallback_models"}
