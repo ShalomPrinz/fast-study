@@ -625,6 +625,10 @@ msgstr "מראה והעדפות"
 msgid "Apply"
 msgstr "החל"
 
+#: src/features/lectures/components/RenamableTitle.tsx:38
+msgid "Approve"
+msgstr "אישור"
+
 #: src/features/course-overview/components/StepRow.tsx:83
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שאתה רוצה ליצור מחדש?"
@@ -753,7 +757,7 @@ msgstr "אי אפשר להוריד את {name} בזמן עיבוד או המתנ
 msgid "Can't download while this lecture is being processed or waiting in line"
 msgstr "אי אפשר להוריד כשההרצאה הזו בעיבוד או ממתינה בתור"
 
-#: src/features/lectures/components/RenamableTitle.tsx:36
+#: src/features/lectures/components/RenamableTitle.tsx:47
 #: src/features/lectures/sidebar/tree/LectureItem.tsx:103
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "אי אפשר לשנות את השם בזמן עיבוד או המתנה בתור"
@@ -2576,7 +2580,7 @@ msgstr "להסיר קבצים מכל ההרצאות הקיימות?"
 msgid "Removed"
 msgstr "הוסר"
 
-#: src/features/lectures/components/RenamableTitle.tsx:50
+#: src/features/lectures/components/RenamableTitle.tsx:61
 msgid "Rename"
 msgstr "שינוי שם"
 

@@ -307,7 +307,8 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
 
 Shift-click on a sidebar row, or a click on the lecture page's title (or the pencil beside it), renames it
 inline through one hook (`useLectureRename`); `MainView` keys the title by `course/lecture/kind`, so
-navigating away discards an open box. A running
+navigating away discards an open box. The title's box has an Approve button that commits like Enter (its
+mousedown is default-prevented so the input's blur-cancel doesn't fire first). A running
 or queued lecture, and a course holding one, a generating overview (`/status`'s `overview_running`) or a
 non-terminal download job or a `running`/`paused` section run (`useCourseDownloading`, extension jobs
 included), refuse the rename

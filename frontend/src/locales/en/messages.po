@@ -625,6 +625,10 @@ msgstr "Appearance and behaviour"
 msgid "Apply"
 msgstr "Apply"
 
+#: src/features/lectures/components/RenamableTitle.tsx:38
+msgid "Approve"
+msgstr "Approve"
+
 #: src/features/course-overview/components/StepRow.tsx:83
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
@@ -753,7 +757,7 @@ msgstr "Can't download {name} while it's being processed or waiting in line"
 msgid "Can't download while this lecture is being processed or waiting in line"
 msgstr "Can't download while this lecture is being processed or waiting in line"
 
-#: src/features/lectures/components/RenamableTitle.tsx:36
+#: src/features/lectures/components/RenamableTitle.tsx:47
 #: src/features/lectures/sidebar/tree/LectureItem.tsx:103
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "Can't rename while it's being processed or waiting in line"
@@ -2576,7 +2580,7 @@ msgstr "Remove files from every existing lecture?"
 msgid "Removed"
 msgstr "Removed"
 
-#: src/features/lectures/components/RenamableTitle.tsx:50
+#: src/features/lectures/components/RenamableTitle.tsx:61
 msgid "Rename"
 msgstr "Rename"
 

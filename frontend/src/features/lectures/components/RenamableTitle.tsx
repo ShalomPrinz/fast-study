@@ -21,12 +21,23 @@ export default function RenamableTitle({
 
   if (rename.renaming) {
     return (
-      <InlineEditInput
-        edit={rename.edit}
-        onCommit={rename.actions.commit}
-        onCancel={rename.actions.cancel}
-        className="renamable-title-input"
-      />
+      <span className="renamable-title-edit">
+        <InlineEditInput
+          edit={rename.edit}
+          onCommit={rename.actions.commit}
+          onCancel={rename.actions.cancel}
+          className="renamable-title-input"
+        />
+        {/* mousedown's default would blur the input first, and a blur cancels. */}
+        <button
+          type="button"
+          className="btn btn--primary renamable-title-approve"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={rename.actions.commit}
+        >
+          {t`Approve`}
+        </button>
+      </span>
     )
   }
 
