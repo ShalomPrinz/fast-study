@@ -18,9 +18,22 @@ const LONG_LECTURE =
 // browser following it never leaves the machine. A function: `PROVIDERS` is bound after import.
 const driveUrl = () => `${PROVIDERS}/drive/view/hunt-seeded`;
 
-// Per course: `[lecture, files, kind]`, files being fixture names in upload order. `material` adds
-// the handout as a material PDF; `summary.pdf` is the handout too, so a lecture can look finished
+// `count` recitations named `תרגול N`, the first `done` of them marked studied.
+const tutorials = (count, done) =>
+  Array.from({ length: count }, (_, i) => [`תרגול ${i + 1}`, [], 'recitation', i < done]);
+
+// `count` assignments named `תרגיל בית N` (one PDF each), the first `done` marked studied.
+const tasks = (count, done) =>
+  Array.from({ length: count }, (_, i) => [
+    `תרגיל בית ${i + 1}`,
+    { 'instructions.pdf': 'handout.pdf' },
+    i < done,
+  ]);
+
+// Per course: `[lecture, files, kind, done]`, files being fixture names in upload order, `done` marking it studied.
+// `material` adds the handout as a material PDF; `summary.pdf` is the handout too, so a lecture can look finished
 // without a render. A transcribed lecture holds `audio.mp3`, as a run leaves it, or it reads removed.
+// Assignment rows are `[name, files, done]`, `files` mapping uploaded name to fixture.
 export const FLOWS = {
   'hb-mgmt': {
     lectures: [
@@ -98,6 +111,25 @@ export const FLOWS = {
       ['תרגיל בית 1', { 'ex1-instructions.pdf': 'handout.pdf', 'ex1-data.txt': 'transcript.txt' }],
     ],
   },
+  // Long recitation and assignment tracks with every progress state: partly done, all done, none done.
+  'hb-prog': {
+    lectures: [
+      ['שיעור 1', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
+      ['שיעור 2', ['video.mp4']],
+      ...tutorials(8, 5),
+    ],
+    assignments: tasks(5, 2),
+  },
+  'hb-stats': {
+    // Every recitation studied, no assignment studied.
+    lectures: [['שיעור 1', ['video.mp4']], ...tutorials(7, 7)],
+    assignments: tasks(4, 0),
+  },
+  'hb-algo': {
+    // No recitation studied, every assignment studied.
+    lectures: [['שיעור 1', ['video.mp4']], ...tutorials(6, 0)],
+    assignments: tasks(6, 6),
+  },
   [SELFCHECK.course]: { lectures: [[SELFCHECK.lecture, ['video.mp4']]] },
 };
 
@@ -128,7 +160,7 @@ export async function seed(paths) {
       'POST',
       sourceUrl ? { name: course, source_url: sourceUrl } : { name: course },
     );
-    for (const [lecture, files, kind = 'lecture'] of rows) {
+    for (const [lecture, files, kind = 'lecture', done = false] of rows) {
       const base = `${DATABASE}/courses/${encode(course)}/lectures`;
       await json(`${base}?kind=${kind}`, 'POST', { name: lecture });
       for (const file of files) {
@@ -143,16 +175,23 @@ export async function seed(paths) {
         const method = file === 'material' ? 'POST' : 'PUT';
         await bytes(url, method, content[file], TYPES[file] ?? 'application/pdf');
       }
+      if (done) await json(`${base}/${encode(lecture)}/done?kind=${kind}`, 'PUT');
       lectures += 1;
     }
     // Each assignment's files are posted as the downloader does: fixture bytes under the wanted name.
-    for (const [assignment, files] of assignments) {
+    for (const [assignment, files, done = false] of assignments) {
       for (const [name, from] of Object.entries(files)) {
         await bytes(
           `${DATABASE}/courses/${encode(course)}/assignments/${encode(assignment)}/files?filename=${encode(name)}`,
           'POST',
           fixture(from),
           TYPES[from] ?? 'application/pdf',
+        );
+      }
+      if (done) {
+        await json(
+          `${DATABASE}/courses/${encode(course)}/assignments/${encode(assignment)}/done`,
+          'PUT',
         );
       }
     }

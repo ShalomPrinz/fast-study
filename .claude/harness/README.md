@@ -94,6 +94,9 @@ named for `/hunt-bugs`' flows, and any task can use them as ready-made fixtures:
 | `hb-pipeline`  | pipeline and course overview  | one lecture per stage, two video-only for queue + lock, a recitation          |
 | `hb-fail`      | failure surfacing             | video-only, transcribed and summarised lectures to fail at each step          |
 | `hb-assign`    | assignment AI docs            | two summarised lectures and `תרגיל בית 1` (a PDF and a text file)             |
+| `hb-prog`      | sidebar section progress      | two lectures, 8 recitations (5 studied), 5 assignments (2 studied)            |
+| `hb-stats`     | sidebar section progress      | one lecture, 7 recitations (all studied), 4 assignments (none studied)        |
+| `hb-algo`      | sidebar section progress      | one lecture, 6 recitations (none studied), 6 assignments (all studied)        |
 | `hb-selfcheck` | the self-check's pipeline run | not a flow's — leave it alone                                                 |
 
 The seeded `drive_url.txt` points at the fake providers' `/drive/view/…`, a page the fake providers serve,
