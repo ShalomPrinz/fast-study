@@ -368,7 +368,7 @@ describe('model display names', () => {
         headers: { get: () => null },
         json: async () => ({
           providers: [],
-          gemini_models: [{ id: 'gemini-3.8-flash', name: 'Gemini Flash 3.8' }],
+          gemini_models: [{ id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash' }],
         }),
       })),
     )
@@ -380,7 +380,7 @@ describe('model display names', () => {
     await load()
     const err = (model: string) =>
       resolveServiceError({ message: 'x', code: 'gemini_overloaded', params: { model } }).headline
-    expect(err('gemini-3.8-flash')).toContain('Gemini Flash 3.8')
+    expect(err('gemini-3.8-flash')).toContain('Gemini 3.8 Flash')
     expect(err('gemini-3.8-flash')).not.toContain('gemini-3.8-flash')
     expect(err('gemini-exp-alias')).toContain('gemini-exp-alias')
     const notice = resolveServiceError({
@@ -388,7 +388,7 @@ describe('model display names', () => {
       code: 'model_fallback',
       params: { from: 'gemini-3.8-flash', to: 'gemini-exp-alias' },
     }).headline
-    expect(notice).toContain('Gemini Flash 3.8')
+    expect(notice).toContain('Gemini 3.8 Flash')
     expect(notice).toContain('gemini-exp-alias')
   })
 })

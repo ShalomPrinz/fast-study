@@ -1661,6 +1661,10 @@ msgstr "פתרון מלא"
 msgid "Full Solution — {assignment}"
 msgstr "פתרון מלא — {assignment}"
 
+#: src/app/HydrogenPrompt.tsx:49
+msgid "Gemini 4 Hydrogen is now the default model. You can change the model any time in Settings."
+msgstr "Gemini 4 Hydrogen הוא כעת מודל ברירת המחדל. אפשר להחליף מודל בכל עת בהגדרות."
+
 #: src/features/lectures/AssignmentView.tsx:154
 #: src/features/lectures/components/MaterialChip.tsx:75
 msgid "Gemini can't read this file type"
@@ -1682,15 +1686,11 @@ msgstr "Gemini לא סימן איפה התמונות בשקפים, ולכן הן
 msgid "Gemini gets the transcript and any materials you add, to write the summary."
 msgstr "Gemini מקבל את התמלול ואת כל החומרים שתוסיף, כדי לכתוב את הסיכום."
 
-#: src/app/HydrogenPrompt.tsx:49
-msgid "Gemini Hydrogen 4 is now the default model. You can change the model any time in Settings."
-msgstr "Gemini Hydrogen 4 הוא כעת מודל ברירת המחדל. אפשר להחליף מודל בכל עת בהגדרות."
-
-#: src/features/lectures/components/AssignmentDocCard.tsx:110
+#: src/features/lectures/components/AssignmentDocCard.tsx:112
 msgid "Gemini is writing…"
 msgstr "‏Gemini כותב…"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:203
+#: src/features/lectures/components/AssignmentDocCard.tsx:205
 msgid "Gemini will write it again."
 msgstr "‏Gemini יכתוב אותו מחדש."
 

@@ -1661,6 +1661,10 @@ msgstr "Full Solution"
 msgid "Full Solution — {assignment}"
 msgstr "Full Solution — {assignment}"
 
+#: src/app/HydrogenPrompt.tsx:49
+msgid "Gemini 4 Hydrogen is now the default model. You can change the model any time in Settings."
+msgstr "Gemini 4 Hydrogen is now the default model. You can change the model any time in Settings."
+
 #: src/features/lectures/AssignmentView.tsx:154
 #: src/features/lectures/components/MaterialChip.tsx:75
 msgid "Gemini can't read this file type"
@@ -1682,15 +1686,11 @@ msgstr "Gemini didn't say where the images are in the slides, so they were not c
 msgid "Gemini gets the transcript and any materials you add, to write the summary."
 msgstr "Gemini gets the transcript and any materials you add, to write the summary."
 
-#: src/app/HydrogenPrompt.tsx:49
-msgid "Gemini Hydrogen 4 is now the default model. You can change the model any time in Settings."
-msgstr "Gemini Hydrogen 4 is now the default model. You can change the model any time in Settings."
-
-#: src/features/lectures/components/AssignmentDocCard.tsx:110
+#: src/features/lectures/components/AssignmentDocCard.tsx:112
 msgid "Gemini is writing…"
 msgstr "Gemini is writing…"
 
-#: src/features/lectures/components/AssignmentDocCard.tsx:203
+#: src/features/lectures/components/AssignmentDocCard.tsx:205
 msgid "Gemini will write it again."
 msgstr "Gemini will write it again."
 

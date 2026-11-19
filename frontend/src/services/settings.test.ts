@@ -365,18 +365,18 @@ describe('fetchConfigOptions model names', () => {
         ok({
           providers: [],
           gemini_models: [
-            { id: 'gemini-4-hydrogen', name: 'Gemini Hydrogen 4' },
-            { id: 'gemini-3.8-flash', name: 'Gemini Flash 3.8' },
+            { id: 'gemini-4-hydrogen', name: 'Gemini 4 Hydrogen' },
+            { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash' },
           ],
         }),
       ),
     )
     const opts = await fetchConfigOptions()
     expect(opts.geminiModels).toEqual([
-      { id: 'gemini-4-hydrogen', name: 'Gemini Hydrogen 4' },
-      { id: 'gemini-3.8-flash', name: 'Gemini Flash 3.8' },
+      { id: 'gemini-4-hydrogen', name: 'Gemini 4 Hydrogen' },
+      { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash' },
     ])
-    expect(modelDisplayName('gemini-3.8-flash')).toBe('Gemini Flash 3.8')
+    expect(modelDisplayName('gemini-3.8-flash')).toBe('Gemini 3.8 Flash')
     expect(modelDisplayName('gemini-flash-latest')).toBe('gemini-flash-latest')
   })
 })

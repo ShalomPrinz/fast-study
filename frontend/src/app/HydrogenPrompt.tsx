@@ -47,7 +47,7 @@ export default function HydrogenPrompt() {
       detail={
         <p className="modal-message modal-note">
           <Trans>
-            Gemini Hydrogen 4 is now the default model. You can change the model any time in
+            Gemini 4 Hydrogen is now the default model. You can change the model any time in
             Settings.
           </Trans>
         </p>
