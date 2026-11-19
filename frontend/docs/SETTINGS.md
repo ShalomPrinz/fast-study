@@ -29,7 +29,7 @@ The model list comes from `GET /config/options` as `{id, name}` (the wall's drop
 typed in and fail minutes later mid-pipeline.
 
 **Summary models** (`SummaryModelsField`, order rules in `utils/geminiOrder.ts`) is one ordered list: row 1 is `geminiModel`,
-rows 2+ are `geminiFallbackModels` (`[]` = never switch, `null` = never saved). ▲/▼ reorder (focus stays on the moved row's arrow),
+rows 2+ are `geminiFallbackModels` (`[]` = never switch, `null` = never saved). ▲/▼ reorder: the two rows slide into each other's place together (FLIP, 200ms, the clicked row on top; clicks mid-slide are ignored, reduced motion swaps instantly), the top row has no ▲ and the bottom no ▼ (slot kept empty, `visibility: hidden`), focus stays on the moved row's arrow (the other one when it is gone),
 ✕ removes (disabled on the last row, its `Tooltip` says why); each fallback row's place name carries a small badge with the previous row's number, the dashed rows under "Not used" add at the end. Never saved,
 `effectiveFallback` derives the rows as the backend does (auto-fallback unset/on: every other model after the main, wrapping; off: none),
 and the first save writes the list explicitly; Save sends both fields whenever either differs from that effective value, so

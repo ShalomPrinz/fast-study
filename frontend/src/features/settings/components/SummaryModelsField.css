@@ -15,6 +15,7 @@
   border: 1px solid var(--accent-line);
   border-radius: var(--r-sm);
   background: var(--accent-soft);
+  position: relative;
 }
 
 .summary-model-badge {
@@ -66,6 +67,11 @@
 .summary-model-row .summary-model-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+.summary-model-row .summary-model-btn[data-slot-empty] {
+  /* Keeps its slot so the arrow columns line up; visibility also drops it from focus and the a11y tree. */
+  visibility: hidden;
 }
 
 .summary-model-row .summary-model-btn:disabled {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { moveModel, removeModel, sameList } from './geminiOrder'
+import { arrowsShown, moveModel, removeModel, sameList } from './geminiOrder'
 
 describe('moveModel', () => {
   it('swaps a row with its neighbour and stays put at the ends', () => {
@@ -21,5 +21,14 @@ describe('sameList', () => {
   it('compares order too', () => {
     expect(sameList(['a', 'b'], ['a', 'b'])).toBe(true)
     expect(sameList(['a', 'b'], ['b', 'a'])).toBe(false)
+  })
+})
+
+describe('arrowsShown', () => {
+  it('hides the up arrow on the top row and the down arrow on the bottom row', () => {
+    expect(arrowsShown(0, 3)).toEqual({ up: false, down: true })
+    expect(arrowsShown(1, 3)).toEqual({ up: true, down: true })
+    expect(arrowsShown(2, 3)).toEqual({ up: true, down: false })
+    expect(arrowsShown(0, 1)).toEqual({ up: false, down: false })
   })
 })

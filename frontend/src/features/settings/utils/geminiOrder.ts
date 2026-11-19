@@ -41,3 +41,8 @@ export function moveModel(order: string[], from: number, step: -1 | 1): string[]
 export function removeModel(order: string[], id: string): string[] | null {
   return order.length <= 1 ? null : order.filter((m) => m !== id)
 }
+
+/** Which arrows a row shows: none to move past either end, so the top row has no ▲ and the bottom no ▼. */
+export function arrowsShown(index: number, count: number): { up: boolean; down: boolean } {
+  return { up: index > 0, down: index < count - 1 }
+}
