@@ -23,8 +23,8 @@ elif tool == "Bash":
     ):
         reason = (
             "Run harness commands in the foreground: `setup.mjs` returns once the stack is "
-            "ready and `npm run test:e2e` exits when the suite ends, so give the Bash call "
-            "timeout: 600000 for setup and 1200000 for e2e. Never run_in_background, nohup or `&` them."
+            "ready and `npm run test:e2e` exits when its specs end; run the full suite as the "
+            "app-harness skill's `--shard` calls. Never run_in_background, nohup or `&` them."
         )
 
 if reason:

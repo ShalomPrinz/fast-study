@@ -480,7 +480,7 @@ out the site's captcha (and failing `site_captcha_timeout` unsolved), the smart 
 marks, the current arrow, the counts and the overview's current-item buttons) and the first-run tour
 (seven-step guided modal over two screenshots: auto-show, Next to Done, Skip, seen after a reload, Settings replay, URL unchanged) — and run with
 `npm run test:e2e` from the repo root against a live stack, `HARNESS_DIR` set to one
-`setup.mjs --harness DIR` started (run it in the foreground with `timeout: 600000`); the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
+`setup.mjs --harness DIR` started. Run only the touched specs (`npm run test:e2e -- <spec files>`) as one foreground call only if it finishes under ~120 s, else shard it (`--shard=i/N`) or split the list across calls; run the full suite as `npm run test:e2e -- --shard=1/3`, `--shard=2/3`, `--shard=3/3`, one foreground call each, because a subagent's foreground call moves to the background after 180 s whatever its `timeout`: raise the shard count when a shard nears 120 s (about 100 s each now); the report, traces and screenshots land in `$HARNESS_DIR/evidence/`.
 CI's [`e2e.yml`](../../.github/workflows/e2e.yml) runs them on pushes to every branch, with real ffmpeg (BtbN's static build of the shipped major.minor), pandoc and tectonic, installed by the composite action
 [`harness-setup`](../../.github/actions/harness-setup/action.yml) that other workflows reuse. The
 release smoke suite stays separate: the shims cannot reach the frozen `faststudy-services.exe` without a

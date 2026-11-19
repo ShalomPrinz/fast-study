@@ -29,7 +29,8 @@ Read the README's sections for the part you touch. Its "what earns a spec" rules
 ```bash
 npm run test:harness                                   # from the repo root
 node .claude/harness/setup.mjs --harness <scratchpad>/harness   # foreground; returns once `harness ready`
-HARNESS_DIR=<scratchpad>/harness npm run test:e2e      # the specs your change touches, or all of them
+HARNESS_DIR=<scratchpad>/harness npm run test:e2e -- <spec files>       # the specs your change touches, if they finish under ~120 s
+HARNESS_DIR=<scratchpad>/harness npm run test:e2e -- --shard=1/3     # or all of them: 1/3, 2/3, 3/3, one call each (the skill says why)
 uvx --from actionlint-py actionlint .github/workflows/e2e.yml   # when it changed
 ```
 

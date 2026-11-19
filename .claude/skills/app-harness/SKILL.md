@@ -68,7 +68,8 @@ with `hb reseed`. A Gemini auto retry only waits and shows its countdown; `hb re
 
 Nothing a run shows is real provider behaviour: transcripts, summaries and downloads are fixtures.
 
-The Playwright e2e specs run against your stack with `HARNESS_DIR=$HARNESS_DIR npm run test:e2e`, in the foreground with `timeout: 1200000`; never background it.
+The Playwright e2e specs run against your stack in the foreground, never backgrounded. Only the specs you touched: `HARNESS_DIR=$HARNESS_DIR npm run test:e2e -- <spec files>` as one call only if it finishes under ~120 s, else shard it (`--shard=i/N`) or split the list across calls. The full suite: three calls in order, `HARNESS_DIR=$HARNESS_DIR npm run test:e2e -- --shard=1/3`, then `--shard=2/3`, then `--shard=3/3`, each `timeout: 175000`.
+A subagent's foreground call moves to the background after 180 s whatever its `timeout`, so each shard must finish well under that (about 100 s now); raise the shard count when one nears 120 s.
 The suite reseeds the stack (wipes scratch data, resets settings, locks and fakes), so run it on a stack whose state you don't need.
 
 A spec that needs the launcher's service bridge sets `test.use({ launcherBridge: true })`: it stubs `window.faststudy.services`, `window.__fsStop(name)` fires a service stop and `window.__fsRestarts` lists the `restart()` calls.
