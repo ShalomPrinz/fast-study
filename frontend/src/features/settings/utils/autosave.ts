@@ -6,18 +6,6 @@ import type { ConfigOptions } from '@/services/settings'
 // A typed or sensitive entry that saves only when its section's Approve is pressed.
 export type ApproveId = 'geminiKey' | 'groqKey' | 'dataRoot' | 'drive' | 'site' | 'retry'
 
-// A section of the page that shows "Saved" after one of its fields lands.
-export type SectionId =
-  | 'keys'
-  | 'storage'
-  | 'drive'
-  | 'downloading'
-  | 'courses'
-  | 'retry'
-  | 'appearance'
-  | 'disk'
-  | 'reports'
-
 // Fields that never save with a change: the approved entries and auto-remove (its own Apply).
 // The retry switch saves at once; only its two numbers wait.
 const HELD_KEYS = [
@@ -130,36 +118,4 @@ export function mergeApproved(
   )
     next.gdriveRootFolder = saved.gdriveRootFolder ?? ''
   return next
-}
-
-const SECTION_OF: Record<string, SectionId> = {
-  geminiApiKey: 'keys',
-  groqApiKey: 'keys',
-  geminiModel: 'keys',
-  geminiFallbackModels: 'keys',
-  summaryFigures: 'keys',
-  dataRoot: 'storage',
-  driveEnabled: 'drive',
-  gdriveRootFolder: 'drive',
-  moodleSite: 'downloading',
-  courseStructure: 'courses',
-  autoRetry: 'retry',
-  autoRetryCount: 'retry',
-  autoRetryMinutes: 'retry',
-  autoRun: 'appearance',
-  aiProvider: 'appearance',
-  autoRemove: 'disk',
-  autoRemoveAfter: 'disk',
-  errorReports: 'reports',
-  privacyConfirmed: 'reports',
-}
-
-/** The sections a landed patch touched, each once. */
-export function sectionsOf(patch: SettingsPatch): SectionId[] {
-  const ids = new Set<SectionId>()
-  for (const key of Object.keys(patch)) {
-    const id = SECTION_OF[key]
-    if (id) ids.add(id)
-  }
-  return [...ids]
 }

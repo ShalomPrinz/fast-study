@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ConfigOptions, Settings } from '@/services/settings'
 import { formFromStore } from './patch'
-import { approvePatch, approveVisible, autoPatch, mergeApproved, sectionsOf } from './autosave'
+import { approvePatch, approveVisible, autoPatch, mergeApproved } from './autosave'
 
 const STORED: Settings = {
   dataRoot: '/data',
@@ -139,14 +139,5 @@ describe('mergeApproved', () => {
     expect(mergeApproved(f, { ...STORED, dataRoot: '/new' }, { dataRoot: '/new/' }).dataRoot).toBe(
       '/new',
     )
-  })
-})
-
-describe('sectionsOf', () => {
-  it('maps each saved field to its section once', () => {
-    expect(sectionsOf({ autoRetry: true, autoRetryCount: 4, driveEnabled: true })).toEqual([
-      'retry',
-      'drive',
-    ])
   })
 })

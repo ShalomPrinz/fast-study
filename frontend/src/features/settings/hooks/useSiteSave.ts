@@ -11,19 +11,21 @@ interface Options {
   storedSite: string
   onSaved: (saved: Settings) => void
   onFailed: (err: unknown) => void
+  // +1 when a pick's request starts, -1 when it settles, so the page can show it saving.
+  onBusy?: (delta: 1 | -1) => void
 }
 
 // `/settings`' picked site, saved alone the moment it is chosen, so its account can be connected
 // without a Save. Every save of the page runs on one chain, so none lands out of order. See docs/SETTINGS.md.
-export function useSiteSave({ storedSite, onSaved, onFailed }: Options) {
+export function useSiteSave({ storedSite, onSaved, onFailed, onBusy }: Options) {
   const saves = useRef<Promise<unknown>>(Promise.resolve())
   // The site the store holds as of the last landed save, and the one it will once the chain drains;
   // `null` until this page writes one.
   const savedSite = useRef<string | null>(null)
   const queuedSite = useRef<string | null>(null)
   const lastTask = useRef(0)
-  const latest = useRef({ storedSite, onSaved, onFailed })
-  latest.current = { storedSite, onSaved, onFailed }
+  const latest = useRef({ storedSite, onSaved, onFailed, onBusy })
+  latest.current = { storedSite, onSaved, onFailed, onBusy }
 
   const saved = () => savedSite.current ?? latest.current.storedSite
   const queued = () => queuedSite.current ?? saved()
@@ -59,12 +61,15 @@ export function useSiteSave({ storedSite, onSaved, onFailed }: Options) {
     void enqueue(site, async () => {
       // Checked here, not at the pick: an earlier save still queued may change what the store holds.
       if (site === saved()) return
+      latest.current.onBusy?.(1)
       try {
         const result = await saveSettings({ moodleSite: site })
         savedSite.current = result.moodleSite ?? ''
         latest.current.onSaved(result)
       } catch (err) {
         latest.current.onFailed(err)
+      } finally {
+        latest.current.onBusy?.(-1)
       }
     })
   }

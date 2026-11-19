@@ -43,7 +43,7 @@ import AutoRemoveSummary from './components/AutoRemoveSummary'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import SettingsSearchBar from './components/SettingsSearchBar'
 import ApproveRow from './components/ApproveRow'
-import SavedMark from './components/SavedMark'
+import SaveStatus from './components/SaveStatus'
 import { useSettingsSearch } from './hooks/useSettingsSearch'
 import {
   formFromStore,
@@ -65,9 +65,7 @@ import {
   approveVisible,
   autoPatch,
   mergeApproved,
-  sectionsOf,
   type ApproveId,
-  type SectionId,
 } from './utils/autosave'
 import { privacyAnswer, restartNotice } from './utils/privacy'
 import { useTour } from '@/shared/contexts/TourContext'
@@ -90,7 +88,7 @@ interface PendingRemoval {
   after: AutoRemoveAfter
 }
 
-// How long a section's "Saved" stays up.
+// How long the header's "Saved" stays up.
 const SAVED_MARK_MS = 2500
 
 // The confirm's warning, one whole sentence per rule: what goes, from which lectures.
@@ -119,7 +117,8 @@ export default function SettingsView() {
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
   const [busy, setBusy] = useState(0)
-  const [savedSections, setSavedSections] = useState<SectionId[]>([])
+  // Bumped on every landed save: it restarts the "Saved" shine, and 0 means none to show.
+  const [savedTick, setSavedTick] = useState(0)
   const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   // The latest form, store and options, read when a change saves: every save runs in the order the
   // changes were made, and a landed save never writes the form back, so a later edit is never reverted.
@@ -140,14 +139,17 @@ export default function SettingsView() {
       landStore(saved)
       edit((f) => withSavedSite(f, saved), false)
       void refreshAccount()
-      flash(['downloading'])
+      flash()
     },
     onFailed: (err) => saveFailed(err),
+    onBusy: (delta) => setBusy((n) => n + delta),
   })
 
   // The http client already toasts a connection error, but that toast is deduped per service and
   // reads as ambient noise — a save that went nowhere still owes its own verdict.
   function saveFailed(err: unknown) {
+    clearTimeout(savedTimer.current)
+    setSavedTick(0)
     if (isConnectionError(err)) {
       toast('error', t`Couldn't save all settings. Restart the app and try again.`)
     } else {
@@ -161,14 +163,13 @@ export default function SettingsView() {
     setSettings(saved)
   }
 
-  function flash(ids: SectionId[]) {
-    if (!ids.length) return
-    setSavedSections(ids)
+  function flash() {
+    setSavedTick((n) => n + 1)
     clearTimeout(savedTimer.current)
-    savedTimer.current = setTimeout(() => setSavedSections([]), SAVED_MARK_MS)
+    savedTimer.current = setTimeout(() => setSavedTick(0), SAVED_MARK_MS)
   }
 
-  // Runs one save on the page's chain and shows "Saved" where it landed; a failure toasts and
+  // Runs one save on the page's chain and shows "Saved" in the header; a failure toasts, clears it and
   // answers null, leaving the fields unsaved so the next change retries them.
   // A function source builds its patch when the save runs, so it diffs against the store as it is then.
   async function persist(source: SettingsPatch | (() => SettingsPatch)): Promise<Settings | null> {
@@ -185,7 +186,7 @@ export default function SettingsView() {
       if (next.errorReports !== undefined) setReportsRestart(restartNotice(saved))
       // The chip follows auto's stream; the one-shot read re-answers what it cannot say (no site).
       if (next.moodleSite !== undefined) void refreshAccount()
-      flash(sectionsOf(next))
+      flash()
       return saved
     } catch (err) {
       saveFailed(err)
@@ -238,6 +239,7 @@ export default function SettingsView() {
 
   useEffect(() => {
     void loadMissing()
+    return () => clearTimeout(savedTimer.current)
   }, [])
   useNotify(() => void loadMissing())
 
@@ -359,7 +361,6 @@ export default function SettingsView() {
 
   const view = (id: ApproveId) => approveVisible(id, form, stored)
   const ready = (id: ApproveId) => Object.keys(approvePatch(id, form, stored)).length > 0
-  const mark = (id: SectionId) => <SavedMark show={savedSections.includes(id)} />
 
   const provider = (id: string) => options?.providers.find((p) => p.id === id)
   const gemini = provider('gemini')
@@ -367,7 +368,10 @@ export default function SettingsView() {
 
   return (
     <main className="main-view main-view--page">
-      <PageHeader title={t`Settings`} />
+      <PageHeader
+        title={t`Settings`}
+        actions={<SaveStatus saving={saving} savedTick={savedTick} />}
+      />
       <SettingsSearchBar
         query={search.query}
         onQuery={search.setQuery}
@@ -381,7 +385,6 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>API keys</Trans>
-                {mark('keys')}
               </h2>
               {/* The note stands in for the whole section: with no key to store, neither a key
                 field nor the model that would consume one has anything to offer. */}
@@ -460,7 +463,6 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Storage</Trans>
-                {mark('storage')}
               </h2>
               <ApproveRow
                 id="dataRoot"
@@ -478,7 +480,6 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Google Drive</Trans>
-                {mark('drive')}
               </h2>
               <ApproveRow
                 id="drive"
@@ -506,7 +507,6 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Downloading recordings</Trans>
-                {mark('downloading')}
               </h2>
               <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
               {/* A confirmed site, or no university, saves at once; an unverified one waits for Approve. */}
@@ -531,7 +531,6 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Courses</Trans>
-                {mark('courses')}
               </h2>
               <CourseStructureField
                 value={form.courseStructure}
@@ -543,7 +542,6 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Automatic retry</Trans>
-                {mark('retry')}
               </h2>
               <ApproveRow
                 id="retry"
@@ -564,7 +562,6 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Appearance and behaviour</Trans>
-                {mark('appearance')}
               </h2>
               <LanguageField />
               <div className="settings-field">
@@ -626,7 +623,6 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Disk space</Trans>
-                {mark('disk')}
               </h2>
               <AutoRemoveField
                 value={form.autoRemove}
@@ -645,7 +641,6 @@ export default function SettingsView() {
               <section className="settings-section">
                 <h2 className="settings-section-title">
                   <Trans>Error reports</Trans>
-                  {mark('reports')}
                 </h2>
                 <ErrorReportsField
                   value={form.errorReports}

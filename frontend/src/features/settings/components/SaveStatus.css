@@ -1,0 +1,43 @@
+.save-status {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.save-status-chip {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  padding: 2px var(--space-3);
+  border-radius: var(--r-pill);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+/* One light sheen sweeping across the chip when it appears. */
+.save-status-chip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--surface) 85%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  animation: save-status-shine 0.9s ease-out 0.1s 1;
+}
+
+@keyframes save-status-shine {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .save-status-chip::after {
+    animation: none;
+    display: none;
+  }
+}
