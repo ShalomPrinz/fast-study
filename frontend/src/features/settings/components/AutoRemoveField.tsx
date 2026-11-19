@@ -24,7 +24,7 @@ interface Props {
 }
 
 // The opt-in that deletes a finished lecture's video (and audio) from disk. It saves through its own
-// Apply, or the page's Save, which treats it the same way. See docs/SETTINGS.md.
+// Apply, never with another change. See docs/SETTINGS.md.
 export default function AutoRemoveField({ value, onChange, driveEnabled, apply, onApply }: Props) {
   const { t } = useLingui()
   const whatOptions: { id: RemoveWhat; label: string }[] = [
@@ -38,8 +38,8 @@ export default function AutoRemoveField({ value, onChange, driveEnabled, apply, 
   const block = autoRemoveBlock(value, driveEnabled)
   // A busy page (null with a complete form) shows no hint, by design.
   const applyBlocker =
-    apply === 'needs-page-save'
-      ? t`Use Save at the top of the page first`
+    apply === 'drive-unsaved'
+      ? t`Save the Drive upload first`
       : apply === null && block
         ? autoRemoveBlockText(block)
         : apply === 'unchanged'
@@ -124,11 +124,9 @@ export default function AutoRemoveField({ value, onChange, driveEnabled, apply, 
       )}
 
       <div className="auto-remove-apply">
-        {apply === 'needs-page-save' && (
-          <span className="settings-hint" data-auto-remove="needs-page-save">
-            <Trans>
-              Drive upload isn't saved yet. Use Save at the top of the page to save both.
-            </Trans>
+        {apply === 'drive-unsaved' && (
+          <span className="settings-hint" data-auto-remove="drive-unsaved">
+            <Trans>Drive upload isn't saved yet. Approve the Drive folder first.</Trans>
           </span>
         )}
         <Tooltip content={applyBlocker}>

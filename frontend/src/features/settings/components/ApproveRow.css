@@ -1,0 +1,9 @@
+.approve-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.approve-row-button {
+  align-self: flex-start;
+}

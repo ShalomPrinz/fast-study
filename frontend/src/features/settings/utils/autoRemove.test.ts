@@ -129,9 +129,9 @@ describe('autoRemoveApply', () => {
     expect(autoRemoveApply(rule('audio', null), stored('audio', null), true)).toBe('unchanged')
   })
 
-  it('leaves "after Drive" to the page Save while the Drive toggle is unsaved', () => {
+  it('waits "after Drive" while the Drive toggle is unsaved', () => {
     expect(autoRemoveApply(rule('video', 'drive'), driveOff(stored(null, null)), true)).toBe(
-      'needs-page-save',
+      'drive-unsaved',
     )
     expect(autoRemoveApply(rule('video', 'drive'), stored(null, null), true)).toBe('save')
     expect(autoRemoveApply(rule('video', 'pdf'), driveOff(stored(null, null)), true)).toBe('save')

@@ -72,8 +72,9 @@ test('switching the data folder in settings re-points the tree without a reload'
   // Settings and Lectures are the sidebar's own rows: client-side navigation, never a reload.
   const switchTo = async (root) => {
     await page.locator('.sidebar-nav-block a[href="/settings"]').click();
-    await page.getByTestId('data-root-input').fill(root);
-    await page.locator('.page-header-actions .btn--primary').click();
+    const input = page.getByTestId('data-root-input');
+    await input.fill(root);
+    await input.press('Enter');
     // The store answering, not the toast: the first save's toast can still be up during the second.
     await expect.poll(async () => (await call(`${DATABASE}/settings`)).body.data_root).toBe(root);
     await page.locator('.sidebar-nav-block button').click();

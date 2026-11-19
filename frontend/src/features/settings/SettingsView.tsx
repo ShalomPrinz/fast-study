@@ -42,9 +42,10 @@ import AutoRetryField from './components/AutoRetryField'
 import AutoRemoveSummary from './components/AutoRemoveSummary'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import SettingsSearchBar from './components/SettingsSearchBar'
+import ApproveRow from './components/ApproveRow'
+import SavedMark from './components/SavedMark'
 import { useSettingsSearch } from './hooks/useSettingsSearch'
 import {
-  buildPatch,
   formFromStore,
   withOptions,
   withSavedAutoRemove,
@@ -53,39 +54,44 @@ import {
 } from './utils/patch'
 import {
   autoRemoveApply,
-  autoRemoveBlock,
-  autoRemoveBlockText,
-  autoRemoveComplete,
-  autoRemoveDirty,
   autoRemovePatch,
   autoRemoveWidens,
   type RemoveWhat,
 } from './utils/autoRemove'
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
+import {
+  approvePatch,
+  approveVisible,
+  autoPatch,
+  mergeApproved,
+  sectionsOf,
+  type ApproveId,
+  type SectionId,
+} from './utils/autosave'
 import { privacyAnswer, restartNotice } from './utils/privacy'
 import { useTour } from '@/shared/contexts/TourContext'
-import Tooltip from '@/shared/components/Tooltip'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import '@/styles/modal.css'
 import '@/styles/settings-form.css'
 import './SettingsView.css'
 
-// A save held back by the advisory guard: a data root change that would split the runs in flight.
+// A data folder approve held back by the advisory guard: the change would split the runs in flight.
 interface Pending {
   patch: SettingsPatch
   runs: string[]
-  sweep: boolean
 }
 
-// A save that widens auto-remove, held for its confirm: the section's Apply, or the page's whole Save.
+// An auto-remove Apply that widens the rule, held for its confirm.
 interface PendingRemoval {
   patch: SettingsPatch
   what: RemoveWhat
   after: AutoRemoveAfter
-  whole: boolean
 }
+
+// How long a section's "Saved" stays up.
+const SAVED_MARK_MS = 2500
 
 // The confirm's warning, one whole sentence per rule: what goes, from which lectures.
 const REMOVAL_WARNING: Record<RemoveWhat, Record<AutoRemoveAfter, MessageDescriptor>> = {
@@ -112,7 +118,15 @@ export default function SettingsView() {
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
-  const [saving, setSaving] = useState(false)
+  const [busy, setBusy] = useState(0)
+  const [savedSections, setSavedSections] = useState<SectionId[]>([])
+  const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  // The latest form, store and options, read when a change saves: every save runs in the order the
+  // changes were made, and a landed save never writes the form back, so a later edit is never reverted.
+  const formRef = useRef<SettingsForm | null>(null)
+  const storedRef = useRef<Settings | null>(null)
+  const optionsRef = useRef<ConfigOptions | null>(null)
+  const saving = busy > 0
   const [siteChecking, setSiteChecking] = useState(false)
   const [pending, setPending] = useState<Pending | null>(null)
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval | null>(null)
@@ -123,11 +137,10 @@ export default function SettingsView() {
     storedSite: stored?.moodleSite ?? '',
     // Only the site: the rest of the form keeps its unsaved edits.
     onSaved: (saved) => {
-      setStored(saved)
-      setSettings(saved)
-      setForm((f) => f && withSavedSite(f, saved))
+      landStore(saved)
+      edit((f) => withSavedSite(f, saved), false)
       void refreshAccount()
-      toast('info', t`University saved`)
+      flash(['downloading'])
     },
     onFailed: (err) => saveFailed(err),
   })
@@ -142,6 +155,61 @@ export default function SettingsView() {
     }
   }
 
+  function landStore(saved: Settings) {
+    storedRef.current = saved
+    setStored(saved)
+    setSettings(saved)
+  }
+
+  function flash(ids: SectionId[]) {
+    if (!ids.length) return
+    setSavedSections(ids)
+    clearTimeout(savedTimer.current)
+    savedTimer.current = setTimeout(() => setSavedSections([]), SAVED_MARK_MS)
+  }
+
+  // Runs one save on the page's chain and shows "Saved" where it landed; a failure toasts and
+  // answers null, leaving the fields unsaved so the next change retries them.
+  // A function source builds its patch when the save runs, so it diffs against the store as it is then.
+  async function persist(source: SettingsPatch | (() => SettingsPatch)): Promise<Settings | null> {
+    setBusy((n) => n + 1)
+    let next: SettingsPatch = {}
+    try {
+      const saved =
+        typeof source === 'function'
+          ? await site.save(() => (next = source()))
+          : await site.save((next = source))
+      if (!saved) return null
+      landStore(saved)
+      // Only a save of the switch answers about it; any other save leaves the notice standing.
+      if (next.errorReports !== undefined) setReportsRestart(restartNotice(saved))
+      // The chip follows auto's stream; the one-shot read re-answers what it cannot say (no site).
+      if (next.moodleSite !== undefined) void refreshAccount()
+      flash(sectionsOf(next))
+      return saved
+    } catch (err) {
+      saveFailed(err)
+      return null
+    } finally {
+      setBusy((n) => n - 1)
+    }
+  }
+
+  // Applies a form edit; an auto edit saves what changed at once, a held one waits for its Approve.
+  function edit(change: (f: SettingsForm) => SettingsForm, auto = true) {
+    const prev = formRef.current
+    if (!prev) return
+    const next = change(prev)
+    formRef.current = next
+    setForm(next)
+    if (!auto || !storedRef.current) return
+    void persist(() => {
+      const form = formRef.current
+      const store = storedRef.current
+      return form && store ? autoPatch(form, store, canSetErrorReports, optionsRef.current) : {}
+    })
+  }
+
   // Fetches whichever of the store and the options is still missing; rerun on notify (docs/SETTINGS.md).
   async function loadMissing() {
     if (stored && options) return
@@ -154,15 +222,18 @@ export default function SettingsView() {
     setLoadFailed(!nextStored)
     if (!nextStored) return
     setStored((prev) => prev ?? nextStored)
+    storedRef.current ??= nextStored
     if (nextOptions) setOptions((prev) => prev ?? nextOptions)
+    optionsRef.current ??= nextOptions
     // An existing form keeps its edits; only the model waits on the options.
-    setForm((prev) =>
-      !prev
-        ? formFromStore(nextStored, nextOptions)
-        : nextOptions
-          ? withOptions(prev, nextStored, nextOptions)
-          : prev,
-    )
+    const prev = formRef.current
+    const next = !prev
+      ? formFromStore(nextStored, nextOptions)
+      : nextOptions
+        ? withOptions(prev, storedRef.current, nextOptions)
+        : prev
+    formRef.current = next
+    setForm(next)
   }
 
   useEffect(() => {
@@ -195,8 +266,6 @@ export default function SettingsView() {
   // Aliased so the async save below keeps the non-null narrowing the early return established.
   const current = form
   const storedNow = stored
-  const currentOptions = options
-  const patch = () => buildPatch(current, stored, canSetErrorReports, currentOptions)
 
   const missing = missingEntries({
     geminiKey: form.geminiApiKey,
@@ -238,66 +307,36 @@ export default function SettingsView() {
     }
   }
 
-  async function commit(next: SettingsPatch, sweepAfter: boolean) {
-    setSaving(true)
+  // An approved entry: stored alone, then only that entry takes the store's answer.
+  async function commitApprove(patch: SettingsPatch) {
     setPending(null)
-    try {
-      const saved = await site.save(next)
-      // Only a save of the switch answers about it; any other save leaves the notice standing.
-      if (next.errorReports !== undefined) setReportsRestart(restartNotice(saved))
-      setStored(saved)
-      setSettings(saved)
-      // The whole form takes the store's answer: keys return to their placeholder, the data root to its
-      // normalized spelling, and a field another writer changed since load stops reading as an edit.
-      setForm(formFromStore(saved, currentOptions))
-      // The chip follows auto's stream; the one-shot read re-answers what it cannot say (no site).
-      if (next.moodleSite !== undefined) void refreshAccount()
-      toast('info', t`Settings saved`)
-      if (sweepAfter) await sweep()
-    } catch (err) {
-      saveFailed(err)
-    } finally {
-      setSaving(false)
-    }
+    const saved = await persist(patch)
+    if (saved) edit((f) => mergeApproved(f, saved, patch), false)
+    if (saved && patch.moodleSite !== undefined) edit((f) => withSavedSite(f, saved), false)
   }
 
-  // The section's own Apply: only its two fields, every other edit on the page kept unsaved.
+  function approve(id: ApproveId) {
+    const next = approvePatch(id, formRef.current ?? current, storedRef.current ?? storedNow)
+    if (!Object.keys(next).length) return
+    const runs = id === 'dataRoot' ? runsAtRisk(next, status) : null
+    if (runs) setPending({ patch: next, runs })
+    else void commitApprove(next)
+  }
+
+  // The section's own Apply: only its two fields, every other edit on the page kept.
   async function commitAutoRemove(next: SettingsPatch, sweepAfter: boolean) {
-    setSaving(true)
-    try {
-      const saved = await site.save(next)
-      setStored(saved)
-      setSettings(saved)
-      setForm((f) => f && withSavedAutoRemove(f, saved))
-      toast('info', t`Auto-remove saved`)
-      if (sweepAfter) await sweep()
-    } catch (err) {
-      saveFailed(err)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  function proceed(next: SettingsPatch, sweepAfter: boolean) {
-    const runs = runsAtRisk(next, status)
-    if (runs) setPending({ patch: next, runs, sweep: sweepAfter })
-    else void commit(next, sweepAfter)
-  }
-
-  // Widening auto-remove deletes files now, so it confirms first; Cancel aborts the whole save.
-  function save() {
-    const next = patch()
-    if (next.autoRemove !== undefined && autoRemoveWidens(current.autoRemove, storedNow)) {
-      setPendingRemoval({ patch: next, ...widened(current), whole: true })
-    } else proceed(next, false)
+    const saved = await persist(next)
+    if (!saved) return
+    edit((f) => withSavedAutoRemove(f, saved), false)
+    if (sweepAfter) await sweep()
   }
 
   async function resweep() {
-    setSaving(true)
+    setBusy((n) => n + 1)
     try {
       await sweep()
     } finally {
-      setSaving(false)
+      setBusy((n) => n - 1)
     }
   }
 
@@ -308,29 +347,19 @@ export default function SettingsView() {
     }
     const next = autoRemovePatch(current.autoRemove, storedNow, current.driveEnabled)
     if (autoRemoveWidens(current.autoRemove, storedNow)) {
-      setPendingRemoval({ patch: next, ...widened(current), whole: false })
+      const what = current.autoRemove.what
+      setPendingRemoval({ patch: next, what, after: current.autoRemove.after! })
     } else void commitAutoRemove(next, false)
-  }
-
-  // The rule a widening save stores; widening implies a chosen timing.
-  function widened(f: SettingsForm): { what: RemoveWhat; after: AutoRemoveAfter } {
-    return { what: f.autoRemove.what, after: f.autoRemove.after! }
   }
 
   function confirmRemoval(held: PendingRemoval) {
     setPendingRemoval(null)
-    if (held.whole) proceed(held.patch, true)
-    else void commitAutoRemove(held.patch, true)
+    void commitAutoRemove(held.patch, true)
   }
 
-  const autoRemoveReady = autoRemoveComplete(form.autoRemove, form.driveEnabled)
-  const autoRemoveChanged = autoRemoveDirty(form.autoRemove, stored)
-  const saveBlocker =
-    missing.length > 0
-      ? t`Fill in the required fields first`
-      : autoRemoveChanged && autoRemoveBlock(form.autoRemove, form.driveEnabled)
-        ? autoRemoveBlockText(autoRemoveBlock(form.autoRemove, form.driveEnabled)!)
-        : undefined
+  const view = (id: ApproveId) => approveVisible(id, form, stored)
+  const ready = (id: ApproveId) => Object.keys(approvePatch(id, form, stored)).length > 0
+  const mark = (id: SectionId) => <SavedMark show={savedSections.includes(id)} />
 
   const provider = (id: string) => options?.providers.find((p) => p.id === id)
   const gemini = provider('gemini')
@@ -338,26 +367,7 @@ export default function SettingsView() {
 
   return (
     <main className="main-view main-view--page">
-      <PageHeader
-        title={t`Settings`}
-        actions={
-          <Tooltip content={saveBlocker}>
-            <button
-              className="btn btn--primary"
-              // A half-chosen auto-remove holds Save the same way it holds Apply.
-              disabled={
-                saving ||
-                siteChecking ||
-                missing.length > 0 ||
-                (autoRemoveChanged && !autoRemoveReady)
-              }
-              onClick={save}
-            >
-              <Trans>Save</Trans>
-            </button>
-          </Tooltip>
-        }
-      />
+      <PageHeader title={t`Settings`} />
       <SettingsSearchBar
         query={search.query}
         onQuery={search.setQuery}
@@ -371,6 +381,7 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>API keys</Trans>
+                {mark('keys')}
               </h2>
               {/* The note stands in for the whole section: with no key to store, neither a key
                 field nor the model that would consume one has anything to offer. */}
@@ -386,26 +397,40 @@ export default function SettingsView() {
               {canStoreApiKeys && options && (
                 <>
                   {gemini && (
-                    <ApiKeyField
-                      provider={gemini}
-                      value={form.geminiApiKey}
-                      onChange={(v) => setForm({ ...form, geminiApiKey: v })}
-                      storedKeyExists={stored.geminiApiKeySet}
-                    />
+                    <ApproveRow
+                      id="geminiKey"
+                      visible={view('geminiKey')}
+                      disabled={!ready('geminiKey')}
+                      onApprove={() => approve('geminiKey')}
+                    >
+                      <ApiKeyField
+                        provider={gemini}
+                        value={form.geminiApiKey}
+                        onChange={(v) => edit((f) => ({ ...f, geminiApiKey: v }), false)}
+                        storedKeyExists={stored.geminiApiKeySet}
+                      />
+                    </ApproveRow>
                   )}
                   {groq && (
-                    <ApiKeyField
-                      provider={groq}
-                      value={form.groqApiKey}
-                      onChange={(v) => setForm({ ...form, groqApiKey: v })}
-                      storedKeyExists={stored.groqApiKeySet}
-                    />
+                    <ApproveRow
+                      id="groqKey"
+                      visible={view('groqKey')}
+                      disabled={!ready('groqKey')}
+                      onApprove={() => approve('groqKey')}
+                    >
+                      <ApiKeyField
+                        provider={groq}
+                        value={form.groqApiKey}
+                        onChange={(v) => edit((f) => ({ ...f, groqApiKey: v }), false)}
+                        storedKeyExists={stored.groqApiKeySet}
+                      />
+                    </ApproveRow>
                   )}
                   <SummaryModelsField
                     models={options.geminiModels}
                     order={[form.geminiModel, ...(form.geminiFallbackModels ?? [])]}
                     onChange={([model, ...rest]) =>
-                      setForm({ ...form, geminiModel: model, geminiFallbackModels: rest })
+                      edit((f) => ({ ...f, geminiModel: model, geminiFallbackModels: rest }))
                     }
                   />
                   <div className="settings-field">
@@ -413,7 +438,7 @@ export default function SettingsView() {
                       <input
                         type="checkbox"
                         checked={form.summaryFigures}
-                        onChange={(e) => setForm({ ...form, summaryFigures: e.target.checked })}
+                        onChange={(e) => edit((f) => ({ ...f, summaryFigures: e.target.checked }))}
                       />
                       <span className="settings-check-text">
                         <span>
@@ -435,24 +460,45 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Storage</Trans>
+                {mark('storage')}
               </h2>
-              <DataRootField
-                value={form.dataRoot}
-                onChange={(v) => setForm({ ...form, dataRoot: v })}
-              />
+              <ApproveRow
+                id="dataRoot"
+                visible={view('dataRoot')}
+                disabled={!ready('dataRoot')}
+                onApprove={() => approve('dataRoot')}
+              >
+                <DataRootField
+                  value={form.dataRoot}
+                  onChange={(v) => edit((f) => ({ ...f, dataRoot: v }), false)}
+                />
+              </ApproveRow>
             </section>
 
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Google Drive</Trans>
+                {mark('drive')}
               </h2>
-              <DriveFields
-                value={{ enabled: form.driveEnabled, folder: form.gdriveRootFolder }}
-                onChange={(v) =>
-                  setForm({ ...form, driveEnabled: v.enabled, gdriveRootFolder: v.folder })
-                }
-                folderMissing={missing.includes('gdriveRootFolder')}
-              />
+              <ApproveRow
+                id="drive"
+                visible={view('drive')}
+                disabled={!ready('drive')}
+                onApprove={() => approve('drive')}
+              >
+                <DriveFields
+                  value={{ enabled: form.driveEnabled, folder: form.gdriveRootFolder }}
+                  // The toggle saves at once; the folder waits for Approve, and turning Drive on
+                  // with no stored folder waits with it.
+                  onChange={(v) =>
+                    edit(
+                      (f) => ({ ...f, driveEnabled: v.enabled, gdriveRootFolder: v.folder }),
+                      v.enabled !== form.driveEnabled,
+                    )
+                  }
+                  folderMissing={missing.includes('gdriveRootFolder')}
+                />
+              </ApproveRow>
             </section>
           </div>
 
@@ -460,44 +506,55 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Downloading recordings</Trans>
+                {mark('downloading')}
               </h2>
               <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
-              {/* A confirmed site, or no university, saves at once; an unverified one waits for Save. */}
-              <MoodleSiteField
-                value={form.moodleSite}
-                // Functional: the probe answers after other fields may have changed.
-                onChange={(v) => setForm((f) => f && { ...f, moodleSite: v })}
-                onSupported={site.pick}
-                onNoSite={() => site.pick('')}
-                onChecking={setSiteChecking}
-              />
+              {/* A confirmed site, or no university, saves at once; an unverified one waits for Approve. */}
+              <ApproveRow
+                id="site"
+                visible={view('site')}
+                disabled={!ready('site')}
+                onApprove={() => approve('site')}
+              >
+                <MoodleSiteField
+                  value={form.moodleSite}
+                  // Functional: the probe answers after other fields may have changed.
+                  onChange={(v) => edit((f) => ({ ...f, moodleSite: v }), false)}
+                  onSupported={site.pick}
+                  onNoSite={() => site.pick('')}
+                  onChecking={setSiteChecking}
+                />
+              </ApproveRow>
               <MoodleAccountField site={stored.moodleSite} choice={form.moodleSite} />
             </section>
 
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Courses</Trans>
+                {mark('courses')}
               </h2>
               <CourseStructureField
                 value={form.courseStructure}
                 saved={toCourseStructure(stored.courseStructure)}
-                onChange={(v) => setForm({ ...form, courseStructure: v })}
+                onChange={(v) => edit((f) => ({ ...f, courseStructure: v }))}
               />
             </section>
 
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Automatic retry</Trans>
+                {mark('retry')}
               </h2>
               <AutoRetryField
                 value={form.autoRetry}
-                onChange={(v) => setForm({ ...form, autoRetry: v })}
+                onChange={(v) => edit((f) => ({ ...f, autoRetry: v }))}
               />
             </section>
 
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Appearance and behaviour</Trans>
+                {mark('appearance')}
               </h2>
               <LanguageField />
               <div className="settings-field">
@@ -521,7 +578,7 @@ export default function SettingsView() {
                 <Select
                   id="auto-run"
                   value={form.autoRun}
-                  onChange={(v) => setForm({ ...form, autoRun: v as AutoRun })}
+                  onChange={(v) => edit((f) => ({ ...f, autoRun: v as AutoRun }))}
                   options={[
                     { value: 'full', label: t`Run the whole pipeline` },
                     { value: 'audio', label: t`Extract the audio only` },
@@ -544,7 +601,7 @@ export default function SettingsView() {
                 <Select
                   id="ai-provider"
                   value={form.aiProvider}
-                  onChange={(v) => setForm({ ...form, aiProvider: v as AiProvider })}
+                  onChange={(v) => edit((f) => ({ ...f, aiProvider: v as AiProvider }))}
                   options={AI_PROVIDER_IDS.map((id) => ({
                     value: id,
                     label: AI_PROVIDERS[id].name,
@@ -559,10 +616,11 @@ export default function SettingsView() {
             <section className="settings-section">
               <h2 className="settings-section-title">
                 <Trans>Disk space</Trans>
+                {mark('disk')}
               </h2>
               <AutoRemoveField
                 value={form.autoRemove}
-                onChange={(v) => setForm({ ...form, autoRemove: v })}
+                onChange={(v) => edit((f) => ({ ...f, autoRemove: v }), false)}
                 driveEnabled={form.driveEnabled}
                 apply={
                   saving || siteChecking
@@ -577,12 +635,13 @@ export default function SettingsView() {
               <section className="settings-section">
                 <h2 className="settings-section-title">
                   <Trans>Error reports</Trans>
+                  {mark('reports')}
                 </h2>
                 <ErrorReportsField
                   value={form.errorReports}
                   confirmed={form.privacyConfirmed}
-                  onChange={(v) => setForm({ ...form, errorReports: v })}
-                  onAnswer={(confirmed) => setForm({ ...form, ...privacyAnswer(confirmed) })}
+                  onChange={(v) => edit((f) => ({ ...f, errorReports: v }))}
+                  onAnswer={(confirmed) => edit((f) => ({ ...f, ...privacyAnswer(confirmed) }))}
                   notice={
                     reportsRestart && (
                       <p
@@ -625,7 +684,7 @@ export default function SettingsView() {
               </ul>
             ) : undefined
           }
-          onConfirm={() => void commit(pending.patch, pending.sweep)}
+          onConfirm={() => void commitApprove(pending.patch)}
           onCancel={() => setPending(null)}
         />
       )}

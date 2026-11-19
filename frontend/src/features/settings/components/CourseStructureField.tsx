@@ -9,7 +9,7 @@ import { checklistState } from '../utils/courseStructure'
 import '@/styles/settings-form.css'
 import './CourseStructureField.css'
 
-// The mode saves with the page; a course's pick under "specific courses" writes at once.
+// The mode and a course's pick under "specific courses" both write at once.
 export default function CourseStructureField({
   value,
   saved,
@@ -47,7 +47,7 @@ export default function CourseStructureField({
       </span>
       {state === 'saveFirst' && (
         <p className="settings-note" data-course-structure="save-first">
-          <Trans>Save to choose the courses.</Trans>
+          <Trans>The courses appear once the change is saved.</Trans>
         </p>
       )}
       {state === 'list' && <CourseChecklist />}

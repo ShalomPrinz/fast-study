@@ -42,8 +42,7 @@ test('a reordered model list saves, and a busy top model falls to the next one i
   await expect(rows(page)).toHaveCount(2);
   await expect(rows(page).first()).toHaveAttribute('data-model-id', FLASH_36);
   await page.screenshot({ path: path.join(harness.evidence, 'gemini-model-order-settings.png') });
-  await page.locator('.page-header-actions .btn--primary').click();
-
+  // Order changes autosave; the store answering is the proof.
   await expect
     .poll(async () => {
       const { body } = await call(`${DATABASE}/settings`);

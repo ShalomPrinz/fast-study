@@ -122,4 +122,78 @@ describe('useSiteSave', () => {
     await settle()
     expect(saveSettings.mock.calls.at(-1)).toEqual([{ moodleSite: BGU }])
   })
+
+  describe('a lazy patch', () => {
+    // A form and a store the builder diffs, as the page does; the fake service applies each patch.
+    function setup() {
+      const form = { summaryFigures: false, errorReports: true }
+      const store = { ...form }
+      saveSettings.mockImplementation(async (patch: Partial<typeof store>) => {
+        Object.assign(store, patch)
+        return { ...store, moodleSite: null } as unknown as Settings
+      })
+      const build = () => {
+        const patch: Partial<typeof store> = {}
+        if (form.summaryFigures !== store.summaryFigures) patch.summaryFigures = form.summaryFigures
+        if (form.errorReports !== store.errorReports) patch.errorReports = form.errorReports
+        return patch
+      }
+      return { form, store, build }
+    }
+
+    it('ends matching the form when a checkbox is toggled twice before the first save lands', async () => {
+      const { form, store, build } = setup()
+      const { hook } = render('')
+      const first = deferred<void>()
+      const real = saveSettings.getMockImplementation()!
+      saveSettings.mockImplementationOnce(async (p) => {
+        await first.promise
+        return real(p)
+      })
+      form.summaryFigures = true
+      await act(async () => void hook.result.current.save(build))
+      form.summaryFigures = false
+      act(() => void hook.result.current.save(build))
+      await act(async () => first.resolve())
+      await settle()
+      expect(store.summaryFigures).toBe(false)
+      expect(saveSettings.mock.calls).toEqual([
+        [{ summaryFigures: true }],
+        [{ summaryFigures: false }],
+      ])
+    })
+
+    it('turns error reports off for good when switched on then off fast', async () => {
+      const { form, store, build } = setup()
+      store.errorReports = false
+      const { hook } = render('')
+      const first = deferred<void>()
+      const real = saveSettings.getMockImplementation()!
+      saveSettings.mockImplementationOnce(async (p) => {
+        await first.promise
+        return real(p)
+      })
+      form.errorReports = true
+      await act(async () => void hook.result.current.save(build))
+      form.errorReports = false
+      act(() => void hook.result.current.save(build))
+      await act(async () => first.resolve())
+      await settle()
+      expect(store.errorReports).toBe(false)
+    })
+
+    it('sends nothing when an earlier save already stored the form', async () => {
+      const { form, build } = setup()
+      const { hook } = render('')
+      form.summaryFigures = true
+      let a: unknown, b: unknown
+      await act(async () => {
+        a = hook.result.current.save(build)
+        b = hook.result.current.save(build)
+        await Promise.all([a, b])
+      })
+      expect(saveSettings).toHaveBeenCalledTimes(1)
+      expect(await b).toBeNull()
+    })
+  })
 })

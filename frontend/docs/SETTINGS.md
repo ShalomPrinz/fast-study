@@ -32,7 +32,7 @@ typed in and fail minutes later mid-pipeline.
 rows 2+ are `geminiFallbackModels` (`[]` = never switch, `null` = never saved). ▲/▼ reorder: the two rows slide into each other's place together (FLIP, 200ms, the clicked row on top; clicks mid-slide are ignored, reduced motion swaps instantly), the top row has no ▲ and the bottom no ▼ (slot kept empty, `visibility: hidden`), focus stays on the moved row's arrow (the other one when it is gone),
 ✕ removes (disabled on the last row, its `Tooltip` says why); each fallback row's place name carries a small badge with the previous row's number, the dashed rows under "Not used" add at the end. Never saved,
 `effectiveFallback` derives the rows as the backend does (auto-fallback unset/on: every other model after the main, wrapping; off: none),
-and the first save writes the list explicitly; Save sends both fields whenever either differs from that effective value, so
+and the first save writes the list explicitly; a change sends both fields whenever either differs from that effective value, so
 `buildPatch` takes the options. The wall asks for no model and keeps a `null` list, so it sends only the model. `geminiAutoFallback`
 is read only for the derivation and never written. Selectors: `#summary-models`, `.summary-model-row[data-model-id]` with
 `.summary-model-up/-down/-remove`, `.summary-model-add[data-model-id]`.
@@ -55,15 +55,13 @@ the rest of the page. Its section (`AutoRemoveField`, rules in `utils/autoRemove
 enabled once it differs from the store and both values are chosen; checking the box always starts from
 video and no timing, and "after Drive" is disabled while the form's Drive toggle is off. A stored "after
 Drive" rule may stay saved beside Drive turned off, by design: it removes nothing until the rule changes
-or Drive is back on. The page's Save
-treats the section exactly like Apply, and a half-chosen section holds both. A save that **widens** the
+or Drive is back on. No other change on the page saves the section, and a half-chosen one holds Apply. A save that **widens** the
 rule (`autoRemoveWidens`: off to on, video to video + audio, Drive to PDF) first confirms that the files
 of every existing lecture go for good; Yes saves, pushes `/config`, then awaits the backend's `POST
-/auto-remove/apply` and toasts its counts (`AutoRemoveSummary`); No saves nothing, the whole Save
-included. Narrowing or unchecking (stored `off`) saves with no confirm and no sweep. Apply's action is
+/auto-remove/apply` and toasts its counts (`AutoRemoveSummary`); No saves nothing. Narrowing or unchecking (stored `off`) saves with no confirm and no sweep. Apply's action is
 `autoRemoveApply`: with the section matching a stored rule that is on, it re-runs the sweep with no
 confirm, the retry the locked and failed toasts point to; "after Drive" while the form's Drive toggle
-differs from the store disables it with a hint, since only the page's Save stores both before sweeping; an incomplete edit shows a hint from `autoRemoveBlock` (no timing yet, or "after Drive" with Drive off, the latter worded per "What to remove"), and the page's Save shows the same one; nothing to apply (`unchanged`) also shows a hint, a busy page with a complete edit (`null`) none. How removed files
+differs from the store disables it with a hint, since the Drive toggle must be stored before sweeping (it can wait on an unapproved Drive folder); an incomplete edit shows a hint from `autoRemoveBlock` (no timing yet, or "after Drive" with Drive off, the latter worded per "What to remove"); nothing to apply (`unchanged`) also shows a hint, a busy page with a complete edit (`null`) none. How removed files
 read on a lecture is in [LECTURES.md](LECTURES.md).
 
 **Error reports apply live, and unset means off** — nothing is sent before an explicit yes. The launcher
@@ -77,7 +75,7 @@ dev's `.env` store has no such field and reports nothing anyway, so both screens
 **The privacy policy** opens from a link under the switch (`PrivacyPolicyModal`); Confirm unlocks only
 once its text is scrolled to the end (`readToEnd`), Confirm turns the switch on and Decline off, and both
 set the launcher-only `privacyConfirmed`, shown as the box's mark. Esc or a click outside answers nothing.
-On `/settings` an answer is a form edit that Save stores. The wall stores `errorReports` explicitly
+On `/settings` an answer saves at once. The wall stores `errorReports` explicitly
 on every save, and while the policy is unanswered its Start opens the modal instead, whose answer saves
 and starts in one go (`wallMustAskPrivacy`); closing it saves nothing.
 
@@ -94,8 +92,8 @@ it to the store alone, the launcher's in the packaged app and the database's `.e
 `lectures_only` and notifies. Everything but this field reads only that per-course flag
 ([LECTURES.md](LECTURES.md)). Under "chosen courses" (`CourseStructureField`) a checklist of the
 courses writes each pick at once (`PATCH /courses/{course}/lectures_only`), and the box
-reads the tree's flag — which is the pick only while that mode is live, so until it is saved the field
-says to save first (`checklistState`). A new course starts unchecked.
+reads the tree's flag — which is the pick only while that mode is live, so until the mode's save lands the field
+says the courses appear once it is saved (`checklistState`). A new course starts unchecked.
 
 ## What is not a setting
 
@@ -134,9 +132,22 @@ Loads the store (database) and the options (backend) apart, so either can be dow
 down the form renders from the store and the API keys and model show as unavailable; with the store down the
 page says so and offers Retry. Whichever half is missing is fetched again on every notify — the backend
 notifies at boot and the stream's reconnect dispatches — so a returning service fills in without a reload;
-the options only resolve the model (`withOptions`), never resetting an edit. It edits a local form, saves changed fields in one `saveSettings` call.
-The form is read from the store (`formFromStore`) on load and again from each save's answer, so a later
-save never reverts another writer's change; a stored model the options no longer list reads as the first.
+the options only resolve the model (`withOptions`), never resetting an edit. It edits a local form and has no Save button (below).
+The form is read from the store (`formFromStore`) on load; a stored model the options no longer list reads as the first.
+**Saving.** There is no Save button. A change saves at once on its own: checkboxes, dropdowns, the summary-model list,
+auto-retry, error reports and the privacy answer, the Drive toggle, a preset university. `autoPatch`
+(`utils/autosave.ts`) is `buildPatch` minus the held entries, so a patch holds only what changed. Typed or sensitive
+entries save through their own **Approve** (`ApproveRow`, hidden until the entry has an unsaved edit; Enter in its text box
+approves too): each API key, the data folder, the Drive folder and a pasted university address. `approvePatch`
+stays empty while the entry is blank or invalid, so that field alone waits (Approve disabled, its hint shown) while every
+other change still saves: Drive turned on with no stored folder waits, and approving the folder stores both together.
+Approving the data folder while runs are in flight opens the split-runs `ConfirmModal` (`runsAtRisk`); Cancel leaves the
+edit unsaved. Auto-remove keeps its own Apply and confirm.
+Saves run on `useSiteSave`'s one chain, in the order the changes were made; an auto save builds its patch when it runs (latest form against the store as it stands then), so a toggle undone before the first save lands is still sent. A landed save writes only the store
+(`storedRef`), never the form, except `mergeApproved`, which takes the store's answer into an approved entry alone (a key
+clears, the folder takes its normalized spelling) and only while its text is unchanged since; so overlapping saves can
+never revert a newer edit. A failed save leaves its field unsaved and the next change retries it.
+A saved section shows a brief "Saved" beside its title (`SavedMark`; no success toast); a failure toasts.
 **Every save answers**, failure included — a connection error's own toast is deduped and reads as noise.
 A failure after the store write leaves the service behind until a retry, so the toast asks for one.
 
@@ -212,7 +223,7 @@ Probes through `probeKey` on blur and paste, only when the value changed and is 
 on new text, and the last-probed value, so retyping a rejected key asks again.
 
 `probeKey` answers `valid`, `rejected` or `unverified`, and every failure short of a verdict is
-`unverified`, since an unreachable provider must never call a good key bad. **Save is always permitted.**
+`unverified`, since an unreachable provider must never call a good key bad. **Approving is always permitted.**
 The key-prefix mismatch is an instant offline warning in the same slot, overwritten by any probe result;
 prefixes are convention, not contract, so it never blocks.
 
@@ -232,21 +243,21 @@ the lock frees;
 
 **The save rule is the opposite of a key's.** A key the provider rejects might still be right; a site that
 definitively isn't a usable Moodle can never work. So `unsupported` saves nothing — the field hands the form
-`null`, which `buildPatch` never sends, so the stored site stays. A probe in flight holds Save on both screens
-(`onChecking`), so a click can't outrun the answer and drop the choice; a blank site never blocks. `unverified` saves, since a
+`null`, which `buildPatch` never sends, so the stored site stays. A probe in flight holds the choice on both screens
+(`onChecking`), so it can't outrun the answer and drop it; a blank site never blocks. `unverified` saves, since a
 bot wall or a dropped connection says nothing about the site; the post-login check in the auto-downloader
 is the backstop. What is saved is always the probe's canonical root, never the typed text.
 
 **No university is a choice too.** The "Choose your university…" entry, or "Other…" with no address
 (`choosesNoSite`), hands the form `''`, which `buildPatch` sends and every store and auto's `/config`
 read as cleared. The wall saves either at once; `/settings` saves only the "Choose…" entry at once
-(`onNoSite`), since a blank "Other…" there is usually a switch half typed, and leaves that one to Save.
+(`onNoSite`), since a blank "Other…" there is usually a switch half typed, and stores nothing for it.
 
 **Both screens save a confirmed site at once**: a `supported` answer, or no university, writes `moodle_site` alone
 through `saveSettings` (store, then auto's `/config`), chained so a quicker second pick never lands first,
-which makes Connect live without a Save. The rest of the form keeps its unsaved edits (`withSavedSite`) and
-saves on submit. `unverified` waits for the submit on both. `/settings` does it in `hooks/useSiteSave.ts`, whose chain
-its Save joins too, so a pick and a Save always land in the order made.
+which makes Connect live at once. The rest of the form keeps its unsaved edits (`withSavedSite`).
+`unverified` waits: the wall for its Start, `/settings` for the University section's Approve. `/settings` does it in
+`hooks/useSiteSave.ts`, whose chain every save of the page joins, so saves land in the order made.
 
 **Switching sites keeps the account.** The auto-downloader holds one session and keeps it across a switch:
 the chip reads not connected on any other site and connected again once its own site is picked back, with

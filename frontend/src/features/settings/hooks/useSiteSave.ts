@@ -40,9 +40,15 @@ export function useSiteSave({ storedSite, onSaved, onFailed }: Options) {
     return run
   }
 
-  // The whole form's Save, on the same chain as the picks.
-  function save(patch: SettingsPatch): Promise<SavedSettings> {
-    return enqueue(patch.moodleSite, async () => {
+  // A page save on the same chain as the picks. A function builds its patch when the save runs,
+  // from the then-latest form and store, and answers `null` without a request when nothing is left to send.
+  function save(patch: SettingsPatch): Promise<SavedSettings>
+  function save(build: () => SettingsPatch): Promise<SavedSettings | null>
+  function save(source: SettingsPatch | (() => SettingsPatch)) {
+    const site = typeof source === 'function' ? undefined : source.moodleSite
+    return enqueue(site, async () => {
+      const patch = typeof source === 'function' ? source() : source
+      if (typeof source === 'function' && !Object.keys(patch).length) return null
       const result = await saveSettings(patch)
       savedSite.current = result.moodleSite ?? ''
       return result
