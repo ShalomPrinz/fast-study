@@ -24,10 +24,20 @@
 }
 
 .sidebar-update-text {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
   line-height: 1.4;
   font-weight: 600;
+}
+
+/* LTR-isolated semver; `align-self` resolves against the column's direction, so it sits at the inline end in both languages (`text-align: end` would follow the span's own `dir="ltr"`). */
+.sidebar-update-version {
+  align-self: flex-end;
+  font-size: var(--fs-fine);
+  font-weight: 400;
+  color: var(--text-2);
 }
 
 /* Beats `.btn--primary`'s ink fill: on this card the one action takes the accent. */

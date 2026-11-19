@@ -1392,7 +1392,7 @@ msgstr "Downloading {active} more…"
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
-#: src/shared/sidebar/UpdateRow.tsx:25
+#: src/shared/sidebar/UpdateRow.tsx:26
 msgid "Downloading update…"
 msgstr "Downloading update…"
 
@@ -1961,7 +1961,7 @@ msgid "Loading your data…"
 msgstr "Loading your data…"
 
 #: src/features/downloads/DownloadsView.tsx:222
-#: src/shared/sidebar/UpdateRow.tsx:44
+#: src/shared/sidebar/UpdateRow.tsx:50
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -2624,7 +2624,7 @@ msgstr "Restart"
 msgid "Restart FastStudy?"
 msgstr "Restart FastStudy?"
 
-#: src/shared/sidebar/UpdateRow.tsx:44
+#: src/shared/sidebar/UpdateRow.tsx:50
 msgid "Restart now"
 msgstr "Restart now"
 
@@ -3499,7 +3499,7 @@ msgstr "Unsaved changes"
 msgid "Unsupported"
 msgstr "Unsupported"
 
-#: src/shared/sidebar/UpdateRow.tsx:37
+#: src/shared/sidebar/UpdateRow.tsx:38
 msgid "Update ready"
 msgstr "Update ready"
 
@@ -3630,7 +3630,7 @@ msgstr "Without one, FastStudy can't fetch recordings from your course site and 
 msgid "Work in progress will be stopped."
 msgstr "Work in progress will be stopped."
 
-#: src/shared/sidebar/UpdateRow.tsx:48
+#: src/shared/sidebar/UpdateRow.tsx:54
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "Work in progress will stop. Restart anyway?"
 

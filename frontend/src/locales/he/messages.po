@@ -1392,7 +1392,7 @@ msgstr "מוריד עוד {active}…"
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
-#: src/shared/sidebar/UpdateRow.tsx:25
+#: src/shared/sidebar/UpdateRow.tsx:26
 msgid "Downloading update…"
 msgstr "מוריד עדכון…"
 
@@ -1961,7 +1961,7 @@ msgid "Loading your data…"
 msgstr "טוען את הנתונים שלך…"
 
 #: src/features/downloads/DownloadsView.tsx:222
-#: src/shared/sidebar/UpdateRow.tsx:44
+#: src/shared/sidebar/UpdateRow.tsx:50
 msgid "Loading…"
 msgstr "טוען…"
 
@@ -2624,7 +2624,7 @@ msgstr "התחל מחדש"
 msgid "Restart FastStudy?"
 msgstr "להפעיל מחדש את FastStudy?"
 
-#: src/shared/sidebar/UpdateRow.tsx:44
+#: src/shared/sidebar/UpdateRow.tsx:50
 msgid "Restart now"
 msgstr "הפעלה מחדש"
 
@@ -3499,7 +3499,7 @@ msgstr "שינויים שלא נשמרו"
 msgid "Unsupported"
 msgstr "לא נתמך"
 
-#: src/shared/sidebar/UpdateRow.tsx:37
+#: src/shared/sidebar/UpdateRow.tsx:38
 msgid "Update ready"
 msgstr "עדכון מוכן"
 
@@ -3630,7 +3630,7 @@ msgstr "בלי אחד מהם, FastStudy לא תוכל להוריד הקלטות 
 msgid "Work in progress will be stopped."
 msgstr "עבודה שרצה כעת תיעצר."
 
-#: src/shared/sidebar/UpdateRow.tsx:48
+#: src/shared/sidebar/UpdateRow.tsx:54
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "עבודה שבתהליך תיעצר. להפעיל מחדש בכל זאת?"
 

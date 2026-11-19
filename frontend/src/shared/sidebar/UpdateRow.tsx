@@ -2,7 +2,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import ReactDOM from 'react-dom'
 import Icon from '@/shared/components/Icon'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import { useRestartToUpdate, useUpdateState } from '@/shared/hooks/useAppUpdate'
+import { useRestartToUpdate, useUpdateState, useUpdateVersion } from '@/shared/hooks/useAppUpdate'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
 import '@/styles/modal.css'
@@ -13,6 +13,7 @@ import './UpdateRow.css'
 export default function UpdateRow({ busy }: { busy: boolean }) {
   const { t } = useLingui()
   const state = useUpdateState()
+  const version = useUpdateVersion(state)
   const { restarting, confirming, request, confirm, cancel } = useRestartToUpdate(busy)
 
   if (state === null) return null
@@ -35,6 +36,11 @@ export default function UpdateRow({ busy }: { busy: boolean }) {
       </span>
       <span className="sidebar-update-text">
         <Trans>Update ready</Trans>
+        {version && (
+          <span className="sidebar-update-version" dir="ltr">
+            v{version}
+          </span>
+        )}
       </span>
       <button
         className="btn btn--primary sidebar-update-restart"

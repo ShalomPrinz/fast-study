@@ -27,6 +27,27 @@ export function useUpdateState(): UpdateState {
   return state
 }
 
+// The downloaded update's version once `state` is `downloaded`; `null` while unknown, absent or failed.
+export function useUpdateVersion(state: UpdateState): string | null {
+  const [version, setVersion] = useState<string | null>(null)
+  useEffect(() => {
+    const updates = runtimeBridge()?.updates
+    if (state !== 'downloaded' || !updates) {
+      setVersion(null)
+      return
+    }
+    let live = true
+    updates
+      .version()
+      .then((v) => live && setVersion(v))
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [state])
+  return version
+}
+
 interface RestartFlow {
   restarting: boolean
   confirming: boolean

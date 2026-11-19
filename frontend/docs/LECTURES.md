@@ -246,7 +246,7 @@ The link rows render through `SidebarLink`. The nav is light (`--nav-*` tokens):
 The footer is `UpdateRow` above a row with `LanguageSwitcher` at the inline start and the version tag at the
 end — the bridge's `version` when `packaged`, else `dev`. `UpdateRow` follows the launcher's update phase
 (`hooks/useAppUpdate.ts`: a snapshot, then pushes; hidden for `null` and without the bridge):
-`downloading` is a spinner, `downloaded` is a white card reading "Update ready" with an accent Restart now. That asks first while the runner or a download
+`downloading` is a spinner, `downloaded` is a white card reading "Update ready" over the launcher's `updates.version()` as `v1.4.2` (LTR; omitted when `null` or rejected), with an accent Restart now. That asks first while the runner or a download
 runs, then grays the window until the app quits; a refusal that arrives drops the gray
 ([electron/docs/UPDATES.md](../../electron/docs/UPDATES.md)).
 

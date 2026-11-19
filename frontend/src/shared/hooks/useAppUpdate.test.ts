@@ -3,12 +3,15 @@ import { afterEach, describe, it, expect, vi } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
 import type { UpdateState } from '@/services/runtime'
 import { versionTag } from '@/services/runtime'
-import { useRestartToUpdate, useUpdateState } from './useAppUpdate'
+import { useRestartToUpdate, useUpdateState, useUpdateVersion } from './useAppUpdate'
 
 type Updates = NonNullable<NonNullable<Window['faststudy']>['updates']>
 
 // A fake launcher: `push` drives the subscription, `answer` resolves the pending snapshot.
-function fakeUpdates(restart: Updates['restart'] = vi.fn()) {
+function fakeUpdates(
+  restart: Updates['restart'] = vi.fn(),
+  version: Updates['version'] = () => Promise.resolve('1.4.2'),
+) {
   let listener: ((s: UpdateState) => void) | null = null
   let answer!: (s: UpdateState) => void
   const unsubscribe = vi.fn(() => (listener = null))
@@ -19,6 +22,7 @@ function fakeUpdates(restart: Updates['restart'] = vi.fn()) {
       return unsubscribe
     },
     restart,
+    version,
   }
   window.faststudy = { updates } as unknown as Window['faststudy']
   return {
@@ -56,6 +60,39 @@ describe('useUpdateState', () => {
     act(() => fake.push('downloaded'))
     await act(async () => fake.answer('downloading'))
     expect(result.current).toBe('downloaded')
+  })
+})
+
+describe('useUpdateVersion', () => {
+  it('reads the version after the downloaded push', async () => {
+    const fake = fakeUpdates()
+    const { result } = renderHook(() => {
+      const state = useUpdateState()
+      return useUpdateVersion(state)
+    })
+    expect(result.current).toBeNull()
+    await act(async () => fake.push('downloaded'))
+    expect(result.current).toBe('1.4.2')
+  })
+
+  it('reads it on mount when the snapshot is already downloaded', async () => {
+    const fake = fakeUpdates()
+    const { result } = renderHook(() => useUpdateVersion(useUpdateState()))
+    await act(async () => fake.answer('downloaded'))
+    expect(result.current).toBe('1.4.2')
+  })
+
+  it('stays null on null, a rejection, or while downloading', async () => {
+    for (const version of [() => Promise.resolve(null), () => Promise.reject(new Error('nope'))]) {
+      const fake = fakeUpdates(vi.fn(), version)
+      const { result } = renderHook(() => useUpdateVersion(useUpdateState()))
+      await act(async () => fake.push('downloaded'))
+      expect(result.current).toBeNull()
+    }
+    const fake = fakeUpdates()
+    const { result } = renderHook(() => useUpdateVersion(useUpdateState()))
+    await act(async () => fake.push('downloading'))
+    expect(result.current).toBeNull()
   })
 })
 

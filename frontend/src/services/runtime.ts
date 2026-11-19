@@ -52,6 +52,8 @@ declare global {
         snapshot: () => Promise<UpdateState>
         subscribe: (callback: (state: UpdateState) => void) => () => void
         restart: () => Promise<void>
+        // The downloaded update's bare semver, `null` before one is ready.
+        version: () => Promise<string | null>
       }
       // The packaged data folder the init wall starts from (`%LOCALAPPDATA%\FastStudy\data`).
       defaultDataRoot?: string
