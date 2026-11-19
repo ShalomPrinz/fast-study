@@ -25,6 +25,7 @@ const full = {
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
   geminiAutoFallback: true,
+  geminiFallbackModels: ['a', 'b'],
   summaryFigures: true,
   autoRetry: true,
   autoRetryCount: 4,
@@ -107,6 +108,26 @@ test('geminiAutoFallback round-trips and reaches the backend env', () => {
     store.write({ geminiAutoFallback: 'true' }),
     /geminiAutoFallback must be a boolean/,
   );
+});
+
+test('geminiFallbackModels round-trips and reaches the backend env', () => {
+  assert.equal(store.read().geminiFallbackModels, null);
+  assert.equal('GEMINI_FALLBACK_MODELS' in store.serviceEnv(), false);
+  assert.deepEqual(store.write({ geminiFallbackModels: ['a', 'b'] }).geminiFallbackModels, [
+    'a',
+    'b',
+  ]);
+  assert.deepEqual(store.serviceEnv(), { GEMINI_FALLBACK_MODELS: 'a,b' });
+  assert.deepEqual(store.write({ geminiFallbackModels: [] }).geminiFallbackModels, []);
+  assert.deepEqual(store.serviceEnv(), { GEMINI_FALLBACK_MODELS: 'none' });
+  // null leaves the stored list alone, like every field
+  assert.deepEqual(store.write({ geminiFallbackModels: null }).geminiFallbackModels, []);
+  for (const bad of ['a,b', [1], [''], ['a', '  '], ['a,b'], ["a'b"], ['a\nb'], ['a\rb'], {}]) {
+    const refused = store.write({ geminiFallbackModels: bad });
+    assert.equal(refused.code, 'setting_must_be_string_list');
+    assert.deepEqual(refused.params, { field: 'geminiFallbackModels' });
+  }
+  assert.deepEqual(store.read().geminiFallbackModels, []);
 });
 
 test('summaryFigures round-trips and reaches the backend env', () => {
@@ -249,6 +270,7 @@ test('echoing a read back blanks nothing', () => {
     geminiModel: written.geminiModel,
     driveEnabled: written.driveEnabled,
     geminiAutoFallback: written.geminiAutoFallback,
+    geminiFallbackModels: written.geminiFallbackModels,
     summaryFigures: written.summaryFigures,
     autoRetry: written.autoRetry,
     autoRetryCount: written.autoRetryCount,
@@ -295,6 +317,7 @@ const unset = {
   geminiModel: null,
   driveEnabled: null,
   geminiAutoFallback: null,
+  geminiFallbackModels: null,
   summaryFigures: null,
   autoRetry: null,
   autoRetryCount: null,
@@ -371,6 +394,7 @@ test('serviceEnv maps every field onto its service env var', () => {
     COURSE_STRUCTURE: 'lectures_some',
     DRIVE_ENABLED: 'true',
     GEMINI_AUTO_FALLBACK: 'true',
+    GEMINI_FALLBACK_MODELS: 'a,b',
     SUMMARY_FIGURES: 'true',
     AUTO_RETRY: 'true',
     AUTO_RETRY_COUNT: '4',

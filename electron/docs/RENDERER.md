@@ -216,13 +216,17 @@ written from both processes would put two writers on one file.
   the view never has a `code` key. IPC strips an Error's own properties, and so does the context
   bridge, so the preload rejects `settings.write` with that plain object rather than an `Error`.
   Codes and params (`field` = the camelCase patch key) are `database/settings.py`'s for the same
-  refusals: `unknown_setting`, `setting_must_be_{string,boolean,integer}`, `setting_invalid_choice`
+  refusals: `unknown_setting`, `setting_must_be_{string,boolean,integer,string_list}`, `setting_invalid_choice`
   (+`value`), plus the launcher's `setting_out_of_range` (+`min`, `max`). The keystore refusal still throws.
 - **Integer fields (`INT_FIELDS`, `{ env, min, max }`) refuse a write outside their range**, and an
   out-of-range stored value reads `null` and stays out of the env.
 - **A stored key the store no longer knows is inert**: neither the read view nor the env lists it.
 - **`gemini_auto_fallback` (`geminiAutoFallback`)** reaches the backend as `GEMINI_AUTO_FALLBACK`
-  (`true`/`false`); unset reads `null`, which the backend treats as on.
+  (`true`/`false`), but only to derive the fallback list when `gemini_fallback_models` was never saved
+  (`docs/MIGRATIONS.md`, "Derived summary model fallback list"); it is not a live switch.
+- **`gemini_fallback_models` (`geminiFallbackModels`)** is a list of non-empty model-id strings
+  (refusing ids with `,`, `'`, CR or LF, which the comma-join and `.env` quoting cannot hold), reaching the backend as `GEMINI_FALLBACK_MODELS`: ids joined by `,`, `[]` as the
+  literal `none` (a blank value reads as unset). Unset reads `null` and sets no env var.
 - **`summary_figures` (`summaryFigures`)** reaches the backend as `SUMMARY_FIGURES` (`true`/`false`);
   unset reads `null`, which the backend treats as off.
 - **`auto_retry` (`autoRetry`, bool), `auto_retry_count` (`autoRetryCount`, 1–10) and

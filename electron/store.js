@@ -31,6 +31,9 @@ const BOOL_FIELDS = {
   summary_figures: 'SUMMARY_FIGURES',
   auto_retry: 'AUTO_RETRY',
 };
+// A list of non-empty model ids; the env var joins them with `,`, and the empty list is the literal
+// `none` because a blank env value reads as unset. No curated-id check: the backend owns the ids.
+const LIST_FIELDS = { gemini_fallback_models: 'GEMINI_FALLBACK_MODELS' };
 // Integers with their env var and inclusive range, mirroring backend/services/settings.py's clamp;
 // a stored value outside it reads as unset.
 const INT_FIELDS = {
@@ -59,6 +62,7 @@ const FIELDS = {
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
   geminiAutoFallback: 'gemini_auto_fallback',
+  geminiFallbackModels: 'gemini_fallback_models',
   summaryFigures: 'summary_figures',
   autoRetry: 'auto_retry',
   autoRetryCount: 'auto_retry_count',
@@ -100,6 +104,18 @@ function text(value) {
 function choice(field, value) {
   const picked = typeof value === 'string' ? value.trim().toLowerCase() : null;
   return CHOICES[field].includes(picked) ? picked : null;
+}
+
+// A stored list of non-empty strings free of `,` `'` CR LF (the comma-join and .env quoting cannot hold them), or null when unset or malformed (`[]` is a value).
+function list(value) {
+  return isStringList(value) ? value : null;
+}
+
+function isStringList(value) {
+  return (
+    Array.isArray(value) &&
+    value.every((v) => typeof v === 'string' && v.trim() !== '' && !/[,'\r\n]/.test(v))
+  );
 }
 
 function bool(value) {
@@ -149,6 +165,7 @@ function read() {
     geminiModel: text(stored.gemini_model),
     driveEnabled: bool(stored.drive_enabled),
     geminiAutoFallback: bool(stored.gemini_auto_fallback),
+    geminiFallbackModels: list(stored.gemini_fallback_models),
     summaryFigures: bool(stored.summary_figures),
     autoRetry: bool(stored.auto_retry),
     autoRetryCount: int('auto_retry_count', stored.auto_retry_count),
@@ -201,6 +218,15 @@ function convert(patch) {
         });
       }
       updates[field] = value;
+    } else if (field in LIST_FIELDS) {
+      if (!isStringList(value)) {
+        throw new SettingRefused(
+          `${key} must be a list of non-empty strings`,
+          'setting_must_be_string_list',
+          { field: key },
+        );
+      }
+      updates[field] = value.map((v) => v.trim());
     } else if (field in INT_FIELDS) {
       if (!Number.isInteger(value)) {
         throw new SettingRefused(`${key} must be an integer`, 'setting_must_be_integer', {
@@ -253,6 +279,10 @@ function serviceEnv() {
   }
   for (const [field, name] of Object.entries(BOOL_FIELDS)) {
     if (typeof stored[field] === 'boolean') env[name] = stored[field] ? 'true' : 'false';
+  }
+  for (const [field, name] of Object.entries(LIST_FIELDS)) {
+    const value = list(stored[field]);
+    if (value) env[name] = value.length ? value.join(',') : 'none';
   }
   for (const [field, { env: name }] of Object.entries(INT_FIELDS)) {
     const value = int(field, stored[field]);
