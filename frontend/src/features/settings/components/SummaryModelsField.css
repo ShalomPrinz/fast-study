@@ -50,6 +50,8 @@
 }
 
 .summary-model-row .summary-model-btn {
+  /* A move keeps the clicked button's DOM node while the hover and disabled state change under it; a fade would flicker. */
+  transition: none;
   padding: var(--space-1) var(--space-3);
   border-color: var(--accent-line);
   background: var(--surface);
