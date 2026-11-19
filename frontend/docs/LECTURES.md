@@ -267,6 +267,8 @@ A course, lecture or editor route whose target the tree lacks renders `NotFoundP
 (`shared/utils/notFound.ts`) turns it into the same danger-bordered "Courses failed to load." (`.main-view--failed`)
 when the latest load failed, since a stale or empty tree can't prove the target is gone.
 
+When the latest load failed and left the tree empty, three notices show at once by design: the tree pane's `--danger-soft` "Courses failed to load." card, the main pane's `.main-view--failed` card (on `/`, or via `NotFoundPanel` on a route miss), and the top `ServiceBanner` ("Part of FastStudy isn't responding.") when a service is unreachable. Do not dedupe them.
+
 `utils/lectureProgress.ts`'s `isLectureComplete` (the last pipeline output exists, mirroring the backend's
 `final_output()`, whatever earlier file is gone) reads `Complete` on the lecture page; the tree shows study
 progress instead. Lectures, recitations and assignments are three tracks, and `utils/studyProgress.ts`'s `trackProgress`
