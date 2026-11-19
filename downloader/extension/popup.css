@@ -52,7 +52,6 @@
 :root {
   --bg: #fbfbfd;
   --surface: #ffffff;
-  --surface-sunken: #f7f8ff;
   --text: #17171f;
   --text-2: #55596b;
   --text-4: #a4a8b8;
@@ -61,6 +60,7 @@
   --control-line: #dcdee7;
   --accent: #4f5bd5;
   --accent-hover: #4049b8;
+  --accent-ink: #4453c4;
   --accent-soft: #eef1fd;
   --accent-line: #d5daf7;
   --ok: #2f7d54;
@@ -335,8 +335,14 @@ input[dir='auto']:placeholder-shown {
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--surface-sunken);
-  color: var(--text);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.btn--ghost:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
 }
 
 .btn--ghost:disabled {

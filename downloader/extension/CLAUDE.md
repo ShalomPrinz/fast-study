@@ -43,7 +43,7 @@ Extension ID: **`hknnjgdhokbapjodjklfodhobjekjlnn`**, pinned by the public `key`
 - No dependencies and no build step (MV3); plain classic scripts.
 - Language follows Chrome's UI language (`chrome.i18n`), not the app's setting: `<html dir>` from `@@bidi_dir`, `lang` from `@@ui_locale`; static strings fill from `data-i18n` / `data-i18n-placeholder` at load. No user-facing literal in `popup.html`/`popup.js`; CSS uses logical properties only.
 - A server failure shows a translated headline with the server's `error` prose verbatim beneath, never translated.
-- Light theme only; `popup.css` copies the tokens it uses from `frontend/src/styles/tokens.css` and the `.btn--primary` rules from `button.css`. Buttons use the app palette — blue, white and their tints, with red kept for destructive actions; no black or near-black button unless the user explicitly asks.
+- Light theme only; `popup.css` copies the tokens it uses from `frontend/src/styles/tokens.css` and the `.btn--primary` rules and the `.btn--ghost` hover and focus ring from `button.css`. Buttons use the app palette — blue, white and their tints, with red kept for destructive actions; no black or near-black button unless the user explicitly asks.
 - `suggestName` in `popup.js` is a port of `frontend/src/features/lectures/utils/nextName.ts` (prefix inferred from the course's own names; `next` for a video, `latest` for a PDF; a lectures-only course takes the number over lectures + recitations, a recitation after a lecture on the same number, and the prefix from its lectures). The fallback prefix comes from `_locales` (`dirLecture`/`dirRecitation`). Change both together.
 - A brand-new course needs nothing here: the server creates it before the job starts.
 
