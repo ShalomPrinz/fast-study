@@ -89,3 +89,7 @@
 .current-course:hover {
   background: none;
 }
+
+.current-course .course-count {
+  font-weight: 700;
+}
