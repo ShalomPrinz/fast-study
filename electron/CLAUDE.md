@@ -106,6 +106,7 @@ Electron's own default. `eslint.config.js` gives `electron/**/*.js` its own
   `^FASTSTUDY_PORT=(\d+)$` line are the same names `lib/runtime/` implements on the service side, and
   the native host `com.faststudy.bridge` is spelled independently by the extension. A change to any
   of them is a cross-service change, not an edit here.
+- **Buttons use the app palette** (blue, white, their tints): no black or near-black button on `boot.html` unless the user explicitly asks.
 
 ## Packaging
 

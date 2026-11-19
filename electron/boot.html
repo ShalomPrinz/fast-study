@@ -20,11 +20,12 @@
         --text-3: #8b8f9f;
         --line: #e8e9ef;
         --accent: #4f5bd5;
+        --accent-hover: #4049b8;
+        --accent-line: #d5daf7;
         --ok-dot: #3f9f6a;
         --ok-text: #1e7a46;
         --danger: #c0392f;
         --danger-soft: #fdf1ef;
-        --ink: #17171f;
       }
       * {
         box-sizing: border-box;
@@ -170,9 +171,17 @@
         cursor: pointer;
       }
       button.primary {
-        background: var(--ink);
-        border-color: var(--ink);
+        background: var(--accent);
+        border-color: var(--accent);
         color: #fff;
+      }
+      button.primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--accent-line);
+        outline-offset: 2px;
       }
       [hidden] {
         display: none !important;
