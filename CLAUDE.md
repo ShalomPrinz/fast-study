@@ -149,6 +149,11 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 - **A doc link in a `CLAUDE.md` never carries an `@` prefix.** `@path` is an import: the file is inlined into context on every session that loads that `CLAUDE.md`, whether or not the task goes near it. Point at `docs/` with plain relative links so the docs stay lazy and `CLAUDE.md` stays the index — a doc table of four `@` links silently costs several hundred lines on every unrelated edit.
 - **Never write documentation inside a data string** — a LaTeX/SQL/shell/template literal the program feeds to a tool is production content, not a place to explain yourself. The rationale goes in the service's `docs/`; if the string itself needs a pointer, put a one-line source comment above the assignment, in the host language.
 
+## UI palette
+
+Every button on every UI surface — `frontend/`, the extension popup, the Electron boot screen, `site/` — uses the app palette: blue (`--accent` family), white and their tints, with green and red kept for done and destructive states.
+No black or near-black button unless the user explicitly asks for one.
+
 ## Architecture Preferences
 
 - Prefer push-based (SSE/WebSocket/event emitter) designs over polling for progress and status updates. Do not propose polling as the default; if polling seems necessary, state explicitly why push is not viable.
