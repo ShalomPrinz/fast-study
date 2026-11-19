@@ -66,7 +66,7 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
   beyond `styles/tokens.css`, and cross-file rules disambiguate by specificity, never source order.
 - Every colour, size and space step comes from a `styles/tokens.css` custom property — no new hex, no
   off-scale padding. The one exception mirrors another service's constant and names its source in a
-  comment (`MarkdownEditor.css`'s callout tints). Buttons are `.btn` + a variant, state labels `.chip` + a
+  comment (`MarkdownEditor.css`'s callout tints). Buttons are `.btn` + a variant (`--primary` once per view; a second main action is `--secondary`), state labels `.chip` + a
   variant, run state `StatusNode` ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §Styling). Buttons use the palette: blue (`--accent` family), white and their tints, with green (`--success`) and red (`--danger`) kept for done and destructive states; no black or near-black button unless the user explicitly asks.
 - A hover hint is `<Tooltip>`, never a DOM `title` ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §Styling).
 - Hooks and components keep a narrow surface: more than ~5 returned fields or ~5 props is a design smell —

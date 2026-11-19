@@ -157,11 +157,16 @@ app renders offline; Heebo is Hebrew-first, JetBrains Mono carries filenames, co
 shell scrollers (nav list, tree course list, main column) take one thin thumb from
 `styles/scrollbar.css`, imported by `Layout`.
 
-`.btn` + `--primary`/`--ghost`/`--danger`/`--info`/`--success` is the whole button vocabulary, `.chip` + five colour variants
+`.btn` + one variant is the whole button vocabulary, `.chip` + five colour variants
 the whole state-label vocabulary, and `StatusNode` the seven row states (`done`, `running`, `pending`,
 `paused`, `failed`, `quota`, `removed`) at one size. `PageHeader` opens every full-page view with one primary action and an
 optional second action row, and `.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in
 `services/toaster.css`.
+
+The button ladder, highest to lowest: `--primary` (solid blue; the view's main action), `--secondary` (white with a
+blue outline; a second main-looking action), `--ghost` (grey outline, blue on hover and focus; row-level and
+dense actions), `--info`/`--success` (tinted not-yet/done study state), `--danger` (destructive). One primary per
+view; a second main-looking action is secondary.
 
 `shared/components/Tooltip` is the one hover hint: `<Tooltip content={…} placement="top">` wraps a
 child that takes a ref, opens after 400 ms on hover or on keyboard focus, and renders nothing for an

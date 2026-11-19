@@ -75,9 +75,10 @@
   background: var(--line-soft);
 }
 
-.empty-state-action .btn.btn--ghost:hover {
-  background: var(--line);
-  color: var(--text);
+.empty-state-action .btn.btn--ghost:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 /* The same card reporting a failure; compound so it beats .empty-state's border in any load order. */

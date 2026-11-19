@@ -61,9 +61,9 @@
 }
 
 /* Copy confirmation reads as a state change on the button, so the eye stays in one place. */
-/* Outspecifies `.btn--ghost` rather than relying on cross-file order. */
-.btn.error-btn--copied,
-.btn.error-btn--copied:hover {
+/* Outspecifies `.btn--ghost` and its hover (0,4,0 vs 0,3,0) rather than relying on cross-file order. */
+.btn.btn--ghost.error-btn--copied,
+.btn.btn--ghost.error-btn--copied:hover {
   border-color: var(--ok);
   background: var(--ok-soft);
   color: var(--ok);

@@ -87,11 +87,6 @@
   color: var(--text-3);
 }
 
-.edit-restore.btn--ghost:hover:not(:disabled) {
-  background: var(--surface-sunken);
-  color: var(--text);
-}
-
 /* An attention state, not an error: nothing failed, but the next save needs a decision first. */
 .edit-conflict {
   display: flex;

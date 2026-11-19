@@ -59,6 +59,8 @@ export default function AssignmentDocCard({
       : t`A complete, step-by-step solution to every question`
   // The catalog row names the placeholder `doc`, which this component's prop would shadow.
   const regenTitle = ((doc: string) => t`Regenerate ${doc}?`)(title)
+  // The guide comes first when studying, so it holds the view's one primary; the solution's main action is secondary.
+  const mainBtn = doc === 'intuition' ? 'btn--primary' : 'btn--secondary'
   const generateLabel = doc === 'intuition' ? t`Create guide` : t`Create solution`
 
   // The ETA of a running render uses the pdf bucket.
@@ -132,7 +134,7 @@ export default function AssignmentDocCard({
               }
             >
               <button
-                className="btn btn--primary"
+                className={`btn ${mainBtn}`}
                 disabled={busy || !hasInputs}
                 onClick={() => void start(doc)}
               >
@@ -145,7 +147,7 @@ export default function AssignmentDocCard({
           <>
             {pdfMissing ? (
               <button
-                className="btn btn--primary"
+                className={`btn ${mainBtn}`}
                 disabled={busy}
                 onClick={() => void start(`${doc}_pdf`)}
               >
@@ -153,7 +155,7 @@ export default function AssignmentDocCard({
               </button>
             ) : (
               <button
-                className="btn btn--primary"
+                className={`btn ${mainBtn}`}
                 disabled={busy}
                 onClick={() => void openAssignmentGenerated(course, assignment, `${doc}.pdf`)}
               >

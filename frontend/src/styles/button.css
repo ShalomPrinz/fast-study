@@ -1,6 +1,5 @@
-/* The app's whole button vocabulary: one filled --primary per page, --ghost for row-level
-   actions, --danger for destructive ones, and the tinted --info / --success pair for study progress
-   (a not-yet / done state). Every button in the UI is a .btn plus one variant. */
+/* Button ladder, every button a .btn plus one variant: --primary (one per view), --secondary, --ghost,
+   --info / --success (study progress), --danger. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -35,8 +34,14 @@
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--surface-sunken);
-  color: var(--text);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.btn--ghost:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
 }
 
 .btn--primary {
@@ -62,6 +67,32 @@
 .btn--primary:disabled {
   border-color: var(--accent-line);
   background: var(--accent-soft);
+  color: var(--text-4);
+}
+
+.btn--secondary {
+  padding: var(--space-4) var(--space-6);
+  border-color: var(--accent-line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--accent-ink);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.btn--secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.btn--secondary:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
+}
+
+.btn--secondary:disabled {
+  border-color: var(--line);
+  background: var(--surface-sunken);
   color: var(--text-4);
 }
 
