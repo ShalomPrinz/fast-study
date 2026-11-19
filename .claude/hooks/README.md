@@ -77,13 +77,18 @@ never marked as passed. A stale cache is cleared by deleting that directory.
 
 ## The context checkpoint
 
-`checkpoint.py` runs on `PostToolUse` for `*-dev` subagents only. When one passes 140K context it
-injects, once, an instruction to finish the current concern and hand back what remains — unless
-it is the agent's only concern, which it keeps working on. The `delegate` skill then briefs the
-remainder to a fresh agent. Per-turn cost grows with context, and
-the runs that got that large were multi-concern briefs. The hook gets the parent's
-`transcript_path`, so it reads `<session>/subagents/agent-<agent_id>.jsonl` for usage, and an empty
-`.checkpoint` file beside it keeps it to one firing. It runs synchronously: a full parse of an 8.5 MB
+`checkpoint.py` runs on `PostToolUse` for `*-dev` subagents only, and fires twice at most. Past
+140K context it asks the agent to say which case applies: items of its brief are still unstarted,
+so it finishes the current one and hands back; or only finishing work remains (tests, i18n, docs,
+verification), so it continues. Either way, an item still failing after about 10 more tool calls is
+handed back partial. Past 180K it says to hand back now. The `delegate` skill then briefs the
+remainder to a fresh agent. Per-turn cost grows with context, so a long tail is paid for on every
+turn. The cases are spelled out because agents read a numbered-step brief for one feature as a
+single concern. The 10-call exit and the hard level exist because a failing test can otherwise keep
+an agent looping with no bound. The hook gets the parent's
+`transcript_path`, so it reads `<session>/subagents/agent-<agent_id>.jsonl` for usage. Empty
+`.checkpoint` and `.checkpoint-hard` files beside it keep each level to one firing. A jump straight
+past 180K sends only the hard message. It runs synchronously: a full parse of an 8.5 MB
 transcript takes about 45 ms.
 
 ## Foreground waits
