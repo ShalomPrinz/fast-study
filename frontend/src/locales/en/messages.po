@@ -1818,12 +1818,12 @@ msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Relo
 msgstr "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 
 #: src/features/settings/components/SummaryModelsField.tsx:21
-msgid "If it is busy"
-msgstr "If it is busy"
+msgid "If <0/> is busy"
+msgstr "If <0/> is busy"
 
 #: src/features/settings/components/SummaryModelsField.tsx:22
-msgid "If that is busy too"
-msgstr "If that is busy too"
+msgid "If <0/> is busy too"
+msgstr "If <0/> is busy too"
 
 #: src/features/downloads/components/RecordingRow.tsx:320
 msgid "In course"

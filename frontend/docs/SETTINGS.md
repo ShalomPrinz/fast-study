@@ -30,12 +30,12 @@ typed in and fail minutes later mid-pipeline.
 
 **Summary models** (`SummaryModelsField`, order rules in `utils/geminiOrder.ts`) is one ordered list: row 1 is `geminiModel`,
 rows 2+ are `geminiFallbackModels` (`[]` = never switch, `null` = never saved). ▲/▼ reorder (focus stays on the moved row's arrow),
-✕ removes (never the last: a red "Keep at least one model." line), the dashed rows under "Not used" add at the end. Never saved,
+✕ removes (disabled on the last row, its `Tooltip` says why); each fallback row's place name carries a small badge with the previous row's number, the dashed rows under "Not used" add at the end. Never saved,
 `effectiveFallback` derives the rows as the backend does (auto-fallback unset/on: every other model after the main, wrapping; off: none),
 and the first save writes the list explicitly; Save sends both fields whenever either differs from that effective value, so
-`buildPatch` takes the options. The wall keeps its single dropdown and a `null` list, so it sends only the model. `geminiAutoFallback`
+`buildPatch` takes the options. The wall asks for no model and keeps a `null` list, so it sends only the model. `geminiAutoFallback`
 is read only for the derivation and never written. Selectors: `#summary-models`, `.summary-model-row[data-model-id]` with
-`.summary-model-up/-down/-remove`, `.summary-model-add[data-model-id]`, `.summary-models-error`.
+`.summary-model-up/-down/-remove`, `.summary-model-add[data-model-id]`.
 
 **Auto retry** (`AutoRetryField`, rules in `utils/autoRetry.ts`) is its own section: a switch plus "Number of
 retries" and "Minutes between retries", disabled while off. Unset reads as the defaults; the two boxes share one row and commit

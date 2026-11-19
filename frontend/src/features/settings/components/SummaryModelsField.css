@@ -76,9 +76,12 @@
   color: var(--danger);
 }
 
-.summary-models-error {
-  font-size: var(--fs-meta);
-  color: var(--danger);
+.summary-model-badge--ref {
+  width: 1.4em;
+  height: 1.4em;
+  font-size: 0.85em;
+  vertical-align: middle;
+  margin-inline: 0.15em;
 }
 
 .summary-models-caption {

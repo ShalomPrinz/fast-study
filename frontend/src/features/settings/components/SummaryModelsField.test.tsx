@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { useState } from 'react'
 import { render, fireEvent } from '@testing-library/react'
 import { i18n } from '@lingui/core'
@@ -65,14 +65,19 @@ describe('SummaryModelsField', () => {
     expect(document.querySelector('.summary-model-add')).toBeNull()
   })
 
-  it('refuses to remove the last row and says so until the list changes', () => {
-    const spy = vi.fn()
-    render(<Harness start={['a']} spy={spy} />)
-    fireEvent.click(row('a').querySelector('.summary-model-remove')!)
-    expect(spy).not.toHaveBeenCalled()
-    expect(rows()).toEqual(['a'])
-    expect(document.querySelector('.summary-models-error')).not.toBeNull()
+  it('disables remove on the last row and enables it again once a model is added', () => {
+    render(<Harness start={['a']} />)
+    const remove = () => row('a').querySelector<HTMLButtonElement>('.summary-model-remove')!
+    expect(remove().disabled).toBe(true)
     fireEvent.click(document.querySelector('.summary-model-add[data-model-id="b"]')!)
-    expect(document.querySelector('.summary-models-error')).toBeNull()
+    expect(remove().disabled).toBe(false)
+  })
+
+  it('points each fallback place at the previous row with a badge', () => {
+    render(<Harness start={['a', 'b', 'c']} />)
+    const ref = (id: string) => row(id).querySelector('.summary-model-badge--ref')?.textContent
+    expect(ref('a')).toBeUndefined()
+    expect(ref('b')).toBe('1')
+    expect(ref('c')).toBe('2')
   })
 })

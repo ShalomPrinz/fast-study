@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { msg } from '@lingui/core/macro'
-import type { MessageDescriptor } from '@lingui/core'
+import Tooltip from '@/shared/components/Tooltip'
 import type { GeminiModel } from '@/services/settings'
 import { moveModel, removeModel } from '../utils/geminiOrder'
 import '@/styles/button.css'
@@ -16,18 +15,31 @@ interface Props {
   onChange: (order: string[]) => void
 }
 
-const PLACES: MessageDescriptor[] = [
-  msg`Starts with this`,
-  msg`If it is busy`,
-  msg`If that is busy too`,
-]
+// A small badge matching the row's number, so a place name points at the row it waits on.
+const Ref = ({ n }: { n: number }) => (
+  <span className="summary-model-badge summary-model-badge--ref">{n}</span>
+)
+
+function Place({ index }: { index: number }) {
+  if (index === 0) return <Trans>Starts with this</Trans>
+  if (index === 1)
+    return (
+      <Trans>
+        If <Ref n={1} /> is busy
+      </Trans>
+    )
+  return (
+    <Trans>
+      If <Ref n={index} /> is busy too
+    </Trans>
+  )
+}
 
 type Dir = 'up' | 'down'
 
-// The ordered summary-models list: arrows reorder, ✕ takes one out (never the last), "Not used" adds.
+// The ordered summary-models list: arrows reorder, ✕ takes one out (disabled on the last), "Not used" adds.
 export default function SummaryModelsField({ models, order, onChange }: Props) {
   const { t } = useLingui()
-  const [keepOne, setKeepOne] = useState(false)
   // The arrow to refocus once the moved row has rendered at its new place.
   const refocus = useRef<{ id: string; dir: Dir } | null>(null)
   const root = useRef<HTMLDivElement>(null)
@@ -48,13 +60,11 @@ export default function SummaryModelsField({ models, order, onChange }: Props) {
 
   function move(index: number, dir: Dir) {
     refocus.current = { id: order[index], dir }
-    setKeepOne(false)
     onChange(moveModel(order, index, dir === 'up' ? -1 : 1))
   }
 
   function remove(id: string) {
     const next = removeModel(order, id)
-    setKeepOne(next === null)
     if (next) onChange(next)
   }
 
@@ -77,7 +87,9 @@ export default function SummaryModelsField({ models, order, onChange }: Props) {
             <span className="summary-model-badge">{i + 1}</span>
             <span className="summary-model-text">
               <span className="summary-model-name">{name(id)}</span>
-              <span className="summary-model-place">{t(PLACES[Math.min(i, 2)])}</span>
+              <span className="summary-model-place">
+                <Place index={i} />
+              </span>
             </span>
             <button
               type="button"
@@ -97,22 +109,20 @@ export default function SummaryModelsField({ models, order, onChange }: Props) {
             >
               ▼
             </button>
-            <button
-              type="button"
-              className="btn summary-model-btn summary-model-remove"
-              aria-label={t`Take out of the list`}
-              onClick={() => remove(id)}
-            >
-              ✕
-            </button>
+            <Tooltip content={order.length <= 1 ? t`Keep at least one model.` : null}>
+              <button
+                type="button"
+                className="btn summary-model-btn summary-model-remove"
+                aria-label={t`Take out of the list`}
+                disabled={order.length <= 1}
+                onClick={() => remove(id)}
+              >
+                ✕
+              </button>
+            </Tooltip>
           </li>
         ))}
       </ol>
-      {keepOne && (
-        <span className="summary-models-error" role="alert">
-          <Trans>Keep at least one model.</Trans>
-        </span>
-      )}
       {unused.length > 0 && (
         <>
           <span className="summary-models-caption">
@@ -124,10 +134,7 @@ export default function SummaryModelsField({ models, order, onChange }: Props) {
               type="button"
               className="summary-model-add"
               data-model-id={m.id}
-              onClick={() => {
-                setKeepOne(false)
-                onChange([...order, m.id])
-              }}
+              onClick={() => onChange([...order, m.id])}
             >
               <span className="summary-model-badge summary-model-badge--add">+</span>
               <span className="summary-model-name">{m.name}</span>
