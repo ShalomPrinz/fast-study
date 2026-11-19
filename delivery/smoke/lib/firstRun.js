@@ -132,7 +132,9 @@ export async function completeInitWall(
     // Every launch is a fresh main process, so only a later step in this one could meet the stub.
     await dialog.restore().catch(() => {});
   }
-  await page.locator('#moodle-site-select').selectOption('biu');
+  // The listbox rows carry no value attribute, so the preset is found by its display name in either UI language.
+  await page.locator('#moodle-site-select').click();
+  await page.getByRole('option', { name: /Bar-Ilan University|אוניברסיטת בר-אילן/ }).click();
   // `supported` or `unsupported` would mean the probe reached the site through the firewall.
   await expect(
     page.locator('#moodle-site'),
