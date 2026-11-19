@@ -63,8 +63,10 @@ test('assignments are listed by section, downloaded into the tree and opened by 
   await page.goto('/');
   // Only one course is open at a time; the rest are rows in the collapsed "More courses" panel.
   await openMoreCourses(page);
-  await page.locator('.other-course').first().waitFor();
-  const other = page.locator('.other-course', { has: page.getByText(COURSE, { exact: true }) });
+  await page.locator('button.other-course').first().waitFor();
+  const other = page.locator('button.other-course', {
+    has: page.getByText(COURSE, { exact: true }),
+  });
   if (await other.count()) await other.click();
   await expect(page.locator('.recitations-title', { hasText: 'Assignments' })).toBeVisible();
   await expect(page.getByTestId('assignment')).toHaveText([FIRST.name]);

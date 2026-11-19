@@ -14,7 +14,7 @@ test.afterEach(async () => {
 
 // The open course's header name, or the name span inside any other course's button in the "More courses" panel.
 const courseNames = (page) =>
-  page.locator('.course-group .course-header .course-name, .other-course .course-name');
+  page.locator('.course-group .course-header .course-name, button.other-course .course-name');
 const PIPELINE = /^hb-pipeline$/;
 
 test('the first-run wall takes both keys and a data folder, then opens the app', async ({
