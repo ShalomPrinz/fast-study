@@ -39,7 +39,7 @@ export default function AssignmentsGroup({ expand }: { expand: ExpandHandle }) {
   const currentIndex = timelineCurrentIndex(course.assignments)
 
   return (
-    <li className="recitations-group">
+    <li className="recitations-group recitations-group--assignment">
       <div className="recitations-header">
         <button className="course-toggle recitations-toggle" onClick={expand.toggle}>
           <span className="chevron">

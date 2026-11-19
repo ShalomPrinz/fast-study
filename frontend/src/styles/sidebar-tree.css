@@ -76,9 +76,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* One row of a track: the line halves through its mark. A half is `--nav-line` grey, or `--ok-dot`
-   green from the first row down to the current one. The line sits over the row's background and under
-   the mark (z-index 2), so a hovered or selected row stays continuous. */
+/* One row of a track: the line halves through its mark. A half is `--nav-line` grey, or `--tl-done`
+   (green unless a section sets it) from the first row down to the current one. The line sits over
+   the row's background and under the mark (z-index 2), so a hovered or selected row stays continuous. */
 .tl {
   position: relative;
 }
@@ -111,7 +111,16 @@
 
 .tl-top-done::before,
 .tl-bottom-done::after {
-  background: var(--ok-dot);
+  background: var(--tl-done, var(--ok-dot));
+}
+
+/* Each section's done colour matches its `TreeProgress` fill; lectures keep the default green. */
+.recitations-group {
+  --tl-done: var(--accent);
+}
+
+.recitations-group--assignment {
+  --tl-done: var(--progress-assignment);
 }
 
 /* A lecture's study mark, 16px: a check once marked done, a ringed circle on its track's current item,
@@ -144,7 +153,7 @@
 
 .lecture-mark--done {
   border-radius: 50%;
-  background: var(--ok-dot);
+  background: var(--tl-done, var(--ok-dot));
   color: var(--surface);
 }
 

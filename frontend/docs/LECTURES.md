@@ -272,8 +272,8 @@ when the latest load failed, since a stale or empty tree can't prove the target 
 progress instead. Lectures, recitations and assignments are three tracks, and `utils/studyProgress.ts`'s `trackProgress`
 reads one in the tree's order: the user's manual `done` marks count toward `done/total`, and its current item
 is the first not done, strictly — an earlier gap stays current. The pane is light, each track a timeline: a 2px line
-runs through the 16px marks, green from the first row to the current one (`timelineSegments`; every row's `.tl`
-class paints its two halves). A mark is a green ✓ circle when done, a white circle ringed in `--accent` on the
+runs through the 16px marks, in the section's colour (`--tl-done`: green lectures, `--accent` recitations, amber assignments, as the progress fills below) from the first row to the current one (`timelineSegments`; every row's `.tl`
+class paints its two halves). A mark is a ✓ circle in that colour when done, a white circle ringed in `--accent` on the
 current item, a hollow circle otherwise and a dashed one for a download placeholder; a running or queued row shows a
 spinner in its place, and a running one (not a queued one) also reads "Processing" (`isLectureRunning`). The open page is a white
 `--shadow-card` row. Marks are display-only. The course header counts lectures, the Recitations header recitations, the Assignments header assignments
