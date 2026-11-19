@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DATABASE, PROVIDERS, SITE, bindPorts, call, json } from '../lib/api.mjs';
 import { markSeeded, reseed as reseedStack } from '../lib/baseline.mjs';
-import { dismissTour, launchChromium } from '../lib/browser.mjs';
+import { dismissTour, launchChromium, openMoreCourses } from '../lib/browser.mjs';
 import { harnessPaths, readPorts } from '../lib/env.mjs';
 import { readLocks } from '../lib/state.mjs';
 
@@ -17,6 +17,9 @@ function resolveHarness() {
   bindPorts(paths);
   return paths;
 }
+
+/** Expand the sidebar's "More courses" panel when collapsed. */
+export { openMoreCourses };
 
 /** This stack's paths; importing this module binds the lib/ URLs to its ports. */
 export const harness = resolveHarness();
