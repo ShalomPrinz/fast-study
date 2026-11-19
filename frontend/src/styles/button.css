@@ -41,23 +41,28 @@
 
 .btn--primary {
   padding: var(--space-4) var(--space-6);
-  border-color: var(--ink);
+  border-color: var(--accent);
   border-radius: var(--r);
-  background: var(--ink);
+  background: var(--accent);
   color: var(--surface);
   font-size: var(--fs-body);
   font-weight: 600;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: var(--text-2);
-  border-color: var(--text-2);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn--primary:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
 }
 
 .btn--primary:disabled {
-  border-color: var(--text-4);
-  background: var(--text-4);
-  color: var(--surface);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--text-4);
 }
 
 .btn--danger {

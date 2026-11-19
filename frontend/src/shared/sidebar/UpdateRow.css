@@ -40,19 +40,12 @@
   color: var(--text-2);
 }
 
-/* Beats `.btn--primary`'s ink fill: on this card the one action takes the accent. */
+/* Compact size for the card: the one action keeps `.btn--primary`'s colours. */
 .sidebar-update .sidebar-update-restart:not(:disabled) {
   flex-shrink: 0;
   padding: var(--space-2) var(--space-4);
   border-radius: var(--r-sm);
-  background: var(--accent);
-  border-color: var(--accent);
   font-size: var(--fs-meta);
-}
-
-.sidebar-update .sidebar-update-restart:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
 }
 
 /* The window-wide gray while Restart now kills the services and installs; nothing behind it is clickable. */

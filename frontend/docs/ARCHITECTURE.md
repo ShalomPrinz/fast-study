@@ -150,12 +150,14 @@ selector), and `main.tsx` imports only it and the fonts; `.claude/hooks/lint.sh`
 absence of a root `index.css`.
 
 Every colour, size and space step resolves to a `tokens.css` property, whose comments give each its role.
-The accent never fills a control on a light surface, where it fails contrast: a filled button is `--ink`,
-the accent is text, border or tint (the tree pane's current-lecture ring is a border). The filled-accent exceptions are the nav's Restart button and the active segment of `.mode-toggle--cards`. Fonts are
-self-hosted through `@fontsource` so the app renders offline; Heebo is Hebrew-first, JetBrains Mono carries
-filenames, counts and durations. The shell scrollers (nav list, tree course list, main column) take one thin thumb from `styles/scrollbar.css`, imported by `Layout`.
+The filled primary button is the accent. Buttons use the palette: blue (`--accent` family), white and
+their tints, with green (`--success`) and red (`--danger`) kept for done and destructive states; no black
+or near-black button unless the user explicitly asks. Fonts are self-hosted through `@fontsource` so the
+app renders offline; Heebo is Hebrew-first, JetBrains Mono carries filenames, counts and durations. The
+shell scrollers (nav list, tree course list, main column) take one thin thumb from
+`styles/scrollbar.css`, imported by `Layout`.
 
-`.btn` + `--primary`/`--ghost`/`--danger` is the whole button vocabulary, `.chip` + five colour variants
+`.btn` + `--primary`/`--ghost`/`--danger`/`--info`/`--success` is the whole button vocabulary, `.chip` + five colour variants
 the whole state-label vocabulary, and `StatusNode` the seven row states (`done`, `running`, `pending`,
 `paused`, `failed`, `quota`, `removed`) at one size. `PageHeader` opens every full-page view with one primary action and an
 optional second action row, and `.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in

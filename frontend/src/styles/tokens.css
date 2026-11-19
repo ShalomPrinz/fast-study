@@ -21,9 +21,6 @@
   --line-soft: #f0f1f5;
   --control-line: #dcdee7;
 
-  /* The single filled button per page — the accent never carries a fill on white, where it fails contrast. */
-  --ink: #17171f;
-
   --accent: #4f5bd5;
   --accent-hover: #4049b8;
   --accent-soft: #eef1fd;
