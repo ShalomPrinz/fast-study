@@ -32,9 +32,9 @@
   font-weight: 600;
 }
 
-/* LTR-isolated semver; `align-self` resolves against the column's direction, so it sits at the inline end in both languages (`text-align: end` would follow the span's own `dir="ltr"`). */
+/* LTR-isolated semver; `align-self` resolves against the column's direction, so it sits under the label's inline start in both languages (`text-align: start` would follow the span's own `dir="ltr"`). */
 .sidebar-update-version {
-  align-self: flex-end;
+  align-self: flex-start;
   font-size: var(--fs-fine);
   font-weight: 400;
   color: var(--text-2);
