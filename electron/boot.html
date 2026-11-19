@@ -22,6 +22,8 @@
         --accent: #4f5bd5;
         --accent-hover: #4049b8;
         --accent-line: #d5daf7;
+        --accent-soft: #eef1fd;
+        --accent-ink: #4453c4;
         --ok-dot: #3f9f6a;
         --ok-text: #1e7a46;
         --danger: #c0392f;
@@ -178,6 +180,11 @@
       button.primary:hover {
         background: var(--accent-hover);
         border-color: var(--accent-hover);
+      }
+      button:not(.primary):hover {
+        border-color: var(--accent-line);
+        background: var(--accent-soft);
+        color: var(--accent-ink);
       }
       button:focus-visible {
         outline: 2px solid var(--accent-line);
