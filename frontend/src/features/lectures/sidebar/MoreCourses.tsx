@@ -5,6 +5,7 @@ import type { Course } from '@/types'
 import { lectureTrack } from '@/features/lectures/utils/courseTree'
 import { readMoreOpen, writeMoreOpen } from '@/features/lectures/utils/openCourse'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
+import '@/styles/sidebar-tree.css'
 import './MoreCourses.css'
 
 // The bar sits above the footer; open, it shares the pane with the main tree and its panel scrolls alone.

@@ -2001,7 +2001,7 @@ msgstr "Moodle דחה את הבקשה."
 msgid "More actions"
 msgstr "פעולות נוספות"
 
-#: src/features/lectures/sidebar/MoreCourses.tsx:34
+#: src/features/lectures/sidebar/MoreCourses.tsx:35
 msgid "More courses"
 msgstr "קורסים נוספים"
 
