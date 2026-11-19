@@ -80,3 +80,12 @@
 .other-course:hover {
   background: var(--nav-bg);
 }
+
+.current-course {
+  font-weight: 700;
+  cursor: default;
+}
+
+.current-course:hover {
+  background: none;
+}

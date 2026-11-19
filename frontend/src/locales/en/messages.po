@@ -2001,9 +2001,9 @@ msgstr "Moodle refused the request."
 msgid "More actions"
 msgstr "More actions"
 
-#: src/features/lectures/sidebar/MoreCourses.tsx:33
-msgid "More courses ({count})"
-msgstr "More courses ({count})"
+#: src/features/lectures/sidebar/MoreCourses.tsx:34
+msgid "More courses"
+msgstr "More courses"
 
 #: src/features/downloads/components/ManualDownload.tsx:174
 msgid "Name in the course"

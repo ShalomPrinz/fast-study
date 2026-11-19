@@ -9,14 +9,15 @@ import './MoreCourses.css'
 
 // The bar sits above the footer; open, it shares the pane with the main tree and its panel scrolls alone.
 export default function MoreCourses({
-  others,
+  courses,
+  openName,
   onOpen,
 }: {
-  others: Course[]
+  courses: Course[]
+  openName: string | undefined
   onOpen: (name: string) => void
 }) {
   const [open, setOpen] = useState(readMoreOpen)
-  const count = others.length
 
   function toggle() {
     writeMoreOpen(!open)
@@ -30,26 +31,37 @@ export default function MoreCourses({
           <Icon icon="chevron-down" />
         </span>
         <span>
-          <Trans>More courses ({count})</Trans>
+          <Trans>More courses</Trans>
         </span>
       </button>
       {open && (
         <nav className="sidebar-nav more-courses-panel">
           <ul className="other-courses-list">
-            {others.map((c) => {
+            {courses.map((c) => {
               const { done, total } = trackProgress(lectureTrack(c))
+              const label = (
+                <>
+                  <span className="course-name" dir="auto">
+                    {c.name}
+                  </span>
+                  {total > 0 && (
+                    <span className="course-count">
+                      {done}/{total}
+                    </span>
+                  )}
+                </>
+              )
               return (
                 <li key={c.name}>
-                  <button className="other-course" onClick={() => onOpen(c.name)}>
-                    <span className="course-name" dir="auto">
-                      {c.name}
-                    </span>
-                    {total > 0 && (
-                      <span className="course-count">
-                        {done}/{total}
-                      </span>
-                    )}
-                  </button>
+                  {c.name === openName ? (
+                    <div className="other-course current-course" aria-current="true">
+                      {label}
+                    </div>
+                  ) : (
+                    <button className="other-course" onClick={() => onOpen(c.name)}>
+                      {label}
+                    </button>
+                  )}
                 </li>
               )
             })}

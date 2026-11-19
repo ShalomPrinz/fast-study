@@ -104,7 +104,7 @@ function LecturesTreePaneBody() {
         )}
       </nav>
       {!notice && !loading && others.length > 0 && (
-        <MoreCourses others={others} onOpen={(name) => openCourse(name)} />
+        <MoreCourses courses={courses} openName={open?.name} onOpen={(name) => openCourse(name)} />
       )}
       <div className="tree-pane-footer">
         <NewCourseRow onCreated={(name) => openCourse(name, open?.name)} />
