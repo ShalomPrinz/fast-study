@@ -50,6 +50,5 @@
 }
 
 .btn.renamable-title-approve {
-  padding: var(--space-1) var(--space-4);
   font-size: var(--fs-meta);
 }
