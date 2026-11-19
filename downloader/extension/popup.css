@@ -52,8 +52,10 @@
 :root {
   --bg: #fbfbfd;
   --surface: #ffffff;
+  --surface-sunken: #f7f8ff;
   --text: #17171f;
   --text-2: #55596b;
+  --text-3: #8b8f9f;
   --text-4: #a4a8b8;
   --line: #e8e9ef;
   --line-soft: #f0f1f5;
@@ -73,7 +75,9 @@
   --space-6: 18px;
   --r-sm: 8px;
   --r: 9px;
+  --r-lg: 12px;
   --shadow-sm: 0 1px 2px rgba(23, 23, 31, 0.08);
+  --shadow-md: 0 4px 14px rgba(23, 23, 31, 0.07);
   --font-ui: 'Heebo', 'Noto Sans Hebrew', system-ui, sans-serif;
   --fs-section: 17px;
   --fs-body: 13px;
@@ -353,4 +357,125 @@ input[dir='auto']:placeholder-shown {
 .status--detail {
   margin-block-start: -8px;
   overflow-wrap: anywhere;
+}
+
+/* Video picker: a select-only listbox; focus stays on the trigger. */
+.select {
+  position: relative;
+}
+
+.select-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+
+.select-trigger:hover {
+  border-color: var(--text-4);
+}
+
+.select-trigger:focus-visible,
+.select-trigger[aria-expanded='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 91, 213, 0.16);
+}
+
+.select-value {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-chevron {
+  flex-shrink: 0;
+  color: var(--text-3);
+  transition: transform 0.15s ease;
+}
+
+.select-trigger[aria-expanded='true'] .select-chevron {
+  transform: rotate(180deg);
+}
+
+.select-panel {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: calc(100% + 4px);
+  min-inline-size: 100%;
+  max-inline-size: calc(100vw - 2 * var(--space-5));
+  max-block-size: 260px;
+  overflow-y: auto;
+  z-index: 10;
+  padding: var(--space-1);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  direction: ltr;
+  animation: select-in 0.12s ease-out;
+}
+
+.select-panel[hidden] {
+  display: none;
+}
+
+@keyframes select-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.select-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  font-size: var(--fs-body);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.select-option > span {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.select-option--active {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+.select-option[aria-selected='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+
+.select-check {
+  flex-shrink: 0;
+  visibility: hidden;
+}
+
+.select-option[aria-selected='true'] .select-check {
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .select-panel {
+    animation: none;
+  }
+
+  .select-trigger,
+  .select-chevron {
+    transition: none;
+  }
 }

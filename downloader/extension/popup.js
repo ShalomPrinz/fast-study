@@ -281,6 +281,135 @@ function formatSize(bytes) {
   return msg('sizeMb', mb.toFixed(1));
 }
 
+// Select-only ARIA listbox over `options` ({label}); focus stays on the trigger. `relabel(i)` re-renders
+// row i after its label changed, the trigger's text included when it is the selected row.
+function createListbox(trigger, panel, options, onCommit) {
+  const TYPE_AHEAD_MS = 500;
+  const valueEl = trigger.querySelector('.select-value');
+  let selected = 0;
+  let active = -1;
+  let typed = '';
+  let typedTimer = 0;
+  const isOpen = () => !panel.hidden;
+
+  const rows = options.map((o, i) => {
+    const row = document.createElement('div');
+    row.id = `videoOption${i}`;
+    row.setAttribute('role', 'option');
+    row.className = 'select-option';
+    const text = document.createElement('span');
+    row.append(text);
+    row.insertAdjacentHTML(
+      'beforeend',
+      '<svg class="select-check" aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.4 2.4L9.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>',
+    );
+    row.addEventListener('mousemove', () => i !== active && setActive(i));
+    row.addEventListener('click', () => commit(i));
+    return row;
+  });
+  panel.replaceChildren(...rows);
+
+  function render(i) {
+    rows[i].firstChild.textContent = options[i].label;
+    if (i === selected) valueEl.textContent = options[i].label;
+  }
+
+  function mark() {
+    rows.forEach((r, i) => r.setAttribute('aria-selected', String(i === selected)));
+    valueEl.textContent = options[selected].label;
+  }
+
+  function setActive(i, scroll) {
+    rows[active]?.classList.remove('select-option--active');
+    active = i;
+    rows[i].classList.add('select-option--active');
+    trigger.setAttribute('aria-activedescendant', rows[i].id);
+    if (scroll) rows[i].scrollIntoView({ block: 'nearest' });
+  }
+
+  function open() {
+    panel.hidden = false;
+    trigger.setAttribute('aria-expanded', 'true');
+    active = -1;
+    setActive(selected, true);
+  }
+
+  function close() {
+    panel.hidden = true;
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.removeAttribute('aria-activedescendant');
+    typed = '';
+  }
+
+  function commit(i) {
+    close();
+    if (i === selected) return;
+    selected = i;
+    mark();
+    onCommit(i);
+  }
+
+  trigger.addEventListener('click', () => (isOpen() ? close() : open()));
+  trigger.addEventListener('keydown', (e) => {
+    if (!isOpen()) {
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) {
+        e.preventDefault();
+        open();
+      }
+      return;
+    }
+    const last = options.length - 1;
+    let to = null;
+    if (e.key === 'ArrowDown') to = active >= last ? 0 : active + 1;
+    else if (e.key === 'ArrowUp') to = active <= 0 ? last : active - 1;
+    else if (e.key === 'Home') to = 0;
+    else if (e.key === 'End') to = last;
+    if (to !== null) {
+      e.preventDefault();
+      setActive(to, true);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    } else if (e.key === 'Enter' || (e.key === ' ' && !typed)) {
+      e.preventDefault();
+      commit(active);
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      typed += e.key.toLowerCase();
+      clearTimeout(typedTimer);
+      typedTimer = setTimeout(() => (typed = ''), TYPE_AHEAD_MS);
+      // Same rule as the app's typeAheadIndex: a repeated letter collapses to one and cycles from the next row; a longer prefix searches from the active row so it stays on a match. The label's leading `[…] ` is skipped.
+      const prefix = /^(.)\1+$/.test(typed) ? typed[0] : typed;
+      const n = options.length;
+      const from = prefix.length === 1 ? active + 1 : Math.max(active, 0);
+      for (let k = 0; k < n; k++) {
+        const idx = (from + k) % n;
+        if (
+          options[idx].label
+            .replace(/^\[[^\]]*\]\s*/, '')
+            .toLowerCase()
+            .startsWith(prefix)
+        ) {
+          setActive(idx, true);
+          break;
+        }
+      }
+    }
+  });
+  // Tab away closes without committing.
+  trigger.addEventListener('blur', close);
+  // Keeps focus on the trigger while a row is clicked, so the blur above does not fire first.
+  panel.addEventListener('mousedown', (e) => e.preventDefault());
+  document.addEventListener('pointerdown', (e) => {
+    if (isOpen() && !trigger.contains(e.target) && !panel.contains(e.target)) close();
+  });
+
+  options.forEach((_, i) => render(i));
+  mark();
+  return { relabel: render };
+}
+
 // Cookie is a forbidden fetch() header, so an auth-gated CDN answers the popup no size; the server's
 // Node http can replay it.
 async function probeSize(url, headers) {
@@ -393,21 +522,19 @@ async function loadSource() {
   ].filter((o) => o.capture);
 
   if (options.length) {
-    const select = $('videoSelect');
-    const opts = options.map((o, i) => {
-      const opt = document.createElement('option');
-      opt.value = String(i);
-      opt.textContent = o.label;
-      return opt;
-    });
-    select.replaceChildren(...opts);
-    select.addEventListener('change', () => (capture = options[+select.value].capture));
+    const picker = createListbox(
+      $('videoSelect'),
+      $('videoListbox'),
+      options,
+      (i) => (capture = options[i].capture),
+    );
     capture = options[0].capture;
     $('videoField').hidden = false;
     options.forEach(async (o, i) => {
       if (!o.probe) return;
       const bytes = await probeSize(o.capture.url, o.capture.headers);
-      opts[i].textContent = `[${formatSize(bytes)}] ${shortenUrl(o.capture.url)}`;
+      o.label = `[${formatSize(bytes)}] ${shortenUrl(o.capture.url)}`;
+      picker.relabel(i);
     });
     return options.length === 1 ? msg('statusOneVideo') : msg('statusManyVideos', options.length);
   }

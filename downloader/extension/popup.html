@@ -35,8 +35,42 @@
       </div>
 
       <div class="field" id="videoField" hidden>
-        <label for="videoSelect" data-i18n="labelVideo"></label>
-        <select id="videoSelect" class="control control--ltr"></select>
+        <label id="videoLabel" for="videoSelect" data-i18n="labelVideo"></label>
+        <div class="select">
+          <button
+            id="videoSelect"
+            type="button"
+            class="control control--ltr select-trigger"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="videoListbox"
+          >
+            <span class="select-value"></span>
+            <svg
+              class="select-chevron"
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
+              <path
+                d="M3.5 6L8 10.5L12.5 6"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <div
+            id="videoListbox"
+            class="select-panel"
+            role="listbox"
+            aria-labelledby="videoLabel"
+            hidden
+          ></div>
+        </div>
       </div>
 
       <div class="field" id="youtubeField" hidden>
