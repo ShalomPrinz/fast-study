@@ -39,6 +39,8 @@ const ASSIGNMENT_DOCS = {
 };
 // Each assignment-doc request as `{doc, files, summaries}`, in order.
 let assignmentCalls = [];
+// The model of each generateContent call, in order, whatever it answered.
+let generateModels = [];
 
 const rules = createRules();
 const { mode, hits } = rules;
@@ -200,6 +202,7 @@ async function handle(req, res) {
       chunk = 0; // the transcript restarts at its first paragraph
       uploaded = [];
       assignmentCalls = [];
+      generateModels = [];
     }
     // A new rule for a provider ends its held calls, so a test lifts a hold the moment it is done.
     for (const provider of ['groq', 'gemini']) {
@@ -211,6 +214,7 @@ async function handle(req, res) {
   if (route === '/health') return json(res, 200, { status: 'ok', mode });
   if (route === '/hits') return json(res, 200, { ...hits });
   if (route === '/uploads') return json(res, 200, { uploads: uploaded });
+  if (route === '/generate-models') return json(res, 200, { models: generateModels });
   if (route === '/assignment-calls') return json(res, 200, { calls: assignmentCalls });
 
   // A key containing `bad` is rejected the way each real provider rejects one — Groq 401, Gemini
@@ -308,6 +312,7 @@ async function handle(req, res) {
     const parts = partsOf(body);
     const doc = assignmentDoc(parts, HEADS);
     const model = /\/models\/([^/:]+):generateContent$/.exec(route)?.[1] ?? null;
+    generateModels.push(model);
     const fail = await failure(
       'gemini',
       req,

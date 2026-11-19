@@ -468,7 +468,7 @@ They run in CI's `internal-tests` job beside the lib tests.
 
 The end-to-end specs live in [`e2e/`](e2e/) — pipeline success (`hb-pipeline`), assignment AI docs (`hb-assign`: a file switched off, a lecture chosen, guide
 generated, edited, regenerated, copied for Study with AI, a failed solution), failure surfacing
-(`hb-fail`), Gemini auto retry (`gemini-auto-retry`: the wait on `/running` and the step row, the re-run landing a PDF, cancel), download (`hb-dl`), a locked `summary.pdf`, "Run these now" joining a live run
+(`hb-fail`), Gemini model order (`gemini-model-order`: Settings reorder, save, a busy top model falls to the next, the unused one is never called), Gemini auto retry (`gemini-auto-retry`: model fallback off via `gemini_fallback_models: []`; the wait on `/running` and the step row, the re-run landing a PDF, cancel), download (`hb-dl`), a locked `summary.pdf`, "Run these now" joining a live run
 (its own two-lecture course in `data-empty`, so its queue holds nothing else), a recitation from
 bare video to Drive, a video dropped on a tree row (new and replacing), a course created, filled
 and renamed from the tree, a summary edited, reloaded over another window's edit and restored, a
@@ -609,6 +609,7 @@ section's contents, so auto's `/list` gives them `media: 'assignment'` with the 
 The fake Gemini records each Files API upload as `{mimeType, size, lecture}`: the mime type the backend
 declared and the bytes it sent. `GET $(hb url providers)/uploads` returns `{uploads: [...]}` in order;
 specs call `geminiUploads()` from `e2e/fixtures.mjs`. `/control {"reset":true}` (so `reset()`) clears it.
+`GET $(hb url providers)/generate-models` returns `{models: [...]}`: the model of every `generateContent` call in order, failed ones included (`reset` clears it).
 
 An assignment doc's `generateContent` (its last text part starts with the first line of the backend's `assignment_intuition.md` / `assignment_solution.md`, read from `backend/assets/instructions`) answers `fixtures/assignment-intuition.md` / `assignment-solution.md` (short Hebrew, a formula and a callout) instead of the summary, and is recorded as `{doc, files, summaries}` — the attached files' mime types (an Office file's extracted text is uploaded as `text/plain`) and each `<lecture kind title>` summary part. `GET $(hb url providers)/assignment-calls` returns `{calls: [...]}` in order (answered calls only; `reset` clears it). The shim stamps an assignment's calls `course/Assignments/name`, so `{"gemini":{"mode":"500","match":"Assignments"}}` fails them alone and a lecture-targeted rule never reaches them. Matching and recording live in `fakes/assignment-calls.mjs`.
 

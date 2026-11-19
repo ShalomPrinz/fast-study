@@ -124,6 +124,13 @@ describe('baseline', () => {
     assert.equal(baselineEnv(paths, 'gemini-x').GEMINI_MODEL, 'gemini-x');
   });
 
+  test('the fallback list parses ids, `none` as empty, and is never in the baseline', () => {
+    const patch = (text) => settingsPatch({ GEMINI_FALLBACK_MODELS: text }).gemini_fallback_models;
+    assert.deepEqual(patch('a,b'), ['a', 'b']);
+    assert.deepEqual(patch('none'), []);
+    assert.equal('GEMINI_FALLBACK_MODELS' in baselineEnv(harnessPaths('/h'), 'm'), false);
+  });
+
   test('the baseline is a valid settings patch', () => {
     assert.doesNotThrow(() => settingsPatch(baselineEnv(harnessPaths('/h'), 'm')));
   });

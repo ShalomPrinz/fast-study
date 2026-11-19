@@ -13,12 +13,12 @@ const MATCH = `${COURSE}/${LECTURE}`;
 // A reseed restores a transcribed lecture, which AUTO_RUN=full would run before the spec acts.
 // Model fallback is off: on, it would absorb a single 503 and no retry would arm.
 test.beforeEach(async () => {
-  await saveSettings({ auto_run: 'off', gemini_auto_fallback: false });
   await reseed();
+  await saveSettings({ auto_run: 'off', gemini_fallback_models: [] });
 });
 test.afterEach(async () => {
   await reset();
-  await saveSettings({ auto_run: 'full', gemini_auto_fallback: true });
+  await saveSettings({ auto_run: 'full' });
 });
 
 const shot = (page, name) =>

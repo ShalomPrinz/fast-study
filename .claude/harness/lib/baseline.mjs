@@ -23,6 +23,8 @@ export const SETTINGS = {
   GROQ_API_KEY: ['groq_api_key', 'string'],
   GEMINI_API_KEY: ['gemini_api_key', 'string'],
   GEMINI_MODEL: ['gemini_model', 'string'],
+  // Ids joined by `,`; `none` is the empty list; absent from the store is the derived default.
+  GEMINI_FALLBACK_MODELS: ['gemini_fallback_models', 'list'],
   GDRIVE_ROOT_FOLDER: ['gdrive_root_folder', 'string'],
   DRIVE_ENABLED: ['drive_enabled', 'bool'],
   AUTO_RUN: ['auto_run', 'string'],
@@ -70,7 +72,11 @@ export function settingsPatch(env) {
         ? ['1', 'true', 'yes', 'on'].includes(text.toLowerCase())
         : type === 'int'
           ? Number(text)
-          : text;
+          : type === 'list'
+            ? text === 'none' || text === ''
+              ? []
+              : text.split(',')
+            : text;
   }
   return patch;
 }
@@ -124,7 +130,8 @@ export async function restore(paths) {
     moodle_site: moodleSite,
     ...rest
   } = settingsPatch(baselineEnv(paths, geminiModel));
-  await json(`${BACKEND}/config`, 'POST', rest);
+  // The env file above no longer holds a fallback list; null unsets the one the backend still holds.
+  await json(`${BACKEND}/config`, 'POST', { ...rest, gemini_fallback_models: null });
   await json(`${DATABASE}/config`, 'POST', { data_root: dataRoot });
   // Before the token is written: switching site deletes it.
   await json(`${AUTO}/config`, 'POST', { moodle_site: moodleSite });
@@ -236,7 +243,11 @@ export async function pushSettings(paths, name, overrides) {
       if (key in stored) env[key] = stored[key];
       else if (WALLED.includes(key)) env[key] = '';
     }
-    await json(`${BACKEND}/config`, 'POST', settingsPatch(env));
+    const patch = settingsPatch(env);
+    if (!('GEMINI_FALLBACK_MODELS' in stored) && !('GEMINI_FALLBACK_MODELS' in overrides)) {
+      patch.gemini_fallback_models = null;
+    }
+    await json(`${BACKEND}/config`, 'POST', patch);
   }
   if (name === 'database' && stored.DATA_ROOT && !('DATA_ROOT' in overrides)) {
     await json(`${DATABASE}/config`, 'POST', { data_root: stored.DATA_ROOT });
