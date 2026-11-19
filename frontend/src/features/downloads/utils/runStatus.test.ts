@@ -152,7 +152,7 @@ describe('targetStatus', () => {
   it('passes each recorded disposition through, whatever the tree and the jobs say', () => {
     const courses = tree([node('Lecture 1', true)])
     const jobs = groupJobsByRef([job({ id: 'a', status: 'error' })])
-    expect(status(target({ disposition: 'skipped' }), courses, jobs)).toBe('skipped')
+    expect(status(target({ disposition: 'skipped' }), courses, jobs)).toBe('already-there')
     expect(
       status(target({ disposition: 'unsupported', media: 'unsupported' }), courses, jobs),
     ).toBe('unsupported')
@@ -309,20 +309,33 @@ describe('summarize', () => {
       target({ ref: 'r3', disposition: 'unsupported', media: 'unsupported' }),
     ]
     expect(summarize(targets, tree([]), 'Algebra', NO_JOBS)).toBe(
-      '0 downloaded, 1 unsupported, 2 already there',
+      '0 downloaded, 1 unsupported, 2 skipped',
     )
   })
 
-  it('counts a skip over another source video as skipped, apart from already there', () => {
+  it('counts a skip as already there only when its resource is stored', () => {
     const targets = [
       target({ ref: 'r1', name: 'Lecture 1', disposition: 'skipped' }),
       target({ ref: 'r2', name: 'Lecture 2', disposition: 'skipped' }),
     ]
     const courses = tree([node('Lecture 1', true, 'r1'), node('Lecture 2', true, 'x')])
-    expect(status(targets[1], courses, NO_JOBS)).toBe('other-video')
+    expect(status(targets[0], courses, NO_JOBS)).toBe('already-there')
+    expect(status(targets[1], courses, NO_JOBS)).toBe('skipped')
     expect(summarize(targets, courses, 'Algebra', NO_JOBS)).toBe(
       '0 downloaded, 1 already there, 1 skipped',
     )
+  })
+
+  it('counts an unprobed row skipped over a stored video as skipped', () => {
+    const t = target({ ref: 'r2', name: 'Lecture 1', media: 'unknown', disposition: 'skipped' })
+    const courses = tree([node('Lecture 1', true, 'x')])
+    expect(status(t, courses, NO_JOBS)).toBe('skipped')
+    expect(summarize([t], courses, 'Algebra', NO_JOBS)).toBe('0 downloaded, 1 skipped')
+  })
+
+  it('counts a pipeline-locked skip with nothing stored as skipped', () => {
+    const t = target({ disposition: 'skipped' })
+    expect(status(t, tree([node('Lecture 1')]), NO_JOBS)).toBe('skipped')
   })
 
   it('counts in-flight rows nowhere — the header shows them as their own state', () => {
@@ -335,7 +348,7 @@ describe('summarize', () => {
       target({ ref: 'r2', name: 'Lecture 2', disposition: 'pending' }),
       target({ ref: 'r3', name: 'Lecture 3', disposition: 'pending' }),
     ]
-    expect(summarize(targets, tree([]), 'Algebra', NO_JOBS)).toBe('0 downloaded, 1 already there')
+    expect(summarize(targets, tree([]), 'Algebra', NO_JOBS)).toBe('0 downloaded, 1 skipped')
   })
 })
 

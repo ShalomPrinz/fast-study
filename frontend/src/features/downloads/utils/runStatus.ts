@@ -4,7 +4,7 @@ import type { JobProgress, JobsByRef } from '../contexts/DownloadJobsContext'
 import { jobsForRef, jobsForTarget } from '../contexts/DownloadJobsContext'
 import type { Item } from '../services/autoDownloader'
 import type { RunTarget, SectionRun } from '../services/downloadServer'
-import { holdsOtherVideo, targetLanded } from './existingItems'
+import { hasResource, targetLanded } from './existingItems'
 
 // `unsupported` is a permanent verdict, not a run failure; `pending` is a row the queue has not
 // reached, where no job means "not started". See docs/BULK.md.
@@ -13,8 +13,8 @@ export type TargetStatus =
   | 'failed'
   | 'cancelled'
   | 'unsupported'
+  | 'already-there'
   | 'skipped'
-  | 'other-video'
   | 'in-flight'
   | 'pending'
 
@@ -58,16 +58,16 @@ export function targetStatus(
 ): TargetStatus {
   if (target.disposition === 'pending') return 'pending'
   if (target.disposition === 'skipped') {
-    // Skipped because the lecture holds a video from another source: not "already there".
-    return holdsOtherVideo(
+    // "Already there" only when the resource is stored; any other skip (another source's video, an
+    // unprobed row over a video, a pipeline lock) leaves the row not downloaded, so it counts as skipped.
+    const held = hasResource(
       { ref: target.ref, media: 'unknown', resolvedMedia: target.media },
       target.name,
       target.kind,
       courses,
       course,
     )
-      ? 'other-video'
-      : 'skipped'
+    return held ? 'already-there' : 'skipped'
   }
   if (target.disposition === 'unsupported') return 'unsupported'
   if (target.disposition === 'queue-failed') return 'failed'
@@ -126,8 +126,9 @@ export function summarize(
   if (count('failed')) parts.push(plural(count('failed'), { other: '# failed' }))
   if (count('cancelled')) parts.push(plural(count('cancelled'), { other: '# cancelled' }))
   if (count('unsupported')) parts.push(plural(count('unsupported'), { other: '# unsupported' }))
-  if (count('skipped')) parts.push(plural(count('skipped'), { other: '# already there' }))
-  if (count('other-video')) parts.push(plural(count('other-video'), { other: '# skipped' }))
+  if (count('already-there'))
+    parts.push(plural(count('already-there'), { other: '# already there' }))
+  if (count('skipped')) parts.push(plural(count('skipped'), { other: '# skipped' }))
   return parts.join(', ')
 }
 

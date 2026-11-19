@@ -77,11 +77,12 @@ test("a section's Download all lands every reachable recording", async ({ page }
   await run.click();
   await expect(run).toHaveText(/^Downloading/);
   await expect(run).toHaveText(/^Download all/, { timeout: 60_000 });
-  await expect(summary).toHaveText('2 downloaded, 1 failed, 2 unsupported, 2 already there');
+  await expect(summary).toHaveText('2 downloaded, 1 failed, 2 unsupported, 2 skipped');
   await expect(page.locator('.Toastify__toast')).toHaveCount(0);
   await expectLanded(cards, unknownNames);
 
-  // Recording 1 was skipped, not re-downloaded over the seeded video. Its card is not checked: a
+  // Recordings 1 and 2 are unprobed links over a stored video (the seeded one, the YouTube child's), so
+  // both count skipped, not already there. Recording 1 was not re-downloaded over the seeded video. A
   // skipped link is never probed, so it stays "?" unless an earlier probe this session typed it.
   expect((await videoOf(SEEDED)).mtime).toBe(seededMtime);
 });

@@ -115,8 +115,8 @@ export function overwritesVideo(
   return holdsVideo(name, kind, courses, course)
 }
 
-// Whether the row's named lecture holds a video from another source — the "different video" warning and
-// the run's "skipped" count. Only the named node counts, not its split siblings.
+// Whether the row's named lecture holds a video from another source — the "different video" warning.
+// Only the named node counts, not its split siblings.
 export function holdsOtherVideo(
   item: { ref?: string; media: Media; resolvedMedia?: Media | ResolvedMedia },
   name: string,
