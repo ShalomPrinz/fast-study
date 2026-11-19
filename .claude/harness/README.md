@@ -48,8 +48,8 @@ service's CORS takes on any port, and `127.0.0.1` is not that origin. Vite liste
 only (`--host`), so `localhost` reaches it on IPv4 even where it resolves to `::1` first.
 
 `setup.mjs` is a plain foreground command: it returns once `harness ready` printed, with exit 0, and
-the stack keeps running in its own process groups (give the Bash call `timeout: 600000`; a cold start
-takes up to ~3 min). Never background, `nohup` or `&` it. A failure exits non-zero and tears down
+the stack keeps running in its own process groups (give the Bash call `timeout: 600000`; it takes about 15–20 s, self-check included).
+Never background, `nohup` or `&` it. A failure exits non-zero and tears down
 what it started. Run on a root whose stack is alive it prints that stack's summary and exits 0; it
 refuses only a setup still in progress, `--reseed` (the live data is not its to wipe; use
 `hb reseed`) and `--browsers` tags the stack lacks (use `hb browser <tag>`). No process holds the

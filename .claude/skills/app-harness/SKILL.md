@@ -17,7 +17,7 @@ node .claude/harness/setup.mjs --harness <scratchpad>/harness --browsers main
 ```
 
 Run it in the foreground with Bash `timeout: 600000`. It returns on its own once the stack is ready
-(about 15 s warm, up to ~3 min cold, when the self-check runs the pipeline) and the stack keeps
+(about 15–20 s, self-check included) and the stack keeps
 running after it exits. Never background it, `nohup` it or end it with `&`. A failed self-check
 exits non-zero, names the assumption that broke and leaves nothing running; fix that first. Run on
 a live root it prints that stack's summary and exits 0. Stop the stack with `--down`.
