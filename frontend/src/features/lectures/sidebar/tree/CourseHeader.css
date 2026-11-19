@@ -1,4 +1,4 @@
-/* The course's own row: no inset beside the nav's, so its progress bar and the sections' share one. */
+/* The course's own row: no margin of its own, so it spans the nav like the bar and sections beneath it. */
 .course-header {
   display: flex;
   align-items: flex-start;

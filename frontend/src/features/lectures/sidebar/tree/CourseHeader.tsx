@@ -92,44 +92,44 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   }
 
   return (
-    <div className="course-header">
-      {renaming ? (
-        <InlineEditInput
-          edit={renameEdit}
-          onCommit={commitRename}
-          onCancel={() => {
-            setRenaming(false)
-            renameEdit.setValue('')
-          }}
-        />
-      ) : (
-        <Tooltip
-          placement="inline-end"
-          content={
-            renameLocked
-              ? t`Can't rename while something in this course is being processed, downloaded or generated`
-              : undefined
-          }
-        >
-          <button
-            className="course-toggle course-toggle--head"
-            onClick={(e) => {
-              if (e.shiftKey) {
-                if (!renameLocked) startRenaming(e)
-                else e.preventDefault()
-              } else expand.toggle()
+    <>
+      <div className="course-header">
+        {renaming ? (
+          <InlineEditInput
+            edit={renameEdit}
+            onCommit={commitRename}
+            onCancel={() => {
+              setRenaming(false)
+              renameEdit.setValue('')
             }}
+          />
+        ) : (
+          <Tooltip
+            placement="inline-end"
+            content={
+              renameLocked
+                ? t`Can't rename while something in this course is being processed, downloaded or generated`
+                : undefined
+            }
           >
-            <span className="course-head-title">
-              <span className={`course-chevron${expand.isOpen ? '' : ' course-chevron--closed'}`}>
-                <Icon icon="chevron-down" />
+            <button
+              className="course-toggle course-toggle--head"
+              onClick={(e) => {
+                if (e.shiftKey) {
+                  if (!renameLocked) startRenaming(e)
+                  else e.preventDefault()
+                } else expand.toggle()
+              }}
+            >
+              <span className="course-head-title">
+                <span className={`course-chevron${expand.isOpen ? '' : ' course-chevron--closed'}`}>
+                  <Icon icon="chevron-down" />
+                </span>
+                <span className="course-name" dir="auto">
+                  {pendingName ?? course.name}
+                </span>
               </span>
-              <span className="course-name" dir="auto">
-                {pendingName ?? course.name}
-              </span>
-            </span>
-            {progress.total > 0 && (
-              <>
+              {progress.total > 0 && (
                 <Tooltip
                   content={renameLocked ? undefined : t`Lectures you marked done`}
                   placement="inline-end"
@@ -140,19 +140,19 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
                     </Trans>
                   </span>
                 </Tooltip>
-                <TreeProgress kind="lecture" done={progress.done} total={progress.total} />
-              </>
-            )}
-          </button>
-        </Tooltip>
-      )}
-      {!renaming && (
-        <Tooltip content={t`Add lecture`} placement="inline-end">
-          <button className="course-add-btn" onClick={startAdding} aria-label={t`Add lecture`}>
-            +
-          </button>
-        </Tooltip>
-      )}
-    </div>
+              )}
+            </button>
+          </Tooltip>
+        )}
+        {!renaming && (
+          <Tooltip content={t`Add lecture`} placement="inline-end">
+            <button className="course-add-btn" onClick={startAdding} aria-label={t`Add lecture`}>
+              +
+            </button>
+          </Tooltip>
+        )}
+      </div>
+      {!renaming && <TreeProgress kind="lecture" done={progress.done} total={progress.total} />}
+    </>
   )
 }

@@ -539,8 +539,8 @@ msgstr "הוספת הרצאה או תרגול"
 msgid "Add figures to the summary"
 msgstr "הוספת איורים לסיכום"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:150
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:151
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:148
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:149
 msgid "Add lecture"
 msgstr "הוספת הרצאה"
 
@@ -758,7 +758,7 @@ msgstr "אי אפשר להוריד כשההרצאה הזו בעיבוד או מ�
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "אי אפשר לשנות את השם בזמן עיבוד או המתנה בתור"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:110
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הורדה או יצירה של תוכן בו"
 

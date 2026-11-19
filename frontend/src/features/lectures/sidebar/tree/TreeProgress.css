@@ -23,7 +23,8 @@
   background: var(--progress-assignment);
 }
 
-/* Same inset as the course header's bar. */
+/* The course's and every section's bar share one inset. */
+.course-group > .tree-progress,
 .recitations-group > .tree-progress {
   margin: 2px var(--tree-bar-inset) var(--space-1);
 }
