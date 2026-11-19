@@ -89,7 +89,8 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     // The brand, not copy: the folder lands in the user's Drive under the same name in every locale.
     gdriveRootFolder: stored.gdriveRootFolder ?? 'FastStudy',
     geminiModel: stored.geminiModel ?? '',
-    geminiAutoFallback: stored.geminiAutoFallback ?? true,
+    // Only the top model is asked here; the rest follow the stored list or its derived default.
+    geminiFallbackModels: null,
     summaryFigures: stored.summaryFigures ?? false,
     autoRetry: autoRetryFromStore(stored),
     // Not asked about here — carried through so the wall's save leaves the default alone.
@@ -146,7 +147,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     try {
       // A site save still in flight lands first; resending the same site is a no-op for its owner.
       await siteSaves.current
-      onDone(await saveSettings(wallPatch(answered, stored, canSetErrorReports)))
+      onDone(await saveSettings(wallPatch(answered, stored, canSetErrorReports, options)))
     } catch (err) {
       // Shown in place, not toasted: a rejected data folder is the one thing standing in the way.
       setFailure(failureNode(err))

@@ -14,8 +14,8 @@ edits them all, and the prerequisites and accounts both screens show.
 | UI language       | OS locale — Hebrew unless it says English | Hebrew, English       | frontend          |
 | Drive upload      | off                                       | on                    | `backend/`        |
 | Drive root folder | `FastStudy`, sent only once Drive is on  | any folder name       | `backend/`        |
-| Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
-| Auto change model when busy | on (a checkbox beside the model) | off       | `backend/`        |
+| Summary model (row 1) | the first curated entry                | row 1 of the ordered list | `backend/`    |
+| Summary models (fallback rows 2+) | every other curated model, wrapping, when never saved | any order, any subset, one minimum | `backend/` |
 | Summary figures   | off (a checkbox beside the model)         | on                    | `backend/`        |
 | Auto retry        | on, 3 retries, 10 minutes apart           | off; 1-10 retries, 1-120 minutes | `backend/`, `electron/` store |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
@@ -25,8 +25,17 @@ edits them all, and the prerequisites and accounts both screens show.
 | AI chat provider  | Claude                                    | ChatGPT, Gemini       | `electron/`, renderer-only |
 | Course structure  | lectures and recitations (`split`)        | lectures only: every course, chosen courses | `database/`, live |
 
-The model list comes from `GET /config/options` as `{id, name}` (dropdown shows the name, stores the id; `modelDisplayName`, filled by every options fetch incl. `InitGate`'s at boot, swaps ids for names in `serviceErrors.ts` error params and `model_fallback` notices, an unmapped id staying raw), so a model the free tier does not serve can never be
+The model list comes from `GET /config/options` as `{id, name}` (the wall's dropdown and the Settings list show the name, stores the id; `modelDisplayName`, filled by every options fetch incl. `InitGate`'s at boot, swaps ids for names in `serviceErrors.ts` error params and `model_fallback` notices, an unmapped id staying raw), so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
+
+**Summary models** (`SummaryModelsField`, order rules in `utils/geminiOrder.ts`) is one ordered list: row 1 is `geminiModel`,
+rows 2+ are `geminiFallbackModels` (`[]` = never switch, `null` = never saved). ▲/▼ reorder (focus stays on the moved row's arrow),
+✕ removes (never the last: a red "Keep at least one model." line), the dashed rows under "Not used" add at the end. Never saved,
+`effectiveFallback` derives the rows as the backend does (auto-fallback unset/on: every other model after the main, wrapping; off: none),
+and the first save writes the list explicitly; Save sends both fields whenever either differs from that effective value, so
+`buildPatch` takes the options. The wall keeps its single dropdown and a `null` list, so it sends only the model. `geminiAutoFallback`
+is read only for the derivation and never written. Selectors: `#summary-models`, `.summary-model-row[data-model-id]` with
+`.summary-model-up/-down/-remove`, `.summary-model-add[data-model-id]`, `.summary-models-error`.
 
 **Auto retry** (`AutoRetryField`, rules in `utils/autoRetry.ts`) is its own section: a switch plus "Number of
 retries" and "Minutes between retries", disabled while off. Unset reads as the defaults; the two boxes share one row and commit
@@ -73,7 +82,7 @@ on every save, and while the policy is unanswered its Start opens the modal inst
 and starts in one go (`wallMustAskPrivacy`); closing it saves nothing.
 
 **The Gemini model offer** (`HydrogenPrompt`, mounted in `Layout` so it never meets the wall) asks once whether to switch
-a stored non-`gemini-4-hydrogen` model; Yes saves the model and the launcher-only `hydrogenPrompted` together; No, Esc
+a stored non-`gemini-4-hydrogen` model; Yes saves hydrogen on top, the rest of the effective order after it (`geminiFallbackModels`), and the launcher-only `hydrogenPrompted` together; No, Esc
 or a click outside (the backdrop calls `onCancel`) all count as No and save only the flag. The init wall's save sets
 the flag too (`wallPatch`), so a new install never sees the offer. An unset model or an answered flag shows nothing, and browser dev reads the flag as answered.
 
@@ -191,10 +200,10 @@ keyring) cannot store them. `runtime.ts` resolves the launcher's report once as 
 no bridge means browser dev, where keys go to `.env`, so a missing answer means a machine that is fine.
 
 Degraded, not fatal: a field that can never be filled invites a user to try, so the wall drops the whole
-keys section, and `/settings` drops the key fields and the summary model with its two checkboxes, leaving `SecureStorageNotice`
+keys section, and `/settings` drops the key fields and the summary models list with the figures checkbox, leaving `SecureStorageNotice`
 under the section heading. The keys stop counting in `missingEntries` and `isInitialized` (which take the flag as an argument,
 staying pure), or the wall would have no way past. A save stays safe: a blank key is never sent, and an
-unrendered model select still holds the stored or default id.
+unrendered list still holds the stored or default order.
 
 ## Key validation — `components/ApiKeyField.tsx`
 
@@ -299,6 +308,6 @@ and `/settings` push each save, so a change reaches every screen without a reloa
 (unset means off, matching the backend) drives the Drive stage and what counts as a complete lecture
 ([LECTURES.md](LECTURES.md)); `useAutoRun` is the other consumer.
 
-**Model fallback notices.** With auto change on, a retried Gemini 503 raises a `model_fallback` notice in the
+**Model fallback notices.** A Gemini 503 that moves on to the next summary model raises a `model_fallback` notice in the
 `notices` of `GET /status` and the overview status. `shared/utils/notices.ts` info-toasts each id once (ids are unique across both
 endpoints) and records, without toasting, whatever a source already holds on its first load after page load. The sentence lives in `serviceErrors.ts`.

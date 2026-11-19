@@ -49,8 +49,10 @@ export interface Settings {
   geminiApiKeySet: boolean
   groqApiKeySet: boolean
   geminiModel: string | null
-  // Unset means off: a busy model fails the call instead of retrying on the next one.
+  // Read only to derive the fallback list for an install that never saved one; unset reads as on.
   geminiAutoFallback: boolean | null
+  // Rows 2+ of the summary models list; `null` when never saved, `[]` for no fallback.
+  geminiFallbackModels: string[] | null
   // Unset means off: the summary carries no figures cropped from the lecture's slides.
   summaryFigures: boolean | null
   // Unset reads as the backend's defaults: on, 3 retries, 10 minutes apart (`AUTO_RETRY_DEFAULTS`).
@@ -88,7 +90,7 @@ export interface SettingsPatch {
   geminiApiKey?: string
   groqApiKey?: string
   geminiModel?: string
-  geminiAutoFallback?: boolean
+  geminiFallbackModels?: string[]
   summaryFigures?: boolean
   autoRetry?: boolean
   autoRetryCount?: number
@@ -113,7 +115,7 @@ const WIRE: Record<SettingsField, string> = {
   geminiApiKey: 'gemini_api_key',
   groqApiKey: 'groq_api_key',
   geminiModel: 'gemini_model',
-  geminiAutoFallback: 'gemini_auto_fallback',
+  geminiFallbackModels: 'gemini_fallback_models',
   summaryFigures: 'summary_figures',
   autoRetry: 'auto_retry',
   autoRetryCount: 'auto_retry_count',
@@ -139,7 +141,7 @@ const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
   'geminiModel',
-  'geminiAutoFallback',
+  'geminiFallbackModels',
   'summaryFigures',
   'autoRetry',
   'autoRetryCount',
@@ -159,6 +161,7 @@ interface RawSettings {
   groq_api_key_set: boolean | null
   gemini_model: string | null
   gemini_auto_fallback?: boolean | null
+  gemini_fallback_models?: string[] | null
   summary_figures?: boolean | null
   auto_retry?: boolean | null
   auto_retry_count?: number | null
@@ -180,6 +183,7 @@ function normalize(raw: RawSettings): Settings {
     groqApiKeySet: raw.groq_api_key_set ?? false,
     geminiModel: raw.gemini_model,
     geminiAutoFallback: raw.gemini_auto_fallback ?? null,
+    geminiFallbackModels: raw.gemini_fallback_models ?? null,
     summaryFigures: raw.summary_figures ?? null,
     autoRetry: raw.auto_retry ?? null,
     autoRetryCount: raw.auto_retry_count ?? null,

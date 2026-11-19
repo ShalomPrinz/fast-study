@@ -8,6 +8,7 @@ import {
   type SettingsPatch,
 } from '@/services/settings'
 import { toAiProvider, type AiProvider } from '@/features/lectures/utils/aiChat'
+import { effectiveFallback, formModel, sameList } from './geminiOrder'
 import { autoRetryFromStore, autoRetryPatch, type AutoRetryForm } from './autoRetry'
 import { autoRemoveFromStore, autoRemovePatch, type AutoRemoveForm } from './autoRemove'
 
@@ -18,7 +19,8 @@ export interface SettingsForm {
   driveEnabled: boolean
   gdriveRootFolder: string
   geminiModel: string
-  geminiAutoFallback: boolean
+  // Rows 2+ of the summary models list; `null` leaves it to the stored value (the wall, or options not loaded).
+  geminiFallbackModels: string[] | null
   summaryFigures: boolean
   autoRetry: AutoRetryForm
   autoRun: AutoRun
@@ -33,15 +35,6 @@ export interface SettingsForm {
   courseStructure: CourseStructure
 }
 
-// The model the form shows: a stored one the options no longer list reads as the first, so Save sends
-// it; with no options (the backend is down) the stored one stays as is, so Save leaves it alone.
-function formModel(stored: Settings, options: ConfigOptions | null): string {
-  const model = stored.geminiModel
-  if (!options) return model ?? ''
-  const models = options.geminiModels.map((m) => m.id)
-  return model !== null && models.includes(model) ? model : (models[0] ?? '')
-}
-
 /** The form as the store answers it, used on load and after every save so a later save diffs only
  *  what this page edited. */
 export function formFromStore(stored: Settings, options: ConfigOptions | null): SettingsForm {
@@ -52,7 +45,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions | null): 
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: formModel(stored, options),
-    geminiAutoFallback: stored.geminiAutoFallback ?? true,
+    geminiFallbackModels: options ? effectiveFallback(stored, options) : null,
     summaryFigures: stored.summaryFigures ?? false,
     autoRetry: autoRetryFromStore(stored),
     autoRun: toAutoRun(stored.autoRun),
@@ -73,8 +66,11 @@ export function withOptions(
   stored: Settings,
   options: ConfigOptions,
 ): SettingsForm {
-  if (options.geminiModels.some((m) => m.id === form.geminiModel)) return form
-  return { ...form, geminiModel: formModel(stored, options) }
+  const model = options.geminiModels.some((m) => m.id === form.geminiModel)
+    ? form.geminiModel
+    : formModel(stored, options)
+  const fallback = form.geminiFallbackModels ?? effectiveFallback(stored, options)
+  return { ...form, geminiModel: model, geminiFallbackModels: fallback }
 }
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore
@@ -83,14 +79,23 @@ export function buildPatch(
   form: SettingsForm,
   stored: Settings,
   canSetErrorReports: boolean,
+  options: ConfigOptions | null,
 ): SettingsPatch {
   const patch: SettingsPatch = {}
   if (form.geminiApiKey.trim()) patch.geminiApiKey = form.geminiApiKey.trim()
   if (form.groqApiKey.trim()) patch.groqApiKey = form.groqApiKey.trim()
   if (form.dataRoot.trim() !== (stored.dataRoot ?? '')) patch.dataRoot = form.dataRoot.trim()
-  if (form.geminiModel !== (stored.geminiModel ?? '')) patch.geminiModel = form.geminiModel
-  if (form.geminiAutoFallback !== (stored.geminiAutoFallback ?? true))
-    patch.geminiAutoFallback = form.geminiAutoFallback
+  // The list is written explicitly whenever either part differs from what the backend runs with, so
+  // the first save ends the derived default.
+  const listChanged =
+    form.geminiFallbackModels !== null &&
+    options !== null &&
+    !sameList(form.geminiFallbackModels, effectiveFallback(stored, options))
+  const modelChanged = form.geminiModel !== (stored.geminiModel ?? '')
+  if (modelChanged || listChanged) {
+    patch.geminiModel = form.geminiModel
+    if (form.geminiFallbackModels !== null) patch.geminiFallbackModels = form.geminiFallbackModels
+  }
   if (form.summaryFigures !== (stored.summaryFigures ?? false))
     patch.summaryFigures = form.summaryFigures
   Object.assign(patch, autoRetryPatch(form.autoRetry, stored))
@@ -124,8 +129,9 @@ export function wallPatch(
   form: SettingsForm,
   stored: Settings,
   canSetErrorReports: boolean,
+  options: ConfigOptions | null,
 ): SettingsPatch {
-  const patch = buildPatch(form, stored, canSetErrorReports)
+  const patch = buildPatch(form, stored, canSetErrorReports, options)
   if (canSetErrorReports) {
     patch.errorReports = form.errorReports
     patch.hydrogenPrompted = true

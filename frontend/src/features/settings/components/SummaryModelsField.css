@@ -1,0 +1,122 @@
+.summary-models-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary-model-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+}
+
+.summary-model-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--surface);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+}
+
+.summary-model-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.summary-model-name {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.summary-model-place {
+  font-size: var(--fs-fine);
+  color: var(--accent-ink);
+}
+
+.summary-model-row .summary-model-btn {
+  padding: var(--space-1) var(--space-3);
+  border-color: var(--accent-line);
+  background: var(--surface);
+  color: var(--accent-ink);
+}
+
+.summary-model-row .summary-model-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.summary-model-row .summary-model-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.summary-model-row .summary-model-btn:disabled {
+  color: var(--text-4);
+}
+
+.summary-model-row .summary-model-remove:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.summary-models-error {
+  font-size: var(--fs-meta);
+  color: var(--danger);
+}
+
+.summary-models-caption {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.summary-model-add {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-5);
+  border: 1px dashed var(--control-line);
+  border-radius: var(--r-sm);
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.summary-model-add:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.summary-model-add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.summary-model-badge--add {
+  background: var(--surface);
+  border: 1px solid var(--accent-line);
+  color: var(--accent-ink);
+}
+
+.settings-page .summary-models-list,
+.settings-page .summary-model-add {
+  max-width: 520px;
+}

@@ -23,6 +23,7 @@ const SETTINGS: Settings = {
   gdriveRootFolder: null,
   autoRun: null,
   geminiAutoFallback: null,
+  geminiFallbackModels: null,
   summaryFigures: null,
   autoRetry: null,
   autoRetryCount: null,

@@ -25,6 +25,7 @@ import { useNotify } from '@/shared/hooks/useNotify'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ApiKeyField from './components/ApiKeyField'
+import SummaryModelsField from './components/SummaryModelsField'
 import BrowserPrereqField from './components/BrowserPrereqField'
 import { useBrowserPrereq } from './hooks/useBrowserPrereq'
 import { useSiteSave } from './hooks/useSiteSave'
@@ -194,7 +195,7 @@ export default function SettingsView() {
   const current = form
   const storedNow = stored
   const currentOptions = options
-  const patch = () => buildPatch(current, stored, canSetErrorReports)
+  const patch = () => buildPatch(current, stored, canSetErrorReports, currentOptions)
 
   const missing = missingEntries({
     geminiKey: form.geminiApiKey,
@@ -399,44 +400,13 @@ export default function SettingsView() {
                       storedKeyExists={stored.groqApiKeySet}
                     />
                   )}
-                  <div className="settings-field">
-                    <div className="settings-label">
-                      <label htmlFor="gemini-model">
-                        <Trans>Summary model</Trans>
-                      </label>
-                    </div>
-                    <select
-                      id="gemini-model"
-                      className="settings-select"
-                      value={form.geminiModel}
-                      onChange={(e) => setForm({ ...form, geminiModel: e.target.value })}
-                    >
-                      {options.geminiModels.map((model) => (
-                        <option key={model.id} value={model.id}>
-                          {model.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="settings-field">
-                    <label className="settings-check">
-                      <input
-                        type="checkbox"
-                        checked={form.geminiAutoFallback}
-                        onChange={(e) => setForm({ ...form, geminiAutoFallback: e.target.checked })}
-                      />
-                      <span className="settings-check-text">
-                        <span>
-                          <Trans>Auto change model when busy</Trans>
-                        </span>
-                      </span>
-                    </label>
-                    <span className="settings-hint">
-                      <Trans>
-                        When the summary model is under high demand, retry once on the next model.
-                      </Trans>
-                    </span>
-                  </div>
+                  <SummaryModelsField
+                    models={options.geminiModels}
+                    order={[form.geminiModel, ...(form.geminiFallbackModels ?? [])]}
+                    onChange={([model, ...rest]) =>
+                      setForm({ ...form, geminiModel: model, geminiFallbackModels: rest })
+                    }
+                  />
                   <div className="settings-field">
                     <label className="settings-check">
                       <input

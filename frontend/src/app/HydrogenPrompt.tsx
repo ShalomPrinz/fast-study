@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { saveSettings, type Settings } from '@/services/settings'
+import {
+  fetchConfigOptions,
+  saveSettings,
+  type Settings,
+  type SettingsPatch,
+} from '@/services/settings'
+import { effectiveFallback, formModel } from '@/features/settings/utils/geminiOrder'
 import { toastFailure } from '@/shared/utils/failure'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
@@ -28,11 +34,22 @@ export default function HydrogenPrompt() {
   async function answer(switchModel: boolean) {
     setAnswered(true)
     try {
-      const { errorReportsRestartNeeded: _, ...saved } = await saveSettings(
-        switchModel
-          ? { geminiModel: HYDROGEN_MODEL, hydrogenPrompted: true }
-          : { hydrogenPrompted: true },
-      )
+      // Hydrogen goes on top and the rest of the effective order follows it.
+      let patch: SettingsPatch = { hydrogenPrompted: true }
+      if (switchModel && settings) {
+        // Without options (backend down) the answer still saves; the order is sent only when the stored list gives it.
+        const options = await fetchConfigOptions().catch(() => null)
+        const order = options
+          ? [formModel(settings, options), ...effectiveFallback(settings, options)]
+          : settings.geminiFallbackModels && [
+              ...(settings.geminiModel ? [settings.geminiModel] : []),
+              ...settings.geminiFallbackModels,
+            ]
+        patch = { geminiModel: HYDROGEN_MODEL, hydrogenPrompted: true }
+        if (order)
+          patch.geminiFallbackModels = [...new Set(order)].filter((id) => id !== HYDROGEN_MODEL)
+      }
+      const { errorReportsRestartNeeded: _, ...saved } = await saveSettings(patch)
       setSettings(saved)
     } catch (err) {
       toastFailure(err)
