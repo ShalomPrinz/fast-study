@@ -189,8 +189,8 @@ connection); `detail` is the transport's own text. It can also end an assignment
 `gemini_overloaded`, `gemini_timeout`, `gemini_unreachable` and a `per_minute`
 `gemini_quota_exhausted` are the transient set the backend auto-retries
 ([`backend/docs/PIPELINE.md`](../backend/docs/PIPELINE.md#auto-retry)); the record keeps its code while the retry waits.
-`model_fallback` is not a failure but a notice: with `GEMINI_AUTO_FALLBACK` on, a 503 retried on the
-next model raises it in the `notices` list of `GET /status` and of the overview status, `from`/`to`
+`model_fallback` is not a failure but a notice: a 503 from `from` that moved the call to `to`, the
+next model in the user's fallback list (`GEMINI_FALLBACK_MODELS`), raises it — one per hop, so a walk through several fallbacks raises one per pair — in the `notices` list of `GET /status` and of the overview status, `from`/`to`
 naming the models, once per `from`/`to` pair per step (per course phase). It toasts once per `id` and never lands in `errors`.
 `drive_unreachable` is a Drive token refresh that never reached Google (a `TransportError`: offline,
 DNS, refused connection); `detail` is the transport's own text. Unlike `drive_not_connected` it leaves
@@ -239,6 +239,7 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
 | `settings.py`, `database_main.py` | `setting_must_be_boolean` | `field`           | dev       |
 | `settings.py`         | `setting_must_be_integer`       | `field`           | dev       |
+| `settings.py`         | `setting_must_be_string_list`   | `field`           | dev       |
 | `settings.py`         | `setting_may_not_contain_quotes`| `field`           | user      |
 | `settings.py`         | `unknown_setting`               | `field`           | dev       |
 | `settings.py`         | `setting_invalid_choice`        | `field`, `value`  | dev       |
@@ -291,6 +292,7 @@ carry rows despite being `dev`: a launcher/frontend key drift reaches real users
 | `store.js` | `setting_must_be_string`  | `field`                | dev   |
 | `store.js` | `setting_must_be_boolean` | `field`                | dev   |
 | `store.js` | `setting_must_be_integer` | `field`                | dev   |
+| `store.js` | `setting_must_be_string_list` | `field`           | dev   |
 | `store.js` | `setting_invalid_choice`  | `field`, `value`       | dev   |
 | `store.js` | `setting_out_of_range`    | `field`, `min`, `max`  | dev   |
 

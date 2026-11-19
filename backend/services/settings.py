@@ -6,9 +6,9 @@ import os
 # Curated, in fallback order: a model id the free tier does not serve fails minutes into a
 # run, so the frontend picks from this table. API id -> the name the user sees.
 GEMINI_MODEL_NAMES = {
-    "gemini-4-hydrogen": "Gemini 4 Hydrogen",
-    "gemini-3.8-flash": "Gemini 3.8 Flash",
-    "gemini-3.6-flash": "Gemini 3.6 Flash",
+    "gemini-4-hydrogen": "Gemini Hydrogen 4",
+    "gemini-3.8-flash": "Gemini Flash 3.8",
+    "gemini-3.6-flash": "Gemini Flash 3.6",
 }
 GEMINI_MODELS = list(GEMINI_MODEL_NAMES)
 
@@ -23,6 +23,8 @@ AUTO_REMOVE_AFTER = ["pdf", "drive"]
 
 _TRUTHY = {"1", "true", "yes", "on"}
 _FALSY = {"0", "false", "no", "off"}
+# GEMINI_FALLBACK_MODELS value for an empty list; a blank would read as never saved.
+_NO_FALLBACK = "none"
 
 # Settings field name → the environment variable its consumer reads.
 _ENV_KEYS = {
@@ -30,6 +32,7 @@ _ENV_KEYS = {
     "groq_api_key": "GROQ_API_KEY",
     "gemini_model": "GEMINI_MODEL",
     "gemini_auto_fallback": "GEMINI_AUTO_FALLBACK",
+    "gemini_fallback_models": "GEMINI_FALLBACK_MODELS",
     "drive_enabled": "DRIVE_ENABLED",
     "gdrive_root_folder": "GDRIVE_ROOT_FOLDER",
     "auto_run": "AUTO_RUN",
@@ -55,9 +58,30 @@ def gemini_model() -> str:
 
 
 def gemini_auto_fallback() -> bool:
-    """Whether a 503 from Gemini retries the call once on the next model. On unless set false."""
+    """The legacy fallback switch, on unless set false; now only seeds the derived fallback list."""
 
     return os.environ.get("GEMINI_AUTO_FALLBACK", "").strip().lower() not in _FALSY
+
+
+def gemini_fallback_models(main: str | None = None) -> list[str]:
+    """The ordered models a 503 from `main` (default: the selected model) falls back to.
+    Read from GEMINI_FALLBACK_MODELS (`,`-joined, `none` = empty); uncurated ids, `main` and duplicates drop."""
+
+    main = main or gemini_model()
+    raw = os.environ.get("GEMINI_FALLBACK_MODELS", "").strip()
+    if raw:
+        ids = [] if raw == _NO_FALLBACK else [i.strip() for i in raw.split(",")]
+    elif not gemini_auto_fallback():
+        # Migration: derive the list for installs that never saved one; see docs/MIGRATIONS.md.
+        ids = []
+    else:
+        at = GEMINI_MODELS.index(main) if main in GEMINI_MODELS else -1
+        ids = GEMINI_MODELS[at + 1 :] + GEMINI_MODELS[: at + 1]
+    out: list[str] = []
+    for i in ids:
+        if i in GEMINI_MODELS and i != main and i not in out:
+            out.append(i)
+    return out
 
 
 def auto_run() -> str:
@@ -131,7 +155,17 @@ def apply_config(values: dict) -> list[str]:
     applied = []
     for field, value in values.items():
         env_key = _ENV_KEYS.get(field)
-        if env_key is None or value is None:
+        if env_key is None:
+            continue
+        if field == "gemini_fallback_models":
+            # null is "never saved": drop the var so the derived default applies again.
+            if value is None:
+                os.environ.pop(env_key, None)
+            else:
+                os.environ[env_key] = ",".join(value) or _NO_FALLBACK
+            applied.append(field)
+            continue
+        if value is None:
             continue
         os.environ[env_key] = (
             str(value).lower() if isinstance(value, bool) else str(value)

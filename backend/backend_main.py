@@ -487,6 +487,7 @@ class ConfigUpdate(BaseModel):
     groq_api_key: str | None = None
     gemini_model: str | None = None
     gemini_auto_fallback: bool | None = None
+    gemini_fallback_models: list[str] | None = None
     drive_enabled: bool | None = None
     gdrive_root_folder: str | None = None
     auto_run: str | None = None

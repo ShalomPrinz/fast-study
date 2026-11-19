@@ -85,13 +85,28 @@ one-line comment pointing at this file.
 - **Old state:** an install set up before `gemini-4-hydrogen` became the first listed model saved
   an older model (usually `gemini-3.8-flash`) at the init wall, so it keeps using that model.
 - **What it does:** once per user, when the saved model is not `gemini-4-hydrogen` and
-  `hydrogen_prompted` is unset, a confirm modal offers the switch. Yes saves `gemini-4-hydrogen`;
+  `hydrogen_prompted` is unset, a confirm modal offers the switch. Yes moves `gemini-4-hydrogen` to
+  the top of the summary model order and keeps the rest of it;
   No, Esc or a click outside keeps the model. Any answer sets `hydrogen_prompted`, so it never asks
   again. The init wall sets it too, so a new install never sees the offer.
 - **Remove when:** most installs have launched once on a version that carries this code. After
   removal, an install that never answered keeps its older model until the user changes it in
   Settings. Remove `hydrogen_prompted` from the store's field list in the same change; a key left
   in a user's settings.json is then ignored and needs no cleanup.
+
+## Derived summary model fallback list
+
+- **Code:** the derivation in `backend/services/settings.py` `gemini_fallback_models()` (the
+  `GEMINI_AUTO_FALLBACK` branch and the wrap-round default), and its frontend twin that builds the
+  Settings form's model order when `geminiFallbackModels` is `null`.
+- **Old state:** an install that never saved `gemini_fallback_models` has only `gemini_model` and
+  possibly `gemini_auto_fallback`.
+- **What it does:** an absent list becomes every other curated model in `GEMINI_MODELS` order after
+  the main model, wrapping round — or `[]` when `gemini_auto_fallback` is false. The first Save in
+  Settings or a Hydrogen prompt answer writes the list explicitly, and the derivation stops applying.
+- **Remove when:** most installs have launched once on a version that carries this code and saved
+  Settings since, plus one release of grace. After removal an absent list means `[]`; drop
+  `gemini_auto_fallback` from every store's field list, `_ENV_KEYS` and `ConfigUpdate` in the same change.
 
 ## Mac-less release gate
 

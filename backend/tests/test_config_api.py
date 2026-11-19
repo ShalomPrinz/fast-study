@@ -15,9 +15,9 @@ class TestConfigOptions:
     def test_lists_providers_without_their_base_url_or_probe(self):
         body = client.get("/config/options").json()
         assert body["gemini_models"] == [
-            {"id": "gemini-4-hydrogen", "name": "Gemini 4 Hydrogen"},
-            {"id": "gemini-3.8-flash", "name": "Gemini 3.8 Flash"},
-            {"id": "gemini-3.6-flash", "name": "Gemini 3.6 Flash"},
+            {"id": "gemini-4-hydrogen", "name": "Gemini Hydrogen 4"},
+            {"id": "gemini-3.8-flash", "name": "Gemini Flash 3.8"},
+            {"id": "gemini-3.6-flash", "name": "Gemini Flash 3.6"},
         ]
         assert [m["id"] for m in body["gemini_models"]] == settings.GEMINI_MODELS
         assert {p["id"] for p in body["providers"]} == set(providers.PROVIDERS)
@@ -270,3 +270,18 @@ class TestRetryNowRoutes:
             )
         assert r.json() == {"fired": False}
         f.assert_called_once_with("C", "pitfalls")
+
+
+class TestFallbackModelsConfig:
+    def test_list_empty_and_null_round_trip(self, monkeypatch):
+        monkeypatch.delenv("GEMINI_FALLBACK_MODELS", raising=False)
+        ids = settings.GEMINI_MODELS
+        body = client.post(
+            "/config", json={"gemini_fallback_models": [ids[2], ids[1]]}
+        ).json()
+        assert body["applied"] == ["gemini_fallback_models"]
+        assert os.environ["GEMINI_FALLBACK_MODELS"] == f"{ids[2]},{ids[1]}"
+        client.post("/config", json={"gemini_fallback_models": []})
+        assert os.environ["GEMINI_FALLBACK_MODELS"] == "none"
+        client.post("/config", json={"gemini_fallback_models": None})
+        assert "GEMINI_FALLBACK_MODELS" not in os.environ

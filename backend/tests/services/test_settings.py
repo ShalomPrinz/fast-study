@@ -156,3 +156,36 @@ class TestSummaryFigures:
         assert settings.apply_config({"summary_figures": True}) == ["summary_figures"]
         assert os.environ["SUMMARY_FIGURES"] == "true"
         monkeypatch.delenv("SUMMARY_FIGURES")
+
+
+def test_fallback_models_drops_retired_main_and_duplicates(monkeypatch):
+    monkeypatch.setenv("GEMINI_MODEL", settings.GEMINI_MODELS[0])
+    ids = [
+        settings.GEMINI_MODELS[2],
+        "retired",
+        settings.GEMINI_MODELS[0],
+        settings.GEMINI_MODELS[2],
+        settings.GEMINI_MODELS[1],
+    ]
+    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", ",".join(ids))
+    assert settings.gemini_fallback_models() == [
+        settings.GEMINI_MODELS[2],
+        settings.GEMINI_MODELS[1],
+    ]
+
+
+def test_fallback_models_none_is_empty(monkeypatch):
+    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", "none")
+    assert settings.gemini_fallback_models() == []
+
+
+def test_fallback_models_absent_derives_from_the_legacy_switch(monkeypatch):
+    monkeypatch.delenv("GEMINI_FALLBACK_MODELS", raising=False)
+    monkeypatch.setenv("GEMINI_MODEL", settings.GEMINI_MODELS[1])
+    monkeypatch.delenv("GEMINI_AUTO_FALLBACK", raising=False)
+    assert settings.gemini_fallback_models() == [
+        settings.GEMINI_MODELS[2],
+        settings.GEMINI_MODELS[0],
+    ]
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "false")
+    assert settings.gemini_fallback_models() == []

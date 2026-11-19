@@ -344,8 +344,15 @@ def _models_called(sdk):
     return [c.kwargs["model"] for c in sdk.models.generate_content.call_args_list]
 
 
-def test_503_without_auto_fallback_does_not_retry(monkeypatch):
-    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "false")
+THIRD = GEMINI_MODELS[2]
+
+
+def _list(monkeypatch, ids):
+    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", ",".join(ids) or "none")
+
+
+def test_503_with_an_empty_list_does_not_retry(monkeypatch):
+    _list(monkeypatch, [])
     sdk, client = _fallback_client(monkeypatch, [_overloaded()], FIRST)
     with pytest.raises(CodedError) as exc:
         client.generate(["x"])
@@ -353,64 +360,65 @@ def test_503_without_auto_fallback_does_not_retry(monkeypatch):
     assert _models_called(sdk) == [FIRST]
 
 
-def test_503_with_auto_fallback_retries_on_next_model_once(monkeypatch):
-    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+def test_503_falls_back_in_the_users_order_and_fires_the_hook(monkeypatch):
+    _list(monkeypatch, [THIRD, SECOND])
     seen = []
     token = llm_mod.fallback_hook.set(lambda a, b: seen.append((a, b)))
     try:
         sdk, client = _fallback_client(
             monkeypatch,
-            [_overloaded(), SimpleNamespace(text=" ok ")],
+            [_overloaded(), _overloaded(), SimpleNamespace(text=" ok ")],
             FIRST,
         )
         assert client.generate(["x"]) == "ok"
-        assert _models_called(sdk) == [FIRST, SECOND]
-        assert seen == [(FIRST, SECOND)]
+        assert _models_called(sdk) == [FIRST, THIRD, SECOND]
+        assert seen == [(FIRST, THIRD), (THIRD, SECOND)]
         assert client.model == FIRST  # per call only
     finally:
         llm_mod.fallback_hook.reset(token)
 
 
-def test_fallback_wraps_round_to_the_first_model(monkeypatch):
-    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+def test_a_fallback_429_moves_on_to_the_next(monkeypatch):
+    _list(monkeypatch, [SECOND, THIRD])
+    quota = _SdkError(_quota_body("GenerateRequestsPerDayPerProjectPerModel"))
     sdk, client = _fallback_client(
-        monkeypatch, [_overloaded(), SimpleNamespace(text="ok")], GEMINI_MODELS[-1]
+        monkeypatch, [_overloaded(), quota, SimpleNamespace(text="ok")], FIRST
     )
-    client.generate(["x"])
-    assert _models_called(sdk) == [GEMINI_MODELS[-1], FIRST]
+    assert client.generate(["x"]) == "ok"
+    assert _models_called(sdk) == [FIRST, SECOND, THIRD]
 
 
-def test_both_models_503_raises_the_original_overloaded(monkeypatch):
-    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+def test_all_503_raises_the_original_chained_from_the_last_failure(monkeypatch):
+    _list(monkeypatch, [SECOND, THIRD])
+    quota = _SdkError(_quota_body("GenerateRequestsPerDayPerProjectPerModel"))
     sdk, client = _fallback_client(
-        monkeypatch, [_overloaded(), _overloaded(), _overloaded()], FIRST
-    )
-    with pytest.raises(CodedError) as exc:
-        client.generate(["x"])
-    assert exc.value.code == "gemini_overloaded"
-    assert exc.value.params == {"model": FIRST}
-    assert len(_models_called(sdk)) == 2
-
-
-def test_fallback_429_raises_the_original_overloaded(monkeypatch):
-    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
-    sdk, client = _fallback_client(
-        monkeypatch,
-        [
-            _overloaded(),
-            _SdkError(_quota_body("GenerateRequestsPerDayPerProjectPerModel")),
-        ],
-        FIRST,
+        monkeypatch, [_overloaded(), _overloaded(), quota], FIRST
     )
     with pytest.raises(CodedError) as exc:
         client.generate(["x"])
     assert exc.value.code == "gemini_overloaded"
     assert exc.value.params == {"model": FIRST}
     assert isinstance(exc.value.__cause__, GeminiRateLimitError)
+    assert len(_models_called(sdk)) == 3
+
+
+def test_unsaved_list_derives_from_the_legacy_switch(monkeypatch):
+    monkeypatch.delenv("GEMINI_FALLBACK_MODELS", raising=False)
+    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "false")
+    sdk, client = _fallback_client(monkeypatch, [_overloaded()], FIRST)
+    with pytest.raises(CodedError):
+        client.generate(["x"])
+    assert _models_called(sdk) == [FIRST]
+    monkeypatch.delenv("GEMINI_AUTO_FALLBACK")
+    sdk, client = _fallback_client(
+        monkeypatch, [_overloaded(), SimpleNamespace(text="ok")], FIRST
+    )
+    client.generate(["x"])
+    assert _models_called(sdk) == [FIRST, SECOND]
 
 
 def test_429_never_falls_back(monkeypatch):
-    monkeypatch.setenv("GEMINI_AUTO_FALLBACK", "true")
+    _list(monkeypatch, [SECOND])
     sdk, client = _fallback_client(
         monkeypatch,
         [_SdkError(_quota_body("GenerateRequestsPerDayPerProjectPerModel"))],
@@ -477,7 +485,7 @@ def test_a_timeout_never_falls_back(monkeypatch):
     sdk = MagicMock()
     sdk.models.generate_content.side_effect = httpx.ReadTimeout("stalled")
     _patched_client(sdk, monkeypatch)
-    monkeypatch.setattr(llm_mod, "gemini_auto_fallback", lambda: True)
+    _list(monkeypatch, [SECOND])
     with pytest.raises(CodedError):
         LLMClient(api_key="k").generate(["x"])
     assert sdk.models.generate_content.call_count == 1
@@ -515,7 +523,8 @@ def _schema_client(monkeypatch):
     sdk = MagicMock()
     _patched_client(sdk, monkeypatch)
     monkeypatch.delenv("GEMINI_AUTO_FALLBACK", raising=False)
-    return LLMClient(model=llm_mod.GEMINI_MODELS[0], api_key="k"), sdk
+    monkeypatch.delenv("GEMINI_FALLBACK_MODELS", raising=False)
+    return LLMClient(model=GEMINI_MODELS[0], api_key="k"), sdk
 
 
 def test_generate_with_a_schema_asks_for_json_and_falls_back_with_it(monkeypatch):
@@ -532,7 +541,7 @@ def test_generate_with_a_schema_asks_for_json_and_falls_back_with_it(monkeypatch
         assert config.response_schema == schema
     assert [c.kwargs["model"] for c in sdk.models.generate_content.call_args_list] == [
         client.model,
-        client._fallback_model(),
+        GEMINI_MODELS[1],
     ]
 
 

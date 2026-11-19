@@ -11,7 +11,7 @@ from google.genai import types
 
 from services import providers
 from services.errors import CodedError
-from services.settings import GEMINI_MODELS, gemini_auto_fallback, gemini_model
+from services.settings import gemini_fallback_models, gemini_model
 
 # Client-level HTTP timeout so a stalled Gemini connection fails instead of hanging the step.
 GEMINI_TIMEOUT_SECONDS = 600
@@ -233,13 +233,6 @@ class LLMClient:
             ),
         )
 
-    def _fallback_model(self) -> str:
-        """The entry after the selected model in GEMINI_MODELS, wrapping round."""
-
-        if self.model not in GEMINI_MODELS:
-            return GEMINI_MODELS[0]
-        return GEMINI_MODELS[(GEMINI_MODELS.index(self.model) + 1) % len(GEMINI_MODELS)]
-
     def generate(
         self,
         contents: list,
@@ -247,26 +240,26 @@ class LLMClient:
         temperature: float | None = None,
     ) -> str:
         """Return the model's stripped text; `response_schema` forces JSON, `temperature` overrides the default.
-        With auto-fallback on, a 503 retries once on the next model; if that fails too, the first error stands."""
+        A 503 walks the fallback list; the first model to answer wins, else the original error stands."""
 
         try:
             return self._generate(contents, self.model, response_schema, temperature)
         except CodedError as first:
-            e = first
-            fallback = self._fallback_model()
-            if (
-                e.code != "gemini_overloaded"
-                or not gemini_auto_fallback()
-                or fallback == self.model
-            ):
+            if first.code != "gemini_overloaded":
                 raise
+            e = first
+        failed, last = self.model, None
         hook = fallback_hook.get()
-        if hook:
-            hook(self.model, fallback)
-        try:
-            return self._generate(contents, fallback, response_schema, temperature)
-        except Exception as second:
-            raise e from second
+        for fallback in gemini_fallback_models(self.model):
+            if hook:
+                hook(failed, fallback)
+            try:
+                return self._generate(contents, fallback, response_schema, temperature)
+            except Exception as err:
+                failed, last = fallback, err
+        if last is None:
+            raise e
+        raise e from last
 
     def _generate(
         self,
