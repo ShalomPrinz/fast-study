@@ -38,9 +38,10 @@ is read only for the derivation and never written. Selectors: `#summary-models`,
 `.summary-model-up/-down/-remove`, `.summary-model-add[data-model-id]`.
 
 **Auto retry** (`AutoRetryField`, rules in `utils/autoRetry.ts`) is its own section: a switch plus "Number of
-retries" and "Minutes between retries", disabled while off. Unset reads as the defaults; the two boxes share one row and commit
-only whole numbers, clamped to the range (`parseRetryInt`; empty or fractional text commits nothing), so a patch never carries an
-out-of-range value (the launcher store would refuse it with `setting_out_of_range`). The three fields go to the
+retries" and "Minutes between retries", disabled while off. Unset reads as the defaults; the switch saves at once, the two
+boxes share one row and wait for the section's Approve (`ApproveRow` id `retry`, Enter approves). A box holds a whole number
+clamped to the range (`parseRetryInt`); empty or fractional text makes it NaN, so Approve stays disabled and a patch never
+carries an out-of-range value (the launcher store would refuse it with `setting_out_of_range`). The three fields go to the
 backend's `POST /config`, which clamps them; turning the switch off drops every waiting retry there. The countdown
 UI is in [LECTURES.md](LECTURES.md) §Runner status.
 
@@ -135,10 +136,10 @@ notifies at boot and the stream's reconnect dispatches — so a returning servic
 the options only resolve the model (`withOptions`), never resetting an edit. It edits a local form and has no Save button (below).
 The form is read from the store (`formFromStore`) on load; a stored model the options no longer list reads as the first.
 **Saving.** There is no Save button. A change saves at once on its own: checkboxes, dropdowns, the summary-model list,
-auto-retry, error reports and the privacy answer, the Drive toggle, a preset university. `autoPatch`
+the auto-retry switch, error reports and the privacy answer, the Drive toggle, a preset university. `autoPatch`
 (`utils/autosave.ts`) is `buildPatch` minus the held entries, so a patch holds only what changed. Typed or sensitive
 entries save through their own **Approve** (`ApproveRow`, hidden until the entry has an unsaved edit; Enter in its text box
-approves too): each API key, the data folder, the Drive folder and a pasted university address. `approvePatch`
+approves too): each API key, the data folder, the Drive folder, the two auto-retry numbers and a pasted university address. `approvePatch`
 stays empty while the entry is blank or invalid, so that field alone waits (Approve disabled, its hint shown) while every
 other change still saves: Drive turned on with no stored folder waits, and approving the folder stores both together.
 Approving the data folder while runs are in flight opens the split-runs `ConfirmModal` (`runsAtRisk`); Cancel leaves the

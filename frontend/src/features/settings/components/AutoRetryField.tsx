@@ -3,8 +3,8 @@ import { Trans } from '@lingui/react/macro'
 import { COUNT_RANGE, MINUTES_RANGE, parseRetryInt, type AutoRetryForm } from '../utils/autoRetry'
 import '@/styles/settings-form.css'
 
-// A number box that only commits a value the store accepts: an out-of-range integer commits its
-// clamped value, an empty or fractional entry commits nothing; blur shows the committed value.
+// A number box: an out-of-range integer reports its clamped value, an empty or fractional entry
+// reports NaN (Approve waits); blur shows the reported value.
 function IntInput({
   id,
   value,
@@ -29,11 +29,11 @@ function IntInput({
       max={range.max}
       step={1}
       disabled={disabled}
-      value={text ?? String(value)}
+      value={text ?? (Number.isNaN(value) ? '' : String(value))}
       onChange={(e) => {
         setText(e.target.value)
         const n = parseRetryInt(e.target.value, range)
-        if (n !== null) onChange(n)
+        onChange(n ?? NaN)
       }}
       onBlur={() => setText(null)}
     />

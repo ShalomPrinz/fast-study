@@ -5,6 +5,7 @@ import {
   type Settings,
 } from '@/services/settings'
 
+// count/minutes are NaN while their box holds text that is not a whole number.
 export interface AutoRetryForm {
   on: boolean
   count: number

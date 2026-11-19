@@ -84,7 +84,7 @@ describe('approvePatch', () => {
   })
 
   it('shows nothing without an edit', () => {
-    for (const id of ['geminiKey', 'groqKey', 'dataRoot', 'drive', 'site'] as const) {
+    for (const id of ['geminiKey', 'groqKey', 'dataRoot', 'drive', 'site', 'retry'] as const) {
       expect(approveVisible(id, base(), STORED)).toBe(false)
     }
   })
@@ -94,6 +94,27 @@ describe('approvePatch', () => {
     expect(approvePatch('geminiKey', f, STORED)).toEqual({ geminiApiKey: 'k' })
     expect(approvePatch('dataRoot', f, STORED)).toEqual({ dataRoot: '/new' })
     expect(approvePatch('site', f, STORED)).toEqual({ moodleSite: 'https://a.ac.il' })
+  })
+})
+
+describe('retry numbers', () => {
+  const edited = (patch: object) => {
+    const b = base()
+    return { ...b, autoRetry: { ...b.autoRetry, ...patch } }
+  }
+
+  it('wait for Approve while the switch saves at once', () => {
+    const f = edited({ count: 10, minutes: 7, on: !base().autoRetry.on })
+    expect(autoPatch(f, STORED, true, OPTIONS)).toEqual({ autoRetry: f.autoRetry.on })
+    expect(approveVisible('retry', f, STORED)).toBe(true)
+    expect(approvePatch('retry', f, STORED)).toEqual({ autoRetryCount: 10, autoRetryMinutes: 7 })
+  })
+
+  it('hold an invalid box: Approve shows but stores nothing', () => {
+    const f = edited({ count: NaN })
+    expect(autoPatch(f, STORED, true, OPTIONS)).toEqual({})
+    expect(approveVisible('retry', f, STORED)).toBe(true)
+    expect(approvePatch('retry', f, STORED)).toEqual({})
   })
 })
 

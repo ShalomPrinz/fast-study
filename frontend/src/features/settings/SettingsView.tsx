@@ -545,10 +545,20 @@ export default function SettingsView() {
                 <Trans>Automatic retry</Trans>
                 {mark('retry')}
               </h2>
-              <AutoRetryField
-                value={form.autoRetry}
-                onChange={(v) => edit((f) => ({ ...f, autoRetry: v }))}
-              />
+              <ApproveRow
+                id="retry"
+                visible={view('retry')}
+                disabled={!ready('retry')}
+                onApprove={() => approve('retry')}
+              >
+                {/* The switch saves at once; the two numbers wait for Approve. */}
+                <AutoRetryField
+                  value={form.autoRetry}
+                  onChange={(v) =>
+                    edit((f) => ({ ...f, autoRetry: v }), v.on !== form.autoRetry.on)
+                  }
+                />
+              </ApproveRow>
             </section>
 
             <section className="settings-section">

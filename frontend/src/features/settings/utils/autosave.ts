@@ -1,9 +1,10 @@
 import type { Settings, SettingsPatch } from '@/services/settings'
+import { autoRetryFromStore, autoRetryPatch } from './autoRetry'
 import { buildPatch, type SettingsForm } from './patch'
 import type { ConfigOptions } from '@/services/settings'
 
 // A typed or sensitive entry that saves only when its section's Approve is pressed.
-export type ApproveId = 'geminiKey' | 'groqKey' | 'dataRoot' | 'drive' | 'site'
+export type ApproveId = 'geminiKey' | 'groqKey' | 'dataRoot' | 'drive' | 'site' | 'retry'
 
 // A section of the page that shows "Saved" after one of its fields lands.
 export type SectionId =
@@ -18,6 +19,7 @@ export type SectionId =
   | 'reports'
 
 // Fields that never save with a change: the approved entries and auto-remove (its own Apply).
+// The retry switch saves at once; only its two numbers wait.
 const HELD_KEYS = [
   'geminiApiKey',
   'groqApiKey',
@@ -26,6 +28,8 @@ const HELD_KEYS = [
   'moodleSite',
   'autoRemove',
   'autoRemoveAfter',
+  'autoRetryCount',
+  'autoRetryMinutes',
 ] as const
 
 /** What a change saves at once: every changed field except the approved entries and auto-remove.
@@ -67,6 +71,18 @@ export function approvePatch(id: ApproveId, form: SettingsForm, stored: Settings
       return form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')
         ? { moodleSite: form.moodleSite }
         : {}
+    case 'retry': {
+      const { count, minutes } = form.autoRetry
+      if (Number.isNaN(count) || Number.isNaN(minutes)) return {}
+      const { autoRetryCount, autoRetryMinutes } = autoRetryPatch(
+        { ...form.autoRetry, on: autoRetryFromStore(stored).on },
+        stored,
+      )
+      return {
+        ...(autoRetryCount !== undefined && { autoRetryCount }),
+        ...(autoRetryMinutes !== undefined && { autoRetryMinutes }),
+      }
+    }
   }
 }
 
@@ -87,6 +103,10 @@ export function approveVisible(id: ApproveId, form: SettingsForm, stored: Settin
       )
     case 'site':
       return !!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')
+    case 'retry': {
+      const was = autoRetryFromStore(stored)
+      return form.autoRetry.count !== was.count || form.autoRetry.minutes !== was.minutes
+    }
   }
 }
 
