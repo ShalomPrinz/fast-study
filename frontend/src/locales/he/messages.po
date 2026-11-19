@@ -1623,6 +1623,10 @@ msgstr "מלא את השדות שלמעלה כדי להמשיך."
 msgid "Fill in the required fields first"
 msgstr "מלא קודם את שדות החובה"
 
+#: src/features/tour/Tour.tsx:140
+msgid "Finish"
+msgstr "סיום"
+
 #: src/features/downloads/components/AccountStatus.tsx:157
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
@@ -2866,8 +2870,7 @@ msgstr "הצגת השלבים"
 msgid "Sidebar"
 msgstr "סרגל צד"
 
-#: src/features/tour/Tour.tsx:142
-#: src/features/tour/Tour.tsx:146
+#: src/features/tour/Tour.tsx:140
 msgid "Skip"
 msgstr "דילוג"
 
@@ -2887,7 +2890,7 @@ msgstr "דולגו"
 msgid "skipped (no video)"
 msgstr "דולג (אין וידאו)"
 
-#: src/features/tour/Tour.tsx:157
+#: src/features/tour/Tour.tsx:150
 msgid "Slide {position} of {total}"
 msgstr "שקף {position} מתוך {total}"
 

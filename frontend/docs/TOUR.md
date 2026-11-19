@@ -11,10 +11,10 @@ element highlighted on the screenshot by the app.
 - **Start.** `shared/contexts/TourContext` is mounted in `Layout` and starts the tour on mount only while the seen
   flag is unset, so it shows right after the first-run wall. Settings → "Replay tutorial" calls `start()` and ignores the flag.
 - **Seen flag.** `localStorage['fast-study:tour-dismissed'] = '1'` (`tourFlag.ts`), written by the context's `stop()`,
-  which every ending goes through: Done, Skip, the close button, Esc. The key name is fixed: the app harness presets it
+  which every ending goes through: Done, Skip/Finish, the close button, Esc. The key name is fixed: the app harness presets it
   in every browser (`HB_TOUR=1` leaves it unset). Reads and writes are wrapped; a failed read counts as unseen.
 - **Controls.** The box holds the title, body, Back and Next (Done on the last step). Back is absent on step 1. The footer holds seven clickable
-  dots and Skip (absent on the last step, replaced by an invisible twin so the dialog keeps its height); close sits on the dialog corner. Left/Right arrows move between steps,
+  dots and Skip (reads Finish on the last step and ends the tour the same way); close sits on the dialog corner. Left/Right arrows move between steps,
   mirrored in RTL (`tourMachine.arrowDelta`). The track holds one slide per screenshot and slides along the reading
   direction only when the step crosses screenshots (3 to 4), so RTL slides the other way and the dots list right to left, in the same 480ms (`--tour-glide`) as the highlight and box. Focus on Next uses `preventScroll`: an overflow-hidden viewport still scrolls to a focused child, which jumped the forward slide.
 - **Tokens.** Scrim, dim, ring, box width and arrow size are `--tour-*` in `styles/tokens.css`. Untokenised: the highlight's 5px padding (`Tour.tsx`, mirrored by `REACH` in the capture script), placement's gap and margin, the 900px dialog and 20px radius.

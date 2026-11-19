@@ -207,10 +207,6 @@
   gap: var(--space-3);
 }
 
-.tour-skip-spacer {
-  visibility: hidden;
-}
-
 .tour-side--end {
   justify-content: flex-end;
 }

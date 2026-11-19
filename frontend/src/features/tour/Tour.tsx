@@ -136,16 +136,9 @@ function TourRun() {
         </div>
         <div className="tour-footer">
           <div className="tour-side">
-            {last ? (
-              // Skip is gone on the last step; an invisible twin keeps the footer, and so the dialog, the same height.
-              <span className="btn btn--ghost tour-skip-spacer" aria-hidden="true">
-                <Trans>Skip</Trans>
-              </span>
-            ) : (
-              <button className="btn btn--ghost tour-skip" onClick={stop}>
-                <Trans>Skip</Trans>
-              </button>
-            )}
+            <button className="btn btn--ghost tour-skip" onClick={stop}>
+              {last ? <Trans>Finish</Trans> : <Trans>Skip</Trans>}
+            </button>
           </div>
           <div className="tour-dots">
             {TOUR_STEPS.map((step, i) => {

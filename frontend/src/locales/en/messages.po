@@ -1623,6 +1623,10 @@ msgstr "Fill in the fields above to continue."
 msgid "Fill in the required fields first"
 msgstr "Fill in the required fields first"
 
+#: src/features/tour/Tour.tsx:140
+msgid "Finish"
+msgstr "Finish"
+
 #: src/features/downloads/components/AccountStatus.tsx:157
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
@@ -2866,8 +2870,7 @@ msgstr "Show steps"
 msgid "Sidebar"
 msgstr "Sidebar"
 
-#: src/features/tour/Tour.tsx:142
-#: src/features/tour/Tour.tsx:146
+#: src/features/tour/Tour.tsx:140
 msgid "Skip"
 msgstr "Skip"
 
@@ -2887,7 +2890,7 @@ msgstr "Skipped"
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
-#: src/features/tour/Tour.tsx:157
+#: src/features/tour/Tour.tsx:150
 msgid "Slide {position} of {total}"
 msgstr "Slide {position} of {total}"
 

@@ -38,10 +38,11 @@ test('the tour shows on first load, walks to Done, and stays gone after a reload
     await page.locator('.tour-next').click();
   }
 
-  // Last step: Skip is gone and Next is Done; Back returns without moving the page.
+  // Last step: Skip becomes Finish and Next is Done; Back returns without moving the page.
   await expect(page.locator('.tour-dot').nth(STEPS - 1)).toHaveClass(/active/);
-  await expect(page.locator('.tour-skip')).toHaveCount(0); // the real Skip; its invisible twin is .tour-skip-spacer
-  expect((await dialog(page).boundingBox()).height).toBe(heightBefore); // the twin keeps the footer height
+  await expect(page.locator('.tour-skip')).toBeVisible();
+  await expect(page.locator('.tour-skip')).toHaveText('Finish');
+  expect((await dialog(page).boundingBox()).height).toBe(heightBefore); // the footer keeps its height
   await page.locator('.tour-back').click();
   await expect(page.locator('.tour-dot').nth(STEPS - 2)).toHaveClass(/active/);
   await page.locator('.tour-next').click();
