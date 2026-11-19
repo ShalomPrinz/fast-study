@@ -1,6 +1,5 @@
 import Tooltip from '@/shared/components/Tooltip'
 import { Trans, useLingui } from '@lingui/react/macro'
-import type { ExpandHandle } from '@/types'
 import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import { useCourseGroup } from './CourseGroupContext'
@@ -10,10 +9,8 @@ import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
 import '@/styles/sidebar-tree.css'
 import './RecitationsGroup.css'
-import Chevron from '@/shared/components/Chevron'
 
-// `expand` is owned by CourseGroup, so this stays open across a course collapse/re-expand.
-export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
+export default function RecitationsGroup() {
   const { t } = useLingui()
   const { course, add } = useCourseGroup()
   const shiftHeld = useShiftHeld()
@@ -21,28 +18,15 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
 
   function startAdding(e: React.MouseEvent) {
     e.stopPropagation()
-    expand.open()
     add.start('recitation')
   }
 
   return (
     <li className="recitations-group">
       <div className="recitations-header">
-        <button className="course-toggle recitations-toggle" onClick={expand.toggle}>
-          <span className="chevron">
-            <Chevron open={expand.isOpen} />
-          </span>
-          <span dir="auto">
-            <Trans>Recitations</Trans>
-          </span>
-          {progress.total > 0 && (
-            <Tooltip content={t`Recitations you marked done`} placement="inline-end">
-              <span className="course-count">
-                {progress.done}/{progress.total}
-              </span>
-            </Tooltip>
-          )}
-        </button>
+        <span className="recitations-title" dir="auto">
+          <Trans>Recitations</Trans>
+        </span>
         {!shiftHeld && (
           <Tooltip content={t`Add recitation`} placement="inline-end">
             <button className="course-add-btn" onClick={startAdding} aria-label={t`Add recitation`}>
@@ -51,17 +35,13 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
           </Tooltip>
         )}
       </div>
-      {expand.isOpen && (
-        <TreeProgress kind="recitation" done={progress.done} total={progress.total} />
-      )}
-      {expand.isOpen && (
-        <ul className="lecture-list recitation-list">
-          <LectureListProvider kind="recitation">
-            <LectureList />
-            <AddLectureInput />
-          </LectureListProvider>
-        </ul>
-      )}
+      <TreeProgress kind="recitation" done={progress.done} total={progress.total} />
+      <ul className="lecture-list recitation-list">
+        <LectureListProvider kind="recitation">
+          <LectureList />
+          <AddLectureInput />
+        </LectureListProvider>
+      </ul>
     </li>
   )
 }

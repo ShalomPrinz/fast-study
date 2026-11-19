@@ -149,7 +149,7 @@ msgstr "{0} is installed — downloading is ready to use."
 
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:141
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:138
 msgid "{0} of {1} studied"
 msgstr "{0} of {1} studied"
 
@@ -539,13 +539,13 @@ msgstr "Add a lecture or recitation"
 msgid "Add figures to the summary"
 msgstr "Add figures to the summary"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:153
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:154
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:150
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:151
 msgid "Add lecture"
 msgstr "Add lecture"
 
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:47
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:48
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:31
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
 msgid "Add recitation"
 msgstr "Add recitation"
 
@@ -651,13 +651,9 @@ msgstr "Assignment Solution"
 
 #: src/features/downloads/components/NewView.tsx:143
 #: src/features/downloads/DownloadsView.tsx:200
-#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:49
+#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:41
 msgid "Assignments"
 msgstr "Assignments"
-
-#: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:52
-msgid "Assignments you marked done"
-msgstr "Assignments you marked done"
 
 #: src/features/extension/ExtensionGuide.tsx:127
 msgid "At the top of the page, turn on the \"Developer mode\" switch. A row of new buttons appears."
@@ -762,7 +758,7 @@ msgstr "Can't download while this lecture is being processed or waiting in line"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "Can't rename while it's being processed or waiting in line"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:113
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:110
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "Can't rename while something in this course is being processed, downloaded or generated"
 
@@ -1928,7 +1924,7 @@ msgstr "Lectures only, in every course"
 msgid "Lectures only, in the courses I choose"
 msgstr "Lectures only, in the courses I choose"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:137
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:134
 msgid "Lectures you marked done"
 msgstr "Lectures you marked done"
 
@@ -2519,7 +2515,7 @@ msgstr "Recitation {0}"
 msgid "Recitation name…"
 msgstr "Recitation name…"
 
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:36
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:28
 #: src/features/search/SearchView.tsx:213
 msgid "Recitations"
 msgstr "Recitations"
@@ -2529,10 +2525,6 @@ msgstr "Recitations"
 #: src/features/course-overview/utils/overview.ts:15
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
-
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:39
-msgid "Recitations you marked done"
-msgstr "Recitations you marked done"
 
 #: src/features/downloads/components/AccountStatus.tsx:228
 msgid "Reconnect"

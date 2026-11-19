@@ -26,9 +26,42 @@
 
 /* Starts under the name, past the chevron. */
 .course-head-sub {
-  padding-inline-start: var(--space-6);
+  padding-inline-start: calc(var(--space-3) + 24px);
   padding-block-end: var(--space-1);
   font-size: var(--fs-fine);
   font-weight: 400;
   color: var(--text-2);
+}
+
+/* 24px round hit area around an 18px chevron; closed it points along the reading direction. */
+.course-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 24px;
+  block-size: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--text-2);
+  transition:
+    transform 0.15s,
+    background 0.1s;
+}
+
+.course-chevron svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.course-toggle:hover .course-chevron {
+  background: var(--nav-track);
+  color: var(--text);
+}
+
+.course-chevron--closed {
+  transform: rotate(-90deg);
+}
+
+.course-chevron--closed:dir(rtl) {
+  transform: rotate(90deg);
 }

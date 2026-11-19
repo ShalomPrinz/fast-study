@@ -7,6 +7,7 @@ import { toastFailure } from '@/shared/utils/failure'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import Icon from '@/shared/components/Icon'
 import Tooltip from '@/shared/components/Tooltip'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
@@ -14,7 +15,6 @@ import { lectureTrack } from '@/features/lectures/utils/courseTree'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
 import { courseNotFound } from '@/shared/utils/notFound'
-import { moveSavedExpansion } from '@/features/lectures/utils/courseExpansion'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobsContext'
 import { ROUTES, routeParam } from '@/shared/utils/routes'
@@ -23,7 +23,6 @@ import { useCourseGroup } from './CourseGroupContext'
 import TreeProgress from './TreeProgress'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
-import Chevron from '@/shared/components/Chevron'
 
 // Reflects and mutates the expand state: toggle on click, open when adding a lecture.
 export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
@@ -65,8 +64,6 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
         typed: name,
         rename: async () => {
           const effective = await renameCourse(course.name, name)
-          // Before the refreshed tree remounts the group under its new name.
-          moveSavedExpansion(course.name, effective)
           onRenamed(course.name, effective)
           return effective
         },
@@ -124,8 +121,8 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             }}
           >
             <span className="course-head-title">
-              <span className="chevron">
-                <Chevron open={expand.isOpen} />
+              <span className={`course-chevron${expand.isOpen ? '' : ' course-chevron--closed'}`}>
+                <Icon icon="chevron-down" />
               </span>
               <span className="course-name" dir="auto">
                 {pendingName ?? course.name}

@@ -276,8 +276,8 @@ runs through the 16px marks, in the section's colour (`--tl-done`: green lecture
 class paints its two halves). A mark is a ✓ circle in that colour when done, a white circle ringed in `--accent` on the
 current item, a hollow circle otherwise and a dashed one for a download placeholder; a running or queued row shows a
 spinner in its place, and a running one (not a queued one) also reads "Processing" (`isLectureRunning`). The open page is a white
-`--shadow-card` row. Marks are display-only. The course header counts lectures, the Recitations header recitations, the Assignments header assignments
-(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. All three draw the shared `TreeProgress` (4px, `--line` track): the header always, a section only while expanded, each with its own fill (`--ok-dot` lectures, `--accent` recitations, `--progress-assignment` assignments) and none when its total is 0.
+`--shadow-card` row. Marks are display-only. The course header counts lectures, the Recitations section recitations, the Assignments section assignments
+(`AssignmentsGroup`, through the same `trackProgress`); assignments never count toward the course header. All three draw the shared `TreeProgress` (4px, `--line` track) under their title, always, each with its own fill (`--ok-dot` lectures, `--accent` recitations, `--progress-assignment` assignments) and none when its total is 0.
 
 **A lectures-only course** (the tree's resolved `lectures_only`, never the setting — [SETTINGS.md](SETTINGS.md))
 has one track: `utils/courseTree.ts`'s `lectureTrack` merges its recitations into the lecture list with no
@@ -291,14 +291,12 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
   on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through
   `sortLectures`. Everything reads it directly, no props
   or outlet context.
-- `CourseGroup` renders only the open course and owns `expanded` (reset on each swap), `recExpanded` and `assignExpanded`, so the sub-groups survive collapsing the
-  course. It opens the Recitations/Assignments group holding the open route (deep links).
+- `CourseGroup` renders only the open course and owns `expanded` (reset on each swap). Recitations and Assignments are always open: a plain title (no count; the "+" on Recitations) over their bar, no chevron. The course chevron (`chevron-down` icon at 18px in a 24px round hit area) points down open and along the reading direction closed.
 - `AssignmentsGroup` lists the course's `assignments` after the recitations, styled like them, whatever
   `lectures_only` says and never folded into the lectures. Nothing creates one by hand, so the group
   shows only once one is listed or downloading, the latter's loading row inside it. Rows carry the same marks (✓ done,
-  ringed current, hollow otherwise); the header's done/total count is hidden while none is listed.
-- The pane unmounts on other routes; only each course's Recitations/Assignments expansion (a module map in
-  `utils/courseExpansion.ts`, moved to the new name on a course rename), the open course and the nav's scroll position
+  ringed current, hollow otherwise); its bar is hidden while none is listed.
+- The pane unmounts on other routes; only the open course and the nav's scroll position
   survive, the latter saved on each scroll because a detached nav reads 0. The open course is read from `localStorage`.
 - `CourseGroupContext` and `LectureListContext` reach the recursive rows without prop-drilling;
   `AddLectureInput` renders only in the list being added to.

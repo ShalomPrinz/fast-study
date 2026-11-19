@@ -49,12 +49,6 @@
   background: var(--nav-bg);
 }
 
-.chevron {
-  font-size: var(--fs-fine);
-  color: var(--nav-icon);
-  flex-shrink: 0;
-}
-
 .lecture-list {
   list-style: none;
 }
@@ -66,7 +60,7 @@
   white-space: nowrap;
 }
 
-/* Right-aligned `done/total` of a track's lectures or recitations, inside its toggle. */
+/* Right-aligned `done/total` of a course in the "Other courses" list. */
 .course-count {
   margin-inline-start: auto;
   flex-shrink: 0;
@@ -240,12 +234,15 @@
   outline: 1px solid var(--accent);
 }
 
-/* Keep below .course-toggle: RecitationsGroup puts both on one button and they
-   collide on padding at equal specificity, so order decides. */
-.recitations-toggle {
-  height: 32px;
+/* A section's title row: not a button, since sections are always open. */
+.recitations-title {
+  flex: 1;
+  min-width: 0;
   padding: 0 var(--space-4);
+  padding-inline-start: var(--tree-bar-inset);
   font-size: var(--fs-meta);
+  font-weight: 600;
+  line-height: 32px;
   color: var(--text-2);
 }
 
