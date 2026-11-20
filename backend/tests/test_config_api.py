@@ -15,9 +15,9 @@ class TestConfigOptions:
     def test_lists_providers_without_their_base_url_or_probe(self):
         body = client.get("/config/options").json()
         assert body["gemini_models"] == [
-            {"id": "gemini-4-hydrogen", "name": "Gemini Hydrogen 4"},
-            {"id": "gemini-3.8-flash", "name": "Gemini Flash 3.8"},
-            {"id": "gemini-3.6-flash", "name": "Gemini Flash 3.6"},
+            {"id": "gemini-4-hydrogen", "name": "Gemini 4 Hydrogen"},
+            {"id": "gemini-3.8-flash", "name": "Gemini 3.8 Flash"},
+            {"id": "gemini-3.6-flash", "name": "Gemini 3.6 Flash"},
         ]
         assert [m["id"] for m in body["gemini_models"]] == settings.GEMINI_MODELS
         assert {p["id"] for p in body["providers"]} == set(providers.PROVIDERS)

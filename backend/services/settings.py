@@ -6,9 +6,9 @@ import os
 # Curated, in fallback order: a model id the free tier does not serve fails minutes into a
 # run, so the frontend picks from this table. API id -> the name the user sees.
 GEMINI_MODEL_NAMES = {
-    "gemini-4-hydrogen": "Gemini Hydrogen 4",
-    "gemini-3.8-flash": "Gemini Flash 3.8",
-    "gemini-3.6-flash": "Gemini Flash 3.6",
+    "gemini-4-hydrogen": "Gemini 4 Hydrogen",
+    "gemini-3.8-flash": "Gemini 3.8 Flash",
+    "gemini-3.6-flash": "Gemini 3.6 Flash",
 }
 GEMINI_MODELS = list(GEMINI_MODEL_NAMES)
 
