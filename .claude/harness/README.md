@@ -475,7 +475,7 @@ and renamed from the tree, a summary edited, reloaded over another window's edit
 materials-only lecture made from course PDFs attached in Downloads, lecture materials of any file
 type (chips by original name, the Gemini switch, a pptx sent as text, the 10 MB refusal), course
 assignments (listed by section in Downloads, downloaded into the tree's group, opened by name), the first-run wall then a
-data-folder switch, a section's bulk "Download all", a videostream and a PDF row each waiting
+data-folder switch, a section's bulk "Download all", the course switch (`course-loading`: skeleton and loadbar while the new course is pending, an inline coded error that keeps the box on it, Try again), a videostream and a PDF row each waiting
 out the site's captcha (and failing `site_captcha_timeout` unsolved), the smart Downloads page's New view (`smart-downloads`: first-load banner, mark irrelevant and restore, a subset downloaded with the dead link auto-skipped; it restarts auto and the server per test, since their probe cache and last run would pre-decide that row), summary figures (`summary-figures`: slide PDF and PPTX materials give cropped figures in the editor's PDF pane, and deleting a figure line then saving drops it), and study progress (done
 marks, the current arrow, the counts and the overview's current-item buttons) and the first-run tour
 (seven-step guided modal over two screenshots: auto-show, Next to Done, Skip, seen after a reload, Settings replay, URL unchanged) — and run with
