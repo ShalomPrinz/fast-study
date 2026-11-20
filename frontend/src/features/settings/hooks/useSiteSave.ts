@@ -11,7 +11,7 @@ interface Options {
   storedSite: string
   onSaved: (saved: Settings) => void
   onFailed: (err: unknown) => void
-  // +1 when a pick's request starts, -1 when it settles, so the page can show it saving.
+  // +1 when a pick's request starts, -1 when it settles, so the page can hold its controls while it runs.
   onBusy?: (delta: 1 | -1) => void
 }
 

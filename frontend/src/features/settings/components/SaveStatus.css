@@ -14,9 +14,8 @@
   color: var(--ok);
 }
 
-/* One light sheen sweeping across the chip when it appears. */
-.save-status-chip::after {
-  content: '';
+/* One light sheen sweeping across the chip on each landed save. */
+.save-status-sheen {
   position: absolute;
   inset: 0;
   background: linear-gradient(
@@ -36,7 +35,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .save-status-chip::after {
+  .save-status-sheen {
     animation: none;
     display: none;
   }

@@ -148,7 +148,7 @@ Saves run on `useSiteSave`'s one chain, in the order the changes were made; an a
 (`storedRef`), never the form, except `mergeApproved`, which takes the store's answer into an approved entry alone (a key
 clears, the folder takes its normalized spelling) and only while its text is unchanged since; so overlapping saves can
 never revert a newer edit. A failed save leaves its field unsaved and the next change retries it.
-The page header shows one save status (`SaveStatus`, `role="status"`, `data-save-state` = `saving`/`saved`/`idle` from `saveState`): "Saving…" while a save is in flight, then "✓ Saved" with a one-off sheen (none under reduced motion) for 2.5 s; no success toast. A failure toasts and clears the status.
+The page header shows one save status (`SaveStatus`, `role="status"`, `data-save-state` = `saved`/`idle`): nothing while a save is in flight, then "✓ Saved" for 2.5 s. A repeat save leaves the chip mounted and only replays its sheen (none under reduced motion), restarting the 2.5 s; no success toast. A failure toasts and clears the status.
 **Every save answers**, failure included — a connection error's own toast is deduped and reads as noise.
 A failure after the store write leaves the service behind until a retry, so the toast asks for one.
 

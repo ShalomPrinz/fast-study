@@ -117,7 +117,7 @@ export default function SettingsView() {
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
   const [busy, setBusy] = useState(0)
-  // Bumped on every landed save: it restarts the "Saved" shine, and 0 means none to show.
+  // Bumped on every landed save: it replays the "Saved" shine, and 0 means none to show.
   const [savedTick, setSavedTick] = useState(0)
   const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   // The latest form, store and options, read when a change saves: every save runs in the order the
@@ -368,10 +368,7 @@ export default function SettingsView() {
 
   return (
     <main className="main-view main-view--page">
-      <PageHeader
-        title={t`Settings`}
-        actions={<SaveStatus saving={saving} savedTick={savedTick} />}
-      />
+      <PageHeader title={t`Settings`} actions={<SaveStatus savedTick={savedTick} />} />
       <SettingsSearchBar
         query={search.query}
         onQuery={search.setQuery}

@@ -1,16 +1,15 @@
 import { Trans } from '@lingui/react/macro'
-import { saveState } from '../utils/saveStatus'
 import './SaveStatus.css'
 
-// The page-header save status: "Saving…" in flight, then "✓ Saved" with a brief sheen.
-export default function SaveStatus({ saving, savedTick }: { saving: boolean; savedTick: number }) {
-  const state = saveState(saving, savedTick)
+// The page-header save status: nothing until a save lands, then "✓ Saved". A repeat save keeps the
+// chip mounted and only remounts the sheen (keyed on the tick), so it replays without a flicker.
+export default function SaveStatus({ savedTick }: { savedTick: number }) {
   return (
-    <span className="save-status" role="status" data-save-state={state}>
-      {state === 'saving' && <Trans>Saving…</Trans>}
-      {state === 'saved' && (
-        <span key={savedTick} className="save-status-chip">
+    <span className="save-status" role="status" data-save-state={savedTick > 0 ? 'saved' : 'idle'}>
+      {savedTick > 0 && (
+        <span className="save-status-chip">
           <span aria-hidden>✓</span> <Trans>Saved</Trans>
+          <span key={savedTick} className="save-status-sheen" aria-hidden />
         </span>
       )}
     </span>
