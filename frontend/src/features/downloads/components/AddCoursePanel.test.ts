@@ -119,7 +119,7 @@ describe('AddCoursePanel', () => {
     })
     const view = mount()
     const item = (await waitFor(() => {
-      const el = view.container.querySelector('.course-picker-item')
+      const el = view.container.querySelector('button.course-picker-item')
       if (!el) throw new Error('no item')
       return el
     })) as HTMLElement

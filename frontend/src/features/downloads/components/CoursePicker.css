@@ -76,6 +76,18 @@
   color: var(--accent);
 }
 
+/* A loading placeholder row: the real row's box, with nothing to click. */
+.course-picker-item.course-picker-item--sk {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* The chip's own text, hidden: it only sets the placeholder's width and height. */
+.course-picker-sk-code {
+  color: transparent;
+  user-select: none;
+}
+
 /* Moodle's course code ahead of the name: picker-only context, never part of the saved name. */
 .chip.course-picker-code {
   justify-self: start;

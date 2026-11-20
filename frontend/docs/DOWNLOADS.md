@@ -81,7 +81,7 @@ in the open-time language: a mounted picker holds the locale (`useLocaleHold`, a
 which disables the sidebar's `LanguageSwitcher` under a "close the course list" hint. `pickerView` opens it straight on the paste input when the account is known to be
 not connected (with the Load-recordings hint), when the list is `available: false` (the site closes it to
 the Moodle app) or empty, or after a failed fetch, which first gets the page's usual word: the reconnect
-hint, the block toast, or the service's reason.
+hint, the block toast, or the service's reason. While the list loads the picker shows skeleton rows (the real `.course-picker-item` box, `sk-shape` bars, no visible text beyond a visually-hidden label) and the page header runs its loadbar (`useReportPickerLoading` / `usePickerLoading`, a module store, no provider).
 
 A picked course saves its `url` unchecked — Moodle built it. A pasted one is checked first with `POST
 /courses/check` (`useCourseUrlCheck`); any refusal — not a course page, off the site, not accessible,

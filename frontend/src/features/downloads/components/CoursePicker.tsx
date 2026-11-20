@@ -3,12 +3,14 @@ import { useState } from 'react'
 import { Plural, Trans } from '@lingui/react/macro'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { useEnrolledCourses } from '@/features/downloads/hooks/useEnrolledCourses'
+import { useReportPickerLoading } from '@/features/downloads/hooks/usePickerLoading'
 import { useLocaleHold } from '@/shared/hooks/useLocaleHold'
 import type { EnrolledCourse } from '@/features/downloads/services/autoDownloader'
 import { codeOverCap, pickerView, splitCourses } from '@/features/downloads/utils/coursePicker'
 import CourseUrlPaste from './CourseUrlPaste'
 import '@/styles/button.css'
 import '@/styles/chip.css'
+import './RecordingsSkeleton.css'
 import './CoursePicker.css'
 
 interface Props {
@@ -25,6 +27,9 @@ interface Props {
   onPaste: (url: string) => void
   onCancel: () => void
 }
+
+// Skeleton rows' name-bar widths (%): ragged, like real course titles.
+const SKELETON_NAME_WIDTHS = [70, 55, 80, 45, 65]
 
 // Picks a course's source from the enrolled courses (past ones behind a toggle) or a pasted URL; with no
 // list to offer (not connected, or the site's list closed) it opens straight on the paste input.
@@ -50,6 +55,7 @@ export default function CoursePicker({
   }
   const [showPast, setShowPast] = useState(false)
   const view = pickerView(status, list, pasting)
+  useReportPickerLoading(view === 'loading')
   const { current, past } = splitCourses(Array.isArray(list) ? list : [])
 
   const item = (c: EnrolledCourse) => (
@@ -103,9 +109,28 @@ export default function CoursePicker({
       )}
       {pasteFirst && paste}
       {view === 'loading' && (
-        <p className="course-picker-note">
-          <Trans>Loading your courses…</Trans>
-        </p>
+        <div aria-busy="true">
+          <span className="visually-hidden">
+            <Trans>Loading your courses…</Trans>
+          </span>
+          <ul className="course-picker-list" aria-hidden="true">
+            {SKELETON_NAME_WIDTHS.map((w) => (
+              <li key={w}>
+                <div className="course-picker-item course-picker-item--sk">
+                  <span className="chip course-picker-code sk-shape">
+                    <span className="course-picker-sk-code">0000000</span>
+                  </span>
+                  <span
+                    className="course-picker-name sk-shape sk-text"
+                    style={{ inlineSize: `${w}%` }}
+                  >
+                    &nbsp;
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {view === 'list' && (
         <>

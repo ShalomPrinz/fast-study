@@ -34,6 +34,7 @@ import DownloadsTabs from '@/features/downloads/components/DownloadsTabs'
 import ExtensionGuide from '@/features/extension/ExtensionGuide'
 import BrowserSwitch from '@/features/extension/BrowserSwitch'
 import { readBrowser, saveBrowser, type Browser } from '@/features/extension/browsers'
+import { usePickerLoading } from '@/features/downloads/hooks/usePickerLoading'
 import { useDownloadsTab } from '@/features/downloads/hooks/useDownloadsTab'
 import type { Scope } from '@/features/downloads/utils/scope'
 import { MEDIA_KEY, readScope, writeScope } from '@/features/downloads/utils/scope'
@@ -80,6 +81,7 @@ export default function DownloadsView() {
   const withSource = courses.filter((c) => c.source_url).length
 
   const { selected, pending, failed, items, edits, reconnectKey, loadKey } = useDownloadsSession()
+  const pickerLoading = usePickerLoading()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
   // The university is optional on the init wall, so a user without one lands here with nothing to sign in to.
   const status = useAuthStatus().status
@@ -273,7 +275,7 @@ export default function DownloadsView() {
               </div>
             </div>
           }
-          loading={tab === 'university' && !!pending}
+          loading={tab === 'university' && (!!pending || pickerLoading)}
           secondaryActions={
             <div className="downloads-header-rows">
               <DownloadsTabs
