@@ -89,11 +89,20 @@ test('figures reach the editor PDF pane, and deleting a figure line removes it f
 /** The summary.pdf's figure captions (`איור N`), counted through the backend's pypdfium2. */
 async function pdfText({ soft = false } = {}) {
   const { execFileSync } = await import('node:child_process');
-  const res = await fetch(`${lecture()}/files/summary.pdf`);
+  let res;
+  let body;
+  try {
+    res = await fetch(`${lecture()}/files/summary.pdf`);
+    if (res.ok) body = Buffer.from(await res.arrayBuffer());
+  } catch (err) {
+    // The database writes in place, so a GET overlapping the re-render PUT is cut short ("terminated"): not yet.
+    if (soft) return null;
+    throw err;
+  }
   if (!res.ok && soft) return null;
   if (!res.ok) throw new Error(`GET summary.pdf answered ${res.status}`);
   const file = path.join(harness.evidence, 'summary-figures.pdf');
-  fs.writeFileSync(file, Buffer.from(await res.arrayBuffer()));
+  fs.writeFileSync(file, body);
   let out;
   try {
     out = execFileSync(
