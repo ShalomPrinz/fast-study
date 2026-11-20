@@ -61,7 +61,7 @@ afterEach(() => {
 })
 
 describe('a failed discovery', () => {
-  it('never selects the course, so no Loaded chip and no open panel', async () => {
+  it('never selects the course and records it as failed, with no detail for a codeless refusal', async () => {
     stubFetch(refused())
     const { result } = render()
 
@@ -70,69 +70,93 @@ describe('a failed discovery', () => {
     expect(result.current.state.selected).toBeNull()
     expect(result.current.state.pending).toBeNull()
     expect(result.current.state.items).toEqual([])
+    expect(result.current.state.failed).toEqual({ course: 'Algebra', detail: null })
   })
 
-  it('toasts exactly once', async () => {
+  it('never toasts', async () => {
     stubFetch(refused())
     const { result } = render()
 
     await act(() => result.current.actions.discover(ALGEBRA))
 
-    expect(sendUpdate).toHaveBeenCalledTimes(1)
-    expect(sendUpdate.mock.calls[0][0]).toBe('error')
+    expect(sendUpdate).not.toHaveBeenCalled()
     expect(reportConnectionError).not.toHaveBeenCalled()
   })
 
-  it('leaves the course already open, and its items, as they were', async () => {
+  it('does not bring back the course that was open', async () => {
     stubFetch(listed(), refused())
     const { result } = render()
 
     await act(() => result.current.actions.discover(ALGEBRA))
     await act(() => result.current.actions.discover(CALCULUS))
 
-    expect(result.current.state.selected).toBe('Algebra')
-    expect(result.current.state.items.map((i) => i.ref)).toEqual(['r1'])
+    expect(result.current.state.selected).toBeNull()
+    expect(result.current.state.items).toEqual([])
+    expect(result.current.state.failed?.course).toBe('Calculus')
   })
-})
 
-describe("a failed discovery's toast", () => {
-  it("renders the service's reason when the refusal carries a code", async () => {
+  it('carries the service reason inline when the refusal has a code, with no toast', async () => {
     stubFetch(Response.json({ error: 'Moodle said no', code: 'moodle_ws_error' }, { status: 500 }))
     const { result } = render()
 
     await act(() => result.current.actions.discover(ALGEBRA))
 
-    expect(sendUpdate).toHaveBeenCalledTimes(1)
-    expect(sendUpdate.mock.calls[0][1].props.failure.code).toBe('moodle_ws_error')
-    expect(sendUpdate.mock.calls[0][1].props.lead).toBe('Algebra')
+    const detail = result.current.state.failed?.detail as { props: { failure: { code: string } } }
+    expect(detail.props.failure.code).toBe('moodle_ws_error')
+    expect(sendUpdate).not.toHaveBeenCalled()
   })
 
-  it("renders an unsupported site's refusal in its own code, not the generic line", async () => {
-    const params = { site: 'lemida.example', reason: 'not_moodle' }
-    stubFetch(
-      Response.json(
-        { status: 'unsupported', message: 'not Moodle', code: 'moodle_site_unsupported', params },
-        { status: 422 },
-      ),
-    )
+  it('is cleared by a retry, which loads the course', async () => {
+    stubFetch(refused(), listed())
     const { result } = render()
 
     await act(() => result.current.actions.discover(ALGEBRA))
+    await act(() => result.current.actions.discover(ALGEBRA))
 
-    expect(sendUpdate).toHaveBeenCalledTimes(1)
-    expect(sendUpdate.mock.calls[0][1].props.failure).toMatchObject({
-      code: 'moodle_site_unsupported',
-      params,
-    })
+    expect(result.current.state.failed).toBeNull()
+    expect(result.current.state.selected).toBe('Algebra')
   })
 
-  it('falls back to the generic line for a codeless refusal', async () => {
+  it('is cleared by close', async () => {
     stubFetch(refused())
     const { result } = render()
 
     await act(() => result.current.actions.discover(ALGEBRA))
+    act(() => result.current.actions.close())
 
-    expect(typeof sendUpdate.mock.calls[0][1]).toBe('string')
+    expect(result.current.state.failed).toBeNull()
+  })
+})
+
+describe('picking a course', () => {
+  it('empties the page and drops typed names at once, before the new load answers', async () => {
+    stubFetch(listed())
+    const { result } = render()
+    await act(() => result.current.actions.discover(ALGEBRA))
+    act(() => result.current.actions.rowEdits.setName('r1', 'typed'))
+    expect(result.current.state.edits.r1.name).toBe('typed')
+
+    stubFetch(new Promise<Response>(() => {}) as never)
+    act(() => {
+      void result.current.actions.discover(CALCULUS)
+    })
+
+    expect(result.current.state.pending).toBe('Calculus')
+    expect(result.current.state.selected).toBeNull()
+    expect(result.current.state.items).toEqual([])
+    expect(result.current.state.edits).toEqual({})
+  })
+})
+
+describe('a blocked-by-site discovery', () => {
+  it('toasts once and records a failure with no detail', async () => {
+    stubFetch(Response.json({ status: 'blocked', params: {} }, { status: 503 }))
+    const { result } = render()
+
+    await act(() => result.current.actions.discover(ALGEBRA))
+
+    expect(sendUpdate).toHaveBeenCalledTimes(1)
+    expect(result.current.state.failed).toEqual({ course: 'Algebra', detail: null })
   })
 })
 
@@ -146,6 +170,7 @@ describe('a discovery against a downed auto-downloader', () => {
     expect(reportConnectionError).toHaveBeenCalledTimes(1)
     expect(sendUpdate).not.toHaveBeenCalled()
     expect(result.current.state.selected).toBeNull()
+    expect(result.current.state.failed).toEqual({ course: 'Algebra', detail: null })
   })
 })
 

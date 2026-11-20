@@ -35,10 +35,10 @@ if cancelled leaves a "No source URL yet" note instead of recordings (the pencil
 discovery is barred (account disconnected, Moodle lock busy) closes the open recordings, shows the reason
 as a note, and loads when the bar lifts (held by course name, so it loads the source URL current then; a
 cleared one loads nothing). Saving a source on the picked course loads it the same way. A discovery that
-fails leaves the box on the session's loaded course, so the box always names what is shown. An unconfigured
+fails leaves the box on the picked course, which the inline error below names. An unconfigured
 site is the nudge, not a note (it reads as disconnected too). The body then holds
 the nudge, the `.source-list-failed` danger note when `courseLoadNotice` says the load failed, the
-source-less note, the load note and — once a course is loaded — the `.recordings-panel`. The 880px measure
+source-less note, the barred-pick note and the picked course's section head with, in turn, its `.recordings-panel` skeleton (loading), its `.recordings-error` (failed) or its `.recordings-panel` (loaded). The 880px measure
 fits a recording's second line: kind toggle, name input and action side by side.
 
 `ModeToggle` emits its cards and body as siblings, so the panel is a three-column grid: the cards centred
@@ -232,17 +232,24 @@ finds the same course and typed names, and a discovery in flight when the user l
 and an identity-stable actions bag are separate contexts; the memoized rows bail out on the setters'
 identity.
 
-`discover` sets `pending` (the row's `Loading…`) and promotes the course to `selected` only once
-`listRecordings` resolves, so every failure leaves the page as it was — the open course included — and
-toasts once (or, for a downed service, shows the client's service banner instead): the reconnect hint, `blockedMessage(challengeWindow)`, the service's reason for a
-coded refusal, or a generic "couldn't load" line. Each discovery takes a ticket; `close` or
+`discover` empties the page the moment it starts (the old course's rows, typed names, expansions; a
+failure never brings them back), sets `pending`, and promotes the course to `selected` only once
+`listRecordings` resolves. While `pending`, the section head reads `Recordings · {course}` with no count,
+under it `RecordingsSkeleton`: a `.recordings-panel[aria-busy]` built from the loaded panel's own classes and following the current scope's layout, so the first row lands where the real one does at any width. Both carry the real `PausedRunsBanner` (its runs are in a context, known before the load). New: the controls row (note in the types slot), the `.new-banner` prompt when the course has no skips yet, then `.new-media`, `.new-section` and five `.new-row` placeholders. All: three card placeholders (the segments every course has: Videos, Materials, Assignments), `MediaNote ghost` of the stored side (never Unknown), a `.recordings-section` head with its run-button slot and five `.sk-row` cards. It cannot know the course's content, so a course that has no skips but recognised items shows the banner placeholder it then drops; it has a visually hidden label and no spinner, and `PageHeader`'s `loading` draws the 3px `.page-header-loadbar` on the header's bottom
+border (University tab only). A failure lands in the session's `failed` (`{ course, detail }`, kept
+across leaving the page) and shows `.recordings-error` in place of the skeleton: the headline naming the
+course, `detail` (the service's reason, only for a coded refusal) and a **Try again** button that goes through `loadCourse`: disabled with `moodleBusyMessage()` while the
+Moodle lock is busy (re-enabled by the free push), and while the account is disconnected it defers like any
+barred pick (the error gives way to the barred note); above a failure of the box's own course the Moodle-busy note is not shown, since the error says it and the gate's cooldown would shift the error (`loadNoteFor`), but the account-disconnected note stays. It never toasts; the reconnect hint, `blockedMessage(challengeWindow)` (a toast), a downed
+service's banner and the Moodle-busy push keep their own channels and show the generic headline only.
+Each discovery takes a ticket; `close` or
 another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
 the exception — an expired session is true whichever discovery found it.
 
 Saving a new source URL on the picked course keeps the panel open, with a "Saving…" note, until the write resolves; the picker's choose, paste and Save controls are disabled meanwhile (`disabled` on `CoursePicker`); a failure shows `.edit-source-error` above the picker and keeps the attempted URL, picked, pasted or empty (a failed clear), in the paste input (`draftUrl`). Cancel closes it at any time, and so does leaving it any other way (tab, another course, Back; the panel is keyed by course); a save already in flight still lands (the tree is refreshed, nothing reloads). On success it closes the panel and, unless the URL was cleared,
 rediscovers from the new one (`sourceChangeAction`, called from `EditSourcePanel`) with
 `{ wait: true }`, since nobody pressed it; a cleared URL closes what was loaded or loading but keeps
-the course in the box with that note; a failed reload leaves the panel closed with discovery's usual toast. Other courses' edits touch nothing.
+the course in the box with that note; a failed reload leaves the panel closed with the inline error. Other courses' edits touch nothing.
 
 ## Discovery
 

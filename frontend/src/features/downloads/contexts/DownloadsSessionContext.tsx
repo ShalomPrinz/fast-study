@@ -15,10 +15,13 @@ import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
 import type { ResolveMedia } from './ResolvedMediaContext'
 
 interface DownloadsSessionState {
-  // The course whose items are on the page, and the one a discovery is currently fetching. They are
-  // separate so a failed discovery changes nothing: nothing paints until the items are in hand.
+  // The course whose items are on the page, and the one a discovery is currently fetching. Starting a
+  // discovery empties the page, so at most one of the two (or `failed`) names a course at a time.
   selected: string | null
   pending: string | null
+  // The last discovery's failure, kept until the next discovery or `close`. `detail` is the service's
+  // reason when it gave a code; null for every other failure, whose own channel already spoke.
+  failed: { course: string; detail: ReactNode } | null
   items: Item[]
   edits: Record<string, RowEdit>
   reconnectKey: number
@@ -51,6 +54,7 @@ interface ProviderProps {
 export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps) {
   const [selected, setSelected] = useState<string | null>(null)
   const [pending, setPending] = useState<string | null>(null)
+  const [failed, setFailed] = useState<DownloadsSessionState['failed']>(null)
   const [items, setItems] = useState<Item[]>([])
   const [reconnectKey, setReconnectKey] = useState(0)
   const [loadKey, setLoadKey] = useState(0)
@@ -96,13 +100,17 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     clearSectionCollapse()
   }, [])
 
-  // Promoted to `selected` only with items in hand, so every failure leaves the page as it was and
-  // says so in a toast.
+  // Starting empties the page (the old course's rows and typed names go at the pick, and a failure
+  // never brings them back); `selected` is set only with items in hand, a failure lands in `failed`.
   const discover = useCallback(
     async (course: Course, { wait = false }: { wait?: boolean } = {}) => {
       if (!course.source_url) return
       const id = ++discoveryId.current
+      clear()
+      setSelected(null)
+      setFailed(null)
       setPending(course.name)
+      const fail = (detail: ReactNode = null) => setFailed({ course: course.name, detail })
       try {
         const url = course.source_url
         // `wait` is a reload nobody pressed (a source-URL edit): it waits out the lock instead of failing.
@@ -120,12 +128,13 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
         // superseded one: it moves the account chip, never the page.
         if (isReconnectError(err)) {
           reconnectHint()
+          if (id === discoveryId.current) fail()
           return
         }
         if (id !== discoveryId.current) return
         // The client already toasted an unreachable service; a second toast would restate it. A busy
         // lock only raced the push that bars discovery.
-        if (isConnectionError(err) || isMoodleBusyError(err)) return
+        if (isConnectionError(err) || isMoodleBusyError(err)) return fail()
         // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
         // hint it stays behind the ticket guard.
         if (isBlockedError(err)) {
@@ -133,18 +142,11 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
             blockedToastKind(err.challengeWindow),
             blockedMessage(err.challengeWindow),
           )
-          return
+          return fail()
         }
-        // A coded refusal says why in the service's words, led by the course name so it never reads
-        // as the open course failing; only a codeless one gets the generic line.
-        const name = course.name
+        // A coded refusal's reason shows inline under the headline, never as a toast.
         const failure = failureOf(err)
-        sendUpdateRef.current?.(
-          'error',
-          failure.code
-            ? serviceErrorNode(failure, name)
-            : t`Couldn't load recordings for "${name}". Try again.`,
-        )
+        fail(failure.code ? serviceErrorNode(failure) : null)
       } finally {
         if (id === discoveryId.current) setPending(null)
       }
@@ -156,6 +158,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     discoveryId.current++
     setSelected(null)
     setPending(null)
+    setFailed(null)
     clear()
   }, [clear])
 
@@ -164,8 +167,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     [discover, close, reconnectHint, resolveMedia, rowEdits],
   )
   const state = useMemo(
-    () => ({ selected, pending, items, edits, reconnectKey, loadKey }),
-    [selected, pending, items, edits, reconnectKey, loadKey],
+    () => ({ selected, pending, failed, items, edits, reconnectKey, loadKey }),
+    [selected, pending, failed, items, edits, reconnectKey, loadKey],
   )
 
   // Rendering `{children}` and nothing else is what keeps the sidebar and the outlet out of this:

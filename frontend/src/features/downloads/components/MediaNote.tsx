@@ -9,7 +9,8 @@ import type { MediaNote as Note } from '../utils/mediaNote'
 import './MediaNote.css'
 
 // The hint under the media cards: what the chosen side holds and what downloading one sets off.
-export default function MediaNote({ media }: { media: Media }) {
+// `ghost` paints the sentence as a skeleton bar (link as plain text), so a loading panel wraps exactly as the real one.
+export default function MediaNote({ media, ghost }: { media: Media; ghost?: boolean }) {
   const { t } = useLingui()
   const note = mediaNote(media, useAutoRun())
   const text: Record<Note, string> = {
@@ -21,14 +22,18 @@ export default function MediaNote({ media }: { media: Media }) {
     unknown: t`The site doesn't say what these files are. Only videos can be downloaded from here, known only after download.`,
   }
   return (
-    <p className="media-note">
+    <p className="media-note" aria-hidden={ghost || undefined}>
       <Icon icon="info" />
-      <span>
+      <span className={ghost ? 'sk-shape sk-ghost' : undefined}>
         {text[note]}
         {noteLinksSettings(note) && (
           <>
             {' '}
-            <Link to={ROUTES.settings}>{t`Change in Settings`}</Link>
+            {ghost ? (
+              t`Change in Settings`
+            ) : (
+              <Link to={ROUTES.settings}>{t`Change in Settings`}</Link>
+            )}
           </>
         )}
       </span>

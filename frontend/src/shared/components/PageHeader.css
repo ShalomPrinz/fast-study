@@ -1,4 +1,5 @@
 .page-header {
+  position: relative;
   flex-shrink: 0;
   padding: var(--space-7) var(--space-8) var(--space-6);
   background: var(--surface);
@@ -89,4 +90,40 @@
 
 .page-header-state--done {
   color: var(--ok);
+}
+
+/* Sits on the header's own bottom border; the header's height never changes. */
+.page-header-loadbar {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 3px;
+  overflow: hidden;
+}
+
+.page-header-loadbar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+  animation: page-header-load 1.4s ease-in-out infinite;
+}
+
+@keyframes page-header-load {
+  0% {
+    inset-inline-start: -35%;
+    width: 35%;
+  }
+  60%,
+  100% {
+    inset-inline-start: 100%;
+    width: 10%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-header-loadbar::after {
+    animation-duration: 3.2s;
+  }
 }

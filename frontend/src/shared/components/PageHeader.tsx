@@ -10,10 +10,19 @@ interface Props {
   actions?: ReactNode
   // A second action row under the title line, clear of the title column, which has no width floor.
   secondaryActions?: ReactNode
+  // A thin indeterminate bar on the header's bottom edge, for a load the page is waiting on.
+  loading?: boolean
 }
 
 // The band every view opens with: breadcrumb, title, metadata row, and a right-aligned action group.
-export default function PageHeader({ eyebrow, title, meta, actions, secondaryActions }: Props) {
+export default function PageHeader({
+  eyebrow,
+  title,
+  meta,
+  actions,
+  secondaryActions,
+  loading,
+}: Props) {
   return (
     <header className="page-header">
       {eyebrow && (
@@ -31,6 +40,7 @@ export default function PageHeader({ eyebrow, title, meta, actions, secondaryAct
         {actions && <div className="page-header-actions">{actions}</div>}
       </div>
       {secondaryActions && <div className="page-header-secondary">{secondaryActions}</div>}
+      {loading && <div className="page-header-loadbar" aria-hidden="true" />}
     </header>
   )
 }

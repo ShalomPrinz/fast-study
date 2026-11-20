@@ -13,16 +13,18 @@ import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { ROUTES, routeParam } from '@/shared/utils/routes'
 import { editSourceRoute } from '@/shared/utils/url'
 import { addedCoursePick } from '@/features/downloads/utils/addedCourse'
-import { boxCourse } from '@/features/downloads/utils/sourcePanel'
+import { boxCourse, loadNoteFor } from '@/features/downloads/utils/sourcePanel'
 import { courseLoadNotice } from '@/shared/utils/courseLoadNotice'
 import CourseSourceBar from '@/features/downloads/components/CourseSourceBar'
 import EditSourcePanel from '@/features/downloads/components/EditSourcePanel'
 import AddCoursePanel from '@/features/downloads/components/AddCoursePanel'
 import { useMoodleLockState } from '@/features/downloads/contexts/MoodleLockContext'
 import { moodleLocked } from '@/features/downloads/utils/moodleLock'
+import Tooltip from '@/shared/components/Tooltip'
 import { moodleBusyMessage } from '@/features/downloads/utils/downloadErrors'
 import ManualDownload from '@/features/downloads/components/ManualDownload'
 import MediaNote from '@/features/downloads/components/MediaNote'
+import RecordingsSkeleton from '@/features/downloads/components/RecordingsSkeleton'
 import FolderJobList from '@/features/downloads/components/FolderJobList'
 import NewView from '@/features/downloads/components/NewView'
 import ScopeControls from '@/features/downloads/components/ScopeControls'
@@ -53,6 +55,19 @@ import '@/styles/spinner.css'
 import '@/styles/button.css'
 import './DownloadsView.css'
 
+// The section caption; no count while the course is loading or failed.
+function RecordingsHead({ selected, count }: { selected: string; count: number | null }) {
+  const { t } = useLingui()
+  return (
+    <div className="section-head">
+      <h2 className="section-title" dir="auto">
+        <Trans>Recordings · {selected}</Trans>
+      </h2>
+      {count !== null && <span className="section-count">{t`${count} found`}</span>}
+    </div>
+  )
+}
+
 function metaClass(shown: boolean): string {
   return shown ? 'downloads-meta-item' : 'downloads-meta-item downloads-meta-item--hidden'
 }
@@ -64,7 +79,7 @@ export default function DownloadsView() {
   const { courses, loaded, loadFailed } = useCourseTreeContext()
   const withSource = courses.filter((c) => c.source_url).length
 
-  const { selected, pending, items, edits, reconnectKey, loadKey } = useDownloadsSession()
+  const { selected, pending, failed, items, edits, reconnectKey, loadKey } = useDownloadsSession()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
   // The university is optional on the init wall, so a user without one lands here with nothing to sign in to.
   const status = useAuthStatus().status
@@ -82,7 +97,7 @@ export default function DownloadsView() {
         ? moodleBusyMessage()
         : null
   // The course picked in the box; the session's `selected` is the one whose recordings are loaded.
-  const [chosen, setChosen] = useState(pending ?? selected ?? '')
+  const [chosen, setChosen] = useState(pending ?? failed?.course ?? selected ?? '')
   // The panels are nested routes, so this view (and its loaded course) stays mounted behind them.
   const navigate = useNavigate()
   const { state: locationState } = useLocation()
@@ -131,18 +146,6 @@ export default function DownloadsView() {
       if (course?.source_url) void discover(course, { wait: true })
     }
   }, [deferred, barred, courses, discover])
-
-  // A discovery that ended without painting its course leaves the box on the session's course, so
-  // the box always names what is shown below.
-  const prevPending = useRef(pending)
-  useEffect(() => {
-    const was = prevPending.current
-    prevPending.current = pending
-    // A course whose URL was just cleared stays in the box with the empty note.
-    const hasSource = courses.some((c) => c.name === was && c.source_url)
-    if (was && !pending && selected !== was && chosen === was && !deferred && hasSource)
-      setChosen(selected ?? '')
-  }, [pending, selected, chosen, deferred, courses])
 
   // Loads a course now, or once discovery is no longer barred (closing what is open meanwhile).
   function loadCourse(course: Course, wait: boolean) {
@@ -216,12 +219,25 @@ export default function DownloadsView() {
     unknown: t`No files of unknown type found.`,
   }
 
+  // The skeleton cannot know the new course's segments: Videos, Materials and Assignments always show,
+  // so the stored side stands in unless it is Unknown, which appears only with content.
+  const storedMedia = localStorage.getItem(MEDIA_KEY)
+  const skeletonMedia: Media =
+    storedMedia && storedMedia !== 'unknown' && storedMedia in allMediaModes
+      ? (storedMedia as Media)
+      : 'video'
+
+  // Why a pick shows no recordings while discovery is barred; a loading course shows the skeleton instead.
+  // Not above a failure of this very course: the error already says it, and a note that lapses with the
+  // gate's cooldown would shift the error. The disconnected note says something the error does not.
   const loadNote =
-    chosenCourse?.source_url && selected !== shown
-      ? pending === shown
-        ? t`Loading…`
-        : blockReason
+    chosenCourse?.source_url && selected !== shown && pending !== shown
+      ? loadNoteFor(blockReason, failed?.course === shown, disconnected)
       : null
+  // At most one of the three names a course; the box stays on it through a failure.
+  const headCourse = pending ?? failed?.course ?? selected
+  const name = headCourse ?? ''
+  const failedCourse = failed ? courses.find((c) => c.name === failed.course) : undefined
 
   return (
     <ResolvedMediaContext.Provider value={resolveMedia}>
@@ -257,6 +273,7 @@ export default function DownloadsView() {
               </div>
             </div>
           }
+          loading={tab === 'university' && !!pending}
           secondaryActions={
             <div className="downloads-header-rows">
               <DownloadsTabs
@@ -374,15 +391,41 @@ export default function DownloadsView() {
                 )}
                 {loadNote && <p className="downloads-load-note">{loadNote}</p>}
 
+                {headCourse && (
+                  <RecordingsHead selected={headCourse} count={selected ? items.length : null} />
+                )}
+
+                {pending && (
+                  <RecordingsSkeleton
+                    name={name}
+                    media={skeletonMedia}
+                    scope={scope}
+                    fresh={!courses.find((c) => c.name === name)?.skipped?.length}
+                  />
+                )}
+
+                {!pending && failed && (
+                  <div className="recordings-error" role="alert">
+                    <p className="recordings-error-headline" dir="auto">
+                      {t`Couldn't load recordings for "${name}"`}
+                    </p>
+                    {failed.detail && <p className="recordings-error-detail">{failed.detail}</p>}
+                    {failedCourse && (
+                      <Tooltip content={locked ? moodleBusyMessage() : undefined}>
+                        <button
+                          className="btn btn--primary"
+                          disabled={locked}
+                          onClick={() => loadCourse(failedCourse, false)}
+                        >
+                          <Trans>Try again</Trans>
+                        </button>
+                      </Tooltip>
+                    )}
+                  </div>
+                )}
+
                 {selected && (
                   <>
-                    <div className="section-head">
-                      <h2 className="section-title" dir="auto">
-                        <Trans>Recordings · {selected}</Trans>
-                      </h2>
-                      <span className="section-count">{t`${items.length} found`}</span>
-                    </div>
-
                     <div className="recordings-panel">
                       <button className="recordings-close" onClick={close} aria-label={t`Close`}>
                         ×
