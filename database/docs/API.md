@@ -132,6 +132,8 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   an error, so a repeat is a no-op. The route keeps no record: the tree's `removed` field is derived from
   the files on disk ([LAYOUT.md](LAYOUT.md#removed-intermediates)).
 
+File writes are in place (`write_bytes` truncates, then writes) and `GET` streams with `FileResponse`, which sends the stat'd size as Content-Length. A `GET` overlapping a write gets a short body: uvicorn logs "Response content shorter than Content-Length" and drops the connection (clients see a reset). Accepted: in the app a reader rarely overlaps (the backend notifies only after the `PUT` completes, the PDF URL is cache-busted by mtime), so the worst case is a preview that fails until the next render. Temp file + `os.replace` was rejected because on Windows the replace fails while any `GET` streams the file, which would fail the pipeline step. A client polling a file during a write must treat a dropped read like a `404`: not ready yet.
+
 Every route that writes or deletes a file answers `423 Locked` when Windows refuses the operation
 because another process holds the file open — a native PDF viewer left open on `summary.pdf` is the
 everyday cause, since the app opens PDFs in the user's own registered app. The `{error}` text names
