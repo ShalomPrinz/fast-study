@@ -110,7 +110,10 @@ async function capture() {
   await journey(page, open, shot, lectureRoute);
 
   await open('/search');
-  await page.selectOption('.search-course-select', { label: SEARCH.course });
+  // The course picker is the shared Select: open its trigger, then pick the option (the click closes the panel).
+  await page.click('.search-field .select-trigger');
+  await page.getByRole('option', { name: SEARCH.course }).click();
+  await page.waitForSelector('.select-panel', { state: 'detached' });
   await page.fill('.search-input', SEARCH.query);
   await shot('feature-search');
   await browser.close();
