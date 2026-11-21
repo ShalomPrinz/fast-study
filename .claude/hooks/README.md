@@ -5,7 +5,7 @@ run at the end of every turn and every subagent, plus `extract.sh` on `SubagentS
 to keep the repo's stated invariants — "new code lands lint-clean", "never hand-format", "zero missing
 translations" — true without anyone remembering them. A fifth,
 `checkpoint.py`, is wired to `PostToolUse` — see [the context checkpoint](#the-context-checkpoint). A sixth, `waits.py`, is wired to
-`PreToolUse` — see [foreground waits](#foreground-waits). A seventh, `cloud-install.sh`, is wired to
+`PreToolUse` — see [foreground waits](#foreground-waits), a seventh, `commits.py`, is too — see [commit trailers](#commit-trailers). An eighth, `cloud-install.sh`, is wired to
 `SessionStart` and acts only in cloud sessions — see [`docs/CLOUD.md`](../../docs/CLOUD.md).
 
 | Script | Does | Blocks the turn |
@@ -99,6 +99,12 @@ it re-armed instead of idling, once 32 times in 90 s. A harness command (`setup.
 `hb`) with `run_in_background`, `nohup` or a lone `&`: both exit on their own within a foreground
 call's 20 minutes (`BASH_MAX_TIMEOUT_MS` in `settings.json`, raised for the main session, whose calls Claude Code never moves to the background, so a full e2e run there fits), and a backgrounded one either never notified or orphaned the real process. It
 matches text per line, so a line that merely names `setup.mjs` and ends in `&` is denied too.
+
+## Commit trailers
+
+`commits.py` runs on `PreToolUse` for `Bash` and denies a `git commit` whose command contains
+a `Claude-Session:` trailer. A cloud session's system prompt asks for that trailer and outranks the written rule
+in the [`git-commit`](../skills/git-commit/SKILL.md) skill, so the rule is enforced here instead.
 
 ## Scope
 
