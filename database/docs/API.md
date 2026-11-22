@@ -91,6 +91,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /courses/{course}/overview/files/{name}/path`      | `{path}`, the absolute on-disk path; 404 if absent                        |
 | `GET    /courses/{course}/overview/meta`                   | `{meta}` (`{}` when absent)                                               |
 | `PATCH  /courses/{course}/overview/meta`                   | merge one slug's entry (`{slug, entry}`)                                  |
+| `GET    /courses/{course}/headings`                        | `{headings: {"lecture:<name>"\|"recitation:<name>": text}}`, each item's first `summary.md` line starting `#` (hashes and whitespace stripped); items with no summary, no such line, an empty heading or undecodable bytes are omitted; `404` `course_not_found`; read-only, no notify |
 | `GET    /courses/{course}/merged`                          | `{merged: [item, …]}` newest first by `created_at`; only entries whose `{name}.pdf` exists; `404` `course_not_found` |
 | `GET    /courses/{course}/merged/{title}`                  | `{name, entry}`: the sanitized name and the item, `entry` null with no meta entry or no pdf; `400` for an unsanitizable title |
 | `PUT    /courses/{course}/merged/{title}/pdf`              | write `merged/{name}.pdf` (raw body), creating `merged/`; `404` course; `423` if locked; notifies |

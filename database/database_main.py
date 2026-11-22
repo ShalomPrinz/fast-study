@@ -842,6 +842,16 @@ def get_overview_file_path(course: str, name: str):
     return {"path": str(p)}
 
 
+@app.get("/courses/{course}/headings")
+def get_course_headings(course: str):
+    """Return each lecture's and recitation's first summary heading, keyed `<kind>:<name>`; read-only."""
+
+    try:
+        return {"headings": summary_fs.course_headings(course)}
+    except Exception as e:
+        return _failure(e, 400, "file_read_failed")
+
+
 @app.get("/courses/{course}/merged")
 def list_merged(course: str):
     """List a course's merged PDFs newest first, each with per-part exists/current_pdf_mtime and a stale flag."""

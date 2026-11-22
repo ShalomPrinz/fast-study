@@ -273,8 +273,8 @@ for the code whichever view chooses to show it.
 Reading, writing and deleting are three codes, not one: a wrong-verb sentence for a failed read is a
 user-visible defect, not a naming quibble. Three params are knowingly thin — `file_write_failed` on
 `POST /…/materials` carries no `file`, because the name is allocated inside the write that failed,
-`file_read_failed` on `GET /…/materials` carries none because it lists a directory rather than reading
-one file, and `overview_read_failed` covers every overview and merged-PDF read route without one. The frontend's
+`file_read_failed` on `GET /…/materials` and `GET /courses/{course}/headings` carries none because each
+lists a directory rather than reading one file, and `overview_read_failed` covers every overview and merged-PDF read route without one. The frontend's
 `file_write_failed` and `file_read_failed` rows therefore select on `file` and name it only when it is
 there.
 

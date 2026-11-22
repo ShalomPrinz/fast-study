@@ -3,10 +3,16 @@ import os
 from pathlib import Path
 
 from .paths import (
+    ASSIGNMENTS_DIR,
+    OVERVIEW_DIR,
+    RECITATIONS_DIR,
     SUMMARY_MATERIALS_MARKER,
     CodedValueError,
+    CourseNotFound,
     LectureNotFound,
     check_none_locked,
+    check_safe_segment,
+    course_dir,
     lecture_dir,
     reject_if_locked,
 )
@@ -147,3 +153,40 @@ def write_summary_materials(course: str, lecture: str, kind: str, names) -> None
     except PermissionError as e:
         reject_if_locked(e, SUMMARY_MATERIALS_MARKER)
         raise
+
+
+def first_heading(summary: Path) -> str | None:
+    """Return the text of the first `#` line of a summary.md, or None when absent, unreadable or empty."""
+
+    # Streams line by line and stops at the first match, so a large summary is never read whole.
+    try:
+        with open(summary, encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("#"):
+                    return line.lstrip("#").strip() or None
+    except (OSError, UnicodeDecodeError):
+        return None
+    return None
+
+
+def course_headings(course: str) -> dict[str, str]:
+    """Map `lecture:<name>` / `recitation:<name>` to each item's first summary heading; items without one are omitted."""
+
+    check_safe_segment(course)
+    root = course_dir(course)
+    if not root.is_dir():
+        raise CourseNotFound(f"course not found: {course}", course=course)
+    out: dict[str, str] = {}
+    rec = root / RECITATIONS_DIR
+    for kind, base, skip in (
+        ("lecture", root, (RECITATIONS_DIR, OVERVIEW_DIR, ASSIGNMENTS_DIR)),
+        ("recitation", rec, ()),
+    ):
+        if not base.is_dir():
+            continue
+        for d in base.iterdir():
+            if d.is_dir() and d.name not in skip:
+                heading = first_heading(d / "summary.md")
+                if heading:
+                    out[f"{kind}:{d.name}"] = heading
+    return out
