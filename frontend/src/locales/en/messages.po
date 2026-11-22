@@ -2059,6 +2059,10 @@ msgstr "Merge summaries"
 msgid "Merged summaries"
 msgstr "Merged summaries"
 
+#: src/features/merged-pdfs/MergedNewView.tsx:99
+msgid "Merged summary title"
+msgstr "Merged summary title"
+
 #: src/features/settings/components/AutoRetryField.tsx:91
 msgid "Minutes between retries"
 msgstr "Minutes between retries"
@@ -3589,10 +3593,6 @@ msgstr "Tick summaries to add them here, then drag to set their order."
 #: src/features/merged-pdfs/MergedNewView.tsx:92
 msgid "Title"
 msgstr "Title"
-
-#: src/features/merged-pdfs/MergedNewView.tsx:99
-msgid "Title of the merged PDF"
-msgstr "Title of the merged PDF"
 
 #: src/features/merged-pdfs/components/MergedOrder.tsx:193
 msgid "To pick up a part, press Space. Use the arrow keys to move it, Space to drop it, or Escape to cancel."

@@ -2059,6 +2059,10 @@ msgstr "איחוד סיכומים"
 msgid "Merged summaries"
 msgstr "איחודי סיכומים"
 
+#: src/features/merged-pdfs/MergedNewView.tsx:99
+msgid "Merged summary title"
+msgstr "כותרת הסיכום המאוחד"
+
 #: src/features/settings/components/AutoRetryField.tsx:91
 msgid "Minutes between retries"
 msgstr "דקות בין ניסיונות"
@@ -3589,10 +3593,6 @@ msgstr "סמן סיכומים כדי להוסיף אותם לכאן, ואז גר
 #: src/features/merged-pdfs/MergedNewView.tsx:92
 msgid "Title"
 msgstr "כותרת"
-
-#: src/features/merged-pdfs/MergedNewView.tsx:99
-msgid "Title of the merged PDF"
-msgstr "כותרת ה-PDF המאוחד"
 
 #: src/features/merged-pdfs/components/MergedOrder.tsx:193
 msgid "To pick up a part, press Space. Use the arrow keys to move it, Space to drop it, or Escape to cancel."

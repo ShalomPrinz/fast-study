@@ -96,7 +96,7 @@ function MergedNewBody({ course, node }: { course: string; node: Course }) {
               className="settings-input"
               dir="auto"
               value={title}
-              placeholder={t`Title of the merged PDF`}
+              placeholder={t`Merged summary title`}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
