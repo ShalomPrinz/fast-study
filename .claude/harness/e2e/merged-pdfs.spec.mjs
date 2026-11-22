@@ -42,9 +42,47 @@ test('two summaries merge in the dragged order, open, go stale and are replaced'
   page,
   context,
 }) => {
-  await page.goto(`/course/${encodeURIComponent(COURSE)}/merged/new`);
+  // A newer summary.md than its PDF makes שיעור 2 outdated.
+  await call(`${course}/lectures/${encodeURIComponent('שיעור 2')}/files/summary.md`, {
+    method: 'PUT',
+    body: '# edited\n',
+    headers: { 'content-type': 'text/markdown' },
+  });
+
+  // Entry is the sidebar row, selected on the history and create pages; Create new sits on the history page.
+  await page.goto(`/course/${encodeURIComponent(COURSE)}/overview`);
+  const sidebarRow = page.locator('.course-merged-row');
+  await expect(sidebarRow).not.toHaveClass(/selected/);
+  await sidebarRow.click();
+  await expect(page).toHaveURL(new RegExp(`/course/${encodeURIComponent(COURSE)}/merged$`));
+  await expect(sidebarRow).toHaveClass(/selected/);
+  await page.locator('.merged-history-create').click();
+  await expect(page).toHaveURL(/\/merged\/new$/);
+  await expect(sidebarRow).toHaveClass(/selected/);
+  await expect(page.locator('.merged-create')).toHaveText('Create merged summary');
   await page.locator('#merged-title').fill(TITLE);
   await expect(page.locator('.merged-create')).toBeDisabled();
+
+  // The first heading of summary.md rides under the name.
+  await expect(
+    page.locator(`.merged-pick[data-part="lecture:${LECTURE}"] .merged-pick-heading`),
+  ).toHaveText('סיבוכיות זמן ריצה');
+
+  // The outdated chip asks before re-rendering; Cancel leaves it as it was.
+  await page.locator('button.merged-pick-outdated').click();
+  await expect(page.locator('.modal')).toBeVisible();
+  await page.locator('.modal .btn--ghost').click();
+  await expect(page.locator('.modal')).toHaveCount(0);
+  await expect(page.locator('button.merged-pick-outdated')).toHaveCount(1);
+
+  // The section checkbox ticks every mergeable lecture (not the one without a PDF); a title click unticks.
+  const toggle = page.locator('.merged-section-toggle[data-kind="lecture"]');
+  await toggle.click();
+  await expect(toggle).toBeChecked();
+  await expect.poll(() => orderKeys(page)).toEqual(['lecture:שיעור 1', 'lecture:שיעור 2']);
+  await page.locator('.merged-section-label').first().click();
+  await expect(toggle).not.toBeChecked();
+  await expect.poll(() => orderKeys(page)).toEqual([]);
 
   // A part with no summary.pdf cannot be ticked.
   await expect(page.locator('.merged-pick--missing')).toHaveCount(1);
