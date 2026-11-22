@@ -1,10 +1,16 @@
 const { spawn } = require('node:child_process');
 const { join } = require('node:path');
 
-/** The database `{path}` route for a target (assignment-generated, assignment, lecture, overview);
- *  `null` for a refused shape: `generated` alongside `name`, or without `assignment`. */
-function dataFileRoute({ course, lecture, assignment, name, generated, kind }) {
+/** The database `{path}` route for a target (merged, assignment-generated, assignment, lecture, overview);
+ *  `null` for a refused shape, listed in `docs/RENDERER.md`. */
+function dataFileRoute({ course, lecture, assignment, name, generated, kind, merged }) {
   const q = encodeURIComponent;
+  if (merged !== undefined) {
+    if (!merged || [name, lecture, assignment, generated].some((value) => value !== undefined)) {
+      return null;
+    }
+    return `/courses/${q(course)}/merged/${q(merged)}/pdf/path`;
+  }
   if (generated !== undefined) {
     if (name !== undefined || !assignment) return null;
     return `/courses/${q(course)}/assignments/${q(assignment)}/generated/${q(generated)}/path`;

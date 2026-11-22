@@ -73,11 +73,13 @@ where every other process on the machine could read it.
 
 A service URL handed to a fresh browser navigation cannot carry the `X-FastStudy-Secret` header, so
 in the packaged app every such navigation is a `401` and a blank window. `open` is the way out, and
-it is four calls. A data-file target takes one of four shapes, each resolved by `dataFiles.js`
+it is four calls. A data-file target takes one of five shapes, each resolved by `dataFiles.js`
 through its `database/` `…/path` route: lecture `{ course, lecture, name, kind }`, assignment
 `{ course, assignment, name }`, assignment-generated `{ course, assignment, generated }` (an AI-generated
-file, `…/generated/{name}/path`), and overview `{ course, name }` (a course-level `overview/` file).
-A `generated` target that also names `name`, or names no `assignment`, is refused before any lookup.
+file, `…/generated/{name}/path`), overview `{ course, name }` (a course-level `overview/` file) and
+merged `{ course, merged }` (a course's merged PDF, `…/merged/{name}/pdf/path`).
+A `generated` target that also names `name`, or names no `assignment`, and a `merged` target that is empty
+or names any other identifier, are refused before any lookup.
 
 - **`open.file(target)`** hands the resolved path to `shell.openPath` — the user's own app, not a
   Chromium tab.
