@@ -70,19 +70,38 @@ def list_overview_files(course: str) -> list[dict]:
     return entries
 
 
-def read_overview_meta(course: str) -> dict:
-    """Return the per-extractor course overview meta map, or {} when absent or unparseable."""
+def read_meta_map(meta_path: Path) -> dict:
+    """Read a {key: entry} meta.json, degrading to {} when absent or unparseable."""
 
-    check_safe_segment(course)
-    meta_path = overview_dir(course) / OVERVIEW_META
     if not meta_path.exists():
         return {}
 
     # Non-critical metadata: degrade to {} rather than break the caller. See docs/LAYOUT.md.
     try:
-        return json.loads(meta_path.read_text(encoding="utf-8"))
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+    return meta if isinstance(meta, dict) else {}
+
+
+def set_meta_entry(meta_path: Path, key: str, entry) -> None:
+    """Set meta[key]=entry in a meta.json atomically (temp file + os.replace); parent dir must exist."""
+
+    meta = read_meta_map(meta_path)
+    meta[key] = entry
+    # Temp file + os.replace: truncate-then-write would expose a torn file to readers.
+    tmp_path = meta_path.with_name(f"{meta_path.name}.{os.getpid()}.tmp")
+    tmp_path.write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    os.replace(tmp_path, meta_path)
+
+
+def read_overview_meta(course: str) -> dict:
+    """Return the per-extractor course overview meta map, or {} when absent or unparseable."""
+
+    check_safe_segment(course)
+    return read_meta_map(overview_dir(course) / OVERVIEW_META)
 
 
 def merge_overview_meta(course: str, slug: str, entry) -> None:
@@ -96,19 +115,4 @@ def merge_overview_meta(course: str, slug: str, entry) -> None:
         raise CourseNotFound(f"course not found: {course}", course=course)
     d = overview_dir(course)
     d.mkdir(exist_ok=True)
-    meta_path = d / OVERVIEW_META
-    if meta_path.exists():
-        try:
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        except Exception:
-            meta = {}
-    else:
-        meta = {}
-
-    meta[slug] = entry
-    # Temp file + os.replace: truncate-then-write would expose a torn file to readers.
-    tmp_path = meta_path.with_name(f"{meta_path.name}.{os.getpid()}.tmp")
-    tmp_path.write_text(
-        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
-    os.replace(tmp_path, meta_path)
+    set_meta_entry(d / OVERVIEW_META, slug, entry)

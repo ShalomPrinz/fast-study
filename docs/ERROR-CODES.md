@@ -235,7 +235,7 @@ for the code whichever view chooses to show it.
 | `fs/crud.py`          | `name_reserved`                 | `name`            | user      |
 | `fs/crud.py`          | `file_not_removable`            | `file`            | dev       |
 | `fs/crud.py`, `fs/summary.py`, `fs/assignments.py` | `lecture_not_found`     | `course`, `lecture` | user    |
-| `fs/overview.py`, `fs/summaries.py`, `fs/crud.py`, `fs/materials.py`, `fs/assignments.py` | `course_not_found` | `course`          | user      |
+| `fs/overview.py`, `fs/merged.py`, `fs/summaries.py`, `fs/crud.py`, `fs/materials.py`, `fs/assignments.py` | `course_not_found` | `course`          | user      |
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
 | `settings.py`, `database_main.py` | `setting_must_be_boolean` | `field`           | dev       |
 | `settings.py`         | `setting_must_be_integer`       | `field`           | dev       |
@@ -247,7 +247,7 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `data_root_not_absolute`        | `path`            | user      |
 | `settings.py`         | `data_root_not_a_directory`     | `path`            | user      |
 | `settings.py`         | `data_root_not_writable`        | `path`, `detail`  | user      |
-| `database_main.py`, `fs/crud.py`, `fs/summary.py`, `fs/assignments.py` | `bad_request_body` | `detail` | dev       |
+| `database_main.py`, `fs/crud.py`, `fs/summary.py`, `fs/assignments.py`, `fs/merged.py` | `bad_request_body` | `detail` | dev       |
 | `database_main.py`    | `create_dir_failed`             | `path`, `detail`  | user      |
 | `database_main.py`    | `rename_failed`                 | `from`, `to`, `detail` | user |
 | `database_main.py`    | `file_write_failed`             | `file`, `detail`  | user      |
@@ -263,7 +263,7 @@ Reading, writing and deleting are three codes, not one: a wrong-verb sentence fo
 user-visible defect, not a naming quibble. Three params are knowingly thin — `file_write_failed` on
 `POST /…/materials` carries no `file`, because the name is allocated inside the write that failed,
 `file_read_failed` on `GET /…/materials` carries none because it lists a directory rather than reading
-one file, and `overview_read_failed` covers all four overview read routes without one. The frontend's
+one file, and `overview_read_failed` covers every overview and merged-PDF read route without one. The frontend's
 `file_write_failed` and `file_read_failed` rows therefore select on `file` and name it only when it is
 there.
 

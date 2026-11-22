@@ -13,7 +13,7 @@ from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fs import assignments, crud, figures, materials, overview, paths, tree
+from fs import assignments, crud, figures, materials, merged, overview, paths, tree
 from fs import sources as skips
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
@@ -839,6 +839,91 @@ def get_overview_file_path(course: str, name: str):
         return _failure(e, 400, "overview_read_failed")
     if not p.exists():
         return _error("Not found", 404, "file_not_found", {"file": name})
+    return {"path": str(p)}
+
+
+@app.get("/courses/{course}/merged")
+def list_merged(course: str):
+    """List a course's merged PDFs newest first, each with per-part exists/current_pdf_mtime and a stale flag."""
+
+    try:
+        return {"merged": merged.list_merged(course)}
+    except Exception as e:
+        return _failure(e, 400, "overview_read_failed")
+
+
+@app.patch("/courses/{course}/merged/meta")
+async def patch_merged_meta(course: str, request: Request):
+    """Set one merged PDF's meta entry under its sanitized title (body: {title, entry}); replaces it wholly."""
+
+    # On the loop with no await between read and write: the single async writer keeps the RMW atomic.
+    try:
+        body = await request.json()
+        title = body["title"]
+        if not isinstance(title, str):
+            raise CodedValueError(
+                "title must be a string",
+                "bad_request_body",
+                detail="title must be a string",
+            )
+        merged.merge_merged_meta(course, title, body["entry"])
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        return _failure(e, 400, "file_write_failed", {"file": overview.OVERVIEW_META})
+
+
+@app.get("/courses/{course}/merged/{title}")
+def get_merged(course: str, title: str):
+    """Resolve a title to its sanitized name and enriched entry (entry is null with no meta or no pdf)."""
+
+    try:
+        name, entry = merged.get_merged(course, title)
+        return {"name": name, "entry": entry}
+    except Exception as e:
+        return _failure(e, 400, "overview_read_failed")
+
+
+@app.put("/courses/{course}/merged/{title}/pdf")
+async def put_merged_pdf(course: str, title: str, request: Request):
+    """Write raw body bytes as a merged PDF under its sanitized title; 404 if the course is missing."""
+
+    try:
+        data = await request.body()
+        merged.write_merged_pdf(course, title, data)
+        broadcast_notify()
+        return Response(status_code=204)
+    except Exception as e:
+        try:
+            file = f"{merged.merged_name(title)}.pdf"
+        except Exception:  # an unsanitizable title is itself the failure being reported
+            file = f"{title.strip()}.pdf"
+        return _failure(e, 400, "file_write_failed", {"file": file})
+
+
+@app.get("/courses/{course}/merged/{title}/pdf")
+def get_merged_pdf(course: str, title: str):
+    """Stream a merged PDF inline."""
+
+    try:
+        name, p = merged.merged_pdf_path(course, title)
+    except Exception as e:
+        return _failure(e, 400, "overview_read_failed")
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": f"{name}.pdf"})
+    return FileResponse(str(p), media_type="application/pdf")
+
+
+@app.get("/courses/{course}/merged/{title}/pdf/path")
+def get_merged_pdf_path(course: str, title: str):
+    """Return a merged PDF's absolute on-disk path, so the launcher can open it in the user's own app."""
+
+    try:
+        name, p = merged.merged_pdf_path(course, title)
+    except Exception as e:
+        return _failure(e, 400, "overview_read_failed")
+    if not p.is_file():
+        return _error("Not found", 404, "file_not_found", {"file": f"{name}.pdf"})
     return {"path": str(p)}
 
 

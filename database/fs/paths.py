@@ -29,6 +29,8 @@ MAX_NAME_LEN = 80
 
 # Course-level dir for overview pipeline outputs (files belong to the course, not a lecture).
 OVERVIEW_DIR = "overview"
+# Subfolder of overview/ holding the user-titled merged PDFs and their meta.json (kept apart from extractor files).
+MERGED_DIR = "merged"
 
 # Course-dir dotfiles: empty lectures-only pick, and the auto-downloader's lecture-site URL.
 LECTURES_ONLY_MARKER = ".lectures_only"
@@ -286,6 +288,12 @@ def overview_dir(course: str) -> Path:
     """Return the course-level overview directory holding cross-lecture study files."""
 
     return course_dir(course) / OVERVIEW_DIR
+
+
+def merged_dir(course: str) -> Path:
+    """Return the directory holding a course's merged PDFs and their meta.json."""
+
+    return overview_dir(course) / MERGED_DIR
 
 
 def overview_pdf_warning_marker(slug: str) -> str:
