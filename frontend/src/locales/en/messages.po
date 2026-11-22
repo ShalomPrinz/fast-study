@@ -2056,8 +2056,8 @@ msgid "Merge summaries"
 msgstr "Merge summaries"
 
 #: src/features/merged-pdfs/MergedPdfsView.tsx:32
-msgid "Merged PDFs"
-msgstr "Merged PDFs"
+msgid "Merged summaries"
+msgstr "Merged summaries"
 
 #: src/features/settings/components/AutoRetryField.tsx:91
 msgid "Minutes between retries"
@@ -2197,10 +2197,6 @@ msgstr "no material will be sent"
 #: src/features/downloads/DownloadsView.tsx:219
 msgid "No materials found."
 msgstr "No materials found."
-
-#: src/features/merged-pdfs/MergedPdfsView.tsx:53
-msgid "No merged PDFs yet"
-msgstr "No merged PDFs yet"
 
 #: src/features/lectures/DocEditor.tsx:285
 msgid "No original saved"
@@ -3824,6 +3820,10 @@ msgstr "Yes"
 #: src/features/settings/components/MoodleAccountField.tsx:43
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
+
+#: src/features/merged-pdfs/MergedPdfsView.tsx:53
+msgid "You haven't created any merged summaries yet"
+msgstr "You haven't created any merged summaries yet"
 
 #: src/features/settings/InitWall.tsx:300
 msgid "You must read the privacy policy before you continue."

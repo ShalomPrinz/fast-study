@@ -24,8 +24,8 @@
 }
 
 .merged-section-toggle {
-  inline-size: 20px;
-  block-size: 20px;
+  inline-size: 16px;
+  block-size: 16px;
   margin: 0;
   flex-shrink: 0;
   accent-color: var(--accent);

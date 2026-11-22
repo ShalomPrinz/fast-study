@@ -2056,8 +2056,8 @@ msgid "Merge summaries"
 msgstr "איחוד סיכומים"
 
 #: src/features/merged-pdfs/MergedPdfsView.tsx:32
-msgid "Merged PDFs"
-msgstr "קבצי PDF מאוחדים"
+msgid "Merged summaries"
+msgstr "איחודי סיכומים"
 
 #: src/features/settings/components/AutoRetryField.tsx:91
 msgid "Minutes between retries"
@@ -2197,10 +2197,6 @@ msgstr "אף חומר לא יישלח"
 #: src/features/downloads/DownloadsView.tsx:219
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
-
-#: src/features/merged-pdfs/MergedPdfsView.tsx:53
-msgid "No merged PDFs yet"
-msgstr "עדיין אין קבצי PDF מאוחדים"
 
 #: src/features/lectures/DocEditor.tsx:285
 msgid "No original saved"
@@ -3824,6 +3820,10 @@ msgstr "כן"
 #: src/features/settings/components/MoodleAccountField.tsx:43
 msgid "You can connect the account once your university is saved."
 msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
+
+#: src/features/merged-pdfs/MergedPdfsView.tsx:53
+msgid "You haven't created any merged summaries yet"
+msgstr "עדיין לא יצרת איחודי סיכומים"
 
 #: src/features/settings/InitWall.tsx:300
 msgid "You must read the privacy policy before you continue."

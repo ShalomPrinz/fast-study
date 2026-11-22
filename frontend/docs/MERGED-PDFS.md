@@ -1,7 +1,7 @@
 # Merged PDFs
 
-`/course/:course/merged` (`features/merged-pdfs/MergedPdfsView`) — a course's merged PDFs, newest first,
-reached from the sidebar's "Merge summaries" row (`CourseMergedRow`, `.course-merged-row`, under the overview row; selected on this page and on the create page). The create page
+`/course/:course/merged` (`features/merged-pdfs/MergedPdfsView`, titled "Merged summaries") — a course's merged PDFs, newest first,
+reached from the sidebar's "Merge summaries" row (`CourseMergedRow`, `.course-merged-row`, sharing the overview row's styling but not its `.course-overview-row` class, which a driver targets; under the overview row; selected on this page and on the create page). The create page
 (`/course/:course/merged/new`, `ROUTES.mergedNew`, `mergedNewRoute`, `MergedNewView`) is below.
 
 ## Data

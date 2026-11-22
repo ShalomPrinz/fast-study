@@ -29,7 +29,7 @@ function MergedPdfsBody({ course }: { course: string }) {
     <main className="main-view main-view--page">
       <PageHeader
         eyebrow={course}
-        title={t`Merged PDFs`}
+        title={t`Merged summaries`}
         meta={
           items && rows.length > 0 ? (
             <span>
@@ -50,7 +50,7 @@ function MergedPdfsBody({ course }: { course: string }) {
           ) : rows.length === 0 ? (
             <div className="merged-empty">
               <EmptyCard icon="document">
-                <Trans>No merged PDFs yet</Trans>
+                <Trans>You haven't created any merged summaries yet</Trans>
               </EmptyCard>
             </div>
           ) : (
