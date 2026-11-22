@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { InFlightEntry, RunError, RunnerStatus } from '@/types'
-import { canMoveToFront, headerState, waitingRetries } from './runnerState'
+import { canMoveToFront, headerState, isLectureRun, waitingRetries } from './runnerState'
 
 const entry: InFlightEntry = {
   course: 'c',
@@ -35,6 +35,13 @@ describe('headerState', () => {
     const assignment: InFlightEntry = { ...entry, kind: 'assignment' }
     expect(headerState(status(false, [assignment]))).toEqual({ kind: 'manual', count: 0 })
     expect(headerState(status(false, [entry, assignment]))).toEqual({ kind: 'manual', count: 1 })
+  })
+
+  it('ignores a merged-PDF run: it is neither a lecture run nor a reason for the header to say running', () => {
+    const merged: InFlightEntry = { ...entry, kind: 'merged', step: 'merge_pdf' }
+    expect(isLectureRun(merged)).toBe(false)
+    expect(headerState(status(false, [merged]))).toEqual({ kind: 'idle' })
+    expect(headerState(status(false, [entry, merged]))).toEqual({ kind: 'manual', count: 1 })
   })
 
   it('reports the sweep position, capped at total', () => {

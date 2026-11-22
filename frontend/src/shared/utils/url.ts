@@ -55,6 +55,20 @@ export function courseRoute(course: string): string {
   return path`/course/${course}/overview`
 }
 
+// Browser routes for a course's merged PDFs: the history page and the create page; no `/:course/:lecture` URL reaches either.
+export function mergedRoute(course: string): string {
+  return path`/course/${course}/merged`
+}
+
+export function mergedNewRoute(course: string): string {
+  return `${mergedRoute(course)}/new`
+}
+
+// API path for a course's merged PDFs: `/courses/{c}/merged`. Already encoded — don't re-`path` it.
+export function mergedBase(course: string): string {
+  return path`/courses/${course}/merged`
+}
+
 // The Downloads page's edit-source panel route for a course.
 export function editSourceRoute(course: string): string {
   return path`/downloads/edit-source/${course}`

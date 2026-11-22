@@ -63,6 +63,7 @@ clock on mount; `.progress-fill`'s `1s linear` width transition matches the tick
 | -------------------------- | ----------------- |
 | `/`                        | empty state       |
 | `/course/:course/overview` | `CourseView`      |
+| `/course/:course/merged`   | `MergedPdfsView` ([MERGED-PDFS.md](MERGED-PDFS.md)) |
 | `/downloads`               | `DownloadsView`   |
 | `/downloads/add-course`, `/downloads/edit-source/:course` | `DownloadsView`, nested: its panel pages |
 | `/search`                  | `SearchView`      |

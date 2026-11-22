@@ -310,8 +310,8 @@ inline through one hook (`useLectureRename`); `MainView` keys the title by `cour
 navigating away discards an open box. The title's box has an Approve button that commits like Enter (its
 mousedown is default-prevented so the input's blur-cancel doesn't fire first). A running
 or queued lecture, and a course holding one, a generating overview (`/status`'s `overview_running`) or a
-non-terminal download job or a `running`/`paused` section run (`useCourseDownloading`, extension jobs
-included), refuse the rename
+non-terminal download job, a `running`/`paused` section run (`useCourseDownloading`, extension jobs
+included) or a running/waiting merged PDF run (the data-root switch refuses it too, via `dataRootGuard`), refuse the rename
 (`utils/renameLock.ts`): each writes by the name it was given, so a mid-run rename splits the lecture in two.
 A running or queued lecture refuses a video drop too, checked again on the replace confirm: the upload wipes
 the folder under a run that would finish from the old video. The replace confirm lists audio, transcript, summary and PDF and says materials are kept; it leaves out `drive_url.txt`, which the wipe also removes (the Drive file itself is never deleted, so only the local link, and "Open in Drive" with it, goes). An open page — lecture or overview — follows the

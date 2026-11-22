@@ -8,6 +8,7 @@ import type {
   AssignmentLecture,
   OverviewMetaRaw,
   OverviewMeta,
+  MergedPdf,
 } from '@/types'
 import {
   path,
@@ -15,6 +16,7 @@ import {
   lectureBase,
   assignmentBase,
   courseOverviewBase,
+  mergedBase,
 } from '@/shared/utils/url'
 import { createClient } from './http'
 import { reportVideoArrived } from './backend'
@@ -301,4 +303,34 @@ export async function fetchCourseMeta(course: string): Promise<OverviewMeta> {
 
 export function overviewFileUrl(course: string, file: string): string {
   return database.url(courseOverviewBase(course) + path`/files/${file}`)
+}
+
+interface RawMergedPdf {
+  name: string
+  title: string
+  created_at: string
+  stale: boolean
+  parts: { name: string; kind: Kind; pdf_mtime: string; exists: boolean }[]
+}
+
+/** A course's merged PDFs, newest first; only those whose PDF exists. */
+export async function fetchMergedPdfs(course: string): Promise<MergedPdf[]> {
+  const raw = await database.get<{ merged: RawMergedPdf[] }>(mergedBase(course))
+  return raw.merged.map((m) => ({
+    name: m.name,
+    title: m.title,
+    createdAt: m.created_at,
+    stale: m.stale,
+    parts: m.parts.map((p) => ({
+      name: p.name,
+      kind: p.kind,
+      pdfMtime: p.pdf_mtime,
+      exists: p.exists,
+    })),
+  }))
+}
+
+// A merged PDF by its file name, for the browser-dev new tab; packaged opens go through the bridge.
+export function mergedPdfUrl(course: string, name: string): string {
+  return database.url(mergedBase(course) + path`/${name}/pdf`)
 }

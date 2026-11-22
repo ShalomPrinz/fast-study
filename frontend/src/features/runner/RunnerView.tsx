@@ -32,6 +32,7 @@ import {
   canMoveToFront,
   headerState,
   isLectureRun,
+  isPipelineRun,
   waitingRetries,
   type LectureRun,
 } from './utils/runnerState'
@@ -239,7 +240,7 @@ export default function RunnerView() {
   const autoRun = useAutoRun()
 
   const header = headerState(status)
-  const inFlight = status?.inFlight ?? []
+  const inFlight = (status?.inFlight ?? []).filter(isPipelineRun)
   const queue = status?.queue ?? []
   const waiting = waitingRetries(status?.errors ?? {})
   const pending = notQueued(courses, [...queue, ...waiting], inFlight, driveEnabled)

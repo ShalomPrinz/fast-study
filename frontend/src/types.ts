@@ -127,6 +127,8 @@ export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'drive'
 
 // The runner also runs assignments, keyed by name in the lecture slot; they are never queued.
 export type RunKind = Kind | 'assignment'
+// What `/status` keys and in-flight entries can name: a merged-PDF run is course-level, so it is not a `RunKind`.
+export type StatusKind = RunKind | 'merged'
 export type AssignmentStep = 'intuition' | 'solution' | 'intuition_pdf' | 'solution_pdf'
 
 export interface CourseSummary {
@@ -137,7 +139,12 @@ export interface CourseSummary {
 
 export type DownloadOperation = 'download:curl' | 'download:ytdlp' | 'download:material'
 export type TimingOperation =
-  Step | 'summarize_materials' | 'assignment_intuition' | 'assignment_solution' | DownloadOperation
+  | Step
+  | 'summarize_materials'
+  | 'assignment_intuition'
+  | 'assignment_solution'
+  | 'merge_pdf'
+  | DownloadOperation
 
 export interface RateLimitInfo {
   limit: number | null
@@ -164,11 +171,13 @@ export interface Selected {
 
 export interface InFlightEntry {
   course: string
-  // The assignment's name when `kind` is `assignment`.
+  // The assignment's name when `kind` is `assignment`, the merged PDF's file name when `merged`.
   lecture: string
-  kind: RunKind
+  kind: StatusKind
   step: string
   startedAt: string
+  // Merged runs only: another merge of the course holds the lock, so this one has not started.
+  waiting?: boolean
 }
 
 // How far an entry's trigger may take it: `full` is every remaining step, `audio` stops at audio.mp3.
@@ -275,3 +284,27 @@ export type OverviewMeta = Record<
 // One external binary as a service's `GET /tools` reports it: usable, or why not (docs/ERROR-CODES.md §lib/tools).
 export type ToolStatus = 'ok' | { code: string; state: string; params: ErrorParams }
 export type ToolReport = Record<string, ToolStatus>
+
+// One part of a merged PDF, by the name and kind that locate its summary.
+export interface MergedPart {
+  name: string
+  kind: Kind
+}
+
+export interface MergedPartInfo extends MergedPart {
+  // ISO UTC mtime of the part's `summary.pdf` when it was merged.
+  pdfMtime: string
+  // The part's folder is still in the course.
+  exists: boolean
+}
+
+// One stored merged PDF; `name` is the sanitized file stem every URL and `/status` key uses.
+export interface MergedPdf {
+  name: string
+  title: string
+  // ISO UTC.
+  createdAt: string
+  // A part's summary changed since the merge.
+  stale: boolean
+  parts: MergedPartInfo[]
+}

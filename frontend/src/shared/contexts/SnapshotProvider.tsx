@@ -14,7 +14,7 @@ import {
   type ServiceFailure,
 } from '@/shared/i18n/serviceErrors'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
-import LectureLead, { AssignmentLead } from '@/shared/components/LectureLead'
+import LectureLead, { AssignmentLead, MergedLead } from '@/shared/components/LectureLead'
 import { announceNotices } from '@/shared/utils/notices'
 import { failureNode } from '@/shared/utils/failure'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
@@ -79,16 +79,21 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
       const parsed = parseInFlightKey(key)
       if (!parsed) return serviceErrorNode(failure)
       const { course, lecture, kind } = parsed
-      const run: FailedRun =
-        kind === 'assignment'
-          ? { kind, step: step ?? '', course, assignment: lecture }
-          : { kind: 'lecture', step: step ?? '', course, lecture }
-      const sentence = failedRunSentence(failure, run)
+      // Only a lecture or assignment step can fail on a Gemini transient; a merge never does.
+      const run: FailedRun | null =
+        kind === 'merged'
+          ? null
+          : kind === 'assignment'
+            ? { kind, step: step ?? '', course, assignment: lecture }
+            : { kind: 'lecture', step: step ?? '', course, lecture }
+      const sentence = run && failedRunSentence(failure, run)
       if (sentence) return serviceErrorNode(failure, undefined, sentence)
       return serviceErrorNode(
         failure,
         kind === 'assignment' ? (
           <AssignmentLead course={course} assignment={lecture} />
+        ) : kind === 'merged' ? (
+          <MergedLead course={course} name={lecture} />
         ) : (
           <LectureLead course={course} lecture={lecture} />
         ),
