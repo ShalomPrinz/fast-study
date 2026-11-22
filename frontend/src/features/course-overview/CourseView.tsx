@@ -1,9 +1,8 @@
 import { Fragment, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { routeParam } from '@/shared/utils/routes'
-import { mergedRoute } from '@/shared/utils/url'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
@@ -28,7 +27,6 @@ import '@/styles/spinner.css'
 import '@/styles/panel.css'
 import '@/styles/pipeline-card.css'
 import '@/styles/button.css'
-import './CourseView.css'
 
 function CourseOverviewBody() {
   const { t } = useLingui()
@@ -133,10 +131,6 @@ function CourseOverviewBody() {
       <div className="page-body">
         <div className="page-column">
           <CurrentStudy course={course} lectures={lectures} recitations={recitations} />
-
-          <Link className="btn btn--secondary merged-entry" to={mergedRoute(course)}>
-            <Trans>Merged PDFs</Trans>
-          </Link>
 
           <div className="section-head">
             <h2 className="section-title">
