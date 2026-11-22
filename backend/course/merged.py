@@ -29,7 +29,9 @@ _TREE_KEYS = {"lecture": "lectures", "recitation": "recitations"}
 _in_flight: dict[
     str, dict
 ] = {}  # skey → {course, lecture, kind, step, started_at, waiting}
-_errors: dict[str, dict] = {}  # skey → last error record; cleared by a later success
+_errors: dict[
+    str, dict
+] = {}  # skey → last error record; cleared when a merge of that name starts
 _locks: dict[str, asyncio.Lock] = {}  # per course: one merge at a time
 
 
@@ -160,6 +162,7 @@ def try_start(course: str, title: str, name: str, parts: list[Part]) -> str:
         "started_at": datetime.now(timezone.utc).isoformat(),
         "waiting": True,
     }
+    _errors.pop(key, None)  # a re-run's failure must not look like the old one
     db_client.notify()
     asyncio.create_task(_run(course, title, name, parts))
     return "started"
@@ -171,6 +174,7 @@ async def _run(course: str, title: str, name: str, parts: list[Part]) -> None:
     try:
         async with lock:
             _in_flight[key]["waiting"] = False
+            _in_flight[key]["started_at"] = datetime.now(timezone.utc).isoformat()
             db_client.notify()
             try:
                 await asyncio.to_thread(_merge, course, title, name, parts)

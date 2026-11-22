@@ -243,6 +243,35 @@ class TestRun:
             gate.set()
         assert "pdf" in db["A"] and "pdf" in db["B"]
 
+    def test_started_at_is_reset_when_the_lock_is_acquired(self, db):
+        gate = threading.Event()
+
+        def slow_fetch(*_args):
+            gate.wait(5)
+            return _pdf_bytes()
+
+        merged.db_client.get_file_bytes.side_effect = slow_fetch
+
+        async def go():
+            merged.try_start("C", "A", "A", PARTS)
+            merged.try_start("C", "B", "B", PARTS)
+            b = merged._in_flight[merged.skey("C", "B")]
+            queued_at = b["started_at"]
+            await asyncio.sleep(0.05)
+            gate.set()
+            while b["waiting"]:
+                await asyncio.sleep(0.01)
+            ran_at = b["started_at"]
+            while merged._in_flight:
+                await asyncio.sleep(0.01)
+            return queued_at, ran_at
+
+        try:
+            queued_at, ran_at = asyncio.run(go())
+        finally:
+            gate.set()
+        assert ran_at > queued_at
+
     def test_in_flight_item_shape(self, db):
         async def go():
             merged.try_start("C", "T", "T", PARTS)
@@ -297,6 +326,21 @@ class TestRun:
         merged.db_client.get_file_bytes.side_effect = lambda *a: _pdf_bytes()
         _start_and_wait(("T", PARTS))
         assert merged.errors() == {}
+
+    def test_accepting_a_new_merge_clears_the_old_error_at_once(self, db):
+        merged.db_client.get_file_bytes.side_effect = lambda *a: b"junk"
+        _start_and_wait(("T", PARTS))
+        assert merged.errors()
+
+        async def go():
+            assert merged.try_start("C", "T", "T", PARTS) == "started"
+            cleared = merged.errors() == {}
+            while merged._in_flight:
+                await asyncio.sleep(0.01)
+            return cleared
+
+        assert asyncio.run(go())
+        assert list(merged.errors()) == [merged.skey("C", "T")]  # failed again, fresh
 
     def test_another_names_success_keeps_the_error(self, db):
         merged.db_client.get_file_bytes.side_effect = lambda *a: b"junk"
