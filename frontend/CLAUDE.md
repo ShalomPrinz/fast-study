@@ -28,7 +28,7 @@ back to those overrides, then the dev ports — see
 | [LECTURES.md](docs/LECTURES.md)            | pipeline constants, lecture view, materials, Study with AI, runner state, sidebar, tree pane |
 | [EDITOR.md](docs/EDITOR.md)                | the summary editor: save cycle, `PdfViewer`, `MarkdownEditor`                     |
 | [OVERVIEW.md](docs/OVERVIEW.md)            | course overview: extractors, generate/continue/re-generate, per-slug gating       |
-| [MERGED-PDFS.md](docs/MERGED-PDFS.md)      | a course's merged-PDF history page: rows, run state, re-create hand-off            |
+| [MERGED-PDFS.md](docs/MERGED-PDFS.md)      | the merged-PDF history page and the create page: run state, picker, drag-and-drop order, submit |
 | [DOWNLOADS.md](docs/DOWNLOADS.md)          | downloads page: tabs, auth, the Moodle lock, session, discovery, row edits, already-downloaded rule |
 | [EXTENSION.md](docs/EXTENSION.md)          | the Downloads Extension tab's guide: steps, bridge-absent state, screenshot drop-in |
 | [JOBS.md](docs/JOBS.md)                    | following a download: the jobs reflection, grouping by `ref`, bars, retry         |

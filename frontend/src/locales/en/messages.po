@@ -344,6 +344,14 @@ msgstr "{model, select, undefined {the Gemini model is under high demand} other 
 msgid "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
 msgstr "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
 
+#: src/features/merged-pdfs/components/MergedOrder.tsx:164
+msgid "{name} dropped at position {position} of {total}."
+msgstr "{name} dropped at position {position} of {total}."
+
+#: src/features/merged-pdfs/components/MergedOrder.tsx:159
+msgid "{name} moved to position {position} of {total}."
+msgstr "{name} moved to position {position} of {total}."
+
 #: src/features/lectures/utils/materialIndicator.ts:55
 msgid "{name} was used"
 msgstr "{name} was used"
@@ -517,6 +525,10 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 msgstr "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 
+#: src/features/merged-pdfs/MergedNewView.tsx:155
+msgid "A merged PDF titled \"{overwriteTitle}\" already exists. Create it anyway and replace it?"
+msgstr "A merged PDF titled \"{overwriteTitle}\" already exists. Create it anyway and replace it?"
+
 #: src/shared/i18n/serviceErrors.ts:153
 msgid "A merged PDF titled \"{title}\" already exists."
 msgstr "A merged PDF titled \"{title}\" already exists."
@@ -541,7 +553,7 @@ msgstr "A summary or assignment step that fails on a temporary Gemini problem ru
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 
-#: src/App.tsx:38
+#: src/App.tsx:39
 msgid "Add a course from Downloads or New course to get started"
 msgstr "Add a course from Downloads or New course to get started"
 
@@ -786,6 +798,7 @@ msgstr "Can't replace the video while it's being processed or waiting in line"
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
 #: src/features/lectures/components/AssignmentDocCard.tsx:207
+#: src/features/merged-pdfs/MergedNewView.tsx:157
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -1212,9 +1225,9 @@ msgstr "Courses"
 msgid "Courses and lectures"
 msgstr "Courses and lectures"
 
-#: src/App.tsx:40
+#: src/App.tsx:41
 #: src/features/downloads/DownloadsView.tsx:385
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:86
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:88
 #: src/features/search/SearchView.tsx:223
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1937,6 +1950,7 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
+#: src/features/merged-pdfs/components/MergedPicker.tsx:112
 #: src/features/search/SearchView.tsx:191
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Lectures"
@@ -1964,6 +1978,10 @@ msgstr "Lectures only, in the courses I choose"
 msgid "Lectures you marked done"
 msgstr "Lectures you marked done"
 
+#: src/features/merged-pdfs/MergedNewView.tsx:105
+msgid "Left out, no longer in the course or without a summary PDF:"
+msgstr "Left out, no longer in the course or without a summary PDF:"
+
 #: src/features/downloads/components/RecordingJobList.tsx:119
 msgid "Lemida is responding slowly. Restart could help."
 msgstr "Lemida is responding slowly. Restart could help."
@@ -1980,7 +1998,7 @@ msgstr "Load new version"
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:82
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:84
 msgid "Loading courses…"
 msgstr "Loading courses…"
 
@@ -2022,6 +2040,14 @@ msgstr "Match whole word"
 #: src/features/lectures/MainView.tsx:639
 msgid "Materials"
 msgstr "Materials"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:125
+msgid "Merge order"
+msgstr "Merge order"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:148
+msgid "Merge PDFs"
+msgstr "Merge PDFs"
 
 #: src/features/course-overview/CourseView.tsx:138
 #: src/features/merged-pdfs/MergedPdfsView.tsx:38
@@ -2074,6 +2100,10 @@ msgstr "New"
 #: src/features/lectures/sidebar/NewCourseRow.tsx:59
 msgid "New course"
 msgstr "New course"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:87
+msgid "New merged PDF"
+msgstr "New merged PDF"
 
 #: src/features/merged-pdfs/components/MergedRow.tsx:83
 msgid "Newer version available"
@@ -2143,7 +2173,7 @@ msgstr "No Lectures"
 msgid "No lectures yet"
 msgstr "No lectures yet"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:90
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:92
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
@@ -2202,6 +2232,10 @@ msgstr "No recordings found."
 #: src/features/downloads/DownloadsView.tsx:391
 msgid "No source URL yet. Use the pencil to choose one."
 msgstr "No source URL yet. Use the pencil to choose one."
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:57
+msgid "No summary PDF yet"
+msgstr "No summary PDF yet"
 
 #: src/features/downloads/components/AccountStatus.tsx:166
 msgid "no university chosen"
@@ -2433,6 +2467,10 @@ msgstr "Other links"
 msgid "Other…"
 msgstr "Other…"
 
+#: src/features/merged-pdfs/components/MergedPicker.tsx:74
+msgid "Outdated PDF"
+msgstr "Outdated PDF"
+
 #: src/features/lectures/AssignmentView.tsx:171
 #: src/features/lectures/AssignmentView.tsx:176
 msgid "Over 10 MB — generating might fail while this is attached"
@@ -2501,6 +2539,10 @@ msgstr "PDF is older than this summary"
 #: src/features/lectures/DocEditor.tsx:280
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
+
+#: src/features/merged-pdfs/components/MergedOrder.tsx:152
+msgid "Picked up {name}. Position {position} of {total}."
+msgstr "Picked up {name}. Position {position} of {total}."
 
 #: src/features/extension/ExtensionGuide.tsx:159
 msgid "Pin FastStudy to the toolbar"
@@ -2574,6 +2616,7 @@ msgstr "recitation"
 #: src/features/downloads/components/ManualDownload.tsx:167
 #: src/features/downloads/components/RecordingRow.tsx:260
 #: src/features/lectures/components/CourseMaterialBox.tsx:80
+#: src/features/merged-pdfs/components/MergedOrder.tsx:53
 msgid "Recitation"
 msgstr "Recitation"
 
@@ -2592,6 +2635,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:28
+#: src/features/merged-pdfs/components/MergedPicker.tsx:122
 #: src/features/search/SearchView.tsx:199
 msgid "Recitations"
 msgstr "Recitations"
@@ -2663,6 +2707,14 @@ msgstr "Renamed {count} downloads — some characters can't be used in a folder 
 #: src/features/downloads/utils/renames.ts:31
 msgid "Renamed to \"{name}\" — some characters can't be used in a folder name."
 msgstr "Renamed to \"{name}\" — some characters can't be used in a folder name."
+
+#: src/features/merged-pdfs/components/MergedOrder.tsx:169
+msgid "Reordering cancelled. {name} is back at position {position} of {total}."
+msgstr "Reordering cancelled. {name} is back at position {position} of {total}."
+
+#: src/features/merged-pdfs/MergedNewView.tsx:156
+msgid "Replace"
+msgstr "Replace"
 
 #. placeholder {0}: pending.lecture
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:63
@@ -2845,13 +2897,25 @@ msgstr "Section {0} is waiting for a passcode"
 msgid "Select {0}"
 msgstr "Select {0}"
 
-#: src/App.tsx:42
+#: src/App.tsx:43
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:113
+msgid "Select all"
+msgstr "Select all"
 
 #: src/features/downloads/components/NewView.tsx:206
 msgid "Select all in this section"
 msgstr "Select all in this section"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:113
+msgid "Select all lectures"
+msgstr "Select all lectures"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:123
+msgid "Select all recitations"
+msgstr "Select all recitations"
 
 #: src/features/lectures/AssignmentView.tsx:189
 msgid "Send {name} to Gemini"
@@ -2996,6 +3060,10 @@ msgstr "Study with AI"
 #: src/features/downloads/components/PasscodePrompt.tsx:87
 msgid "Submit"
 msgstr "Submit"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:102
+msgid "Summaries"
+msgstr "Summaries"
 
 #: src/features/settings/components/DriveConnection.tsx:90
 msgid "Summaries upload to this account's Drive. Connecting opens a Google sign-in page in your browser, and you can do it later."
@@ -3244,6 +3312,10 @@ msgstr "The PDF is missing."
 msgid "The PDF is older than an earlier step's output. Re-generate it."
 msgstr "The PDF is older than an earlier step's output. Re-generate it."
 
+#: src/features/merged-pdfs/components/MergedPicker.tsx:72
+msgid "The PDF is older than the latest summary text."
+msgstr "The PDF is older than the latest summary text."
+
 #: src/features/lectures/utils/pdfBadge.ts:25
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "The PDF is older than the summary. Re-generate it."
@@ -3434,6 +3506,10 @@ msgstr "This cannot be undone."
 msgid "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 msgstr "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 
+#: src/features/merged-pdfs/components/MergedPicker.tsx:107
+msgid "This course has no lectures yet."
+msgstr "This course has no lectures yet."
+
 #: src/shared/i18n/serviceErrors.ts:150
 msgid "This course has no summaries yet."
 msgstr "This course has no summaries yet."
@@ -3503,6 +3579,22 @@ msgstr "This summary changed in another window or was regenerated. Load the new 
 #: src/features/tour/tourSteps.ts:41
 msgid "Three ways to download"
 msgstr "Three ways to download"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:130
+msgid "Tick summaries to add them here, then drag to set their order."
+msgstr "Tick summaries to add them here, then drag to set their order."
+
+#: src/features/merged-pdfs/MergedNewView.tsx:92
+msgid "Title"
+msgstr "Title"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:99
+msgid "Title of the merged PDF"
+msgstr "Title of the merged PDF"
+
+#: src/features/merged-pdfs/components/MergedOrder.tsx:193
+msgid "To pick up a part, press Space. Use the arrow keys to move it, Space to drop it, or Escape to cancel."
+msgstr "To pick up a part, press Space. Use the arrow keys to move it, Space to drop it, or Escape to cancel."
 
 #: src/features/course-overview/constants/overview.ts:28
 msgid "Topics"

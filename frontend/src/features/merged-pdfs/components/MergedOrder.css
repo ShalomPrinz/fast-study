@@ -1,0 +1,76 @@
+.merged-order-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.merged-order-item {
+  padding-block: var(--space-1);
+}
+
+/* The whole row is the drag handle: no text selection, and touch/pen drag instead of scrolling. */
+.merged-order-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: var(--fs-body);
+  color: var(--text);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.merged-order-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The 200 ms hold: the row tints and lifts a little, arming the drag. */
+.merged-order-row--armed {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-sm);
+}
+
+/* The slot the dragged row left; the overlay carries the real row. */
+.merged-order-row--dragging {
+  opacity: 0.35;
+  background: var(--surface-sunken);
+  border-style: dashed;
+}
+
+.merged-order-row--overlay {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-lg);
+  cursor: grabbing;
+}
+
+.merged-order-grip {
+  color: var(--text-4);
+  letter-spacing: -2px;
+  flex-shrink: 0;
+}
+
+.merged-order-index {
+  min-width: 1.5em;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.merged-order-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

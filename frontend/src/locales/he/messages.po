@@ -344,6 +344,14 @@ msgstr "{model, select, undefined {מודל Gemini בביקוש גבוה} other 
 msgid "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
 msgstr "{more_count, plural, =0 {משהו בסיכום מנע את בניית ה-PDF.} one {משהו בסיכום מנע את בניית ה-PDF, ועוד בעיה אחת.} two {משהו בסיכום מנע את בניית ה-PDF, ועוד # בעיות.} other {משהו בסיכום מנע את בניית ה-PDF, ועוד # בעיות.}}"
 
+#: src/features/merged-pdfs/components/MergedOrder.tsx:164
+msgid "{name} dropped at position {position} of {total}."
+msgstr "{name} הונח במיקום {position} מתוך {total}."
+
+#: src/features/merged-pdfs/components/MergedOrder.tsx:159
+msgid "{name} moved to position {position} of {total}."
+msgstr "{name} הועבר למיקום {position} מתוך {total}."
+
 #: src/features/lectures/utils/materialIndicator.ts:55
 msgid "{name} was used"
 msgstr "סוכם עם {name}"
@@ -517,6 +525,10 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 msgstr "בקורס של הרצאות בלבד התרגולים מופיעים בין ההרצאות, וכל מה שתוסיף אליו יישמר כהרצאה. שום דבר שכבר נשמר לא זז."
 
+#: src/features/merged-pdfs/MergedNewView.tsx:155
+msgid "A merged PDF titled \"{overwriteTitle}\" already exists. Create it anyway and replace it?"
+msgstr "קובץ PDF ממוזג בשם \"{overwriteTitle}\" כבר קיים. ליצור אותו בכל זאת ולהחליף אותו?"
+
 #: src/shared/i18n/serviceErrors.ts:153
 msgid "A merged PDF titled \"{title}\" already exists."
 msgstr "כבר קיים קובץ PDF מאוחד בשם \"{title}\"."
@@ -541,7 +553,7 @@ msgstr "שלב בסיכום או במטלה שנכשל בגלל תקלה זמנ�
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "נפתח חלון באתר האוניברסיטה. פתור שם את החידה, והחיבור יושלם מעצמו."
 
-#: src/App.tsx:38
+#: src/App.tsx:39
 msgid "Add a course from Downloads or New course to get started"
 msgstr "הוסף קורס דרך \"הורדות\" או \"קורס חדש\" כדי להתחיל"
 
@@ -786,6 +798,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
 #: src/features/lectures/components/AssignmentDocCard.tsx:207
+#: src/features/merged-pdfs/MergedNewView.tsx:157
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -1212,9 +1225,9 @@ msgstr "קורסים"
 msgid "Courses and lectures"
 msgstr "קורסים והרצאות"
 
-#: src/App.tsx:40
+#: src/App.tsx:41
 #: src/features/downloads/DownloadsView.tsx:385
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:86
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:88
 #: src/features/search/SearchView.tsx:223
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1937,6 +1950,7 @@ msgstr "שם ההרצאה"
 msgid "Lecture name…"
 msgstr "שם ההרצאה…"
 
+#: src/features/merged-pdfs/components/MergedPicker.tsx:112
 #: src/features/search/SearchView.tsx:191
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Lectures"
@@ -1964,6 +1978,10 @@ msgstr "הרצאות בלבד, בקורסים שאבחר"
 msgid "Lectures you marked done"
 msgstr "הרצאות שסיימת"
 
+#: src/features/merged-pdfs/MergedNewView.tsx:105
+msgid "Left out, no longer in the course or without a summary PDF:"
+msgstr "לא נכללו, כי אינם בקורס עוד או שאין להם PDF של סיכום:"
+
 #: src/features/downloads/components/RecordingJobList.tsx:119
 msgid "Lemida is responding slowly. Restart could help."
 msgstr "למדה מגיבה לאט. הורדה מחדש יכולה לעזור."
@@ -1980,7 +1998,7 @@ msgstr "טעינת הגרסה החדשה"
 msgid "Load the FastStudy folder"
 msgstr "טעינת התיקייה של FastStudy"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:82
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:84
 msgid "Loading courses…"
 msgstr "טוען קורסים…"
 
@@ -2022,6 +2040,14 @@ msgstr "התאמת מילה שלמה"
 #: src/features/lectures/MainView.tsx:639
 msgid "Materials"
 msgstr "חומרים"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:125
+msgid "Merge order"
+msgstr "סדר המיזוג"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:148
+msgid "Merge PDFs"
+msgstr "צור PDF מאוחד"
 
 #: src/features/course-overview/CourseView.tsx:138
 #: src/features/merged-pdfs/MergedPdfsView.tsx:38
@@ -2074,6 +2100,10 @@ msgstr "חדשים"
 #: src/features/lectures/sidebar/NewCourseRow.tsx:59
 msgid "New course"
 msgstr "קורס חדש"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:87
+msgid "New merged PDF"
+msgstr "PDF מאוחד חדש"
 
 #: src/features/merged-pdfs/components/MergedRow.tsx:83
 msgid "Newer version available"
@@ -2143,7 +2173,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet"
 msgstr "אין עדיין הרצאות"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:90
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:92
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
@@ -2202,6 +2232,10 @@ msgstr "לא נמצאו הקלטות."
 #: src/features/downloads/DownloadsView.tsx:391
 msgid "No source URL yet. Use the pencil to choose one."
 msgstr "אין עדיין כתובת מקור. בחרו אותה בעזרת העיפרון."
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:57
+msgid "No summary PDF yet"
+msgstr "עדיין אין PDF של הסיכום"
 
 #: src/features/downloads/components/AccountStatus.tsx:166
 msgid "no university chosen"
@@ -2433,6 +2467,10 @@ msgstr "קישורים אחרים"
 msgid "Other…"
 msgstr "אחר…"
 
+#: src/features/merged-pdfs/components/MergedPicker.tsx:74
+msgid "Outdated PDF"
+msgstr "PDF לא עדכני"
+
 #: src/features/lectures/AssignmentView.tsx:171
 #: src/features/lectures/AssignmentView.tsx:176
 msgid "Over 10 MB — generating might fail while this is attached"
@@ -2501,6 +2539,10 @@ msgstr "ה-PDF ישן יותר מהסיכום הזה"
 #: src/features/lectures/DocEditor.tsx:280
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
+
+#: src/features/merged-pdfs/components/MergedOrder.tsx:152
+msgid "Picked up {name}. Position {position} of {total}."
+msgstr "{name} הורם. מיקום {position} מתוך {total}."
 
 #: src/features/extension/ExtensionGuide.tsx:159
 msgid "Pin FastStudy to the toolbar"
@@ -2574,6 +2616,7 @@ msgstr "תרגול"
 #: src/features/downloads/components/ManualDownload.tsx:167
 #: src/features/downloads/components/RecordingRow.tsx:260
 #: src/features/lectures/components/CourseMaterialBox.tsx:80
+#: src/features/merged-pdfs/components/MergedOrder.tsx:53
 msgid "Recitation"
 msgstr "תרגול"
 
@@ -2592,6 +2635,7 @@ msgid "Recitation name…"
 msgstr "שם התרגול…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:28
+#: src/features/merged-pdfs/components/MergedPicker.tsx:122
 #: src/features/search/SearchView.tsx:199
 msgid "Recitations"
 msgstr "תרגולים"
@@ -2663,6 +2707,14 @@ msgstr "שמות של {count} הורדות שונו — יש תווים שאי �
 #: src/features/downloads/utils/renames.ts:31
 msgid "Renamed to \"{name}\" — some characters can't be used in a folder name."
 msgstr "השם שונה ל-\"{name}\" — יש תווים שאי אפשר להשתמש בהם בשם תיקייה."
+
+#: src/features/merged-pdfs/components/MergedOrder.tsx:169
+msgid "Reordering cancelled. {name} is back at position {position} of {total}."
+msgstr "שינוי הסדר בוטל. {name} חזר למיקום {position} מתוך {total}."
+
+#: src/features/merged-pdfs/MergedNewView.tsx:156
+msgid "Replace"
+msgstr "החלפה"
 
 #. placeholder {0}: pending.lecture
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:63
@@ -2845,13 +2897,25 @@ msgstr "היחידה {0} ממתינה לקוד גישה"
 msgid "Select {0}"
 msgstr "בחירת {0}"
 
-#: src/App.tsx:42
+#: src/App.tsx:43
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:113
+msgid "Select all"
+msgstr "בחירת הכול"
 
 #: src/features/downloads/components/NewView.tsx:206
 msgid "Select all in this section"
 msgstr "בחירת כל היחידה"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:113
+msgid "Select all lectures"
+msgstr "בחירת כל ההרצאות"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:123
+msgid "Select all recitations"
+msgstr "בחירת כל התרגולים"
 
 #: src/features/lectures/AssignmentView.tsx:189
 msgid "Send {name} to Gemini"
@@ -2996,6 +3060,10 @@ msgstr "ללמוד עם AI"
 #: src/features/downloads/components/PasscodePrompt.tsx:87
 msgid "Submit"
 msgstr "שליחה"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:102
+msgid "Summaries"
+msgstr "סיכומים"
 
 #: src/features/settings/components/DriveConnection.tsx:90
 msgid "Summaries upload to this account's Drive. Connecting opens a Google sign-in page in your browser, and you can do it later."
@@ -3244,6 +3312,10 @@ msgstr "ה-PDF חסר."
 msgid "The PDF is older than an earlier step's output. Re-generate it."
 msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור אותו מחדש."
 
+#: src/features/merged-pdfs/components/MergedPicker.tsx:72
+msgid "The PDF is older than the latest summary text."
+msgstr "ה-PDF ישן מהטקסט העדכני של הסיכום."
+
 #: src/features/lectures/utils/pdfBadge.ts:25
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
@@ -3434,6 +3506,10 @@ msgstr "לא ניתן לבטל את הפעולה."
 msgid "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, ולכן אי אפשר לשמור אותם כאן. כל שאר ההגדרות במסך הזה פועלות כרגיל."
 
+#: src/features/merged-pdfs/components/MergedPicker.tsx:107
+msgid "This course has no lectures yet."
+msgstr "עדיין אין הרצאות בקורס הזה."
+
 #: src/shared/i18n/serviceErrors.ts:150
 msgid "This course has no summaries yet."
 msgstr "אין עדיין סיכומים בקורס הזה."
@@ -3503,6 +3579,22 @@ msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש.
 #: src/features/tour/tourSteps.ts:41
 msgid "Three ways to download"
 msgstr "שלוש דרכים להוריד"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:130
+msgid "Tick summaries to add them here, then drag to set their order."
+msgstr "סמן סיכומים כדי להוסיף אותם לכאן, ואז גרור כדי לקבוע את הסדר."
+
+#: src/features/merged-pdfs/MergedNewView.tsx:92
+msgid "Title"
+msgstr "כותרת"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:99
+msgid "Title of the merged PDF"
+msgstr "כותרת ה-PDF המאוחד"
+
+#: src/features/merged-pdfs/components/MergedOrder.tsx:193
+msgid "To pick up a part, press Space. Use the arrow keys to move it, Space to drop it, or Escape to cancel."
+msgstr "כדי להרים פריט, לחץ על רווח. הזז אותו במקשי החצים, הנח אותו ברווח, או בטל ב-Escape."
 
 #: src/features/course-overview/constants/overview.ts:28
 msgid "Topics"

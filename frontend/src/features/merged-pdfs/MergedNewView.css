@@ -1,0 +1,78 @@
+.merged-new {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 880px;
+}
+
+.merged-new-title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.merged-new-label {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.merged-note {
+  margin: 0;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--r-sm);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--fs-meta);
+}
+
+/* Selection at inline-start, order at inline-end, so the pair mirrors under RTL; stacked when narrow. */
+.merged-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* The page sits beside two sidebars, so it is the column's width that decides, not the window's. */
+@container (max-width: 640px) {
+  .merged-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.merged-col {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.merged-col-title {
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  border-block-end: 1px solid var(--line-soft);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Each column scrolls on its own, so a long course never pushes the create button away. */
+.merged-col-body {
+  max-block-size: 60vh;
+  overflow-y: auto;
+  padding: var(--space-3);
+}
+
+.merged-hint {
+  margin: 0;
+  padding: var(--space-5);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.merged-new-actions {
+  display: flex;
+  justify-content: flex-end;
+}
