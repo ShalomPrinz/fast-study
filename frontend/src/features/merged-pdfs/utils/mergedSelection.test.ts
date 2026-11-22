@@ -11,6 +11,10 @@ import {
   movePart,
   pdfState,
   pickGroups,
+  isRenderingPdf,
+  sectionTick,
+  toggleSection,
+  type PickItem,
   readPrefill,
   submitAction,
   toggleInOrder,
@@ -47,6 +51,44 @@ describe('toggleInOrder', () => {
 describe('appendMissing', () => {
   it('adds only the parts not ticked yet, after the existing order', () => {
     expect(names(appendMissing([L('c')], [L('a'), L('b'), L('c')]))).toEqual(['c', 'a', 'b'])
+  })
+})
+
+const item = (part: MergedPart, state: PickItem['state'] = 'ok'): PickItem => ({ part, state })
+
+describe('sectionTick', () => {
+  const items = [item(L('a')), item(L('b'), 'outdated'), item(L('c'), 'missing')]
+  it('counts only the mergeable items', () => {
+    expect(sectionTick(items, [])).toBe('none')
+    expect(sectionTick(items, [L('a')])).toBe('some')
+    expect(sectionTick(items, [L('a'), L('b')])).toBe('all')
+  })
+  it('ignores a ticked part that is no longer mergeable', () => {
+    expect(sectionTick(items, [L('c')])).toBe('none')
+  })
+  it('reads none when nothing is mergeable', () => {
+    expect(sectionTick([item(L('c'), 'missing')], [])).toBe('none')
+  })
+})
+
+describe('toggleSection', () => {
+  const items = [item(L('a')), item(L('b')), item(L('c'), 'missing')]
+  it('ticks the rest when only some are ticked, keeping the existing order', () => {
+    expect(names(toggleSection([L('b')], items))).toEqual(['b', 'a'])
+  })
+  it('unticks the section when all are ticked, leaving other sections alone', () => {
+    expect(names(toggleSection([R('x'), L('a'), L('b')], items))).toEqual(['x'])
+  })
+  it('never ticks an unmergeable item', () => {
+    expect(names(toggleSection([], items))).toEqual(['a', 'b'])
+  })
+})
+
+describe('isRenderingPdf', () => {
+  it('is true only for the pdf step', () => {
+    expect(isRenderingPdf({ step: 'pdf' })).toBe(true)
+    expect(isRenderingPdf({ step: 'summarize' })).toBe(false)
+    expect(isRenderingPdf(null)).toBe(false)
   })
 })
 

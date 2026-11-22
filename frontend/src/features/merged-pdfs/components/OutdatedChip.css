@@ -1,0 +1,21 @@
+.merged-pick-outdated {
+  flex-shrink: 0;
+}
+
+/* A chip that is a button: drop the native chrome so it reads as .chip--warn, with a pointer and a hover tint. */
+button.merged-pick-outdated {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button.merged-pick-outdated:hover {
+  background: var(--warn);
+  color: var(--surface);
+}
+
+.merged-pick-spinner {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+}

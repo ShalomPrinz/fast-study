@@ -68,7 +68,7 @@ msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {הרצאה אחת בעיבוד} two {# הרצאות בעיבוד} other {# הרצאות בעיבוד}}"
 
 #. placeholder {0}: lectures.length
-#: src/features/course-overview/CourseView.tsx:110
+#: src/features/course-overview/CourseView.tsx:108
 msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
@@ -78,12 +78,12 @@ msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
 #. placeholder {0}: rows.length
-#: src/features/merged-pdfs/MergedPdfsView.tsx:42
+#: src/features/merged-pdfs/MergedPdfsView.tsx:36
 msgid "{0, plural, one {# merged PDF} other {# merged PDFs}}"
 msgstr "{0, plural, one {קובץ PDF מאוחד אחד} two {# קבצי PDF מאוחדים} other {# קבצי PDF מאוחדים}}"
 
 #. placeholder {0}: recitations.length
-#: src/features/course-overview/CourseView.tsx:114
+#: src/features/course-overview/CourseView.tsx:112
 msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {תרגול אחד} two {# תרגולים} other {# תרגולים}}"
 
@@ -272,7 +272,7 @@ msgid "{files, plural, one {# file} other {# files}} · {lectures, plural, =0 {n
 msgstr "{files, plural, one {קובץ אחד} other {# קבצים}} · {lectures, plural, =0 {בלי חומר מהקורס} one {הרצאה אחת מצורפת} other {# הרצאות מצורפות}}"
 
 #. placeholder {0}: extractors.length
-#: src/features/course-overview/CourseView.tsx:146
+#: src/features/course-overview/CourseView.tsx:140
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
@@ -376,7 +376,7 @@ msgstr "{phase, select, analyze {הניתוח של \"{title}\" נכשל בקור
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
-#: src/features/course-overview/CourseView.tsx:117
+#: src/features/course-overview/CourseView.tsx:115
 msgid "{processed} fully processed"
 msgstr "{processed} עובדו במלואן"
 
@@ -525,7 +525,7 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 msgstr "בקורס של הרצאות בלבד התרגולים מופיעים בין ההרצאות, וכל מה שתוסיף אליו יישמר כהרצאה. שום דבר שכבר נשמר לא זז."
 
-#: src/features/merged-pdfs/MergedNewView.tsx:155
+#: src/features/merged-pdfs/MergedNewView.tsx:160
 msgid "A merged PDF titled \"{overwriteTitle}\" already exists. Create it anyway and replace it?"
 msgstr "קובץ PDF ממוזג בשם \"{overwriteTitle}\" כבר קיים. ליצור אותו בכל זאת ולהחליף אותו?"
 
@@ -798,7 +798,8 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/FolderJobList.tsx:102
 #: src/features/downloads/components/PasscodePrompt.tsx:79
 #: src/features/lectures/components/AssignmentDocCard.tsx:207
-#: src/features/merged-pdfs/MergedNewView.tsx:157
+#: src/features/merged-pdfs/components/OutdatedChip.tsx:60
+#: src/features/merged-pdfs/MergedNewView.tsx:162
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -1205,7 +1206,7 @@ msgstr "חומר מהקורס"
 msgid "Course name…"
 msgstr "שם הקורס…"
 
-#: src/features/course-overview/CourseView.tsx:143
+#: src/features/course-overview/CourseView.tsx:137
 msgid "Course overview"
 msgstr "סקירת קורס"
 
@@ -1245,7 +1246,12 @@ msgstr "צור קודם את {input}"
 msgid "Create guide"
 msgstr "יצירת מדריך"
 
-#: src/features/merged-pdfs/MergedPdfsView.tsx:30
+#: src/features/merged-pdfs/MergedNewView.tsx:87
+#: src/features/merged-pdfs/MergedNewView.tsx:151
+msgid "Create merged summary"
+msgstr "צור סיכום מאוחד"
+
+#: src/features/merged-pdfs/MergedPdfsView.tsx:45
 msgid "Create new"
 msgstr "צור חדש"
 
@@ -1566,7 +1572,7 @@ msgid "Extracting audio"
 msgstr "מחלץ שמע"
 
 #: src/features/course-overview/constants/overview.ts:117
-#: src/features/course-overview/CourseView.tsx:76
+#: src/features/course-overview/CourseView.tsx:74
 msgid "failed"
 msgstr "נכשל"
 
@@ -1749,7 +1755,7 @@ msgstr "צור קודם את הסיכום"
 msgid "Generate this step first"
 msgstr "צור קודם את השלב הזה"
 
-#: src/features/course-overview/CourseView.tsx:106
+#: src/features/course-overview/CourseView.tsx:104
 msgid "Generating · {runningTitle}"
 msgstr "יוצר · {runningTitle}"
 
@@ -1950,7 +1956,7 @@ msgstr "שם ההרצאה"
 msgid "Lecture name…"
 msgstr "שם ההרצאה…"
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:112
+#: src/features/merged-pdfs/components/MergedPicker.tsx:141
 #: src/features/search/SearchView.tsx:191
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Lectures"
@@ -2041,16 +2047,15 @@ msgstr "התאמת מילה שלמה"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/features/merged-pdfs/MergedNewView.tsx:125
+#: src/features/merged-pdfs/MergedNewView.tsx:129
 msgid "Merge order"
 msgstr "סדר המיזוג"
 
-#: src/features/merged-pdfs/MergedNewView.tsx:148
-msgid "Merge PDFs"
-msgstr "צור PDF מאוחד"
+#: src/features/lectures/sidebar/tree/CourseMergedRow.tsx:29
+msgid "Merge summaries"
+msgstr "איחוד סיכומים"
 
-#: src/features/course-overview/CourseView.tsx:138
-#: src/features/merged-pdfs/MergedPdfsView.tsx:38
+#: src/features/merged-pdfs/MergedPdfsView.tsx:32
 msgid "Merged PDFs"
 msgstr "קבצי PDF מאוחדים"
 
@@ -2100,10 +2105,6 @@ msgstr "חדשים"
 #: src/features/lectures/sidebar/NewCourseRow.tsx:59
 msgid "New course"
 msgstr "קורס חדש"
-
-#: src/features/merged-pdfs/MergedNewView.tsx:87
-msgid "New merged PDF"
-msgstr "PDF מאוחד חדש"
 
 #: src/features/merged-pdfs/components/MergedRow.tsx:83
 msgid "Newer version available"
@@ -2197,7 +2198,7 @@ msgstr "אף חומר לא יישלח"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/merged-pdfs/MergedPdfsView.tsx:55
+#: src/features/merged-pdfs/MergedPdfsView.tsx:53
 msgid "No merged PDFs yet"
 msgstr "עדיין אין קבצי PDF מאוחדים"
 
@@ -2233,7 +2234,7 @@ msgstr "לא נמצאו הקלטות."
 msgid "No source URL yet. Use the pencil to choose one."
 msgstr "אין עדיין כתובת מקור. בחרו אותה בעזרת העיפרון."
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:57
+#: src/features/merged-pdfs/components/MergedPicker.tsx:78
 msgid "No summary PDF yet"
 msgstr "עדיין אין PDF של הסיכום"
 
@@ -2467,7 +2468,7 @@ msgstr "קישורים אחרים"
 msgid "Other…"
 msgstr "אחר…"
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:74
+#: src/features/merged-pdfs/components/OutdatedChip.tsx:53
 msgid "Outdated PDF"
 msgstr "PDF לא עדכני"
 
@@ -2635,7 +2636,7 @@ msgid "Recitation name…"
 msgstr "שם התרגול…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:28
-#: src/features/merged-pdfs/components/MergedPicker.tsx:122
+#: src/features/merged-pdfs/components/MergedPicker.tsx:146
 #: src/features/search/SearchView.tsx:199
 msgid "Recitations"
 msgstr "תרגולים"
@@ -2665,6 +2666,14 @@ msgstr "הקלטות. הורדת הקלטה מתחילה מיד את יצירת 
 #: src/features/downloads/components/MediaNote.tsx:19
 msgid "Recordings. Downloading one starts nothing; you run the summary yourself."
 msgstr "הקלטות. הורדת הקלטה לא מפעילה דבר, ואת הסיכום תריץ בעצמך."
+
+#: src/features/merged-pdfs/components/OutdatedChip.tsx:59
+msgid "Recreate"
+msgstr "יצירה מחדש"
+
+#: src/features/merged-pdfs/components/OutdatedChip.tsx:58
+msgid "Recreate the PDF of \"{name}\" from its latest summary?"
+msgstr "ליצור מחדש את ה-PDF של \"{name}\" מהסיכום העדכני?"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:172
 #: src/features/lectures/components/AssignmentDocCard.tsx:175
@@ -2708,11 +2717,15 @@ msgstr "שמות של {count} הורדות שונו — יש תווים שאי �
 msgid "Renamed to \"{name}\" — some characters can't be used in a folder name."
 msgstr "השם שונה ל-\"{name}\" — יש תווים שאי אפשר להשתמש בהם בשם תיקייה."
 
+#: src/features/merged-pdfs/components/OutdatedChip.tsx:38
+msgid "Rendering…"
+msgstr "מרנדר…"
+
 #: src/features/merged-pdfs/components/MergedOrder.tsx:169
 msgid "Reordering cancelled. {name} is back at position {position} of {total}."
 msgstr "שינוי הסדר בוטל. {name} חזר למיקום {position} מתוך {total}."
 
-#: src/features/merged-pdfs/MergedNewView.tsx:156
+#: src/features/merged-pdfs/MergedNewView.tsx:161
 msgid "Replace"
 msgstr "החלפה"
 
@@ -2901,21 +2914,13 @@ msgstr "בחירת {0}"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:113
+#: src/features/merged-pdfs/components/MergedPicker.tsx:141
 msgid "Select all"
 msgstr "בחירת הכול"
 
 #: src/features/downloads/components/NewView.tsx:206
 msgid "Select all in this section"
 msgstr "בחירת כל היחידה"
-
-#: src/features/merged-pdfs/components/MergedPicker.tsx:113
-msgid "Select all lectures"
-msgstr "בחירת כל ההרצאות"
-
-#: src/features/merged-pdfs/components/MergedPicker.tsx:123
-msgid "Select all recitations"
-msgstr "בחירת כל התרגולים"
 
 #: src/features/lectures/AssignmentView.tsx:189
 msgid "Send {name} to Gemini"
@@ -3041,6 +3046,7 @@ msgstr "שלב {0} מתוך {1}"
 #: src/features/lectures/DocEditor.tsx:298
 #: src/features/lectures/MainView.tsx:198
 #: src/features/lectures/MainView.tsx:209
+#: src/features/merged-pdfs/components/OutdatedChip.tsx:27
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
@@ -3061,7 +3067,7 @@ msgstr "ללמוד עם AI"
 msgid "Submit"
 msgstr "שליחה"
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:102
+#: src/features/merged-pdfs/components/MergedPicker.tsx:129
 msgid "Summaries"
 msgstr "סיכומים"
 
@@ -3312,9 +3318,9 @@ msgstr "ה-PDF חסר."
 msgid "The PDF is older than an earlier step's output. Re-generate it."
 msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור אותו מחדש."
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:72
-msgid "The PDF is older than the latest summary text."
-msgstr "ה-PDF ישן מהטקסט העדכני של הסיכום."
+#: src/features/merged-pdfs/components/OutdatedChip.tsx:44
+msgid "The PDF is older than the latest summary text. Click to recreate it."
+msgstr "ה-PDF ישן מהסיכום העדכני. לחיצה תיצור אותו מחדש."
 
 #: src/features/lectures/utils/pdfBadge.ts:25
 msgid "The PDF is older than the summary. Re-generate it."
@@ -3506,7 +3512,7 @@ msgstr "לא ניתן לבטל את הפעולה."
 msgid "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, ולכן אי אפשר לשמור אותם כאן. כל שאר ההגדרות במסך הזה פועלות כרגיל."
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:107
+#: src/features/merged-pdfs/components/MergedPicker.tsx:134
 msgid "This course has no lectures yet."
 msgstr "עדיין אין הרצאות בקורס הזה."
 
@@ -3580,7 +3586,7 @@ msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש.
 msgid "Three ways to download"
 msgstr "שלוש דרכים להוריד"
 
-#: src/features/merged-pdfs/MergedNewView.tsx:130
+#: src/features/merged-pdfs/MergedNewView.tsx:134
 msgid "Tick summaries to add them here, then drag to set their order."
 msgstr "סמן סיכומים כדי להוסיף אותם לכאן, ואז גרור כדי לקבוע את הסדר."
 

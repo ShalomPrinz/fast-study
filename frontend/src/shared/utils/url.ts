@@ -69,6 +69,11 @@ export function mergedBase(course: string): string {
   return path`/courses/${course}/merged`
 }
 
+// API path for a course's summary headings: `/courses/{c}/headings`. Already encoded.
+export function headingsBase(course: string): string {
+  return path`/courses/${course}/headings`
+}
+
 // The Downloads page's edit-source panel route for a course.
 export function editSourceRoute(course: string): string {
   return path`/downloads/edit-source/${course}`

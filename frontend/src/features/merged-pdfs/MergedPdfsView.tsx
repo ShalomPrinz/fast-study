@@ -25,12 +25,6 @@ function MergedPdfsBody({ course }: { course: string }) {
   const rows = items ? mergedRows(course, items, status) : []
   const courseNode = courses.find((c) => c.name === course)
 
-  const create = (
-    <Link className="btn btn--primary merged-create-link" to={mergedNewRoute(course)}>
-      <Trans>Create new</Trans>
-    </Link>
-  )
-
   return (
     <main className="main-view main-view--page">
       <PageHeader
@@ -43,15 +37,19 @@ function MergedPdfsBody({ course }: { course: string }) {
             </span>
           ) : undefined
         }
-        actions={rows.length > 0 ? create : undefined}
       />
       <div className="page-body">
         <div className="page-column">
+          <div className="merged-history-create">
+            <Link className="btn btn--primary merged-create-link" to={mergedNewRoute(course)}>
+              <Trans>Create new</Trans>
+            </Link>
+          </div>
           {items === null ? (
             <div className="spinner" />
           ) : rows.length === 0 ? (
             <div className="merged-empty">
-              <EmptyCard icon="document" action={create}>
+              <EmptyCard icon="document">
                 <Trans>No merged PDFs yet</Trans>
               </EmptyCard>
             </div>

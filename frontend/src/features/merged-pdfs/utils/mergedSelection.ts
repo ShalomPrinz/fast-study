@@ -57,10 +57,35 @@ export function toggleInOrder(order: MergedPart[], part: MergedPart, on: boolean
   return has ? order.filter((p) => partKey(p) !== key) : order
 }
 
-/** The shortcut: appends every part not yet ticked, in the given order. */
+/** Appends every part not yet ticked, in the given order. */
 export function appendMissing(order: MergedPart[], parts: MergedPart[]): MergedPart[] {
   return parts.reduce((acc, p) => toggleInOrder(acc, p, true), order)
 }
+
+export type SectionTick = 'none' | 'some' | 'all'
+
+/** How much of a section's mergeable items are ticked; a section with none to merge reads `none`. */
+export function sectionTick(items: PickItem[], order: MergedPart[]): SectionTick {
+  const ticked = new Set(order.map(partKey))
+  const parts = mergeable(items)
+  const count = parts.filter((p) => ticked.has(partKey(p))).length
+  if (count === 0) return 'none'
+  return count === parts.length ? 'all' : 'some'
+}
+
+/** The section checkbox: all ticked unticks the section's mergeable items, anything less ticks the rest. */
+export function toggleSection(order: MergedPart[], items: PickItem[]): MergedPart[] {
+  const parts = mergeable(items)
+  if (sectionTick(items, order) === 'all') {
+    const drop = new Set(parts.map(partKey))
+    return order.filter((p) => !drop.has(partKey(p)))
+  }
+  return appendMissing(order, parts)
+}
+
+/** The picker's outdated chip while its lecture's `pdf` step is in flight: the PDF is being recreated. */
+export const isRenderingPdf = (inFlight: { step: string } | null): boolean =>
+  inFlight?.step === 'pdf'
 
 /** Moves the part at `from` to index `to`; an out-of-range index leaves the order as it was. */
 export function movePart(order: MergedPart[], from: number, to: number): MergedPart[] {

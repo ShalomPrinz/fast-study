@@ -1,7 +1,7 @@
 # Merged PDFs
 
 `/course/:course/merged` (`features/merged-pdfs/MergedPdfsView`) — a course's merged PDFs, newest first,
-reached from the "Merged PDFs" secondary button under `CurrentStudy` on the overview. The create page
+reached from the sidebar's "Merge summaries" row (`CourseMergedRow`, `.course-merged-row`, under the overview row; selected on this page and on the create page). The create page
 (`/course/:course/merged/new`, `ROUTES.mergedNew`, `mergedNewRoute`, `MergedNewView`) is below.
 
 ## Data
@@ -32,7 +32,7 @@ toast-once memory rearms on any status that lacks the key).
 
 ## Row
 
-Title, `created_at`, parts in merge order under their raw folder names (as the sidebar shows them; only the
+The page opens with one centred `.btn--primary` "Create new" (`.merged-history-create`, empty or not) above the list. Row: title, `created_at`, parts in merge order under their raw folder names (as the sidebar shows them; only the
 PDF's bookmarks are Hebrew-translated), `missing` beside a part whose folder is gone, a "newer version
 available" chip when `stale`. Open / Open with… (`canOpenWith()`) / Re-create. No delete anywhere.
 
@@ -44,14 +44,23 @@ Re-create navigates to `mergedNewRoute(course)` with router state `MergedPrefill
 ## Create page
 
 `MergedNewView`: a title (`#merged-title`, required), then `MergedPicker` at inline-start and `MergedOrder` at
-inline-end (stacked under 640px of the page's own width, a container query), then "Merge PDFs"
-(`.merged-create`, disabled while the title is blank, the order empty or a request is in flight).
+inline-end (stacked under 640px of the page's own width, a container query). The page title and the submit
+(`.merged-create`, centred under the order column only, in `.merged-order-stack`) both read "Create merged summary"; the submit is disabled while the title is blank, the order empty or a request is in flight.
 
-- **Picker** lists the sidebar's tracks verbatim (`lectureTrack` / `recitationTrack`, so a lectures-only course
-  is one merged list with one "select all"), parts by raw folder name. A part with no `summary.pdf` is a
+- **Picker** lists the sidebar's tracks verbatim (`lectureTrack` / `recitationTrack`; a lectures-only course is
+  one merged list under a "Select all" title), parts by raw folder name with the summary's first heading
+  under it in gray (`useCourseHeadings` → `GET /courses/{c}/headings`, keyed `partKey`, refetched on SSE; one
+  ellipsised line, full text in a `<Tooltip>`). Each section's title row reuses the downloads `.group-header`
+  hover and carries a native checkbox, `.merged-section-toggle[data-kind="lecture"|"recitation"]` (indeterminate
+  when some mergeable parts are ticked); a click anywhere on the row toggles it (`sectionTick`, `toggleSection`):
+  all ticked unticks the section's mergeable parts, else the rest are appended. A part with no `summary.pdf` is a
   disabled `.merged-pick--missing` with a tooltip (a part already ticked stays enabled so it can be unticked,
-  `checkboxDisabled`; one that vanishes from the tree is pruned from the order and named in the dropped note, `pruneVanished`); one whose PDF is older than `summary.md` (tree mtimes,
-  `pdfState`) carries an "Outdated PDF" chip and stays tickable. "Select all" appends the unticked ones.
+  `checkboxDisabled`; one that vanishes from the tree is pruned from the order and named in the dropped note, `pruneVanished`).
+  One whose PDF is older than `summary.md` (tree mtimes, `pdfState`) stays tickable and carries `OutdatedChip`
+  (`.merged-pick-outdated`), a button: it opens a `ConfirmModal`, and confirming runs the lecture page's pdf step
+  (`runStep(..., 'pdf')`, no `fresh`, so the old PDF stays tickable meanwhile). While `/status` holds that
+  lecture's `pdf` step in flight (`isRenderingPdf`) the chip is a spinner with "Rendering…"; the SSE tree refetch
+  drops it once the new PDF lands, and a failure toasts through the usual pipeline error path.
 - **Order** is the ticked parts: ticking appends, unticking removes, drag reorders. Parts are keyed
   `kind:name` (`partKey`), since a lecture and a recitation may share a name.
 - **Submit** posts `overwrite=false`; `submitAction` decides: `started`/`busy` go to the history,

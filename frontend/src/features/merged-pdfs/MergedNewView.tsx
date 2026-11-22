@@ -14,7 +14,6 @@ import PageHeader from '@/shared/components/PageHeader'
 import MergedOrder from './components/MergedOrder'
 import MergedPicker from './components/MergedPicker'
 import {
-  appendMissing,
   applyPrefill,
   canCreate,
   existingTitle,
@@ -25,6 +24,7 @@ import {
   readPrefill,
   submitAction,
   toggleInOrder,
+  toggleSection,
   type SubmitOutcome,
 } from './utils/mergedSelection'
 import '@/styles/spinner.css'
@@ -84,7 +84,7 @@ function MergedNewBody({ course, node }: { course: string; node: Course }) {
 
   return (
     <main className="main-view main-view--page">
-      <PageHeader eyebrow={course} title={t`New merged PDF`} />
+      <PageHeader eyebrow={course} title={t`Create merged summary`} />
       <div className="page-body">
         <form className="merged-new" onSubmit={onSubmit}>
           <div className="merged-new-title">
@@ -113,40 +113,45 @@ function MergedNewBody({ course, node }: { course: string; node: Course }) {
           )}
           <div className="merged-cols">
             <MergedPicker
-              lectures={groups.lectures}
-              recitations={groups.recitations}
+              course={course}
+              groups={groups}
               single={!!node.lectures_only}
               order={order}
               onToggle={(part, on) => setOrder((o) => toggleInOrder(o, part, on))}
-              onSelectAll={(parts) => setOrder((o) => appendMissing(o, parts))}
+              onToggleSection={(items) => setOrder((o) => toggleSection(o, items))}
             />
-            <section className="merged-col merged-col--order" aria-labelledby="merged-order-title">
-              <h2 className="merged-col-title" id="merged-order-title">
-                <Trans>Merge order</Trans>
-              </h2>
-              <div className="merged-col-body">
-                {order.length === 0 ? (
-                  <p className="merged-hint merged-order-empty">
-                    <Trans>Tick summaries to add them here, then drag to set their order.</Trans>
-                  </p>
-                ) : (
-                  <MergedOrder
-                    order={order}
-                    showKind={!node.lectures_only}
-                    onMove={(from, to) => setOrder((o) => movePart(o, from, to))}
-                  />
-                )}
+            <div className="merged-order-stack">
+              <section
+                className="merged-col merged-col--order"
+                aria-labelledby="merged-order-title"
+              >
+                <h2 className="merged-col-title" id="merged-order-title">
+                  <Trans>Merge order</Trans>
+                </h2>
+                <div className="merged-col-body">
+                  {order.length === 0 ? (
+                    <p className="merged-hint merged-order-empty">
+                      <Trans>Tick summaries to add them here, then drag to set their order.</Trans>
+                    </p>
+                  ) : (
+                    <MergedOrder
+                      order={order}
+                      showKind={!node.lectures_only}
+                      onMove={(from, to) => setOrder((o) => movePart(o, from, to))}
+                    />
+                  )}
+                </div>
+              </section>
+              <div className="merged-new-actions">
+                <button
+                  type="submit"
+                  className="btn btn--primary merged-create"
+                  disabled={!canCreate(title, order) || submitting}
+                >
+                  <Trans>Create merged summary</Trans>
+                </button>
               </div>
-            </section>
-          </div>
-          <div className="merged-new-actions">
-            <button
-              type="submit"
-              className="btn btn--primary merged-create"
-              disabled={!canCreate(title, order) || submitting}
-            >
-              <Trans>Merge PDFs</Trans>
-            </button>
+            </div>
           </div>
         </form>
       </div>

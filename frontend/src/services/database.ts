@@ -17,6 +17,7 @@ import {
   assignmentBase,
   courseOverviewBase,
   mergedBase,
+  headingsBase,
 } from '@/shared/utils/url'
 import { createClient } from './http'
 import { reportVideoArrived } from './backend'
@@ -311,6 +312,11 @@ interface RawMergedPdf {
   created_at: string
   stale: boolean
   parts: { name: string; kind: Kind; pdf_mtime: string; exists: boolean }[]
+}
+
+/** Each lecture's and recitation's first summary heading, keyed `kind:name` like `partKey`; items without one are absent. */
+export async function fetchCourseHeadings(course: string): Promise<Record<string, string>> {
+  return (await database.get<{ headings: Record<string, string> }>(headingsBase(course))).headings
 }
 
 /** A course's merged PDFs, newest first; only those whose PDF exists. */
