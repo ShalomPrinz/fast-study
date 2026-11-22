@@ -8,6 +8,7 @@ from typing import Literal
 import runtime
 import sentry_policy
 import sentry_sdk
+from course import merged as course_merged
 from course import overview
 from course import runner as course_runner
 from fastapi import FastAPI, Query
@@ -286,6 +287,21 @@ async def run_assignment_step(
             course, assignment, step, fresh=fresh and pdf_only
         )
     }
+
+
+@app.post("/courses/{course}/merged")
+async def merge_pdfs(course: str, body: course_merged.MergeRequest):
+    """Join the chosen parts' summary.pdf under one title. Refusals and the run: docs/PIPELINE.md#merged-pdf."""
+
+    try:
+        title, name = await asyncio.to_thread(course_merged.validate, body, course)
+    except course_merged.Refused as e:
+        return _error(e.body, e.status)
+    except db_client.DbClientError as e:
+        if not _is_user_actionable(e):
+            raise
+        return _error(failure(str(e), e.code, **e.params), 409)
+    return {"status": course_merged.try_start(course, title, name, body.parts)}
 
 
 @app.post("/courses/{course}/lectures/{lecture}/pipeline")

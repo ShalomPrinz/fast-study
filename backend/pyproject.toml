@@ -18,6 +18,7 @@ dependencies = [
     "faststudy-sentry",
     "pypdfium2>=4",
     "pillow>=10",
+    "pypdf==7.0.0",
 ]
 
 [tool.uv.sources]

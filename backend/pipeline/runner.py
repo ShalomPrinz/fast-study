@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import NamedTuple, Optional
 
 import sentry_sdk
+from course import merged as course_merged
 from course import runner as course_runner
 from services import auto_retry, db_client, google_auth, notices, settings
 from services.errors import (
@@ -210,8 +211,8 @@ def get_status() -> dict:
 
     return {
         "runner": dict(_runner_status),
-        "in_flight": list(_in_flight.values()),
-        "errors": dict(_errors),
+        "in_flight": [*_in_flight.values(), *course_merged.in_flight()],
+        "errors": {**_errors, **course_merged.errors()},
         "queue": [entry._asdict() for entry in _queue],
         "overview_running": course_runner.active_courses(),
         "notices": notices.recent(NOTICE_SCOPE),
@@ -254,10 +255,11 @@ async def _prune() -> None:
     Any existing lecture keeps its error whatever files it has, since a step may run off any of them.
     Pings SSE when it removed something, so clients refetch a /status that was built before it."""
 
-    if not _errors:
+    if not _errors and not course_merged.errors():
         return
     # A record written while the tree is fetched postdates it, so only earlier ones may go.
     before = dict(_errors)
+    merged_before = course_merged.errors()
     try:
         tree = await asyncio.to_thread(db_client.get_tree)
     except Exception:
@@ -278,6 +280,8 @@ async def _prune() -> None:
             _drop_retry(skey)
             del _errors[skey]
             removed = True
+    if course_merged.prune_errors(merged_before, {c["name"] for c in tree}):
+        removed = True
     if removed:
         db_client.notify()
 

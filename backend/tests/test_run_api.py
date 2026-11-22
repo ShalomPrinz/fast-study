@@ -494,3 +494,63 @@ class TestRunAssignmentStep:
             client.post("/courses/C/assignments/A/run/solution?fresh=true")
         assert run.call_args_list[0].kwargs == {"fresh": True}
         assert run.call_args_list[1].kwargs == {"fresh": False}
+
+
+class TestMergedRoute:
+    BODY = {"title": "T", "parts": [{"name": "Lecture 1", "kind": "lecture"}]}
+
+    def test_a_refusal_answers_its_status_and_body(self):
+        from course import merged
+
+        with patch.object(
+            merged,
+            "validate",
+            side_effect=merged.Refused(409, "m", "merged_pdf_exists", title="T"),
+        ):
+            response = client.post("/courses/C/merged", json=self.BODY)
+        assert response.status_code == 409
+        assert response.json() == {
+            "error": "m",
+            "code": "merged_pdf_exists",
+            "params": {"title": "T"},
+        }
+
+    def test_a_valid_request_starts_the_run(self):
+        from course import merged
+
+        with (
+            patch.object(merged, "validate", return_value=("T", "T")),
+            patch.object(merged, "try_start", return_value="started") as start,
+        ):
+            response = client.post(
+                "/courses/C/merged", json={**self.BODY, "overwrite": True}
+            )
+        assert response.json() == {"status": "started"}
+        assert start.call_args.args[:3] == ("C", "T", "T")
+
+    def test_busy_is_passed_on(self):
+        from course import merged
+
+        with (
+            patch.object(merged, "validate", return_value=("T", "T")),
+            patch.object(merged, "try_start", return_value="busy"),
+        ):
+            assert client.post("/courses/C/merged", json=self.BODY).json() == {
+                "status": "busy"
+            }
+
+    def test_an_unconfigured_data_root_is_a_409(self):
+        from course import merged
+
+        with patch.object(
+            merged,
+            "validate",
+            side_effect=DbClientError("no root", "data_root_not_configured"),
+        ):
+            response = client.post("/courses/C/merged", json=self.BODY)
+        assert response.status_code == 409
+        assert response.json()["code"] == "data_root_not_configured"
+
+    def test_a_bad_part_kind_is_a_422(self):
+        body = {"title": "T", "parts": [{"name": "x", "kind": "assignment"}]}
+        assert client.post("/courses/C/merged", json=body).status_code == 422
