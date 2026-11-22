@@ -19,7 +19,7 @@ export default function CourseMergedRow() {
   return (
     <li>
       <button
-        className={`lecture-btn course-overview-row course-merged-row${isSelected ? ' selected' : ''}`}
+        className={`lecture-btn course-merged-row${isSelected ? ' selected' : ''}`}
         onClick={() => navigate(mergedRoute(course.name))}
       >
         <span className="course-overview-icon" aria-hidden="true">
