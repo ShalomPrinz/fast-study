@@ -13,6 +13,7 @@ import { promisify } from 'node:util';
 import { bindPorts, call } from './lib/api.mjs';
 import { appServices, appUrl } from './lib/browser.mjs';
 import { COURSE_FILES, oversizePdf } from './lib/course-files.mjs';
+import { minimalPdf } from './lib/pdf.mjs';
 import {
   BANNER,
   FAKE_COURSE_URL,
@@ -88,19 +89,8 @@ const VIDEO_ARGS = [
   '-shortest',
 ];
 
-// A valid one-page PDF, written by hand: the material path only needs bytes a PDF reader accepts,
-// and generating one through pandoc would make the harness depend on the tool it is testing.
-const MINIMAL_PDF = `%PDF-1.4
-1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
-2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
-3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>endobj
-4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj
-5 0 obj<</Length 58>>stream
-BT /F1 18 Tf 72 760 Td (harness fixture handout) Tj ET
-endstream
-endobj
-trailer<</Root 1 0 R>>
-`;
+// Valid for pypdf and pdf.js, outline included: the merge path joins these, and generating one through pandoc would make the harness depend on the tool it tests.
+const HANDOUT_PDF = minimalPdf();
 
 function say(line) {
   console.log(line);
@@ -143,11 +133,8 @@ async function buildHarness() {
       path.join(paths.fixtures, name),
     );
   }
-  fs.writeFileSync(path.join(paths.fixtures, 'handout.pdf'), MINIMAL_PDF);
-  fs.writeFileSync(
-    path.join(paths.fixtures, 'big-appendix.pdf'),
-    oversizePdf(Buffer.from(MINIMAL_PDF)),
-  );
+  fs.writeFileSync(path.join(paths.fixtures, 'handout.pdf'), HANDOUT_PDF);
+  fs.writeFileSync(path.join(paths.fixtures, 'big-appendix.pdf'), oversizePdf(HANDOUT_PDF));
   for (const [name, file] of Object.entries(COURSE_FILES)) {
     if (file.build) fs.writeFileSync(path.join(paths.fixtures, name), file.build());
   }

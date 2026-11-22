@@ -97,7 +97,10 @@ named for `/hunt-bugs`' flows, and any task can use them as ready-made fixtures:
 | `hb-prog`      | sidebar section progress      | two lectures, 8 recitations (5 studied), 5 assignments (2 studied)            |
 | `hb-stats`     | sidebar section progress      | one lecture, 7 recitations (all studied), 4 assignments (none studied)        |
 | `hb-algo`      | sidebar section progress      | one lecture, 6 recitations (none studied), 6 assignments (all studied)        |
+| `hb-merge`     | merged PDFs                   | `שיעור 1`, `שיעור 2` and recitation `תרגול 1` with a valid `summary.pdf` (nested outline), `שיעור 3` summarised without a PDF |
 | `hb-selfcheck` | the self-check's pipeline run | not a flow's — leave it alone                                                 |
+
+Every seeded `summary.pdf`, material and assignment PDF is `fixtures/handout.pdf`, built by `lib/pdf.mjs`: a valid one-page PDF with a nested outline, so pypdf (the merge) and pdf.js both open it. A spec that writes a lecture's PDF through the database sends `POST /notify` after it, as the backend's pdf step does.
 
 The seeded `drive_url.txt` points at the fake providers' `/drive/view/…`, a page the fake providers serve,
 so "Open in Drive" never leaves the machine. `<harness>/data-empty` is a second marked root, empty
