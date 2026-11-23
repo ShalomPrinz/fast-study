@@ -1,6 +1,5 @@
 import asyncio
 import io
-import threading
 from datetime import datetime, timezone
 from unittest.mock import patch
 
@@ -10,6 +9,7 @@ from course import merged
 from pipeline import runner
 from pypdf import PdfReader, PdfWriter
 from services.db_client import DbClientError
+from tests.gate import Gate
 
 NODE = {
     "name": "C",
@@ -175,27 +175,6 @@ class TestValidate:
         assert e.value.body["params"] == {"name": part.name, "kind": part.kind}
 
 
-class _Gate:
-    """Fake parks in `block()` until `open()`; `reached()` awaits it parking, by which point the
-    course lock is held and any later merge is queued behind it."""
-
-    def __init__(self):
-        self._reached = threading.Semaphore(0)
-        self._open = threading.Event()
-
-    def block(self):
-        self._reached.release()
-        self._open.wait(timeout=5)
-
-    def open(self):
-        self._open.set()
-
-    async def reached(self):
-        assert await asyncio.to_thread(self._reached.acquire, timeout=5), (
-            "fake never reached block()"
-        )
-
-
 async def _finished():
     """Await every merge task started so far."""
     tasks = set(merged._tasks)
@@ -273,7 +252,7 @@ class TestRun:
         assert asyncio.run(go()) == (1, 0)
 
     def test_merges_of_one_course_run_one_at_a_time(self, db):
-        gate = _Gate()
+        gate = Gate()
 
         def slow_fetch(*_args):
             gate.block()
@@ -297,7 +276,7 @@ class TestRun:
         assert "pdf" in db["A"] and "pdf" in db["B"]
 
     def test_started_at_is_reset_when_the_lock_is_acquired(self, db):
-        gate = _Gate()
+        gate = Gate()
 
         def slow_fetch(*_args):
             gate.block()
