@@ -37,4 +37,6 @@ printed digest left a question open.
 ### Then fix it in the owning service
 
 The `service` tag says which runtime reported it; route the fix to that service's subagent. The
-output is diagnosis, not a licence to edit, and never resolve or ignore the issue in Sentry.
+output is diagnosis, not a licence to edit. Never resolve or ignore the issue by hand or through
+the API: name it in the fix commit's `Fixes FASTSTUDY-<id>` trailer (see `git-commit`), and Sentry
+resolves it when the release carrying the fix is built.
