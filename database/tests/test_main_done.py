@@ -20,7 +20,7 @@ def notifies(monkeypatch):
     import database_main
 
     calls = []
-    monkeypatch.setattr(database_main, "broadcast_notify", lambda: calls.append(1))
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: calls.append(t))
     return calls
 
 
@@ -57,6 +57,7 @@ def test_set_and_clear_are_idempotent_and_show_on_the_tree(
         assert not (d / ".done").exists()
         assert _entry(client, kind, "L1")["done"] is False
     assert len(notifies) == 4
+    assert set(notifies) == {("tree",)}
 
 
 @pytest.mark.parametrize("method", ["put", "delete"])

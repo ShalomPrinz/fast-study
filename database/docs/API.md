@@ -104,10 +104,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `POST   /settings/data-root/probe`                         | judge a candidate `{data_root}` without creating anything; `200` `{path}`, `422` coded |
 | `POST   /config`                                           | apply `{data_root, error_reports, course_structure}` to the running process |
 | `GET    /events`                                           | SSE stream of `notify` events                                             |
-| `POST   /notify`                                           | broadcast a `notify` event                                                |
+| `POST   /notify`                                           | broadcast a `notify` event; optional body `{topics}` is relayed ([EVENTS](EVENTS.md)) |
 
-Course create/rename/lectures-only pick, lecture create/rename, `POST /…/removed` and a `POST /config` carrying `data_root` or `course_structure` broadcast
-a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
+Which routes broadcast a `notify`, and with which topics, is in [EVENTS.md](EVENTS.md).
 
 ## Write semantics
 

@@ -120,10 +120,10 @@ def test_patch_attach_toggles_and_notifies(client, lecture, monkeypatch):
     import database_main
 
     pings = []
-    monkeypatch.setattr(database_main, "broadcast_notify", lambda: pings.append(1))
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: pings.append(t))
     client.post(f"{URL}/materials", content=b"a")
     r = client.patch(f"{URL}/materials/material.pdf", json={"attach": False})
-    assert r.status_code == 204 and pings == [1]
+    assert r.status_code == 204 and pings == [("tree",)]
     assert client.get(f"{URL}/materials").json()["materials"][0]["attach"] is False
     client.patch(f"{URL}/materials/material.pdf", json={"attach": True})
     assert client.get(f"{URL}/materials").json()["materials"][0]["attach"] is True
@@ -236,7 +236,7 @@ def test_patch_attach_write_failure_is_500_and_silent(client, lecture, monkeypat
     import fs.material_meta as mm
 
     pings = []
-    monkeypatch.setattr(database_main, "broadcast_notify", lambda: pings.append(1))
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: pings.append(t))
     client.post(f"{URL}/materials", content=b"a")
     client.patch(f"{URL}/materials/material.pdf", json={"attach": False})
     before = (lecture / ".materials.json").read_text()
