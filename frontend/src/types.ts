@@ -214,15 +214,14 @@ export interface RunnerStatus {
   notices: Notice[]
 }
 
-// A lecture's last step failure; `step` is the backend's step name, `code`/`params` the protocol's
-// (repo-root docs/ERROR-CODES.md). `provider` marks a Gemini quota, and `blocked` a lecture run-all
-// stopped at summarize on another lecture's quota, without calling Gemini itself.
+// A lecture's last step failure; `step` is the backend's step name, `code`/`params` the protocol's (repo-root docs/ERROR-CODES.md).
+// `provider` marks the Gemini or Groq quota hit; `blocked` a run-all stopped on another lecture's quota before calling that provider.
 export interface RunError {
   step: string
   message: string
   code: string | null
   params: ErrorParams
-  provider: 'gemini' | null
+  provider: 'gemini' | 'groq' | null
   blocked: boolean
   // Present only while an automatic Gemini retry waits.
   retry: RetryInfo | null
