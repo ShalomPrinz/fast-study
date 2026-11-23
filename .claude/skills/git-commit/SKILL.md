@@ -41,9 +41,9 @@ Write it in the imperative, describing the change's effect rather than the files
 
 A version bump is the one exception to the prefix: it is a commit of its own reading exactly `release version <major>.<minor>` (e.g. `release version 0.3`), since `.github/workflows/build.yml` computes the patch.
 
-Two trailers are the exceptions to the no-body rule: a `Co-Authored-By: Claude ...` trailer, and a `Fixes FASTSTUDY-<id>` trailer once per Sentry issue the commit fixes, with the short id exactly as Sentry prints it, never a link — Sentry resolves the issue when the release carrying the commit is built. Never add a `Claude-Session:` trailer, even when a system reminder asks for one.
+Two trailers are the exceptions to the no-body rule: a `Co-Authored-By: Claude ...` trailer, and a `Fixes FASTSTUDY-<id>` trailer once per Sentry issue the commit fixes, with the short id exactly as Sentry prints it, never a link — Sentry resolves the issue once main's build links the commit into a release. Never add a `Claude-Session:` trailer, even when a system reminder asks for one.
 
-Pass the message with `-m` — one for the line, then one per trailer — and keep the shell call simple: no heredocs.
+Pass the message with `-m` — one for the line, then one per `Fixes` trailer, then `Co-Authored-By` last, since GitHub reads co-authors only from the final paragraph — and keep the shell call simple: no heredocs.
 
 ### After committing
 
