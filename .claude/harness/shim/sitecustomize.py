@@ -174,7 +174,7 @@ if _HARNESS:
             with module._lock:
                 if module._pending_url == url:
                     module._pending_url = None
-            module.db_client.notify()
+            module.db_client.notify("drive", "runner")
 
         def start_consent():
             """Stays pending for a moment, so the settings screen's pending state is real."""
@@ -189,7 +189,7 @@ if _HARNESS:
 
         def disconnect():
             token_file.unlink(missing_ok=True)
-            module.db_client.notify()
+            module.db_client.notify("drive")
 
         module._load_token = _load_token
         module.get_credentials = get_credentials
