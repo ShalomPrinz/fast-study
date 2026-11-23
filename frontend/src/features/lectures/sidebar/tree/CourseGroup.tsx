@@ -6,6 +6,7 @@ import { CourseGroupContext } from './CourseGroupContext'
 import { LectureListProvider } from './LectureListContext'
 import CourseHeader from './CourseHeader'
 import CourseOverviewRow from './CourseOverviewRow'
+import CourseMergedRow from './CourseMergedRow'
 import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
 import RecitationsGroup from './RecitationsGroup'
@@ -41,6 +42,7 @@ export default function CourseGroup({
         {expanded && (
           <ul className="lecture-list">
             <CourseOverviewRow />
+            <CourseMergedRow />
             <LectureListProvider kind="lecture">
               <LectureList />
               <AddLectureInput />

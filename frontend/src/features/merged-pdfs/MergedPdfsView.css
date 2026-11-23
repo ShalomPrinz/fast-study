@@ -1,0 +1,18 @@
+.merged-empty {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-8);
+}
+
+.merged-history-create {
+  display: flex;
+  justify-content: center;
+  margin-block-end: var(--space-6);
+}
+
+.merged-create-link {
+  min-width: 240px;
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--fs-course);
+  text-decoration: none;
+}

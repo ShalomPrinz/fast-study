@@ -374,6 +374,37 @@ def delete_generated(course: str, name: str, filename: str) -> None:
     _raise_for_status(r)
 
 
+def _merged_url(course: str, title: str) -> str:
+    return f"{DATABASE_URL}/courses/{_q(course)}/merged/{_q(title)}"
+
+
+def get_merged(course: str, title: str) -> dict:
+    """The merged PDF a title sanitizes to: `{name, entry}`, `entry` null when none is on disk.
+    Raises `course_not_found` / `name_has_no_legal_characters`."""
+
+    r = _request("GET", _merged_url(course, title))
+    _raise_for_status(r)
+    return r.json()
+
+
+def put_merged_pdf(course: str, name: str, data: bytes) -> None:
+    """Write `merged/{name}.pdf` (`file_locked` when another program holds it open)."""
+
+    r = _request("PUT", f"{_merged_url(course, name)}/pdf", data=data)
+    _raise_for_status(r)
+
+
+def patch_merged_meta(course: str, title: str, entry: dict) -> None:
+    """Replace the merged entry a title sanitizes to, wholly."""
+
+    r = _request(
+        "PATCH",
+        f"{DATABASE_URL}/courses/{_q(course)}/merged/meta",
+        json={"title": title, "entry": entry},
+    )
+    _raise_for_status(r)
+
+
 def notify() -> None:
     """Fire-and-forget broadcast on the database SSE notify channel. Failure is swallowed —
     the channel is for liveness pings, not for correctness."""

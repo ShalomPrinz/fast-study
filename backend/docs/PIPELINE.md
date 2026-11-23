@@ -164,6 +164,14 @@ An assignment's Intuition Guide and Full Solution are runner steps under `kind="
 - A daily quota records `gemini_quota_exhausted` like any step but never sets `_summarize_block` and never sweeps other records: no run-all depends on it.
 - `prune_stale_errors` keeps an assignment's error while the assignment is in the tree.
 
+## Merged PDF
+
+`course/merged.py` joins chosen lectures'/recitations' `summary.pdf` into one course-level PDF, served by `POST /courses/{c}/merged` ([API.md](API.md)). It is course-level, so it lives in `course/` and shares none of the runner's state: its own `_in_flight` / `_errors` (skey `{course}||{name}||merged`, `name` the sanitized title) which `pipeline/runner.py` `get_status()` and `_prune` fold in, and one `asyncio.Lock` per course, so merges of different titles queue (`waiting: true` until the lock is held, when `started_at` resets to the run's real start) while the same title is `busy`.
+
+- Run: read the tree for each part's `summary.pdf` mtime, fetch each into a tempdir (then the in-flight record's `size`, null until now, becomes their total bytes and SSE pings), `join_pdfs` (`course/merged_pdf.py`, pypdf; one bookmark per part labelled with `display_name`, the Hebrew name, each part's own outline nested under it; each part's named destinations get a `p{i}-` prefix and its link and outline-item destinations are retargeted (each shared object once), since every part shares hyperref's names and pypdf would otherwise keep the first), `PUT` the PDF, then `PATCH` the meta entry `{title, created_at, parts: [{name, kind, pdf_mtime}]}` — the meta last, so a failed write leaves no entry. `pdf_mtime` is the recorded mtime, which is how the UI later tells a part changed.
+- Manual only: no Drive, no auto retry, no queue, no `AUTO_RUN`. An error (`merged_part_missing`, `merge_pdf_failed`, or the database's `file_locked`) clears when a new merge of that title is accepted, so a repeat failure is a fresh record.
+- Pings SSE on request, on lock acquired and on end; a duration is recorded under `merge_pdf` against the summed input bytes.
+
 ## Timing
 
 `timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. A list of paths as the first argument records their summed size, an int as is (an assignment doc's summed input bytes, in `assignment_intuition` / `assignment_solution`; its PDF render uses `pdf`); the materials-only summarize records under its own `summarize_materials` bucket so materials-only runs never skew the transcript `summarize` ETA. See [timing/README.md](../timing/README.md) for queries and the outlier-cleaning scripts.

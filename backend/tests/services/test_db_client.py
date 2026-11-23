@@ -187,3 +187,35 @@ class TestFigures:
         with _answering(locked), pytest.raises(DbClientError) as e:
             db_client.delete_figures("C", "L", "lecture")
         assert e.value.code == "file_locked"
+
+
+class TestMergedCalls:
+    def test_get_merged_encodes_the_title_and_returns_the_body(self):
+        body = {"name": "a b", "entry": None}
+        with _answering(FakeResponse(200, body)) as req:
+            assert db_client.get_merged("C 1", "a b") == body
+        assert req.call_args.args[0] == "GET"
+        assert req.call_args.args[1].endswith("/courses/C%201/merged/a%20b")
+
+    def test_put_merged_pdf_sends_the_bytes(self):
+        with _answering(FakeResponse(204)) as req:
+            db_client.put_merged_pdf("C", "T", b"%PDF")
+        assert req.call_args.args[:1] == ("PUT",)
+        assert req.call_args.args[1].endswith("/courses/C/merged/T/pdf")
+        assert req.call_args.kwargs["data"] == b"%PDF"
+
+    def test_patch_merged_meta_sends_title_and_entry(self):
+        with _answering(FakeResponse(204)) as req:
+            db_client.patch_merged_meta("C", "T", {"title": "T"})
+        assert req.call_args.args[:1] == ("PATCH",)
+        assert req.call_args.args[1].endswith("/courses/C/merged/meta")
+        assert req.call_args.kwargs["json"] == {"title": "T", "entry": {"title": "T"}}
+
+    def test_a_locked_pdf_raises_file_locked(self):
+        resp = FakeResponse(
+            423, {"error": "l", "code": "file_locked", "params": {"file": "T.pdf"}}
+        )
+        with _answering(resp):
+            with pytest.raises(DbClientError) as e:
+                db_client.put_merged_pdf("C", "T", b"x")
+        assert (e.value.code, e.value.params) == ("file_locked", {"file": "T.pdf"})

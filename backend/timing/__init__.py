@@ -19,14 +19,22 @@ DOWNLOAD_OPERATIONS = frozenset(
 
 ASSIGNMENT_OPERATIONS = frozenset({"assignment_intuition", "assignment_solution"})
 
+# The course-level merged PDF run, sized by its summed input bytes.
+MERGE_OPERATIONS = frozenset({"merge_pdf"})
+
 
 def _allowed_operations() -> frozenset:
-    """Valid buckets: the pipeline's own steps plus the downloader's operations."""
+    """Valid buckets: the pipeline's own steps, the assignment and merge runs, and the downloader's operations."""
 
     # Importing here to avoid import cycle
     from pipeline.runner import STEP_ORDER
 
-    return frozenset(STEP_ORDER) | ASSIGNMENT_OPERATIONS | DOWNLOAD_OPERATIONS
+    return (
+        frozenset(STEP_ORDER)
+        | ASSIGNMENT_OPERATIONS
+        | MERGE_OPERATIONS
+        | DOWNLOAD_OPERATIONS
+    )
 
 
 def init_db():

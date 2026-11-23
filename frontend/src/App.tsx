@@ -10,6 +10,8 @@ import EditAssignmentDocView from '@/features/lectures/EditAssignmentDocView'
 import LecturesLayout from '@/features/lectures/LecturesLayout'
 import EditSummaryView from '@/features/lectures/EditSummaryView'
 import CourseView from '@/features/course-overview/CourseView'
+import MergedPdfsView from '@/features/merged-pdfs/MergedPdfsView'
+import MergedNewView from '@/features/merged-pdfs/MergedNewView'
 import DownloadsView from '@/features/downloads/DownloadsView'
 import SearchView from '@/features/search/SearchView'
 import RunnerView from '@/features/runner/RunnerView'
@@ -64,6 +66,8 @@ export default function App() {
             <Route element={<LecturesLayout />}>
               <Route index element={<EmptyState />} />
               <Route path={ROUTES.overview} element={<CourseView />} />
+              <Route path={ROUTES.merged} element={<MergedPdfsView />} />
+              <Route path={ROUTES.mergedNew} element={<MergedNewView />} />
               <Route path={ROUTES.assignment} element={<AssignmentView />} />
               <Route path={ROUTES.lecture} element={<MainView />} />
             </Route>

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import NamedTuple, Optional
 
 import sentry_sdk
+from course import merged as course_merged
 from course import runner as course_runner
 from services import auto_retry, db_client, google_auth, notices, settings
 from services.errors import (
@@ -72,6 +73,9 @@ PDF_BUILD_TEX_FILE = ".pdf_build.tex"
 # Empty marker: summary.md still holds uncropped PDF figure links (a failed box call).
 FIGURES_PENDING_FILE = ".figures_pending"
 ORIGINAL_SUMMARY_FILE = "original_summary.md"
+
+# Strong refs: the loop holds tasks weakly, so an unreferenced one can be collected mid-run.
+_tasks: set[asyncio.Task] = set()
 
 _locks: dict[
     tuple[str, str, str], asyncio.Lock
@@ -210,8 +214,8 @@ def get_status() -> dict:
 
     return {
         "runner": dict(_runner_status),
-        "in_flight": list(_in_flight.values()),
-        "errors": dict(_errors),
+        "in_flight": [*_in_flight.values(), *course_merged.in_flight()],
+        "errors": {**_errors, **course_merged.errors()},
         "queue": [entry._asdict() for entry in _queue],
         "overview_running": course_runner.active_courses(),
         "notices": notices.recent(NOTICE_SCOPE),
@@ -234,6 +238,12 @@ def schedule_prune() -> asyncio.Task:
     return _prune_task
 
 
+def _spawn(coro) -> None:
+    task = asyncio.create_task(coro)
+    _tasks.add(task)
+    task.add_done_callback(_tasks.discard)
+
+
 async def _prune_until_clean() -> None:
     global _prune_dirty
     while True:
@@ -254,10 +264,11 @@ async def _prune() -> None:
     Any existing lecture keeps its error whatever files it has, since a step may run off any of them.
     Pings SSE when it removed something, so clients refetch a /status that was built before it."""
 
-    if not _errors:
+    if not _errors and not course_merged.errors():
         return
     # A record written while the tree is fetched postdates it, so only earlier ones may go.
     before = dict(_errors)
+    merged_before = course_merged.errors()
     try:
         tree = await asyncio.to_thread(db_client.get_tree)
     except Exception:
@@ -278,6 +289,8 @@ async def _prune() -> None:
             _drop_retry(skey)
             del _errors[skey]
             removed = True
+    if course_merged.prune_errors(merged_before, {c["name"] for c in tree}):
+        removed = True
     if removed:
         db_client.notify()
 
@@ -1308,7 +1321,7 @@ def enqueue(entry: QueueEntry, *, retry: bool = False) -> bool:
         # of arrivals in one callback would otherwise each start a drain of their own.
         # Counters reset here too, so a snapshot taken before the task starts is not last run's.
         _runner_status.update(running=True, done=0, total=1, last_error=None)
-        asyncio.create_task(run_all())
+        _spawn(run_all())
     else:
         # Counted now, so "lecture N of M" grows the moment a lecture joins a live run.
         _runner_status["total"] += 1
@@ -1354,7 +1367,7 @@ def clear_drive_not_connected() -> None:
     cleared = [k for k in cleared if not k.endswith(f"||{ASSIGNMENT_KIND}")]
     if cleared and settings.drive_enabled():
         # A task, not awaited: the consent thread waits on this call and the file checks are I/O.
-        asyncio.create_task(_queue_drive_uploads(cleared))
+        _spawn(_queue_drive_uploads(cleared))
 
 
 async def _queue_drive_uploads(skeys: list[str]) -> None:
@@ -1713,7 +1726,7 @@ def try_run_step(
     if not retry:
         _drop_retry(_skey(course, lecture, kind))
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
-    asyncio.create_task(run_step(course, lecture, kind, step, fresh=fresh))
+    _spawn(run_step(course, lecture, kind, step, fresh=fresh))
     return "started"
 
 
@@ -1733,9 +1746,7 @@ def try_run_assignment_step(
         return "busy"
     if not retry:
         _drop_retry(_skey(course, assignment, ASSIGNMENT_KIND))
-    asyncio.create_task(
-        run_step(course, assignment, ASSIGNMENT_KIND, step, fresh=fresh)
-    )
+    _spawn(run_step(course, assignment, ASSIGNMENT_KIND, step, fresh=fresh))
     return "started"
 
 
@@ -1747,7 +1758,7 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
         return "busy"
     _drop_retry(_skey(course, lecture, kind))
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
-    asyncio.create_task(run_pipeline_for(course, lecture, kind))
+    _spawn(run_pipeline_for(course, lecture, kind))
     return "started"
 
 

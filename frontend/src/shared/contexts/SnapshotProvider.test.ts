@@ -284,6 +284,39 @@ describe('markStarted', () => {
   })
 })
 
+describe('a merge error', () => {
+  const FAILED = {
+    step: 'merge',
+    message: 'x',
+    code: 'file_locked',
+    params: { file: 'm.pdf' },
+    provider: null,
+    blocked: false,
+  }
+  const withError = (on: boolean) =>
+    ({ ...status(1), errors: on ? { 'C||m||merged': FAILED } : {} }) as unknown as RunnerStatus
+
+  it('toasts again when the same error disappears and reappears', async () => {
+    const sendUpdate = vi.fn()
+    fetchRunnerStatus
+      .mockResolvedValueOnce(withError(false))
+      .mockResolvedValueOnce(withError(true))
+      .mockResolvedValueOnce(withError(false))
+      .mockResolvedValueOnce(withError(true))
+      .mockResolvedValueOnce(withError(true))
+    fetchTree.mockResolvedValue(tree(1))
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(SnapshotProvider, { sendUpdate, children })
+    renderHook(() => useRunnerStatus(), { wrapper })
+    await act(async () => {})
+    for (let i = 0; i < 4; i++)
+      await act(async () => {
+        notify.cb()
+      })
+    expect(sendUpdate.mock.calls.filter(([kind]) => kind === 'error')).toHaveLength(2)
+  })
+})
+
 describe('an assignment run', () => {
   const error = {
     step: 'solution',

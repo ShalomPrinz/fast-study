@@ -1,6 +1,12 @@
 import { t } from '@lingui/core/macro'
 import type { Kind } from '@/types'
-import { assignmentFileUrl, assignmentGeneratedUrl, materialUrl, overviewFileUrl } from './database'
+import {
+  assignmentFileUrl,
+  assignmentGeneratedUrl,
+  materialUrl,
+  mergedPdfUrl,
+  overviewFileUrl,
+} from './database'
 import { runtimeBridge, type OpenTarget } from './runtime'
 import { toast } from './toaster'
 
@@ -75,6 +81,18 @@ export async function openLectureFileWith(
 /** A generated file under a course's `overview/`. */
 export async function openOverviewFile(course: string, name: string): Promise<void> {
   await openTarget({ course, name }, overviewFileUrl(course, name))
+}
+
+/** A course's merged PDF by its file name: the OS default app packaged, a new tab in browser dev. */
+export async function openMergedPdf(course: string, name: string): Promise<void> {
+  await openTarget({ course, merged: name }, mergedPdfUrl(course, name))
+}
+
+/** The OS's "Open with…" picker for a merged PDF; callers gate on `canOpenWith`. */
+export async function openMergedPdfWith(course: string, name: string): Promise<void> {
+  const fileWith = runtimeBridge()?.open?.fileWith
+  if (!fileWith) return
+  await openFile(fileWith({ course, merged: name }))
 }
 
 /** An http(s) link; the bridge refuses and reports anything else. Call from `onClick` with

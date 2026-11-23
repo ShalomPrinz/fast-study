@@ -40,6 +40,7 @@ test('each target shape resolves through its own database route', async () => {
       '/courses/A/assignments/HW%201/generated/plan.md/path',
     ],
     [{ course: 'A', name: 'syllabus.pdf' }, '/courses/A/overview/files/syllabus.pdf/path'],
+    [{ course: 'A b', merged: 'all/1 x' }, '/courses/A%20b/merged/all%2F1%20x/pdf/path'],
   ];
   for (const [target] of cases) {
     assert.deepEqual(await dataFilePath(target, DATABASE), { path: '/data/file.pdf' });
@@ -51,11 +52,14 @@ test('each target shape resolves through its own database route', async () => {
   assert.equal(requests[0].init.headers['X-FastStudy-Secret'], 's3cret');
 });
 
-test('a generated target that also names a file, or no assignment, is refused unasked', async () => {
+test('a malformed generated or merged target is refused unasked', async () => {
   stubFetch();
   for (const target of [
     { course: 'A', assignment: 'HW', name: 'q.pdf', generated: 'plan.md' },
     { course: 'A', generated: 'plan.md' },
+    { course: 'A', merged: 'all', name: 'x.pdf' },
+    { course: 'A', merged: 'all', lecture: 'L1' },
+    { course: 'A', merged: '' },
   ]) {
     assert.deepEqual(await dataFilePath(target, DATABASE), { error: 'invalid target' });
   }

@@ -8,6 +8,7 @@ build paths; they pass `(course, lecture, kind)` and let `fs/paths.py` resolve t
 {DATA_ROOT}/{course}/Recitations/{name}/...     recitations
 {DATA_ROOT}/{course}/Assignments/{name}/...     assignments: a named folder of files, filenames sanitized like folder names
 {DATA_ROOT}/{course}/overview/...               course-level files (see OVERVIEW.md)
+{DATA_ROOT}/{course}/overview/merged/...        merged PDFs + meta.json, named by sanitized title (see OVERVIEW.md)
 ```
 
 `lecture_dir(course, lecture, kind)` is the only resolver — `kind="recitation"` inserts the
@@ -196,7 +197,7 @@ field stay backwards-compatible.
 ## Degrade, don't fail
 
 Every metadata read (`transcript.partial.meta.json`, both `.pdf_warning` readers,
-`overview/meta.json`, `.materials.json`, `.skipped.json`, `.video_source.json`) swallows parse and read errors and falls back to "absent". A corrupt
+`overview/meta.json`, `overview/merged/meta.json`, `.materials.json`, `.skipped.json`, `.video_source.json`) swallows parse and read errors and falls back to "absent". A corrupt
 side-file must never take down a whole tree or listing; the next write self-heals it.
 Writing `.materials.json` degrades the same way: a failed write is logged and the upload or delete still succeeds, untagged. The one exception is `PATCH …/materials/{name}`: the flag lives only in the sidecar, so a failed write answers `500 file_write_failed` and does not notify.
 

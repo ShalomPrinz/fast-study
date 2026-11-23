@@ -149,6 +149,17 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
   no_summaries_found: msg({ message: 'This course has no summaries yet.' }),
 
+  // backend — merged PDFs; the merge's own error text rides in `detail`.
+  merged_pdf_exists: msg({ message: 'A merged PDF titled "{title}" already exists.' }),
+  merged_part_missing: msg({
+    message:
+      '{kind, select, recitation {The recitation "{name}" has no summary PDF to merge.} other {The lecture "{name}" has no summary PDF to merge.}}',
+  }),
+  merge_pdf_failed: msg({ message: 'The PDFs could not be merged.' }),
+  merged_title_required: msg({
+    message: 'The title has no characters that can be used in a file name.',
+  }),
+
   // database
   file_locked: msg({
     message:

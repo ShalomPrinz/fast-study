@@ -100,3 +100,17 @@ describe('lectureToRemember', () => {
     expect(lastLectureRoute(courses, readLastLecture())).toBe(route)
   })
 })
+
+describe('lectureToRemember', () => {
+  it('remembers nothing on the merged pages, which also fit the lecture prefix', () => {
+    expect(lectureToRemember('/course/algebra/merged', 'lecture')).toBeNull()
+    expect(lectureToRemember('/course/algebra/merged/new', 'lecture')).toBeNull()
+  })
+  it('still remembers a lecture path', () => {
+    expect(lectureToRemember('/algebra/Lecture%201', 'lecture')).toEqual({
+      course: 'algebra',
+      lecture: 'Lecture 1',
+      kind: 'lecture',
+    })
+  })
+})

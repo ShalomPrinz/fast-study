@@ -130,6 +130,19 @@ export const FLOWS = {
     lectures: [['שיעור 1', ['video.mp4']], ...tutorials(6, 0)],
     assignments: tasks(6, 6),
   },
+  'hb-merge': {
+    // Merged PDFs: two lectures and a recitation holding a valid summary.pdf, and `שיעור 3` with none.
+    lectures: [
+      ['שיעור 1', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']],
+      ['שיעור 2', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']],
+      ['שיעור 3', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']],
+      [
+        'תרגול 1',
+        ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf'],
+        'recitation',
+      ],
+    ],
+  },
   [SELFCHECK.course]: { lectures: [[SELFCHECK.lecture, ['video.mp4']]] },
 };
 

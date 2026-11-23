@@ -26,6 +26,7 @@ import ExtractorRow from '@/features/course-overview/components/ExtractorRow'
 import '@/styles/spinner.css'
 import '@/styles/panel.css'
 import '@/styles/pipeline-card.css'
+import '@/styles/button.css'
 
 function CourseOverviewBody() {
   const { t } = useLingui()

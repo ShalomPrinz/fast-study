@@ -6,9 +6,10 @@ import { findLecture } from './courseTree'
 
 const STORAGE_KEY = 'fastStudyLastLecture'
 
-// The lecture a path opens, or null; an overview or assignment path also fits the lecture prefix with course "course".
+// The lecture a path opens, or null; an overview, assignment or merged path also fits the lecture prefix with course "course".
 export function lectureToRemember(pathname: string, kind: Kind): Selected | null {
-  if (matchPath(ROUTES.overview, pathname) || matchPath(ROUTES.assignment, pathname)) return null
+  const notLecture = [ROUTES.overview, ROUTES.assignment, ROUTES.merged, ROUTES.mergedNew]
+  if (notLecture.some((pattern) => matchPath(pattern, pathname))) return null
   const params = matchPath(`${ROUTES.lecture}/*`, pathname)?.params
   if (!params?.course || !params.lecture) return null
   return {

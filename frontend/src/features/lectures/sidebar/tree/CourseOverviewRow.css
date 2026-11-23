@@ -13,6 +13,7 @@
   height: 16px;
 }
 
-.course-overview-row {
+.course-overview-row,
+.course-merged-row {
   color: var(--text-2);
 }

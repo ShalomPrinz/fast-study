@@ -2,11 +2,12 @@
 import type { SettingsBacking } from './settings'
 import type { Kind } from '@/types'
 
-/** What the bridge opens: a lecture file, a course `overview/` file (no `lecture`) an assignment file or one of its generated files. */
+/** What the bridge opens: a lecture file, a course `overview/` file (no `lecture`), an assignment file or one of its generated files, or a course's merged PDF. */
 export type OpenTarget =
   | { course: string; lecture?: string; name: string; kind?: Kind }
   | { course: string; assignment: string; name: string }
   | { course: string; assignment: string; generated: string }
+  | { course: string; merged: string }
 
 /** The launcher's update phase; only these two cross the bridge, everything else is `null`. */
 export type UpdateState = 'downloading' | 'downloaded' | null

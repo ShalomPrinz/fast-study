@@ -102,6 +102,10 @@ bug in one of our own callers can, and it renders through the generic fallback u
 | `course/runner.py` resolve        | `unknown_phase`            | `phase`            | dev   |
 | `course/runner.py` resolve        | `unknown_extractors`       | `slugs`            | dev   |
 | `backend_main.py` overview        | `course_not_found`         | `course`           | user  |
+| `course/merged.py` validate       | `merged_title_required`    | —                  | user  |
+| `course/merged.py` validate       | `merged_parts_required`    | —                  | dev   |
+| `course/merged.py` validate       | `merged_pdf_exists`        | `title`            | user  |
+| `course/merged.py` validate       | `merged_part_missing`      | `name`, `kind`     | user  |
 | `backend_main.py` overview, run-all| `data_root_not_configured`| —                  | user  |
 | `timing/__init__.py` record       | `timing_operation_required`| —                  | dev   |
 | `timing/__init__.py` record       | `unknown_timing_operation` | `operation`        | dev   |
@@ -162,9 +166,16 @@ failures it was given, so a refusal the user can act on is caught by the route i
 | `services/google_auth.py`               | `internal_unknown_scope`    | `scope`                         | dev   |
 | `pipeline/runner.py` fold               | `unknown_error`             | —                               | dev   |
 | `pipeline/runner.py` `last_error`       | `run_crashed`               | `course`, `lecture`, `detail`   | user  |
+| `course/merged.py` run                  | `merged_part_missing`       | `name`, `kind`                  | user  |
+| `course/merged.py` run                  | `merge_pdf_failed`          | `detail`                        | user  |
 | `services/db_client.py`                 | `file_not_found`            | `file`, `course`, `lecture`     | user  |
 | `services/db_client.py`                 | `overview_file_not_found`   | `file`, `course`                | user  |
 | `services/db_client.py`                 | `storage_error`             | `detail`                        | user  |
+
+`merge_pdf_failed`'s `detail` is pypdf's own text, untranslated. The merged-PDF run (kind `merged` in `/status`,
+`merge_pdf` step) also passes `database/`'s `file_locked` and `course_not_found` through, and `merged_part_missing`
+is both a request refusal (409, the part has no `summary.pdf` in the tree) and a run error (the file vanished mid-run).
+The request also answers `database/`'s own `course_not_found` (404) and `name_has_no_legal_characters` (400) for the title; the backend raises the latter itself, before any database call, for a title of dots alone.
 
 `latex_error`'s `message` and `at` are engine text and stay untranslated; the frame around them
 (`LaTeX error:`, `line N:`, `and K more`) is the frontend's. `db_client` forwards the peer's own
@@ -235,7 +246,7 @@ for the code whichever view chooses to show it.
 | `fs/crud.py`          | `name_reserved`                 | `name`            | user      |
 | `fs/crud.py`          | `file_not_removable`            | `file`            | dev       |
 | `fs/crud.py`, `fs/summary.py`, `fs/assignments.py` | `lecture_not_found`     | `course`, `lecture` | user    |
-| `fs/overview.py`, `fs/summaries.py`, `fs/crud.py`, `fs/materials.py`, `fs/assignments.py` | `course_not_found` | `course`          | user      |
+| `fs/overview.py`, `fs/merged.py`, `fs/summaries.py`, `fs/crud.py`, `fs/materials.py`, `fs/assignments.py` | `course_not_found` | `course`          | user      |
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
 | `settings.py`, `database_main.py` | `setting_must_be_boolean` | `field`           | dev       |
 | `settings.py`         | `setting_must_be_integer`       | `field`           | dev       |
@@ -247,7 +258,7 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `data_root_not_absolute`        | `path`            | user      |
 | `settings.py`         | `data_root_not_a_directory`     | `path`            | user      |
 | `settings.py`         | `data_root_not_writable`        | `path`, `detail`  | user      |
-| `database_main.py`, `fs/crud.py`, `fs/summary.py`, `fs/assignments.py` | `bad_request_body` | `detail` | dev       |
+| `database_main.py`, `fs/crud.py`, `fs/summary.py`, `fs/assignments.py`, `fs/merged.py` | `bad_request_body` | `detail` | dev       |
 | `database_main.py`    | `create_dir_failed`             | `path`, `detail`  | user      |
 | `database_main.py`    | `rename_failed`                 | `from`, `to`, `detail` | user |
 | `database_main.py`    | `file_write_failed`             | `file`, `detail`  | user      |
@@ -262,8 +273,8 @@ for the code whichever view chooses to show it.
 Reading, writing and deleting are three codes, not one: a wrong-verb sentence for a failed read is a
 user-visible defect, not a naming quibble. Three params are knowingly thin — `file_write_failed` on
 `POST /…/materials` carries no `file`, because the name is allocated inside the write that failed,
-`file_read_failed` on `GET /…/materials` carries none because it lists a directory rather than reading
-one file, and `overview_read_failed` covers all four overview read routes without one. The frontend's
+`file_read_failed` on `GET /…/materials` and `GET /courses/{course}/headings` carries none because each
+lists a directory rather than reading one file, and `overview_read_failed` covers every overview and merged-PDF read route without one. The frontend's
 `file_write_failed` and `file_read_failed` rows therefore select on `file` and name it only when it is
 there.
 

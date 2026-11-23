@@ -1,0 +1,66 @@
+/* Wraps in a narrow column so the actions drop under the body rather than squeeze it. */
+.pipeline-card .merged-row {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.merged-row-title {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.merged-row-date {
+  margin-block-start: var(--space-1);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.merged-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+}
+
+.merged-part {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.merged-part + .merged-part::before {
+  content: '·';
+  margin-inline-end: var(--space-1);
+  color: var(--text-4);
+}
+
+.merged-row-note {
+  margin-block-start: var(--space-3);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.merged-row-error {
+  margin-block-start: var(--space-3);
+  font-size: var(--fs-meta);
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+
+.merged-row .progress-wrap {
+  margin-block-start: var(--space-4);
+}
+
+.merged-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-inline-start: auto;
+}

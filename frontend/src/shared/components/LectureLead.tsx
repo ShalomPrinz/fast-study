@@ -15,3 +15,9 @@ export function AssignmentLead({ course, assignment }: { course: string; assignm
   const { t } = useLingui()
   return <>{t`${course} · assignment ${assignment}`}</>
 }
+
+// The merged-PDF counterpart, naming the file the way a failed assignment names its own.
+export function MergedLead({ course, name }: { course: string; name: string }) {
+  const { t } = useLingui()
+  return <>{t`${course} · merged PDF ${name}`}</>
+}

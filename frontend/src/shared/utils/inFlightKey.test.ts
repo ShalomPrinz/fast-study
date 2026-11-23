@@ -21,6 +21,12 @@ describe('parseInFlightKey', () => {
     })
   })
 
+  it('round-trips a merged-PDF run, whose file name sits in the lecture slot', () => {
+    const key = inFlightKey('hb-edit', 'סיכום א', 'merged')
+    expect(key).toBe('hb-edit||סיכום א||merged')
+    expect(parseInFlightKey(key)).toEqual({ course: 'hb-edit', lecture: 'סיכום א', kind: 'merged' })
+  })
+
   it("rejects a key that names no lecture, like the runner's crash", () => {
     expect(parseInFlightKey('runner-crash')).toBeNull()
     expect(parseInFlightKey('a||b||other')).toBeNull()

@@ -91,6 +91,13 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /courses/{course}/overview/files/{name}/path`      | `{path}`, the absolute on-disk path; 404 if absent                        |
 | `GET    /courses/{course}/overview/meta`                   | `{meta}` (`{}` when absent)                                               |
 | `PATCH  /courses/{course}/overview/meta`                   | merge one slug's entry (`{slug, entry}`)                                  |
+| `GET    /courses/{course}/headings`                        | `{headings: {"lecture:<name>"\|"recitation:<name>": text}}`, each item's first `summary.md` line starting `#` (hashes and whitespace stripped); items with no summary, no such line, an empty heading or undecodable bytes are omitted; `404` `course_not_found`; read-only, no notify |
+| `GET    /courses/{course}/merged`                          | `{merged: [item, …]}` newest first by `created_at`; only entries whose `{name}.pdf` exists; `404` `course_not_found` |
+| `GET    /courses/{course}/merged/{title}`                  | `{name, entry}`: the sanitized name and the item, `entry` null with no meta entry or no pdf; `400` for an unsanitizable title |
+| `PUT    /courses/{course}/merged/{title}/pdf`              | write `merged/{name}.pdf` (raw body), creating `merged/`; `404` course; `423` if locked; notifies |
+| `PATCH  /courses/{course}/merged/meta`                     | `{title, entry}`: set the entry under `safe_name(title.strip())`, replacing it wholly; `204`; notifies |
+| `GET    /courses/{course}/merged/{title}/pdf`              | stream the pdf (`application/pdf`); `404` `file_not_found`                |
+| `GET    /courses/{course}/merged/{title}/pdf/path`         | `{path}`, the absolute on-disk path; `404` if absent                      |
 | `GET    /settings`                                         | the browser-dev settings store; API keys report set/unset only            |
 | `PUT    /settings`                                         | merge a partial settings object into the repo-root `.env`                 |
 | `GET    /course_structure`                                 | `{course_structure}`, the live mode `/tree` resolves against — never null, unlike `/settings`' `.env` view |
@@ -158,6 +165,9 @@ read/write/delete, so no pre-probe of the files catches it. The rename routes an
 `DELETE /…/files/summary.md` additionally drops `.summary_materials.json` and `.figures_pending` (the backend writes and deletes that empty marker with plain `PUT`/`DELETE /…/files/.figures_pending`; the tree reports it as `figuresPending`); `GET /…/files/{name}` (and the overview twin) takes its media type from `mimetypes.guess_type`. `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
 chokepoint for that rule — a warning describes THIS pdf and cannot outlive it — so backend
 teardown, frontend deletes, and re-render resets all get it without repeating the logic.
+
+Merged PDFs (`overview/merged/`, see OVERVIEW.md) have no delete route either. A title is percent-encoded
+into the URL path; one containing `/` cannot be addressed (the router answers an uncoded `404`).
 
 There is deliberately **no delete route for overview files**. Adding one must drop the pdf's
 `.{slug}.pdf_warning` the same way.

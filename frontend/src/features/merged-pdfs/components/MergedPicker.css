@@ -1,0 +1,100 @@
+.merged-group + .merged-group {
+  margin-block-start: var(--space-5);
+}
+
+/* The group header's gutter padding is already framed by the column body's padding. */
+.merged-group-head {
+  margin-block-end: var(--space-1);
+}
+
+/* The label's ::after stretches over the whole header line, so a click anywhere on it toggles the section. */
+.merged-section-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.merged-section-label::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-sm);
+}
+
+.merged-section-toggle {
+  inline-size: 16px;
+  block-size: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  /* Above the label's overlay, so the box itself is the click target and a driver can hit it. */
+  position: relative;
+  z-index: 1;
+}
+
+.merged-section-toggle:disabled,
+.merged-section-toggle:disabled ~ .merged-group-title {
+  cursor: not-allowed;
+}
+
+.merged-group-heading {
+  margin: 0;
+  min-width: 0;
+}
+
+.merged-pick-list {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.merged-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-body);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.merged-pick:hover:not(.merged-pick--missing) {
+  background: var(--accent-soft);
+}
+
+.merged-pick input {
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.merged-pick-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.merged-pick-name {
+  align-self: flex-start;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* One line, ellipsised; the full heading is its tooltip. */
+.merged-pick-heading {
+  align-self: flex-start;
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-fine);
+  color: var(--text-3);
+}
+
+.merged-pick--missing {
+  color: var(--text-4);
+  cursor: not-allowed;
+}

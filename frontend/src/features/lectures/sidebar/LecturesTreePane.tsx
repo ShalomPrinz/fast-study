@@ -41,9 +41,11 @@ function LecturesTreePaneBody() {
   const { selected } = useSelection()
   const overviewMatch = useMatch(ROUTES.overview)
   const assignmentMatch = useMatch(ROUTES.assignment)
+  const mergedMatch = useMatch(ROUTES.merged)
+  const mergedNewMatch = useMatch(ROUTES.mergedNew)
   const routeCourse = firstCourseName(
     selected?.course,
-    routeParam((overviewMatch ?? assignmentMatch)?.params.course),
+    routeParam((overviewMatch ?? assignmentMatch ?? mergedMatch ?? mergedNewMatch)?.params.course),
   )
   // `was` keeps a renamed course open until the refreshed tree carries its new name; the route wins on first paint.
   const [want, setWant] = useState<WantedCourse>(() => ({

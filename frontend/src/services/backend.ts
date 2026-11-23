@@ -6,6 +6,7 @@ import type {
   TimingOperation,
   Kind,
   RunKind,
+  StatusKind,
   AssignmentStep,
   RunnerStatus,
   RunError,
@@ -16,6 +17,7 @@ import type {
   CourseStatus,
   ToolReport,
   Notice,
+  MergedPart,
 } from '@/types'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 import {
@@ -25,6 +27,7 @@ import {
   runStepQuery,
   courseOverviewBase,
   overviewGenerateQuery,
+  mergedBase,
   retryPath,
   retryNowPath,
   overviewRetryNowPath,
@@ -128,9 +131,11 @@ function normalizeNotices(raw: RawNotice[] | undefined): Notice[] {
 interface RawInFlightEntry {
   course: string
   lecture: string
-  kind: RunKind
+  kind: StatusKind
   step: string
   started_at: string
+  waiting?: boolean
+  size?: number | null
 }
 
 interface RawRunnerStatus {
@@ -156,6 +161,8 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
       kind: e.kind,
       step: e.step,
       startedAt: e.started_at,
+      waiting: e.waiting ?? false,
+      size: e.size ?? null,
     })),
     queue: raw.queue ?? [],
     notices: normalizeNotices(raw.notices),
@@ -282,4 +289,14 @@ export async function fetchCourseStatus(course: string): Promise<CourseStatus> {
       ]),
     ),
   }
+}
+
+/** Starts a merge of the chosen parts, in order, into the course's merged PDF `title`; refusals throw coded. */
+export async function createMergedPdf(
+  course: string,
+  title: string,
+  parts: MergedPart[],
+  overwrite: boolean,
+): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(mergedBase(course), { json: { title, parts, overwrite } })
 }
