@@ -179,12 +179,10 @@ class TestDocStep:
                 )
                 await asyncio.sleep(0)
                 assert runner.try_run_assignment_step("C", "A1", "solution") == "busy"
+                run = set(runner._tasks)
                 release.set()
-                # The run task ending is the point auto_remove would have been reached by.
-                await asyncio.wait_for(
-                    asyncio.gather(*(asyncio.all_tasks() - {asyncio.current_task()})),
-                    5,
-                )
+                # The run task ending is the point where a non-assignment kind would auto_remove.
+                await asyncio.wait_for(asyncio.gather(*run), 5)
                 remove.assert_not_called()
                 assert runner._queue == []
 
