@@ -23,8 +23,14 @@ does not know**, so a missed or misspelled tag degrades to a full refetch.
 
 Producers are the backend (each meaningful pipeline and course-overview state change, via
 `services/db_client.notify`), the downloader server (after a successful upload), and this service
-itself: every mutation route tags `tree` on success except `PUT /files…`, which broadcasts nothing,
-and `POST /config` tags `settings` + `tree` when it applies a new `data_root` or `course_structure`.
+itself: every mutation route tags `tree` on success except the raw file writes and deletes, which
+broadcast nothing: `PUT …/video`, `POST …/materials`, `PUT …/files/{name}`, `DELETE …/files/{name}`,
+`PUT …/figures/{name}`, `DELETE …/figures`, `PUT …/overview/files/{name}` and
+`PATCH …/overview/meta`. Their caller writes several files per job, so it sends its
+own `tree` notify once its writes are done and a multi-file write pings once.
+`PATCH /courses/{course}/source_url` broadcasts nothing and nobody notifies for it: its only caller is the
+frontend, which refetches the course tree itself after the call. `POST /config` tags
+`settings` + `tree` when it applies a new `data_root` or `course_structure`.
 
 A route that calls `broadcast_notify(*topics)` is `async def`: the queues are plain `asyncio.Queue`s, not thread-safe, so a push from a threadpool worker can be lost or wake no one.
 
