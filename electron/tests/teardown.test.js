@@ -48,14 +48,27 @@ test(
 test(
   'a group that ignores SIGTERM is SIGKILLed once the grace ends',
   { skip: process.platform !== 'linux' },
-  async () => {
+  async (t) => {
     // The grandchild inherits the ignored SIGTERM, as a tool spawned by a hung service would.
     const child = spawnGroup("trap '' TERM; sleep 60 & wait");
     await new Promise((resolve) => setTimeout(resolve, 200));
     const lines = [];
-    const started = Date.now();
-    await reapChildren(signalChildren([child], assert.fail), 500, (line) => lines.push(line));
-    assert.ok(Date.now() - started >= 500);
+    // Only setTimeout is faked, and only once the real settle wait is over: the grace is the sole timer left.
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    let reaped = false;
+    const reaping = reapChildren(signalChildren([child], assert.fail), 500, (line) =>
+      lines.push(line),
+    ).then(() => {
+      reaped = true;
+    });
+    t.mock.timers.tick(499);
+    await new Promise(setImmediate);
+    assert.deepEqual(lines, []);
+    assert.equal(reaped, false);
+    assert.equal(child.exitCode === null && child.signalCode === null, true);
+    t.mock.timers.tick(1);
+    await reaping;
+    t.mock.timers.reset();
     assert.equal(lines.length, 1);
     assert.equal(
       child.signalCode ?? (await new Promise((r) => child.once('exit', (_c, s) => r(s)))),

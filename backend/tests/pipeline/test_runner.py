@@ -2421,6 +2421,7 @@ class TestApplyAutoRemove:
 
         async def go():
             release = asyncio.Event()
+            reached = asyncio.Event()
 
             async def slow_removal(fn, *args):
                 if fn is runner.auto_remove:
@@ -2429,16 +2430,19 @@ class TestApplyAutoRemove:
                     seen["enqueue"] = runner.enqueue(_entry("L1"))
                     seen["first"] = runner.try_run_step("C1", "L1", "lecture", "drive")
                     seen["second"] = runner.try_run_step("C1", "L1", "lecture", "drive")
+                    reached.set()
                     await release.wait()
                     return result
                 return fn(*args)
 
             with patch.object(runner.asyncio, "to_thread", slow_removal):
                 sweep = asyncio.create_task(runner.apply_auto_remove())
-                await asyncio.sleep(0.01)
+                await asyncio.wait_for(reached.wait(), 5)
                 release.set()
                 await sweep
-            await asyncio.sleep(0.01)
+            # The started run_step task is not kept; it only ends once the removal released the lock.
+            started = asyncio.all_tasks() - {asyncio.current_task()}
+            await asyncio.wait_for(asyncio.gather(*started), 5)
 
         with (
             patch.object(runner.db_client, "get_tree", return_value=_sweep_tree("L1")),
@@ -2460,8 +2464,10 @@ class TestApplyAutoRemove:
         self, monkeypatch, clean_queue
     ):
         ran: list = []
+        entered = asyncio.Event()
 
         async def fake_entry(entry):
+            entered.set()  # run_all claimed the lecture; the next line queues on the removal's lock
             async with runner._locks[
                 runner._lkey(entry.course, entry.lecture, entry.kind)
             ]:
@@ -2475,7 +2481,7 @@ class TestApplyAutoRemove:
                 runner._removing.add(key)
                 runner._queue.append(_entry("L1"))
                 drain = asyncio.create_task(runner.run_all())
-                await asyncio.sleep(0.01)
+                await asyncio.wait_for(entered.wait(), 5)
                 assert ran == []  # waiting on the removal, not skipped
                 runner._removing.discard(key)
             await drain
