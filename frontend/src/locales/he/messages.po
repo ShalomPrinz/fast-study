@@ -2309,11 +2309,11 @@ msgstr "אין חדש בקורס הזה."
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
-#: src/shared/contexts/SnapshotProvider.tsx:174
+#: src/shared/contexts/SnapshotProvider.tsx:180
 msgid "Nothing to run - All pipelines complete"
 msgstr "אין מה להריץ - כל ההרצאות הושלמו"
 
-#: src/shared/contexts/SnapshotProvider.tsx:178
+#: src/shared/contexts/SnapshotProvider.tsx:184
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בעיבוד"
 

@@ -12,14 +12,14 @@ import { useRunnerStatus } from './RunnerStatusContext'
 const { fetchRunnerStatus, fetchTree, notify } = vi.hoisted(() => ({
   fetchRunnerStatus: vi.fn(),
   fetchTree: vi.fn(),
-  notify: { cb: () => {} },
+  notify: { cb: (_m?: string[]) => {} },
 }))
 vi.mock('@/services/backend', () => ({ fetchRunnerStatus, runAll: vi.fn() }))
 vi.mock('@/services/database', () => ({ fetchTree }))
 vi.mock('@/services/toaster', () => ({ toast: vi.fn() }))
 vi.mock('@/services/events', () => ({
-  subscribeNotify: (cb: () => void) => {
-    notify.cb = cb
+  subscribeNotify: (cb: (m: string[]) => void, topics?: string[]) => {
+    notify.cb = (m = topics ?? []) => cb(m)
     return () => {}
   },
 }))
@@ -358,5 +358,56 @@ describe('an assignment run', () => {
     const { container } = renderNode(createElement(I18nProvider, { i18n }, node))
     expect(container.querySelector('.service-error-lead')?.textContent).toBe('C · assignment A')
     expect(container.querySelector('.service-error-detail')?.textContent).toBe('boom')
+  })
+})
+
+describe('a topic-tagged notify', () => {
+  async function booted() {
+    fetchRunnerStatus.mockResolvedValue(status(1))
+    fetchTree.mockResolvedValue(tree(1))
+    const hook = render()
+    await act(async () => {})
+    fetchRunnerStatus.mockClear()
+    fetchTree.mockClear()
+    return hook
+  }
+
+  it('refetches only /status for runner', async () => {
+    await booted()
+    await act(async () => notify.cb(['runner']))
+    expect(fetchRunnerStatus).toHaveBeenCalledTimes(1)
+    expect(fetchTree).not.toHaveBeenCalled()
+  })
+
+  it('refetches only /tree for tree', async () => {
+    await booted()
+    await act(async () => notify.cb(['tree']))
+    expect(fetchTree).toHaveBeenCalledTimes(1)
+    expect(fetchRunnerStatus).not.toHaveBeenCalled()
+  })
+
+  it('refetches both for runner and tree', async () => {
+    await booted()
+    await act(async () => notify.cb(['runner', 'tree']))
+    expect(fetchRunnerStatus).toHaveBeenCalledTimes(1)
+    expect(fetchTree).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not drop an older pair's /tree because a later /status-only fetch landed first", async () => {
+    fetchRunnerStatus.mockResolvedValueOnce(status(1))
+    fetchTree.mockResolvedValueOnce(tree(1))
+    const { seen } = render()
+    await act(async () => {})
+    const s2 = deferred<RunnerStatus>()
+    const t2 = deferred<Course[]>()
+    fetchRunnerStatus.mockReturnValueOnce(s2.promise).mockResolvedValueOnce(status(3))
+    fetchTree.mockReturnValueOnce(t2.promise)
+    act(() => notify.cb(['runner', 'tree']))
+    await act(async () => notify.cb(['runner']))
+    await act(async () => {
+      s2.resolve(status(2))
+      t2.resolve(tree(2))
+    })
+    expect(seen.at(-1)).toBe('3/v2/true')
   })
 })

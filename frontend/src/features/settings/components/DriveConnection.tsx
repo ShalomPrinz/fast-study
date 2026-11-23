@@ -39,7 +39,7 @@ export default function DriveConnection() {
     void refresh()
   }, [refresh])
   // A landed token, a flow that failed or timed out and a disconnect all push; `pending` does not.
-  useNotify(refresh)
+  useNotify(() => void refresh(), ['drive'])
 
   async function connect() {
     setBusy(true)

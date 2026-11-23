@@ -183,7 +183,7 @@ hidden, while the provider half still opens its menu. A pick there saves `aiProv
 ## Runner status and in-flight state
 
 `RunnerStatusContext` holds `GET /status`, refreshed by `SnapshotProvider` (in `Layout`) on mount and
-every notify together with the tree, never polled. `inFlight` covers active steps from any trigger;
+a `runner` (or untagged) notify, never polled. `inFlight` covers active steps from any trigger;
 `errors` keeps a lecture's last failure after it leaves; `runner.lastError` is an exception that aborted a sweep, distinct from per-step failures. Keys are
 `course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror `_skey` in
 `backend/pipeline/runner.py`**. `/running` is the whole surface for the queue, the in-flight entries and
@@ -290,7 +290,7 @@ Only new items are forced to `lecture` (add-item, both download forms); a name t
 recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
 
 - `CourseTreeContext` exposes `courses`, `loaded`, `loadFailed` and `refreshCourses`; `SnapshotProvider` fills it, refreshing
-  on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through
+  on a `tree` (or untagged) notify, together with `/status` when both are named, and sorts courses by name (`localeCompare`) and their lectures through
   `sortLectures`. Everything reads it directly, no props
   or outlet context.
 - `CourseGroup` renders only the open course and owns `expanded` (reset on each swap). Recitations and Assignments are always open: a plain title (no count; the "+" on Recitations) over their bar, no chevron. The course chevron (`chevron-down` icon at 18px in a 24px round hit area) points down open and along the reading direction closed.

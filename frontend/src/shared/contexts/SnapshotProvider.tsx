@@ -19,6 +19,7 @@ import { announceNotices } from '@/shared/utils/notices'
 import { failureNode } from '@/shared/utils/failure'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useNotify } from '@/shared/hooks/useNotify'
+import { refreshSides } from '@/shared/utils/refreshSides'
 import { useNewestRequest } from '@/shared/hooks/useLatestRequest'
 import { sortLectures } from '@/features/lectures/utils/lectureSort'
 import { announcePdfWarnings } from '@/features/lectures/utils/pdfWarnings'
@@ -30,8 +31,10 @@ interface ProviderProps {
   children: ReactNode
 }
 
-// Refetches `/status` and `/tree` as one pair applied in one render, so a page combining them never
-// shows one fresh beside the other stale — a finished step's button back, /running re-listing it.
+const BOTH = { runner: true, tree: true }
+
+// Refetches `/status` and `/tree` as one pair in one render; `/status` lands alone only on a `runner`-only
+// notify, which senders send only when nothing was written since their last notify (database/docs/EVENTS.md).
 export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
   const [status, setStatus] = useState<RunnerStatus | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
@@ -50,9 +53,10 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
   // PDF render warnings ride the tree, so they are announced from it rather than from /status.
   const warningReports = useReportOnce((msg) => toast('warning', msg))
 
-  // Any pair newer than the one shown lands, even with a newer fetch in flight: a notify stream
-  // would otherwise drop every answer until it pauses.
-  const newest = useNewestRequest()
+  // Per side, any answer newer than the one shown lands, even with a newer fetch in flight: a notify stream
+  // would otherwise drop every answer until it pauses. Separate gates keep a lone /status from dropping a pair's /tree.
+  const newestStatus = useNewestRequest()
+  const newestTree = useNewestRequest()
   const issued = useRef(0)
   // The first applied status and tree carry errors and warnings from before load: seed-and-suppress them.
   const statusPrimed = useRef(false)
@@ -120,22 +124,24 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
 
   // Either side may fail alone: the other still applies, so a backend that is down never freezes the
   // tree, nor a failed /tree the runner state. The failure itself was toasted by the http client.
-  async function refresh() {
+  // A side a notify did not name is skipped; both together still land in one render.
+  async function refresh(sides: { runner: boolean; tree: boolean } = BOTH) {
     const id = ++issued.current
-    const pair = await newest(Promise.allSettled([fetchRunnerStatus(), fetchTree()]))
-    // Overtaken by a pair already shown.
-    if (!pair) return
-    const [s, c] = pair
-    if (s.status === 'fulfilled') applyStatus(s.value, id)
-    if (c.status === 'fulfilled') {
+    const [s, c] = await Promise.allSettled([
+      sides.runner ? newestStatus(fetchRunnerStatus()) : undefined,
+      sides.tree ? newestTree(fetchTree()) : undefined,
+    ])
+    // The gates settle `undefined` for a side already overtaken by a newer one, and for a side not asked.
+    if (s.status === 'fulfilled' && s.value) applyStatus(s.value, id)
+    if (c.status === 'fulfilled' && c.value) {
       setCourses(c.value)
       for (const w of treeWaiters.current) if (w(c.value)) treeWaiters.current.delete(w)
       announcePdfWarnings(c.value, warningReports, treePrimed.current)
       treePrimed.current = true
       setLoaded(true)
       setLoadFailed(false)
-    } else if (id === issued.current) {
-      // Only the newest fetch's failure settles `loaded`, or routes would flash "not found" before a newer
+    } else if (c.status === 'rejected') {
+      // Only the newest tree fetch's failure reaches here, or routes would flash "not found" before a newer
       // tree lands; settling it beats spinning forever behind a database service that is down.
       setLoaded(true)
       setLoadFailed(true)
@@ -165,7 +171,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     }
   }
 
-  useNotify(refresh)
+  useNotify((matched) => void refresh(refreshSides(matched)), ['runner', 'tree'])
 
   async function trigger() {
     try {

@@ -12,6 +12,6 @@ export function useNewCoursesLecturesOnly(): boolean {
       .catch(() => {})
   }
   useEffect(load, [])
-  useNotify(load)
+  useNotify(() => void load(), ['settings'])
   return all
 }

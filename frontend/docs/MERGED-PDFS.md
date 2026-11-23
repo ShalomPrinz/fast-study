@@ -7,7 +7,7 @@ reached from the sidebar's "Merge summaries" row (`CourseMergedRow`, `.course-me
 ## Data
 
 `fetchMergedPdfs` (`database.ts`) reads `GET /courses/{c}/merged`; `useMergedPdfs` refetches it on each
-`useNotify`, since neither the tree (merged PDFs aren't in it) nor a `/status` snapshot shows that a merge ended.
+`tree` notify (merged-PDF run state comes from `/status` via `SnapshotProvider`, not from here).
 `createMergedPdf` (`backend.ts`) is the `POST`; its 409
 and 400 refusals throw coded like any other. `MergedPdf.name` is the sanitized file stem: every URL, the
 bridge target (`{ course, merged: name }`) and the `/status` key use it, `title` is only shown.

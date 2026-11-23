@@ -11,6 +11,7 @@ import type {
 import { announceNotices } from '@/shared/utils/notices'
 import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
 import { fetchCourseFiles, fetchCourseMeta } from '@/services/database'
+import { refreshSides } from '@/shared/utils/refreshSides'
 import { useNotify } from '@/shared/hooks/useNotify'
 import { useNewestRequest } from '@/shared/hooks/useLatestRequest'
 
@@ -36,6 +37,8 @@ export function useCourseOverview(): CourseOverviewValue {
   return ctx
 }
 
+const BOTH = { runner: true, tree: true }
+
 export function CourseOverviewProvider({
   course,
   children,
@@ -47,9 +50,10 @@ export function CourseOverviewProvider({
   const [files, setFiles] = useState<CourseFile[]>([])
   const [meta, setMeta] = useState<OverviewMeta>({})
   const [status, setStatus] = useState<CourseStatus | null>(null)
-  // Any triple newer than the one shown lands, even with a newer fetch in flight: a notify stream
-  // would otherwise drop every answer until it pauses.
-  const newest = useNewestRequest()
+  // Per half (disk, live), any answer newer than the one shown lands, even with a newer fetch in flight:
+  // a notify stream would otherwise drop every answer until it pauses.
+  const newestDisk = useNewestRequest()
+  const newestLive = useNewestRequest()
   const shownCourse = useRef(course)
 
   useEffect(() => {
@@ -58,24 +62,26 @@ export function CourseOverviewProvider({
       .catch(() => {}) // connection errors are toasted centrally by the http client
   }, [])
 
-  // Files, meta and status apply together, or a finished extractor's status lands beside its stale
-  // files and shows "Generate" again. A side that fails alone keeps its last value; the http client toasted it.
-  async function refresh() {
-    const triple = await newest(
-      Promise.allSettled([
-        fetchCourseFiles(course),
-        fetchCourseMeta(course),
-        fetchCourseStatus(course),
-      ]),
-    )
-    // Overtaken by a triple already shown, or fetched for the course before a switch.
-    if (!triple || course !== shownCourse.current) return
-    const [f, m, s] = triple
-    if (f.status === 'fulfilled') setFiles(f.value)
-    if (m.status === 'fulfilled') setMeta(m.value)
-    if (s.status === 'fulfilled') {
-      setStatus(s.value)
-      announceNotices(`overview:${course}`, s.value.notices)
+  // Files, meta and status apply in one render; status lands alone only on a `runner`-only notify, sent only
+  // when nothing was written since the last one. A side that fails alone keeps its last value; the http client toasted it.
+  // A notify names one half: `runner` is the status, `tree` the files and meta.
+  async function refresh(sides: { runner: boolean; tree: boolean } = BOTH) {
+    const [disk, live] = await Promise.all([
+      sides.tree
+        ? newestDisk(Promise.allSettled([fetchCourseFiles(course), fetchCourseMeta(course)]))
+        : undefined,
+      sides.runner ? newestLive(Promise.allSettled([fetchCourseStatus(course)])) : undefined,
+    ])
+    // A half is undefined when not asked or overtaken by one already shown; both drop on a course switch.
+    if (course !== shownCourse.current) return
+    if (disk) {
+      const [f, m] = disk
+      if (f.status === 'fulfilled') setFiles(f.value)
+      if (m.status === 'fulfilled') setMeta(m.value)
+    }
+    if (live?.[0].status === 'fulfilled') {
+      setStatus(live[0].value)
+      announceNotices(`overview:${course}`, live[0].value.notices)
     }
   }
 
@@ -87,7 +93,7 @@ export function CourseOverviewProvider({
     refresh()
   }, [course])
 
-  useNotify(refresh)
+  useNotify((matched) => void refresh(refreshSides(matched)), ['runner', 'tree'])
 
   // One trigger; omitting names = all slugs. skipExisting = continue (missing phases only),
   // default = overwrite. See docs/OVERVIEW.md.
