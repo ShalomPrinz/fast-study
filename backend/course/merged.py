@@ -123,6 +123,13 @@ def validate(req: MergeRequest, course: str) -> tuple[str, str]:
     title = clean_title(req.title)
     if not title:
         raise Refused(400, "a title is required", "merged_title_required")
+    if set(title) == {"."}:
+        raise Refused(
+            400,
+            f"{req.title!r} has no legal characters",
+            "name_has_no_legal_characters",
+            name=req.title,
+        )
     if not req.parts:
         raise Refused(400, "at least one part is required", "merged_parts_required")
     try:

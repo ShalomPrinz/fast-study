@@ -175,7 +175,7 @@ failures it was given, so a refusal the user can act on is caught by the route i
 `merge_pdf_failed`'s `detail` is pypdf's own text, untranslated. The merged-PDF run (kind `merged` in `/status`,
 `merge_pdf` step) also passes `database/`'s `file_locked` and `course_not_found` through, and `merged_part_missing`
 is both a request refusal (409, the part has no `summary.pdf` in the tree) and a run error (the file vanished mid-run).
-The request also answers `database/`'s own `course_not_found` (404) and `name_has_no_legal_characters` (400) for the title.
+The request also answers `database/`'s own `course_not_found` (404) and `name_has_no_legal_characters` (400) for the title; the backend raises the latter itself, before any database call, for a title of dots alone.
 
 `latex_error`'s `message` and `at` are engine text and stay untranslated; the frame around them
 (`LaTeX error:`, `line N:`, `and K more`) is the frontend's. `db_client` forwards the peer's own

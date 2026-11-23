@@ -102,6 +102,18 @@ class TestValidate:
             merged.validate(_req(title=" / \\ "), "C")
         assert (e.value.status, e.value.body["code"]) == (400, "merged_title_required")
 
+    @pytest.mark.parametrize("title", [".", "..", " ... ", "./"])
+    def test_a_dots_only_title_is_refused_before_any_db_call(self, db, title):
+        with pytest.raises(merged.Refused) as e:
+            merged.validate(_req(title=title), "C")
+        assert (e.value.status, e.value.body["code"]) == (
+            400,
+            "name_has_no_legal_characters",
+        )
+        assert e.value.body["params"] == {"name": title}
+        merged.db_client.get_merged.assert_not_called()
+        merged.db_client.get_tree.assert_not_called()
+
     def test_no_parts_is_required_after_the_title(self, db):
         with pytest.raises(merged.Refused) as e:
             merged.validate(_req(parts=[]), "C")
