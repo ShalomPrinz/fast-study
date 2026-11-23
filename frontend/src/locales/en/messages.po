@@ -78,7 +78,7 @@ msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
 
 #. placeholder {0}: rows.length
-#: src/features/merged-pdfs/MergedPdfsView.tsx:36
+#: src/features/merged-pdfs/MergedPdfsView.tsx:34
 msgid "{0, plural, one {# merged PDF} other {# merged PDFs}}"
 msgstr "{0, plural, one {# merged PDF} other {# merged PDFs}}"
 
@@ -1251,7 +1251,7 @@ msgstr "Create guide"
 msgid "Create merged summary"
 msgstr "Create merged summary"
 
-#: src/features/merged-pdfs/MergedPdfsView.tsx:45
+#: src/features/merged-pdfs/MergedPdfsView.tsx:43
 msgid "Create new"
 msgstr "Create new"
 
@@ -2055,7 +2055,7 @@ msgstr "Merge order"
 msgid "Merge summaries"
 msgstr "Merge summaries"
 
-#: src/features/merged-pdfs/MergedPdfsView.tsx:32
+#: src/features/merged-pdfs/MergedPdfsView.tsx:30
 msgid "Merged summaries"
 msgstr "Merged summaries"
 
@@ -2067,7 +2067,7 @@ msgstr "Merged summary title"
 msgid "Minutes between retries"
 msgstr "Minutes between retries"
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:65
+#: src/features/merged-pdfs/components/MergedRow.tsx:55
 msgid "missing"
 msgstr "missing"
 
@@ -2110,7 +2110,7 @@ msgstr "New"
 msgid "New course"
 msgstr "New course"
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:83
+#: src/features/merged-pdfs/components/MergedRow.tsx:73
 msgid "Newer version available"
 msgstr "Newer version available"
 
@@ -2350,7 +2350,7 @@ msgstr "Only technical error details are sent, never your files or keys. It's an
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "Only YouTube playlists can be opened up; {host} cannot."
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:87
+#: src/features/merged-pdfs/components/MergedRow.tsx:77
 msgid "Open"
 msgstr "Open"
 
@@ -2588,7 +2588,7 @@ msgstr "Questions go to the project's GitHub issues page: <0>github.com/ShalomPr
 msgid "Queued"
 msgstr "Queued"
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:93
+#: src/features/merged-pdfs/components/MergedRow.tsx:83
 msgid "Re-create"
 msgstr "Re-create"
 
@@ -3745,7 +3745,7 @@ msgstr "Video link"
 msgid "Videos"
 msgstr "Videos"
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:72
+#: src/features/merged-pdfs/components/MergedRow.tsx:62
 msgid "Waiting for another merge to finish"
 msgstr "Waiting for another merge to finish"
 
@@ -3825,7 +3825,7 @@ msgstr "Yes"
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
 
-#: src/features/merged-pdfs/MergedPdfsView.tsx:53
+#: src/features/merged-pdfs/MergedPdfsView.tsx:51
 msgid "You haven't created any merged summaries yet"
 msgstr "You haven't created any merged summaries yet"
 

@@ -6,8 +6,9 @@ reached from the sidebar's "Merge summaries" row (`CourseMergedRow`, `.course-me
 
 ## Data
 
-`fetchMergedPdfs` (`database.ts`) reads `GET /courses/{c}/merged`; `useMergedPdfs` refetches it on each SSE
-notify, which the backend pings when a merge ends. `createMergedPdf` (`backend.ts`) is the `POST`; its 409
+`fetchMergedPdfs` (`database.ts`) reads `GET /courses/{c}/merged`; `useMergedPdfs` refetches it on each
+`useNotify`, since neither the tree (merged PDFs aren't in it) nor a `/status` snapshot shows that a merge ended.
+`createMergedPdf` (`backend.ts`) is the `POST`; its 409
 and 400 refusals throw coded like any other. `MergedPdf.name` is the sanitized file stem: every URL, the
 bridge target (`{ course, merged: name }`) and the `/status` key use it, `title` is only shown.
 
@@ -49,7 +50,7 @@ inline-end (stacked under 640px of the page's own width, a container query). The
 
 - **Picker** lists the sidebar's tracks verbatim (`lectureTrack` / `recitationTrack`; a lectures-only course is
   one merged list under a "Select all" title), parts by raw folder name with the summary's first heading
-  under it in gray (`useCourseHeadings` → `GET /courses/{c}/headings`, keyed `partKey`, refetched on SSE; one
+  under it in gray (`useCourseHeadings` → `GET /courses/{c}/headings`, keyed `partKey`, refetched only when `headingsKey` changes: a part's name or `summary.md` mtime in the tree, a part appearing or vanishing included; one
   ellipsised line, full text in a `<Tooltip>`). Each section's title row reuses the downloads `.group-header`
   hover and carries a native checkbox, `.merged-section-toggle[data-kind="lecture"|"recitation"]` (indeterminate
   when some mergeable parts are ticked); a click anywhere on the row toggles it (`sectionTick`, `toggleSection`):

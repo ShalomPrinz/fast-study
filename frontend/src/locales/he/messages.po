@@ -78,7 +78,7 @@ msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
 #. placeholder {0}: rows.length
-#: src/features/merged-pdfs/MergedPdfsView.tsx:36
+#: src/features/merged-pdfs/MergedPdfsView.tsx:34
 msgid "{0, plural, one {# merged PDF} other {# merged PDFs}}"
 msgstr "{0, plural, one {קובץ PDF מאוחד אחד} two {# קבצי PDF מאוחדים} other {# קבצי PDF מאוחדים}}"
 
@@ -1251,7 +1251,7 @@ msgstr "יצירת מדריך"
 msgid "Create merged summary"
 msgstr "צור סיכום מאוחד"
 
-#: src/features/merged-pdfs/MergedPdfsView.tsx:45
+#: src/features/merged-pdfs/MergedPdfsView.tsx:43
 msgid "Create new"
 msgstr "צור חדש"
 
@@ -2055,7 +2055,7 @@ msgstr "סדר המיזוג"
 msgid "Merge summaries"
 msgstr "איחוד סיכומים"
 
-#: src/features/merged-pdfs/MergedPdfsView.tsx:32
+#: src/features/merged-pdfs/MergedPdfsView.tsx:30
 msgid "Merged summaries"
 msgstr "איחודי סיכומים"
 
@@ -2067,7 +2067,7 @@ msgstr "כותרת הסיכום המאוחד"
 msgid "Minutes between retries"
 msgstr "דקות בין ניסיונות"
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:65
+#: src/features/merged-pdfs/components/MergedRow.tsx:55
 msgid "missing"
 msgstr "חסר"
 
@@ -2110,7 +2110,7 @@ msgstr "חדשים"
 msgid "New course"
 msgstr "קורס חדש"
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:83
+#: src/features/merged-pdfs/components/MergedRow.tsx:73
 msgid "Newer version available"
 msgstr "יש גרסה חדשה יותר"
 
@@ -2350,7 +2350,7 @@ msgstr "נשלחים רק פרטים טכניים על שגיאות, אף פעם
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {host}."
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:87
+#: src/features/merged-pdfs/components/MergedRow.tsx:77
 msgid "Open"
 msgstr "פתיחה"
 
@@ -2588,7 +2588,7 @@ msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-G
 msgid "Queued"
 msgstr "בתור"
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:93
+#: src/features/merged-pdfs/components/MergedRow.tsx:83
 msgid "Re-create"
 msgstr "יצירה מחדש"
 
@@ -3745,7 +3745,7 @@ msgstr "קישור לווידאו"
 msgid "Videos"
 msgstr "וידאו"
 
-#: src/features/merged-pdfs/components/MergedRow.tsx:72
+#: src/features/merged-pdfs/components/MergedRow.tsx:62
 msgid "Waiting for another merge to finish"
 msgstr "ממתין לסיום איחוד אחר"
 
@@ -3825,7 +3825,7 @@ msgstr "כן"
 msgid "You can connect the account once your university is saved."
 msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
 
-#: src/features/merged-pdfs/MergedPdfsView.tsx:53
+#: src/features/merged-pdfs/MergedPdfsView.tsx:51
 msgid "You haven't created any merged summaries yet"
 msgstr "עדיין לא יצרת איחודי סיכומים"
 
