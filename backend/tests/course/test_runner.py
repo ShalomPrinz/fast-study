@@ -963,11 +963,7 @@ class TestConcurrency:
                 )
                 # Run2's task ends once its free slug is done (pitfalls skips at extract, never blocks).
                 await _finish_since(before)
-                assert _entry(COURSE, "pitfalls")["status"] in (
-                    "done",
-                    "skipped",
-                    "error",
-                )
+                assert _entry(COURSE, "pitfalls")["status"] == "skipped"
 
                 # Run1 still blocked → its entry is byte-for-byte what it was; Run2 did NOT touch it.
                 assert _entry(COURSE, "exam-hints") == holder
