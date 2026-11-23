@@ -1,6 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
-import type { Course } from '@/types'
 import { canOpenWith, openMergedPdf, openMergedPdfWith } from '@/services/open'
 import { formatDateTime } from '@/shared/utils/format'
 import { mergedNewRoute } from '@/shared/utils/url'
@@ -10,7 +9,7 @@ import ServiceError from '@/shared/components/ServiceError'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
 import OpenWithMenu from '@/features/lectures/components/OpenWithMenu'
 import type { MergedPrefill } from '../types'
-import { mergeInputBytes, type MergedRow } from '../utils/mergedRows'
+import type { MergedRow } from '../utils/mergedRows'
 import './MergedRow.css'
 
 const NODE: Record<MergedRow['run']['state'], StatusNodeState> = {
@@ -22,22 +21,13 @@ const NODE: Record<MergedRow['run']['state'], StatusNodeState> = {
 
 // One history row: title, when it was made, its parts in merge order, and what a run on it is doing.
 // A first creation has no stored entry, so it shows the file name and its run alone.
-export default function MergedRowView({
-  course,
-  row,
-  courseNode,
-}: {
-  course: string
-  row: MergedRow
-  courseNode: Course | undefined
-}) {
+export default function MergedRowView({ course, row }: { course: string; row: MergedRow }) {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { item, run } = row
-  const stats = useTimingStats(
-    run.state === 'running' ? 'merge_pdf' : null,
-    mergeInputBytes(item, courseNode),
-  )
+  // No stats lookup until the backend reports the merge's size, so the bar shows no ETA rather than a wrong one.
+  const size = run.state === 'running' ? run.size : null
+  const stats = useTimingStats(size === null ? null : 'merge_pdf', size ?? 0)
 
   function recreate() {
     if (!item) return

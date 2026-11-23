@@ -300,13 +300,31 @@ class TestRun:
 
         item = asyncio.run(go())
         assert item.keys() == {
-            "course", "lecture", "kind", "step", "started_at", "waiting",
+            "course", "lecture", "kind", "step", "started_at", "waiting", "size",
         }  # fmt: skip
         assert (item["lecture"], item["kind"], item["step"]) == (
             "T",
             "merged",
             "merge_pdf",
         )
+
+    def test_in_flight_size_is_null_then_the_part_bytes_by_the_join(self, db):
+        seen = {}
+
+        def join(inputs, labels, title, out):
+            seen["size"] = merged.in_flight()[0]["size"]
+            return merged.join_pdfs(inputs, labels, title, out)
+
+        async def go():
+            merged.try_start("C", "T", "T", PARTS)
+            seen["before"] = merged.in_flight()[0]["size"]
+            while merged._in_flight:
+                await asyncio.sleep(0.01)
+
+        with patch.object(merged, "join_pdfs", side_effect=join):
+            asyncio.run(go())
+        assert seen["before"] is None
+        assert seen["size"] == 2 * len(_pdf_bytes())
 
     def test_a_vanished_part_file_is_merged_part_missing(self, db):
         merged.db_client.get_file_bytes.side_effect = DbClientError(

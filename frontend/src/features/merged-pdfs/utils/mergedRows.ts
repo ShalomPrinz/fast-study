@@ -1,11 +1,11 @@
-import type { Course, MergedPdf, RunError, RunnerStatus } from '@/types'
+import type { MergedPdf, RunError, RunnerStatus } from '@/types'
 import { inFlightKey, parseInFlightKey } from '@/shared/utils/inFlightKey'
 
 /** Where a merged PDF's run stands: another merge of the course holds the lock (`waiting`), it is `running`, or it `failed`. */
 export type MergedRun =
   | { state: 'idle' }
   | { state: 'waiting' }
-  | { state: 'running'; startedAt: string }
+  | { state: 'running'; startedAt: string; size: number | null }
   | { state: 'failed'; error: RunError }
 
 /** One history row; `item` is null for a first creation, which has no stored entry yet and is known by its file name only. */
@@ -20,7 +20,9 @@ function runOf(status: RunnerStatus | null, course: string, name: string): Merge
   // A running entry outranks the error of the attempt before it: the backend clears that error only once the run ends.
   const live = status?.inFlight.find((e) => inFlightKey(e.course, e.lecture, e.kind) === key)
   if (live)
-    return live.waiting ? { state: 'waiting' } : { state: 'running', startedAt: live.startedAt }
+    return live.waiting
+      ? { state: 'waiting' }
+      : { state: 'running', startedAt: live.startedAt, size: live.size ?? null }
   const error = status?.errors[key]
   return error ? { state: 'failed', error } : { state: 'idle' }
 }
@@ -46,13 +48,4 @@ export function mergedRows(
     ...fresh.map((name) => ({ name, item: null, run: runOf(status, course, name) })),
     ...items.map((item) => ({ name: item.name, item, run: runOf(status, course, item.name) })),
   ]
-}
-
-/** The summed `summary.pdf` bytes of a stored entry's parts, which is what the backend sizes `merge_pdf` runs by; 0 when unknown. */
-export function mergeInputBytes(item: MergedPdf | null, course: Course | undefined): number {
-  if (!item || !course) return 0
-  return item.parts.reduce((sum, part) => {
-    const list = part.kind === 'recitation' ? course.recitations : course.lectures
-    return sum + (list.find((l) => l.name === part.name)?.files['summary.pdf']?.size ?? 0)
-  }, 0)
 }

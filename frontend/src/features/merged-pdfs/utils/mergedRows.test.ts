@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import type { Course, InFlightEntry, MergedPdf, RunError, RunnerStatus } from '@/types'
-import { mergeInputBytes, mergedRows } from './mergedRows'
+import type { InFlightEntry, MergedPdf, RunError, RunnerStatus } from '@/types'
+import { mergedRows } from './mergedRows'
 
 const item = (name: string): MergedPdf => ({
   name,
@@ -76,26 +76,19 @@ describe('mergedRows', () => {
   })
 })
 
-describe('mergeInputBytes', () => {
-  const lec = (name: string, size: number) => ({ name, files: { 'summary.pdf': { size } } })
-  const course = {
-    lectures: [lec('L1', 100), lec('L2', 50)],
-    recitations: [lec('L1', 7)],
-  } as unknown as Course
-
-  it('sums the parts summary.pdf sizes by kind, counting a vanished part as 0', () => {
-    const merged: MergedPdf = {
-      ...item('a'),
-      parts: [
-        { name: 'L1', kind: 'lecture', pdfMtime: '', exists: true },
-        { name: 'L1', kind: 'recitation', pdfMtime: '', exists: true },
-        { name: 'gone', kind: 'lecture', pdfMtime: '', exists: false },
-      ],
-    }
-    expect(mergeInputBytes(merged, course)).toBe(107)
-  })
-
-  it('is 0 for a first creation, whose parts the page cannot know', () => {
-    expect(mergeInputBytes(null, course)).toBe(0)
+describe('mergedRows run size', () => {
+  it('carries the backend size into a running run, null while unknown', () => {
+    const sized = { ...run('a'), size: 1234 }
+    expect(mergedRows('C', [], status([sized]))[0].run).toMatchObject({
+      state: 'running',
+      size: 1234,
+    })
+    expect(mergedRows('C', [], status([run('a')]))[0].run).toMatchObject({
+      state: 'running',
+      size: null,
+    })
+    expect(mergedRows('C', [], status([{ ...run('a'), size: null }]))[0].run).toMatchObject({
+      size: null,
+    })
   })
 })

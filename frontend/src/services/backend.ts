@@ -135,6 +135,7 @@ interface RawInFlightEntry {
   step: string
   started_at: string
   waiting?: boolean
+  size?: number | null
 }
 
 interface RawRunnerStatus {
@@ -161,6 +162,7 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
       step: e.step,
       startedAt: e.started_at,
       waiting: e.waiting ?? false,
+      size: e.size ?? null,
     })),
     queue: raw.queue ?? [],
     notices: normalizeNotices(raw.notices),

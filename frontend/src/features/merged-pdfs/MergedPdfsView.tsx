@@ -19,11 +19,9 @@ import './MergedPdfsView.css'
 
 function MergedPdfsBody({ course }: { course: string }) {
   const { t } = useLingui()
-  const { courses } = useCourseTreeContext()
   const { status } = useRunnerStatus()
   const items = useMergedPdfs(course)
   const rows = items ? mergedRows(course, items, status) : []
-  const courseNode = courses.find((c) => c.name === course)
 
   return (
     <main className="main-view main-view--page">
@@ -56,7 +54,7 @@ function MergedPdfsBody({ course }: { course: string }) {
           ) : (
             <div className="pipeline-card merged-list">
               {rows.map((row) => (
-                <MergedRowView key={row.name} course={course} row={row} courseNode={courseNode} />
+                <MergedRowView key={row.name} course={course} row={row} />
               ))}
             </div>
           )}

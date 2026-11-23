@@ -28,7 +28,7 @@ _TREE_KEYS = {"lecture": "lectures", "recitation": "recitations"}
 
 _in_flight: dict[
     str, dict
-] = {}  # skey → {course, lecture, kind, step, started_at, waiting}
+] = {}  # skey → {course, lecture, kind, step, started_at, waiting, size}
 _errors: dict[
     str, dict
 ] = {}  # skey → last error record; cleared when a merge of that name starts
@@ -172,6 +172,7 @@ def try_start(course: str, title: str, name: str, parts: list[Part]) -> str:
         "step": STEP,
         "started_at": datetime.now(timezone.utc).isoformat(),
         "waiting": True,
+        "size": None,  # the parts' total bytes, set once they are fetched
     }
     _errors.pop(key, None)  # a re-run's failure must not look like the old one
     db_client.notify()
@@ -238,6 +239,10 @@ def _merge(course: str, title: str, name: str, parts: list[Part]) -> None:
             path.write_bytes(data)
             inputs.append(path)
         size = sum(p.stat().st_size for p in inputs)
+        record = _in_flight.get(skey(course, name))  # gone if the run was torn down
+        if record is not None:
+            record["size"] = size  # one atomic store; the loop only reads the dict
+            db_client.notify()
         labels = [display_name(p.name, p.kind) for p in parts]
         try:
             out = join_pdfs(inputs, labels, title, Path(tmp) / "merged.pdf")

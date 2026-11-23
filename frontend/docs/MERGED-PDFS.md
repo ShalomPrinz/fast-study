@@ -16,8 +16,8 @@ bridge target (`{ course, merged: name }`) and the `/status` key use it, `title`
 A merge appears in `/status` as `kind: 'merged'`, `lecture` = the file name, so it is a `StatusKind`, not a
 `RunKind` (no retry, no queue). `mergedRows` derives each row's `MergedRun` from the one status the
 `SnapshotProvider` already holds: `in_flight` with `waiting` is waiting for the course's merge lock, without
-it running (a `ProgressBar` sized by `mergeInputBytes`, the parts' summed `summary.pdf` bytes; a first
-creation has no stored parts, so it asks with 0), an `errors` record is failed (`ServiceError` under the
+it running (a `ProgressBar` sized by the entry's `size`, the parts' summed `summary.pdf` bytes the backend
+merges; `null` until it has fetched them, and then no timing lookup is made, so the bar shows no ETA yet), an `errors` record is failed (`ServiceError` under the
 row). A run outranks the previous attempt's error. A run or error with no stored entry is its own row above
 the history, titled by file name. The failure toast comes from `SnapshotProvider` (led by `MergedLead`), not
 this page, so it shows on any page, once.

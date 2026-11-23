@@ -178,6 +178,8 @@ export interface InFlightEntry {
   startedAt: string
   // Merged runs only: another merge of the course holds the lock, so this one has not started.
   waiting?: boolean
+  // Merged runs only: the parts' summed summary.pdf bytes the merge is sized by; null until the backend has fetched them.
+  size?: number | null
 }
 
 // How far an entry's trigger may take it: `full` is every remaining step, `audio` stops at audio.mp3.
