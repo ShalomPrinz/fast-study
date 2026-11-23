@@ -43,7 +43,7 @@ export default function PasscodePrompt({
 
   const message =
     reason === 'incorrect'
-      ? t`That passcode didn't work. Try another one`
+      ? t`That passcode didn't work. Try another one.`
       : t`Enter the zoom passcode for this recording`
 
   return ReactDOM.createPortal(

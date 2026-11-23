@@ -3178,8 +3178,8 @@ msgid "That link isn't a course's main page. Copy the address that ends in cours
 msgstr "הקישור הזה אינו העמוד הראשי של קורס. העתק את הכתובת שמסתיימת ב-⁦course/view.php?id=⁩ ובמספר: ⁦{url}⁩."
 
 #: src/features/downloads/components/PasscodePrompt.tsx:46
-msgid "That passcode didn't work. Try another one"
-msgstr "קוד הגישה לא עבד. נסה קוד אחר"
+msgid "That passcode didn't work. Try another one."
+msgstr "קוד הגישה לא עבד. נסה קוד אחר."
 
 #: src/shared/i18n/serviceErrors.ts:323
 msgid "That playlist has no entries."
