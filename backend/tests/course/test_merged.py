@@ -175,11 +175,38 @@ class TestValidate:
         assert e.value.body["params"] == {"name": part.name, "kind": part.kind}
 
 
+class _Gate:
+    """Fake parks in `block()` until `open()`; `reached()` awaits it parking, by which point the
+    course lock is held and any later merge is queued behind it."""
+
+    def __init__(self):
+        self._reached = threading.Semaphore(0)
+        self._open = threading.Event()
+
+    def block(self):
+        self._reached.release()
+        self._open.wait(timeout=5)
+
+    def open(self):
+        self._open.set()
+
+    async def reached(self):
+        assert await asyncio.to_thread(self._reached.acquire, timeout=5), (
+            "fake never reached block()"
+        )
+
+
+async def _finished():
+    """Await every merge task started so far."""
+    tasks = set(merged._tasks)
+    if tasks:
+        await asyncio.wait_for(asyncio.gather(*tasks), 5)
+
+
 def _start_and_wait(*requests):
     async def go():
         started = [merged.try_start("C", t, t, p) for t, p in requests]
-        while merged._in_flight:
-            await asyncio.sleep(0.01)
+        await _finished()
         return started
 
     return asyncio.run(go())
@@ -230,8 +257,7 @@ class TestRun:
         async def go():
             first = merged.try_start("C", "T", "T", PARTS)
             second = merged.try_start("C", "T", "T", PARTS)
-            while merged._in_flight:
-                await asyncio.sleep(0.01)
+            await _finished()
             return first, second
 
         assert asyncio.run(go()) == ("started", "busy")
@@ -240,18 +266,17 @@ class TestRun:
         async def go():
             merged.try_start("C", "T", "T", PARTS)
             held = len(merged._tasks)
-            while merged._in_flight:
-                await asyncio.sleep(0.01)
+            await _finished()
             await asyncio.sleep(0)  # let the done callback run
             return held, len(merged._tasks)
 
         assert asyncio.run(go()) == (1, 0)
 
     def test_merges_of_one_course_run_one_at_a_time(self, db):
-        gate = threading.Event()
+        gate = _Gate()
 
         def slow_fetch(*_args):
-            gate.wait(5)
+            gate.block()
             return _pdf_bytes()
 
         merged.db_client.get_file_bytes.side_effect = slow_fetch
@@ -259,24 +284,23 @@ class TestRun:
         async def go():
             merged.try_start("C", "A", "A", PARTS)
             merged.try_start("C", "B", "B", PARTS)
-            await asyncio.sleep(0.1)
+            await gate.reached()  # A holds the course lock, so B is queued behind it
             seen = {i["lecture"]: i["waiting"] for i in merged.in_flight()}
-            gate.set()
-            while merged._in_flight:
-                await asyncio.sleep(0.01)
+            gate.open()
+            await _finished()
             return seen
 
         try:
             assert asyncio.run(go()) == {"A": False, "B": True}
         finally:
-            gate.set()
+            gate.open()
         assert "pdf" in db["A"] and "pdf" in db["B"]
 
     def test_started_at_is_reset_when_the_lock_is_acquired(self, db):
-        gate = threading.Event()
+        gate = _Gate()
 
         def slow_fetch(*_args):
-            gate.wait(5)
+            gate.block()
             return _pdf_bytes()
 
         merged.db_client.get_file_bytes.side_effect = slow_fetch
@@ -286,27 +310,26 @@ class TestRun:
             merged.try_start("C", "B", "B", PARTS)
             b = merged._in_flight[merged.skey("C", "B")]
             queued_at = b["started_at"]
+            await gate.reached()
+            assert b["waiting"]
+            # Real elapsed time: ISO stamps from a coarse clock could tie without it.
             await asyncio.sleep(0.05)
-            gate.set()
-            while b["waiting"]:
-                await asyncio.sleep(0.01)
-            ran_at = b["started_at"]
-            while merged._in_flight:
-                await asyncio.sleep(0.01)
-            return queued_at, ran_at
+            gate.open()
+            await _finished()
+            assert not b["waiting"]
+            return queued_at, b["started_at"]
 
         try:
             queued_at, ran_at = asyncio.run(go())
         finally:
-            gate.set()
+            gate.open()
         assert ran_at > queued_at
 
     def test_in_flight_item_shape(self, db):
         async def go():
             merged.try_start("C", "T", "T", PARTS)
             item = merged.in_flight()[0]
-            while merged._in_flight:
-                await asyncio.sleep(0.01)
+            await _finished()
             return item
 
         item = asyncio.run(go())
@@ -329,8 +352,7 @@ class TestRun:
         async def go():
             merged.try_start("C", "T", "T", PARTS)
             seen["before"] = merged.in_flight()[0]["size"]
-            while merged._in_flight:
-                await asyncio.sleep(0.01)
+            await _finished()
 
         with patch.object(merged, "join_pdfs", side_effect=join):
             asyncio.run(go())
@@ -382,8 +404,7 @@ class TestRun:
         async def go():
             assert merged.try_start("C", "T", "T", PARTS) == "started"
             cleared = merged.errors() == {}
-            while merged._in_flight:
-                await asyncio.sleep(0.01)
+            await _finished()
             return cleared
 
         assert asyncio.run(go())
