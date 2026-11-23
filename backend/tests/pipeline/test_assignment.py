@@ -180,7 +180,11 @@ class TestDocStep:
                 await asyncio.sleep(0)
                 assert runner.try_run_assignment_step("C", "A1", "solution") == "busy"
                 release.set()
-                await asyncio.sleep(0.05)
+                # The run task ending is the point auto_remove would have been reached by.
+                await asyncio.wait_for(
+                    asyncio.gather(*(asyncio.all_tasks() - {asyncio.current_task()})),
+                    5,
+                )
                 remove.assert_not_called()
                 assert runner._queue == []
 

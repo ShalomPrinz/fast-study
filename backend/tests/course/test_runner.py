@@ -172,6 +172,26 @@ async def _wait_done(course=COURSE, timeout=5.0):
     }
 
 
+class _Gate:
+    """A worker-thread fake blocks in `block()` after signalling it arrived; the test awaits
+    `reached()` (one hit per blocked call), so state read afterwards is that of the blocked call."""
+
+    def __init__(self):
+        self._release = threading.Event()
+        self._hits = threading.Semaphore(0)
+
+    def block(self):
+        self._hits.release()
+        self._release.wait(timeout=5)
+
+    def open(self):
+        self._release.set()
+
+    async def reached(self, n=1):
+        for _ in range(n):
+            assert await asyncio.to_thread(self._hits.acquire, True, 5)
+
+
 def _untimed(entry):
     """An entry without its wall-clock `started_at`, so assertions can compare it by equality."""
 
@@ -300,10 +320,10 @@ class TestGenerateSubset:
 
 class TestPhaseTransitions:
     def test_phase_starts_extract_before_switching_to_analyze(self, db, monkeypatch):
-        release = threading.Event()
+        gate = _Gate()
 
         def blocking_get_file_bytes(course, lecture, kind, filename):
-            release.wait(timeout=5)
+            gate.block()
             return TRANSCRIPT.encode("utf-8")
 
         monkeypatch.setattr(db_client, "get_file_bytes", blocking_get_file_bytes)
@@ -312,27 +332,23 @@ class TestPhaseTransitions:
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
             try:
                 # Blocked inside extract → the slug's phase is "extract" and running stays True.
-                ext = {}
-                for _ in range(500):
-                    st = course_runner.get_status(COURSE)
-                    ext = st["extractors"].get("exam-hints", {})
-                    lock = course_runner._locks.get((COURSE, "exam-hints"))
-                    if lock and lock.locked() and ext.get("phase") == "extract":
-                        break
-                    await asyncio.sleep(0.01)
-                assert ext.get("phase") == "extract" and st["running"] is True
+                await gate.reached()
+                st = course_runner.get_status(COURSE)
+                ext = st["extractors"]["exam-hints"]
+                assert ext["phase"] == "extract" and st["running"] is True
+                assert course_runner._locks[(COURSE, "exam-hints")].locked()
             finally:
-                release.set()
+                gate.open()
             return await _wait_done()
 
         status = asyncio.run(go())
         assert status["extractors"]["exam-hints"]["phase"] == "to_pdf"
 
     def test_running_stays_true_through_analyze(self, db, monkeypatch):
-        release = threading.Event()
+        gate = _Gate()
 
         def slow_analyze(ext, report, course):
-            release.wait(timeout=5)
+            gate.block()
             return "ניתוח"
 
         monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
@@ -342,28 +358,23 @@ class TestPhaseTransitions:
             try:
                 # No false "done" flicker between phases: while analyze blocks, the run is
                 # still running with the slug at phase "analyze" and the extractor "running".
+                await gate.reached()
                 st = course_runner.get_status(COURSE)
-                for _ in range(500):
-                    st = course_runner.get_status(COURSE)
-                    ext = st["extractors"].get("exam-hints", {})
-                    if ext.get("phase") == "analyze" and ext.get("status") == "running":
-                        break
-                    await asyncio.sleep(0.01)
                 assert st["running"] is True
                 assert st["extractors"]["exam-hints"]["phase"] == "analyze"
                 assert st["extractors"]["exam-hints"]["status"] == "running"
             finally:
-                release.set()
+                gate.open()
             await _wait_done()
 
         asyncio.run(go())
 
     def test_started_at_stamped_once_and_carried_across_phases(self, db, monkeypatch):
-        release = threading.Event()
+        gate = _Gate()
         seen = {}
 
         def slow_analyze(ext, report, course):
-            release.wait(timeout=5)
+            gate.block()
             return "ניתוח"
 
         monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
@@ -372,16 +383,12 @@ class TestPhaseTransitions:
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
             try:
                 # The stamp belongs to the chain, so the one read mid-analyze must survive to_pdf.
-                for _ in range(500):
-                    ext = course_runner.get_status(COURSE)["extractors"].get(
-                        "exam-hints", {}
-                    )
-                    if ext.get("phase") == "analyze":
-                        seen["mid"] = ext.get("started_at")
-                        break
-                    await asyncio.sleep(0.01)
+                await gate.reached()
+                ext = course_runner.get_status(COURSE)["extractors"]["exam-hints"]
+                assert ext["phase"] == "analyze"
+                seen["mid"] = ext["started_at"]
             finally:
-                release.set()
+                gate.open()
             await _wait_done()
             return course_runner.get_status(COURSE)["extractors"]["exam-hints"]
 
@@ -851,10 +858,10 @@ class TestConcurrency:
     a slug whose lock is already held by ANOTHER run SKIPS it (first-come keeps it, no clobber)."""
 
     def test_same_single_slug_is_busy_and_status_not_clobbered(self, db, monkeypatch):
-        release = threading.Event()
+        gate = _Gate()
 
         def blocking_get_file_bytes(course, lecture, kind, filename):
-            release.wait(timeout=5)
+            gate.block()
             return TRANSCRIPT.encode("utf-8")
 
         monkeypatch.setattr(db_client, "get_file_bytes", blocking_get_file_bytes)
@@ -865,18 +872,11 @@ class TestConcurrency:
                 == "started"
             )
             try:
-                for _ in range(
-                    500
-                ):  # wait until the run holds the (course, slug) lock, in extract
-                    lock = course_runner._locks.get((COURSE, "exam-hints"))
-                    if (
-                        lock
-                        and lock.locked()
-                        and _phase(COURSE, "exam-hints") == "extract"
-                    ):
-                        break
-                    await asyncio.sleep(0.01)
+                await (
+                    gate.reached()
+                )  # the run holds the (course, slug) lock, in extract
                 assert course_runner._locks[(COURSE, "exam-hints")].locked()
+                assert _phase(COURSE, "exam-hints") == "extract"
 
                 # Same course + same (only) slug while it's in flight → every requested slug held → busy.
                 assert (
@@ -894,7 +894,7 @@ class TestConcurrency:
                     "phase": "extract",
                 }
             finally:
-                release.set()
+                gate.open()
             await _wait_done()
 
             # Lock released → a fresh generate starts normally on the same loop.
@@ -910,10 +910,10 @@ class TestConcurrency:
         self, db, monkeypatch
     ):
         # Distinct (course, slug) locks ⇒ neither run is skipped; both hold their own lock at once.
-        release = threading.Event()
+        gate = _Gate()
 
         def blocking(*a):
-            release.wait(timeout=5)
+            gate.block()
             return TRANSCRIPT.encode("utf-8")
 
         monkeypatch.setattr(db_client, "get_file_bytes", blocking)
@@ -928,20 +928,9 @@ class TestConcurrency:
                 == "started"
             )
             try:
-                for _ in range(500):
-                    la = course_runner._locks.get((COURSE, "exam-hints"))
-                    lp = course_runner._locks.get((COURSE, "pitfalls"))
-                    exs = course_runner.get_status(COURSE)["extractors"]
-                    if (
-                        la
-                        and lp
-                        and la.locked()
-                        and lp.locked()
-                        and exs.get("exam-hints", {}).get("status") == "running"
-                        and exs.get("pitfalls", {}).get("status") == "running"
-                    ):
-                        break
-                    await asyncio.sleep(0.01)
+                await gate.reached(2)
+                la = course_runner._locks[(COURSE, "exam-hints")]
+                lp = course_runner._locks[(COURSE, "pitfalls")]
                 # Both slug locks held at the same instant → genuinely parallel, neither skipped.
                 assert la.locked() and lp.locked()
                 st = course_runner.get_status(COURSE)
@@ -949,7 +938,7 @@ class TestConcurrency:
                 assert st["extractors"]["exam-hints"]["status"] == "running"
                 assert st["extractors"]["pitfalls"]["status"] == "running"
             finally:
-                release.set()
+                gate.open()
             await _wait_done()
 
         asyncio.run(go())
@@ -957,10 +946,10 @@ class TestConcurrency:
     def test_collision_skip_does_not_overwrite_holder_entry(self, db, monkeypatch):
         # Run1 holds exam-hints (blocked in analyze). Run2 = [exam-hints, pitfalls]: it must SKIP the
         # held exam-hints (leaving Run1's entry intact) and still run its free slug pitfalls.
-        release = threading.Event()
+        gate = _Gate()
 
         def slow_analyze(ext, report, course):
-            release.wait(timeout=5)
+            gate.block()
             return "ניתוח"
 
         monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
@@ -971,41 +960,26 @@ class TestConcurrency:
                 == "started"
             )
             # Wait until Run1 holds exam-hints and is parked in analyze.
-            for _ in range(500):
-                lock = course_runner._locks.get((COURSE, "exam-hints"))
-                ext = _entry(COURSE, "exam-hints")
-                if (
-                    lock
-                    and lock.locked()
-                    and ext.get("phase") == "analyze"
-                    and ext.get("status") == "running"
-                ):
-                    break
-                await asyncio.sleep(0.01)
+            await gate.reached()
             assert course_runner._locks[(COURSE, "exam-hints")].locked()
             holder = dict(_entry(COURSE, "exam-hints"))
             assert holder == {"status": "running", "phase": "analyze"}
 
             # Run2 includes the held slug (skipped) + a free slug (runs) → started, not busy.
+            run1 = asyncio.all_tasks()
             assert (
                 course_runner.try_run_generate(
                     COURSE, _course_node(), ["exam-hints", "pitfalls"]
                 )
                 == "started"
             )
-            # Wait until Run2 finishes its free slug.
-            for _ in range(500):
-                if _entry(COURSE, "pitfalls").get("status") in (
-                    "done",
-                    "skipped",
-                    "error",
-                ):
-                    break
-                await asyncio.sleep(0.01)
+            # Run2's own task ends once its free slug is finished (Run1 stays parked).
+            await asyncio.wait_for(asyncio.gather(*(asyncio.all_tasks() - run1)), 5)
 
             # Run1 still blocked → its entry is byte-for-byte what it was; Run2 did NOT touch it.
+            assert _entry(COURSE, "pitfalls").get("status") == "skipped"
             assert _entry(COURSE, "exam-hints") == holder
-            release.set()
+            gate.open()
             await _wait_done()
             # Run1 finished exam-hints itself.
             assert _entry(COURSE, "exam-hints")["status"] == "done"
@@ -1015,10 +989,10 @@ class TestConcurrency:
     def test_same_slug_different_courses_run_in_parallel(self, db, monkeypatch):
         # (course, slug) keying ⇒ the same slug in two courses uses two locks ⇒ fully parallel.
         COURSE2 = "אלגברה לינארית"
-        release = threading.Event()
+        gate = _Gate()
 
         def blocking(*a):
-            release.wait(timeout=5)
+            gate.block()
             return TRANSCRIPT.encode("utf-8")
 
         monkeypatch.setattr(db_client, "get_file_bytes", blocking)
@@ -1035,15 +1009,12 @@ class TestConcurrency:
                 == "started"
             )
             try:
-                for _ in range(500):
-                    l1 = course_runner._locks.get((COURSE, "exam-hints"))
-                    l2 = course_runner._locks.get((COURSE2, "exam-hints"))
-                    if l1 and l2 and l1.locked() and l2.locked():
-                        break
-                    await asyncio.sleep(0.01)
+                await gate.reached(2)
+                l1 = course_runner._locks[(COURSE, "exam-hints")]
+                l2 = course_runner._locks[(COURSE2, "exam-hints")]
                 assert l1.locked() and l2.locked()  # different keys → both live at once
             finally:
-                release.set()
+                gate.open()
             await _wait_done(COURSE)
             await _wait_done(COURSE2)
 
@@ -1051,10 +1022,10 @@ class TestConcurrency:
 
     def test_busy_only_when_every_requested_slug_in_flight(self, db, monkeypatch):
         # "busy" ⇔ ALL requested slugs are currently in flight; a request that includes any free slug starts.
-        release = threading.Event()
+        gate = _Gate()
 
         def slow_analyze(ext, report, course):
-            release.wait(timeout=5)
+            gate.block()
             return "ניתוח"
 
         monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
@@ -1064,11 +1035,8 @@ class TestConcurrency:
                 course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
                 == "started"
             )
-            for _ in range(500):
-                lock = course_runner._locks.get((COURSE, "exam-hints"))
-                if lock and lock.locked():
-                    break
-                await asyncio.sleep(0.01)
+            await gate.reached()
+            assert course_runner._locks[(COURSE, "exam-hints")].locked()
             # All requested slugs (just exam-hints) held → busy.
             assert (
                 course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
@@ -1081,7 +1049,7 @@ class TestConcurrency:
                 )
                 == "started"
             )
-            release.set()
+            gate.open()
             await _wait_done()
 
         asyncio.run(go())
@@ -1363,10 +1331,10 @@ class TestStatusAndListing:
     def test_status_snapshot_lists_course_for_whole_generation(self, db, monkeypatch):
         from pipeline import runner as pipeline_runner
 
-        release = threading.Event()
+        gate = _Gate()
 
         def slow_analyze(ext, report, course):
-            release.wait(timeout=5)
+            gate.block()
             return "ניתוח"
 
         monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
@@ -1377,13 +1345,11 @@ class TestStatusAndListing:
             assert pipeline_runner.get_status()["overview_running"] == [COURSE]
             assert db.notifies == 1
             try:
-                for _ in range(500):
-                    if _entry(COURSE, "exam-hints").get("phase") == "analyze":
-                        break
-                    await asyncio.sleep(0.01)
+                await gate.reached()
+                assert _phase(COURSE, "exam-hints") == "analyze"
                 assert pipeline_runner.get_status()["overview_running"] == [COURSE]
             finally:
-                release.set()
+                gate.open()
             await _wait_done()
             return pipeline_runner.get_status()["overview_running"]
 
