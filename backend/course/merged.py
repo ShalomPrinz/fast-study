@@ -1,6 +1,5 @@
-"""The course-level merged PDF run: validate a request, then join the chosen parts' summary.pdf
-under one title. Own small store (in flight, errors, a per-course lock), merged into /status by
-the pipeline runner. See docs/PIPELINE.md#merged-pdf."""
+"""The course-level merged PDF run: validate a request, then join the chosen parts' summary.pdf under
+one title, with its own in-flight/error store and per-course lock. See docs/PIPELINE.md#merged-pdf."""
 
 import asyncio
 import logging
