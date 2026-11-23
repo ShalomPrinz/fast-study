@@ -340,3 +340,22 @@ describe('findMatches offset mapping', () => {
     expect(findMatches([summary], 'alpha')).toEqual(first)
   })
 })
+
+describe('whitespace normalization', () => {
+  const spans = (content: string, query: string) =>
+    findMatches([lecture(content)], query).map((m) => [m.index, m.end])
+
+  it('collapses mixed whitespace runs, so a spaced query matches across them', () => {
+    const content = ' \t\n  alpha \t\r\n\n  beta    gamma\n\n  '
+    expect(spans(content, 'alpha beta gamma')).toEqual([[5, 30]])
+    expect(spans(content, 'alpha  beta')).toEqual([[5, 21]])
+    expect(spans(content, ' alpha')).toEqual([[5, 10]])
+    expect(spans(content, 'gamma ')).toEqual([[25, 30]])
+  })
+
+  it('keeps Hebrew with niqqud contiguous around collapsed whitespace', () => {
+    const content = '\n  שָׁלוֹם \t\n עוֹלָם  \n'
+    expect(spans(content, 'שָׁלוֹם עוֹלָם')).toEqual([[3, 20]])
+    expect(spans(content, 'עוֹלָם')).toEqual([[14, 20]])
+  })
+})

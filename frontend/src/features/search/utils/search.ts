@@ -80,15 +80,19 @@ function normalize(summary: CourseSummary): Normalized {
   const { content } = summary
   const rawAt: number[] = []
   let text = ''
+  // Starts true so leading whitespace is dropped; a flag, because endsWith on a growing rope is quadratic.
+  let lastWasSpace = true
   const emit = (ch: string, at: number) => {
     if (/\s/.test(ch)) {
-      if (text && !text.endsWith(' ')) {
+      if (!lastWasSpace) {
         text += ' '
         rawAt.push(at)
+        lastWasSpace = true
       }
     } else {
       text += ch
       rawAt.push(at)
+      lastWasSpace = false
     }
   }
 
