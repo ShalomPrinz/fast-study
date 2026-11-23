@@ -973,13 +973,15 @@ class TestConcurrency:
                 )
                 == "started"
             )
-            # Run2's own task ends once its free slug is finished (Run1 stays parked).
-            await asyncio.wait_for(asyncio.gather(*(asyncio.all_tasks() - run1)), 5)
+            try:
+                # Run2's own task ends once its free slug is finished (Run1 stays parked).
+                await asyncio.wait_for(asyncio.gather(*(asyncio.all_tasks() - run1)), 5)
 
-            # Run1 still blocked → its entry is byte-for-byte what it was; Run2 did NOT touch it.
-            assert _entry(COURSE, "pitfalls").get("status") == "skipped"
-            assert _entry(COURSE, "exam-hints") == holder
-            gate.open()
+                # Run1 still blocked → its entry is byte-for-byte what it was; Run2 did NOT touch it.
+                assert _entry(COURSE, "pitfalls").get("status") == "skipped"
+                assert _entry(COURSE, "exam-hints") == holder
+            finally:
+                gate.open()
             await _wait_done()
             # Run1 finished exam-hints itself.
             assert _entry(COURSE, "exam-hints")["status"] == "done"
@@ -1037,19 +1039,23 @@ class TestConcurrency:
             )
             await gate.reached()
             assert course_runner._locks[(COURSE, "exam-hints")].locked()
-            # All requested slugs (just exam-hints) held → busy.
-            assert (
-                course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
-                == "busy"
-            )
-            # Includes a free slug (pitfalls) → started.
-            assert (
-                course_runner.try_run_generate(
-                    COURSE, _course_node(), ["exam-hints", "pitfalls"]
+            try:
+                # All requested slugs (just exam-hints) held → busy.
+                assert (
+                    course_runner.try_run_generate(
+                        COURSE, _course_node(), ["exam-hints"]
+                    )
+                    == "busy"
                 )
-                == "started"
-            )
-            gate.open()
+                # Includes a free slug (pitfalls) → started.
+                assert (
+                    course_runner.try_run_generate(
+                        COURSE, _course_node(), ["exam-hints", "pitfalls"]
+                    )
+                    == "started"
+                )
+            finally:
+                gate.open()
             await _wait_done()
 
         asyncio.run(go())
