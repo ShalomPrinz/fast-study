@@ -112,7 +112,8 @@ mints an event id even with no client.
 Source maps upload only from a `vite build` with `SENTRY_AUTH_TOKEN` set (`SENTRY_ORG`, `SENTRY_PROJECT`
 defaulting to `faststudy`); the maps are `hidden` and deleted after upload, so none ship. The release
 comes from `FASTSTUDY_VERSION`, never `electron/package.json`, whose patch CI replaces; a token without
-it fails the build rather than upload to the wrong release. An org token routes to the org's region
+it fails the build rather than upload to the wrong release. The plugin links no commits
+(`setCommits: false`); CI's build-win step does. An org token routes to the org's region
 (EU included) on its own, so no `url` is set.
 
 ## `events.ts` and `toaster.ts`

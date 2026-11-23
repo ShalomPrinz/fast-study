@@ -219,6 +219,18 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.FASTSTUDY_SENTRY_DSN }}
         run: npm ci && npm run build
 
+      # Links the release's commits so a `Fixes FASTSTUDY-<id>` trailer resolves; win only, as both builds
+      # share one release. The token is optional, so none skips; a failure warns, never blocking an installer.
+      - name: Link the release's commits to Sentry
+        if: github.ref == 'refs/heads/main'
+        working-directory: frontend
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          RELEASE: faststudy@${{ needs.version.outputs.version }}
+        run: |
+          [ -z "$SENTRY_AUTH_TOKEN" ] || ./node_modules/.bin/sentry-cli releases set-commits "$RELEASE" --auto --ignore-missing || echo "::warning::Linking commits to Sentry release $RELEASE failed"
+
       # One workspace install, so auto and server share one hoisted node_modules. downloader/.npmrc's
       # install-links makes the file:../lib/*/js deps real directories, not links that dangle once
       # the tree is copied into the installer.

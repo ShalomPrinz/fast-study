@@ -18,7 +18,8 @@ function sentryUpload(): PluginOption[] {
       authToken,
       org: process.env.SENTRY_ORG,
       project: process.env.SENTRY_PROJECT || 'faststudy',
-      release: { name: `faststudy@${version}` },
+      // CI's build-win step owns commit linking.
+      release: { name: `faststudy@${version}`, setCommits: false },
       sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
       telemetry: false,
     }),
