@@ -156,6 +156,9 @@ const MESSAGES: Record<string, MessageDescriptor> = {
       '{kind, select, recitation {The recitation "{name}" has no summary PDF to merge.} other {The lecture "{name}" has no summary PDF to merge.}}',
   }),
   merge_pdf_failed: msg({ message: 'The PDFs could not be merged.' }),
+  merged_title_required: msg({
+    message: 'The title has no characters that can be used in a file name.',
+  }),
 
   // database
   file_locked: msg({

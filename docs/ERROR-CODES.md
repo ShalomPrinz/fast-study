@@ -102,7 +102,7 @@ bug in one of our own callers can, and it renders through the generic fallback u
 | `course/runner.py` resolve        | `unknown_phase`            | `phase`            | dev   |
 | `course/runner.py` resolve        | `unknown_extractors`       | `slugs`            | dev   |
 | `backend_main.py` overview        | `course_not_found`         | `course`           | user  |
-| `course/merged.py` validate       | `merged_title_required`    | —                  | dev   |
+| `course/merged.py` validate       | `merged_title_required`    | —                  | user  |
 | `course/merged.py` validate       | `merged_parts_required`    | —                  | dev   |
 | `course/merged.py` validate       | `merged_pdf_exists`        | `title`            | user  |
 | `course/merged.py` validate       | `merged_part_missing`      | `name`, `kind`     | user  |
