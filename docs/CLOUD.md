@@ -17,7 +17,8 @@ not pushed is lost when the session ends. The rules below override the matching 
   [`git-commit`](../.claude/skills/git-commit/SKILL.md) skill, `reviewer` included.
 - If a push would cancel a workflow run still in progress on the branch, wait for that run to finish,
   then push.
-- Never push to `main`, never force-push, and never push any other branch.
+- Never push to `main`, never force-push, and never push any other branch. `.claude/hooks/branches.py`
+  denies a push that breaks the branch rule.
 - Each push to that branch runs `build.yml` (build + smoke). With no `gh`, read the results from the public
   API (`curl -s "https://api.github.com/repos/ShalomPrinz/fast-study/actions/runs?branch=<branch>"`); logs need auth.
 

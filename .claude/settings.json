@@ -28,6 +28,11 @@
             "type": "command",
             "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/hooks/commits.py\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/hooks/commits.py\" ]; then python3 \"$d/.claude/hooks/commits.py\"; fi",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/hooks/branches.py\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/hooks/branches.py\" ]; then python3 \"$d/.claude/hooks/branches.py\"; fi",
+            "timeout": 10
           }
         ]
       }

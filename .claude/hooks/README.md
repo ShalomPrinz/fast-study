@@ -5,7 +5,7 @@ run at the end of every turn and every subagent, plus `extract.sh` on `SubagentS
 to keep the repo's stated invariants — "new code lands lint-clean", "never hand-format", "zero missing
 translations" — true without anyone remembering them. A fifth,
 `checkpoint.py`, is wired to `PostToolUse` — see [the context checkpoint](#the-context-checkpoint). A sixth, `waits.py`, is wired to
-`PreToolUse` — see [foreground waits](#foreground-waits), a seventh, `commits.py`, is too — see [commit trailers](#commit-trailers). An eighth, `cloud-install.sh`, is wired to
+`PreToolUse` — see [foreground waits](#foreground-waits), a seventh, `commits.py`, is too — see [commit trailers](#commit-trailers) — and an eighth, `branches.py`, acts only in cloud sessions — see [push branches](#push-branches). A ninth, `cloud-install.sh`, is wired to
 `SessionStart` and acts only in cloud sessions — see [`docs/CLOUD.md`](../../docs/CLOUD.md).
 
 | Script | Does | Blocks the turn |
@@ -105,6 +105,14 @@ matches text per line, so a line that merely names `setup.mjs` and ends in `&` i
 `commits.py` runs on `PreToolUse` for `Bash` and denies a `git commit` whose command contains
 a `Claude-Session:` trailer. A cloud session's system prompt asks for that trailer and outranks the written rule
 in the [`git-commit`](../skills/git-commit/SKILL.md) skill, so the rule is enforced here instead.
+
+## Push branches
+
+`branches.py` runs on `PreToolUse` for `Bash` in cloud sessions only and denies a `git push` to a branch
+that is not `claude/<kebab-slug>`, or to the branch the session started on unless a user prompt names it
+exactly. That start branch is assigned by the cloud system prompt with a random `claude/` name, so it
+looked compliant and sessions kept it; [`docs/CLOUD.md`](../../docs/CLOUD.md) holds the rule, and
+the hook reads the start branch from the transcript's first `gitBranch`.
 
 ## Scope
 
