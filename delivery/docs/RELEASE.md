@@ -166,8 +166,10 @@ Two optional secrets; a fork or a build without them still produces an installer
   release, so a `Fixes FASTSTUDY-<id>` trailer resolves its issue: that step is the one owner of commit
   linking, and the vite plugin's own set-commits is off (`release.setCommits: false` in `vite.config.ts`)
   because it would run in both jobs and fail silently. One job because both builds feed one release,
-  `--auto` because Sentry reads the range since the previous release from GitHub (the shallow checkout
-  suffices). No token skips the step; a failure only warns, so bookkeeping never blocks an installer.
+  `--auto` because Sentry reads the range since the previous release through its GitHub integration
+  (otherwise sentry-cli links HEAD alone). A `Fixes` commit resolves its issue only when main's build
+  links it into a release, so a branch commit resolves once its merge ships. No token skips the step;
+  a failure only warns, so bookkeeping never blocks an installer.
 
 The smoke run's installs carry the DSN, but the per-program firewall blocks every event they send —
 on Windows only: the macOS suite sets up no firewall and never turns reports on, which are off until
