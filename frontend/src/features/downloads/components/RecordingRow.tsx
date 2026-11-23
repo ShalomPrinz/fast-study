@@ -75,8 +75,8 @@ const RecordingRow = memo(function RecordingRow({ item, edit, lock, course, onRe
     setName,
     setKind,
   } = useRowEdit(item, edit, course, lock)
-  // The actual downloads (one bar each) of this row's `ref` in this course, scoped to its current
-  // name and kind; a running download re-attaches after a reload. Subscribed per row, so another
+  // The actual downloads (one bar each) of this row's `ref` in this course: a running one by ref,
+  // a settled one by current name and kind; a running download re-attaches after a reload. Subscribed per row, so another
   // row's job change doesn't re-render this one.
   const jobs = jobsForTarget(useRowJobs(course, item.ref), effectiveName, kind)
   // Auto's cached probe answer, updated in place by a download this session (single-row or bulk) —

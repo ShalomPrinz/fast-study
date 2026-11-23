@@ -18,7 +18,7 @@ export type TargetStatus =
   | 'in-flight'
   | 'pending'
 
-// This target's jobs: course-, ref-, name- and kind-scoped.
+// This target's jobs: course- and ref-scoped; a settled job must also match name and kind.
 function targetJobs(
   jobsByRef: JobsByRef,
   course: string,

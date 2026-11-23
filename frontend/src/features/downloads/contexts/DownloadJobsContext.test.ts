@@ -116,8 +116,8 @@ describe('jobsForTarget', () => {
   const bucket = jobsForRef(
     groupJobsByRef([
       job({ id: 'a', lecture: 'שיעור 3', status: 'done' }),
-      job({ id: 'b', lecture: 'שיעור 4.1' }),
-      job({ id: 'c', lecture: 'שיעור 4.2' }),
+      job({ id: 'b', lecture: 'שיעור 4.1', status: 'done' }),
+      job({ id: 'c', lecture: 'שיעור 4.2', status: 'done' }),
     ]),
     'Algo',
     'r1',
@@ -133,6 +133,19 @@ describe('jobsForTarget', () => {
   it("keeps the name's own job and its zoom halves", () => {
     expect(jobsForTarget(bucket, 'שיעור 3', 'lecture').map((j) => j.id)).toEqual(['a'])
     expect(jobsForTarget(bucket, 'שיעור 4', 'lecture').map((j) => j.id)).toEqual(['b', 'c'])
+  })
+
+  // A rename mid-download must keep the running job (keyed by its ref), so no Download button shows.
+  it('keeps a running job whatever the row is now named', () => {
+    const running = jobsForRef(
+      groupJobsByRef([job({ id: 'r', lecture: 'שיעור 3', status: 'running' })]),
+      'Algo',
+      'r1',
+    )
+    const jobs = jobsForTarget(running, 'שיעור 33', 'lecture')
+    expect(jobs.map((j) => j.id)).toEqual(['r'])
+    expect(rowStatus(jobs)).toBe('running')
+    expect(jobsForTarget(running, 'שיעור 3', 'recitation').map((j) => j.id)).toEqual(['r'])
   })
 
   it('drops a job of the other kind', () => {

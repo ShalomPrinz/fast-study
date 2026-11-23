@@ -164,15 +164,15 @@ export function jobsForRef(byRef: JobsByRef, course: string, ref: string): reado
   return byRef.get(rowKey(course, ref)) ?? EMPTY_JOBS
 }
 
-// One target's jobs within a ref bucket: name- and kind-scoped (`name`, `name.1`, `name.2`), since a row
-// renamed or re-kinded leaves the old target's jobs under the same ref.
+// One target's jobs within a ref bucket: a running job always stays (matched by ref); a settled one
+// must match `name` (or `name.1`/`name.2`) and kind, so a renamed row doesn't inherit the old result.
 export function jobsForTarget(
   jobs: readonly JobProgress[],
   name: string,
   kind: Kind,
 ): readonly JobProgress[] {
   const names = new Set([name, `${name}.1`, `${name}.2`])
-  const scoped = jobs.filter((j) => j.kind === kind && names.has(j.title))
+  const scoped = jobs.filter((j) => !isTerminal(j) || (j.kind === kind && names.has(j.title)))
   // Keeps the shared identity when nothing is dropped, so an untouched row's snapshot stays stable.
   return scoped.length === jobs.length ? jobs : scoped.length ? scoped : EMPTY_JOBS
 }
