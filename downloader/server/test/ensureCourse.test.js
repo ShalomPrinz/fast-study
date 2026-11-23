@@ -49,7 +49,7 @@ test.after(() => {
 });
 
 process.env.DATABASE_URL = `http://127.0.0.1:${db.address().port}`;
-const { ensureCourse } = await import('../src/services/database.js');
+const { ensureCourse, uploadPdf } = await import('../src/services/database.js');
 const { default: pdfRouter } = await import('../src/routes/pdf.js');
 
 test.beforeEach(() => {
@@ -142,4 +142,13 @@ test('/upload-pdf answers 502 with the refusal and stores nothing when the creat
     server.closeAllConnections();
     server.close();
   }
+});
+
+test('uploadPdf notifies the database with the tree topic', async () => {
+  courses.add('C');
+  assert.equal(await uploadPdf(Buffer.from('%PDF-1.4'), 'C', 'L1', 'lecture'), null);
+  for (let i = 0; i < 200 && !seen.some((s) => s.path === '/notify'); i++)
+    await new Promise((r) => setTimeout(r, 10));
+  const notify = seen.find((s) => s.path === '/notify');
+  assert.deepEqual(JSON.parse(notify.body), { topics: ['tree'] });
 });

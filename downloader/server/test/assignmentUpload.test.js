@@ -9,9 +9,10 @@ import path from 'node:path';
 
 const calls = [];
 const peer = http.createServer((req, res) => {
-  req.resume();
+  let raw = '';
+  req.on('data', (c) => (raw += c));
   req.on('end', () => {
-    calls.push({ method: req.method, url: new URL(req.url, 'http://x') });
+    calls.push({ method: req.method, url: new URL(req.url, 'http://x'), body: raw });
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ assignment: 'A', name: 'f.pdf' }));
   });
@@ -51,6 +52,10 @@ test('uploadAssignmentFile posts to the assignment-files route', async () => {
   const post = calls.find((c) => c.method === 'POST' && c.url.pathname.includes('/assignments/'));
   assert.equal(post.url.pathname, '/courses/C/assignments/A/files');
   assert.equal(post.url.searchParams.get('filename'), 'f.pdf');
+  for (let i = 0; i < 200 && !calls.some((c) => c.url.pathname === '/notify'); i++)
+    await new Promise((r) => setTimeout(r, 10));
+  const notify = calls.find((c) => c.url.pathname === '/notify');
+  assert.deepEqual(JSON.parse(notify.body), { topics: ['tree'] });
 });
 
 test('toRun picks the assignment fetcher only for media assignment', () => {

@@ -95,7 +95,7 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool, source =
       return failure;
     }
     emitLog(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
-    notifyFrontend();
+    notifyFrontend(['tree']);
     // Only a video PUT announces itself: it is what the backend's auto-run policy acts on, and a
     // material POST deliberately starts nothing.
     reportVideoArrived(course, lecture, kind);
@@ -168,7 +168,7 @@ async function postTempFile(url, tempDir, tool, where) {
       return failure;
     }
     emitLog(`✅ Uploaded ${body?.name} to database (${where})`);
-    notifyFrontend();
+    notifyFrontend(['tree']);
     return null;
   } catch (err) {
     // undici's message is a bare "fetch failed"; the cause (a missing file, a reset) is the reason.
@@ -235,16 +235,16 @@ export async function uploadPdf(
     return failure;
   }
   emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
-  notifyFrontend();
+  notifyFrontend(['tree']);
   return null;
 }
 
-// Non-blocking ping so subscribed sidebars refetch the tree; silent on failure so a
-// download still counts as done when the frontend is down.
-export function notifyFrontend() {
+// Non-blocking ping tagged with the topics that changed (vocabulary: database/docs/EVENTS.md); silent
+// on failure so a download still counts as done when the frontend is down.
+export function notifyFrontend(topics) {
   fetch(`${DATABASE_URL}/notify`, {
     method: 'POST',
     headers: peerHeaders({ 'Content-Type': 'application/json' }),
-    body: '{}',
+    body: JSON.stringify({ topics }),
   }).catch(() => {});
 }
