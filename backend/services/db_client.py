@@ -405,11 +405,15 @@ def patch_merged_meta(course: str, title: str, entry: dict) -> None:
     _raise_for_status(r)
 
 
-def notify() -> None:
-    """Fire-and-forget broadcast on the database SSE notify channel. Failure is swallowed —
-    the channel is for liveness pings, not for correctness."""
+def notify(*topics: str) -> None:
+    """Fire-and-forget SSE broadcast tagged with at least one topic (database/docs/EVENTS.md);
+    failure is swallowed, since the channel is for liveness, not correctness."""
 
+    if not topics:
+        raise TypeError("notify() needs at least one topic")
     try:
-        _session.post(f"{DATABASE_URL}/notify", timeout=2)
+        _session.post(
+            f"{DATABASE_URL}/notify", json={"topics": list(topics)}, timeout=2
+        )
     except Exception:
         pass

@@ -123,7 +123,7 @@ def db(monkeypatch):
             if not name.startswith(".")
         ]
 
-    def notify():
+    def notify(*_topics):
         calls.notifies += 1
 
     def patch_overview_meta(course, slug, entry):

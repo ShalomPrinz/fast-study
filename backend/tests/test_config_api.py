@@ -123,7 +123,7 @@ class TestDriveRoutes:
         monkeypatch.setenv("FASTSTUDY_STATE_DIR", str(tmp_path / "state"))
         monkeypatch.setattr(google_auth, "_consent_needed", False)
         monkeypatch.setattr(google_auth, "_pending_url", None)
-        monkeypatch.setattr(google_auth.db_client, "notify", lambda: None)
+        monkeypatch.setattr(google_auth.db_client, "notify", lambda *_t: None)
 
     def test_status_of_a_fresh_install(self):
         body = client.get("/config/drive/status").json()

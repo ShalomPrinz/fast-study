@@ -2,7 +2,7 @@
 
 ## What this is
 
-FastAPI app exposing two things over HTTP: the per-lecture video → audio → transcript → summary → PDF → Drive pipeline, and the per-course overview generator. Every mutating endpoint is fire-and-forget — it schedules a background asyncio task and returns `started`/`busy`; the frontend reads outcomes from the status endpoints, refetching on the database service's SSE notify.
+FastAPI app exposing two things over HTTP: the per-lecture video → audio → transcript → summary → PDF → Drive pipeline, and the per-course overview generator. Every mutating endpoint is fire-and-forget — it schedules a background asyncio task and returns `started`/`busy`; the frontend reads outcomes from the status endpoints, refetching on the database service's SSE notify. Every `db_client.notify(*topics)` names its topics (`runner`, `tree`, `settings`, `drive`; [`database/docs/EVENTS.md`](../database/docs/EVENTS.md)) and a write through `db_client` makes the next notify carry `tree` ([docs/PIPELINE.md](docs/PIPELINE.md)); Drive consent and disconnect send `drive`.
 
 ## Docs
 

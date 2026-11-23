@@ -177,7 +177,7 @@ def try_start(course: str, title: str, name: str, parts: list[Part]) -> str:
         "size": None,  # the parts' total bytes, set once they are fetched
     }
     _errors.pop(key, None)  # a re-run's failure must not look like the old one
-    db_client.notify()
+    db_client.notify("runner")
     _spawn(_run(course, title, name, parts))
     return "started"
 
@@ -195,7 +195,7 @@ async def _run(course: str, title: str, name: str, parts: list[Part]) -> None:
         async with lock:
             _in_flight[key]["waiting"] = False
             _in_flight[key]["started_at"] = datetime.now(timezone.utc).isoformat()
-            db_client.notify()
+            db_client.notify("runner")
             try:
                 await asyncio.to_thread(_merge, course, title, name, parts)
                 _errors.pop(key, None)
@@ -203,7 +203,7 @@ async def _run(course: str, title: str, name: str, parts: list[Part]) -> None:
                 _errors[key] = _error_record(e)
     finally:
         _in_flight.pop(key, None)
-        db_client.notify()
+        db_client.notify("runner", "tree")
 
 
 def _error_record(e: Exception) -> dict:
@@ -250,7 +250,7 @@ def _merge(course: str, title: str, name: str, parts: list[Part]) -> None:
         record = _in_flight.get(skey(course, name))  # gone if the run was torn down
         if record is not None:
             record["size"] = size  # one atomic store; the loop only reads the dict
-            db_client.notify()
+            db_client.notify("runner")
         labels = [display_name(p.name, p.kind) for p in parts]
         try:
             out = join_pdfs(inputs, labels, title, Path(tmp) / "merged.pdf")

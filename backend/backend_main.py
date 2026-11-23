@@ -88,7 +88,7 @@ async def lifespan(_app: FastAPI):
     refetches the now-empty /status."""
 
     # Not awaited: lifespan startup gates the bind, and a down database would stall it for the timeout.
-    asyncio.get_running_loop().run_in_executor(None, db_client.notify)
+    asyncio.get_running_loop().run_in_executor(None, db_client.notify, "runner")
     yield
 
 
@@ -421,7 +421,7 @@ async def run_all_endpoint():
     ]
     if not any(queued):
         return {"status": "all_in_flight"}
-    runner.db_client.notify()
+    runner.db_client.notify("runner")
     return {"status": "started", **runner.get_status()}
 
 

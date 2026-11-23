@@ -32,7 +32,7 @@ def add(scope: str, code: str, params: dict, **where) -> None:
                 "_scope": scope,
             }
         )
-    db_client.notify()
+    db_client.notify("runner")
 
 
 def recent(scope: str) -> list[dict]:

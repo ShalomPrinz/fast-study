@@ -9,7 +9,7 @@ def test_startup_notifies_once(monkeypatch):
     fired = threading.Event()
     calls = []
 
-    def fake_notify():
+    def fake_notify(*topics):
         calls.append(1)
         fired.set()
 

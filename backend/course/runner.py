@@ -48,7 +48,7 @@ def cancel_retry(course: str, slug: str) -> bool:
 
     dropped = _drop_retry(course, slug)
     if dropped:
-        db_client.notify()
+        db_client.notify("runner")
     return dropped
 
 
@@ -67,7 +67,7 @@ def cancel_all_retries() -> None:
     """Drop every waiting retry, e.g. when the auto-retry switch goes off."""
 
     if any([_drop_retry(c, slug) for c, slug in list(_retries)]):
-        db_client.notify()
+        db_client.notify("runner")
 
 
 def _fire_retry(course: str, slug: str) -> None:
@@ -103,7 +103,7 @@ async def _replay(course: str, slug: str) -> None:
         started = False
     if not started:
         _attempts.pop(key, None)
-        db_client.notify()
+        db_client.notify("runner")
 
 
 def _now_iso() -> str:
@@ -194,7 +194,9 @@ def try_run_generate(
         return "busy"  # all requested slugs already in flight
     run = OverviewRun(course, course_node, slugs, from_phase, skip_existing)
     _spawn(run.execute())
-    db_client.notify()  # the seeded pending entries put the course in `/status` overview_running
+    db_client.notify(
+        "runner"
+    )  # the seeded pending entries put the course in `/status` overview_running
     return "started"
 
 
@@ -235,7 +237,7 @@ class OverviewRun:
             # Anything raised outside a phase worker would strand seeded entries at "pending".
             sentry_sdk.capture_exception(e)
             self._fail_pending(e)
-        db_client.notify()
+        db_client.notify("runner", "tree")
 
     async def _walk_slugs(self) -> None:
         """The slug-by-slug walk `execute` guards."""
@@ -258,13 +260,15 @@ class OverviewRun:
                     # Continue mode: keep an output already on disk at run start.
                     if self.skip_existing and extractor.output_file(phase) in existing:
                         self._mark_kept(slug)
-                        db_client.notify()
+                        db_client.notify("runner")
                         continue
 
                     stopped = await asyncio.to_thread(self._run_slug_phase, slug, phase)
                     if phase is Phase.ANALYZE:
                         self._schedule_retry(slug)
-                    db_client.notify()  # after the retry is armed, so the first ping carries it
+                    db_client.notify(
+                        "runner", "tree"
+                    )  # after the retry is armed, so the first ping carries it
                     if stopped:
                         break  # dead end: stop this slug's chain, the other slugs go on
 

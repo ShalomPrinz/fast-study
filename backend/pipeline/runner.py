@@ -292,7 +292,7 @@ async def _prune() -> None:
     if course_merged.prune_errors(merged_before, {c["name"] for c in tree}):
         removed = True
     if removed:
-        db_client.notify()
+        db_client.notify("runner")
 
 
 # ---- Gemini auto retry (docs/PIPELINE.md#auto-retry) ----
@@ -318,7 +318,7 @@ def cancel_retry(course: str, lecture: str, kind: str) -> bool:
 
     dropped = _drop_retry(_skey(course, lecture, kind))
     if dropped:
-        db_client.notify()
+        db_client.notify("runner")
     return dropped
 
 
@@ -339,7 +339,7 @@ def cancel_all_retries() -> None:
 
     dropped = [_drop_retry(skey) for skey in list(_retries)]
     if any(dropped):
-        db_client.notify()
+        db_client.notify("runner")
 
 
 def _schedule_retry(
@@ -383,7 +383,7 @@ def _fire_retry(skey: str) -> None:
     record = _errors.get(skey)
     if record is None:  # the error was dropped (rename/delete): nothing to retry
         _attempts.pop(skey, None)
-        db_client.notify()
+        db_client.notify("runner")
         return
     _attempts[skey] = entry["attempt"]
     record.pop("retry", None)
@@ -403,7 +403,7 @@ def _fire_retry(skey: str) -> None:
         log.info(
             "%s/%s (%s): retry skipped, the lecture is busy", course, lecture, kind
         )
-    db_client.notify()
+    db_client.notify("runner")
 
 
 def _arm_figures_retry(
@@ -419,7 +419,7 @@ def _arm_figures_retry(
         "figures", failed["message"], code=failed["code"], params=failed["params"]
     )
     _schedule_retry(course, lecture, kind, "figures", "step")
-    db_client.notify()
+    db_client.notify("runner", "tree")
 
 
 # ---- empty-file guard ----
@@ -877,7 +877,7 @@ def _exec_figures(course: str, lecture: str, kind: str) -> dict:
         for name, data in sources.files.items():
             db_client.put_figure(course, lecture, kind, name, data)
         if sources.files:
-            db_client.notify()
+            db_client.notify("tree")
         # Re-read right before the write so a mid-call edit survives. A crop is no user edit: plain
         # file writes (no `put_summary`) take no revert snapshot and keep .summary_materials.json.
         current = db_client.get_summary(course, lecture, kind)
@@ -896,7 +896,7 @@ def _exec_figures(course: str, lecture: str, kind: str) -> dict:
             db_client.put_file_bytes(
                 course, lecture, kind, "summary.md", rewritten.encode("utf-8")
             )
-        db_client.notify()
+        db_client.notify("tree")
         # Kept while a raw line is left (an edited caption); best-effort, since a later run's
         # no-links path clears it and this run must still refresh the PDF.
         if not raw_pdf_links(rewritten):
@@ -910,7 +910,7 @@ def _exec_figures(course: str, lecture: str, kind: str) -> dict:
                     kind,
                     e,
                 )
-            db_client.notify()
+            db_client.notify("tree")
         return {"status": "done", "changed": True}
     except Exception as e:
         return _failed(e)
@@ -920,7 +920,7 @@ def _drop_pending_marker(course: str, lecture: str, kind: str) -> None:
     """Drop the marker when there is nothing left to crop; a failing delete fails the step."""
 
     db_client.delete_file(course, lecture, kind, FIGURES_PENDING_FILE)
-    db_client.notify()
+    db_client.notify("tree")
 
 
 def _drop_marker(course: str, lecture: str, kind: str, name: str) -> None:
@@ -980,7 +980,7 @@ def _exec_pdf(course: str, lecture: str, kind: str, *, fresh: bool = False) -> d
         # The .tex a PREVIOUS hard failure left behind: any `l.<N>` now on offer indexes
         # this build, so a stale file would send the reader to the wrong line.
         _drop_marker(course, lecture, kind, PDF_BUILD_TEX_FILE)
-        db_client.notify()
+        db_client.notify("tree")
         return {"status": "done"}
     except PdfRenderError as e:
         # Keep the generated .tex so the `l.<N>` in the message is lookup-able; it lives
@@ -1150,7 +1150,7 @@ def _exec_assignment_pdf(
         else:
             _drop_generated(course, assignment, warning_name)
         _drop_generated(course, assignment, tex_name)
-        db_client.notify()
+        db_client.notify("tree")
         return {"status": "done"}
     except PdfRenderError as e:
         stored_tex = False
@@ -1343,7 +1343,7 @@ def enqueue_arrival(course: str, lecture: str, kind: str) -> str:
         return "off"
     if not enqueue(QueueEntry(course, lecture, kind, depth)):
         return "busy"
-    db_client.notify()
+    db_client.notify("runner")
     return "queued"
 
 
@@ -1407,7 +1407,7 @@ def move_to_front(course: str, lecture: str, kind: str) -> str:
     front = 1 if _started is not None and _queue[0][:3] == _started else 0
     if index > front:
         _queue.insert(front, _queue.pop(index))
-        db_client.notify()
+        db_client.notify("runner")
     return "moved"
 
 
@@ -1531,7 +1531,8 @@ async def _run_step_unlocked(
         for key in [k for k, e in _errors.items() if e["code"] in _GROQ_LIMIT_CODES]:
             del _errors[key]
         _transcribe_block = None
-    db_client.notify()
+    # tree too: a keep_in_flight step before this one wrote without a notify of its own.
+    db_client.notify("runner", "tree")
 
     result = await _call_step(course, lecture, kind, step, fresh=fresh)
 
@@ -1539,7 +1540,7 @@ async def _run_step_unlocked(
         _attempts.pop(skey, None)
         if not keep_in_flight:
             _in_flight.pop(skey, None)
-            db_client.notify()
+            db_client.notify("runner", "tree")
         return result
     else:  # error
         msg = result.get("message") or result.get("status") or "unknown error"
@@ -1565,7 +1566,7 @@ async def _run_step_unlocked(
         _schedule_retry(course, lecture, kind, step, origin)
         if not keep_in_flight:
             _in_flight.pop(skey, None)
-            db_client.notify()
+            db_client.notify("runner", "tree")
         return result
 
 
@@ -1596,7 +1597,7 @@ async def _run_figures_unlocked(course: str, lecture: str, kind: str) -> None:
             )
     finally:
         if _in_flight.pop(skey, None) is not None:
-            db_client.notify()
+            db_client.notify("runner", "tree")
 
 
 async def _run_pipeline_unlocked(
@@ -1648,7 +1649,7 @@ async def _run_pipeline_unlocked(
                 )
                 _drop_handover()
                 _in_flight.pop(skey, None)
-                db_client.notify()
+                db_client.notify("runner", "tree")
                 log.info(
                     "%s/%s (%s): %s blocked (%s), stopping here",
                     course,
@@ -1669,7 +1670,7 @@ async def _run_pipeline_unlocked(
         _arm_figures_retry(course, lecture, kind, figures_failed)
         # No notify when nothing ran: run_all's per-lecture pings must not burst (PIPELINE.md).
         if not held and _in_flight.pop(skey, None) is not None:
-            db_client.notify()
+            db_client.notify("runner", "tree")
 
 
 async def run_step(
@@ -1810,6 +1811,9 @@ def auto_remove(course: str, lecture: str, kind: str) -> str:
         if not names:
             return "none"
         db_client.remove_files(course, lecture, kind, names)
+        db_client.notify(
+            "tree"
+        )  # the step's own notify already went out before this removal
     except Exception as e:
         locked = isinstance(e, db_client.DbClientError) and e.code == "file_locked"
         log.warning(
@@ -1921,9 +1925,9 @@ async def run_all() -> dict:
                 )
                 _unqueue(_started)
                 _started = None
-                _drop_handover()
+                dropped = _drop_handover()  # its last step wrote without a notify
                 _runner_status["done"] += 1
-                db_client.notify()
+                db_client.notify(*(("runner", "tree") if dropped else ("runner",)))
                 continue
             try:
                 if await _run_entry(entry):
@@ -1952,7 +1956,7 @@ async def run_all() -> dict:
             # One notify covers the entry leaving and, if it started no step, the held lecture too.
             dropped = _handover != _skey(course, lecture, kind) and _drop_handover()
             if dropped or len(_queue) != queued:
-                db_client.notify()
+                db_client.notify("runner", "tree")
         blocked = (
             f", {blocked_count} stopped on a Gemini daily quota or Groq rate limit"
             if blocked_count
@@ -1974,4 +1978,4 @@ async def run_all() -> dict:
         _summarize_block = None
         _transcribe_block = None
         _drop_handover()
-        db_client.notify()
+        db_client.notify("runner", "tree")

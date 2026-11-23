@@ -205,7 +205,7 @@ def test_a_run_blocked_before_its_first_step_notifies_after_leaving_the_queue():
             patch.object(
                 runner.db_client,
                 "notify",
-                side_effect=lambda: queue_at_notify.append(
+                side_effect=lambda *_t: queue_at_notify.append(
                     [q[1] for q in runner._queue]
                 ),
             ),

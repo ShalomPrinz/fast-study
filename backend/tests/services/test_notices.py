@@ -4,7 +4,7 @@ from services import notices
 
 def test_fallback_hook_records_notice_under_scope_and_notifies(monkeypatch):
     pings = []
-    monkeypatch.setattr(notices.db_client, "notify", lambda: pings.append(1))
+    monkeypatch.setattr(notices.db_client, "notify", lambda *_t: pings.append(1))
     with notices.record_fallbacks("s-test", course="c", lecture="l"):
         llm_mod.fallback_hook.get()("a", "b")
         llm_mod.fallback_hook.get()("b", "a")
@@ -21,7 +21,7 @@ def test_fallback_hook_records_notice_under_scope_and_notifies(monkeypatch):
 
 
 def test_fallback_pair_raises_once_per_block(monkeypatch):
-    monkeypatch.setattr(notices.db_client, "notify", lambda: None)
+    monkeypatch.setattr(notices.db_client, "notify", lambda *_t: None)
     with notices.record_fallbacks("s-dedupe"):
         llm_mod.fallback_hook.get()("a", "b")
         llm_mod.fallback_hook.get()("a", "b")
@@ -33,7 +33,7 @@ def test_fallback_pair_raises_once_per_block(monkeypatch):
 
 
 def test_notices_expire(monkeypatch):
-    monkeypatch.setattr(notices.db_client, "notify", lambda: None)
+    monkeypatch.setattr(notices.db_client, "notify", lambda *_t: None)
     notices.add("s-exp", "model_fallback", {})
     monkeypatch.setattr(notices, "_TTL", -1)
     assert notices.recent("s-exp") == []

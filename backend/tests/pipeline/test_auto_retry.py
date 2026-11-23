@@ -22,7 +22,7 @@ OVERLOADED = {
 def _clean(monkeypatch):
     for var in ("AUTO_RETRY", "AUTO_RETRY_COUNT", "AUTO_RETRY_MINUTES"):
         monkeypatch.delenv(var, raising=False)
-    monkeypatch.setattr(runner.db_client, "notify", lambda: None)
+    monkeypatch.setattr(runner.db_client, "notify", lambda *_t: None)
     yield
     runner.cancel_all_retries()
     for state in (runner._errors, runner._attempts, runner._in_flight, runner._retries):
@@ -343,7 +343,7 @@ class TestCancelAndSupersede:
             ping = []
             with (
                 patch.object(runner.db_client, "get_tree", return_value=[]),
-                patch.object(runner.db_client, "notify", lambda: ping.append(1)),
+                patch.object(runner.db_client, "notify", lambda *_t: ping.append(1)),
             ):
                 await runner.prune_stale_errors()
                 assert ping == [1]
@@ -458,7 +458,7 @@ def test_status_answers_before_a_slow_prune_finishes():
 
         with (
             patch.object(runner.db_client, "get_tree", slow_tree),
-            patch.object(runner.db_client, "notify", lambda: ping.append(1)),
+            patch.object(runner.db_client, "notify", lambda *_t: ping.append(1)),
         ):
             status = await asyncio.wait_for(backend_main.runner_status_endpoint(), 1)
             assert SKEY in status["errors"] and ping == []

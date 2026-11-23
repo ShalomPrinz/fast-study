@@ -37,7 +37,7 @@ def _isolate(tmp_path, monkeypatch):
     monkeypatch.setenv("FASTSTUDY_STATE_DIR", str(tmp_path / "state"))
     monkeypatch.setattr(google_auth, "_consent_needed", False)
     monkeypatch.setattr(google_auth, "_pending_url", None)
-    monkeypatch.setattr(google_auth.db_client, "notify", lambda: None)
+    monkeypatch.setattr(google_auth.db_client, "notify", lambda *_t: None)
 
 
 class TestGetCredentials:
@@ -97,7 +97,9 @@ class TestGetCredentials:
 class TestConsentNeededFlag:
     def test_a_missing_token_sets_it_and_notifies_once(self, monkeypatch):
         calls = []
-        monkeypatch.setattr(google_auth.db_client, "notify", lambda: calls.append(1))
+        monkeypatch.setattr(
+            google_auth.db_client, "notify", lambda *_t: calls.append(1)
+        )
 
         for _ in range(3):
             with pytest.raises(google_auth.DriveNotConnected):
