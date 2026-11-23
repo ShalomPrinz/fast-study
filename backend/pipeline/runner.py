@@ -74,6 +74,9 @@ PDF_BUILD_TEX_FILE = ".pdf_build.tex"
 FIGURES_PENDING_FILE = ".figures_pending"
 ORIGINAL_SUMMARY_FILE = "original_summary.md"
 
+# Strong refs: the loop holds tasks weakly, so an unreferenced one can be collected mid-run.
+_tasks: set[asyncio.Task] = set()
+
 _locks: dict[
     tuple[str, str, str], asyncio.Lock
 ] = {}  # per-lecture; created lazily via setdefault
@@ -233,6 +236,12 @@ def schedule_prune() -> asyncio.Task:
     else:
         _prune_dirty = True
     return _prune_task
+
+
+def _spawn(coro) -> None:
+    task = asyncio.create_task(coro)
+    _tasks.add(task)
+    task.add_done_callback(_tasks.discard)
 
 
 async def _prune_until_clean() -> None:
@@ -1312,7 +1321,7 @@ def enqueue(entry: QueueEntry, *, retry: bool = False) -> bool:
         # of arrivals in one callback would otherwise each start a drain of their own.
         # Counters reset here too, so a snapshot taken before the task starts is not last run's.
         _runner_status.update(running=True, done=0, total=1, last_error=None)
-        asyncio.create_task(run_all())
+        _spawn(run_all())
     else:
         # Counted now, so "lecture N of M" grows the moment a lecture joins a live run.
         _runner_status["total"] += 1
@@ -1358,7 +1367,7 @@ def clear_drive_not_connected() -> None:
     cleared = [k for k in cleared if not k.endswith(f"||{ASSIGNMENT_KIND}")]
     if cleared and settings.drive_enabled():
         # A task, not awaited: the consent thread waits on this call and the file checks are I/O.
-        asyncio.create_task(_queue_drive_uploads(cleared))
+        _spawn(_queue_drive_uploads(cleared))
 
 
 async def _queue_drive_uploads(skeys: list[str]) -> None:
@@ -1717,7 +1726,7 @@ def try_run_step(
     if not retry:
         _drop_retry(_skey(course, lecture, kind))
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
-    asyncio.create_task(run_step(course, lecture, kind, step, fresh=fresh))
+    _spawn(run_step(course, lecture, kind, step, fresh=fresh))
     return "started"
 
 
@@ -1737,9 +1746,7 @@ def try_run_assignment_step(
         return "busy"
     if not retry:
         _drop_retry(_skey(course, assignment, ASSIGNMENT_KIND))
-    asyncio.create_task(
-        run_step(course, assignment, ASSIGNMENT_KIND, step, fresh=fresh)
-    )
+    _spawn(run_step(course, assignment, ASSIGNMENT_KIND, step, fresh=fresh))
     return "started"
 
 
@@ -1751,7 +1758,7 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
         return "busy"
     _drop_retry(_skey(course, lecture, kind))
     _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
-    asyncio.create_task(run_pipeline_for(course, lecture, kind))
+    _spawn(run_pipeline_for(course, lecture, kind))
     return "started"
 
 

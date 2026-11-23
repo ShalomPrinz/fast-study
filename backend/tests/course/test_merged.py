@@ -236,6 +236,17 @@ class TestRun:
 
         assert asyncio.run(go()) == ("started", "busy")
 
+    def test_the_running_task_is_held_until_it_is_done(self, db):
+        async def go():
+            merged.try_start("C", "T", "T", PARTS)
+            held = len(merged._tasks)
+            while merged._in_flight:
+                await asyncio.sleep(0.01)
+            await asyncio.sleep(0)  # let the done callback run
+            return held, len(merged._tasks)
+
+        assert asyncio.run(go()) == (1, 0)
+
     def test_merges_of_one_course_run_one_at_a_time(self, db):
         gate = threading.Event()
 

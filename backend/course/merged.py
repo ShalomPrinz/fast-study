@@ -32,6 +32,9 @@ _in_flight: dict[
 _errors: dict[
     str, dict
 ] = {}  # skey → last error record; cleared when a merge of that name starts
+# Strong refs: the loop holds tasks weakly, so an unreferenced one can be collected mid-run.
+_tasks: set[asyncio.Task] = set()
+
 _locks: dict[str, asyncio.Lock] = {}  # per course: one merge at a time
 
 
@@ -176,8 +179,14 @@ def try_start(course: str, title: str, name: str, parts: list[Part]) -> str:
     }
     _errors.pop(key, None)  # a re-run's failure must not look like the old one
     db_client.notify()
-    asyncio.create_task(_run(course, title, name, parts))
+    _spawn(_run(course, title, name, parts))
     return "started"
+
+
+def _spawn(coro) -> None:
+    task = asyncio.create_task(coro)
+    _tasks.add(task)
+    task.add_done_callback(_tasks.discard)
 
 
 async def _run(course: str, title: str, name: str, parts: list[Part]) -> None:

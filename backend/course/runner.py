@@ -16,6 +16,9 @@ from services.errors import (
 from course import analyze, collect, extract, merge, overview, to_pdf
 from course.overview import Phase
 
+# Strong refs: the loop holds tasks weakly, so an unreferenced one can be collected mid-run.
+_tasks: set[asyncio.Task] = set()
+
 # Per-(course, slug); created lazily via setdefault, persists across runs so same-slug triggers serialize.
 _locks: dict[tuple[str, str], asyncio.Lock] = {}
 # course → { slug → entry }; entry = {"status", "phase"?, "message"?, "code"?, "params"?,
@@ -75,7 +78,13 @@ def _fire_retry(course: str, slug: str) -> None:
         return
     _status.get(course, {}).get(slug, {}).pop("retry", None)
     _attempts[(course, slug)] = entry["attempt"]
-    asyncio.create_task(_replay(course, slug))
+    _spawn(_replay(course, slug))
+
+
+def _spawn(coro) -> None:
+    task = asyncio.create_task(coro)
+    _tasks.add(task)
+    task.add_done_callback(_tasks.discard)
 
 
 async def _replay(course: str, slug: str) -> None:
@@ -184,7 +193,7 @@ def try_run_generate(
     if not seeded_any:
         return "busy"  # all requested slugs already in flight
     run = OverviewRun(course, course_node, slugs, from_phase, skip_existing)
-    asyncio.create_task(run.execute())
+    _spawn(run.execute())
     db_client.notify()  # the seeded pending entries put the course in `/status` overview_running
     return "started"
 
