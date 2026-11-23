@@ -116,7 +116,8 @@ auto-downloader's `GET /auth/events` stream (`subscribeAuth`, the current state 
 change), opened on mount. It never toasts, so a route with no account control never reports the service
 as down. The stream cannot say "no university configured" (it reads as idle), so `AccountStatus` also
 asks `/auth/status` once per mount (`refresh`), and the provider adds `unconfigured` while the pushed
-phase is idle. `status: null` is "unknown".
+phase is idle. `status: null` is "unknown". A dropped stream returns the status to unknown; the native
+reconnect's first frame refills it and the reopen re-runs `refresh` to bring `unconfigured` back.
 
 A frame's `zoomCaptcha` (absent reads false) is a zoom download waiting on a captcha in the on-screen
 Chrome window, and `challenge.captcha` the university site's challenge window doing the same.

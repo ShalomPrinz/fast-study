@@ -263,13 +263,15 @@ export async function fetchAuthStatus(): Promise<AuthStatus> {
 }
 
 // The login state on subscribe and on every change, no replay; a downed service keeps the native retry.
-// `onOpen` fires on every (re)connect, before that connection's first frame.
+// `onOpen` fires on every (re)connect, before that connection's first frame; `onLost` when the stream drops.
 export function subscribeAuth(
   onState: (state: AuthStatus) => void,
   onOpen?: () => void,
+  onLost?: () => void,
 ): () => void {
   const es = new EventSource(withSecretParam(autoDownloader.url('/auth/events')))
   if (onOpen) es.onopen = onOpen
+  if (onLost) es.onerror = onLost
   es.onmessage = (e) => {
     try {
       const { storedSite, ...frame } = JSON.parse(e.data) as AuthFrame

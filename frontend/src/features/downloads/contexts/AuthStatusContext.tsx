@@ -41,15 +41,6 @@ export function AuthStatusProvider({
     }
   }, [])
 
-  useEffect(() => {
-    const solves = createSiteCaptchaSolves()
-    return subscribeAuth((frame) => {
-      const solve = solves.frame(frame)
-      if (solve && siteSolveToasts(frame, accountPanels.current > 0)) onSolved.current?.(solve)
-      setPushed(frame)
-    }, solves.reseed)
-  }, [])
-
   const refresh = useCallback(async () => {
     try {
       setProbed(await fetchAuthStatus())
@@ -59,6 +50,30 @@ export function AuthStatusProvider({
     }
     setProbeDone(true)
   }, [])
+
+  useEffect(() => {
+    const solves = createSiteCaptchaSolves()
+    let lost = false
+    return subscribeAuth(
+      (frame) => {
+        const solve = solves.frame(frame)
+        if (solve && siteSolveToasts(frame, accountPanels.current > 0)) onSolved.current?.(solve)
+        setPushed(frame)
+      },
+      () => {
+        solves.reseed()
+        // The stream cannot say `unconfigured`, so a reconnect re-reads it.
+        if (lost) void refresh()
+        lost = false
+      },
+      // A dead stream makes the last frame and the one-shot read stale; both are refilled on reconnect.
+      () => {
+        lost = true
+        setPushed(null)
+        setProbed(null)
+      },
+    )
+  }, [refresh])
 
   const status = useMemo(() => {
     if (!pushed) return probed

@@ -207,6 +207,21 @@ describe('subscribeAuth', () => {
     ])
     expect(es.close).toHaveBeenCalled()
   })
+
+  it('calls onLost when the stream errors', async () => {
+    const es: { onerror?: () => void; close: () => void } = { close: vi.fn() }
+    vi.stubGlobal(
+      'EventSource',
+      vi.fn(function () {
+        return es
+      }),
+    )
+    const { subscribeAuth } = await import('./autoDownloader')
+    const lost = vi.fn()
+    subscribeAuth(() => {}, undefined, lost)
+    es.onerror?.()
+    expect(lost).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('the busy lock', () => {
