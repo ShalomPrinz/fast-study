@@ -55,7 +55,8 @@ test(
     const lines = [];
     const started = Date.now();
     await reapChildren(signalChildren([child], assert.fail), 500, (line) => lines.push(line));
-    assert.ok(Date.now() - started >= 500);
+    // A libuv timer can fire about 1 ms early against the wall clock.
+    assert.ok(Date.now() - started >= 490);
     assert.equal(lines.length, 1);
     assert.equal(
       child.signalCode ?? (await new Promise((r) => child.once('exit', (_c, s) => r(s)))),
