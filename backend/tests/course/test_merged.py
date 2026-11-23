@@ -153,6 +153,12 @@ class TestValidate:
         assert e.value.body["params"] == {"title": "T"}
         assert merged.validate(_req(overwrite=True), "C") == ("T", "T")
 
+    def test_the_exists_refusal_names_the_stored_title_not_the_typed_one(self, db):
+        db["ab"] = {"entry": {"title": "Stored Title"}}
+        with pytest.raises(merged.Refused) as e:
+            merged.validate(_req(title="a/b"), "C")
+        assert e.value.body["params"] == {"title": "Stored Title"}
+
     @pytest.mark.parametrize(
         "part",
         [

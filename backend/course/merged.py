@@ -144,8 +144,12 @@ def validate(req: MergeRequest, course: str) -> tuple[str, str]:
     except CodedError as e:
         raise Refused(404, str(e), e.code, **e.params) from e
     if found["entry"] is not None and not req.overwrite:
+        stored = found["entry"].get("title") or title
         raise Refused(
-            409, f"a merged PDF titled {title} exists", "merged_pdf_exists", title=title
+            409,
+            f"a merged PDF titled {stored} exists",
+            "merged_pdf_exists",
+            title=stored,
         )
     for part in req.parts:
         try:
