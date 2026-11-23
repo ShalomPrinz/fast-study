@@ -14,11 +14,11 @@ import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import { lectureTrack } from '@/features/lectures/utils/courseTree'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
+import { renameFollowTarget } from '@/features/lectures/utils/renameFollow'
 import { courseNotFound } from '@/shared/utils/notFound'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobsContext'
 import { ROUTES, routeParam } from '@/shared/utils/routes'
-import { assignmentRoute, courseRoute } from '@/shared/utils/url'
 import { useCourseGroup } from './CourseGroupContext'
 import TreeProgress from './TreeProgress'
 import '@/styles/sidebar-tree.css'
@@ -39,6 +39,8 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
     assignmentMatch && routeParam(assignmentMatch.params.course) === course.name
       ? routeParam(assignmentMatch.params.assignment)
       : null
+  const mergedOpen = routeParam(useMatch(ROUTES.merged)?.params.course) === course.name
+  const mergedNewOpen = routeParam(useMatch(ROUTES.mergedNew)?.params.course) === course.name
   // A course rename moves every lecture folder, so anything writing into it by name locks it.
   const renameLocked = isCourseRenameLocked(status, course.name) || downloading
 
@@ -70,13 +72,16 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
         refresh: (effective) => refreshUntil((tree) => !courseNotFound(tree, effective)),
         // The database may sanitize the typed name, so the page follows the folder it answers with.
         follow: (effective) => {
-          if (selected?.course === course.name) {
-            onSelect(effective, selected.lecture, selected.kind, { replace: true })
-          } else if (overviewOpen) {
-            navigate(courseRoute(effective), { replace: true })
-          } else if (openAssignment !== null) {
-            navigate(assignmentRoute(effective, openAssignment), { replace: true })
-          }
+          const target = renameFollowTarget(course.name, effective, {
+            selected,
+            overviewOpen,
+            openAssignment,
+            mergedOpen,
+            mergedNewOpen,
+          })
+          if (target?.type === 'lecture') {
+            onSelect(effective, target.lecture, target.kind, { replace: true })
+          } else if (target) navigate(target.to, { replace: true })
         },
         show: setPendingName,
       })
