@@ -179,7 +179,7 @@ class TestDocStep:
                 )
                 await asyncio.sleep(0)
                 assert runner.try_run_assignment_step("C", "A1", "solution") == "busy"
-                run = asyncio.all_tasks() - {asyncio.current_task()}
+                run = set(runner._tasks)
                 release.set()
                 # The run task ending is the point where a non-assignment kind would auto_remove.
                 await asyncio.wait_for(asyncio.gather(*run), 5)
