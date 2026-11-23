@@ -127,10 +127,6 @@ button.runner-row-main:hover {
   color: var(--text-2);
 }
 
-.row-sub--warn {
-  color: var(--warn);
-}
-
 /* ---- the focus card ---- */
 
 /* The lecture the runner is on, raised out of the row vocabulary: it is the one thing on this page

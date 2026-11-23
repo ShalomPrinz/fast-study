@@ -181,8 +181,8 @@ shell scrollers (nav list, tree course list, main column) take one thin thumb fr
 `styles/scrollbar.css`, imported by `Layout`.
 
 `.btn` + one variant is the whole button vocabulary, `.chip` + five colour variants
-the whole state-label vocabulary, and `StatusNode` the seven row states (`done`, `running`, `pending`,
-`paused`, `failed`, `quota`, `removed`) at one size. `PageHeader` opens every full-page view with one primary action and an
+the whole state-label vocabulary, and `StatusNode` the six row states (`done`, `running`, `pending`,
+`failed`, `quota`, `removed`) at one size. `PageHeader` opens every full-page view with one primary action and an
 optional second action row, and `.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in
 `services/toaster.css`.
 

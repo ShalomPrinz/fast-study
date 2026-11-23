@@ -58,11 +58,6 @@ export function formatFullTimestamp(iso: string): string {
   })
 }
 
-// Clock time only, e.g. "14:32".
-export function formatClockTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(i18n.locale, { hour: '2-digit', minute: '2-digit' })
-}
-
 // Date and time from unix milliseconds, e.g. "12 Oct 2026, 14:30" / "12 באוק׳ 2026, 14:30".
 export function formatDateTime(ms: number): string {
   return new Date(ms).toLocaleString(i18n.locale, {

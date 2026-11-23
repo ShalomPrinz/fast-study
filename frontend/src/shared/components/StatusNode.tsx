@@ -5,15 +5,13 @@ export type StatusNodeState =
   | 'done'
   | 'running'
   | 'pending'
-  | 'paused'
   | 'failed'
   | 'quota'
   // A file gone from disk after a later stage was made from it: finished, but not there.
   | 'removed'
 
-// The one run-state glyph for pipeline rows, course branches and their steps. `paused` is a run
-// waiting out a provider's rate limit: still ours, not a failure. `quota` is a failure on a provider's
-// exhausted daily quota, which no retry fixes until it resets.
+// The one run-state glyph for pipeline rows, course branches and their steps. `quota` is a failure
+// on a provider's exhausted daily quota, which no retry fixes until it resets.
 export default function StatusNode({ state, hint }: { state: StatusNodeState; hint?: string }) {
   return (
     <Tooltip content={hint}>
@@ -24,18 +22,6 @@ export default function StatusNode({ state, hint }: { state: StatusNodeState; hi
               d="M2.5 6.2l2.4 2.4L9.5 4"
               stroke="currentColor"
               strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-        {state === 'paused' && (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <circle cx="6" cy="6" r="4.4" stroke="currentColor" strokeWidth="1.4" />
-            <path
-              d="M6 3.6V6l1.7 1.1"
-              stroke="currentColor"
-              strokeWidth="1.4"
               strokeLinecap="round"
               strokeLinejoin="round"
             />

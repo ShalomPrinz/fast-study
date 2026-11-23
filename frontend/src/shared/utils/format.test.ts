@@ -2,7 +2,6 @@ import { i18n } from '@lingui/core'
 import { describe, it, expect } from 'vitest'
 import {
   formatBytes,
-  formatClockTime,
   formatDateTime,
   formatRelativeTime,
   formatDuration,
@@ -73,15 +72,6 @@ describe('formatFullTimestamp', () => {
     expect(out).toContain('יולי')
     expect(out).toContain('2026')
     expect(out).not.toContain('Friday')
-  })
-})
-
-describe('formatClockTime', () => {
-  it('renders hour and minute in both locales', () => {
-    activate('en')
-    expect(formatClockTime(iso)).toContain('32')
-    activate('he')
-    expect(formatClockTime(iso)).toBe('14:32')
   })
 })
 
