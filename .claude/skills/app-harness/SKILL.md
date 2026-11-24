@@ -34,7 +34,7 @@ hb url                                   # every URL of this stack; `hb url <nam
 hb goto /course/hb-edit/overview         # actions take plain arguments, no JSON to escape
 hb click 'text=…'
 hb fill 'input[placeholder="Course name…"]' 'קורס'
-hb press Enter --shot saved              # goto, click, fill and press take --shot NAME; all take --browser TAG
+hb press Enter --shot saved              # goto, click, fill and press take --shot NAME; all take --browser TAG (also before the command)
 hb screenshot after-save                 # the full window now, no action
 hb shot dialog --before --setup "await page.click('text=…')"  # en+he, before+after → evidence/main-dialog-[before-]<lang>.png
 hb download hb-dl 'הקלטה 4 — גרפים'      # Downloads → pick the course in the combobox → press that row's Download

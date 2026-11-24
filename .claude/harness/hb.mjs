@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ACTIONS, actionRequest } from './lib/act.mjs';
+import { ACTIONS, actionRequest, leadingFlags } from './lib/act.mjs';
 import { DATABASE, bindPorts, bytes, call, fireRetries, saveSettings } from './lib/api.mjs';
 import { markSeeded, removeLecture, reseed, settingsPatch, unwall, wall } from './lib/baseline.mjs';
 import { serveBefore } from './lib/before.mjs';
@@ -441,10 +441,10 @@ function help() {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
   // Only ahead of the command, so a fill value that reads `--harness` stays a value.
-  const root = args[0] === '--harness' ? args.splice(0, 2)[1] : process.env.HARNESS_DIR;
-  const [name, ...rest] = args;
+  const lead = leadingFlags(process.argv.slice(2));
+  const root = lead.root ?? process.env.HARNESS_DIR;
+  const [name, ...rest] = lead.rest;
   if (!name || name === 'help' || !COMMANDS[name]) {
     help();
     if (name && name !== 'help') throw new Error(`unknown command "${name}"`);

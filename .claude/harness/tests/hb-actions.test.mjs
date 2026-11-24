@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { actionRequest } from '../lib/act.mjs';
+import { actionRequest, leadingFlags } from '../lib/act.mjs';
 
 const HB = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'hb.mjs');
 const noStdin = () => assert.fail('stdin read');
@@ -48,6 +48,18 @@ describe('actionRequest', () => {
       path: '/screenshot',
       body: '{"name":"x"}',
     });
+  });
+
+  test('leading --harness and --browser are stripped, the tag trails the command', () => {
+    assert.deepEqual(leadingFlags(['--browser', 'b', 'goto', '/']), {
+      root: undefined,
+      rest: ['goto', '/', '--browser', 'b'],
+    });
+    assert.deepEqual(leadingFlags(['--harness', 'h', '--browser', 'b', 'click', 'x']), {
+      root: 'h',
+      rest: ['click', 'x', '--browser', 'b'],
+    });
+    assert.deepEqual(leadingFlags(['fill', 'i', '--browser']).rest, ['fill', 'i', '--browser']);
   });
 
   test('eval takes its JS from the argument, or stdin when none or -', () => {
@@ -127,6 +139,12 @@ describe('hb actions against a session', () => {
     const { code, out } = await hb(['click', 'FAIL']);
     assert.equal(code, 1);
     assert.equal(out, 'ok /click\n');
+  });
+
+  test('hb --browser TAG <action> reaches that session', async () => {
+    const { code } = await hb(['--browser', 'main', 'goto', '/x']);
+    assert.equal(code, 0);
+    assert.equal(received.at(-1).path, '/goto');
   });
 
   test('an unknown session names how to start it', async () => {

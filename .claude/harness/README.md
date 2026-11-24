@@ -228,12 +228,13 @@ in `stack.json`), and logs every event to `logs/browser-<tag>.log`.
 
 The common actions have a plain-argument form in `hb` (`node .claude/harness/hb.mjs --harness DIR`), which builds the request itself — so a
 selector or value with quotes, Hebrew or newlines is typed as-is. Each goes to the `main` session
-unless `--browser TAG` names another, prints the session's answer, and exits 1 when it failed:
+unless `--browser TAG` names another (before the command or after it), prints the session's answer, and exits 1 when it failed:
 
 ```bash
 hb goto /course/hb-mgmt/overview                    # a path on the app (a lecture is /<course>/<lecture>), or a full URL
 hb goto / --shot home                               # `--shot NAME` on goto, click, fill and press
 hb screenshot after-save                            # the full window now → evidence/<tag>-after-save.png
+hb --browser other goto /                           # `--browser TAG` may lead the command
 hb click 'text=New course'                          # any Playwright selector
 hb fill 'input[placeholder="Course name…"]' hb-mgmt-x
 hb press Enter --shot created                       # on the focus, or `hb press <key> <selector>`

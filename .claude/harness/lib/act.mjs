@@ -63,3 +63,18 @@ export function actionRequest(name, args, readStdin) {
   if (flags.shot !== undefined) body.screenshot = flags.shot;
   return { tag: flags.browser, path: `/${name}`, body: JSON.stringify(body) };
 }
+
+// `--harness DIR` and `--browser TAG` ahead of the command: the root, and the tag appended after the
+// command's own arguments so the action (or `download`, `shot`…) reads it as it always did.
+export function leadingFlags(args) {
+  const rest = [...args];
+  let root;
+  let browser;
+  for (;;) {
+    if (rest[0] === '--harness') root = rest.splice(0, 2)[1];
+    else if (rest[0] === '--browser') browser = rest.splice(0, 2)[1];
+    else break;
+  }
+  if (browser !== undefined && rest.length) rest.push('--browser', browser);
+  return { root, rest };
+}
