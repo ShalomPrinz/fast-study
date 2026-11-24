@@ -118,5 +118,5 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs, styleFails =
     restoreStyle();
     delete globalThis.document;
   });
-  return { launches, state, log };
+  return { launches, state, log, launch };
 }

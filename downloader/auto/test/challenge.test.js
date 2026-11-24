@@ -13,7 +13,7 @@ import { setCurrentSite } from '../src/moodle/site.js';
 import { writeTokenFile } from '../src/auth/tokenStore.js';
 import { handleList } from '../src/http/server.js';
 import { unreachable } from '../src/lib/errors.js';
-import { siteAuth, authState, authEvents } from '../src/core/registry.js';
+import { siteAuth, authState, authEvents, setSite } from '../src/core/registry.js';
 import {
   openChallenge,
   closeChallenge,
@@ -1219,7 +1219,7 @@ test('a window gone with no browser to relaunch, mid-routed-call, says challenge
   stubFetch(t, () => html());
   await moodleGate.run({}, () => openChallenge(SITE));
   const [ctx] = profile.launches;
-  t.after(configureChallenge({ userAgent: async () => null }));
+  configureChallenge({ userAgent: async () => null }); // fakeProfile's t.after restores the real deps
   // Another report parks openChallenge in front, so the routed call queues behind it.
   let unpark;
   const parked = new Promise((r) => (unpark = r));
@@ -1453,4 +1453,55 @@ test('a styling spawn that rejects never changes the outcome', async (t) => {
   const ready = fakeProfile(t, { styleFails: true });
   assert.ok(ready);
   assert.equal(await gated(() => openChallenge(SITE)), 'ready');
+});
+
+// ── The window never outlives the login it belongs to ───────────────────────
+
+// Holds the next launch until released; the window is built only then.
+function holdLaunch(t, profile) {
+  let release;
+  const held = new Promise((r) => (release = r));
+  let started;
+  const launching = new Promise((r) => (started = r));
+  const real = profile.launch;
+  // No restore of its own: fakeProfile's t.after resets every dep to the pre-fakeProfile ones.
+  configureChallenge({
+    launch: async (...args) => {
+      started();
+      await held;
+      return real(...args);
+    },
+  });
+  return { release, launching };
+}
+
+test('a disconnect while the window launches closes it once the launch resolves', async (t) => {
+  const profile = fakeProfile(t);
+  const hold = holdLaunch(t, profile);
+  const opening = gated(() => openChallenge(SITE));
+  await hold.launching;
+  const closing = closeChallenge({ forget: true });
+  await tick();
+  hold.release();
+  await opening.catch(() => {});
+  await closing;
+  assert.equal(profile.launches.length, 1);
+  assert.equal(profile.launches[0].closed, true);
+  assert.deepEqual(shown(), { open: false, captcha: false });
+});
+
+test('a site switch while the window launches closes it once the launch resolves', async (t) => {
+  const profile = fakeProfile(t);
+  const hold = holdLaunch(t, profile);
+  const opening = gated(() => openChallenge(SITE));
+  await hold.launching;
+  t.after(() => setCurrentSite(null));
+  const switching = setSite('https://other.test');
+  await tick();
+  hold.release();
+  await opening.catch(() => {});
+  await switching;
+  assert.equal(profile.launches.length, 1);
+  assert.equal(profile.launches[0].closed, true);
+  assert.deepEqual(shown(), { open: false, captcha: false });
 });
