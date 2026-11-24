@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { statePath } from '@faststudy/runtime';
+import { heldTokenKey } from './tokenKey.js';
 
 const VERSION = 1;
 
@@ -12,7 +13,7 @@ export const tokenPath = () => statePath('auth', 'moodle-token.json');
 
 // The key, null when unset; a set-but-malformed key throws rather than silently writing plaintext.
 function tokenKey() {
-  const raw = process.env.FASTSTUDY_TOKEN_KEY;
+  const raw = heldTokenKey();
   if (!raw) return null;
   const key = Buffer.from(raw, 'base64');
   if (key.length !== 32) throw new Error('FASTSTUDY_TOKEN_KEY must be the base64 of 32 bytes');

@@ -1,4 +1,6 @@
-// First: Sentry has to init before the rest of the app loads.
+// First of all: pulls FASTSTUDY_TOKEN_KEY out of the env before Sentry or any child can inherit it.
+import './src/auth/tokenKey.js';
+// Then: Sentry has to init before the rest of the app loads.
 import './instrument.js';
 import * as Sentry from '@sentry/node';
 import express from 'express';

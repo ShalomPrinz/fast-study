@@ -7,6 +7,7 @@ import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { MoodleToken, CAPTURE_TIMEOUT_MS, decodeApptoken } from '../src/auth/moodleToken.js';
 import { readTokenFile, writeTokenFile } from '../src/auth/tokenStore.js';
+import { setTokenKey } from '../src/auth/tokenKey.js';
 import { gated } from './gated.js';
 import { moodleGate } from '../src/moodle/gate.js';
 import { challengeState } from '../src/moodle/challenge.js';
@@ -333,13 +334,8 @@ const KEY = Buffer.alloc(32, 7).toString('base64');
 const OTHER_KEY = Buffer.alloc(32, 9).toString('base64');
 
 function withKey(t, key) {
-  const prev = process.env.FASTSTUDY_TOKEN_KEY;
-  if (key === undefined) delete process.env.FASTSTUDY_TOKEN_KEY;
-  else process.env.FASTSTUDY_TOKEN_KEY = key;
-  t.after(() => {
-    if (prev === undefined) delete process.env.FASTSTUDY_TOKEN_KEY;
-    else process.env.FASTSTUDY_TOKEN_KEY = prev;
-  });
+  setTokenKey(key);
+  t.after(() => setTokenKey(undefined));
 }
 
 test('token file round trips encrypted: no plaintext on disk, fresh IV per write', (t) => {

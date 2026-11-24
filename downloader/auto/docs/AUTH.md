@@ -75,7 +75,8 @@ auth state's `storedSite` names that site beforehand so the frontend can confirm
   AES-256-GCM, `{ v:1, iv, tag, data }` with a random 12-byte IV per write (`auth/tokenStore.js`);
   unset is plaintext (dev). A file that cannot be read (wrong key, corrupt, tampered, or encrypted
   with no key) reads as absent; a legacy plaintext one is read and rewritten encrypted. A
-  malformed key throws on write.
+  malformed key throws on write. The key is moved out of `process.env` into memory when `auth/tokenKey.js` loads (the first import of `app.js`, ahead of Sentry), so no
+  child process (Chrome, Xvfb, yt-dlp) inherits it.
 - `status()` — no browser, no API call: `{ connected: a token for this site exists, expired: markExpired flag, unverified: the token awaits verification }`.
 - `disconnect()` — deletes the token file, clears the flag and the last error, cancels a login in
   flight (window closed, no failure reported), and closes block mode's window, then deletes its
