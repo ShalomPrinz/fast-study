@@ -154,6 +154,11 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 Every button on every UI surface — `frontend/`, the extension popup, the Electron boot screen, `site/` — uses the app palette: blue (`--accent` family), white and their tints, with green and red kept for done and destructive states.
 No black or near-black button unless the user explicitly asks for one.
 
+## Disabled buttons
+
+Every disabled button on every UI surface carries a tooltip saying why it is disabled, so the user is never left guessing what to do to enable it.
+A button exempt from this is exempt only where its own service docs say so, with the reason.
+
 ## Architecture Preferences
 
 - Prefer push-based (SSE/WebSocket/event emitter) designs over polling for progress and status updates. Do not propose polling as the default; if polling seems necessary, state explicitly why push is not viable.
