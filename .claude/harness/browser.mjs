@@ -69,34 +69,66 @@ function record(kind, text, loud) {
   console.log(`${event.time} ${kind} ${text}`);
 }
 
-page.on('console', (message) => {
-  const type = message.type();
-  record(`console.${type}`, message.text(), type === 'error' || type === 'warning');
-});
-page.on('pageerror', (error) => record('pageerror', error.message, true));
-page.on('dialog', (dialog) => {
-  record('dialog', `${dialog.type()}: ${dialog.message()} (dismissed)`, true);
-  dialog.dismiss().catch(() => {});
-});
-// Chromium also fails a request whose body load is cut off after it was answered; that one is
-// already recorded by its response, so it is noted quietly.
-page.on('requestfailed', async (request) => {
-  const line = `${request.method()} ${request.url()} ${request.failure()?.errorText}`;
-  const answered = await request.response().catch(() => null);
-  if (answered) return record('aborted', `${line} after ${answered.status()}`, false);
-  record('failed', line, true);
-  if (mutating(request)) saveMutation(request, null, request.failure()?.errorText);
-});
 // Vite's module and asset loads would bury the app's own traffic, so only API-shaped requests.
 const API_TYPES = new Set(['fetch', 'xhr', 'eventsource', 'document']);
-page.on('response', async (response) => {
+
+// Every page of the context is logged alike. A popup (`window.open`) also gets its document's answer
+// and any download it triggers; headless shell neither renders a PDF nor fires a download, leaving its URL blank.
+function watch(p) {
+  p.on('console', (message) => {
+    const type = message.type();
+    record(`console.${type}`, message.text(), type === 'error' || type === 'warning');
+  });
+  p.on('pageerror', (error) => record('pageerror', error.message, true));
+  p.on('dialog', (dialog) => {
+    record('dialog', `${dialog.type()}: ${dialog.message()} (dismissed)`, true);
+    dialog.dismiss().catch(() => {});
+  });
+  // Chromium also fails a request whose body load is cut off after it was answered; that one is
+  // already recorded by its response, so it is noted quietly.
+  p.on('requestfailed', async (request) => {
+    const line = `${request.method()} ${request.url()} ${request.failure()?.errorText}`;
+    const answered = await request.response().catch(() => null);
+    if (answered) return record('aborted', `${line} after ${answered.status()}`, false);
+    record('failed', line, true);
+    if (mutating(request)) saveMutation(request, null, request.failure()?.errorText);
+  });
+  p.on('response', async (response) => {
+    const request = response.request();
+    const status = response.status();
+    // A non-main page's navigation is the context handler's `popup` line, not a second one here.
+    const popupNavigation = p !== page && request.isNavigationRequest();
+    if (!popupNavigation) {
+      if (status >= 400) record('http', `${status} ${request.method()} ${request.url()}`, true);
+      else if (API_TYPES.has(request.resourceType()))
+        record('request', `${status} ${request.method()} ${request.url()}`, false);
+    }
+    if (mutating(request)) saveMutation(request, response);
+  });
+  if (p === page) return;
+  p.on('download', (download) => record('popup', `download ${download.url()}`, true));
+}
+// Logs every navigation of a non-main page as the one `popup` line (the per-page listener skips them);
+// a popup's first one is answered before its page exists, so only the context sees it. Any non-main
+// page counts, `/eval` `context.newPage()` tabs included.
+context.on('response', (response) => {
   const request = response.request();
-  const status = response.status();
-  if (status >= 400) record('http', `${status} ${request.method()} ${request.url()}`, true);
-  else if (API_TYPES.has(request.resourceType()))
-    record('request', `${status} ${request.method()} ${request.url()}`, false);
-  if (mutating(request)) saveMutation(request, response);
+  if (!request.isNavigationRequest()) return;
+  let frame = null;
+  try {
+    frame = response.frame();
+  } catch {
+    // issued before the frame existed: a popup's initial request
+  }
+  if (frame && (frame.page() === page || frame.parentFrame())) return;
+  record(
+    'popup',
+    `${response.status()} ${response.url()} ${response.headers()['content-type'] ?? ''}`,
+    true,
+  );
 });
+watch(page);
+context.on('page', watch);
 
 function mutating(request) {
   return !['GET', 'HEAD', 'OPTIONS'].includes(request.method());

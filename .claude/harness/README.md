@@ -283,7 +283,7 @@ all console output and every API request (fetch, xhr, EventSource, document) wit
 Every non-GET request is appended to `evidence/<tag>-mutations.jsonl` with its body (a binary
 upload as its size) and the service's answer, which outlives the session.
 
-The context grants `clipboard-read` and `clipboard-write`, as the e2e `context` fixture does.
+Every page of the context is logged, popups included: a popup's document is recorded as `popup <status> <url> <content-type>` and a download it starts as `popup download <url>`. Headless shell neither renders a PDF nor fires a download event for it (the popup's URL stays blank), so the `popup 200 … application/pdf` line is the evidence. The context grants `clipboard-read` and `clipboard-write`, as the e2e `context` fixture does.
 
 Every session records a DOM timeline from its first `/goto`, with nothing to switch on, so a
 change seen only after the fact can still be asked about: a snapshot per document, then each
