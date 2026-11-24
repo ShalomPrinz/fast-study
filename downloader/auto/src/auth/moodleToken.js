@@ -69,13 +69,13 @@ export class MoodleToken extends AuthProvider {
     this._onChange = onChange;
     // The headed window of the login in flight, so disconnect() can close it. Null once captured.
     this._pending = null;
-    // A background login (capture → persist → verify) is running; `_gen` bumps on disconnect so a
+    // A background login (capture → verify → persist) is running; `_gen` bumps on disconnect so a
     // superseded run ends quietly. `_error` is the last failed attempt, cleared by the next connect.
     this._driving = false;
     this._gen = 0;
     this._error = null;
-    // Runtime "known invalid" flag: set by a caller when wsClient.invalidToken fires (a
-    // server-side token kill the token file can't reveal), cleared by the next complete().
+    // Runtime "known invalid" flag: set by markExpired() on a WS invalidToken (a server-side kill the
+    // token file can't reveal), cleared when a verification persists a token, and by disconnect().
     this._invalidated = false;
     // The running login's hold on the Moodle lock; disconnect() drops it without waiting for the run.
     this._loginLease = null;
