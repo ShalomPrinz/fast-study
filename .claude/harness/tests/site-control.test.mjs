@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { MODES, createSiteControl } from '../fakes/site-control.mjs';
+import { MODES, createSiteControl, exampleSite } from '../fakes/site-control.mjs';
 import { DEFAULT_DOWNLOAD_MS } from '../lib/env.mjs';
 
 const DIE = 'https://lemida.biu.ac.il/die/lecture-08.mp4';
@@ -290,5 +290,19 @@ describe('request log', () => {
     assert.equal(all[0].path, '/p10');
     site.control({ reset: true });
     assert.deepEqual(site.hits(), []);
+  });
+});
+
+describe('exampleSite', () => {
+  test('notmoodle.example is no Moodle, any other .example host is one at its own origin', () => {
+    assert.deepEqual(exampleSite('notmoodle.example'), { notMoodle: true });
+    assert.deepEqual(exampleSite('Moodle.Uni.example'), { origin: 'https://moodle.uni.example' });
+    assert.deepEqual(exampleSite('a.example', false), { origin: 'http://a.example' });
+  });
+
+  test('other hosts are not its business', () => {
+    assert.equal(exampleSite('lemida.biu.ac.il'), null);
+    assert.equal(exampleSite('example.com'), null);
+    assert.equal(exampleSite(undefined), null);
   });
 });

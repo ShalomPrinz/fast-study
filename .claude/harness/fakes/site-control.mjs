@@ -152,3 +152,13 @@ export function createSiteControl() {
     },
   };
 }
+
+/** What the fake site is on a `*.example` host (a University "Other…" name): `null` for any other
+ *  host, `{ notMoodle: true }` for `notmoodle.example` (404 to everything), else `{ origin }` — the
+ *  Moodle that host is, which the public-config probe reports as its own wwwroot. */
+export function exampleSite(host, secure = true) {
+  const name = String(host ?? '').toLowerCase();
+  if (!name.endsWith('.example')) return null;
+  if (name === 'notmoodle.example') return { notMoodle: true };
+  return { origin: `${secure ? 'https' : 'http'}://${name}` };
+}

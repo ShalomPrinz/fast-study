@@ -32,6 +32,7 @@ if (HARNESS) {
     'drive.google.com',
     'docs.google.com',
     'validate.perfdrive.com',
+    '*.example',
     '*.objectstorage.il-jerusalem-1.oraclecloud.com',
   ];
   const isServed = (host) => {

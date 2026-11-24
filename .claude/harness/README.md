@@ -552,6 +552,8 @@ the post-login check reads — Settings → University account → Connect shows
 drops `core_enrol_get_users_courses`: the site still connects, and the next Connect saves the course
 picker as unavailable, so Downloads offers only the paste input. An unknown mode is answered 400.
 
+The shim also serves every `*.example` host, for a University "Other…" name (`exampleSite` in `fakes/site-control.mjs`): `notmoodle.example` answers 404 to everything, any other `*.example` host answers as Moodle, its `service-nologin.php` reporting that host's own origin as `wwwroot` and `launchurl`.
+
 A provider's rule is `{mode, match, times, model}` (`model` only with Gemini `503`); a bare string is `{mode}`, every call. Nothing the
 SDKs send names the lecture, so the shim stamps each call a pipeline step or an overview makes with
 an `x-harness-lecture` header — its path, `course/lecture` or `course/Recitations/name`, or the

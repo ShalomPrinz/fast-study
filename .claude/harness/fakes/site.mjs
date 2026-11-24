@@ -16,7 +16,7 @@ import {
   ZOOM_ROW,
 } from '../lib/env.mjs';
 import { COURSE_FILES } from '../lib/course-files.mjs';
-import { createSiteControl } from './site-control.mjs';
+import { createSiteControl, exampleSite } from './site-control.mjs';
 
 const HARNESS = process.env.HARNESS_DIR;
 const TOKEN = process.env.HARNESS_WSTOKEN;
@@ -516,6 +516,10 @@ function serveSite(req, res, url, route, host) {
     });
     return res.end();
   }
+  // A University "Other…" name: `notmoodle.example` is no Moodle, any other `.example` host is one.
+  const example = exampleSite(host, Boolean(req.socket.encrypted));
+  if (example?.notMoodle) return json(res, { error: 'harness: not a Moodle site' }, 404);
+  const origin = example?.origin ?? SITE;
   if (state.mode === 'radware' && !hasClearance(req)) return toCaptcha(res);
 
   // A top-level browser navigation is served: the real wall for one is the radware 302, and a 200
@@ -555,11 +559,11 @@ function serveSite(req, res, url, route, host) {
             ? {
                 error: false,
                 data: {
-                  wwwroot: SITE,
+                  wwwroot: origin,
                   sitename: 'harness Moodle',
                   enablemobilewebservice: state.mode === 'mobile_service_off' ? 0 : 1,
                   maintenanceenabled: 0,
-                  launchurl: `${SITE}/admin/tool/mobile/launch.php`,
+                  launchurl: `${origin}/admin/tool/mobile/launch.php`,
                   warnings: [],
                 },
               }
