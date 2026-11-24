@@ -15,6 +15,7 @@ import {
 } from './env.mjs';
 import { seed } from './seed.mjs';
 import { snapshot } from './state.mjs';
+import { seedTiming } from './timing.mjs';
 
 // Every setting the store knows, as `ENV name → [settings field, type]`, so `hb set` takes the
 // names the .env uses and the baseline leaves no field at a value a flow left behind.
@@ -216,6 +217,7 @@ export async function reseed(paths) {
   wipe(paths.data, paths);
   wipe(paths.dataEmpty, paths);
   const seeded = await seed(paths);
+  await seedTiming(paths);
   await call(`${DATABASE}/notify`, { method: 'POST' });
   return seeded;
 }

@@ -103,6 +103,8 @@ named for `/hunt-bugs`' flows, and any task can use them as ready-made fixtures:
 
 Every seeded `summary.pdf`, material and assignment PDF is `fixtures/handout.pdf`, built by `lib/pdf.mjs`: a valid one-page PDF with a nested outline, so pypdf (the merge) and pdf.js both open it. A spec that writes a lecture's PDF through the database sends `POST /notify` after it, as the backend's pdf step does.
 
+A reseed also replaces `<harness>/state/timing.db`'s rows with realistic samples (8 / 12 / 20 s at 1 / 5 / 20 MB, scaled per operation) for `audio`, `transcribe`, `summarize`, `pdf`, `drive`, `assignment_intuition`, `assignment_solution` and `merge_pdf` (`lib/timing.mjs`), so an ETA reads seconds to minutes; `download:*` has none.
+
 The seeded `drive_url.txt` points at the fake providers' `/drive/view/…`, a page the fake providers serve,
 so "Open in Drive" never leaves the machine. `<harness>/data-empty` is a second marked root, empty
 after every seed, for the data-folder switch.
