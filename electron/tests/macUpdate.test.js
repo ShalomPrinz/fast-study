@@ -277,7 +277,7 @@ test('the helper swaps only after the app has exited, then relaunches it', async
 test('a swap that fails half way puts the previous build back and still relaunches', async () => {
   // Fails the one move that puts the new build in place: its source is the hidden `.new` sibling.
   const mv = '#!/bin/sh\ncase "$1" in *.app.new) exit 1 ;; esac\nexec /bin/mv "$@"\n';
-  const { bundle, start, build, lines, stop } = install({ mv });
+  const { bundle, opened, start, build, lines, stop } = install({ mv });
   start();
   await stop();
   const log = await lines('relaunching');
@@ -285,6 +285,8 @@ test('a swap that fails half way puts the previous build back and still relaunch
     'swap failed: restored the previous build',
     `relaunching ${bundle}`,
   ]);
+  // `open` is the helper's last step; wait for it so cleanup does not race the helper.
+  assert.equal(await appeared(opened), true);
   assert.equal(build(), 'old');
   assert.deepEqual(fs.readdirSync(path.dirname(bundle)), ['FastStudy.app']);
 });
