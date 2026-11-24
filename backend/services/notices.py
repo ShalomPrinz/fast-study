@@ -32,7 +32,9 @@ def add(scope: str, code: str, params: dict, **where) -> None:
                 "_scope": scope,
             }
         )
-    db_client.notify("runner")
+    db_client.notify(
+        "runner", "tree"
+    )  # the step may have written files since the last notify
 
 
 def recent(scope: str) -> list[dict]:
