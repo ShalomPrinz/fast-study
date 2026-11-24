@@ -25,6 +25,6 @@ export function useMergedPdfs(course: string): MergedPdf[] | null {
     void refresh()
   }, [course])
 
-  useNotify(refresh)
+  useNotify(() => void refresh(), ['tree'])
   return items
 }

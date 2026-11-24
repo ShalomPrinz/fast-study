@@ -33,7 +33,7 @@ export default function DriveConsentPrompt() {
   useEffect(() => {
     void refresh()
   }, [refresh])
-  useNotify(refresh)
+  useNotify(() => void refresh(), ['drive'])
 
   async function accept() {
     setAnswered(true)

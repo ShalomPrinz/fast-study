@@ -161,7 +161,7 @@ async def post_course(request: Request):
         body = await request.json()
         name = body["name"]
         effective = crud.create_course(name, body.get("source_url"))
-        broadcast_notify()
+        broadcast_notify("tree")
         return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "create_dir_failed", {"path": name})
@@ -176,7 +176,7 @@ async def patch_course(course: str, request: Request):
         body = await request.json()
         name = body["name"]
         effective = crud.rename_course(course, name)
-        broadcast_notify()
+        broadcast_notify("tree")
         return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "rename_failed", {"from": course, "to": name})
@@ -212,7 +212,7 @@ async def patch_course_lectures_only(course: str, request: Request):
     try:
         body = await request.json()
         crud.set_course_lectures_only(course, _bool_field(body, "lectures_only"))
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": LECTURES_ONLY_MARKER})
@@ -227,7 +227,7 @@ async def post_course_skipped(course: str, request: Request):
         body = await request.json()
         refs, changed = skips.update_skipped(course, body)
         if changed:
-            broadcast_notify()
+            broadcast_notify("tree")
         return {"refs": refs}
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": SKIPPED_MARKER})
@@ -242,7 +242,7 @@ async def post_lecture(course: str, request: Request, kind: str = Query("lecture
         body = await request.json()
         name = body["name"]
         effective = crud.create_lecture(course, name, kind)
-        broadcast_notify()
+        broadcast_notify("tree")
         return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "create_dir_failed", {"path": name})
@@ -259,7 +259,7 @@ async def patch_lecture(
         body = await request.json()
         name = body["name"]
         effective = crud.rename_lecture(course, lecture, name, kind)
-        broadcast_notify()
+        broadcast_notify("tree")
         return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "rename_failed", {"from": lecture, "to": name})
@@ -271,7 +271,7 @@ async def put_lecture_done(course: str, lecture: str, kind: str = Query("lecture
 
     try:
         crud.set_lecture_done(course, lecture, kind, True)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": DONE_MARKER})
@@ -283,7 +283,7 @@ async def delete_lecture_done(course: str, lecture: str, kind: str = Query("lect
 
     try:
         crud.set_lecture_done(course, lecture, kind, False)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_delete_failed", {"file": DONE_MARKER})
@@ -356,7 +356,7 @@ async def patch_material(
             )
         if not materials.set_attach(course, lecture, kind, name, body["attach"]):
             return _error("Not found", 404, "file_not_found", {"file": name})
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except OSError as e:
         # The flag lives only in the sidecar, so a failed write is a server fault, not a bad request.
@@ -375,7 +375,7 @@ async def put_summary_materials(
         body = await request.json()
         names = body.get("materials") if isinstance(body, dict) else None
         summary_fs.write_summary_materials(course, lecture, kind, names)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(
@@ -410,7 +410,7 @@ async def post_removed(
         # A non-object body passes None on, which remove_files refuses as bad_request_body.
         files = body.get("files") if isinstance(body, dict) else None
         crud.remove_files(course, lecture, kind, files)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         # Body, name, lock and unlink failures are coded already, so the files param is only a fallback.
@@ -518,7 +518,7 @@ async def put_summary(
         content = (await request.body()).decode("utf-8")
         summary_fs.write_summary(course, lecture, kind, content, fresh)
         # An editor open on this summary in another window reloads or warns off this.
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 500, "summary_io_failed")
@@ -530,7 +530,7 @@ async def delete_summary(course: str, lecture: str, kind: str = Query("lecture")
 
     try:
         summary_fs.revert_summary(course, lecture, kind)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 500, "summary_io_failed")
@@ -579,7 +579,7 @@ async def post_assignment_file(
         assignment, effective = assignments.write_assignment_file(
             course, name, filename, data, source
         )
-        broadcast_notify()
+        broadcast_notify("tree")
         return {"assignment": assignment, "name": effective}
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": filename})
@@ -591,7 +591,7 @@ async def put_assignment_done(course: str, name: str):
 
     try:
         assignments.set_assignment_done(course, name, True)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": DONE_MARKER})
@@ -603,7 +603,7 @@ async def delete_assignment_done(course: str, name: str):
 
     try:
         assignments.set_assignment_done(course, name, False)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_delete_failed", {"file": DONE_MARKER})
@@ -643,7 +643,7 @@ async def patch_assignment_file(course: str, name: str, file: str, request: Requ
         body = await request.json()
         value = body.get("attach") if isinstance(body, dict) else None
         assignments.set_file_attach(course, name, file, value)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": file})
@@ -657,7 +657,7 @@ async def put_assignment_lectures(course: str, name: str, request: Request):
         body = await request.json()
         value = body.get("lectures") if isinstance(body, dict) else None
         assignments.set_lectures(course, name, value)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": ".assignment_meta.json"})
@@ -686,7 +686,7 @@ async def put_assignment_doc(
     try:
         content = (await request.body()).decode("utf-8")
         assignments.write_doc(course, name, doc, content, fresh)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 500, "summary_io_failed")
@@ -698,7 +698,7 @@ async def delete_assignment_doc(course: str, name: str, doc: str):
 
     try:
         assignments.revert_doc(course, name, doc)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 500, "summary_io_failed")
@@ -737,7 +737,7 @@ async def put_assignment_generated(course: str, name: str, file: str, request: R
     try:
         data = await request.body()
         assignments.write_generated(course, name, file, data)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": file})
@@ -749,7 +749,7 @@ async def delete_assignment_generated(course: str, name: str, file: str):
 
     try:
         assignments.delete_generated(course, name, file)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_delete_failed", {"file": file})
@@ -877,7 +877,7 @@ async def patch_merged_meta(course: str, request: Request):
                 detail="title must be a string",
             )
         merged.merge_merged_meta(course, title, body["entry"])
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": overview.OVERVIEW_META})
@@ -901,7 +901,7 @@ async def put_merged_pdf(course: str, title: str, request: Request):
     try:
         data = await request.body()
         merged.write_merged_pdf(course, title, data)
-        broadcast_notify()
+        broadcast_notify("tree")
         return Response(status_code=204)
     except Exception as e:
         try:
@@ -1006,7 +1006,7 @@ async def post_config(request: Request):
             tree.set_course_structure(mode)
         # Every open tree still shows the old root's courses or the old lectures_only flags until it refetches.
         if "data_root" in body or mode is not None:
-            broadcast_notify()
+            broadcast_notify("settings", "tree")
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "settings_store_io_failed")
@@ -1021,10 +1021,17 @@ async def events():
 
 @app.post("/notify")
 async def notify(request: Request):
-    """Fan a notify event out to every SSE subscriber; body is drained but ignored."""
+    """Relay the sender's {topics} to every SSE subscriber; a missing or malformed body broadcasts untagged."""
 
-    await request.body()
-    broadcast_notify()
+    topics: list[str] = []
+    try:
+        body = await request.json()
+        raw = body.get("topics") if isinstance(body, dict) else None
+        if isinstance(raw, list) and all(isinstance(t, str) for t in raw):
+            topics = raw
+    except Exception:
+        pass
+    broadcast_notify(*topics)
     return Response(status_code=204)
 
 

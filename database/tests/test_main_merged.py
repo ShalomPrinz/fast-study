@@ -243,10 +243,10 @@ def test_writes_notify_once(client, monkeypatch):
     import database_main
 
     calls = []
-    monkeypatch.setattr(database_main, "broadcast_notify", lambda: calls.append(1))
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: calls.append(t))
     client.patch("/courses/Algo/merged/meta", json={"title": "A", "entry": _entry("A")})
     client.put("/courses/Algo/merged/A/pdf", content=b"x")
-    assert len(calls) == 2
+    assert calls == [("tree",)] * 2
     client.put("/courses/Missing/merged/A/pdf", content=b"x")
     assert len(calls) == 2
 

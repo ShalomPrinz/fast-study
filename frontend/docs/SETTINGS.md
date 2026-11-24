@@ -131,7 +131,7 @@ in `localStorage` ([I18N.md](I18N.md)).
 
 Loads the store (database) and the options (backend) apart, so either can be down alone. With the backend
 down the form renders from the store and the API keys and model show as unavailable; with the store down the
-page says so and offers Retry. Whichever half is missing is fetched again on every notify — the backend
+page says so and offers Retry. Whichever half is missing is fetched again on every `settings` (or untagged) notify — the backend
 notifies at boot and the stream's reconnect dispatches — so a returning service fills in without a reload;
 the options only resolve the model (`withOptions`), never resetting an edit. It edits a local form and has no Save button (below).
 The form is read from the store (`formFromStore`) on load; a stored model the options no longer list reads as the first.
@@ -290,7 +290,7 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   States `unknown` / `disconnected` / `pending` / `connected`. `POST /config/drive/connect` opens the
   browser on the backend's side and answers the URL, so **Connect** opens nothing itself; the pending
   state's reopen link connects again (same URL, no rival flow) and hands it to `openExternalUrl`. A landed
-  token, a failed flow and a disconnect each notify, so the chip follows SSE; only `pending` is recorded
+  token, a failed flow and a disconnect each notify (`drive`), so the chip follows SSE; only `pending` is recorded
   by its caller. Failures fill the status slot, since the wall renders outside the toast container. A
   lecture with no token still finishes as a local PDF.
 

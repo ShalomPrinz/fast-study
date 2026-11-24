@@ -1,4 +1,5 @@
 import asyncio
+import json
 from typing import AsyncIterator
 
 _subscribers: set[asyncio.Queue] = set()
@@ -30,10 +31,12 @@ def close_all() -> None:
         q.put_nowait(_SHUTDOWN)
 
 
-def broadcast_notify() -> None:
-    """Fan a `notify` event out to every subscriber; per-queue failures are swallowed (fire-and-forget)."""
+def broadcast_notify(*topics: str) -> None:
+    """Fan a `notify` event carrying the topics (none = everything) out to every subscriber; per-queue failures are swallowed (fire-and-forget)."""
 
-    msg = "event: notify\ndata: {}\n\n"
+    # dict.fromkeys drops duplicates and keeps order.
+    data = {"topics": list(dict.fromkeys(topics))} if topics else {}
+    msg = f"event: notify\ndata: {json.dumps(data, separators=(',', ':'))}\n\n"
     for q in list(_subscribers):
         try:
             q.put_nowait(msg)

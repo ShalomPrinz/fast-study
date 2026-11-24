@@ -13,7 +13,7 @@ def notifies(monkeypatch):
     import database_main
 
     calls = []
-    monkeypatch.setattr(database_main, "broadcast_notify", lambda: calls.append(1))
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: calls.append(t))
     return calls
 
 
@@ -64,7 +64,7 @@ def test_removes_files_and_notifies_once(client, lecture, notifies):
         "transcript.txt",
     ]
     assert _tree_lecture(client)["removed"] == ["video.mp4", "audio.mp3"]
-    assert notifies == [1]
+    assert notifies == [("tree",)]
 
 
 def test_repeating_a_removal_is_idempotent(client, lecture):

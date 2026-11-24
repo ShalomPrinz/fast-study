@@ -1,14 +1,14 @@
 import { useEffect, useRef } from 'react'
-import { subscribeNotify } from '@/services/events'
+import { subscribeNotify, type Topic } from '@/services/events'
 
-// SSE notify subscription; the ref keeps `cb` fresh without re-subscribing each render.
-export function useNotify(cb: () => void): void {
+// SSE notify subscription, filtered to `topics` (all when omitted); the ref keeps `cb` fresh without re-subscribing each render.
+export function useNotify(cb: (matched: Topic[]) => void, topics?: readonly Topic[]): void {
   const cbRef = useRef(cb)
   useEffect(() => {
     cbRef.current = cb
   })
 
   useEffect(() => {
-    return subscribeNotify(() => cbRef.current())
+    return subscribeNotify((matched) => cbRef.current(matched), topics)
   }, [])
 }

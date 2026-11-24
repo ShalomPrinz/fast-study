@@ -20,7 +20,7 @@ def notifies(monkeypatch):
     import database_main
 
     calls = []
-    monkeypatch.setattr(database_main, "broadcast_notify", lambda: calls.append(1))
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: calls.append(t))
     return calls
 
 
@@ -57,6 +57,7 @@ def test_add_remove_batch_idempotent_and_notifies_only_on_change(
     assert client.post(url, json={"remove": ["b", "c"]}).json() == {"refs": []}
     assert not (data_root / "Algo" / ".skipped.json").exists()
     assert len(notifies) == 3
+    assert set(notifies) == {("tree",)}
 
 
 def test_skipped_covers_recitation_refs_and_survives_course_rename(client, data_root):

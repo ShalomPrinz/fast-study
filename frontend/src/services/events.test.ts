@@ -2,19 +2,19 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 
 class FakeEventSource {
   static instances: FakeEventSource[] = []
-  listeners = new Map<string, Set<() => void>>()
+  listeners = new Map<string, Set<(e: { data?: string }) => void>>()
   closed = false
 
   constructor(public url: string) {
     FakeEventSource.instances.push(this)
   }
 
-  addEventListener(type: string, fn: () => void) {
+  addEventListener(type: string, fn: (e: { data?: string }) => void) {
     if (!this.listeners.has(type)) this.listeners.set(type, new Set())
     this.listeners.get(type)!.add(fn)
   }
 
-  removeEventListener(type: string, fn: () => void) {
+  removeEventListener(type: string, fn: (e: { data?: string }) => void) {
     this.listeners.get(type)?.delete(fn)
   }
 
@@ -22,8 +22,8 @@ class FakeEventSource {
     this.closed = true
   }
 
-  fire(type: string) {
-    for (const fn of this.listeners.get(type) ?? []) fn()
+  fire(type: string, data?: string) {
+    for (const fn of this.listeners.get(type) ?? []) fn({ data })
   }
 }
 
@@ -103,5 +103,66 @@ describe('subscribeNotify', () => {
     const { url } = FakeEventSource.instances[0]
     expect(url.split('?')[0]).toMatch(/\/events$/)
     expect(url).toContain('?secret=s3cret')
+  })
+})
+
+const tagged = (...topics: string[]) => JSON.stringify({ topics })
+
+describe('topic filtering', () => {
+  it('calls a topic subscriber only with the topics the event carried', async () => {
+    const { subscribeNotify } = await importEvents()
+    const runner = vi.fn()
+    const both = vi.fn()
+    subscribeNotify(runner, ['runner'])
+    subscribeNotify(both, ['runner', 'tree'])
+
+    FakeEventSource.instances[0].fire('notify', tagged('tree'))
+    expect(runner).not.toHaveBeenCalled()
+    expect(both).toHaveBeenLastCalledWith(['tree'])
+
+    FakeEventSource.instances[0].fire('notify', tagged('tree', 'runner', 'drive'))
+    expect(runner).toHaveBeenLastCalledWith(['runner'])
+    expect(both).toHaveBeenLastCalledWith(['runner', 'tree'])
+  })
+
+  it('gives a subscriber without topics every event', async () => {
+    const { subscribeNotify } = await importEvents()
+    const all = vi.fn()
+    subscribeNotify(all)
+    FakeEventSource.instances[0].fire('notify', tagged('drive'))
+    expect(all).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['untagged', '{}'],
+    ['no data', undefined],
+    ['empty topics', '{"topics":[]}'],
+    ['an unknown topic beside a known one', tagged('tree', 'nope')],
+    ['unparsable data', 'not json'],
+  ])('fires every subscriber with all its topics on %s', async (_name, data) => {
+    const { subscribeNotify } = await importEvents()
+    const a = vi.fn()
+    subscribeNotify(a, ['settings', 'drive'])
+    FakeEventSource.instances[0].fire('notify', data)
+    expect(a).toHaveBeenCalledWith(['settings', 'drive'])
+  })
+
+  it('fires every subscriber with all its topics on each open', async () => {
+    const { subscribeNotify } = await importEvents()
+    const a = vi.fn()
+    subscribeNotify(a, ['drive'])
+    FakeEventSource.instances[0].fire('open')
+    expect(a).toHaveBeenCalledWith(['drive'])
+  })
+})
+
+describe('matchTopics', () => {
+  it('intersects a tagged event with the subscription, and passes an untagged one whole', async () => {
+    const { matchTopics } = await importEvents()
+    expect(matchTopics(['runner', 'tree'], ['tree'])).toEqual(['tree'])
+    expect(matchTopics(['runner'], ['drive'])).toEqual([])
+    expect(matchTopics(['runner'], null)).toEqual(['runner'])
+    expect(matchTopics(undefined, ['drive'])).toEqual(['drive'])
+    expect(matchTopics(undefined, null)).toEqual(['runner', 'tree', 'settings', 'drive'])
   })
 })

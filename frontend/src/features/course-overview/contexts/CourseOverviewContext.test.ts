@@ -9,7 +9,7 @@ const { fetchCourseFiles, fetchCourseMeta, fetchCourseStatus, notify } = vi.hois
   fetchCourseFiles: vi.fn(),
   fetchCourseMeta: vi.fn(),
   fetchCourseStatus: vi.fn(),
-  notify: { cb: () => {} },
+  notify: { cb: (_m?: string[]) => {} },
 }))
 vi.mock('@/services/backend', () => ({
   fetchCourseStatus,
@@ -18,8 +18,8 @@ vi.mock('@/services/backend', () => ({
 }))
 vi.mock('@/services/database', () => ({ fetchCourseFiles, fetchCourseMeta }))
 vi.mock('@/services/events', () => ({
-  subscribeNotify: (cb: () => void) => {
-    notify.cb = cb
+  subscribeNotify: (cb: (m: string[]) => void, topics?: string[]) => {
+    notify.cb = (m = topics ?? []) => cb(m)
     return () => {}
   },
 }))
@@ -153,5 +153,43 @@ describe('a refresh', () => {
       t1.s.resolve(status(1))
     })
     expect(seen.at(-1)).toBe('-/v1/1')
+  })
+})
+
+describe('a topic-tagged notify', () => {
+  async function booted() {
+    fetchCourseFiles.mockResolvedValue(files(1))
+    fetchCourseMeta.mockResolvedValue(meta(1))
+    fetchCourseStatus.mockResolvedValue(status(1))
+    const hook = render()
+    await act(async () => {})
+    fetchCourseFiles.mockClear()
+    fetchCourseMeta.mockClear()
+    fetchCourseStatus.mockClear()
+    return hook
+  }
+
+  it('refetches only the status for runner', async () => {
+    await booted()
+    await act(async () => notify.cb(['runner']))
+    expect(fetchCourseStatus).toHaveBeenCalledTimes(1)
+    expect(fetchCourseFiles).not.toHaveBeenCalled()
+    expect(fetchCourseMeta).not.toHaveBeenCalled()
+  })
+
+  it('refetches only files and meta for tree', async () => {
+    await booted()
+    await act(async () => notify.cb(['tree']))
+    expect(fetchCourseFiles).toHaveBeenCalledTimes(1)
+    expect(fetchCourseMeta).toHaveBeenCalledTimes(1)
+    expect(fetchCourseStatus).not.toHaveBeenCalled()
+  })
+
+  it('refetches the triple for runner and tree', async () => {
+    await booted()
+    await act(async () => notify.cb(['runner', 'tree']))
+    expect(fetchCourseFiles).toHaveBeenCalledTimes(1)
+    expect(fetchCourseMeta).toHaveBeenCalledTimes(1)
+    expect(fetchCourseStatus).toHaveBeenCalledTimes(1)
   })
 })

@@ -28,15 +28,24 @@ modal (`PendingUploadProvider`) renders it itself.
 
 The database service owns one notify channel. `services/events.ts` opens a single `EventSource` on the
 first subscriber and closes it on the last, and every open — reconnects included — fires each subscriber,
-so notifies lost while the database was down resync; `useNotify(cb)` is the only interface. `SnapshotProvider`
+so notifies lost while the database was down resync; `useNotify(cb, topics?)` is the only interface. `SnapshotProvider`
 (behind `CourseTreeContext` and `RunnerStatusContext`) and `CourseOverviewContext` refresh on notify — nothing
 polls. The backend notifies on every meaningful state change, and the downloader after a download.
 
+A notify carries topics (`runner`, `tree`, `settings`, `drive`; vocabulary and meaning in
+[../../database/docs/EVENTS.md](../../database/docs/EVENTS.md)), and a subscriber that names its topics is called, with the ones
+matched, only when the event carries one of them. An untagged event, any unknown topic, unparsable data and every `open` fire everyone
+with all its topics, so a missed tag refetches more, never leaves a view stale. `notifyTopicDrift.test.ts` fails on a topic literal
+outside the vocabulary at any notify call site.
+
 `SnapshotProvider` fetches `/status` and `/tree` as one pair and applies both in one render, since pages
-combine them — a step's button, the lecture header's state, `/running`'s not-queued list — and the faster
-`/status` landing alone would show a finished step as pending again for a frame. On mount, every notify and
-every `refreshCourses()` it refetches both. If one side fails the other still applies; a failed `/tree`
-settles `loaded` and sets `loadFailed` only when no newer fetch is in flight; a later success clears `loadFailed`.
+combine them — a step's button, the lecture header's state, `/running`'s not-queued list. On mount, every untagged or
+both-topic notify and every `refreshCourses()` it refetches both; a `runner`-only notify refetches `/status` alone and a `tree`-only one `/tree` alone
+(`utils/refreshSides.ts`), with a separate `useNewestRequest()` gate per side so a lone `/status` never drops an older pair's `/tree`.
+A finished step never shows as pending beside a stale listing because senders include `tree` whenever anything was written since
+their last notify on that path, so a `runner`-only notify follows only pure live-state changes and the listing on screen is current
+(rule in [../../database/docs/EVENTS.md](../../database/docs/EVENTS.md)). If one side fails the other still applies; a failed `/tree`
+settles `loaded` and sets `loadFailed` only when no newer `/tree` fetch is in flight; a later success clears `loadFailed`.
 
 The downloader server has its own stream, reflected by `DownloadJobsProvider` and `SectionRunsProvider`
 ([JOBS.md](JOBS.md), [BULK.md](BULK.md)): a contentless ping plus one snapshot fetch per ping and per
@@ -44,7 +53,7 @@ connect, since the stream itself is memoryless.
 
 A fetcher that a notify burst can re-trigger wraps its promise in `useLatestRequest()`, which settles only
 the newest call (superseded ones resolve `undefined`, even on failure) so a late answer cannot overwrite a
-fresher one. The unkeyed status-and-tree pair, and the overview's files-meta-status triple, use
+fresher one. The unkeyed status and tree fetches, and the overview's files-and-meta and status halves, each use
 `useNewestRequest()` instead: any answer newer than the one shown lands, since under a steady notify stream
 every answer is overtaken before it arrives and latest-only never settles.
 

@@ -5,15 +5,34 @@ This service owns the only SSE channel in the app. `GET /events` is a long-lived
 `event: notify` message out to all of them. A `: connected` comment is sent immediately so
 proxies and clients see the stream open before any real traffic.
 
-The event carries **no payload** — the body of `/notify` is drained and discarded. It is a
-"something changed, refetch" ping, which keeps producers from having to model what changed and
-keeps the channel a single event type. Producers are the backend (each meaningful pipeline and
-course-overview state change, via `services/db_client.notify`), the downloader server (after a
-successful upload), and this service itself after a successful course create, rename or lectures-only pick,
-lecture create, rename or done toggle, an assignment done toggle, attach, selection, doc or generated-file write, a summary write or restore (so an editor open in another window sees it), and a `POST /config` that applies a new `data_root` or `course_structure` — so every open tree
-refetches, not just the window that acted.
+The event name stays `notify`; the topics ride in `data`: `data: {"topics":["runner","tree"]}`.
+An untagged notify is `data: {}`. `POST /notify` reads an optional JSON body `{"topics": [...]}`
+and relays the list as is; a missing, empty or unparsable body, or one without a list of strings
+under `topics`, broadcasts untagged and never fails the request. The database does not validate
+names against the vocabulary.
 
-A route that calls `broadcast_notify()` is `async def`: the queues are plain `asyncio.Queue`s, not thread-safe, so a push from a threadpool worker can be lost or wake no one.
+| Topic      | Means                                                          |
+| ---------- | -------------------------------------------------------------- |
+| `runner`   | the backend's live state: `/status`, course `/status`, notices |
+| `tree`     | disk state: `/tree`, course files, course meta                 |
+| `settings` | `/config` changed (data root, course-structure mode)           |
+| `drive`    | Drive consent or connection changed                            |
+
+A notify may carry several topics. **No topics means everything, and so does any topic a consumer
+does not know**, so a missed or misspelled tag degrades to a full refetch.
+
+Producers are the backend (each meaningful pipeline and course-overview state change, via
+`services/db_client.notify`), the downloader server (after a successful upload), and this service
+itself: every mutation route tags `tree` on success except the raw file writes and deletes, which
+broadcast nothing: `PUT …/video`, `POST …/materials`, `PUT …/files/{name}`, `DELETE …/files/{name}`,
+`PUT …/figures/{name}`, `DELETE …/figures`, `PUT …/overview/files/{name}` and
+`PATCH …/overview/meta`. Their caller writes several files per job, so it sends its
+own `tree` notify once its writes are done and a multi-file write pings once.
+`PATCH /courses/{course}/source_url` broadcasts nothing and nobody notifies for it: its only caller is the
+frontend, which refetches the course tree itself after the call. `POST /config` tags
+`settings` + `tree` when it applies a new `data_root` or `course_structure`.
+
+A route that calls `broadcast_notify(*topics)` is `async def`: the queues are plain `asyncio.Queue`s, not thread-safe, so a push from a threadpool worker can be lost or wake no one.
 
 Delivery is fire-and-forget: per-queue failures are swallowed, and producers neither wait nor
 retry. A missed notify costs a stale view until the next one, never a blocked producer.

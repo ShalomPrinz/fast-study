@@ -21,7 +21,7 @@ db = runner.db_client
 def _clean(monkeypatch):
     for var in ("AUTO_RETRY", "AUTO_RETRY_COUNT", "AUTO_RETRY_MINUTES"):
         monkeypatch.delenv(var, raising=False)
-    monkeypatch.setattr(db, "notify", lambda: None)
+    monkeypatch.setattr(db, "notify", lambda *_t: None)
     yield
     runner.cancel_all_retries()
     for state in (runner._errors, runner._attempts, runner._in_flight, runner._retries):

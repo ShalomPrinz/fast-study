@@ -392,7 +392,7 @@ class TestStatus:
         with (
             patch.object(backend_main.runner, "_errors", errors),
             patch.object(backend_main.runner.db_client, "get_tree", get_tree),
-            patch.object(backend_main.runner.db_client, "notify", lambda: None),
+            patch.object(backend_main.runner.db_client, "notify", lambda *_t: None),
         ):
             status = asyncio.run(go())
             assert skey in status["errors"]  # the snapshot precedes the prune

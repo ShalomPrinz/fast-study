@@ -84,11 +84,13 @@ _tool_probe = _start_tool_probe()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Notify once at boot so a page still showing a step a previous process was running
-    refetches the now-empty /status."""
+    """Notify once at boot so every backend-sourced view refetches.
+    Carries `tree`: a step that died mid-pipeline may have written without a notify."""
 
     # Not awaited: lifespan startup gates the bind, and a down database would stall it for the timeout.
-    asyncio.get_running_loop().run_in_executor(None, db_client.notify)
+    asyncio.get_running_loop().run_in_executor(
+        None, db_client.notify, "runner", "tree", "settings", "drive"
+    )
     yield
 
 
@@ -421,7 +423,7 @@ async def run_all_endpoint():
     ]
     if not any(queued):
         return {"status": "all_in_flight"}
-    runner.db_client.notify()
+    runner.db_client.notify("runner")
     return {"status": "started", **runner.get_status()}
 
 

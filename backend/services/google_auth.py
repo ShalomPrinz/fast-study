@@ -107,7 +107,7 @@ def _set_consent_needed(value: bool) -> None:
         if _consent_needed == value:
             return
         _consent_needed = value
-    db_client.notify()
+    db_client.notify("drive")
 
 
 def get_credentials(scope_key: ScopeKey) -> Credentials:
@@ -280,14 +280,14 @@ def _await_consent(flow, server, redirect_app: _RedirectApp) -> None:
         server.server_close()
         with _lock:
             _pending_url = None
-        db_client.notify()
+        db_client.notify("drive", "runner")
 
 
 def disconnect() -> None:
     """Forget the Drive token. Already gone counts as success — the end state is what matters."""
 
     _token_path("drive").unlink(missing_ok=True)
-    db_client.notify()
+    db_client.notify("drive")
 
 
 def drive_status() -> dict:

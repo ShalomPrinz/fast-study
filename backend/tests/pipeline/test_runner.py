@@ -1010,7 +1010,7 @@ def _run_all_observed(plans: dict, *, fetch_error: str | None = None):
             plans[lecture].clear()
         return result
 
-    def record():
+    def record(*_topics):
         snapshots.append(sorted(e["lecture"] for e in runner._in_flight.values()))
 
     async def go():
@@ -1062,6 +1062,34 @@ class TestRunAllHandover:
         assert snaps == [["L1"], [], []]
         assert runner._runner_status["last_error"]["code"] == "run_crashed"
         runner._runner_status["last_error"] = None
+
+    def test_a_lock_held_skip_drops_the_held_lecture_with_tree(self):
+        topics, ran = [], []
+
+        async def fake_fetch(course, lecture, kind):
+            return _STATES[-1 if ran else 2]  # one summarize step left, then done
+
+        async def fake_call(course, lecture, kind, step, **_opts):
+            runner.db_client.put_summary(
+                course, lecture, kind, "x"
+            )  # writes, no notify
+            ran.append(step)
+            return {"status": "done"}
+
+        async def go():
+            runner._queue[:] = [_entry("L1"), _entry("L2")]
+            with (
+                patch.object(runner, "_fetch_files", fake_fetch),
+                patch.object(runner, "_call_step", fake_call),
+                patch.object(runner.db_client, "put_summary", lambda *a, **k: None),
+                patch.object(runner, "_claim", lambda key: key[1] != "L2"),
+                patch.object(runner.db_client, "notify", lambda *t: topics.append(t)),
+            ):
+                await runner.run_all()
+
+        asyncio.run(go())
+        assert topics[-3:-1] == [("runner", "tree")] * 2  # L2's skip carries tree
+        assert ("runner",) not in topics
 
     def test_the_last_lecture_is_cleared_at_run_end(self):
         snaps = _run_all_observed({"L1": [{"status": "done"}]})
@@ -1815,7 +1843,7 @@ class _PdfDb:
         if self.delete_raises:
             raise RuntimeError("database service is down")
 
-    def _notify(self):
+    def _notify(self, *_topics):
         self.notifies += 1
 
 
@@ -2111,7 +2139,7 @@ def test_exec_pdf_fresh_delete_failure_is_the_step_error_and_skips_the_render():
 def test_fresh_run_step_records_the_delete_failure(clean_queue):
     skey = runner._skey("C1", "L1", "lecture")
     with (
-        patch.object(runner.db_client, "notify", lambda: None),
+        patch.object(runner.db_client, "notify", lambda *_t: None),
         patch.object(runner.db_client, "file_exists", lambda *a: True),
         patch.object(
             runner.db_client,
@@ -2546,7 +2574,7 @@ def test_a_model_fallback_in_a_step_is_noticed_on_the_pipeline_status(monkeypatc
     import services.llm_client as llm_mod
     from services import notices
 
-    monkeypatch.setattr(notices.db_client, "notify", lambda: None)
+    monkeypatch.setattr(notices.db_client, "notify", lambda *_t: None)
 
     def step(course, lecture, kind, **_opts):
         llm_mod.fallback_hook.get()("m1", "m2")
@@ -2819,7 +2847,7 @@ def test_materials_only_summary_passes_the_figure_sources_too(monkeypatch):
         patch.object(runner.db_client, "get_file_bytes", return_value=b"%PDF-a"),
         patch.object(runner, "summarize_materials", side_effect=fake),
         patch.object(runner.db_client, "delete_figures") as delete,
-        patch.object(runner.db_client, "put_summary"),
+        patch.object(runner.db_client, "put_summary", lambda *a, **k: None),
     ):
         assert runner._exec_summarize("C1", "L1", "lecture")["status"] == "done"
     assert len(seen["figures"]) == 1 and "material.pdf" in seen["figures"][0].pdfs

@@ -69,7 +69,7 @@ class TestOverviewRetry:
         monkeypatch.setattr(
             course_runner.db_client,
             "notify",
-            lambda: pings.append(
+            lambda *_t: pings.append(
                 dict(course_runner._status.get(COURSE, {}).get(SLUG, {}))
             ),
         )

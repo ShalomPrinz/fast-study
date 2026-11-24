@@ -74,8 +74,8 @@ A database refusal that carries a `code` is forwarded with its `code`/`params`/`
 
 ## After a successful upload
 
-- **`notifyFrontend`** — a non-blocking `POST /notify`, so the database's SSE bus tells connected
-  sidebars to refetch the tree (the browser can't know when curl/yt-dlp finished). Silent on failure:
+- **`notifyFrontend`** — a non-blocking `POST /notify {"topics":["tree"]}`, so the database's SSE bus
+  tells connected sidebars to refetch the tree (`PUT …/video` and `POST …/materials` broadcast nothing, so this is the only signal; `POST …/assignments/{name}/files` already broadcasts `tree`, making this a harmless duplicate; topics: `database/docs/EVENTS.md`). Silent on failure:
   a download still counts as done when the frontend is down.
 - **`reportVideoArrived`** (`services/backend.js`) — after a video PUT only, fire
   `POST {BACKEND_URL}/courses/{course}/lectures/{lecture}/video-arrived?kind=`; the backend alone

@@ -204,7 +204,7 @@ def test_done_toggle_is_idempotent_listed_in_tree_notifies_and_never_a_file(
     import database_main
 
     calls = []
-    monkeypatch.setattr(database_main, "broadcast_notify", lambda: calls.append(1))
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: calls.append(t))
     _post(client)
     calls.clear()
     url = "/courses/Algo/assignments/תרגיל 1/done"
@@ -223,6 +223,7 @@ def test_done_toggle_is_idempotent_listed_in_tree_notifies_and_never_a_file(
         assert client.delete(url).status_code == 204
     assert _node(client)["assignments"][0]["done"] is False
     assert len(calls) == 4
+    assert set(calls) == {("tree",)}
 
 
 def test_done_missing_assignment_is_404_both_verbs(client):
@@ -386,7 +387,7 @@ def test_every_write_notifies(client, asg, monkeypatch):
     import database_main
 
     hits = []
-    monkeypatch.setattr(database_main, "broadcast_notify", lambda: hits.append(1))
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: hits.append(t))
     client.patch(f"{A}/files/ex1.pdf", json={"attach": False})
     client.put(f"{A}/lectures", json={"lectures": []})
     client.put(f"{A}/docs/intuition", content=b"x")
@@ -394,6 +395,7 @@ def test_every_write_notifies(client, asg, monkeypatch):
     client.put(f"{A}/generated/intuition.pdf", content=b"x")
     client.delete(f"{A}/generated/intuition.pdf")
     assert len(hits) == 6
+    assert set(hits) == {("tree",)}
 
 
 def test_generated_writes_404_when_dir_vanishes_after_check(data_root, monkeypatch):

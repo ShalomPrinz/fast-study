@@ -241,7 +241,7 @@ export default function SettingsView() {
     void loadMissing()
     return () => clearTimeout(savedTimer.current)
   }, [])
-  useNotify(() => void loadMissing())
+  useNotify(() => void loadMissing(), ['settings'])
 
   if (!stored || !form) {
     return (

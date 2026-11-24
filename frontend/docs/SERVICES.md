@@ -119,7 +119,7 @@ it fails the build rather than upload to the wrong release. The plugin links no 
 ## `events.ts` and `toaster.ts`
 
 `events.ts` is a module-level singleton over `${databaseUrl}/events`, opened on the first subscriber and
-closed on the last, consumed only through `useNotify`. Every `open` dispatches like a notify, so a reconnect resyncs.
+closed on the last, consumed only through `useNotify`. `subscribeNotify(cb, topics?)` parses each event's `data` once and calls `cb` with the subscriber's topics the event carried (pure `matchTopics`); untagged, unknown-topic and unparsable events and every `open` call every subscriber with all its topics, so a reconnect resyncs.
 
 `toaster.ts` is the one `react-toastify` import (its CSS too) and hosts every toast shape — new shapes get
 a helper here. `ToastContainer` is mounted in `App` above the init gate, since a toast with no mounted
