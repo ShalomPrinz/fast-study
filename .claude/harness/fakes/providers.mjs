@@ -99,7 +99,7 @@ function readBody(req) {
   });
 }
 
-// Groq's 429 body, phrased the way transcribe.py's parse_rate_limit_message expects to read it.
+// Groq's 429: the backend reads the wait only from the `retry-after` header (decimal seconds), never the body.
 function groqRateLimit(res) {
   json(
     res,
@@ -108,8 +108,7 @@ function groqRateLimit(res) {
       error: {
         message:
           'Rate limit reached for model `whisper-large-v3` in organization `org_hunt` on ' +
-          'seconds of audio per hour (ASH): Limit 7200, Used 7200, Requested 600. ' +
-          'Please try again in 12m30s.',
+          'seconds of audio per hour (ASH). Please try again in 12m30s.',
         type: 'rate_limit_exceeded',
         code: 'rate_limit_exceeded',
       },
