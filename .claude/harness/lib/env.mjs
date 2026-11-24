@@ -84,6 +84,8 @@ export function harnessPaths(root) {
     network: at('logs', 'network.log'),
     // This stack's ports, `browser-<tag>` sessions included (`hb url`).
     ports: at('ports.json'),
+    // Present: auto/'s installed-browser launches fail (`hb no-browser on`).
+    noBrowser: at('no-browser'),
   };
 }
 

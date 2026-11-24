@@ -157,7 +157,14 @@ if (HARNESS) {
     }
     const browserType = Object.getPrototypeOf(chromium);
     const originalLaunch = browserType.launch;
+    // `hb no-browser on` drops a flag file; read at each launch so no restart is needed for the launch itself.
+    const failChannel = async (options) => {
+      const { noBrowserError } = await import('../lib/no-browser.mjs');
+      const error = noBrowserError(options, fs.existsSync(path.join(HARNESS, 'no-browser')));
+      if (error) throw error;
+    };
     browserType.launch = async function launch(options) {
+      await failChannel(options);
       const browser = await originalLaunch.call(this, offline(options));
       const originalNewContext = browser.newContext;
       browser.newContext = async function newContext(...args) {
@@ -170,6 +177,7 @@ if (HARNESS) {
     // The challenge window's persistent profile launches here instead of through `launch`.
     const originalPersistent = browserType.launchPersistentContext;
     browserType.launchPersistentContext = async function launchPersistentContext(dir, options) {
+      await failChannel(options);
       const context = await originalPersistent.call(this, dir, offline(options));
       logRefusals(context);
       return context;

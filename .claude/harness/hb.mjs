@@ -299,6 +299,19 @@ return ${JSON.stringify(`picked ${course}`)};`;
       if (!response.ok) process.exitCode = 1;
     },
   },
+  'no-browser': {
+    usage: 'no-browser on|off',
+    summary:
+      'make auto/ find no installed Chrome or Edge (its /prereqs/browser fails), or find one again',
+    async run(paths, [state]) {
+      if (state !== 'on' && state !== 'off') throw new Error('usage: no-browser on|off');
+      if (state === 'on') fs.writeFileSync(paths.noBrowser, '');
+      else fs.rmSync(paths.noBrowser, { force: true });
+      // The probe's answer is cached per process, so auto/ starts over either way.
+      await restart(paths, 'downloader-auto', {});
+      console.log(`no-browser ${state}: downloader-auto restarted`);
+    },
+  },
   'forget-probes': {
     usage: 'forget-probes',
     summary:

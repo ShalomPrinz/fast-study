@@ -64,7 +64,7 @@ rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture
 `radware` mode walls Moodle until a captcha is solved with `{"solve":true}`; `{"revoke":true}` makes
 the next call meet a fresh captcha, with no reseed. Restart one service after a code change with
 `node .claude/harness/setup.mjs --harness $HARNESS_DIR --restart <service>` (names in `hb help`). Put the baseline back
-with `hb reseed`. A University "Other…" `*.example` host answers as Moodle, `notmoodle.example` as not Moodle. A Gemini auto retry only waits and shows its countdown; `hb retry fire [key]` runs it now.
+with `hb reseed`. `hb no-browser on|off` makes auto/ find no installed Chrome/Edge (restarts it; a reseed clears it). A University "Other…" `*.example` host answers as Moodle, `notmoodle.example` as not Moodle. A Gemini auto retry only waits and shows its countdown; `hb retry fire [key]` runs it now.
 
 Nothing a run shows is real provider behaviour: transcripts, summaries and downloads are fixtures.
 

@@ -213,6 +213,8 @@ export async function removeLecture(course, lecture, kind) {
 
 /** Restore the baseline, wipe both scratch roots and seed the flow courses. */
 export async function reseed(paths) {
+  // A leftover `hb no-browser on` would outlive the reseed that promises the baseline.
+  fs.rmSync(paths.noBrowser, { force: true });
   await restore(paths);
   wipe(paths.data, paths);
   wipe(paths.dataEmpty, paths);

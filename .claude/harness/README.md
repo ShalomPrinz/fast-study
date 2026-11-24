@@ -128,6 +128,7 @@ node .claude/harness/hb.mjs add-assignment-file hb-assign 'תרגיל בית 1' 
 node .claude/harness/hb.mjs rm-lecture hb-pipeline 'שיעור 4'          # delete its folder, notify
 node .claude/harness/hb.mjs lock 'hb-nav/שיעור 1/summary.pdf'        # held open, Windows-style
 node .claude/harness/hb.mjs unlock            # every lock off (or name the globs to drop)
+node .claude/harness/hb.mjs no-browser on     # auto/ finds no installed Chrome/Edge until `no-browser off` (restarts downloader-auto)
 node .claude/harness/hb.mjs forget-probes     # every probed link back to unprobed ('?')
 node .claude/harness/hb.mjs moodle-busy on    # auto/'s Moodle lock held until `moodle-busy off` (≤ 5 min)
 node .claude/harness/hb.mjs download hb-dl 'הקלטה 4 — גרפים'          # load a course's recordings, press one row's Download
@@ -357,7 +358,7 @@ The browsers `downloader-auto` launches are processes of their own, out of the s
 so in that service alone the shim also patches `BrowserType.launch` in auto/'s `playwright-core`.
 That one prototype covers every launch — `launchBrowser` (the login and the plain capture session), the
 channel probe, the zoom launcher — and rewrites each: always headless, always the chromium
-`browser.mjs` picks (`channel` dropped, so the run does not depend on the box's Chrome),
+`browser.mjs` picks (`channel` dropped, so the run does not depend on the box's Chrome; with `hb no-browser on` a launch that names a `channel` instead throws Playwright's "Chromium distribution 'chrome' is not found at …", so `/prereqs/browser` reports `browser_missing` — the flag is `<harness>/no-browser`, `on` restarts downloader-auto because the probe is cached per process, and a reseed removes it),
 `--ignore-certificate-errors` for the fake's self-signed cert, and `--host-resolver-rules` mapping
 every host the fake site serves to its TLS port and every other name to `NOTFOUND`. Chromium honours
 the port in a `MAP` rule, so no proxy is needed; the cost is that a plain `http://` URL to a served
