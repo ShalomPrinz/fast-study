@@ -94,6 +94,7 @@ named for `/hunt-bugs`' flows, and any task can use them as ready-made fixtures:
 | `hb-pipeline`  | pipeline and course overview  | one lecture per stage, two video-only for queue + lock, a recitation          |
 | `hb-fail`      | failure surfacing             | video-only, transcribed and summarised lectures to fail at each step          |
 | `hb-assign`    | assignment AI docs            | two summarised lectures and `תרגיל בית 1` (a PDF and a text file)             |
+| `hb-assign-docs` | assignment AI docs, already generated | one summarised lecture and `תרגיל בית 1` (a PDF, a text file) holding both `intuition.md` and `solution.md` (the fixtures) |
 | `hb-prog`      | sidebar section progress      | two lectures, 8 recitations (5 studied), 5 assignments (2 studied)            |
 | `hb-stats`     | sidebar section progress      | one lecture, 7 recitations (all studied), 4 assignments (none studied)        |
 | `hb-algo`      | sidebar section progress      | one lecture, 6 recitations (none studied), 6 assignments (all studied)        |

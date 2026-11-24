@@ -33,7 +33,7 @@ const tasks = (count, done) =>
 // Per course: `[lecture, files, kind, done]`, files being fixture names in upload order, `done` marking it studied.
 // `material` adds the handout as a material PDF; `summary.pdf` is the handout too, so a lecture can look finished
 // without a render. A transcribed lecture holds `audio.mp3`, as a run leaves it, or it reads removed.
-// Assignment rows are `[name, files, done]`, `files` mapping uploaded name to fixture.
+// Assignment rows are `[name, files, done, docs]`, `files` mapping uploaded name to fixture, `docs` the AI docs (`intuition`, `solution`) to write from fixtures/assignment-<doc>.md.
 export const FLOWS = {
   'hb-mgmt': {
     lectures: [
@@ -109,6 +109,18 @@ export const FLOWS = {
     ],
     assignments: [
       ['תרגיל בית 1', { 'ex1-instructions.pdf': 'handout.pdf', 'ex1-data.txt': 'transcript.txt' }],
+    ],
+  },
+  'hb-assign-docs': {
+    // An assignment that already holds both AI docs; `hb-assign` starts without, for the generating spec.
+    lectures: [['שיעור 1', ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md']]],
+    assignments: [
+      [
+        'תרגיל בית 1',
+        { 'ex1-instructions.pdf': 'handout.pdf', 'ex1-data.txt': 'transcript.txt' },
+        false,
+        ['intuition', 'solution'],
+      ],
     ],
   },
   // Long recitation and assignment tracks with every progress state: partly done, all done, none done.
@@ -192,13 +204,21 @@ export async function seed(paths) {
       lectures += 1;
     }
     // Each assignment's files are posted as the downloader does: fixture bytes under the wanted name.
-    for (const [assignment, files, done = false] of assignments) {
+    for (const [assignment, files, done = false, docs = []] of assignments) {
       for (const [name, from] of Object.entries(files)) {
         await bytes(
           `${DATABASE}/courses/${encode(course)}/assignments/${encode(assignment)}/files?filename=${encode(name)}`,
           'POST',
           fixture(from),
           TYPES[from] ?? 'application/pdf',
+        );
+      }
+      for (const doc of docs) {
+        await bytes(
+          `${DATABASE}/courses/${encode(course)}/assignments/${encode(assignment)}/docs/${doc}?fresh=true`,
+          'PUT',
+          fixture(`assignment-${doc}.md`),
+          'text/markdown',
         );
       }
       if (done) {
