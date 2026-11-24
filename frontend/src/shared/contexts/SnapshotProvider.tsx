@@ -122,9 +122,8 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     statusPrimed.current = true
   }
 
-  // Either side may fail alone: the other still applies, so a backend that is down never freezes the
-  // tree, nor a failed /tree the runner state. The failure itself was toasted by the http client.
-  // A side a notify did not name is skipped; both together still land in one render.
+  // Either side may fail alone (the http client toasted it) and the other still applies; a side a notify
+  // did not name is skipped, and both together land in one render.
   async function refresh(sides: { runner: boolean; tree: boolean } = BOTH) {
     const id = ++issued.current
     const [s, c] = await Promise.allSettled([

@@ -62,9 +62,8 @@ export function CourseOverviewProvider({
       .catch(() => {}) // connection errors are toasted centrally by the http client
   }, [])
 
-  // Files, meta and status apply in one render; status lands alone only on a `runner`-only notify, sent only
-  // when nothing was written since the last one. A side that fails alone keeps its last value; the http client toasted it.
-  // A notify names one half: `runner` is the status, `tree` the files and meta.
+  // Files, meta and status apply in one render; a `runner`-only notify (nothing written) refreshes status alone.
+  // A side that fails alone keeps its last value; the http client toasted it.
   async function refresh(sides: { runner: boolean; tree: boolean } = BOTH) {
     const [disk, live] = await Promise.all([
       sides.tree

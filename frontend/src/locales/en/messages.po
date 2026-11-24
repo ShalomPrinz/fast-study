@@ -2309,11 +2309,11 @@ msgstr "Nothing new in this course."
 msgid "Nothing running"
 msgstr "Nothing running"
 
-#: src/shared/contexts/SnapshotProvider.tsx:180
+#: src/shared/contexts/SnapshotProvider.tsx:179
 msgid "Nothing to run - All pipelines complete"
 msgstr "Nothing to run - All pipelines complete"
 
-#: src/shared/contexts/SnapshotProvider.tsx:184
+#: src/shared/contexts/SnapshotProvider.tsx:183
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "Nothing to run - All remaining pipelines already running"
 
