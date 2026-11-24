@@ -26,6 +26,7 @@ import {
   waitForService,
 } from '../lib/stack.mjs';
 import { diff } from '../lib/state.mjs';
+import { bindPorts, saveSettings } from '../lib/api.mjs';
 
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-tests-'));
 after(() => fs.rmSync(scratch, { recursive: true, force: true }));
@@ -131,8 +132,57 @@ describe('baseline', () => {
     assert.equal('GEMINI_FALLBACK_MODELS' in baselineEnv(harnessPaths('/h'), 'm'), false);
   });
 
+  test('the retry, fallback, provider and structure settings are typed and the baseline resets them', () => {
+    const patch = settingsPatch({
+      AUTO_RETRY: 'off',
+      AUTO_RETRY_COUNT: '5',
+      AUTO_RETRY_MINUTES: '2',
+      GEMINI_AUTO_FALLBACK: 'false',
+      AI_PROVIDER: 'claude',
+      COURSE_STRUCTURE: 'lectures_all',
+    });
+    assert.deepEqual(patch, {
+      auto_retry: false,
+      auto_retry_count: 5,
+      auto_retry_minutes: 2,
+      gemini_auto_fallback: false,
+      ai_provider: 'claude',
+      course_structure: 'lectures_all',
+    });
+    const base = baselineEnv(harnessPaths('/h'));
+    assert.equal(base.AUTO_RETRY, 'true');
+    assert.equal(base.COURSE_STRUCTURE, 'split');
+    assert.equal('AI_PROVIDER' in base, false);
+  });
+
   test('the baseline is a valid settings patch', () => {
     assert.doesNotThrow(() => settingsPatch(baselineEnv(harnessPaths('/h'), 'm')));
+  });
+});
+
+describe('saveSettings routing', () => {
+  test('course_structure goes to the database /config, never the backend /config', async () => {
+    bindPorts(harnessPaths('/h'), { database: 1, backend: 2, auto: 3, providers: 4, site: 5 });
+    const sent = [];
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      sent.push([init.method, String(url), JSON.parse(init.body)]);
+      return new Response('{}', { status: 200 });
+    };
+    try {
+      await saveSettings({
+        course_structure: 'lectures_all',
+        ai_provider: 'claude',
+        auto_retry: false,
+        data_root: '/d',
+      });
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+    const to = (port) =>
+      sent.filter(([, url]) => url.includes(`:${port}/config`)).map(([, , b]) => b);
+    assert.deepEqual(to(1), [{ data_root: '/d', course_structure: 'lectures_all' }]);
+    assert.deepEqual(to(2), [{ auto_retry: false }]);
   });
 });
 

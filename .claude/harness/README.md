@@ -75,7 +75,7 @@ baseline again.
 ## The baseline, and one course per flow
 
 A seed wipes both scratch roots and restores everything a flow can change: the scratch `.env` (fake
-keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, `AUTO_REMOVE=off`, `SUMMARY_FIGURES=false`,
+keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, `AUTO_REMOVE=off`, `SUMMARY_FIGURES=false`, `AUTO_RETRY=true` (3 re-runs, 10 min), `GEMINI_AUTO_FALLBACK=true`, `COURSE_STRUCTURE=split` (`AI_PROVIDER` has no baseline value; a reseed clears it),
 `MOODLE_SITE=https://lemida.biu.ac.il`) pushed to the running backend, database and auto-downloader through
 `POST /config`, the Moodle token (after
 `/auth/disconnect`, the only thing that clears the auto-downloader's in-memory "expired"), both
@@ -115,7 +115,7 @@ mid-run, or restart `backend` for a clean runner.
 export HARNESS_DIR=DIR                          # or pass --harness DIR to each call
 node .claude/harness/hb.mjs help              # every subcommand, one line each
 node .claude/harness/hb.mjs url [name]        # this stack's URLs, or one of them
-node .claude/harness/hb.mjs set AUTO_RUN=off  # save settings by .env name, as the settings screen does
+node .claude/harness/hb.mjs set AUTO_RUN=off  # save settings by .env name, as the settings screen does (also AUTO_RETRY[_COUNT|_MINUTES], GEMINI_AUTO_FALLBACK, AI_PROVIDER, COURSE_STRUCTURE)
 node .claude/harness/hb.mjs reseed            # the baseline and the flow courses, stack left running
 node .claude/harness/hb.mjs state             # save <harness>/state.json, print what moved since the seed
 node .claude/harness/hb.mjs wall              # blank DATA_ROOT, both keys and MOODLE_SITE: reload shows the first-run screen
@@ -187,7 +187,7 @@ is appended across setup runs on one harness directory, so pass `--since` with t
 work started. Both shims write it: `<time> <service> REFUSED host:port` for a refusal (`… (browser)` from one of
 auto/'s browsers) and, from Node, `REDIRECT` for a connection sent to the fake site.
 
-`set` writes the store with `PUT /settings`, then the owner's `POST /config` (`MOODLE_SITE` goes to
+`set` writes the store with `PUT /settings`, then the owner's `POST /config` (`COURSE_STRUCTURE` and `DATA_ROOT` go to the database, `AI_PROVIDER` nowhere; `MOODLE_SITE` goes to
 the auto-downloader, which keeps its token across a site change and drops it on Disconnect or a Connect to another site), so the running service applies
 it at once. Settings are global: `AUTO_RUN=off` (`off | audio | full`) stops every video
 arrival from queuing a run, for every agent on this stack, so an agent sharing a stack sets it once

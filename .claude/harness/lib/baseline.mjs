@@ -32,6 +32,13 @@ export const SETTINGS = {
   AUTO_REMOVE: ['auto_remove', 'string'],
   AUTO_REMOVE_AFTER: ['auto_remove_after', 'string'],
   SUMMARY_FIGURES: ['summary_figures', 'bool'],
+  GEMINI_AUTO_FALLBACK: ['gemini_auto_fallback', 'bool'],
+  AUTO_RETRY: ['auto_retry', 'bool'],
+  AUTO_RETRY_COUNT: ['auto_retry_count', 'int'],
+  AUTO_RETRY_MINUTES: ['auto_retry_minutes', 'int'],
+  // Renderer-only closed lists the database stores; AI_PROVIDER has no baseline value (a reseed rewrites the .env without it).
+  AI_PROVIDER: ['ai_provider', 'string'],
+  COURSE_STRUCTURE: ['course_structure', 'string'],
 };
 
 /** The model the running backend offers first — read live, so the baseline never names one it lacks. */
@@ -54,6 +61,12 @@ export function baselineEnv(paths, geminiModel) {
     AUTO_REMOVE_AFTER: '',
     // Off, as shipped: the figures flow turns it on and the next reseed puts it back.
     SUMMARY_FIGURES: 'false',
+    // The shipped defaults, so a flow's retry or structure choice never leaks into the next.
+    GEMINI_AUTO_FALLBACK: 'true',
+    AUTO_RETRY: 'true',
+    AUTO_RETRY_COUNT: '3',
+    AUTO_RETRY_MINUTES: '10',
+    COURSE_STRUCTURE: 'split',
     // Set, or the first-run wall would block every run until a site is picked.
     MOODLE_SITE: FAKE_MOODLE_SITE,
   };
@@ -128,11 +141,16 @@ export async function restore(paths) {
   const {
     data_root: dataRoot,
     moodle_site: moodleSite,
+    course_structure: courseStructure,
+    ai_provider: _aiProvider,
     ...rest
   } = settingsPatch(baselineEnv(paths, geminiModel));
   // The env file above no longer holds a fallback list; null unsets the one the backend still holds.
   await json(`${BACKEND}/config`, 'POST', { ...rest, gemini_fallback_models: null });
-  await json(`${DATABASE}/config`, 'POST', { data_root: dataRoot });
+  await json(`${DATABASE}/config`, 'POST', {
+    data_root: dataRoot,
+    course_structure: courseStructure,
+  });
   // Before the token is written: switching site deletes it.
   await json(`${AUTO}/config`, 'POST', { moodle_site: moodleSite });
   // Disconnect first: it is the only thing that clears the auto-downloader's in-memory "expired".
@@ -243,14 +261,20 @@ export async function pushSettings(paths, name, overrides) {
       if (key in stored) env[key] = stored[key];
       else if (WALLED.includes(key)) env[key] = '';
     }
-    const patch = settingsPatch(env);
+    // Neither field exists on the backend's /config; the database holds them.
+    const { ai_provider: _a, course_structure: _c, ...patch } = settingsPatch(env);
     if (!('GEMINI_FALLBACK_MODELS' in stored) && !('GEMINI_FALLBACK_MODELS' in overrides)) {
       patch.gemini_fallback_models = null;
     }
     await json(`${BACKEND}/config`, 'POST', patch);
   }
-  if (name === 'database' && stored.DATA_ROOT && !('DATA_ROOT' in overrides)) {
-    await json(`${DATABASE}/config`, 'POST', { data_root: stored.DATA_ROOT });
+  if (name === 'database') {
+    const live = {};
+    if (stored.DATA_ROOT && !('DATA_ROOT' in overrides)) live.data_root = stored.DATA_ROOT;
+    if (stored.COURSE_STRUCTURE && !('COURSE_STRUCTURE' in overrides)) {
+      live.course_structure = stored.COURSE_STRUCTURE;
+    }
+    if (Object.keys(live).length) await json(`${DATABASE}/config`, 'POST', live);
   }
   if (name === 'downloader-auto' && !('MOODLE_SITE' in overrides)) {
     await json(`${AUTO}/config`, 'POST', { moodle_site: stored.MOODLE_SITE ?? '' });

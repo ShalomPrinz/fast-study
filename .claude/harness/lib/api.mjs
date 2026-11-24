@@ -82,10 +82,20 @@ export async function waitForFile(
 
 /** Save settings the way the settings screen does: the store first, then the owner's live process. */
 export async function saveSettings(patch) {
-  const { data_root: dataRoot, moodle_site: moodleSite, ...rest } = patch;
+  const {
+    data_root: dataRoot,
+    moodle_site: moodleSite,
+    course_structure: courseStructure,
+    ...both
+  } = patch;
+  // The database alone stores ai_provider; the backend has no field for it or course_structure.
+  const { ai_provider: _a, ...rest } = both;
   const { body } = await json(`${DATABASE}/settings`, 'PUT', patch);
   if (Object.keys(rest).length) await json(`${BACKEND}/config`, 'POST', rest);
-  if (dataRoot !== undefined) await json(`${DATABASE}/config`, 'POST', { data_root: dataRoot });
+  const live = {};
+  if (dataRoot !== undefined) live.data_root = dataRoot;
+  if (courseStructure !== undefined) live.course_structure = courseStructure;
+  if (Object.keys(live).length) await json(`${DATABASE}/config`, 'POST', live);
   if (moodleSite !== undefined) await json(`${AUTO}/config`, 'POST', { moodle_site: moodleSite });
   return body;
 }
