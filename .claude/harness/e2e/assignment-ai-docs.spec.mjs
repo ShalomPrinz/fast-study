@@ -31,8 +31,7 @@ const assignmentCalls = async () => (await json(`${PROVIDERS}/assignment-calls`,
 const shot = (page, name) =>
   page.screenshot({ path: path.join(harness.evidence, `assignment-ai-docs-${name}.png`) });
 
-// Chromium is headless here: the clipboard needs its permissions granted, and the AI chat's tab never leaves the box.
-test.use({ locale: 'en-US', permissions: ['clipboard-read', 'clipboard-write'] });
+test.use({ locale: 'en-US' });
 test.beforeEach(reseed);
 test.afterEach(reset);
 

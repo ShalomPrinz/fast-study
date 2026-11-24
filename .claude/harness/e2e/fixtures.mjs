@@ -154,6 +154,8 @@ function installLauncherBridge() {
 
 // `tourDismissed: false` (test.use) lets a spec meet the first-run tour; otherwise it is marked dismissed.
 export const test = base.extend({
+  // Headless refuses `navigator.clipboard` without a grant, so every spec gets one.
+  permissions: [['clipboard-read', 'clipboard-write'], { option: true }],
   tourDismissed: [true, { option: true }],
   // `launcherBridge: true` (test.use) stubs the launcher's services bridge; off, the SPA meets no bridge.
   launcherBridge: [false, { option: true }],

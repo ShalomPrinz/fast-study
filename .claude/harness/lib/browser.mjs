@@ -137,7 +137,11 @@ export async function openMoreCourses(page) {
  *  is dismissed unless HB_TOUR=1. */
 export async function openBrowser() {
   const browser = await launchChromium();
-  const context = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  // Clipboard grants: headless refuses `navigator.clipboard.writeText` without them.
+  const context = await browser.newContext({
+    viewport: { width: 1400, height: 900 },
+    permissions: ['clipboard-read', 'clipboard-write'],
+  });
   context.setDefaultTimeout(10_000);
   if (process.env.HB_TOUR !== '1') await context.addInitScript(dismissTour);
   const page = await context.newPage();
