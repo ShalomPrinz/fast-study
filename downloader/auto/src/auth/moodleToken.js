@@ -69,8 +69,8 @@ export class MoodleToken extends AuthProvider {
     this._onChange = onChange;
     // The headed window of the login in flight, so disconnect() can close it. Null once captured.
     this._pending = null;
-    // A background login (capture → verify → persist) is running; `_gen` bumps on disconnect so a
-    // superseded run ends quietly. `_error` is the last failed attempt, cleared by the next connect.
+    // A login (capture → verify → persist) is running; `_gen` bumps on disconnect, ending it quietly.
+    // `_error`: last failed login or verification; cleared by connect, abandonLogin/disconnect, a good verify.
     this._driving = false;
     this._gen = 0;
     this._error = null;
