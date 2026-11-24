@@ -7,6 +7,8 @@ export interface CreateAttempt {
   error: unknown
   // Runs one create and resolves whether it succeeded; a second call while one runs is ignored.
   run: (create: () => Promise<unknown>) => Promise<boolean>
+  // True from run's start until its create settles, read from a ref so a blur handler never sees a stale render.
+  running: () => boolean
   reset: () => void
 }
 
@@ -38,10 +40,9 @@ export function useCreateAttempt(): CreateAttempt {
 
   function reset() {
     generation.current++
-    busy.current = false
     setPending(false)
     setError(null)
   }
 
-  return { pending, error, run, reset }
+  return { pending, error, run, running: () => busy.current, reset }
 }

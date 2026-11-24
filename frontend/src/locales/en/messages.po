@@ -1206,7 +1206,7 @@ msgid "Course material"
 msgstr "Course material"
 
 #: src/features/downloads/components/AddCoursePanel.tsx:92
-#: src/features/lectures/sidebar/NewCourseRow.tsx:49
+#: src/features/lectures/sidebar/NewCourseRow.tsx:52
 msgid "Course name…"
 msgstr "Course name…"
 
@@ -2110,7 +2110,7 @@ msgstr "Needs the desktop app"
 msgid "New"
 msgstr "New"
 
-#: src/features/lectures/sidebar/NewCourseRow.tsx:59
+#: src/features/lectures/sidebar/NewCourseRow.tsx:62
 msgid "New course"
 msgstr "New course"
 

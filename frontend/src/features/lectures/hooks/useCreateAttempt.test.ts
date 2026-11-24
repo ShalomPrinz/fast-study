@@ -54,4 +54,24 @@ describe('useCreateAttempt', () => {
     })
     expect(result.current.error).toBeNull()
   })
+  it('keeps ignoring a second run after reset while the first still runs', async () => {
+    const { result } = renderHook(() => useCreateAttempt())
+    let fail!: (e: unknown) => void
+    let p!: Promise<boolean>
+    act(() => {
+      p = result.current.run(() => new Promise((_, rej) => (fail = rej)))
+    })
+    act(() => result.current.reset())
+    expect(result.current.running()).toBe(true)
+    const again = vi.fn(() => Promise.resolve())
+    await act(async () => {
+      expect(await result.current.run(again)).toBe(false)
+    })
+    expect(again).not.toHaveBeenCalled()
+    await act(async () => {
+      fail(new Error('x'))
+      await p
+    })
+    expect(result.current.running()).toBe(false)
+  })
 })

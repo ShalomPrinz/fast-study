@@ -303,7 +303,7 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
 - `CourseGroupContext` and `LectureListContext` reach the recursive rows without prop-drilling;
   `AddLectureInput` renders only in the list being added to.
 - New course/lecture/recitation inputs stay open with the typed text until the create succeeds
-  (`useCreateAttempt`): `CreateStatus` shows "Creating…" and blocks a second submit, then the refusal in place.
+  (`useCreateAttempt`): `CreateStatus` shows "Creating…" and blocks a second submit, then the refusal in place. A blur or Escape mid-create only hides the input (`running()`); a refusal then reopens it with the text and the error (taking focus only when no other text field has it, `useInlineEdit`'s `yieldFocus`), and a reopen or submit sends nothing while it runs.
 
 Shift-click on a sidebar row, or a click on the lecture page's title (or the pencil beside it), renames it
 inline through one hook (`useLectureRename`); `MainView` keys the title by `course/lecture/kind`, so

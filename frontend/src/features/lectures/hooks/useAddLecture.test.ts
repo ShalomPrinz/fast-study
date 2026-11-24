@@ -109,4 +109,35 @@ describe('useAddLecture', () => {
     expect(createLecture).toHaveBeenCalledWith('Algebra', 'Recitation 2', 'recitation')
     expect(onSelect).toHaveBeenCalledWith('Algebra', 'Recitation 2', 'recitation')
   })
+  it('reopens with the text and the refusal when it lands after the input closed, sending one create', async () => {
+    let refuse!: (e: unknown) => void
+    createLecture.mockReturnValue(new Promise((_, rej) => (refuse = rej)))
+
+    const { result } = renderHook(() => useAddLecture(COURSE))
+    act(() => result.current.start('lecture'))
+    act(() => result.current.edit.setValue('Lecture 3'))
+    let done!: Promise<void>
+    act(() => {
+      done = result.current.commit()
+    })
+    act(() => result.current.cancel()) // blur
+    expect(result.current.target).toBeNull()
+
+    // Reopening and submitting again while it runs sends nothing.
+    act(() => result.current.start('lecture'))
+    expect(result.current.target).toEqual({ kind: 'lecture' })
+    expect(result.current.edit.value).toBe('Lecture 3')
+    await act(() => result.current.commit())
+    expect(createLecture).toHaveBeenCalledTimes(1)
+
+    act(() => result.current.cancel())
+    await act(async () => {
+      refuse(new RequestError('already exists', 'name_taken', { name: 'Lecture 3' }))
+      await done
+    })
+    expect(result.current.target).toEqual({ kind: 'lecture' })
+    expect(result.current.edit.value).toBe('Lecture 3')
+    expect(result.current.attempt.error).toMatchObject({ code: 'name_taken' })
+    expect(createLecture).toHaveBeenCalledTimes(1)
+  })
 })

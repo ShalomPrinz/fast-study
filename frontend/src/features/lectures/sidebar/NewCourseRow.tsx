@@ -12,17 +12,18 @@ export default function NewCourseRow({ onCreated }: { onCreated: (name: string) 
   const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
   const [addingCourse, setAddingCourse] = useState(false)
-  const addCourseEdit = useInlineEdit(addingCourse || null)
+  const addCourseEdit = useInlineEdit(addingCourse || null, { yieldFocus: true })
   const attempt = useCreateAttempt()
 
   async function commit() {
     const name = addCourseEdit.value.trim()
     if (!name) return cancel()
+    if (attempt.running()) return
     let created = ''
     const ok = await attempt.run(async () => {
       created = await createCourse(name)
     })
-    if (!ok) return
+    if (!ok) return setAddingCourse(true)
     close()
     onCreated(created)
     await refreshCourses()
@@ -34,7 +35,9 @@ export default function NewCourseRow({ onCreated }: { onCreated: (name: string) 
     attempt.reset()
   }
 
+  // A blur or Escape while a create runs only hides the input: the create finishes, and a refusal reopens it.
   function cancel() {
+    if (attempt.running()) return setAddingCourse(false)
     close()
   }
 

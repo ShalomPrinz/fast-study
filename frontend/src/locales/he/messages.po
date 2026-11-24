@@ -1206,7 +1206,7 @@ msgid "Course material"
 msgstr "חומר מהקורס"
 
 #: src/features/downloads/components/AddCoursePanel.tsx:92
-#: src/features/lectures/sidebar/NewCourseRow.tsx:49
+#: src/features/lectures/sidebar/NewCourseRow.tsx:52
 msgid "Course name…"
 msgstr "שם הקורס…"
 
@@ -2110,7 +2110,7 @@ msgstr "דורש את אפליקציית שולחן העבודה"
 msgid "New"
 msgstr "חדשים"
 
-#: src/features/lectures/sidebar/NewCourseRow.tsx:59
+#: src/features/lectures/sidebar/NewCourseRow.tsx:62
 msgid "New course"
 msgstr "קורס חדש"
 
