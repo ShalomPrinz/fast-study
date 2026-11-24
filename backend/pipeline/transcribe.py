@@ -2,7 +2,6 @@ import json
 import logging
 import math
 import os
-import re
 import tempfile
 from pathlib import Path
 
@@ -24,16 +23,13 @@ PARTIAL_META = "transcript.partial.meta.json"
 
 
 class TranscribeRateLimitError(CodedError):
-    """A Groq 429; info = {limit, used, requested, retry_after_seconds, message}."""
+    """A Groq 429; info = {retry_after_seconds, message}."""
 
     def __init__(self, info: dict):
         self.info = info
         super().__init__(
             info.get("message", ""),
             "groq_rate_limited",
-            limit=info.get("limit"),
-            used=info.get("used"),
-            requested=info.get("requested"),
             retry_after_seconds=info.get("retry_after_seconds"),
         )
 
@@ -97,30 +93,14 @@ def keep_chunk_text(segments: list, index: int, total: int) -> str:
     return " ".join(t for t in kept if t)
 
 
-def parse_rate_limit_message(msg: str) -> dict:
-    """Pull {limit, used, requested, retry_after_seconds} out of Groq's prose 429 message."""
+def _retry_after_seconds(err: groq.RateLimitError) -> float | None:
+    """Wait in seconds from the 429's `retry-after` header; None when absent or not a number."""
 
-    def _int(pattern: str):
-        m = re.search(pattern, msg)
-        return int(m.group(1)) if m else None
-
-    limit = _int(r"Limit\s+(\d+)")
-    used = _int(r"Used\s+(\d+)")
-    requested = _int(r"Requested\s+(\d+)")
-
-    retry_after_seconds = None
-    m = re.search(r"try again in (?:(\d+)m)?\s*(\d+(?:\.\d+)?)s", msg)
-    if m:
-        minutes = int(m.group(1)) if m.group(1) else 0
-        seconds = float(m.group(2))
-        retry_after_seconds = minutes * 60 + seconds
-
-    return {
-        "limit": limit,
-        "used": used,
-        "requested": requested,
-        "retry_after_seconds": retry_after_seconds,
-    }
+    try:
+        value = float(err.response.headers["retry-after"])
+    except (KeyError, ValueError, AttributeError):
+        return None
+    return value if math.isfinite(value) and value >= 0 else None
 
 
 def _extract_groq_message(err: groq.RateLimitError) -> str:
@@ -241,9 +221,10 @@ def transcribe_audio(audio_path: str) -> str:
                         response_format="verbose_json",
                     )
             except groq.RateLimitError as e:
-                msg = _extract_groq_message(e)
-                info = parse_rate_limit_message(msg)
-                info["message"] = msg
+                info = {
+                    "message": _extract_groq_message(e),
+                    "retry_after_seconds": _retry_after_seconds(e),
+                }
                 raise TranscribeRateLimitError(info) from e
             except (groq.AuthenticationError, groq.PermissionDeniedError) as e:
                 raise CodedError(

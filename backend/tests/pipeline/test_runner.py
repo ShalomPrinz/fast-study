@@ -694,7 +694,7 @@ def test_exec_transcribe_rate_limit_is_a_flagged_error_keeping_the_partial():
     """A Groq 429 is a coded error flagged groq_limit; the partial still round-trips."""
     puts: list[str] = []
     err = runner.TranscribeRateLimitError(
-        {"message": "slow down", "limit": 7200, "retry_after_seconds": 750.0}
+        {"message": "slow down", "retry_after_seconds": 750.0}
     )
 
     def _exists(course, lecture, kind, name):
@@ -719,12 +719,7 @@ def test_exec_transcribe_rate_limit_is_a_flagged_error_keeping_the_partial():
     assert result["status"] == "error"
     assert result["groq_limit"] is True
     assert result["code"] == "groq_rate_limited"
-    assert result["params"] == {
-        "limit": 7200,
-        "used": None,
-        "requested": None,
-        "retry_after_seconds": 750.0,
-    }
+    assert result["params"] == {"retry_after_seconds": 750.0}
     assert runner.PARTIAL_TXT in puts and runner.PARTIAL_META in puts
 
 
@@ -1176,12 +1171,7 @@ def test_a_crashed_run_records_a_coded_last_error():
 # ---- Groq rate-limit block ----
 
 
-GROQ_PARAMS = {
-    "limit": 7200,
-    "used": 7019,
-    "requested": 600,
-    "retry_after_seconds": 209.5,
-}
+GROQ_PARAMS = {"retry_after_seconds": 209.5}
 
 
 def _groq_error_result():

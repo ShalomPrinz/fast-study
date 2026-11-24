@@ -11,7 +11,6 @@ from transcribe import (
     _load_resume_state,
     chunk_count,
     keep_chunk_text,
-    parse_rate_limit_message,
     transcribe_audio,
 )
 
@@ -70,35 +69,42 @@ def test_a_rejected_groq_key_raises_api_key_rejected(
     assert (e.value.code, e.value.params) == ("api_key_rejected", {"provider": "groq"})
 
 
-GROQ_429_MESSAGE = (
-    "Rate limit reached for model `whisper-large-v3` in organization "
-    "`org_01kqa6gm4behr9sv6rr3fqkxw9` service tier `on_demand` on seconds of "
-    "audio per hour (ASPH): Limit 7200, Used 7019, Requested 600. Please try "
-    "again in 3m29.5s. Need more tokens? Upgrade to Dev Tier today at "
-    "https://console.groq.com/settings/billing"
+def _groq_429_raises(monkeypatch, tmp_path, headers):
+    import groq
+    import httpx
+
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_x")
+    audio = tmp_path / "audio.mp3"
+    audio.write_bytes(b"\x00" * 64)
+    response = httpx.Response(
+        429,
+        headers=headers,
+        request=httpx.Request("POST", "https://api.groq.com/x"),
+    )
+    client = MagicMock()
+    client.audio.transcriptions.create.side_effect = groq.RateLimitError(
+        "slow down", response=response, body=None
+    )
+    monkeypatch.setattr(transcribe_mod, "Groq", MagicMock(return_value=client))
+    monkeypatch.setattr(transcribe_mod, "get_duration", lambda p: 60.0)
+    monkeypatch.setattr(transcribe_mod, "split_one_chunk", lambda *a: str(audio))
+    with pytest.raises(transcribe_mod.TranscribeRateLimitError) as e:
+        transcribe_audio(str(audio))
+    return e.value
+
+
+def test_a_groq_429_takes_its_wait_from_the_retry_after_header(monkeypatch, tmp_path):
+    err = _groq_429_raises(monkeypatch, tmp_path, {"retry-after": "209"})
+    assert err.code == "groq_rate_limited"
+    assert err.params == {"retry_after_seconds": 209.0}
+
+
+@pytest.mark.parametrize(
+    "headers", [{}, {"retry-after": "soon"}, {"retry-after": "-5"}]
 )
-
-
-def test_parse_rate_limit_message_full():
-    info = parse_rate_limit_message(GROQ_429_MESSAGE)
-    assert info["limit"] == 7200
-    assert info["used"] == 7019
-    assert info["requested"] == 600
-    assert info["retry_after_seconds"] == pytest.approx(209.5)
-
-
-def test_parse_rate_limit_message_seconds_only():
-    info = parse_rate_limit_message("try again in 12s")
-    assert info["retry_after_seconds"] == pytest.approx(12.0)
-    assert info["limit"] is None
-
-
-def test_parse_rate_limit_message_empty():
-    info = parse_rate_limit_message("")
-    assert info["limit"] is None
-    assert info["used"] is None
-    assert info["requested"] is None
-    assert info["retry_after_seconds"] is None
+def test_a_groq_429_without_a_usable_header_has_no_wait(monkeypatch, tmp_path, headers):
+    err = _groq_429_raises(monkeypatch, tmp_path, headers)
+    assert err.params == {"retry_after_seconds": None}
 
 
 # Long enough for exactly 12 overlapping chunks.
