@@ -89,16 +89,16 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
   gemini_overloaded: msg({
     message:
-      '{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The Gemini model {model} is under high demand right now. This is usually temporary, so try again later.}}',
+      '{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The model {model} is under high demand right now. This is usually temporary, so try again later.}}',
   }),
   gemini_timeout: msg({
     message:
-      '{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}',
+      '{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}',
   }),
   // The transport's own text rides in `detail`.
   gemini_unreachable: msg({
     message:
-      '{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the Gemini model {model}. Check your internet connection and try again.}}',
+      '{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the model {model}. Check your internet connection and try again.}}',
   }),
   // A notice, not a failure: toasted as info when the backend retries a busy model on the next one.
   model_fallback: msg({ message: 'Auto changing to another model: {from} to {to}.' }),
@@ -369,15 +369,15 @@ const RETRYING: Record<string, MessageDescriptor> = {
   gemini_quota_exhausted: msg({ message: "Gemini's rate limit was reached." }),
   gemini_overloaded: msg({
     message:
-      '{model, select, undefined {The Gemini model is under high demand right now.} other {The Gemini model {model} is under high demand right now.}}',
+      '{model, select, undefined {The Gemini model is under high demand right now.} other {The model {model} is under high demand right now.}}',
   }),
   gemini_timeout: msg({
     message:
-      '{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped.}}',
+      '{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The model {model} did not respond for {seconds} seconds, so the request was stopped.}}',
   }),
   gemini_unreachable: msg({
     message:
-      '{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the Gemini model {model}. Check your internet connection.}}',
+      '{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the model {model}. Check your internet connection.}}',
   }),
 }
 
@@ -401,15 +401,15 @@ export type FailedRun =
 const TOAST_REASONS: Record<string, MessageDescriptor> = {
   gemini_overloaded: msg({
     message:
-      '{model, select, undefined {the Gemini model is under high demand} other {the Gemini model {model} is under high demand}}',
+      '{model, select, undefined {the Gemini model is under high demand} other {the model {model} is under high demand}}',
   }),
   gemini_timeout: msg({
     message:
-      '{model, select, undefined {the Gemini model did not respond for {seconds} seconds} other {the Gemini model {model} did not respond for {seconds} seconds}}',
+      '{model, select, undefined {the Gemini model did not respond for {seconds} seconds} other {the model {model} did not respond for {seconds} seconds}}',
   }),
   gemini_unreachable: msg({
     message:
-      '{model, select, undefined {Gemini could not be reached} other {the Gemini model {model} could not be reached}}',
+      '{model, select, undefined {Gemini could not be reached} other {the model {model} could not be reached}}',
   }),
   gemini_quota_exhausted: msg({
     message:

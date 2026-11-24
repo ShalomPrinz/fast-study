@@ -73,7 +73,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {# lecture} other {# lectures}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:489
+#: src/features/lectures/MainView.tsx:490
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
 
@@ -166,7 +166,7 @@ msgid "{0} remaining"
 msgstr "{0} remaining"
 
 #. placeholder {0}: formatDuration(videoDuration)
-#: src/features/lectures/MainView.tsx:486
+#: src/features/lectures/MainView.tsx:487
 msgid "{0} video"
 msgstr "{0} video"
 
@@ -210,11 +210,11 @@ msgstr "{course} · merged PDF {name}"
 msgid "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 msgstr "{deferred, plural, one {# lecture is being processed; its files will be removed when its run finishes.} other {# lectures are being processed; their files will be removed when their run finishes.}}"
 
-#: src/features/lectures/MainView.tsx:685
+#: src/features/lectures/MainView.tsx:682
 msgid "{deleteName} will be deleted."
 msgstr "{deleteName} will be deleted."
 
-#: src/features/lectures/MainView.tsx:574
+#: src/features/lectures/MainView.tsx:571
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
@@ -280,7 +280,7 @@ msgstr "{generated} of {0} generated"
 msgid "{host} could not be reached. Check your internet connection and try again."
 msgstr "{host} could not be reached. Check your internet connection and try again."
 
-#: src/features/lectures/MainView.tsx:301
+#: src/features/lectures/MainView.tsx:302
 msgid "{input} was removed"
 msgstr "{input} was removed"
 
@@ -305,40 +305,40 @@ msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
 #: src/shared/i18n/serviceErrors.ts:99
-msgid "{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the Gemini model {model}. Check your internet connection and try again.}}"
-msgstr "{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the Gemini model {model}. Check your internet connection and try again.}}"
+msgid "{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the model {model}. Check your internet connection and try again.}}"
+msgstr "{model, select, undefined {Could not reach Gemini. Check your internet connection and try again.} other {Could not reach the model {model}. Check your internet connection and try again.}}"
 
 #: src/shared/i18n/serviceErrors.ts:378
-msgid "{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the Gemini model {model}. Check your internet connection.}}"
-msgstr "{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the Gemini model {model}. Check your internet connection.}}"
+msgid "{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the model {model}. Check your internet connection.}}"
+msgstr "{model, select, undefined {Could not reach Gemini. Check your internet connection.} other {Could not reach the model {model}. Check your internet connection.}}"
 
 #: src/shared/i18n/serviceErrors.ts:410
-msgid "{model, select, undefined {Gemini could not be reached} other {the Gemini model {model} could not be reached}}"
-msgstr "{model, select, undefined {Gemini could not be reached} other {the Gemini model {model} could not be reached}}"
+msgid "{model, select, undefined {Gemini could not be reached} other {the model {model} could not be reached}}"
+msgstr "{model, select, undefined {Gemini could not be reached} other {the model {model} could not be reached}}"
 
 #: src/shared/i18n/serviceErrors.ts:94
-msgid "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}"
-msgstr "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}"
+msgid "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}"
+msgstr "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped. Try again.} other {The model {model} did not respond for {seconds} seconds, so the request was stopped. Try again.}}"
 
 #: src/shared/i18n/serviceErrors.ts:374
-msgid "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped.}}"
-msgstr "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The Gemini model {model} did not respond for {seconds} seconds, so the request was stopped.}}"
+msgid "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The model {model} did not respond for {seconds} seconds, so the request was stopped.}}"
+msgstr "{model, select, undefined {The Gemini model did not respond for {seconds} seconds, so the request was stopped.} other {The model {model} did not respond for {seconds} seconds, so the request was stopped.}}"
 
 #: src/shared/i18n/serviceErrors.ts:406
-msgid "{model, select, undefined {the Gemini model did not respond for {seconds} seconds} other {the Gemini model {model} did not respond for {seconds} seconds}}"
-msgstr "{model, select, undefined {the Gemini model did not respond for {seconds} seconds} other {the Gemini model {model} did not respond for {seconds} seconds}}"
+msgid "{model, select, undefined {the Gemini model did not respond for {seconds} seconds} other {the model {model} did not respond for {seconds} seconds}}"
+msgstr "{model, select, undefined {the Gemini model did not respond for {seconds} seconds} other {the model {model} did not respond for {seconds} seconds}}"
 
 #: src/shared/i18n/serviceErrors.ts:90
-msgid "{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The Gemini model {model} is under high demand right now. This is usually temporary, so try again later.}}"
-msgstr "{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The Gemini model {model} is under high demand right now. This is usually temporary, so try again later.}}"
+msgid "{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The model {model} is under high demand right now. This is usually temporary, so try again later.}}"
+msgstr "{model, select, undefined {The Gemini model is under high demand right now. This is usually temporary, so try again later.} other {The model {model} is under high demand right now. This is usually temporary, so try again later.}}"
 
 #: src/shared/i18n/serviceErrors.ts:370
-msgid "{model, select, undefined {The Gemini model is under high demand right now.} other {The Gemini model {model} is under high demand right now.}}"
-msgstr "{model, select, undefined {The Gemini model is under high demand right now.} other {The Gemini model {model} is under high demand right now.}}"
+msgid "{model, select, undefined {The Gemini model is under high demand right now.} other {The model {model} is under high demand right now.}}"
+msgstr "{model, select, undefined {The Gemini model is under high demand right now.} other {The model {model} is under high demand right now.}}"
 
 #: src/shared/i18n/serviceErrors.ts:402
-msgid "{model, select, undefined {the Gemini model is under high demand} other {the Gemini model {model} is under high demand}}"
-msgstr "{model, select, undefined {the Gemini model is under high demand} other {the Gemini model {model} is under high demand}}"
+msgid "{model, select, undefined {the Gemini model is under high demand} other {the model {model} is under high demand}}"
+msgstr "{model, select, undefined {the Gemini model is under high demand} other {the model {model} is under high demand}}"
 
 #: src/shared/i18n/serviceErrors.ts:114
 msgid "{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}"
@@ -416,11 +416,11 @@ msgstr "{scope, select, daily {Gemini's daily quota is used up until midnight Pa
 msgid "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 msgstr "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}"
 
-#: src/features/lectures/MainView.tsx:466
+#: src/features/lectures/MainView.tsx:467
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · step {stepNumber} of {stepCount}"
 
-#: src/features/lectures/MainView.tsx:594
+#: src/features/lectures/MainView.tsx:591
 msgid "{stageCount, plural, one {# step} other {# steps}}"
 msgstr "{stageCount, plural, one {# step} other {# steps}}"
 
@@ -731,7 +731,7 @@ msgstr "Auto-run: the whole pipeline"
 msgid "Automatic retry"
 msgstr "Automatic retry"
 
-#: src/features/lectures/MainView.tsx:437
+#: src/features/lectures/MainView.tsx:438
 msgid "Available once the summary is generated."
 msgstr "Available once the summary is generated."
 
@@ -948,7 +948,7 @@ msgctxt "edge"
 msgid "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 msgstr "Click \"Load unpacked\". In the window that opens, paste the folder path below into the address bar at the top, press Enter, then click \"Select Folder\"."
 
-#: src/features/lectures/MainView.tsx:436
+#: src/features/lectures/MainView.tsx:437
 msgid "Click \"Open chat\" to study this lecture with {provider}."
 msgstr "Click \"Open chat\" to study this lecture with {provider}."
 
@@ -1003,7 +1003,7 @@ msgstr "Collect"
 msgid "Compile"
 msgstr "Compile"
 
-#: src/features/lectures/MainView.tsx:480
+#: src/features/lectures/MainView.tsx:481
 msgid "Complete"
 msgstr "Complete"
 
@@ -1059,7 +1059,7 @@ msgstr "Continue"
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
-#: src/features/lectures/MainView.tsx:305
+#: src/features/lectures/MainView.tsx:306
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
@@ -1138,7 +1138,7 @@ msgstr "Could not tell what {url} is — the site didn't answer usefully."
 msgid "Couldn't copy the assignment material. Try again."
 msgstr "Couldn't copy the assignment material. Try again."
 
-#: src/features/lectures/MainView.tsx:441
+#: src/features/lectures/MainView.tsx:442
 msgid "Couldn't copy the summary. Try again."
 msgstr "Couldn't copy the summary. Try again."
 
@@ -1238,7 +1238,7 @@ msgstr "Courses failed to load."
 msgid "Create"
 msgstr "Create"
 
-#: src/features/lectures/MainView.tsx:403
+#: src/features/lectures/MainView.tsx:404
 msgid "Create {input} first"
 msgstr "Create {input} first"
 
@@ -1484,7 +1484,7 @@ msgstr "Edit"
 msgid "Edit source URL"
 msgstr "Edit source URL"
 
-#: src/features/lectures/MainView.tsx:499
+#: src/features/lectures/MainView.tsx:500
 msgid "Edit summary"
 msgstr "Edit summary"
 
@@ -1747,7 +1747,7 @@ msgstr "Generate"
 msgid "Generate Course Overviews"
 msgstr "Generate Course Overviews"
 
-#: src/features/lectures/MainView.tsx:438
+#: src/features/lectures/MainView.tsx:439
 msgid "Generate the summary first"
 msgstr "Generate the summary first"
 
@@ -1834,7 +1834,7 @@ msgstr "I confirmed, try again"
 msgid "I solved the captcha"
 msgstr "I solved the captcha"
 
-#: src/features/lectures/MainView.tsx:446
+#: src/features/lectures/MainView.tsx:447
 msgid "I want to study this lecture in depth, and soon I'll ask you specific questions about it. Its summary is below.\n"
 "\n"
 "To start, reply with a single sentence — \"What do you want to learn first?\" — followed by a numbered list of 4–6 topics from the lecture to choose from."
@@ -1916,7 +1916,7 @@ msgstr "Key verified"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:427
+#: src/features/lectures/MainView.tsx:428
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -2043,7 +2043,7 @@ msgstr "Match whole word"
 #: src/features/downloads/components/NewView.tsx:142
 #: src/features/downloads/DownloadsView.tsx:203
 #: src/features/lectures/AssignmentView.tsx:141
-#: src/features/lectures/MainView.tsx:639
+#: src/features/lectures/MainView.tsx:636
 msgid "Materials"
 msgstr "Materials"
 
@@ -2276,7 +2276,7 @@ msgstr "Not enough data to estimate"
 msgid "Not in course"
 msgstr "Not in course"
 
-#: src/features/lectures/MainView.tsx:415
+#: src/features/lectures/MainView.tsx:416
 msgid "not provided"
 msgstr "not provided"
 
@@ -2390,7 +2390,7 @@ msgstr "Open folder"
 msgid "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 msgstr "Open Google Chrome, paste this address into the address bar at the top and press Enter:"
 
-#: src/features/lectures/MainView.tsx:510
+#: src/features/lectures/MainView.tsx:511
 msgid "Open in Drive"
 msgstr "Open in Drive"
 
@@ -2413,7 +2413,7 @@ msgstr "Open Microsoft Edge, paste this address into the address bar at the top 
 #: src/features/lectures/components/PdfHero.tsx:192
 #: src/features/lectures/components/PdfViewer.tsx:131
 #: src/features/lectures/components/PdfViewer.tsx:132
-#: src/features/lectures/MainView.tsx:504
+#: src/features/lectures/MainView.tsx:505
 #: src/features/search/components/SearchResult.tsx:34
 msgid "Open PDF"
 msgstr "Open PDF"
@@ -2523,7 +2523,7 @@ msgstr "Paste the assignment material with Ctrl+V, we already copied it for you.
 msgid "Paste the course page's address (…/course/view.php?id=…)"
 msgstr "Paste the course page's address (…/course/view.php?id=…)"
 
-#: src/features/lectures/MainView.tsx:439
+#: src/features/lectures/MainView.tsx:440
 msgid "Paste the lecture content with Ctrl+V, we already copied it for you."
 msgstr "Paste the lecture content with Ctrl+V, we already copied it for you."
 
@@ -2549,11 +2549,11 @@ msgstr "Picked up {name}. Position {position} of {total}."
 msgid "Pin FastStudy to the toolbar"
 msgstr "Pin FastStudy to the toolbar"
 
-#: src/features/lectures/MainView.tsx:572
+#: src/features/lectures/MainView.tsx:569
 msgid "Pipeline"
 msgstr "Pipeline"
 
-#: src/features/lectures/MainView.tsx:234
+#: src/features/lectures/MainView.tsx:235
 #: src/features/runner/RunnerView.tsx:261
 msgid "Pipeline already running"
 msgstr "Pipeline already running"
@@ -2697,7 +2697,7 @@ msgstr "Remove {name}"
 msgid "Remove files from every existing lecture?"
 msgstr "Remove files from every existing lecture?"
 
-#: src/features/lectures/MainView.tsx:382
+#: src/features/lectures/MainView.tsx:383
 msgid "Removed"
 msgstr "Removed"
 
@@ -2798,8 +2798,8 @@ msgstr "Retry automatically when Gemini is busy or unreachable"
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "Retrying in {time} (attempt {attempt}/{of})"
 
-#: src/features/lectures/MainView.tsx:386
-#: src/features/lectures/MainView.tsx:389
+#: src/features/lectures/MainView.tsx:387
+#: src/features/lectures/MainView.tsx:390
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
@@ -2807,7 +2807,7 @@ msgstr "Rotate {file}"
 msgid "Run now"
 msgstr "Run now"
 
-#: src/features/lectures/MainView.tsx:545
+#: src/features/lectures/components/RunRemainingButton.tsx:17
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
@@ -2976,8 +2976,8 @@ msgstr "Show more"
 msgid "Show screenshot"
 msgstr "Show screenshot"
 
+#: src/features/lectures/MainView.tsx:594
 #: src/features/lectures/MainView.tsx:597
-#: src/features/lectures/MainView.tsx:600
 msgid "Show steps"
 msgstr "Show steps"
 
@@ -3002,7 +3002,7 @@ msgstr "skipped"
 msgid "Skipped"
 msgstr "Skipped"
 
-#: src/features/lectures/MainView.tsx:399
+#: src/features/lectures/MainView.tsx:400
 msgid "skipped (no video)"
 msgstr "skipped (no video)"
 
@@ -3044,8 +3044,8 @@ msgstr "Step {0} of {1}"
 #: src/features/lectures/components/AssignmentDocCard.tsx:82
 #: src/features/lectures/DocEditor.tsx:239
 #: src/features/lectures/DocEditor.tsx:298
-#: src/features/lectures/MainView.tsx:198
-#: src/features/lectures/MainView.tsx:209
+#: src/features/lectures/MainView.tsx:199
+#: src/features/lectures/MainView.tsx:210
 #: src/features/merged-pdfs/components/OutdatedChip.tsx:27
 msgid "Step already running"
 msgstr "Step already running"
@@ -3079,7 +3079,7 @@ msgstr "Summaries upload to this account's Drive. Connecting opens a Google sign
 msgid "Summarize"
 msgstr "Summarize"
 
-#: src/features/lectures/MainView.tsx:347
+#: src/features/lectures/MainView.tsx:348
 msgid "summarized from materials only"
 msgstr "summarized from materials only"
 
@@ -3095,7 +3095,7 @@ msgstr "Summarizing the transcript failed."
 msgid "Summary"
 msgstr "Summary"
 
-#: src/features/lectures/MainView.tsx:440
+#: src/features/lectures/MainView.tsx:441
 msgid "Summary copied — paste it in the chat with Ctrl+V."
 msgstr "Summary copied — paste it in the chat with Ctrl+V."
 
@@ -3111,7 +3111,7 @@ msgstr "summary did not use any material"
 msgid "Summary models"
 msgstr "Summary models"
 
-#: src/features/lectures/MainView.tsx:590
+#: src/features/lectures/MainView.tsx:587
 msgid "Summary ready"
 msgstr "Summary ready"
 
@@ -3269,7 +3269,7 @@ msgstr "The folder in your Drive that summaries are uploaded into. It is created
 msgid "The folder path and its buttons are available in the FastStudy desktop app."
 msgstr "The folder path and its buttons are available in the FastStudy desktop app."
 
-#: src/features/lectures/MainView.tsx:669
+#: src/features/lectures/MainView.tsx:666
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
@@ -3298,7 +3298,7 @@ msgstr "The Moodle login timed out. Try connecting again."
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "The Moodle session expired. Reconnect the account and try again."
 
-#: src/features/lectures/MainView.tsx:686
+#: src/features/lectures/MainView.tsx:683
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -3484,7 +3484,7 @@ msgid "The Zoom window was closed during the capture. Try the download again."
 msgstr "The Zoom window was closed during the capture. Try the download again."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:670
+#: src/features/lectures/MainView.tsx:667
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 

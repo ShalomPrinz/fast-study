@@ -9,6 +9,8 @@ import {
 } from './serviceErrors'
 import { fetchConfigOptions } from '@/services/settings'
 import { vi } from 'vitest'
+import { i18n } from '@lingui/core'
+import { messages as he } from '@/locales/he/messages.po'
 
 // Codes, never copy: what a row says is the catalogs' business and changes with every translation.
 describe('serviceErrorRow', () => {
@@ -383,6 +385,8 @@ describe('model display names', () => {
     expect(err('gemini-3.8-flash')).toContain('Gemini 3.8 Flash')
     expect(err('gemini-3.8-flash')).not.toContain('gemini-3.8-flash')
     expect(err('gemini-exp-alias')).toContain('gemini-exp-alias')
+    // The mapped name already carries "Gemini", so the sentence around it must not repeat it.
+    expect(err('gemini-3.8-flash').match(/Gemini/g)).toHaveLength(1)
     const notice = resolveServiceError({
       message: 'x',
       code: 'model_fallback',
@@ -390,5 +394,21 @@ describe('model display names', () => {
     }).headline
     expect(notice).toContain('Gemini 3.8 Flash')
     expect(notice).toContain('gemini-exp-alias')
+  })
+
+  it('says Gemini once in the Hebrew sentence too', async () => {
+    await load()
+    i18n.loadAndActivate({ locale: 'he', messages: he })
+    try {
+      const sentence = resolveServiceError({
+        message: 'x',
+        code: 'gemini_overloaded',
+        params: { model: 'gemini-3.8-flash' },
+      }).headline
+      expect(sentence).toContain('Gemini 3.8 Flash')
+      expect(sentence.match(/Gemini/g)).toHaveLength(1)
+    } finally {
+      i18n.activate('en')
+    }
   })
 })
