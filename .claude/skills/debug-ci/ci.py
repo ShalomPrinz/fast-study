@@ -152,9 +152,11 @@ NORMALIZE = [
 
 
 def fetch_log(job_id, path):
-    # `gh run view --log-failed` and `--job <id> --log` come back empty or truncated on this
-    # repo's runs; the raw job-log API is the only path that reliably yields the whole text.
-    raw = gh("api", "%s/actions/jobs/%s/logs" % (REPO, job_id))
+    # `gh run view --log` comes back empty or truncated here, so read the raw job-log API; gh
+    # refuses its ANSI escapes without the flag, and NORMALIZE strips them anyway.
+    raw = gh(
+        "api", "--allow-escape-sequences", "%s/actions/jobs/%s/logs" % (REPO, job_id)
+    )
     lines = []
     for line in (raw or b"").decode("utf-8", "replace").split("\n"):
         line = line.rstrip("\r")
