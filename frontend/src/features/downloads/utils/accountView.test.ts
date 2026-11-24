@@ -91,7 +91,12 @@ describe('accountView', () => {
     expect(accountView('idle', { ...idle, expired: true }).chip).toBe('expired')
     expect(accountView('idle', ok).chip).toBe('connected')
     expect(accountView('idle', idle).chip).toBe('disconnected')
-    expect(accountView('idle', null).chip).toBe('disconnected')
+    expect(accountView('idle', null).chip).toBe('checking')
+  })
+
+  it('never offers Connect for an unknown status, whatever the phase', () => {
+    expect(accountView('verifying', null).chip).toBe('checking')
+    expect(accountView('disconnecting', null).chip).toBe('checking')
   })
 })
 

@@ -38,6 +38,8 @@ export function accountView(
   if (phase === 'loading') return { chip: 'checking', panel: null }
   if (phase === 'connecting' || status?.phase === 'pending')
     return { chip: 'finishing', panel: null }
+  // Unknown is not "not connected": no Connect until the service has answered.
+  if (!status) return { chip: 'checking', panel: null }
   if (status?.unconfigured) return { chip: 'unconfigured', panel: null }
   if (status?.unverified) return { chip: 'unverified', panel: unverifiedPanel(status, captchaSeen) }
   if (status?.connected && !status.expired) return { chip: 'connected', panel: null }
@@ -99,3 +101,6 @@ export function connectConfirmOpen(
 ): boolean {
   return open && hasForeignToken && (chip === 'disconnected' || chip === 'expired')
 }
+
+// How long the account stays unknown before the chip says the downloader cannot be reached.
+export const UNREACHABLE_AFTER_MS = 10_000

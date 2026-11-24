@@ -16,6 +16,7 @@ import {
   useMoodleLockState,
   useWithMoodleLock,
 } from '@/features/downloads/contexts/MoodleLockContext'
+import { useUnreachable } from '@/features/downloads/hooks/useUnreachable'
 import { moodleLocked } from '@/features/downloads/utils/moodleLock'
 import { foreignSiteName } from '@/features/settings/utils/moodleSites'
 import { isMoodleBusyError } from '@/services/http'
@@ -136,6 +137,7 @@ export default function AccountStatus() {
   const seenNow = captchaSeen(seenCaptcha, status)
   if (seenNow !== seenCaptcha) setSeenCaptcha(seenNow)
   const view = accountView(phase, status, seenNow)
+  const unreachable = useUnreachable(view.chip === 'checking')
   // Folded the same way, so a frame that clears the foreign token or leaves Connect drops the confirm for good.
   const confirmNow = connectConfirmOpen(confirmConnect, view.chip, foreignName !== null)
   if (confirmNow !== confirmConnect) setConfirmConnect(confirmNow)
@@ -144,9 +146,13 @@ export default function AccountStatus() {
   const lockedTitle = locked ? moodleBusyMessage() : undefined
 
   if (view.chip === 'checking') {
-    return (
+    return unreachable ? (
+      <span className="chip chip--warn" data-account="unreachable">
+        <Trans>Can't reach the downloader</Trans>
+      </span>
+    ) : (
       <span className="chip chip--neutral">
-        <Trans>checking account…</Trans>
+        <Trans>Checking…</Trans>
       </span>
     )
   }

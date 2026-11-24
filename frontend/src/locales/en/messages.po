@@ -553,7 +553,7 @@ msgstr "A section is waiting for a passcode"
 msgid "A summary or assignment step that fails on a temporary Gemini problem runs again on its own, and you can cancel the wait. A used-up daily quota is never retried."
 msgstr "A summary or assignment step that fails on a temporary Gemini problem runs again on its own, and you can cancel the wait. A used-up daily quota is never retried."
 
-#: src/features/downloads/components/AccountStatus.tsx:260
+#: src/features/downloads/components/AccountStatus.tsx:266
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 
@@ -781,6 +781,10 @@ msgstr "Can't download {name} while it's being processed or waiting in line"
 msgid "Can't download while this lecture is being processed or waiting in line"
 msgstr "Can't download while this lecture is being processed or waiting in line"
 
+#: src/features/downloads/components/AccountStatus.tsx:151
+msgid "Can't reach the downloader"
+msgstr "Can't reach the downloader"
+
 #: src/features/lectures/components/RenamableTitle.tsx:47
 #: src/features/lectures/sidebar/tree/LectureItem.tsx:103
 msgid "Can't rename while it's being processed or waiting in line"
@@ -844,14 +848,11 @@ msgstr "Change the data folder while lectures are being processed?"
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:149
-msgid "checking account…"
-msgstr "checking account…"
-
 #: src/features/settings/components/DriveConnection.tsx:98
 msgid "checking Drive…"
 msgstr "checking Drive…"
 
+#: src/features/downloads/components/AccountStatus.tsx:155
 #: src/features/downloads/components/AddCoursePanel.tsx:120
 #: src/features/downloads/components/CourseUrlPaste.tsx:66
 #: src/features/settings/components/ApiKeyField.tsx:123
@@ -1021,12 +1022,12 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "Confirmed ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:228
+#: src/features/downloads/components/AccountStatus.tsx:234
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
 
-#: src/features/downloads/components/AccountStatus.tsx:234
+#: src/features/downloads/components/AccountStatus.tsx:240
 msgid "Connect anyway?"
 msgstr "Connect anyway?"
 
@@ -1039,7 +1040,7 @@ msgstr "Connect Google Drive now?"
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
 
-#: src/features/downloads/components/AccountStatus.tsx:128
+#: src/features/downloads/components/AccountStatus.tsx:129
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "Connecting again needs a full login in a browser window, including two-step verification."
 
@@ -1313,17 +1314,17 @@ msgstr "Delete {name}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:189
-#: src/features/downloads/components/AccountStatus.tsx:210
+#: src/features/downloads/components/AccountStatus.tsx:195
+#: src/features/downloads/components/AccountStatus.tsx:216
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:127
+#: src/features/downloads/components/AccountStatus.tsx:128
 msgid "Disconnect the university account?"
 msgstr "Disconnect the university account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:210
+#: src/features/downloads/components/AccountStatus.tsx:216
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -1668,7 +1669,7 @@ msgstr "Fill in the required fields first"
 msgid "Finish"
 msgstr "Finish"
 
-#: src/features/downloads/components/AccountStatus.tsx:157
+#: src/features/downloads/components/AccountStatus.tsx:163
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -1830,11 +1831,11 @@ msgstr "Home"
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
 
-#: src/features/downloads/components/AccountStatus.tsx:248
+#: src/features/downloads/components/AccountStatus.tsx:254
 msgid "I confirmed, try again"
 msgstr "I confirmed, try again"
 
-#: src/features/downloads/components/AccountStatus.tsx:245
+#: src/features/downloads/components/AccountStatus.tsx:251
 msgid "I solved the captcha"
 msgstr "I solved the captcha"
 
@@ -2242,7 +2243,7 @@ msgstr "No source URL yet. Use the pencil to choose one."
 msgid "No summary PDF yet"
 msgstr "No summary PDF yet"
 
-#: src/features/downloads/components/AccountStatus.tsx:166
+#: src/features/downloads/components/AccountStatus.tsx:172
 msgid "no university chosen"
 msgstr "no university chosen"
 
@@ -2267,7 +2268,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "Not confirmed yet"
 
-#: src/features/downloads/components/AccountStatus.tsx:220
+#: src/features/downloads/components/AccountStatus.tsx:226
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -2422,7 +2423,7 @@ msgstr "Open Microsoft Edge, paste this address into the address bar at the top 
 msgid "Open PDF"
 msgstr "Open PDF"
 
-#: src/features/downloads/components/AccountStatus.tsx:246
+#: src/features/downloads/components/AccountStatus.tsx:252
 msgid "Open the captcha again"
 msgstr "Open the captcha again"
 
@@ -2442,7 +2443,7 @@ msgstr "Open the first recitation you haven't finished yet"
 msgid "Open the sign-in page"
 msgstr "Open the sign-in page"
 
-#: src/features/downloads/components/AccountStatus.tsx:284
+#: src/features/downloads/components/AccountStatus.tsx:290
 msgid "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 msgstr "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 
@@ -2651,7 +2652,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:228
+#: src/features/downloads/components/AccountStatus.tsx:234
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -2950,7 +2951,7 @@ msgstr "Sent to Gemini with the summary"
 msgid "Server is responding slowly. Restart could help."
 msgstr "Server is responding slowly. Restart could help."
 
-#: src/features/downloads/components/AccountStatus.tsx:220
+#: src/features/downloads/components/AccountStatus.tsx:226
 msgid "session expired"
 msgstr "session expired"
 
@@ -3206,7 +3207,7 @@ msgstr "That's probably because Windows quarantined the app — restart the app 
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "The API keys and the summary model aren't available right now. They'll come back here on their own."
 
-#: src/features/downloads/components/AccountStatus.tsx:265
+#: src/features/downloads/components/AccountStatus.tsx:271
 msgid "The captcha is solved. Finishing the connection…"
 msgstr "The captcha is solved. Finishing the connection…"
 
@@ -3290,7 +3291,7 @@ msgstr "The following files will be re-generated:"
 msgid "The Google access token is stored only on your computer and is never sent to FastStudy's author, who receives no Google user data. You can disconnect Drive in Settings, which deletes the token, or revoke access in your <0>Google account permissions</0>."
 msgstr "The Google access token is stored only on your computer and is never sent to FastStudy's author, who receives no Google user data. You can disconnect Drive in Settings, which deletes the token, or revoke access in your <0>Google account permissions</0>."
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:69
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
@@ -3419,7 +3420,7 @@ msgstr "The summary is empty"
 msgid "The title has no characters that can be used in a file name."
 msgstr "The title has no characters that can be used in a file name."
 
-#: src/features/downloads/components/AccountStatus.tsx:256
+#: src/features/downloads/components/AccountStatus.tsx:262
 msgid "The university is checking the connection."
 msgstr "The university is checking the connection."
 
@@ -3448,7 +3449,7 @@ msgstr "The university site is asking for a captcha in a Chrome window. Solve it
 msgid "The university site is busy with another request. Try again in a moment."
 msgstr "The university site is busy with another request. Try again in a moment."
 
-#: src/features/downloads/components/AccountStatus.tsx:278
+#: src/features/downloads/components/AccountStatus.tsx:284
 msgid "The university site is refusing requests right now. Wait a few minutes, then press “Try again”."
 msgstr "The university site is refusing requests right now. Wait a few minutes, then press “Try again”."
 
@@ -3476,11 +3477,11 @@ msgstr "The video of every lecture already uploaded to Drive will be deleted fro
 msgid "The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered."
 msgstr "The video of every lecture that already has a PDF will be deleted from this computer. It cannot be recovered."
 
-#: src/features/downloads/components/AccountStatus.tsx:273
+#: src/features/downloads/components/AccountStatus.tsx:279
 msgid "The window on the university site passed, with no captcha to solve. Press “Try again”."
 msgstr "The window on the university site passed, with no captcha to solve. Press “Try again”."
 
-#: src/features/downloads/components/AccountStatus.tsx:267
+#: src/features/downloads/components/AccountStatus.tsx:273
 msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 msgstr "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 
@@ -3631,7 +3632,7 @@ msgstr "Transcribing the audio failed."
 msgid "Transcript"
 msgstr "Transcript"
 
-#: src/features/downloads/components/AccountStatus.tsx:247
+#: src/features/downloads/components/AccountStatus.tsx:253
 #: src/features/downloads/DownloadsView.tsx:422
 msgid "Try again"
 msgstr "Try again"
@@ -3670,7 +3671,7 @@ msgstr "University"
 msgid "University account"
 msgstr "University account"
 
-#: src/features/downloads/components/AccountStatus.tsx:203
+#: src/features/downloads/components/AccountStatus.tsx:209
 msgid "University account connected"
 msgstr "University account connected"
 
@@ -3731,7 +3732,7 @@ msgstr "Uploading to Google Drive failed."
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/downloads/components/AccountStatus.tsx:290
+#: src/features/downloads/components/AccountStatus.tsx:296
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 
@@ -3762,7 +3763,7 @@ msgstr "Videos"
 msgid "Waiting for another merge to finish"
 msgstr "Waiting for another merge to finish"
 
-#: src/features/downloads/components/AccountStatus.tsx:175
+#: src/features/downloads/components/AccountStatus.tsx:181
 msgid "waiting for you to solve the captcha"
 msgstr "waiting for you to solve the captcha"
 
@@ -3846,7 +3847,7 @@ msgstr "You haven't created any merged summaries yet"
 msgid "You must read the privacy policy before you continue."
 msgstr "You must read the privacy policy before you continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:233
+#: src/features/downloads/components/AccountStatus.tsx:239
 msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
 msgstr "You're logged in to {foreignName}. Connecting here logs you out of it."
 
