@@ -541,6 +541,10 @@ msgstr "A one-time setup of about three minutes."
 msgid "A proxy is set on this computer, and the app may not reach the site through it. Try another network or turn the proxy off."
 msgstr "A proxy is set on this computer, and the app may not reach the site through it. Try another network or turn the proxy off."
 
+#: src/features/lectures/components/RunRemainingButton.tsx:15
+msgid "A run is already in progress here."
+msgstr "A run is already in progress here."
+
 #: src/features/downloads/components/PausedRunsBanner.tsx:53
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"

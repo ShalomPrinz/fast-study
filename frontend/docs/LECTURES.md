@@ -28,7 +28,7 @@ when the MP4 header yields one, material count, the `StudyDoneButton` toggle, th
 open PDF, open in Drive, each once its file exists — sit on a second header row, keeping them off a title
 column with no width floor. Below 960px `useCompactHeaderActions` (one `matchMedia` on window width; the
 content pane is always the window less 536) folds them into `LectureActionsMenu` (a thin wrapper of the shared `OverflowMenu`), a ⋮ left of
-`Run Remaining` so the primary button never moves.
+`Run Remaining` so the primary button never moves. While a run is in flight `Run Remaining` is disabled and its tooltip says a run is already in progress.
 A complete lecture (`filesComplete`) shows the pipeline as one `Summary ready` row with `N steps` on its `pipeline-file` line and an
 `info` button at its end; a click anywhere on the row opens `PipelineStepsModal` (the `info` button is the keyboard target) with the full rows (the same `stepRows` the incomplete page renders)
 and the last-error block. The modal closes on its one floating Close pill, Escape (not while the rotate confirm is above it) or a backdrop

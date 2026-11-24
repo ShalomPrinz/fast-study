@@ -1,4 +1,5 @@
 import Tooltip from '@/shared/components/Tooltip'
+import RunRemainingButton from '@/features/lectures/components/RunRemainingButton'
 import { Fragment, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
@@ -540,11 +541,7 @@ To start, reply with a single sentence â€” "What do you want to learn first?" â€
           <>
             {compactActions && <LectureActionsMenu actions={headerActions} />}
             <StudyDoneButton course={course} lecture={lecture} kind={kind} done={done} />
-            {hasActions && (
-              <button className="btn btn--primary" onClick={handleRunRemaining} disabled={inflight}>
-                <Trans>Run Remaining</Trans>
-              </button>
-            )}
+            {hasActions && <RunRemainingButton inflight={inflight} onClick={handleRunRemaining} />}
           </>
         }
         secondaryActions={

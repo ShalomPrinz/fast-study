@@ -541,6 +541,10 @@ msgstr "הגדרה חד־פעמית של כשלוש דקות."
 msgid "A proxy is set on this computer, and the app may not reach the site through it. Try another network or turn the proxy off."
 msgstr "מוגדר פרוקסי במחשב הזה, ויתכן שהאפליקציה לא מצליחה להגיע דרכו אל האתר. נסה רשת אחרת או כבה את הפרוקסי."
 
+#: src/features/lectures/components/RunRemainingButton.tsx:15
+msgid "A run is already in progress here."
+msgstr "כבר מתבצעת כאן הרצה."
+
 #: src/features/downloads/components/PausedRunsBanner.tsx:53
 msgid "A section is waiting for a passcode"
 msgstr "יחידה ממתינה לקוד גישה"

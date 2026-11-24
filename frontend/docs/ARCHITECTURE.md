@@ -195,7 +195,7 @@ view; a second main-looking action is secondary.
 child that takes a ref, opens after 400 ms on hover or on keyboard focus, and renders nothing for an
 empty `content`. `placement` is `top`/`bottom`/`inline-start`/`inline-end`, the logical sides resolved
 against the document's `dir`. A disabled button gets its hint on hover only, with no wrapper: it takes no keyboard focus, and Chromium still fires hover on it.
-A button disabled for a lasting reason (missing input or prerequisite, lock, unaccepted policy) passes that reason, with the fix, as its `content` while disabled; busy states (saving, checking) get none.
+Every disabled button passes its reason as its `content` while disabled, with the fix when there is one (missing input or prerequisite, lock, unaccepted policy); busy states (saving, checking, a run in progress) say what is busy.
 It is `position: fixed`, so it never grows the window's scroll height, and closes on any ancestor scroll.
 The pointer can move from the anchor into the hint (`safePolygon`) and drag-select its text; a drag that drifts out does not close it, and one released outside keeps it open while it holds the selection.
 A drag-select that starts in a hint stays in it: the page is `user-select: none` for the drag, and past the hint's edge the selection extends to the hint's start or end (`clampedSelectPoint`).
