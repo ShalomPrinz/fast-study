@@ -59,6 +59,7 @@ export function parseFragment(file, text) {
   let header = '';
   let finding = null;
   let field = null;
+  let sawNone = false;
 
   const close = () => {
     if (!finding) return;
@@ -116,6 +117,7 @@ export function parseFragment(file, text) {
     const head = line.match(/^#### (.+)$/);
     if (head) {
       if (section !== 0) fail(i, '`####` findings belong under `### Confirmed` only');
+      else if (sawNone) fail(i, '`- none` under `### Confirmed` stands alone');
       close();
       finding = { symptom: head[1].trim(), line: i, fields: {} };
       field = null;
@@ -123,6 +125,15 @@ export function parseFragment(file, text) {
     }
     if (section !== 0 || !line.trim()) {
       if (field) finding.fields[field] += `\n${line}`;
+      continue;
+    }
+    // An empty Confirmed section holds `- none`, as brief.md asks.
+    if (!finding && !sawNone && line.trim() === '- none') {
+      sawNone = true;
+      continue;
+    }
+    if (sawNone && !finding) {
+      fail(i, '`- none` under `### Confirmed` stands alone');
       continue;
     }
     const bullet = line.match(/^- \*\*([^*]+):\*\*(.*)$/);
