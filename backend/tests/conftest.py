@@ -73,7 +73,11 @@ class _TrackedDb:
     """Stands in for `db_client` and records, in call order, the file writes and notify topics.
     Attributes resolve at call time, so a test's own patch of a write or of `notify` still runs."""
 
-    _WRITE_PREFIXES = ("put_", "delete_", "patch_", "remove_")
+    _WRITE_PREFIXES = (
+        "put_",
+        "delete_",
+        "patch_",
+    )  # remove_: that database route broadcasts tree itself
 
     def __init__(self, real, ledger):
         object.__setattr__(self, "_real", real)

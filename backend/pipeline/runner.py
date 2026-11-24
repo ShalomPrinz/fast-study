@@ -1811,9 +1811,6 @@ def auto_remove(course: str, lecture: str, kind: str) -> str:
         if not names:
             return "none"
         db_client.remove_files(course, lecture, kind, names)
-        db_client.notify(
-            "tree"
-        )  # the step's own notify already went out before this removal
     except Exception as e:
         locked = isinstance(e, db_client.DbClientError) and e.code == "file_locked"
         log.warning(
