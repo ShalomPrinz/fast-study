@@ -42,7 +42,7 @@ auth state's `storedSite` names that site beforehand so the frontend can confirm
   other than the selected one (no site set included) — the token a Connect would delete, so the
   frontend can confirm first — else `null`; `error` is `{ code, params }` of the last failed attempt (`moodle_login_abandoned`,
   `moodle_login_timeout`, `moodle_site_unsupported`, `site_blocked` (`challengeWindow` when set), `site_captcha_timeout`,
-  `moodle_reconnect_required`), cleared by the next `connect()`. The stream (`core/registry.js`'s
+  `moodle_reconnect_required`, `moodle_upstream_error`, `moodle_ws_error`, `internal_error` for an uncoded throw), set by a login or any verification (`complete()`, `verifyAfterSolve()`, a WS route's lazy one) and cleared by `connect()`, `disconnect()`, `abandonLogin()` or a successful verification. The stream (`core/registry.js`'s
   `authEvents`, one emitter whichever site is set) sends `state()` as an unnamed `data:` frame on
   subscribe and again on every change (`connect`, run end, retry, lazy verification, `markExpired`,
   `disconnect`, a site switch; idle when no site is set). Every frame also carries `moodleBusy`, the

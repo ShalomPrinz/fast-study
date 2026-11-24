@@ -28,6 +28,7 @@ already had.
 | Overview status | `{status, phase, message, code, params, started_at}` per extractor          | `backend/course/runner.py`                                   |
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
 | Run target      | `{…, disposition, code?}` per target on `GET /runs` and the runs SSE        | `downloader/server/src/runs.js`                              |
+| Auth state      | `{…, error?: {code, params}}` — no prose — on each `/auth/events` SSE frame | `downloader/auto/src/auth/moodleToken.js` `state()`          |
 | Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
 | Bridge rejection | an `Error` whose `message` is the failure text, plus `code?`                | `electron/dataFiles.js`, `electron/preload.js`               |
 | Settings IPC    | `{code, params, message}` returned in place of the settings view            | `electron/store.js` via `faststudy:settings-write`           |
@@ -436,6 +437,8 @@ failure (OS reason, `unsupported`, other statuses, a bad URL) carries no `code`.
 | `moodle/gate.js`                | `moodle_call_ungated`         | `target`                 | dev   |
 | `app.js` backstop               | `internal_error`              | `detail`                 | user  |
 | `http/server.js`, request checks| `invalid_request`             | `field`                  | user  |
+
+These codes ride `/auth/events` as `error: {code, params}` (the last failed login or verification, set by a login, `complete()`, `verifyAfterSolve()` or a WS route's lazy verification; cleared by `connect()`, `disconnect()`, `abandonLogin()` and any successful verification): `moodle_login_abandoned`, `moodle_login_timeout`, `moodle_reconnect_required`, `moodle_site_unsupported`, `site_blocked`, `site_captcha_timeout`, `moodle_upstream_error`, `moodle_ws_error`, plus `internal_error` for any uncoded throw (a raw `fetch failed`, a malformed JSON reply).
 
 `UnsupportedError` and `PasscodeError` extend `CodedError` (`src/lib/errors.js`), so the code survives
 the throw up to `handleResolve` and the backstop and the four typed refusals (401/409/422/503) relay
