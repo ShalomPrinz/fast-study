@@ -33,6 +33,7 @@ import { bindPorts } from './lib/api.mjs';
 import { appUrl, openBrowser } from './lib/browser.mjs';
 import { recordDom } from './lib/dom-timeline.mjs';
 import { harnessPaths } from './lib/env.mjs';
+import { isBenignAbort } from './lib/log-filter.mjs';
 
 const args = process.argv.slice(2);
 const value = (name) => {
@@ -89,6 +90,7 @@ function watch(p) {
   p.on('requestfailed', async (request) => {
     const line = `${request.method()} ${request.url()} ${request.failure()?.errorText}`;
     const answered = await request.response().catch(() => null);
+    if (answered && isBenignAbort(request.failure()?.errorText, answered.status())) return;
     if (answered) return record('aborted', `${line} after ${answered.status()}`, false);
     record('failed', line, true);
     if (mutating(request)) saveMutation(request, null, request.failure()?.errorText);
