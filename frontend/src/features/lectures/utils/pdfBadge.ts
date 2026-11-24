@@ -56,3 +56,14 @@ export function pdfBadge(files: FileStatus): PdfBadge | null {
 export function pdfNeedsUpdate(files: FileStatus | null): boolean {
   return statePdfNeedsUpdate(files && lecturePdfState(files))
 }
+
+export const staleDriveTitle = (): string =>
+  t`The Drive copy is older than the PDF. Upload it again.`
+
+// Drive is stale once summary.pdf is newer than drive_url.txt. A missing file on either side never is.
+export function driveBadge(files: FileStatus): PdfBadge | null {
+  const pdf = files['summary.pdf']
+  const drive = files['drive_url.txt']
+  if (!pdf.exists || !drive.exists || pdf.mtime === null || drive.mtime === null) return null
+  return pdf.mtime > drive.mtime ? { kind: 'stale', title: staleDriveTitle() } : null
+}

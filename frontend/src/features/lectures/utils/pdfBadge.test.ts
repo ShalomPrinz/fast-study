@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { FileStatus, FileInfo } from '@/types'
-import { pdfBadge, pdfNeedsUpdate } from './pdfBadge'
+import { driveBadge, pdfBadge, pdfNeedsUpdate } from './pdfBadge'
 
 const info = (over: Partial<FileInfo> = {}): FileInfo => ({
   exists: false,
@@ -94,5 +94,27 @@ describe('pdfNeedsUpdate', () => {
   it('is true when there is no PDF, or no file status yet', () => {
     expect(pdfNeedsUpdate(files({ exists: false }, { exists: true, mtime: 200 }))).toBe(true)
     expect(pdfNeedsUpdate(null)).toBe(true)
+  })
+})
+
+describe('driveBadge', () => {
+  const f = (pdf: Partial<FileInfo>, drive: Partial<FileInfo>) => ({
+    ...files(pdf, { exists: true, mtime: 1 }),
+    'drive_url.txt': info(drive),
+  })
+  it('is stale when the PDF is newer than the Drive file', () => {
+    expect(driveBadge(f({ exists: true, mtime: 200 }, { exists: true, mtime: 100 }))?.kind).toBe(
+      'stale',
+    )
+  })
+  it('is null when Drive is current', () => {
+    expect(driveBadge(f({ exists: true, mtime: 100 }, { exists: true, mtime: 200 }))).toBeNull()
+    expect(driveBadge(f({ exists: true, mtime: 100 }, { exists: true, mtime: 100 }))).toBeNull()
+  })
+  it('is null when the Drive file is missing', () => {
+    expect(driveBadge(f({ exists: true, mtime: 200 }, { exists: false }))).toBeNull()
+  })
+  it('is null when the PDF is missing', () => {
+    expect(driveBadge(f({ exists: false }, { exists: true, mtime: 100 }))).toBeNull()
   })
 })

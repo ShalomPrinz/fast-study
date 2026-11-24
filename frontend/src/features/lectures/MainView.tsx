@@ -23,7 +23,7 @@ import { formatDuration } from '@/shared/utils/format'
 import { toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
-import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
+import { driveBadge, pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { stageControl, stepState } from '@/features/lectures/utils/stepState'
 import { useSupportedMaterials } from '@/shared/contexts/SupportedMaterialsContext'
 import { attachedMaterials, displayName } from '@/features/lectures/utils/materials'
@@ -342,6 +342,7 @@ export default function MainView() {
                   />
                 )}
                 {file === 'summary.pdf' && <PdfWarningBadge badge={pdfBadge(files)} />}
+                {file === 'drive_url.txt' && <PdfWarningBadge badge={driveBadge(files)} />}
               </div>
               {file === 'summary.md' && summarizedFromMaterials(files, attached) && (
                 <p className="pipeline-materials-note">
@@ -383,6 +384,21 @@ export default function MainView() {
                 <Trans>Removed</Trans>
               </span>
             )}
+            {file === 'drive_url.txt' &&
+              step &&
+              driveEnabled &&
+              driveBadge(files) &&
+              !isRunning && (
+                <Tooltip content={inflight ? t`Step already running` : undefined}>
+                  <button
+                    className="btn btn--ghost"
+                    onClick={() => handleStep(step)}
+                    disabled={inflight}
+                  >
+                    <Trans>Upload again</Trans>
+                  </button>
+                </Tooltip>
+              )}
             {control === 'rotate' && step && (
               <Tooltip content={inputRemoved ?? t`Rotate ${file}`}>
                 <button

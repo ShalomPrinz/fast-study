@@ -230,6 +230,10 @@ backend's regression estimate for the step's _input_ size and drops answers for 
 the editor toolbar spells it out as a chip. A **missing** PDF is never stale — every re-render path deletes
 `summary.pdf` first, which keeps a pending re-render quiet — and equal mtimes don't warn.
 
+`driveBadge(files)` flags the Drive row the same way (≠ chip, plus an "Upload again" button that runs `drive`, shown only with Drive on: the backend rejects it otherwise, while the badge stays)
+when `summary.pdf` is newer than `drive_url.txt`; a missing file on either side is never stale. A stale Drive
+copy still counts as done, so Complete and "N of 6" don't change. `drive` needs no `fresh`: it always re-uploads.
+
 A render warning is the database service's `.pdf_warning` inlined onto the tree's `FileInfo`. It lives on
 the tree, not `/status`, so it is announced as each tree applies (`announcePdfWarnings`): the first tree only
 seeds, and a vanished warning is pruned so it can fire again. Deleting `summary.pdf` drops the dotfile
