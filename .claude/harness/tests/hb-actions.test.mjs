@@ -38,6 +38,18 @@ describe('actionRequest', () => {
     assert.deepEqual(body, { selector: '-x', value: '--shot' });
   });
 
+  test('goto takes --shot, screenshot sends the name', () => {
+    assert.equal(
+      JSON.parse(actionRequest('goto', ['/', '--shot', 'x'], noStdin).body).screenshot,
+      'x',
+    );
+    assert.deepEqual(actionRequest('screenshot', ['x'], noStdin), {
+      tag: 'main',
+      path: '/screenshot',
+      body: '{"name":"x"}',
+    });
+  });
+
   test('eval takes its JS from the argument, or stdin when none or -', () => {
     assert.equal(actionRequest('eval', ['return 1'], noStdin).body, 'return 1');
     assert.equal(actionRequest('eval', [], () => 'from stdin').body, 'from stdin');
@@ -48,7 +60,8 @@ describe('actionRequest', () => {
     ['click', []],
     ['fill', ['only-selector']],
     ['click', ['a', 'b']],
-    ['goto', ['/', '--shot', 'x']],
+    ['screenshot', ['x', '--shot', 'y']],
+    ['screenshot', []],
     ['eval', ['x', '--shot', 'y']],
     ['click', ['a', '--shot']],
   ]) {

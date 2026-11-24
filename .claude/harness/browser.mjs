@@ -7,12 +7,13 @@
 //   FASTSTUDY_PORT=N node .claude/harness/browser.mjs --tag T [--harness DIR]   (or HARNESS_DIR; N=0 for any)
 //
 // Arguments ride as a JSON body or as query parameters, and the method does not matter:
-// /goto {"url"}                 a path on the app, or a full URL
+// /goto {"url"}                 a path on the app, or a full URL (also takes {"screenshot":name})
 // /click {"selector"}           then the mouse leaves the page, so no tooltip covers the next
 // /fill {"selector","value"}
 // /press {"key","selector"}     a key (`Enter`, `Control+a`), on the selector when given, else the focus
 //                               /click, /fill and /press also take {"screenshot":name}: captured once the
 //                               action settles, so a short-lived toast is in the same call
+// /screenshot {"name"}        the full window to evidence/<tag>-<name>.png
 // /text {"selector"}            innerText; the whole body when no selector
 // /eval <js>                    raw body: an async function body given `page` and `context`
 // /log {"since"}                every recorded event from N on, numbered
@@ -174,11 +175,12 @@ const acted = async (line, screenshot) =>
 const AsyncFunction = (async () => {}).constructor;
 
 const COMMANDS = {
-  '/goto': async ({ url }) => {
+  '/goto': async ({ url, screenshot }) => {
     const response = await page.goto(new URL(url ?? '/', APP).href);
     await settle();
-    return `${response?.status()} ${page.url()}`;
+    return acted(`${response?.status()} ${page.url()}`, screenshot);
   },
+  '/screenshot': async ({ name }) => shoot(name),
   '/click': async ({ selector, screenshot }) => {
     await page.click(selector);
     await page.mouse.move(-1, -1);

@@ -2,7 +2,12 @@
 // arguments instead of JSON escaped inside shell quotes.
 
 export const ACTIONS = {
-  goto: { usage: 'goto <path-or-url> [--browser TAG]', fields: ['url'], required: 1 },
+  goto: {
+    usage: 'goto <path-or-url> [--shot NAME] [--browser TAG]',
+    fields: ['url'],
+    required: 1,
+  },
+  screenshot: { usage: 'screenshot <name> [--browser TAG]', fields: ['name'], required: 1 },
   click: {
     usage: 'click <selector> [--shot NAME] [--browser TAG]',
     fields: ['selector'],
@@ -46,7 +51,7 @@ export function actionRequest(name, args, readStdin) {
   const action = ACTIONS[name];
   const { flags, positional } = parse(args);
   const usage = `usage: ${action.usage}`;
-  const shotless = name === 'goto' || name === 'eval';
+  const shotless = name === 'screenshot' || name === 'eval';
   if (shotless && flags.shot !== undefined) throw new Error(usage);
   if (positional.length < action.required || positional.length > Math.max(action.fields.length, 1))
     throw new Error(usage);

@@ -232,6 +232,8 @@ unless `--browser TAG` names another, prints the session's answer, and exits 1 w
 
 ```bash
 hb goto /course/hb-mgmt/overview                    # a path on the app (a lecture is /<course>/<lecture>), or a full URL
+hb goto / --shot home                               # `--shot NAME` on goto, click, fill and press
+hb screenshot after-save                            # the full window now → evidence/<tag>-after-save.png
 hb click 'text=New course'                          # any Playwright selector
 hb fill 'input[placeholder="Course name…"]' hb-mgmt-x
 hb press Enter --shot created                       # on the focus, or `hb press <key> <selector>`
@@ -273,7 +275,7 @@ alike. Never pick one by text: `has-text("No")` is a case-insensitive substring 
 
 Arguments ride as a JSON body or query parameters, whatever the method. `/eval`'s raw body is an
 async function body given `page` and `context` — the escape hatch for waits and new tabs.
-`/click`, `/fill` and `/press` take an optional `screenshot` name, captured once the action settles
+`/screenshot {"name"}` takes one outright. `/goto`, `/click`, `/fill` and `/press` take an optional `screenshot` name, captured once the action settles
 (half a second) into `evidence/<tag>-<name>.png`, so a toast that is gone before a
 separate call still lands in the evidence.
 
