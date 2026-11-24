@@ -49,11 +49,6 @@ function dispatch(e?: Event) {
   }
 }
 
-// An open carries no topics, so it refires everyone.
-function dispatchAll() {
-  dispatch()
-}
-
 export function subscribeNotify(cb: Callback, topics?: readonly Topic[]): () => void {
   const sub: Subscriber = { cb, topics }
   subscribers.add(sub)
@@ -61,14 +56,14 @@ export function subscribeNotify(cb: Callback, topics?: readonly Topic[]): () => 
   if (!es) {
     es = new EventSource(withSecretParam(`${databaseUrl}/events`))
     es.addEventListener('notify', dispatch)
-    es.addEventListener('open', dispatchAll)
+    es.addEventListener('open', dispatch) // an open carries no data, so it refires everyone
   }
 
   return () => {
     subscribers.delete(sub)
     if (subscribers.size === 0 && es) {
       es.removeEventListener('notify', dispatch)
-      es.removeEventListener('open', dispatchAll)
+      es.removeEventListener('open', dispatch)
       es.close()
       es = null
     }
