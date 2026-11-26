@@ -1,7 +1,10 @@
+import asyncio
+import json
 import logging
 import mimetypes
 import os
 import signal
+import threading
 from contextlib import asynccontextmanager
 from json import JSONDecodeError
 
@@ -13,7 +16,17 @@ from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fs import assignments, crud, figures, materials, merged, overview, paths, tree
+from fs import (
+    assignments,
+    crud,
+    figures,
+    materials,
+    merged,
+    overview,
+    paths,
+    tree,
+    video_import,
+)
 from fs import sources as skips
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
@@ -305,6 +318,82 @@ async def put_video(
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": "video.mp4"})
+
+
+def _ndjson(obj: dict) -> str:
+    """Encode one NDJSON line of the import stream."""
+
+    return json.dumps(obj, ensure_ascii=False) + "\n"
+
+
+def _import_error_line(exc: Exception) -> str:
+    """Build the stream's final error line; the user's source path never reaches params, message or log."""
+
+    if isinstance(exc, CodedError):
+        code, params, message = exc.code, exc.params, str(exc)
+    else:
+        # OSError's str() embeds the source path; strerror is the OS text alone.
+        detail = getattr(exc, "strerror", None) or type(exc).__name__
+        code, params = "video_import_failed", {"file": "video.mp4", "detail": detail}
+        message = f"importing the video failed: {detail}"
+    log.warning("video import failed: %s", code)
+    return _ndjson({"error": {"code": code, "params": params, "message": message}})
+
+
+async def _import_stream(d, src, mode):
+    """Run the import in a worker thread, streaming its progress as NDJSON and cancelling it if the client leaves."""
+
+    loop = asyncio.get_running_loop()
+    queue: asyncio.Queue = asyncio.Queue()
+    cancelled = threading.Event()
+
+    def progress(copied: int, total: int):
+        loop.call_soon_threadsafe(queue.put_nowait, {"copied": copied, "total": total})
+
+    touched = threading.Event()
+    task = asyncio.ensure_future(
+        asyncio.to_thread(
+            video_import.run_import, d, src, mode, progress, cancelled, touched
+        )
+    )
+
+    def finished(_t):
+        # Owned by the worker's task, not the stream: a cancel from any direction still tags a lecture the wipe changed, success or failure.
+        if touched.is_set():
+            broadcast_notify("tree")
+        if not _t.cancelled():
+            _t.exception()  # marks it retrieved; the stream reports it
+        queue.put_nowait(None)
+
+    task.add_done_callback(finished)
+    try:
+        while (item := await queue.get()) is not None:
+            yield _ndjson(item)
+        yield _ndjson({"done": True, "originalKept": task.result()})
+    except Exception as e:
+        yield _import_error_line(e)
+    finally:
+        # A disconnect closes the generator here: the worker stops at its next chunk and deletes its temp file.
+        if not task.done():
+            cancelled.set()
+
+
+@app.post("/courses/{course}/lectures/{lecture}/video/import")
+async def import_video(
+    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+):
+    """Copy or move a local .mp4 (body {path, mode}) in as video.mp4, streaming NDJSON progress; same wipe as PUT …/video."""
+
+    try:
+        body = await request.json()
+        d, src = video_import.prepare_import(
+            course, lecture, kind, body["path"], body["mode"]
+        )
+    except Exception as e:
+        return _failure(e, 400, "video_import_failed", {"file": "video.mp4"})
+    return StreamingResponse(
+        _import_stream(d, src, body["mode"]), media_type="application/x-ndjson"
+    )
 
 
 @app.get("/courses/{course}/lectures/{lecture}/materials")

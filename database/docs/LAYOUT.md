@@ -140,6 +140,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
 | `.skipped.json`          | course dir  | `{"refs": [...]}`: discovery refs the user or the downloader skipped; one set per course, recitations included; removed once empty |
 | `.video_source.json`     | lecture dir | `{"source": ref}`: the discovery ref of the current video (`?source=` on `PUT …/video`); a removed video keeps it, a rename moves it, every fresh upload drops the old ref in the wipe and writes the new one best-effort, so a failed write leaves none, never a stale one |
+| `.video.<random>.tmp` | lecture dir | a video being placed by `POST …/video/import` (unique per import, so concurrent ones never share a file), renamed to `video.mp4` after the wipe; deleted on failure or cancel, never a tree row; the one exception is a moved source that could not be put back, which stays as the user's only copy and is never deleted |
 | `.done`                  | lecture or assignment dir | empty marker; the user studied it — a fresh video upload or an assignment file upload keeps it |
 | `.materials.json`        | lecture dir | `{material name: {source?, filename?, attach?}}` per-material meta |
 | `.assignment_files.json` | assignment dir | `{"v": 2, "files": {filename: source}}`: every file the app saved (source `""` when none, else an opaque string); the listing is these entries whose file still exists |

@@ -23,6 +23,7 @@ already had.
 | Channel         | Shape                                                                      | Produced by                                                  |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | HTTP body       | `{error, code, params}` on every non-2xx                                   | all four services                                            |
+| NDJSON stream line | `{error: {code, params, message}}` as the last line of a `200` stream | `database/database_main.py` `POST …/video/import`            |
 | Pipeline error  | `{step, message, code, params, provider, blocked}` per lecture on `/status` | `backend/pipeline/runner.py`                                 |
 | Runner crash    | `runner.last_error` — `{message, code, params}` or `null`                   | `backend/pipeline/runner.py`                                 |
 | Overview status | `{status, phase, message, code, params, started_at}` per extractor          | `backend/course/runner.py`                                   |
@@ -260,13 +261,21 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `data_root_not_absolute`        | `path`            | user      |
 | `settings.py`         | `data_root_not_a_directory`     | `path`            | user      |
 | `settings.py`         | `data_root_not_writable`        | `path`, `detail`  | user      |
-| `database_main.py`, `fs/crud.py`, `fs/summary.py`, `fs/assignments.py`, `fs/merged.py` | `bad_request_body` | `detail` | dev       |
+| `database_main.py`, `fs/crud.py`, `fs/summary.py`, `fs/assignments.py`, `fs/merged.py`, `fs/video_import.py` | `bad_request_body` | `detail` | dev       |
 | `database_main.py`    | `create_dir_failed`             | `path`, `detail`  | user      |
 | `database_main.py`    | `rename_failed`                 | `from`, `to`, `detail` | user |
 | `database_main.py`    | `file_write_failed`             | `file`, `detail`  | user      |
 | `database_main.py`    | `file_read_failed`              | `file`, `detail`  | user      |
 | `database_main.py`, `fs/crud.py` | `file_delete_failed` | `file`, `detail`  | user      |
 | `database_main.py`, `fs/paths.py` | `file_not_found` | `file`            | user      |
+| `fs/video_import.py`  | `import_source_missing` | `file` | user |
+| `fs/video_import.py`  | `import_source_not_a_file` | `file` | user |
+| `fs/video_import.py`  | `import_source_not_mp4` | `file` | user |
+| `fs/video_import.py`  | `import_source_unreadable` | `file` | user |
+| `fs/video_import.py`  | `import_source_is_target` | `file` | user |
+| `fs/video_import.py`  | `import_mode_unknown` | `mode` | dev |
+| `fs/video_import.py`  | `import_source_stranded` | `kept` | user |
+| `database_main.py`    | `video_import_failed`           | `file`, `detail`  | user      |
 | `fs/figures.py`       | `figure_name_invalid`           | `name`            | dev       |
 | `database_main.py`    | `summary_io_failed`             | `detail`          | uncertain |
 | `database_main.py`    | `overview_read_failed`          | `detail`          | uncertain |

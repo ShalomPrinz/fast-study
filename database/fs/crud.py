@@ -158,19 +158,22 @@ def rename_lecture(course: str, old: str, new: str, kind: str) -> str:
     return target.name
 
 
-def write_video(
-    course: str, lecture: str, kind: str, data: bytes, source: str | None = None
-) -> None:
-    """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source, and record its discovery ref (the old one is always dropped)."""
+def prepare_video_dir(course: str, lecture: str, kind: str) -> Path:
+    """Validate the target of a fresh video and return its lecture dir, made on demand (the course never)."""
 
     # The downloader uploads here for brand-new lectures, so the create path's name check applies.
     check_not_reserved(lecture)
-    # The lecture dir is made on demand, the course never: an upload still in flight when its course
-    # was renamed would otherwise recreate the old name as a ghost course.
+    # An upload still in flight when its course was renamed would otherwise recreate the old name as a ghost course.
     if not course_dir(course).is_dir():
         raise CourseNotFound(f"course not found: {course}", course=course)
     d = lecture_dir(course, lecture, kind)
     d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _video_wipe_set(d: Path) -> tuple[list[Path], list[Path]]:
+    """List the derived files and the figures a fresh video erases; materials and .done stay."""
+
     # Materials stay: they are attached by hand or by the downloader, not derived from the video.
     # The summary snapshot goes, or "Restore original" would bring back the old video's summary.
     wipe = [
@@ -187,10 +190,24 @@ def write_video(
             VIDEO_SOURCE_MARKER,
         )
     ]
-    # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
-    # half-wiped with the new video never written.
-    figures = figure_files(d)
+    return wipe, figure_files(d)
+
+
+def check_video_wipe_unlocked(d: Path) -> None:
+    """Raise FileLocked if any file a fresh video would wipe is held open; touches nothing."""
+
+    wipe, figures = _video_wipe_set(d)
     check_none_locked([*wipe, *figures])
+
+
+def wipe_for_new_video(d: Path, on_start=None) -> None:
+    """Erase everything derived from the old video, all-or-nothing on locks; on_start fires once the lock probe passed, before the first unlink."""
+
+    # A lock hit mid-loop would leave the lecture half-wiped with the new video never written.
+    wipe, figures = _video_wipe_set(d)
+    check_none_locked([*wipe, *figures])
+    if on_start:
+        on_start()
     for p in wipe:
         if p.exists():
             try:
@@ -200,6 +217,23 @@ def write_video(
                 raise
     # Figures were cropped from the old video's slides-summary, so they go with it (already probed above).
     wipe_figures(d, probed=True)
+
+
+def place_video(d: Path, tmp: Path, on_wipe_start=None) -> None:
+    """Wipe the old video's derived files, then rename a finished temp file in the lecture dir to video.mp4; on_wipe_start fires when the lecture first changes."""
+
+    # The temp file is complete before the wipe, so a failed copy or a cancel never costs the old video.
+    wipe_for_new_video(d, on_wipe_start)
+    os.replace(tmp, d / "video.mp4")
+
+
+def write_video(
+    course: str, lecture: str, kind: str, data: bytes, source: str | None = None
+) -> None:
+    """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source, and record its discovery ref (the old one is always dropped)."""
+
+    d = prepare_video_dir(course, lecture, kind)
+    wipe_for_new_video(d)
     (d / "video.mp4").write_bytes(data)
     if source:
         write_video_source(d, source)

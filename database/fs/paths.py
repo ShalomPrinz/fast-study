@@ -1,6 +1,7 @@
 import errno
 import os
 import re
+import secrets
 import stat
 import sys
 from pathlib import Path
@@ -39,6 +40,14 @@ SOURCE_URL_MARKER = ".source_url"
 SKIPPED_MARKER = ".skipped.json"
 # Lecture-dir JSON {"source": ref}: the discovery ref the current video came from; a removed video keeps it.
 VIDEO_SOURCE_MARKER = ".video_source.json"
+
+
+def new_video_tmp(d: Path) -> Path:
+    """Return a unique hidden temp path in the lecture dir, `.video.<random>.tmp`, for a video being placed before it is renamed to video.mp4."""
+
+    # Unique so two concurrent placements in one lecture never share a file; nothing ever deletes a stray one blindly.
+    return d / f".video.{secrets.token_hex(6)}.tmp"
+
 
 # Lecture-dir dotfiles: one line of LaTeX warning text for summary.pdf, and the generated
 # LaTeX the backend keeps only on a hard render failure. Dotfiles never become tree rows.

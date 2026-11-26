@@ -27,7 +27,7 @@ itself: every mutation route tags `tree` on success except the raw file writes a
 broadcast nothing: `PUT …/video`, `POST …/materials`, `PUT …/files/{name}`, `DELETE …/files/{name}`,
 `PUT …/figures/{name}`, `DELETE …/figures`, `PUT …/overview/files/{name}` and
 `PATCH …/overview/meta`. Their caller writes several files per job, so it sends its
-own `tree` notify once its writes are done and a multi-file write pings once.
+own `tree` notify once its writes are done and a multi-file write pings once. `POST …/video/import` is the only writer of its job, so it tags `tree` itself, once, whenever the wipe started (success, or a failure after it).
 `PATCH /courses/{course}/source_url` broadcasts nothing and nobody notifies for it: its only caller is the
 frontend, which refetches the course tree itself after the call. `POST /config` tags
 `settings` + `tree` when it applies a new `data_root` or `course_structure`.
