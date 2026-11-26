@@ -1,10 +1,13 @@
 import Tooltip from '@/shared/components/Tooltip'
-import { useId, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ServiceError from '@/shared/components/ServiceError'
 import { createCourse } from '@/services/database'
+import { runtimeBridge } from '@/services/runtime'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import { jobState, useJobById } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { ManualEntry } from '@/features/downloads/contexts/ManualDownloadsContext'
 import {
@@ -14,6 +17,22 @@ import {
   useManualDraft,
   useManualEntries,
 } from '@/features/downloads/contexts/ManualDownloadsContext'
+import {
+  claimedByImports,
+  startImport,
+  useImportEntries,
+} from '@/features/downloads/contexts/ManualImportsContext'
+import {
+  classifyDrop,
+  importBlocker,
+  importRoute,
+  pathOf,
+  type ImportBlocker,
+  type ImportMode,
+} from '@/features/downloads/utils/fileImport'
+import ManualFileSource, { useRejectedDrop } from './ManualFileSource'
+import ManualImportList from './ManualImportList'
+import ManualImportAnnouncer from './ManualImportAnnouncer'
 import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
 import {
   manualStatus,
@@ -42,13 +61,66 @@ import './ManualDownload.css'
 // The Downloads page's Manual tab: a "paste a link" form for any video that opens without signing in.
 // auto routes it (Moodle-site links under the Moodle lock, others through yt-dlp); see docs/DOWNLOADS.md.
 export default function ManualDownload() {
+  const { source } = useManualDraft()
+  const rejected = useRejectedDrop()
+  const [dragging, setDragging] = useState(false)
+  const depth = useRef(0)
+
+  // Electron would otherwise navigate to a file dropped anywhere; the real drop handling stays on
+  // the section, so the sidebar's lecture rows keep their own.
+  useEffect(() => {
+    const stop = (e: DragEvent) => e.preventDefault()
+    document.addEventListener('dragover', stop)
+    document.addEventListener('drop', stop)
+    return () => {
+      document.removeEventListener('dragover', stop)
+      document.removeEventListener('drop', stop)
+    }
+  }, [])
+
+  const hasFiles = (e: React.DragEvent) => e.dataTransfer.types.includes('Files')
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault()
+    depth.current = 0
+    setDragging(false)
+    const verdict = classifyDrop(Array.from(e.dataTransfer.files))
+    if (verdict.kind === 'file') updateManualDraft({ source: 'file', file: verdict.file })
+    else rejected(verdict)
+  }
+
   return (
-    <section className="manual-download">
-      <p className="manual-download-warning">
-        <Trans>Works only for video links, and only if they open without signing in.</Trans>
-      </p>
+    <section
+      className="manual-download"
+      onDragEnter={(e) => {
+        if (!hasFiles(e)) return
+        depth.current++
+        setDragging(true)
+      }}
+      onDragOver={(e) => {
+        if (hasFiles(e)) e.preventDefault()
+      }}
+      onDragLeave={(e) => {
+        if (!hasFiles(e)) return
+        depth.current = Math.max(0, depth.current - 1)
+        if (depth.current === 0) setDragging(false)
+      }}
+      onDrop={onDrop}
+    >
+      {source === 'link' && (
+        <p className="manual-download-warning">
+          <Trans>Works only for video links, and only if they open without signing in.</Trans>
+        </p>
+      )}
       <ManualForm />
+      <ManualImportList />
       <ManualJobList />
+      <ManualImportAnnouncer />
+      {dragging && (
+        <div className="manual-download-dropveil">
+          <Trans>Drop the .mp4 to upload it</Trans>
+        </div>
+      )}
     </section>
   )
 }
@@ -59,7 +131,12 @@ function ManualForm() {
   const { courses } = useCourseTreeContext()
   const entries = useManualEntries()
   // In the module store, so a trip to another page keeps what was typed; null fields follow defaults.
-  const { url, course: typed, kind: picked, name } = useManualDraft()
+  const { source, file, url, course: typed, kind: picked, name } = useManualDraft()
+  const imports = useImportEntries()
+  const { status: runner } = useRunnerStatus()
+  const [importConfirm, setImportConfirm] = useState<{ mode: ImportMode; lecture: string } | null>(
+    null,
+  )
   const newCoursesLecturesOnly = useNewCoursesLecturesOnly()
   const [pending, setPending] = useState(false)
   const [confirm, setConfirm] = useState(false)
@@ -68,13 +145,39 @@ function ManualForm() {
   const courseText = typed ?? courses[0]?.name ?? ''
   const existing = matchCourse(courses, courseText)
   const course = existing ?? courseText.trim()
-  const claimed = entries.map((e) => ({ ...e.target, kind: e.request.kind }))
+  const claimed = [
+    ...entries.map((e) => ({ ...e.target, kind: e.request.kind })),
+    ...claimedByImports(imports),
+  ]
   // A lectures-only course hides the toggle: a new item is a lecture, an existing recitation's name its own.
   const onlyLectures = !!course && lecturesOnly(courses, course, newCoursesLecturesOnly)
   const suggestKind = onlyLectures ? 'lecture' : picked
   const lecture = name ?? (course ? suggestManualName(courses, course, suggestKind, claimed) : '')
   const kind = onlyLectures ? lecturesOnlyKind(courses, course, lecture.trim()) : picked
-  const locked = lockedFor(url)
+  const locked = source === 'link' && lockedFor(url)
+  // The File's absolute path through the desktop bridge; '' in a plain browser.
+  const path = useMemo(() => (file ? pathOf(file, runtimeBridge()) : ''), [file])
+  const importBusy = isLectureRenameLocked(runner, course, lecture.trim(), kind)
+  const blockerFor = (mode: ImportMode) =>
+    importBlocker({
+      hasFile: !!file,
+      course,
+      name: lecture,
+      busy: importBusy,
+      route: importRoute(mode, path),
+    })
+  const blockerText = (b: ImportBlocker | null) =>
+    b === 'no-file'
+      ? t`Choose an .mp4 file first`
+      : b === 'no-course'
+        ? t`Choose a course first`
+        : b === 'no-name'
+          ? t`Enter a name first`
+          : b === 'busy'
+            ? t`Can't replace the video while it's being processed or waiting in line`
+            : b === 'desktop-only'
+              ? t`Moving needs the desktop app`
+              : undefined
   const ready = !!url.trim() && !!course && !!lecture.trim() && !pending && !locked
   const downloadBlocker = !url.trim()
     ? t`Paste a video link first`
@@ -110,6 +213,32 @@ function ManualForm() {
     setPending(false)
   }
 
+  async function submitImport(mode: ImportMode, name: string) {
+    if (!file) return
+    setPending(true)
+    if (!existing) {
+      try {
+        await createCourse(course)
+      } catch (err) {
+        toastDownloadError(course, err)
+        setPending(false)
+        return
+      }
+    }
+    startImport({ file, mode, course, lecture: name, kind })
+    // Move spends the file; Copy keeps it for another copy. The entry holds its own File for Retry.
+    updateManualDraft(mode === 'move' ? { name: null, file: null } : { name: null })
+    setPending(false)
+  }
+
+  function onImport(mode: ImportMode) {
+    if (pending || blockerFor(mode)) return
+    const name = lecture.trim()
+    if (overwritesVideo({ media: 'video' }, name, kind, courses, course)) {
+      setImportConfirm({ mode, lecture: name })
+    } else void submitImport(mode, name)
+  }
+
   // A video PUT wipes the lecture's transcript and summary, so replacing one confirms first.
   function onDownload() {
     if (!ready) return
@@ -119,21 +248,41 @@ function ManualForm() {
 
   return (
     <div className="manual-download-form">
-      <div className="manual-download-field manual-download-url">
-        <label className="manual-download-label" htmlFor={`${id}-url`}>
-          <Trans>Video link</Trans>
-        </label>
-        <input
-          id={`${id}-url`}
-          className="source-row-input"
-          value={url}
-          onChange={(e) => updateManualDraft({ url: e.target.value })}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') onDownload()
-          }}
-          dir="auto"
-        />
+      <div className="manual-download-field manual-download-source" role="group">
+        <div className="mode-toggle mode-toggle--light">
+          <button
+            className={source === 'link' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+            onClick={() => updateManualDraft({ source: 'link' })}
+          >
+            <Trans>Link</Trans>
+          </button>
+          <button
+            className={source === 'file' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+            onClick={() => updateManualDraft({ source: 'file' })}
+          >
+            <Trans>File from computer</Trans>
+          </button>
+        </div>
       </div>
+      {source === 'file' ? (
+        <ManualFileSource file={file} onPick={(f) => updateManualDraft({ file: f })} />
+      ) : (
+        <div className="manual-download-field manual-download-url">
+          <label className="manual-download-label" htmlFor={`${id}-url`}>
+            <Trans>Video link</Trans>
+          </label>
+          <input
+            id={`${id}-url`}
+            className="source-row-input"
+            value={url}
+            onChange={(e) => updateManualDraft({ url: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onDownload()
+            }}
+            dir="auto"
+          />
+        </div>
+      )}
       <div className="manual-download-field manual-download-course">
         <label className="manual-download-label" htmlFor={`${id}-course`}>
           <Trans>Course</Trans>
@@ -181,11 +330,47 @@ function ManualForm() {
           dir="auto"
         />
       </div>
-      <Tooltip content={downloadBlocker}>
-        <button className="btn btn--primary" onClick={onDownload} disabled={!ready}>
-          {pending ? <span className="recording-spinner" /> : t`Download`}
-        </button>
-      </Tooltip>
+      {source === 'file' ? (
+        <div className="manual-download-actions">
+          <Tooltip content={blockerText(blockerFor('copy'))}>
+            <button
+              className="btn btn--primary"
+              onClick={() => onImport('copy')}
+              disabled={pending || !!blockerFor('copy')}
+            >
+              {pending ? <span className="recording-spinner" /> : t`Copy`}
+            </button>
+          </Tooltip>
+          <Tooltip content={blockerText(blockerFor('move'))}>
+            <button
+              className="btn btn--secondary"
+              onClick={() => onImport('move')}
+              disabled={pending || !!blockerFor('move')}
+            >
+              <Trans>Move</Trans>
+            </button>
+          </Tooltip>
+        </div>
+      ) : (
+        <Tooltip content={downloadBlocker}>
+          <button className="btn btn--primary" onClick={onDownload} disabled={!ready}>
+            {pending ? <span className="recording-spinner" /> : t`Download`}
+          </button>
+        </Tooltip>
+      )}
+
+      {importConfirm && (
+        <ConfirmModal
+          message={t`Replace the existing video in "${importConfirm.lecture}"?`}
+          warning={t`Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept.`}
+          onConfirm={() => {
+            const { mode, lecture: name } = importConfirm
+            setImportConfirm(null)
+            void submitImport(mode, name)
+          }}
+          onCancel={() => setImportConfirm(null)}
+        />
+      )}
 
       {confirm && (
         <ConfirmModal

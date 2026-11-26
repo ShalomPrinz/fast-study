@@ -325,6 +325,21 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   biu_video_missing: msg({
     message: "This lecture's video is no longer available in BIU's video store.",
   }),
+  // Importing a local .mp4 into a lecture; `file` is the source's file name.
+  import_source_missing: msg({
+    message: "The file \u201c{file}\u201d couldn't be found. Choose it again.",
+  }),
+  import_source_not_a_file: msg({ message: '\u201c{file}\u201d is not a file.' }),
+  import_source_not_mp4: msg({ message: '\u201c{file}\u201d is not an .mp4 file.' }),
+  import_source_unreadable: msg({ message: "The file \u201c{file}\u201d couldn't be read." }),
+  import_source_is_target: msg({ message: "\u201c{file}\u201d is already this lecture's video." }),
+  // `kept` is the hidden temporary file in the lecture folder that now holds the original.
+  import_source_stranded: msg({
+    message:
+      "Moving the video failed. The original is kept in the lecture's folder as \u201c{kept}\u201d.",
+  }),
+  // The OS's own error text rides in `detail`.
+  video_import_failed: msg({ message: "Couldn't import \u201c{file}\u201d." }),
   zoom_no_media_request: msg({
     message:
       'No video was captured on that Zoom page. The passcode or the player may need a manual start.',

@@ -62,6 +62,9 @@ declare global {
       errorReports?: boolean
       // The native folder dialog, opened at `defaultPath`; `null` on cancel. Absent on older launchers.
       pickFolder?: (defaultPath?: string) => Promise<string | null>
+      // The picked or dropped File's absolute path, '' when it has none; synchronous, never throws.
+      // Absent in a plain browser and on older launchers.
+      pathForFile?: (file: File) => string
       // OS sleep/wake pushed by the launcher; push-only, no snapshot. Absent on older launchers.
       power?: { subscribe: (callback: (state: PowerState) => void) => () => void }
       // The folder Chrome loads the extension unpacked from; `reveal()` opens it and always resolves.

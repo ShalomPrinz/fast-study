@@ -105,6 +105,16 @@ first refetch, or done once its video is in the tree — a `done` job is evicted
 `download_auth_failed` reads "this link needs a login" instead of "reconnect the account"
 (`manualFailureHeadline`, through `ServiceError`'s `headline`), in the card and the toast alike.
 
+A local-file import is not a job: `ManualImportsContext` is a module store of this session's imports (`running`,
+`done`, `error`, `cancelled`), so one runs on while the user is on other pages, and `ManualImportList` renders them
+newest first beside the download cards. A running card shows `<name> · <course>`, the Copying/Moving chip, the file
+name, a determinate bar with "45% · 540 MB of 1.2 GB" and a ghost Cancel (aborts the request); done is the
+`Imported ✓` chip, plus a notice when a Move could not remove the original; failed is a `ServiceError` and Retry,
+which re-runs the same entry. `importRoute` picks the transport: with a path off the bridge, `importVideo` (by path,
+progress from the NDJSON answer); without one, Copy goes through `uploadVideoWithProgress`. Either way the arrival
+is reported to the backend afterwards, and running and done imports claim their names for `suggestManualName`.
+`ManualImportAnnouncer` is a polite live region for start, done and failure.
+
 ## Folder jobs
 
 A general-mode job (`dest: 'folder'`, the popup's "General video") lands in a computer folder, not a

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { uploadVideo, deleteFile, renameCourse, renameLecture } from './database'
-import type { RequestError } from './http'
+import { importVideo, uploadVideo, deleteFile, renameCourse, renameLecture } from './database'
+import { ConnectionError, type RequestError } from './http'
 
 // Minimal stand-ins for the parts of Response the http client touches.
 function noContent(): Response {
@@ -117,5 +117,25 @@ describe('renameLecture and renameCourse', () => {
 
     stubFetch(() => answered({ name: 'x two' }))
     await expect(renameCourse('C', 'x: two')).resolves.toBe('x two')
+  })
+})
+
+describe('importVideo', () => {
+  it('maps a body read that dies mid-stream to a ConnectionError', async () => {
+    const body = new ReadableStream({
+      pull() {
+        throw new TypeError('network error')
+      },
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, status: 200, body }) as unknown as Response),
+    )
+    await expect(
+      importVideo('C', 'L', { path: '/v.mp4', mode: 'copy' }, 'lecture', {
+        signal: new AbortController().signal,
+        onProgress: () => {},
+      }),
+    ).rejects.toBeInstanceOf(ConnectionError)
   })
 })

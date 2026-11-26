@@ -1,5 +1,19 @@
-/* The Manual tab's body: the note, the form, then this session's manual jobs. */
+/* The Manual tab's body: the note, the form, then this session's manual jobs. Its column stretches to the
+   page body so the whole tab, not just the form's height, is the drop target. */
+.page-body:has(> .page-column > .manual-download) {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-column:has(> .manual-download) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .manual-download {
+  position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -22,6 +36,7 @@
   gap: var(--space-5);
 }
 
+.manual-download-source,
 .manual-download-url,
 .manual-download-course {
   grid-column: 1 / -1;
@@ -50,7 +65,8 @@
   font-size: var(--fs-body);
 }
 
-.manual-download-form > .btn {
+.manual-download-form > .btn,
+.manual-download-actions {
   grid-column: 1 / -1;
   justify-self: center;
   padding-inline: var(--space-8);
@@ -81,4 +97,68 @@
 .manual-download-error {
   font-size: var(--fs-meta);
   color: var(--danger);
+}
+
+/* Copy and Move side by side, centred under the form. */
+.manual-download-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.manual-download-actions .btn {
+  padding-inline: var(--space-8);
+  font-size: var(--fs-row);
+}
+
+.manual-download-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border: 2px dashed var(--accent-line);
+  border-radius: var(--r-lg);
+  background: var(--accent-soft);
+  font-size: var(--fs-row);
+  color: var(--text-3);
+}
+
+.manual-download-file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  font-size: var(--fs-row);
+}
+
+.manual-download-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manual-download-file-size {
+  flex-shrink: 0;
+  color: var(--text-3);
+}
+
+/* Shown while a file is dragged over the tab; pointer-events off so it never steals the drop. */
+.manual-download-dropveil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--accent);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  font-size: var(--fs-section);
+  color: var(--accent-ink);
+  pointer-events: none;
+}
+
+.manual-download-note {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
 }

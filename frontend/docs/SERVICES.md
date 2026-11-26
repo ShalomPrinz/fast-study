@@ -47,6 +47,10 @@ Everything filesystem-backed. `materialUrl`/`deleteMaterial`/`setMaterialAttach`
 comes from the tree rather than the fixed `FileName` set. `uploadVideo` announces the arrival to the
 backend (`reportVideoArrived`) itself, because auto-run is backend policy and a caller that only stored
 the bytes would lose it; a failed report is logged, never rethrown, since the bytes are stored.
+`importVideo` copies or moves a local .mp4 by absolute path (`POST …/video/import`), resolving on the NDJSON
+stream's final line with `{originalKept}` and reporting progress from the lines before it (`shared/utils/videoImportStream.ts`);
+`uploadVideoWithProgress` is `uploadVideo` over XHR, since `fetch` has no upload progress, mapping errors as the client does.
+Neither reports the arrival: the import store does.
 `setLectureDone` is one call for both directions: `PUT` marks a lecture studied, `DELETE` reverts it. `setAssignmentDone` does the same for an assignment (`…/assignments/{a}/done`).
 
 ## `runtime.ts` — the Electron preload bridge
@@ -64,6 +68,8 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **`open`** — a bridge without `open` (or without `open.file` / `open.external`) counts as no bridge, which is the browser-dev test and the harness's `services`-only stub; its `fileWith` and `reveal`, and the top-level `platform`, are optional (older launcher). `services` (`onStopped`, `restart`) feeds `serviceHealth.ts`; absent in dev.
 - **`canStoreApiKeys`**, `defaultDataRoot` and `pickFolder` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
   the OS `locale` ([I18N.md](I18N.md)).
+- **`pathForFile`** — optional `(file: File) => string`, the picked or dropped file's absolute path, `''` when it has none. It is
+  absent in a plain browser and on an older launcher, which reads as no path: Copy uploads the bytes and Move is unavailable.
 - **`extension`** — optional `{ path, reveal() }`, the Chrome extension's folder for the Downloads page's Extension tab ([EXTENSION.md](EXTENSION.md)).
 - **`power`** — optional `subscribe(cb)` pushing `'suspend'`/`'resume'`; `runtime.ts` subscribes once at load and `isQuiet(last, now)`
   (pure) decides the quiet window: suspend (capped at 60 s, so a missed resume cannot mute an outage) until 5 s after resume, a lone resume included. No bridge or no `power` means never quiet.
