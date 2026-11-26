@@ -126,7 +126,7 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
             >
               <span className="course-head-title">
                 <span className="course-switch-icon">
-                  <Icon icon="chevrons-up-down" />
+                  <Icon icon="switch" />
                 </span>
                 <span className="course-name" dir="auto">
                   {pendingName ?? course.name}

@@ -72,6 +72,7 @@
   --space-6: 18px;
   --space-7: 26px;
   --space-8: 40px;
+  --icon-box: 24px; /* round hit area around an icon; also the header title's line height */
 
   --r-sm: 8px;
   --r: 9px;

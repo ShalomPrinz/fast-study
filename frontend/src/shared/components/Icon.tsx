@@ -18,7 +18,7 @@ export type IconName =
   | 'chevron-start'
   | 'chevron-end'
   | 'chevron-down'
-  | 'chevrons-up-down'
+  | 'switch'
   | 'arrow-start'
   | 'arrow-end'
   | 'warning'
@@ -283,11 +283,11 @@ const ChevronDownIcon = () => (
   </svg>
 )
 
-// Vertical, so it needs no mirroring; marks a control that swaps between a set of options.
-const ChevronsUpDownIcon = () => (
+// Two-way arrows are symmetric, so a Hebrew page does not mirror them.
+const SwitchIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
-      d="M4.5 6.5L8 3l3.5 3.5M4.5 9.5L8 13l3.5-3.5"
+      d="M5 3L2 6l3 3M2 6h12M11 13l3-3-3-3M14 10H2"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"
@@ -427,7 +427,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   'chevron-start': ChevronStartIcon,
   'chevron-end': ChevronEndIcon,
   'chevron-down': ChevronDownIcon,
-  'chevrons-up-down': ChevronsUpDownIcon,
+  switch: SwitchIcon,
   'arrow-start': ArrowStartIcon,
   'arrow-end': ArrowEndIcon,
   warning: WarningIcon,

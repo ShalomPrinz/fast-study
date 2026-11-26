@@ -5,11 +5,18 @@
   margin: 0;
 }
 
-.course-add-btn {
-  margin-block-start: var(--space-1);
+.course-header {
+  gap: var(--space-2);
 }
 
+/* Centred on the title button, whatever its height. */
+.course-header .course-add-btn {
+  align-self: center;
+}
+
+/* Roomy hover box; the inline padding keeps the content on the bar's inset, so the box stays inside the pane. */
 .course-toggle--head {
+  padding-block: var(--space-2);
   padding-inline: var(--tree-bar-inset);
 }
 
@@ -17,6 +24,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  line-height: var(--icon-box);
   font-size: var(--fs-course);
   font-weight: 700;
 }
@@ -35,8 +43,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 24px;
-  block-size: 24px;
+  inline-size: var(--icon-box);
+  block-size: var(--icon-box);
   flex-shrink: 0;
   border-radius: 50%;
   color: var(--text-2);
