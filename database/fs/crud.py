@@ -158,15 +158,21 @@ def rename_lecture(course: str, old: str, new: str, kind: str) -> str:
     return target.name
 
 
-def prepare_video_dir(course: str, lecture: str, kind: str) -> Path:
-    """Validate the target of a fresh video and return its lecture dir, made on demand (the course never)."""
+def check_video_target(course: str, lecture: str, kind: str) -> Path:
+    """Validate the target of a fresh video and return its lecture dir path, creating nothing."""
 
     # The downloader uploads here for brand-new lectures, so the create path's name check applies.
     check_not_reserved(lecture)
     # An upload still in flight when its course was renamed would otherwise recreate the old name as a ghost course.
     if not course_dir(course).is_dir():
         raise CourseNotFound(f"course not found: {course}", course=course)
-    d = lecture_dir(course, lecture, kind)
+    return lecture_dir(course, lecture, kind)
+
+
+def prepare_video_dir(course: str, lecture: str, kind: str) -> Path:
+    """Validate the target of a fresh video and return its lecture dir, made on demand (the course never)."""
+
+    d = check_video_target(course, lecture, kind)
     d.mkdir(parents=True, exist_ok=True)
     return d
 

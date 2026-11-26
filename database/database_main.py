@@ -50,6 +50,7 @@ from fs.paths import (
 )
 from logging_setup import setup_logging
 from sentry_sdk.transport import HttpTransport
+from starlette.concurrency import run_in_threadpool
 
 setup_logging()
 log = logging.getLogger("db")
@@ -310,14 +311,41 @@ async def put_video(
     kind: str = Query("lecture"),
     source: str | None = Query(None),
 ):
-    """Upload video.mp4 from a raw body, wiping derived artifacts (materials stay); ?source= records its discovery ref."""
+    """Upload video.mp4 from a raw body streamed to a temp file, wiping derived artifacts (materials stay); ?source= records its discovery ref."""
 
+    tmp = None
     try:
-        data = await request.body()
-        crud.write_video(course, lecture, kind, data, source)
+        try:
+            # Refused before the first body byte, so a doomed upload fails fast; the wipe re-probes after the body.
+            d = crud.check_video_target(course, lecture, kind)
+            crud.check_video_wipe_unlocked(d)
+        except Exception as refusal:
+            # Unread body at close makes h11 reset the connection and the coded reply is lost, so discard it first.
+            async for _ in request.stream():
+                pass
+            return _failure(refusal, 400, "file_write_failed", {"file": "video.mp4"})
+        # Staged beside the lecture, not in it, so an upload that never completes creates no lecture dir to clean up or race.
+        tmp = paths.new_video_tmp(paths.course_dir(course))
+        with open(tmp, "wb") as out:
+            async for chunk in request.stream():
+                # Off the loop per chunk, so a multi-GB body never stalls other requests.
+                await run_in_threadpool(out.write, chunk)
+        d = await run_in_threadpool(crud.prepare_video_dir, course, lecture, kind)
+        await run_in_threadpool(crud.place_video, d, tmp)
+        tmp = None
+        if source:
+            crud.write_video_source(d, source)
         return Response(status_code=204)
     except Exception as e:
+        # A mid-body disconnect lands here too; the peer is gone, so the coded body is for the log and tests only.
         return _failure(e, 400, "file_write_failed", {"file": "video.mp4"})
+    finally:
+        # Cleanup never replaces the real outcome.
+        if tmp is not None:
+            try:
+                tmp.unlink(missing_ok=True)
+            except OSError:
+                log.warning("video upload: temp cleanup failed")
 
 
 def _ndjson(obj: dict) -> str:
