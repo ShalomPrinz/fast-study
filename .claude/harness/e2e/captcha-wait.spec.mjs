@@ -67,8 +67,12 @@ test('a videostream download waits for the captcha and lands once it is solved',
     row.locator('.recording-name-input').fill(lecture),
   );
   await expectContinued(page, card);
-  await expect(card).toHaveClass(/recording-card--downloaded/, { timeout: 15_000 });
-  expect((await treeLecture(COURSE, lecture)).files['video.mp4'].exists).toBe(true);
+  // The landed row leaves the New list, so the card can vanish before a class check sees it.
+  await expect
+    .poll(async () => (await treeLecture(COURSE, lecture))?.files['video.mp4']?.exists, {
+      timeout: 15_000,
+    })
+    .toBe(true);
 });
 
 test('a course PDF download waits for the captcha and attaches once it is solved', async ({
@@ -79,15 +83,18 @@ test('a course PDF download waits for the captcha and attaches once it is solved
     row.getByLabel('Attach material to').fill(lecture),
   );
   await expectContinued(page, card);
-  await expect(card.locator('.recording-material-count')).toHaveText('1 material', {
-    timeout: 15_000,
-  });
-  const { materials } = (
-    await call(
-      `${DATABASE}/courses/${COURSE}/lectures/${encodeURIComponent(lecture)}/materials?kind=lecture`,
+  // The landed row leaves the New list, so the database is the proof, not the row's badge.
+  await expect
+    .poll(
+      async () =>
+        (
+          await call(
+            `${DATABASE}/courses/${COURSE}/lectures/${encodeURIComponent(lecture)}/materials?kind=lecture`,
+          )
+        ).body.materials?.map((m) => m.name),
+      { timeout: 15_000 },
     )
-  ).body;
-  expect(materials.map((m) => m.name)).toEqual(['material.pdf']);
+    .toEqual(['material.pdf']);
 });
 
 test.describe('with nobody to solve it', () => {
