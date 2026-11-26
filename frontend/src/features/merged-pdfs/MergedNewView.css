@@ -89,3 +89,7 @@
   padding: var(--space-4) var(--space-8);
   font-size: var(--fs-row);
 }
+
+.merged-new-required {
+  color: var(--danger);
+}

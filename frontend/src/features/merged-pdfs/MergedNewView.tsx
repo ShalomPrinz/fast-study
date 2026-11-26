@@ -99,11 +99,17 @@ function MergedNewBody({ course, node }: { course: string; node: Course }) {
           <div className="merged-new-title">
             <label className="merged-new-label" htmlFor="merged-title">
               <Trans>Title</Trans>
+              {title.trim() === '' && (
+                <span className="merged-new-required" aria-hidden="true">
+                  {' *'}
+                </span>
+              )}
             </label>
             <input
               id="merged-title"
               className="settings-input"
               dir="auto"
+              aria-required="true"
               value={title}
               placeholder={t`Merged summary title`}
               onChange={(e) => setTitle(e.target.value)}
