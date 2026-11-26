@@ -1,6 +1,5 @@
-/* The pane doesn't scroll — the tree nav and the More courses panel scroll on their own, with the bar between
-   them, so the footer stays put. The block-start inset sits outside the scrollers, so a scrolled list still never
-   runs flush against the window's top edge. */
+/* The pane doesn't scroll — the nav does, under the sticky course header, so the footer stays put. The block-start
+   inset sits outside the scroller, so a scrolled list still never runs flush against the window's top edge. */
 .tree-pane {
   /* Where a progress bar starts inside its row, so the header's and the sections' line up. */
   --tree-bar-inset: 6px;

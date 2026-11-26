@@ -60,7 +60,7 @@
   white-space: nowrap;
 }
 
-/* Right-aligned `done/total` of a course in the More courses panel. */
+/* Right-aligned `done/total` of a course in the courses list. */
 .course-count {
   margin-inline-start: auto;
   flex-shrink: 0;
@@ -275,4 +275,14 @@
 
 .lecture-placeholder .progress-label {
   color: var(--text-2);
+}
+
+/* Text for assistive tech only: keeps a button's accessible name a superset of its visible text. */
+.tree-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

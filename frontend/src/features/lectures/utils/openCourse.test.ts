@@ -2,10 +2,14 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   firstCourseName,
   nextWanted,
-  readMoreOpen,
+  readCoursesView,
   readOpenCourse,
   resolveOpenCourse,
-  writeMoreOpen,
+  scrollTag,
+  showsCoursesView,
+  treeScrollTop,
+  viewFocusSelectors,
+  writeCoursesView,
   writeOpenCourse,
 } from './openCourse'
 
@@ -58,20 +62,20 @@ describe('open course memory', () => {
   })
 })
 
-describe('more courses memory', () => {
+describe('courses view memory', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it('starts collapsed and round-trips', () => {
+  it('starts on the course view and round-trips', () => {
     const store = new Map<string, string>()
     vi.stubGlobal('localStorage', {
       getItem: (k: string) => store.get(k) ?? null,
       setItem: (k: string, v: string) => void store.set(k, v),
     })
-    expect(readMoreOpen()).toBe(false)
-    writeMoreOpen(true)
-    expect(readMoreOpen()).toBe(true)
-    writeMoreOpen(false)
-    expect(readMoreOpen()).toBe(false)
+    expect(readCoursesView()).toBe(false)
+    writeCoursesView(true)
+    expect(readCoursesView()).toBe(true)
+    writeCoursesView(false)
+    expect(readCoursesView()).toBe(false)
   })
 
   it('survives blocked storage', () => {
@@ -83,8 +87,8 @@ describe('more courses memory', () => {
         throw new Error('blocked')
       },
     })
-    expect(() => writeMoreOpen(true)).not.toThrow()
-    expect(readMoreOpen()).toBe(false)
+    expect(() => writeCoursesView(true)).not.toThrow()
+    expect(readCoursesView()).toBe(false)
   })
 })
 
@@ -110,5 +114,55 @@ describe('firstCourseName', () => {
 
   it('takes the first non-empty name', () => {
     expect(firstCourseName('', 'b', 'c')).toBe('b')
+  })
+})
+
+describe('showsCoursesView', () => {
+  it('keeps the saved view without a route course', () => {
+    expect(showsCoursesView(null, true)).toBe(true)
+    expect(showsCoursesView(null, false)).toBe(false)
+  })
+
+  it('forces the course view when the route names a course', () => {
+    expect(showsCoursesView('a', true)).toBe(false)
+  })
+})
+
+describe('treeScrollTop', () => {
+  it('restores the saved offset for the same course', () => {
+    expect(treeScrollTop({ course: 'a', top: 120 }, 'a')).toBe(120)
+  })
+
+  it('starts a different course at the top', () => {
+    expect(treeScrollTop({ course: 'a', top: 120 }, 'b')).toBe(0)
+  })
+})
+
+describe('scrollTag', () => {
+  it('tags a renamed course still open under its old name with the new one', () => {
+    expect(scrollTag('old', { name: 'new', was: 'old' }, { course: 'new' })).toBe('new')
+  })
+
+  it('does not move the tag for a new course, whose saved tag was not moved', () => {
+    expect(scrollTag('cur', { name: 'created', was: 'cur' }, { course: 'cur' })).toBe('cur')
+  })
+
+  it('tags with the open name otherwise', () => {
+    expect(scrollTag('a', { name: 'a' }, { course: 'a' })).toBe('a')
+    expect(scrollTag('a', { name: 'b' }, { course: 'a' })).toBe('a')
+    expect(scrollTag('new', { name: 'new', was: 'old' }, { course: 'new' })).toBe('new')
+  })
+})
+
+describe('viewFocusSelectors', () => {
+  it('prefers the current row in the list, then the back button', () => {
+    expect(viewFocusSelectors(true)).toEqual([
+      '.other-course[aria-current]',
+      '.course-toggle--head',
+    ])
+  })
+
+  it('targets the header button in the tree', () => {
+    expect(viewFocusSelectors(false)).toEqual(['.course-toggle--head'])
   })
 })

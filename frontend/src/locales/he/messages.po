@@ -150,7 +150,7 @@ msgstr "{0} מותקן — אפשר להוריד הקלטות."
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:143
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:141
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:40
 msgid "{0} of {1} studied"
 msgstr "{0} מתוך {1} נלמדו"
@@ -574,8 +574,8 @@ msgstr "הוספת הרצאה או תרגול"
 msgid "Add figures to the summary"
 msgstr "הוספת איורים לסיכום"
 
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:152
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:153
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:154
 msgid "Add lecture"
 msgstr "הוספת הרצאה"
 
@@ -603,6 +603,10 @@ msgstr "הכול"
 #: src/features/runner/RunnerView.tsx:321
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
+
+#: src/features/lectures/sidebar/CourseList.tsx:36
+msgid "All courses"
+msgstr "כל הקורסים"
 
 #: src/features/lectures/DocEditor.tsx:407
 msgid "All edits will be discarded and the original AI summary restored."
@@ -745,6 +749,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "זמין אחרי שתבחר חומר מהקורס או תיצור מדריך."
 
 #: src/features/lectures/DocEditor.tsx:268
+#: src/features/lectures/sidebar/CourseList.tsx:25
 #: src/features/tour/TourCallout.tsx:81
 msgid "Back"
 msgstr "חזרה"
@@ -752,6 +757,10 @@ msgstr "חזרה"
 #: src/features/settings/components/ApiKeyField.tsx:61
 msgid "Back in the key window, click \"Create key\"."
 msgstr "בחזרה בחלון המפתח, לחץ על \"Create key\"."
+
+#: src/features/lectures/sidebar/CourseList.tsx:25
+msgid "Back to {openName}"
+msgstr "חזרה אל {openName}"
 
 #: src/features/settings/utils/moodleSites.ts:13
 msgid "Bar-Ilan University"
@@ -790,7 +799,7 @@ msgstr "אין חיבור למוריד"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "אי אפשר לשנות את השם בזמן עיבוד או המתנה בתור"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:116
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:121
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הורדה או יצירה של תוכן בו"
 
@@ -1233,7 +1242,7 @@ msgstr "קורסים והרצאות"
 
 #: src/App.tsx:41
 #: src/features/downloads/DownloadsView.tsx:385
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:88
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:127
 #: src/features/search/SearchView.tsx:223
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1993,7 +2002,7 @@ msgstr "הרצאות בלבד, בכל הקורסים"
 msgid "Lectures only, in the courses I choose"
 msgstr "הרצאות בלבד, בקורסים שאבחר"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:139
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:137
 msgid "Lectures you marked done"
 msgstr "הרצאות שסיימת"
 
@@ -2017,7 +2026,7 @@ msgstr "טעינת הגרסה החדשה"
 msgid "Load the FastStudy folder"
 msgstr "טעינת התיקייה של FastStudy"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:84
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:123
 msgid "Loading courses…"
 msgstr "טוען קורסים…"
 
@@ -2094,10 +2103,6 @@ msgstr "Moodle דחה את הבקשה."
 #: src/shared/components/OverflowMenu.tsx:72
 msgid "More actions"
 msgstr "פעולות נוספות"
-
-#: src/features/lectures/sidebar/MoreCourses.tsx:35
-msgid "More courses"
-msgstr "קורסים נוספים"
 
 #: src/features/settings/components/SummaryModelsField.tsx:156
 msgid "Move down"
@@ -2191,7 +2196,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet"
 msgstr "אין עדיין הרצאות"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:92
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:131
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
@@ -3132,6 +3137,11 @@ msgstr "הסיכום מוכן"
 #: src/features/lectures/utils/materialIndicator.ts:33
 msgid "summary with {name}"
 msgstr "סיכום עם {name}"
+
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:147
+msgid "Switch course"
+msgstr "החלפת קורס"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:132
 msgid "Switch on a file or choose course material first"

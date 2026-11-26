@@ -24,7 +24,7 @@
   font-weight: 700;
 }
 
-/* Starts under the name, past the chevron. */
+/* Starts under the name, past the icon. */
 .course-head-sub {
   padding-inline-start: calc(var(--space-3) + 24px);
   padding-block-end: var(--space-1);
@@ -33,8 +33,8 @@
   color: var(--text-2);
 }
 
-/* 24px round hit area around an 18px chevron; closed it points along the reading direction. */
-.course-chevron {
+/* 24px round hit area around the switch icon. */
+.course-switch-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -43,25 +43,30 @@
   flex-shrink: 0;
   border-radius: 50%;
   color: var(--text-2);
-  transition:
-    transform 0.15s,
-    background 0.1s;
+  transition: background 0.1s;
 }
 
-.course-chevron svg {
+.course-switch-icon svg {
   inline-size: 18px;
   block-size: 18px;
 }
 
-.course-toggle:hover .course-chevron {
+.course-toggle:hover .course-switch-icon {
   background: var(--nav-track);
   color: var(--text);
 }
 
-.course-chevron--closed {
-  transform: rotate(-90deg);
+/* The back arrow points along the reading direction's start, which reverses in Hebrew. */
+[dir='rtl'] .course-switch-icon--back svg {
+  transform: scaleX(-1);
 }
 
-.course-chevron--closed:dir(rtl) {
-  transform: rotate(90deg);
+/* Pinned to the top of the scrolling nav; sticking is measured inside the nav's padding, so the negative offset lets
+   the box cover it and no row shows above the header. */
+.pane-sticky-head {
+  position: sticky;
+  inset-block-start: calc(-1 * var(--space-3));
+  z-index: 10;
+  padding-block-start: var(--space-3);
+  background: var(--tree-pane-bg);
 }

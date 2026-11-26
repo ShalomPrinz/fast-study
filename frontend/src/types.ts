@@ -7,12 +7,6 @@ export interface InlineEdit {
   ref: RefObject<HTMLInputElement>
 }
 
-export interface ExpandHandle {
-  isOpen: boolean
-  toggle: () => void
-  open: () => void
-}
-
 export type FileName =
   | 'video.mp4'
   | 'audio.mp3'

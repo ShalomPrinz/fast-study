@@ -18,6 +18,8 @@ export type IconName =
   | 'chevron-start'
   | 'chevron-end'
   | 'chevron-down'
+  | 'chevrons-up-down'
+  | 'arrow-start'
   | 'arrow-end'
   | 'warning'
   | 'check'
@@ -281,6 +283,32 @@ const ChevronDownIcon = () => (
   </svg>
 )
 
+// Vertical, so it needs no mirroring; marks a control that swaps between a set of options.
+const ChevronsUpDownIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M4.5 6.5L8 3l3.5 3.5M4.5 9.5L8 13l3.5-3.5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+// Points backwards along the reading direction, so a Hebrew page must mirror it in CSS.
+const ArrowStartIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M13 8H3.5M7.5 4L3.5 8l4 4"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 // An open book; labels a course.
 const BookIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -399,6 +427,8 @@ const icons: Record<IconName, () => JSX.Element> = {
   'chevron-start': ChevronStartIcon,
   'chevron-end': ChevronEndIcon,
   'chevron-down': ChevronDownIcon,
+  'chevrons-up-down': ChevronsUpDownIcon,
+  'arrow-start': ArrowStartIcon,
   'arrow-end': ArrowEndIcon,
   warning: WarningIcon,
   check: CheckIcon,

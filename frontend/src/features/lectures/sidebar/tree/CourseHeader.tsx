@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useMatch, useNavigate } from 'react-router-dom'
 import { Trans, useLingui } from '@lingui/react/macro'
-import type { ExpandHandle } from '@/types'
 import { renameCourse } from '@/services/database'
+import { toast } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
@@ -24,8 +24,8 @@ import TreeProgress from './TreeProgress'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
 
-// Reflects and mutates the expand state: toggle on click, open when adding a lecture.
-export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
+// Frozen at the top of the pane while the tree scrolls; the title row swaps the pane to the course list.
+export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
   const { t } = useLingui()
   const { course, add, onRenamed } = useCourseGroup()
   const { selected, onSelect } = useSelection()
@@ -92,12 +92,11 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
 
   function startAdding(e: React.MouseEvent) {
     e.stopPropagation()
-    expand.open()
     add.start('lecture')
   }
 
   return (
-    <>
+    <div className="pane-sticky-head">
       <div className="course-header">
         {renaming ? (
           <InlineEditInput
@@ -109,26 +108,25 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             }}
           />
         ) : (
-          <Tooltip
-            placement="inline-end"
-            content={
-              renameLocked
-                ? t`Can't rename while something in this course is being processed, downloaded or generated`
-                : undefined
-            }
-          >
+          <Tooltip placement="inline-end" content={t`Switch course`}>
             <button
               className="course-toggle course-toggle--head"
               onClick={(e) => {
                 if (e.shiftKey) {
                   if (!renameLocked) startRenaming(e)
-                  else e.preventDefault()
-                } else expand.toggle()
+                  else {
+                    e.preventDefault()
+                    toast(
+                      'info',
+                      t`Can't rename while something in this course is being processed, downloaded or generated`,
+                    )
+                  }
+                } else onSwitch()
               }}
             >
               <span className="course-head-title">
-                <span className={`course-chevron${expand.isOpen ? '' : ' course-chevron--closed'}`}>
-                  <Icon icon="chevron-down" />
+                <span className="course-switch-icon">
+                  <Icon icon="chevrons-up-down" />
                 </span>
                 <span className="course-name" dir="auto">
                   {pendingName ?? course.name}
@@ -146,6 +144,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
                   </span>
                 </Tooltip>
               )}
+              <span className="tree-visually-hidden">{t`Switch course`}</span>
             </button>
           </Tooltip>
         )}
@@ -158,6 +157,6 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
         )}
       </div>
       {!renaming && <TreeProgress kind="lecture" done={progress.done} total={progress.total} />}
-    </>
+    </div>
   )
 }

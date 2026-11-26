@@ -150,7 +150,7 @@ msgstr "{0} is installed — downloading is ready to use."
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:143
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:141
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:40
 msgid "{0} of {1} studied"
 msgstr "{0} of {1} studied"
@@ -574,8 +574,8 @@ msgstr "Add a lecture or recitation"
 msgid "Add figures to the summary"
 msgstr "Add figures to the summary"
 
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:152
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:153
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:154
 msgid "Add lecture"
 msgstr "Add lecture"
 
@@ -603,6 +603,10 @@ msgstr "All"
 #: src/features/runner/RunnerView.tsx:321
 msgid "All caught up — every lecture is finished."
 msgstr "All caught up — every lecture is finished."
+
+#: src/features/lectures/sidebar/CourseList.tsx:36
+msgid "All courses"
+msgstr "All courses"
 
 #: src/features/lectures/DocEditor.tsx:407
 msgid "All edits will be discarded and the original AI summary restored."
@@ -745,6 +749,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "Available once you choose course material or generate a guide."
 
 #: src/features/lectures/DocEditor.tsx:268
+#: src/features/lectures/sidebar/CourseList.tsx:25
 #: src/features/tour/TourCallout.tsx:81
 msgid "Back"
 msgstr "Back"
@@ -752,6 +757,10 @@ msgstr "Back"
 #: src/features/settings/components/ApiKeyField.tsx:61
 msgid "Back in the key window, click \"Create key\"."
 msgstr "Back in the key window, click \"Create key\"."
+
+#: src/features/lectures/sidebar/CourseList.tsx:25
+msgid "Back to {openName}"
+msgstr "Back to {openName}"
 
 #: src/features/settings/utils/moodleSites.ts:13
 msgid "Bar-Ilan University"
@@ -790,7 +799,7 @@ msgstr "Can't reach the downloader"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "Can't rename while it's being processed or waiting in line"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:116
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:121
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "Can't rename while something in this course is being processed, downloaded or generated"
 
@@ -1233,7 +1242,7 @@ msgstr "Courses and lectures"
 
 #: src/App.tsx:41
 #: src/features/downloads/DownloadsView.tsx:385
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:88
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:127
 #: src/features/search/SearchView.tsx:223
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1993,7 +2002,7 @@ msgstr "Lectures only, in every course"
 msgid "Lectures only, in the courses I choose"
 msgstr "Lectures only, in the courses I choose"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:139
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:137
 msgid "Lectures you marked done"
 msgstr "Lectures you marked done"
 
@@ -2017,7 +2026,7 @@ msgstr "Load new version"
 msgid "Load the FastStudy folder"
 msgstr "Load the FastStudy folder"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:84
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:123
 msgid "Loading courses…"
 msgstr "Loading courses…"
 
@@ -2094,10 +2103,6 @@ msgstr "Moodle refused the request."
 #: src/shared/components/OverflowMenu.tsx:72
 msgid "More actions"
 msgstr "More actions"
-
-#: src/features/lectures/sidebar/MoreCourses.tsx:35
-msgid "More courses"
-msgstr "More courses"
 
 #: src/features/settings/components/SummaryModelsField.tsx:156
 msgid "Move down"
@@ -2191,7 +2196,7 @@ msgstr "No Lectures"
 msgid "No lectures yet"
 msgstr "No lectures yet"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:92
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:131
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
@@ -3132,6 +3137,11 @@ msgstr "Summary ready"
 #: src/features/lectures/utils/materialIndicator.ts:33
 msgid "summary with {name}"
 msgstr "summary with {name}"
+
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:147
+msgid "Switch course"
+msgstr "Switch course"
 
 #: src/features/lectures/components/AssignmentDocCard.tsx:132
 msgid "Switch on a file or choose course material first"

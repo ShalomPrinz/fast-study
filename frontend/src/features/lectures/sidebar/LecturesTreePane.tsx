@@ -7,22 +7,28 @@ import { ROUTES, routeParam } from '@/shared/utils/routes'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import {
   nextWanted,
+  readCoursesView,
   readOpenCourse,
   resolveOpenCourse,
+  showsCoursesView,
+  writeCoursesView,
   writeOpenCourse,
   type WantedCourse,
   firstCourseName,
+  scrollTag,
+  treeScrollTop,
+  viewFocusSelectors,
 } from '@/features/lectures/utils/openCourse'
 import { PendingUploadProvider } from './PendingUploadModal'
 import NewCourseRow from './NewCourseRow'
-import MoreCourses from './MoreCourses'
+import CourseList from './CourseList'
 import CourseGroup from './tree/CourseGroup'
 import '@/styles/sidebar-tree.css'
 import '@/styles/spinner.css'
 import './LecturesTreePane.css'
 
-// Saved on every scroll rather than on unmount, where the detached nav already reads 0.
-let savedScrollTop = 0
+// Saved on every scroll rather than on unmount, where the detached nav already reads 0; tagged with its course.
+let savedScroll = { course: '', top: 0 }
 
 export default function LecturesTreePane() {
   return (
@@ -52,7 +58,18 @@ function LecturesTreePaneBody() {
     name: routeCourse ?? readOpenCourse(),
   }))
   const open = resolveOpenCourse(courses, want.name, want.was)
-  const others = courses.filter((c) => c !== open)
+  // Set by a hand switch so the new view takes focus; a route-forced one leaves it alone.
+  const focusAfterSwitch = useRef<'list' | 'tree' | null>(null)
+  const [coursesView, setCoursesView] = useState(() =>
+    showsCoursesView(routeCourse, readCoursesView()),
+  )
+
+  // Only a hand switch is remembered; a route-forced course view must not overwrite the saved choice.
+  function switchView(toCourses: boolean) {
+    if (toCourses !== coursesView) focusAfterSwitch.current = toCourses ? 'list' : 'tree'
+    setCoursesView(toCourses)
+    writeCoursesView(toCourses)
+  }
 
   function openCourse(name: string, was?: string) {
     setWant((prev) => nextWanted(prev, name, was))
@@ -61,12 +78,29 @@ function LecturesTreePaneBody() {
 
   // Navigating into another course (search, deep link, Downloads) opens it; swapping by hand never re-runs this.
   useEffect(() => {
-    if (routeCourse) openCourse(routeCourse)
+    if (!routeCourse) return
+    openCourse(routeCourse)
+    setCoursesView(false)
   }, [routeCourse])
 
+  // The courses list starts at the top; the tree comes back where it was left, unless a different course opened.
+  const openName = open?.name
   useLayoutEffect(() => {
-    if (navRef.current) navRef.current.scrollTop = savedScrollTop
-  }, [])
+    const nav = navRef.current
+    if (!nav) return
+    nav.scrollTop = coursesView || !openName ? 0 : treeScrollTop(savedScroll, openName)
+    const pending = focusAfterSwitch.current
+    focusAfterSwitch.current = null
+    if (pending) {
+      for (const sel of viewFocusSelectors(pending === 'list')) {
+        const el = nav.querySelector<HTMLElement>(sel)
+        if (el) {
+          el.focus()
+          break
+        }
+      }
+    }
+  }, [coursesView, openName])
 
   return (
     <aside className="tree-pane">
@@ -74,7 +108,12 @@ function LecturesTreePaneBody() {
         className={notice || loading ? 'sidebar-nav sidebar-nav--empty' : 'sidebar-nav'}
         ref={navRef}
         onScroll={(e) => {
-          savedScrollTop = e.currentTarget.scrollTop
+          if (!coursesView && openName) {
+            savedScroll = {
+              course: scrollTag(openName, want, savedScroll),
+              top: e.currentTarget.scrollTop,
+            }
+          }
         }}
       >
         {loading ? (
@@ -92,24 +131,38 @@ function LecturesTreePaneBody() {
             <Trans>No lectures yet. Add one from Downloads, or add a course manually.</Trans>
           </p>
         ) : (
-          <>
-            {open && (
-              <CourseGroup
-                key={open.name}
-                course={open}
-                onRenamed={(from, to) => {
-                  if (from === open.name) openCourse(to, from)
-                }}
-              />
-            )}
-          </>
+          open &&
+          (coursesView ? (
+            <CourseList
+              courses={courses}
+              openName={open.name}
+              onOpen={(name) => {
+                openCourse(name)
+                switchView(false)
+              }}
+              onBack={() => switchView(false)}
+            />
+          ) : (
+            <CourseGroup
+              key={open.name}
+              course={open}
+              onRenamed={(from, to) => {
+                if (from !== open.name) return
+                if (savedScroll.course === from) savedScroll = { ...savedScroll, course: to }
+                openCourse(to, from)
+              }}
+              onSwitch={() => switchView(true)}
+            />
+          ))
         )}
       </nav>
-      {!notice && !loading && others.length > 0 && (
-        <MoreCourses courses={courses} openName={open?.name} onOpen={(name) => openCourse(name)} />
-      )}
       <div className="tree-pane-footer">
-        <NewCourseRow onCreated={(name) => openCourse(name, open?.name)} />
+        <NewCourseRow
+          onCreated={(name) => {
+            openCourse(name, open?.name)
+            switchView(false)
+          }}
+        />
       </div>
     </aside>
   )
