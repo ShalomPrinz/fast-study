@@ -1,7 +1,7 @@
 // The service banner under the launcher's bridge (stubbed): a stop shows it, Restart calls the
 // launcher once, asking first while a pipeline step runs, and Dismiss hides it until the next stop.
 import { BACKEND, call, saveSettings } from '../lib/api.mjs';
-import { test, expect, openMoreCourses, providers, reseed, reset } from './fixtures.mjs';
+import { test, expect, openCourseSwitcher, providers, reseed, reset } from './fixtures.mjs';
 
 const COURSE = 'hb-fail';
 const LECTURE = 'שיעור 2'; // transcribed, so Summarize is the next step
@@ -41,7 +41,7 @@ test('a stopped service shows the banner and Restart calls the launcher once', a
   await page.goto('/');
   expect((await (await first).json()).in_flight).toEqual([]);
   // SnapshotProvider renders the tree and the status together, so a listed course means the banner has it.
-  await openMoreCourses(page);
+  await openCourseSwitcher(page);
   await expect(page.getByText(COURSE, { exact: true }).first()).toBeVisible();
   const banner = page.getByRole('alert').filter({ has: page.locator('.service-banner-restart') });
   await expect(banner).toHaveCount(0);

@@ -125,12 +125,17 @@ export const dismissTour = () => {
   }
 };
 
-/** Expand the sidebar's "More courses" panel if its bar is there and collapsed (no bar: no other courses). */
-export async function openMoreCourses(page) {
-  const bar = page.locator('.more-courses-bar');
-  await bar.waitFor({ timeout: 15_000 }).catch(() => {});
-  if ((await bar.count()) && (await bar.getAttribute('aria-expanded')) === 'false')
-    await bar.click();
+/** Open the sidebar's courses view by clicking the course header's "Switch course" button; a no-op when
+ *  the view is already open or there is no course to switch from. */
+export async function openCourseSwitcher(page) {
+  const list = page.locator('button.other-course').first();
+  const toggle = page.getByRole('button', { name: 'Switch course' });
+  await toggle
+    .or(list)
+    .first()
+    .waitFor({ timeout: 15_000 })
+    .catch(() => {});
+  if (await toggle.count()) await toggle.click();
 }
 
 /** Launch headless chromium and open one page, 1400×900, with a 10 s action timeout; the tour

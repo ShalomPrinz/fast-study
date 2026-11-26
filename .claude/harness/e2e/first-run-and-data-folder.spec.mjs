@@ -3,7 +3,7 @@
 import { DATABASE, call, saveSettings } from '../lib/api.mjs';
 import { unwall, wall } from '../lib/baseline.mjs';
 import { FAKE_KEYS } from '../lib/env.mjs';
-import { test, expect, harness, openMoreCourses, reseed, reset } from './fixtures.mjs';
+import { test, expect, harness, openCourseSwitcher, reseed, reset } from './fixtures.mjs';
 
 test.beforeEach(reseed);
 test.afterEach(async () => {
@@ -12,7 +12,7 @@ test.afterEach(async () => {
   await reset();
 });
 
-// The open course's header name, or the name span inside any other course's button in the "More courses" panel.
+// The open course's header name, or the name span inside any course's button in the courses view.
 const courseNames = (page) =>
   page.locator('.course-group .course-header .course-name, button.other-course .course-name');
 const PIPELINE = /^hb-pipeline$/;
@@ -53,7 +53,7 @@ test('the first-run wall takes both keys and a data folder, then opens the app',
   await submit.click();
 
   await expect(wallView).toHaveCount(0);
-  await openMoreCourses(page);
+  await openCourseSwitcher(page);
   await expect(courseNames(page).filter({ hasText: PIPELINE })).toBeVisible();
   const { body: settings } = await call(`${DATABASE}/settings`);
   expect(settings).toMatchObject({
@@ -67,7 +67,7 @@ test('switching the data folder in settings re-points the tree without a reload'
   page,
 }) => {
   await page.goto('/');
-  await openMoreCourses(page);
+  await openCourseSwitcher(page);
   await expect(courseNames(page).filter({ hasText: PIPELINE })).toBeVisible();
   // Settings and Lectures are the sidebar's own rows: client-side navigation, never a reload.
   const switchTo = async (root) => {
@@ -85,7 +85,7 @@ test('switching the data folder in settings re-points the tree without a reload'
   await expect(courseNames(page)).toHaveCount(0);
 
   await switchTo(harness.data);
-  await openMoreCourses(page);
+  await openCourseSwitcher(page);
   await expect(courseNames(page).filter({ hasText: PIPELINE })).toBeVisible();
   await expect(page.locator('.tree-pane-empty')).toHaveCount(0);
 });

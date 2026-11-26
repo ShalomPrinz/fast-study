@@ -18,7 +18,7 @@ import {
   wrapFetchError,
 } from './api.mjs';
 import { backendGeminiModel, connectDrive } from './baseline.mjs';
-import { appServices, appUrl, openBrowser, openMoreCourses } from './browser.mjs';
+import { appServices, appUrl, openBrowser, openCourseSwitcher } from './browser.mjs';
 import {
   DEFAULT_DOWNLOAD_MS,
   FAILURE_ROWS,
@@ -379,7 +379,7 @@ async function theAppLoadsFromItsOrigin(paths) {
     if (blocked.length) {
       throw new Error(`from ${APP}: ${blocked.join(', ')}\n${errors.slice(0, 4).join('\n')}`);
     }
-    await openMoreCourses(page);
+    await openCourseSwitcher(page);
     for (const name of courses) {
       await page
         .getByText(name, { exact: true })

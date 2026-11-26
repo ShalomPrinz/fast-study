@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import { DATABASE, saveSettings } from '../lib/api.mjs';
 import { loadRecordings, recordingCard } from '../lib/downloads.mjs';
-import { test, expect, harness, openMoreCourses, reseed, reset } from './fixtures.mjs';
+import { test, expect, harness, openCourseSwitcher, reseed, reset } from './fixtures.mjs';
 
 const COURSE = 'hb-dl';
 // The fake site's assignments (fakes/site.mjs): the first lives in `חומרי עזר`, the second in `תרגולים`.
@@ -61,8 +61,8 @@ test('assignments are listed by section, downloaded into the tree and opened by 
 
   // The tree's group lists the assignment, and its view lists both files.
   await page.goto('/');
-  // Only one course is open at a time; the rest are rows in the collapsed "More courses" panel.
-  await openMoreCourses(page);
+  // Only one course is open at a time; the courses view lists them all.
+  await openCourseSwitcher(page);
   await page.locator('button.other-course').first().waitFor();
   const other = page.locator('button.other-course', {
     has: page.getByText(COURSE, { exact: true }),
