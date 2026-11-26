@@ -5,6 +5,7 @@ import { renameCourse } from '@/services/database'
 import { toast } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
+import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import Icon from '@/shared/components/Icon'
@@ -44,6 +45,7 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
   const mergedNewOpen = routeParam(useMatch(ROUTES.mergedNew)?.params.course) === course.name
   // A course rename moves every lecture folder, so anything writing into it by name locks it.
   const renameLocked = isCourseRenameLocked(status, course.name) || downloading
+  const shiftHeld = useShiftHeld()
 
   const [renaming, setRenaming] = useState(false)
   const [pendingName, setPendingName] = useState<string | null>(null)
@@ -125,9 +127,9 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
             }}
           />
         ) : (
-          // Shift+click, or Enter / Space / F2 from the keyboard, renames: hidden gestures, so the title carries no hover or pointer styling.
+          // Shift+click, or Enter / Space / F2 from the keyboard, renames: hidden gestures, so the title shows a pointer only while Shift is held and rename is available.
           <div
-            className="course-head-title course-head-title--plain"
+            className={`course-head-title course-head-title--plain${shiftHeld && !renameLocked ? ' course-head-title--shift' : ''}`}
             role="button"
             tabIndex={0}
             aria-description={t`Enter or F2 to rename, or Shift+click`}

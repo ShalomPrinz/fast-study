@@ -43,12 +43,16 @@
   color: var(--text);
 }
 
-/* Plain title: padded like the buttons, no hover box or pointer. */
+/* Plain title: padded like the buttons, no hover box; pointer only while Shift is held. */
 .course-head-title--plain {
   flex: 1;
   min-width: 0;
   padding-block: var(--space-2);
   padding-inline: var(--space-5);
+}
+
+.course-head-title--shift {
+  cursor: pointer;
 }
 
 .course-head-title--plain:focus-visible {

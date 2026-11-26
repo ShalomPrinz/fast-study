@@ -150,8 +150,8 @@ msgstr "{0} is installed — downloading is ready to use."
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:162
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:40
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:164
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:36
 msgid "{0} of {1} studied"
 msgstr "{0} of {1} studied"
 
@@ -574,13 +574,13 @@ msgstr "Add a lecture or recitation"
 msgid "Add figures to the summary"
 msgstr "Add figures to the summary"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:149
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:150
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:151
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:152
 msgid "Add lecture"
 msgstr "Add lecture"
 
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:31
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:28
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:29
 msgid "Add recitation"
 msgstr "Add recitation"
 
@@ -799,7 +799,7 @@ msgstr "Can't reach the downloader"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "Can't rename while it's being processed or waiting in line"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:99
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:101
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "Can't rename while something in this course is being processed, downloaded or generated"
 
@@ -1510,7 +1510,7 @@ msgstr "Enter a course name first"
 msgid "Enter a name first"
 msgstr "Enter a name first"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:133
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:135
 msgid "Enter or F2 to rename, or Shift+click"
 msgstr "Enter or F2 to rename, or Shift+click"
 
@@ -2006,7 +2006,7 @@ msgstr "Lectures only, in every course"
 msgid "Lectures only, in the courses I choose"
 msgstr "Lectures only, in the courses I choose"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:158
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:160
 msgid "Lectures you marked done"
 msgstr "Lectures you marked done"
 
@@ -2657,7 +2657,7 @@ msgstr "Recitation {0}"
 msgid "Recitation name…"
 msgstr "Recitation name…"
 
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:28
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:26
 #: src/features/merged-pdfs/components/MergedPicker.tsx:146
 #: src/features/search/SearchView.tsx:199
 msgid "Recitations"
@@ -3142,7 +3142,7 @@ msgstr "Summary ready"
 msgid "summary with {name}"
 msgstr "summary with {name}"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:115
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:117
 msgid "Switch course"
 msgstr "Switch course"
 
