@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { useMatch } from 'react-router-dom'
+import { useMatch, useNavigate } from 'react-router-dom'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { courseLoadNotice, isCourseTreeLoading } from '@/shared/utils/courseLoadNotice'
 import { ROUTES, routeParam } from '@/shared/utils/routes'
+import { courseRoute } from '@/shared/utils/url'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import {
   nextWanted,
@@ -43,6 +44,7 @@ function LecturesTreePaneBody() {
   const notice = courseLoadNotice(courses, loaded, loadFailed)
   const loading = isCourseTreeLoading(courses, loaded, loadFailed)
   const { t } = useLingui()
+  const navigate = useNavigate()
   const navRef = useRef<HTMLElement>(null)
   const { selected } = useSelection()
   const overviewMatch = useMatch(ROUTES.overview)
@@ -139,6 +141,7 @@ function LecturesTreePaneBody() {
               onOpen={(name) => {
                 openCourse(name)
                 switchView(false)
+                navigate(courseRoute(name))
               }}
               onBack={() => switchView(false)}
             />

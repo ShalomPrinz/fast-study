@@ -13,6 +13,7 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import { lectureTrack } from '@/features/lectures/utils/courseTree'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
+import { isRenameKey } from '@/features/lectures/utils/renameKey'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
 import { renameFollowTarget } from '@/features/lectures/utils/renameFollow'
 import { courseNotFound } from '@/shared/utils/notFound'
@@ -24,7 +25,7 @@ import TreeProgress from './TreeProgress'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
 
-// Frozen at the top of the pane while the tree scrolls; the title row swaps the pane to the course list.
+// Frozen at the top of the pane while the tree scrolls; a button row above the plain title swaps the pane to the course list.
 export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
   const { t } = useLingui()
   const { course, add, onRenamed } = useCourseGroup()
@@ -49,7 +50,7 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
   const renameEdit = useInlineEdit(renaming ? course.name : null)
   const progress = trackProgress(lectureTrack(course))
 
-  function startRenaming(e: React.MouseEvent) {
+  function startRenaming(e: React.SyntheticEvent) {
     e.preventDefault()
     setRenaming(true)
     renameEdit.setValue(course.name)
@@ -90,6 +91,16 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
     }
   }
 
+  function tryRename(e: React.SyntheticEvent) {
+    if (!renameLocked) startRenaming(e)
+    else {
+      toast(
+        'info',
+        t`Can't rename while something in this course is being processed, downloaded or generated`,
+      )
+    }
+  }
+
   function startAdding(e: React.MouseEvent) {
     e.stopPropagation()
     add.start('lecture')
@@ -97,6 +108,12 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <div className="pane-sticky-head">
+      <button className="pane-switch-btn" onClick={onSwitch}>
+        <span className="course-switch-icon">
+          <Icon icon="switch" />
+        </span>
+        <Trans>Switch course</Trans>
+      </button>
       <div className="course-header">
         {renaming ? (
           <InlineEditInput
@@ -108,33 +125,25 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
             }}
           />
         ) : (
-          <Tooltip placement="inline-end" content={t`Switch course`}>
-            <button
-              className="course-toggle course-toggle--head"
-              onClick={(e) => {
-                if (e.shiftKey) {
-                  if (!renameLocked) startRenaming(e)
-                  else {
-                    e.preventDefault()
-                    toast(
-                      'info',
-                      t`Can't rename while something in this course is being processed, downloaded or generated`,
-                    )
-                  }
-                } else onSwitch()
-              }}
-            >
-              <span className="course-head-title">
-                <span className="course-switch-icon">
-                  <Icon icon="switch" />
-                </span>
-                <span className="course-name" dir="auto">
-                  {pendingName ?? course.name}
-                </span>
-              </span>
-              <span className="tree-visually-hidden">{t`Switch course`}</span>
-            </button>
-          </Tooltip>
+          // Shift+click, or Enter / Space / F2 from the keyboard, renames: hidden gestures, so the title carries no hover or pointer styling.
+          <div
+            className="course-head-title course-head-title--plain"
+            role="button"
+            tabIndex={0}
+            aria-description={t`Enter or F2 to rename, or Shift+click`}
+            onClick={(e) => {
+              if (e.shiftKey) tryRename(e)
+            }}
+            onKeyDown={(e) => {
+              if (!isRenameKey(e)) return
+              e.preventDefault() // Space must not scroll the pane, locked or not
+              tryRename(e)
+            }}
+          >
+            <span className="course-name" dir="auto">
+              {pendingName ?? course.name}
+            </span>
+          </div>
         )}
         {!renaming && (
           <Tooltip content={t`Add lecture`} placement="inline-end">

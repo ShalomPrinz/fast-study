@@ -9,15 +9,52 @@
   gap: var(--space-2);
 }
 
-/* Centred on the title button, whatever its height. */
+/* Centred on the title, whatever its height. */
 .course-header .course-add-btn {
   align-self: center;
 }
 
-/* Roomy hover box; the box stays full pane width, so the extra inline room sits inside it. */
-.course-toggle--head {
+/* The view-switch button row, identical in both views so the header does not jump. */
+.pane-switch-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
   padding-block: var(--space-2);
   padding-inline: var(--space-5);
+  background: none;
+  border: none;
+  border-radius: var(--r);
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.pane-switch-btn:hover {
+  background: var(--nav-bg);
+  color: var(--text);
+}
+
+.pane-switch-btn:hover .course-switch-icon {
+  background: var(--nav-track);
+  color: var(--text);
+}
+
+/* Plain title: padded like the buttons, no hover box or pointer. */
+.course-head-title--plain {
+  flex: 1;
+  min-width: 0;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-5);
+}
+
+.course-head-title--plain:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--r);
 }
 
 .course-head-title {
@@ -54,11 +91,6 @@
 .course-switch-icon svg {
   inline-size: 18px;
   block-size: 18px;
-}
-
-.course-toggle:hover .course-switch-icon {
-  background: var(--nav-track);
-  color: var(--text);
 }
 
 /* The back arrow points along the reading direction's start, which reverses in Hebrew. */

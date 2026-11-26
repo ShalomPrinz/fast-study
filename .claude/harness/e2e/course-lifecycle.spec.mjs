@@ -65,7 +65,7 @@ test('a course is created, filled and renamed from the tree, the open page follo
   expect(await treeLecture(COURSE, 'Lecture 2')).toBeUndefined();
 
   await group(COURSE)
-    .locator('.course-header .course-toggle')
+    .locator('.course-header .course-head-title')
     .click({ modifiers: ['Shift'] });
   // The header's name gives way to the input, so the group no longer matches by name here.
   const courseInput = page.locator('.course-header input');

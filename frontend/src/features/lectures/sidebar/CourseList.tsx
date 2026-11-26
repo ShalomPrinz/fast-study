@@ -1,14 +1,13 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import type { Course } from '@/types'
 import Icon from '@/shared/components/Icon'
-import Tooltip from '@/shared/components/Tooltip'
 import { lectureTrack } from '@/features/lectures/utils/courseTree'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import '@/styles/sidebar-tree.css'
 import './tree/CourseHeader.css'
 import './CourseList.css'
 
-// The pane's courses view: a frozen "All courses" header (its back arrow returns to the open course), then every course
+// The pane's courses view: a frozen header (a "Back to <course>" button, then the plain "All courses" title), then every course
 // with its done/total count, the open one highlighted.
 export default function CourseList({
   courses,
@@ -26,18 +25,16 @@ export default function CourseList({
   return (
     <>
       <div className="pane-sticky-head">
+        <button className="pane-switch-btn" onClick={onBack}>
+          <span className="course-switch-icon course-switch-icon--back">
+            <Icon icon="arrow-start" />
+          </span>
+          {back}
+        </button>
         <div className="course-header">
-          <Tooltip content={back} placement="inline-end">
-            <button className="course-toggle course-toggle--head" onClick={onBack}>
-              <span className="course-head-title">
-                <span className="course-switch-icon course-switch-icon--back">
-                  <Icon icon="arrow-start" />
-                </span>
-                <Trans>All courses</Trans>
-              </span>
-              <span className="tree-visually-hidden">{back}</span>
-            </button>
-          </Tooltip>
+          <div className="course-head-title course-head-title--plain">
+            <Trans>All courses</Trans>
+          </div>
         </div>
       </div>
       <ul className="other-courses-list">

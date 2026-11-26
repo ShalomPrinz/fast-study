@@ -27,28 +27,6 @@
   color: var(--text);
 }
 
-.course-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  flex: 1;
-  min-width: 0;
-  padding: var(--space-1) var(--space-4);
-  background: none;
-  border: none;
-  color: var(--text);
-  font: inherit;
-  font-size: var(--fs-body);
-  font-weight: 600;
-  text-align: start;
-  cursor: pointer;
-  border-radius: var(--r);
-}
-
-.course-toggle:hover {
-  background: var(--nav-bg);
-}
-
 .lecture-list {
   list-style: none;
 }
@@ -275,14 +253,4 @@
 
 .lecture-placeholder .progress-label {
   color: var(--text-2);
-}
-
-/* Text for assistive tech only: keeps a button's accessible name a superset of its visible text. */
-.tree-visually-hidden {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }

@@ -156,13 +156,10 @@ describe('scrollTag', () => {
 
 describe('viewFocusSelectors', () => {
   it('prefers the current row in the list, then the back button', () => {
-    expect(viewFocusSelectors(true)).toEqual([
-      '.other-course[aria-current]',
-      '.course-toggle--head',
-    ])
+    expect(viewFocusSelectors(true)).toEqual(['.other-course[aria-current]', '.pane-switch-btn'])
   })
 
   it('targets the header button in the tree', () => {
-    expect(viewFocusSelectors(false)).toEqual(['.course-toggle--head'])
+    expect(viewFocusSelectors(false)).toEqual(['.pane-switch-btn'])
   })
 })

@@ -150,7 +150,7 @@ msgstr "{0} מותקן — אפשר להוריד הקלטות."
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:153
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:162
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:40
 msgid "{0} of {1} studied"
 msgstr "{0} מתוך {1} נלמדו"
@@ -574,8 +574,8 @@ msgstr "הוספת הרצאה או תרגול"
 msgid "Add figures to the summary"
 msgstr "הוספת איורים לסיכום"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:140
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:141
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:149
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:150
 msgid "Add lecture"
 msgstr "הוספת הרצאה"
 
@@ -749,7 +749,7 @@ msgid "Available once you choose course material or generate a guide."
 msgstr "זמין אחרי שתבחר חומר מהקורס או תיצור מדריך."
 
 #: src/features/lectures/DocEditor.tsx:268
-#: src/features/lectures/sidebar/CourseList.tsx:25
+#: src/features/lectures/sidebar/CourseList.tsx:24
 #: src/features/tour/TourCallout.tsx:81
 msgid "Back"
 msgstr "חזרה"
@@ -758,7 +758,7 @@ msgstr "חזרה"
 msgid "Back in the key window, click \"Create key\"."
 msgstr "בחזרה בחלון המפתח, לחץ על \"Create key\"."
 
-#: src/features/lectures/sidebar/CourseList.tsx:25
+#: src/features/lectures/sidebar/CourseList.tsx:24
 msgid "Back to {openName}"
 msgstr "חזרה אל {openName}"
 
@@ -799,7 +799,7 @@ msgstr "אין חיבור למוריד"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "אי אפשר לשנות את השם בזמן עיבוד או המתנה בתור"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:121
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:99
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הורדה או יצירה של תוכן בו"
 
@@ -1242,7 +1242,7 @@ msgstr "קורסים והרצאות"
 
 #: src/App.tsx:41
 #: src/features/downloads/DownloadsView.tsx:385
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:127
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:129
 #: src/features/search/SearchView.tsx:223
 #: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
@@ -1509,6 +1509,10 @@ msgstr "הזן קודם שם קורס"
 #: src/features/downloads/components/ManualDownload.tsx:84
 msgid "Enter a name first"
 msgstr "הזן קודם שם"
+
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:133
+msgid "Enter or F2 to rename, or Shift+click"
+msgstr "Enter או F2 לשינוי שם, או Shift+לחיצה"
 
 #: src/features/downloads/components/PasscodePrompt.tsx:47
 msgid "Enter the zoom passcode for this recording"
@@ -2002,7 +2006,7 @@ msgstr "הרצאות בלבד, בכל הקורסים"
 msgid "Lectures only, in the courses I choose"
 msgstr "הרצאות בלבד, בקורסים שאבחר"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:149
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:158
 msgid "Lectures you marked done"
 msgstr "הרצאות שסיימת"
 
@@ -2026,7 +2030,7 @@ msgstr "טעינת הגרסה החדשה"
 msgid "Load the FastStudy folder"
 msgstr "טעינת התיקייה של FastStudy"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:123
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:125
 msgid "Loading courses…"
 msgstr "טוען קורסים…"
 
@@ -2196,7 +2200,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet"
 msgstr "אין עדיין הרצאות"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:131
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:133
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
@@ -3138,8 +3142,7 @@ msgstr "הסיכום מוכן"
 msgid "summary with {name}"
 msgstr "סיכום עם {name}"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:135
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:115
 msgid "Switch course"
 msgstr "החלפת קורס"
 

@@ -80,7 +80,5 @@ export function scrollTag(openName: string, want: WantedCourse, saved: { course:
 
 // Focus targets after a hand view switch, best first: the current row then the back button in the list, the header button in the tree.
 export function viewFocusSelectors(toCourses: boolean): string[] {
-  return toCourses
-    ? ['.other-course[aria-current]', '.course-toggle--head']
-    : ['.course-toggle--head']
+  return toCourses ? ['.other-course[aria-current]', '.pane-switch-btn'] : ['.pane-switch-btn']
 }
