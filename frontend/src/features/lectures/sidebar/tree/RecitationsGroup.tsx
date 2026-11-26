@@ -1,6 +1,5 @@
 import Tooltip from '@/shared/components/Tooltip'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
 import { trackProgress } from '@/features/lectures/utils/studyProgress'
 import { useCourseGroup } from './CourseGroupContext'
 import TreeProgress from './TreeProgress'
@@ -13,7 +12,6 @@ import './RecitationsGroup.css'
 export default function RecitationsGroup() {
   const { t } = useLingui()
   const { course, add } = useCourseGroup()
-  const shiftHeld = useShiftHeld()
   const progress = trackProgress(course.recitations)
 
   function startAdding(e: React.MouseEvent) {
@@ -27,13 +25,11 @@ export default function RecitationsGroup() {
         <span className="recitations-title" dir="auto">
           <Trans>Recitations</Trans>
         </span>
-        {!shiftHeld && (
-          <Tooltip content={t`Add recitation`} placement="inline-end">
-            <button className="course-add-btn" onClick={startAdding} aria-label={t`Add recitation`}>
-              +
-            </button>
-          </Tooltip>
-        )}
+        <Tooltip content={t`Add recitation`} placement="inline-end">
+          <button className="course-add-btn" onClick={startAdding} aria-label={t`Add recitation`}>
+            +
+          </button>
+        </Tooltip>
       </div>
       {progress.total > 0 && (
         <div className="course-head-sub">
