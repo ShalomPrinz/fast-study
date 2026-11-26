@@ -287,7 +287,7 @@ const ChevronDownIcon = () => (
 const SwitchIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
-      d="M5 3L2 6l3 3M2 6h12M11 13l3-3-3-3M14 10H2"
+      d="M5 1.5L2 4.5l3 3M2 4.5h12M11 14.5l3-3-3-3M14 11.5H2"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"

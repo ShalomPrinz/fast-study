@@ -297,7 +297,7 @@ recitation's keeps `recitation` (`lecturesOnlyKind`), since nothing moves.
   on a `tree` (or untagged) notify, together with `/status` when both are named, and sorts courses by name (`localeCompare`) and their lectures through
   `sortLectures`. Everything reads it directly, no props
   or outlet context.
-- `CourseGroup` renders only the open course, never folded. Recitations and Assignments are always open: a plain title (no count; the "+" on Recitations) over their bar, no chevron. The course header's switch icon (`switch`, two-way arrows not mirrored in RTL, at 18px in a 24px round hit area on the name's 24px line) marks the title row as the course switcher.
+- `CourseGroup` renders only the open course, never folded. Recitations and Assignments are always open: a plain title (no count; the "+" on Recitations) over their bar, no chevron. The course header's switch icon (`switch`, two-way arrows not mirrored in RTL, at 18px in a 24px round hit area on the name's 24px line) marks the title row as the course switcher; the title button and the "N of M studied" line share a `--space-5` inline padding, the bar keeps the full pane width.
 - `AssignmentsGroup` lists the course's `assignments` after the recitations, styled like them, whatever
   `lectures_only` says and never folded into the lectures. Nothing creates one by hand, so the group
   shows only once one is listed or downloading, the latter's loading row inside it. Rows carry the same marks (✓ done,

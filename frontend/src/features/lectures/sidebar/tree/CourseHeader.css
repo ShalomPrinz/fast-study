@@ -14,10 +14,10 @@
   align-self: center;
 }
 
-/* Roomy hover box; the inline padding keeps the content on the bar's inset, so the box stays inside the pane. */
+/* Roomy hover box; the box stays full pane width, so the extra inline room sits inside it. */
 .course-toggle--head {
   padding-block: var(--space-2);
-  padding-inline: var(--tree-bar-inset);
+  padding-inline: var(--space-5);
 }
 
 .course-head-title {
@@ -29,9 +29,9 @@
   font-weight: 700;
 }
 
-/* The "N of M studied" line above a progress bar, aligned with the bar's inset. */
+/* The "N of M studied" line above a progress bar, aligned with the name. */
 .course-head-sub {
-  padding-inline: var(--tree-bar-inset);
+  padding-inline: var(--space-5);
   padding-block-end: var(--space-1);
   font-size: var(--fs-fine);
   font-weight: 400;
