@@ -46,7 +46,7 @@ Re-create navigates to `mergedNewRoute(course)` with router state `MergedPrefill
 
 `MergedNewView`: a title (`#merged-title`, required), then `MergedPicker` at inline-start and `MergedOrder` at
 inline-end (stacked under 640px of the page's own width, a container query). The page title and the submit
-(`.merged-create`, centred under the order column only, in `.merged-order-stack`) both read "Create merged summary"; the submit is disabled while the title is blank, the order empty or a request is in flight.
+(`.merged-create`, centred under the order column only, in `.merged-order-stack`) both read "Create merged summary"; the submit is disabled while the title is blank, the order empty or a request is in flight, and its tooltip names which (`createBlocker`). A section checkbox with no mergeable item is disabled with a tooltip on its label.
 
 - **Picker** lists the sidebar's tracks verbatim (`lectureTrack` / `recitationTrack`; a lectures-only course is
   one merged list under a "Select all" title), parts by raw folder name with the summary's first heading

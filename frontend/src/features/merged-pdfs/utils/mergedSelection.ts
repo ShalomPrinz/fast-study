@@ -127,6 +127,21 @@ export function applyPrefill(
 export const canCreate = (title: string, order: MergedPart[]): boolean =>
   title.trim() !== '' && order.length > 0
 
+export type CreateBlocker = 'title' | 'selection' | 'both' | 'submitting'
+
+/** Why the create button is disabled, or null when it is enabled; a request in flight wins over the form's gaps. */
+export function createBlocker(
+  title: string,
+  order: MergedPart[],
+  submitting: boolean,
+): CreateBlocker | null {
+  if (submitting) return 'submitting'
+  const noTitle = title.trim() === ''
+  const noParts = order.length === 0
+  if (noTitle && noParts) return 'both'
+  return noTitle ? 'title' : noParts ? 'selection' : null
+}
+
 export type SubmitOutcome = { status: 'started' | 'busy' } | { error: unknown }
 export type SubmitAction = 'navigate' | 'confirm-overwrite' | 'toast'
 

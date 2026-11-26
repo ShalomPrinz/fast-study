@@ -10,12 +10,14 @@ import { toastFailure } from '@/shared/utils/failure'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
+import Tooltip from '@/shared/components/Tooltip'
 import PageHeader from '@/shared/components/PageHeader'
 import MergedOrder from './components/MergedOrder'
 import MergedPicker from './components/MergedPicker'
 import {
   applyPrefill,
   canCreate,
+  createBlocker,
   existingTitle,
   mergeable,
   movePart,
@@ -58,6 +60,13 @@ function MergedNewBody({ course, node }: { course: string; node: Course }) {
     setDropped((d) => [...d, ...pruned.dropped])
   }, [groups, order])
 
+  const blocker = createBlocker(title, order, submitting)
+  const blockerText = {
+    title: t`Enter a title to create the merged summary.`,
+    selection: t`Tick at least one summary to merge.`,
+    both: t`Enter a title and tick at least one summary.`,
+    submitting: t`Creating the merged summary...`,
+  }
   const overwriteTitle = confirmOverwrite ?? ''
 
   async function submit(overwrite: boolean) {
@@ -143,13 +152,15 @@ function MergedNewBody({ course, node }: { course: string; node: Course }) {
                 </div>
               </section>
               <div className="merged-new-actions">
-                <button
-                  type="submit"
-                  className="btn btn--primary merged-create"
-                  disabled={!canCreate(title, order) || submitting}
-                >
-                  <Trans>Create merged summary</Trans>
-                </button>
+                <Tooltip content={blocker ? blockerText[blocker] : undefined}>
+                  <button
+                    type="submit"
+                    className="btn btn--primary merged-create"
+                    disabled={!canCreate(title, order) || submitting}
+                  >
+                    <Trans>Create merged summary</Trans>
+                  </button>
+                </Tooltip>
               </div>
             </div>
           </div>

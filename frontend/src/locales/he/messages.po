@@ -525,7 +525,7 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A lectures-only course lists its recitations among its lectures, and everything you add to it is a lecture. Nothing already saved moves."
 msgstr "בקורס של הרצאות בלבד התרגולים מופיעים בין ההרצאות, וכל מה שתוסיף אליו יישמר כהרצאה. שום דבר שכבר נשמר לא זז."
 
-#: src/features/merged-pdfs/MergedNewView.tsx:160
+#: src/features/merged-pdfs/MergedNewView.tsx:177
 msgid "A merged PDF titled \"{overwriteTitle}\" already exists. Create it anyway and replace it?"
 msgstr "קובץ PDF ממוזג בשם \"{overwriteTitle}\" כבר קיים. ליצור אותו בכל זאת ולהחליף אותו?"
 
@@ -816,7 +816,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/PasscodePrompt.tsx:79
 #: src/features/lectures/components/AssignmentDocCard.tsx:207
 #: src/features/merged-pdfs/components/OutdatedChip.tsx:60
-#: src/features/merged-pdfs/MergedNewView.tsx:162
+#: src/features/merged-pdfs/MergedNewView.tsx:179
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -1260,8 +1260,8 @@ msgstr "צור קודם את {input}"
 msgid "Create guide"
 msgstr "יצירת מדריך"
 
-#: src/features/merged-pdfs/MergedNewView.tsx:87
-#: src/features/merged-pdfs/MergedNewView.tsx:151
+#: src/features/merged-pdfs/MergedNewView.tsx:96
+#: src/features/merged-pdfs/MergedNewView.tsx:167
 msgid "Create merged summary"
 msgstr "צור סיכום מאוחד"
 
@@ -1280,6 +1280,10 @@ msgstr "יצירת פתרון"
 #: src/features/course-overview/components/GenerateAllButton.tsx:42
 msgid "Creates comprehensive summaries for all lectures and recitations in the course"
 msgstr "יוצר סיכומים מקיפים עבור כל ההרצאות והתרגולים בקורס"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:68
+msgid "Creating the merged summary..."
+msgstr "יוצר את הסיכום המאוחד..."
 
 #: src/features/lectures/components/CreateStatus.tsx:15
 msgid "Creating…"
@@ -1509,6 +1513,14 @@ msgstr "הזן קודם שם קורס"
 #: src/features/downloads/components/ManualDownload.tsx:84
 msgid "Enter a name first"
 msgstr "הזן קודם שם"
+
+#: src/features/merged-pdfs/MergedNewView.tsx:67
+msgid "Enter a title and tick at least one summary."
+msgstr "יש להזין כותרת ולסמן לפחות סיכום אחד."
+
+#: src/features/merged-pdfs/MergedNewView.tsx:65
+msgid "Enter a title to create the merged summary."
+msgstr "יש להזין כותרת כדי ליצור את הסיכום המאוחד."
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:135
 msgid "Enter or F2 to rename, or Shift+click"
@@ -1982,7 +1994,7 @@ msgstr "שם ההרצאה"
 msgid "Lecture name…"
 msgstr "שם ההרצאה…"
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:141
+#: src/features/merged-pdfs/components/MergedPicker.tsx:144
 #: src/features/search/SearchView.tsx:191
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Lectures"
@@ -2010,7 +2022,7 @@ msgstr "הרצאות בלבד, בקורסים שאבחר"
 msgid "Lectures you marked done"
 msgstr "הרצאות שסיימת"
 
-#: src/features/merged-pdfs/MergedNewView.tsx:105
+#: src/features/merged-pdfs/MergedNewView.tsx:120
 msgid "Left out, no longer in the course or without a summary PDF:"
 msgstr "לא נכללו, כי אינם בקורס עוד או שאין להם PDF של סיכום:"
 
@@ -2073,7 +2085,7 @@ msgstr "התאמת מילה שלמה"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/features/merged-pdfs/MergedNewView.tsx:129
+#: src/features/merged-pdfs/MergedNewView.tsx:144
 msgid "Merge order"
 msgstr "סדר המיזוג"
 
@@ -2085,7 +2097,7 @@ msgstr "איחוד סיכומים"
 msgid "Merged summaries"
 msgstr "איחודי סיכומים"
 
-#: src/features/merged-pdfs/MergedNewView.tsx:99
+#: src/features/merged-pdfs/MergedNewView.tsx:114
 msgid "Merged summary title"
 msgstr "כותרת הסיכום המאוחד"
 
@@ -2256,7 +2268,11 @@ msgstr "לא נמצאו הקלטות."
 msgid "No source URL yet. Use the pencil to choose one."
 msgstr "אין עדיין כתובת מקור. בחרו אותה בעזרת העיפרון."
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:78
+#: src/features/merged-pdfs/components/MergedPicker.tsx:56
+msgid "No summary in this section has a PDF yet"
+msgstr "לאף סיכום בקבוצה הזו אין עדיין קובץ PDF"
+
+#: src/features/merged-pdfs/components/MergedPicker.tsx:81
 msgid "No summary PDF yet"
 msgstr "עדיין אין PDF של הסיכום"
 
@@ -2658,7 +2674,7 @@ msgid "Recitation name…"
 msgstr "שם התרגול…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:26
-#: src/features/merged-pdfs/components/MergedPicker.tsx:146
+#: src/features/merged-pdfs/components/MergedPicker.tsx:149
 #: src/features/search/SearchView.tsx:199
 msgid "Recitations"
 msgstr "תרגולים"
@@ -2747,7 +2763,7 @@ msgstr "מרנדר…"
 msgid "Reordering cancelled. {name} is back at position {position} of {total}."
 msgstr "שינוי הסדר בוטל. {name} חזר למיקום {position} מתוך {total}."
 
-#: src/features/merged-pdfs/MergedNewView.tsx:161
+#: src/features/merged-pdfs/MergedNewView.tsx:178
 msgid "Replace"
 msgstr "החלפה"
 
@@ -2936,7 +2952,7 @@ msgstr "בחירת {0}"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:141
+#: src/features/merged-pdfs/components/MergedPicker.tsx:144
 msgid "Select all"
 msgstr "בחירת הכול"
 
@@ -3090,7 +3106,7 @@ msgstr "ללמוד עם AI"
 msgid "Submit"
 msgstr "שליחה"
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:129
+#: src/features/merged-pdfs/components/MergedPicker.tsx:132
 msgid "Summaries"
 msgstr "סיכומים"
 
@@ -3547,7 +3563,7 @@ msgstr "לא ניתן לבטל את הפעולה."
 msgid "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, ולכן אי אפשר לשמור אותם כאן. כל שאר ההגדרות במסך הזה פועלות כרגיל."
 
-#: src/features/merged-pdfs/components/MergedPicker.tsx:134
+#: src/features/merged-pdfs/components/MergedPicker.tsx:137
 msgid "This course has no lectures yet."
 msgstr "עדיין אין הרצאות בקורס הזה."
 
@@ -3621,11 +3637,15 @@ msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש.
 msgid "Three ways to download"
 msgstr "שלוש דרכים להוריד"
 
-#: src/features/merged-pdfs/MergedNewView.tsx:134
+#: src/features/merged-pdfs/MergedNewView.tsx:66
+msgid "Tick at least one summary to merge."
+msgstr "יש לסמן לפחות סיכום אחד למיזוג."
+
+#: src/features/merged-pdfs/MergedNewView.tsx:149
 msgid "Tick summaries to add them here, then drag to set their order."
 msgstr "סמן סיכומים כדי להוסיף אותם לכאן, ואז גרור כדי לקבוע את הסדר."
 
-#: src/features/merged-pdfs/MergedNewView.tsx:92
+#: src/features/merged-pdfs/MergedNewView.tsx:101
 msgid "Title"
 msgstr "כותרת"
 

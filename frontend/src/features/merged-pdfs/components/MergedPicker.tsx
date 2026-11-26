@@ -47,25 +47,28 @@ function Group({
   const { t } = useLingui()
   const ticked = new Set(order.map(partKey))
   const tick = sectionTick(items, order)
+  const noPdf = mergeable(items).length === 0
   return (
     <div className="merged-group">
       {/* The header reuses the downloads group header's hover; the label's ::after stretches the click over the whole line. */}
       <div className="group-header merged-group-head">
         <h3 className="merged-group-heading">
-          <label className="merged-section-label">
-            <input
-              type="checkbox"
-              className="merged-section-toggle"
-              data-kind={kind}
-              disabled={mergeable(items).length === 0}
-              checked={tick === 'all'}
-              ref={(el) => {
-                if (el) el.indeterminate = tick === 'some'
-              }}
-              onChange={() => onToggleSection(items)}
-            />
-            <span className="group-header-title merged-group-title">{title}</span>
-          </label>
+          <Tooltip content={noPdf ? t`No summary in this section has a PDF yet` : undefined}>
+            <label className="merged-section-label">
+              <input
+                type="checkbox"
+                className="merged-section-toggle"
+                data-kind={kind}
+                disabled={noPdf}
+                checked={tick === 'all'}
+                ref={(el) => {
+                  if (el) el.indeterminate = tick === 'some'
+                }}
+                onChange={() => onToggleSection(items)}
+              />
+              <span className="group-header-title merged-group-title">{title}</span>
+            </label>
+          </Tooltip>
         </h3>
       </div>
       <ul className="merged-pick-list">

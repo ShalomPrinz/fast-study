@@ -5,6 +5,7 @@ import {
   appendMissing,
   applyPrefill,
   canCreate,
+  createBlocker,
   checkboxDisabled,
   existingTitle,
   pruneVanished,
@@ -209,5 +210,17 @@ describe('existingTitle', () => {
       existingTitle({ error: new RequestError('x', 'merged_pdf_exists', { title: 'S' }) }, 'T'),
     ).toBe('S')
     expect(existingTitle({ error: new Error('x') }, 'T')).toBe('T')
+  })
+})
+
+describe('createBlocker', () => {
+  it('names the missing title, selection or both', () => {
+    expect(createBlocker(' ', [L('a')], false)).toBe('title')
+    expect(createBlocker('t', [], false)).toBe('selection')
+    expect(createBlocker('', [], false)).toBe('both')
+  })
+  it('is null when creatable and submitting wins otherwise', () => {
+    expect(createBlocker('t', [L('a')], false)).toBeNull()
+    expect(createBlocker('t', [L('a')], true)).toBe('submitting')
   })
 })
