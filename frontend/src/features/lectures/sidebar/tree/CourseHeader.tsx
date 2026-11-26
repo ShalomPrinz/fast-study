@@ -132,18 +132,6 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
                   {pendingName ?? course.name}
                 </span>
               </span>
-              {progress.total > 0 && (
-                <Tooltip
-                  content={renameLocked ? undefined : t`Lectures you marked done`}
-                  placement="inline-end"
-                >
-                  <span className="course-head-sub">
-                    <Trans>
-                      {progress.done} of {progress.total} studied
-                    </Trans>
-                  </span>
-                </Tooltip>
-              )}
               <span className="tree-visually-hidden">{t`Switch course`}</span>
             </button>
           </Tooltip>
@@ -156,6 +144,18 @@ export default function CourseHeader({ onSwitch }: { onSwitch: () => void }) {
           </Tooltip>
         )}
       </div>
+      {!renaming && progress.total > 0 && (
+        <Tooltip
+          content={renameLocked ? undefined : t`Lectures you marked done`}
+          placement="inline-end"
+        >
+          <div className="course-head-sub">
+            <Trans>
+              {progress.done} of {progress.total} studied
+            </Trans>
+          </div>
+        </Tooltip>
+      )}
       {!renaming && <TreeProgress kind="lecture" done={progress.done} total={progress.total} />}
     </div>
   )

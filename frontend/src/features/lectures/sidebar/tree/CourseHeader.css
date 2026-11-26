@@ -10,9 +10,6 @@
 }
 
 .course-toggle--head {
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-1);
   padding-inline: var(--tree-bar-inset);
 }
 
@@ -24,9 +21,9 @@
   font-weight: 700;
 }
 
-/* Starts under the name, past the icon. */
+/* The "N of M studied" line above a progress bar, aligned with the bar's inset. */
 .course-head-sub {
-  padding-inline-start: calc(var(--space-3) + 24px);
+  padding-inline: var(--tree-bar-inset);
   padding-block-end: var(--space-1);
   font-size: var(--fs-fine);
   font-weight: 400;

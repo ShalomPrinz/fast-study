@@ -45,7 +45,7 @@ test('lectures marked done move the current arrow, the counts and the overview b
   const row = (name, kind = 'lecture') =>
     group.locator(`[data-testid="lecture"][data-lecture="${name}"][data-kind="${kind}"]`);
   const mark = (name, kind) => row(name, kind).locator('.lecture-mark');
-  const lectureCount = group.locator('.course-header .course-head-sub');
+  const lectureCount = group.locator('.pane-sticky-head > .course-head-sub');
   const studied = (done, total) => `${done} of ${total} studied`;
   // The bars are aria-hidden spans whose fill width is the done/total ratio.
   const fillPct = (selector) =>

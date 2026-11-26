@@ -150,7 +150,7 @@ msgstr "{0} מותקן — אפשר להוריד הקלטות."
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:141
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:153
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:40
 msgid "{0} of {1} studied"
 msgstr "{0} מתוך {1} נלמדו"
@@ -574,8 +574,8 @@ msgstr "הוספת הרצאה או תרגול"
 msgid "Add figures to the summary"
 msgstr "הוספת איורים לסיכום"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:152
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:153
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:140
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:141
 msgid "Add lecture"
 msgstr "הוספת הרצאה"
 
@@ -2002,7 +2002,7 @@ msgstr "הרצאות בלבד, בכל הקורסים"
 msgid "Lectures only, in the courses I choose"
 msgstr "הרצאות בלבד, בקורסים שאבחר"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:137
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:149
 msgid "Lectures you marked done"
 msgstr "הרצאות שסיימת"
 
@@ -3139,7 +3139,7 @@ msgid "summary with {name}"
 msgstr "סיכום עם {name}"
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:147
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:135
 msgid "Switch course"
 msgstr "החלפת קורס"
 

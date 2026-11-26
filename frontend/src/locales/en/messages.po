@@ -150,7 +150,7 @@ msgstr "{0} is installed — downloading is ready to use."
 #. placeholder {0}: progress.done
 #. placeholder {1}: progress.total
 #: src/features/lectures/sidebar/tree/AssignmentsGroup.tsx:46
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:141
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:153
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:40
 msgid "{0} of {1} studied"
 msgstr "{0} of {1} studied"
@@ -574,8 +574,8 @@ msgstr "Add a lecture or recitation"
 msgid "Add figures to the summary"
 msgstr "Add figures to the summary"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:152
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:153
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:140
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:141
 msgid "Add lecture"
 msgstr "Add lecture"
 
@@ -2002,7 +2002,7 @@ msgstr "Lectures only, in every course"
 msgid "Lectures only, in the courses I choose"
 msgstr "Lectures only, in the courses I choose"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:137
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:149
 msgid "Lectures you marked done"
 msgstr "Lectures you marked done"
 
@@ -3139,7 +3139,7 @@ msgid "summary with {name}"
 msgstr "summary with {name}"
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:147
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:135
 msgid "Switch course"
 msgstr "Switch course"
 
