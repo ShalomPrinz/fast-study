@@ -107,7 +107,7 @@ function MergedNewBody({ course, node }: { course: string; node: Course }) {
             </label>
             <input
               id="merged-title"
-              className="settings-input"
+              className={`settings-input${title.trim() === '' ? ' merged-new-input--blank' : ''}`}
               dir="auto"
               aria-required="true"
               value={title}

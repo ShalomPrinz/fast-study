@@ -18,6 +18,12 @@
   color: var(--text-2);
 }
 
+/* Stays red while focused too, outranking .settings-input:focus: blank is still the thing to fix. */
+.settings-input.merged-new-input--blank,
+.settings-input.merged-new-input--blank:focus {
+  border-color: var(--danger);
+}
+
 .merged-note {
   margin: 0;
   padding: var(--space-3) var(--space-5);
