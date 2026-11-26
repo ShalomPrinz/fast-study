@@ -22,7 +22,7 @@ import {
   materialSupported,
   materialTooLarge,
 } from '@/features/lectures/utils/materials'
-import { assignmentClipboardText } from '@/features/lectures/utils/aiChat'
+import { assignmentClipboardText, hasAssignmentGuides } from '@/features/lectures/utils/aiChat'
 import { chosenSummaries, docInputs, inputsLocked } from '@/features/lectures/utils/assignmentDocs'
 import {
   canOpenWith,
@@ -95,9 +95,13 @@ export default function AssignmentView() {
       docs.intuition ? fetchAssignmentDoc(course, assignment, 'intuition') : null,
       docs.solution ? fetchAssignmentDoc(course, assignment, 'solution') : null,
     ])
-    const prompt = t`I'm working on this assignment and want to understand it in depth, not just get answers. Below are the course material I chose and any guides I already have.
+    const prompt = hasAssignmentGuides(docs)
+      ? t`I'm working on this assignment and want to understand it in depth, not just get answers. Below are the course material I chose and any guides I already have.
 
 To start, reply with a single sentence — "Which question do you want to work on first?" — followed by a numbered list of the assignment's questions, each with a one-line description.`
+      : t`I'm working on this assignment and want to understand it in depth, not just get answers. Below is the course material I chose. The assignment itself is not included.
+
+To start, reply with a single sentence asking me to paste the question I want to work on, or to attach the assignment file or text. After that, help me work through it in depth.`
     return assignmentClipboardText({
       prompt,
       course,

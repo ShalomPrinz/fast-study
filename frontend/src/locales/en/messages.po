@@ -51,7 +51,7 @@ msgstr "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
 
 #. placeholder {0}: inputs.files
 #. placeholder {1}: inputs.summaries
-#: src/features/lectures/AssignmentView.tsx:232
+#: src/features/lectures/AssignmentView.tsx:236
 msgid "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} other {# summaries}}"
 msgstr "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} other {# summaries}}"
 
@@ -267,7 +267,7 @@ msgstr "{file} was not found."
 msgid "{fileCount, plural, one {# file} other {# files}}"
 msgstr "{fileCount, plural, one {# file} other {# files}}"
 
-#: src/features/lectures/AssignmentView.tsx:127
+#: src/features/lectures/AssignmentView.tsx:131
 msgid "{files, plural, one {# file} other {# files}} · {lectures, plural, =0 {no course material} one {# lecture attached} other {# lectures attached}}"
 msgstr "{files, plural, one {# file} other {# files}} · {lectures, plural, =0 {no course material} one {# lecture attached} other {# lectures attached}}"
 
@@ -681,7 +681,7 @@ msgstr "Assignment · {assignment}"
 msgid "Assignment material copied — paste it in the chat with Ctrl+V."
 msgstr "Assignment material copied — paste it in the chat with Ctrl+V."
 
-#: src/features/lectures/AssignmentView.tsx:229
+#: src/features/lectures/AssignmentView.tsx:233
 msgid "Assignment Solution"
 msgstr "Assignment Solution"
 
@@ -1649,7 +1649,7 @@ msgstr "FastStudy's use and transfer of information received from Google APIs wi
 msgid "File type"
 msgstr "File type"
 
-#: src/features/lectures/AssignmentView.tsx:144
+#: src/features/lectures/AssignmentView.tsx:148
 msgid "Files that are switched on are sent to Gemini."
 msgstr "Files that are switched on are sent to Gemini."
 
@@ -1707,7 +1707,7 @@ msgstr "Full Solution — {assignment}"
 msgid "Gemini 4 Hydrogen is now the default model. You can change the model any time in Settings."
 msgstr "Gemini 4 Hydrogen is now the default model. You can change the model any time in Settings."
 
-#: src/features/lectures/AssignmentView.tsx:154
+#: src/features/lectures/AssignmentView.tsx:158
 #: src/features/lectures/components/MaterialChip.tsx:75
 msgid "Gemini can't read this file type"
 msgstr "Gemini can't read this file type"
@@ -1847,13 +1847,21 @@ msgstr "I want to study this lecture in depth, and soon I'll ask you specific qu
 "\n"
 "To start, reply with a single sentence — \"What do you want to learn first?\" — followed by a numbered list of 4–6 topics from the lecture to choose from."
 
-#: src/features/lectures/AssignmentView.tsx:98
+#: src/features/lectures/AssignmentView.tsx:99
 msgid "I'm working on this assignment and want to understand it in depth, not just get answers. Below are the course material I chose and any guides I already have.\n"
 "\n"
 "To start, reply with a single sentence — \"Which question do you want to work on first?\" — followed by a numbered list of the assignment's questions, each with a one-line description."
 msgstr "I'm working on this assignment and want to understand it in depth, not just get answers. Below are the course material I chose and any guides I already have.\n"
 "\n"
 "To start, reply with a single sentence — \"Which question do you want to work on first?\" — followed by a numbered list of the assignment's questions, each with a one-line description."
+
+#: src/features/lectures/AssignmentView.tsx:102
+msgid "I'm working on this assignment and want to understand it in depth, not just get answers. Below is the course material I chose. The assignment itself is not included.\n"
+"\n"
+"To start, reply with a single sentence asking me to paste the question I want to work on, or to attach the assignment file or text. After that, help me work through it in depth."
+msgstr "I'm working on this assignment and want to understand it in depth, not just get answers. Below is the course material I chose. The assignment itself is not included.\n"
+"\n"
+"To start, reply with a single sentence asking me to paste the question I want to work on, or to attach the assignment file or text. After that, help me work through it in depth."
 
 #: src/features/settings/components/SummaryModelsField.tsx:27
 msgid "If <0/> is busy"
@@ -2047,7 +2055,7 @@ msgstr "Match whole word"
 
 #: src/features/downloads/components/NewView.tsx:142
 #: src/features/downloads/DownloadsView.tsx:203
-#: src/features/lectures/AssignmentView.tsx:141
+#: src/features/lectures/AssignmentView.tsx:145
 #: src/features/lectures/MainView.tsx:652
 msgid "Materials"
 msgstr "Materials"
@@ -2103,7 +2111,7 @@ msgstr "Move up"
 msgid "Name in the course"
 msgstr "Name in the course"
 
-#: src/features/lectures/AssignmentView.tsx:200
+#: src/features/lectures/AssignmentView.tsx:204
 msgid "Needs the desktop app"
 msgstr "Needs the desktop app"
 
@@ -2289,7 +2297,7 @@ msgstr "not provided"
 msgid "Not queued"
 msgstr "Not queued"
 
-#: src/features/lectures/AssignmentView.tsx:157
+#: src/features/lectures/AssignmentView.tsx:161
 #: src/features/lectures/components/MaterialChip.tsx:78
 msgid "Not sent to Gemini"
 msgstr "Not sent to Gemini"
@@ -2383,7 +2391,7 @@ msgstr "Open Chrome's extensions page"
 msgid "Open Edge's extensions page"
 msgstr "Open Edge's extensions page"
 
-#: src/features/lectures/AssignmentView.tsx:163
+#: src/features/lectures/AssignmentView.tsx:167
 msgid "Open file"
 msgstr "Open file"
 
@@ -2477,8 +2485,8 @@ msgstr "Other…"
 msgid "Outdated PDF"
 msgstr "Outdated PDF"
 
-#: src/features/lectures/AssignmentView.tsx:171
-#: src/features/lectures/AssignmentView.tsx:176
+#: src/features/lectures/AssignmentView.tsx:175
+#: src/features/lectures/AssignmentView.tsx:180
 msgid "Over 10 MB — generating might fail while this is attached"
 msgstr "Over 10 MB — generating might fail while this is attached"
 
@@ -2927,7 +2935,7 @@ msgstr "Select all"
 msgid "Select all in this section"
 msgstr "Select all in this section"
 
-#: src/features/lectures/AssignmentView.tsx:189
+#: src/features/lectures/AssignmentView.tsx:193
 msgid "Send {name} to Gemini"
 msgstr "Send {name} to Gemini"
 
@@ -2939,7 +2947,7 @@ msgstr "Send {name} to Gemini with the summary"
 msgid "Send error reports"
 msgstr "Send error reports"
 
-#: src/features/lectures/AssignmentView.tsx:156
+#: src/features/lectures/AssignmentView.tsx:160
 msgid "Sent to Gemini"
 msgstr "Sent to Gemini"
 
@@ -2969,7 +2977,7 @@ msgstr "Several rows would download into the same lecture ({names}). Rename them
 msgid "Show captcha window"
 msgstr "Show captcha window"
 
-#: src/features/lectures/AssignmentView.tsx:207
+#: src/features/lectures/AssignmentView.tsx:211
 msgid "Show in folder"
 msgstr "Show in folder"
 

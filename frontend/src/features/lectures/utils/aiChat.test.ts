@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { AI_PROVIDERS, assignmentClipboardText, clipboardText, toAiProvider } from './aiChat'
+import {
+  AI_PROVIDERS,
+  assignmentClipboardText,
+  clipboardText,
+  hasAssignmentGuides,
+  toAiProvider,
+} from './aiChat'
 
 describe('clipboardText', () => {
   it('puts the prompt, a blank line, then the summary inside a lecture tag', () => {
@@ -65,5 +71,16 @@ describe('assignmentClipboardText', () => {
     const out = assignmentClipboardText({ ...base, solution: 'answers' })
     expect(out).not.toContain('<intuition_guide>')
     expect(out).toContain('<solution>')
+  })
+})
+
+describe('hasAssignmentGuides', () => {
+  it('is false with neither guide', () => {
+    expect(hasAssignmentGuides({ intuition: null, solution: null })).toBe(false)
+  })
+
+  it('is true with either guide', () => {
+    expect(hasAssignmentGuides({ intuition: 'x', solution: null })).toBe(true)
+    expect(hasAssignmentGuides({ intuition: null, solution: 'x' })).toBe(true)
   })
 })

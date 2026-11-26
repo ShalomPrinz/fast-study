@@ -51,7 +51,7 @@ msgstr "\"<0>{lecture}</0>\" ב\"<1>{course}</1>\""
 
 #. placeholder {0}: inputs.files
 #. placeholder {1}: inputs.summaries
-#: src/features/lectures/AssignmentView.tsx:232
+#: src/features/lectures/AssignmentView.tsx:236
 msgid "{0, plural, one {# file} other {# files}} · {1, plural, one {# summary} other {# summaries}}"
 msgstr "{0, plural, one {קובץ אחד} two {# קבצים} other {# קבצים}} · {1, plural, one {סיכום אחד} two {# סיכומים} other {# סיכומים}}"
 
@@ -267,7 +267,7 @@ msgstr "{file} לא נמצא."
 msgid "{fileCount, plural, one {# file} other {# files}}"
 msgstr "{fileCount, plural, one {קובץ אחד} two {# קבצים} other {# קבצים}}"
 
-#: src/features/lectures/AssignmentView.tsx:127
+#: src/features/lectures/AssignmentView.tsx:131
 msgid "{files, plural, one {# file} other {# files}} · {lectures, plural, =0 {no course material} one {# lecture attached} other {# lectures attached}}"
 msgstr "{files, plural, one {קובץ אחד} other {# קבצים}} · {lectures, plural, =0 {בלי חומר מהקורס} one {הרצאה אחת מצורפת} other {# הרצאות מצורפות}}"
 
@@ -681,7 +681,7 @@ msgstr "מטלה · {assignment}"
 msgid "Assignment material copied — paste it in the chat with Ctrl+V."
 msgstr "חומר המטלה הועתק — הדבק אותו בצ'אט עם Ctrl+V."
 
-#: src/features/lectures/AssignmentView.tsx:229
+#: src/features/lectures/AssignmentView.tsx:233
 msgid "Assignment Solution"
 msgstr "פתרון המטלה"
 
@@ -1649,7 +1649,7 @@ msgstr "השימוש של FastStudy במידע שמתקבל מ-Google APIs וה�
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/lectures/AssignmentView.tsx:144
+#: src/features/lectures/AssignmentView.tsx:148
 msgid "Files that are switched on are sent to Gemini."
 msgstr "קבצים שמסומנים נשלחים ל-Gemini."
 
@@ -1707,7 +1707,7 @@ msgstr "פתרון מלא — {assignment}"
 msgid "Gemini 4 Hydrogen is now the default model. You can change the model any time in Settings."
 msgstr "Gemini 4 Hydrogen הוא כעת מודל ברירת המחדל. אפשר להחליף מודל בכל עת בהגדרות."
 
-#: src/features/lectures/AssignmentView.tsx:154
+#: src/features/lectures/AssignmentView.tsx:158
 #: src/features/lectures/components/MaterialChip.tsx:75
 msgid "Gemini can't read this file type"
 msgstr "Gemini לא יכול לקרוא סוג קובץ כזה"
@@ -1847,13 +1847,21 @@ msgstr "אני רוצה ללמוד את ההרצאה הזו לעומק, ובקר
 "\n"
 "כדי להתחיל, ענה במשפט אחד בלבד — \"מה תרצה ללמוד קודם?\" — ואחריו רשימה ממוספרת של 4–6 נושאים מתוך ההרצאה לבחירה."
 
-#: src/features/lectures/AssignmentView.tsx:98
+#: src/features/lectures/AssignmentView.tsx:99
 msgid "I'm working on this assignment and want to understand it in depth, not just get answers. Below are the course material I chose and any guides I already have.\n"
 "\n"
 "To start, reply with a single sentence — \"Which question do you want to work on first?\" — followed by a numbered list of the assignment's questions, each with a one-line description."
 msgstr "אני עובד על המטלה הזו ורוצה להבין אותה לעומק, לא רק לקבל תשובות. למטה החומר מהקורס שבחרתי והמדריכים שכבר יש לי.\n"
 "\n"
 "כדי להתחיל, ענה במשפט אחד — \"על איזו שאלה תרצה לעבוד קודם?\" — ואחריו רשימה ממוספרת של שאלות המטלה, לכל אחת תיאור בשורה אחת."
+
+#: src/features/lectures/AssignmentView.tsx:102
+msgid "I'm working on this assignment and want to understand it in depth, not just get answers. Below is the course material I chose. The assignment itself is not included.\n"
+"\n"
+"To start, reply with a single sentence asking me to paste the question I want to work on, or to attach the assignment file or text. After that, help me work through it in depth."
+msgstr "אני עובד על המטלה הזו ורוצה להבין אותה לעומק, לא רק לקבל תשובות. למטה החומר מהקורס שבחרתי. המטלה עצמה לא מצורפת.\n"
+"\n"
+"כדי להתחיל, ענה במשפט אחד שמבקש ממני להדביק את השאלה שאני רוצה לעבוד עליה, או לצרף את קובץ המטלה או את הטקסט שלה. אחר כך עזור לי לעבור עליה לעומק."
 
 #: src/features/settings/components/SummaryModelsField.tsx:27
 msgid "If <0/> is busy"
@@ -2047,7 +2055,7 @@ msgstr "התאמת מילה שלמה"
 
 #: src/features/downloads/components/NewView.tsx:142
 #: src/features/downloads/DownloadsView.tsx:203
-#: src/features/lectures/AssignmentView.tsx:141
+#: src/features/lectures/AssignmentView.tsx:145
 #: src/features/lectures/MainView.tsx:652
 msgid "Materials"
 msgstr "חומרים"
@@ -2103,7 +2111,7 @@ msgstr "הזז למעלה"
 msgid "Name in the course"
 msgstr "השם בקורס"
 
-#: src/features/lectures/AssignmentView.tsx:200
+#: src/features/lectures/AssignmentView.tsx:204
 msgid "Needs the desktop app"
 msgstr "דורש את אפליקציית שולחן העבודה"
 
@@ -2289,7 +2297,7 @@ msgstr "חסר"
 msgid "Not queued"
 msgstr "לא בתור"
 
-#: src/features/lectures/AssignmentView.tsx:157
+#: src/features/lectures/AssignmentView.tsx:161
 #: src/features/lectures/components/MaterialChip.tsx:78
 msgid "Not sent to Gemini"
 msgstr "לא נשלח ל-Gemini"
@@ -2383,7 +2391,7 @@ msgstr "פתיחת דף התוספים של Chrome"
 msgid "Open Edge's extensions page"
 msgstr "פתיחת דף התוספים של Edge"
 
-#: src/features/lectures/AssignmentView.tsx:163
+#: src/features/lectures/AssignmentView.tsx:167
 msgid "Open file"
 msgstr "פתיחת הקובץ"
 
@@ -2477,8 +2485,8 @@ msgstr "אחר…"
 msgid "Outdated PDF"
 msgstr "PDF לא עדכני"
 
-#: src/features/lectures/AssignmentView.tsx:171
-#: src/features/lectures/AssignmentView.tsx:176
+#: src/features/lectures/AssignmentView.tsx:175
+#: src/features/lectures/AssignmentView.tsx:180
 msgid "Over 10 MB — generating might fail while this is attached"
 msgstr "מעל 10 MB — היצירה עלולה להיכשל כל עוד הקובץ מצורף"
 
@@ -2927,7 +2935,7 @@ msgstr "בחירת הכול"
 msgid "Select all in this section"
 msgstr "בחירת כל היחידה"
 
-#: src/features/lectures/AssignmentView.tsx:189
+#: src/features/lectures/AssignmentView.tsx:193
 msgid "Send {name} to Gemini"
 msgstr "לשלוח את {name} ל-Gemini"
 
@@ -2939,7 +2947,7 @@ msgstr "שליחת {name} ל-Gemini עם הסיכום"
 msgid "Send error reports"
 msgstr "שליחת דיווחי שגיאות"
 
-#: src/features/lectures/AssignmentView.tsx:156
+#: src/features/lectures/AssignmentView.tsx:160
 msgid "Sent to Gemini"
 msgstr "נשלח ל-Gemini"
 
@@ -2969,7 +2977,7 @@ msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה �
 msgid "Show captcha window"
 msgstr "הצגת חלון החידה"
 
-#: src/features/lectures/AssignmentView.tsx:207
+#: src/features/lectures/AssignmentView.tsx:211
 msgid "Show in folder"
 msgstr "הצגה בתיקייה"
 

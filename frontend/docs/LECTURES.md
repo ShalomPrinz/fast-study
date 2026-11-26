@@ -143,7 +143,7 @@ meta line of file and attached-lecture counts. Below it, top to bottom:
 - **Study with AI**, outside the sections in the page's side column (see below): the lecture page's `StudyWithAiCard`, taking `ready`, its `copy` texts and a `collect` that builds
   the clipboard text. Here `collect` fetches each chosen summary (`fetchSummaryContent`) and each existing doc
   (`fetchAssignmentDoc`) into `assignmentClipboardText`: the prompt, then `<assignment course title>` holding one
-  `<lecture kind title>` per summary, `<intuition_guide>` and `<solution>` where they exist. Enabled when any of the three exists.
+  `<lecture kind title>` per summary, `<intuition_guide>` and `<solution>` where they exist. With neither guide (`hasAssignmentGuides`) the prompt says the assignment is not included and asks the user to paste a question or attach the assignment, since its own files are never copied. Enabled when any of the three exists.
 
 `docInputs` sizes the in-progress ETA (`assignment_{doc}` bucket) from the tree alone: the switched-on supported files' on-disk bytes plus the chosen
 `summary.md` sizes. An Office file is sent as extracted text, so this only approximates the bytes Gemini receives.

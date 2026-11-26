@@ -30,6 +30,11 @@ export function clipboardText(
   return `${prompt}\n\n<lecture course="${attr(course)}" title="${attr(lecture)}">\n${summary}\n</lecture>`
 }
 
+/** Whether any guide exists; without one the AI has no way to know the assignment's questions. */
+export function hasAssignmentGuides(docs: { intuition: unknown; solution: unknown }): boolean {
+  return docs.intuition !== null || docs.solution !== null
+}
+
 export interface AssignmentClipboardInput {
   prompt: string
   course: string
