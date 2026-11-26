@@ -18,6 +18,8 @@ import { useRowEditsDispatch } from '@/features/downloads/contexts/RowEditsConte
 import { useWithMoodleLock } from '@/features/downloads/contexts/MoodleLockContext'
 import { isMoodleBusyError } from '@/services/http'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { unskipForDownload } from '@/features/downloads/utils/unskip'
+import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 
 type Result = 'fail' | null
@@ -46,6 +48,7 @@ export function useRecordingDownload({
   // The server's canonical spelling replaces the row's name, so the row compares against disk.
   const { setName, lock } = useRowEditsDispatch()
   const withMoodleLock = useWithMoodleLock()
+  const { courses } = useCourseTreeContext()
   // Latest runner status by ref: a confirm or passcode replay runs a closure from an earlier render.
   const { status } = useRunnerStatus()
   const statusRef = useRef(status)
@@ -84,6 +87,8 @@ export function useRecordingDownload({
       // The row's `moodle` flag decides, as it does the row's disabled state (`rowLocked`).
       const send = () => downloadItem(args)
       const { media, renames, captchaSolved } = await (item.moodle ? withMoodleLock(send) : send())
+      // An accepted whole-row download un-skips the row; a clip retry is not a new start.
+      if (!args.only) void unskipForDownload(courses, args.course, [args.ref])
       resolveMedia(args.ref, media)
       toastCaptchaSolved(captchaSolved)
       // An accepted whole-row download pins its name, so the tree refresh it causes cannot move the

@@ -29,6 +29,7 @@ import {
 } from '@/features/downloads/utils/runStatus'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
+import { unskipForDownload } from '@/features/downloads/utils/unskip'
 import { startAndLock } from '@/features/downloads/utils/rowLocks'
 
 export interface BulkRun {
@@ -101,6 +102,12 @@ export function useBulkRun(
       )
       return
     }
+    // Before the post: the run driver adds auto-skipped refs during the run, so a later remove could undo one.
+    void unskipForDownload(
+      courses,
+      course,
+      built.filter((t) => t.disposition === 'pending').map((t) => t.ref),
+    )
     const post = () => startSectionRun({ sectionId: runKey, course, targets: built, scope })
     try {
       const renames = await startAndLock(

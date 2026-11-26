@@ -18,16 +18,31 @@ import {
 import { MoodleBusyError } from '@/services/http'
 import { useRecordingDownload } from './useRecordingDownload'
 
-const { downloadItem, saveZoomPasscode, toastDownloadError, toastLectureBusy, runner } = vi.hoisted(
-  () => ({
-    downloadItem: vi.fn(),
-    saveZoomPasscode: vi.fn(),
-    toastDownloadError: vi.fn(),
-    toastLectureBusy: vi.fn(),
-    runner: { status: null as unknown },
-  }),
-)
+const {
+  downloadItem,
+  saveZoomPasscode,
+  toastDownloadError,
+  toastLectureBusy,
+  runner,
+  updateSkipped,
+  toastFailure,
+  tree,
+} = vi.hoisted(() => ({
+  updateSkipped: vi.fn(),
+  toastFailure: vi.fn(),
+  tree: { courses: [] as unknown[] },
+  downloadItem: vi.fn(),
+  saveZoomPasscode: vi.fn(),
+  toastDownloadError: vi.fn(),
+  toastLectureBusy: vi.fn(),
+  runner: { status: null as unknown },
+}))
 vi.mock('@/features/downloads/services/downloadServer', () => ({ downloadItem }))
+vi.mock('@/services/database', () => ({ updateSkipped }))
+vi.mock('@/shared/utils/failure', () => ({ toastFailure }))
+vi.mock('@/shared/contexts/CourseTreeContext', () => ({
+  useCourseTreeContext: () => ({ courses: tree.courses }),
+}))
 // Partial: the hook's `is*` guards are `instanceof` checks, so the real error classes must stay.
 vi.mock('@/features/downloads/services/autoDownloader', async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -94,6 +109,7 @@ function render(siblings: string[] = []) {
 beforeEach(() => {
   vi.clearAllMocks()
   runner.status = null
+  tree.courses = []
 })
 
 // Under a busy pushed lock: whether this row's download takes the lock is the row's `moodle` flag alone.
@@ -386,5 +402,43 @@ describe('useRecordingDownload', () => {
     expect(saveZoomPasscode).not.toHaveBeenCalled()
     expect(result.current.passcode).not.toBeNull()
     expect(downloadItem).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('un-skipping an accepted download', () => {
+  it('removes a skipped row ref once the request is accepted', async () => {
+    tree.courses = [{ name: 'Algebra', skipped: ['row-ref', 'other'] }]
+    updateSkipped.mockResolvedValue([])
+    downloadItem.mockResolvedValue({ media: 'video', renames: [] })
+    const { result } = render()
+    await act(() => result.current.download())
+    expect(updateSkipped).toHaveBeenCalledExactlyOnceWith('Algebra', { remove: ['row-ref'] })
+    expect(downloadItem).toHaveBeenCalledOnce()
+  })
+
+  it('makes no call for a row that is not skipped', async () => {
+    tree.courses = [{ name: 'Algebra', skipped: ['other'] }]
+    downloadItem.mockResolvedValue({ media: 'video', renames: [] })
+    const { result } = render()
+    await act(() => result.current.download())
+    expect(updateSkipped).not.toHaveBeenCalled()
+  })
+
+  it('toasts a failed write without failing the download', async () => {
+    tree.courses = [{ name: 'Algebra', skipped: ['row-ref'] }]
+    updateSkipped.mockRejectedValue(new Error('nope'))
+    downloadItem.mockResolvedValue({ media: 'video', renames: [] })
+    const { result } = render()
+    await act(() => result.current.download())
+    expect(toastFailure).toHaveBeenCalledOnce()
+    expect(downloadItem).toHaveBeenCalledOnce()
+  })
+
+  it('makes no call when the request is refused', async () => {
+    tree.courses = [{ name: 'Algebra', skipped: ['row-ref'] }]
+    downloadItem.mockRejectedValueOnce(new MoodleBusyError('lock taken'))
+    const { result } = render()
+    await act(() => result.current.download())
+    expect(updateSkipped).not.toHaveBeenCalled()
   })
 })

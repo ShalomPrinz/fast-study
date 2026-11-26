@@ -333,6 +333,8 @@ editable name, kind and target and starts checked; a sticky bar acts on exactly 
 All is today's page. A row whose ref is in the course's `skipped` set (and a skipped playlist header) also shows a **Skipped** chip and a
 **Restore** action (`SkippedMark`, `updateSkipped(course, { remove })`), which returns the row to New.
 
+Downloading a skipped row un-skips it when the download starts, not on landing, so a failed download shows in New for retry. A row's own download (not a clip retry) un-skips once the server accepts the request, so a refused one leaves the row skipped; a section, playlist or course run (only its `pending` targets) un-skips before the run is posted, so the run driver's own auto-skips cannot be undone and a refused run still un-skips. Each sends one `updateSkipped(course, { remove })` with just the refs in the skip set (`unskipForDownload`). A failed write toasts and never blocks the download. A skipped playlist header is left as is when a child downloads.
+
 ## Unknown rows
 
 An `unknown` row carries a chip — `?`, then `Video` / `Unsupported` — and **never changes

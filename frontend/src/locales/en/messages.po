@@ -2969,7 +2969,7 @@ msgstr "session expired"
 msgid "Settings"
 msgstr "Settings"
 
-#: src/features/downloads/hooks/useBulkRun.ts:100
+#: src/features/downloads/hooks/useBulkRun.ts:101
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "Several rows would download into the same lecture ({names}). Rename them, then run again."
 
