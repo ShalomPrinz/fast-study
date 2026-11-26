@@ -27,14 +27,14 @@ everything on quit.
 | `windowState.js` | The window's size and maximized flag across launches — `window-state.json` under `userData` |
 | `dataFiles.js` | Resolving a data-file target to its path through `database/`, Windows' Open with, and reveal in the file manager |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
-| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, platform, updates, services (stopped, restart), open, folder picker, extension |
+| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, platform, updates, services (stopped, restart), open, folder picker, file path, extension |
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 
 | Doc                                | Covers                                                                   |
 | ---------------------------------- | ------------------------------------------------------------------------ |
 | [BOOT.md](docs/BOOT.md)            | The launch sequence, launch screen, child env, spawns, teardown, the log |
-| [RENDERER.md](docs/RENDERER.md)    | `app://bundle`, `window.faststudy`, open, folder picker, Sentry, checks, settings store |
+| [RENDERER.md](docs/RENDERER.md)    | `app://bundle`, `window.faststudy`, open, folder picker, file path, Sentry, checks, settings store |
 | [UPDATES.md](docs/UPDATES.md)      | How a packaged app updates itself                                        |
 | [EXTENSION.md](docs/EXTENSION.md)  | The extension copy, `bridge.json`, the `com.faststudy.bridge` host and its registration |
 
