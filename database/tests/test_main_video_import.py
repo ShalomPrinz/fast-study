@@ -4,7 +4,6 @@ import asyncio
 import json
 import os
 import threading
-import time
 
 import pytest
 from fastapi.testclient import TestClient
@@ -175,6 +174,38 @@ def test_wipe_failing_after_a_same_volume_move_puts_the_source_back(
     assert not list(lecture.glob(".video.*.tmp"))
 
 
+def _gate_second_read(monkeypatch, video_import):
+    """Block the copy worker at its second source read until the returned event is set, so a cancel always lands mid-copy."""
+
+    release = threading.Event()
+    real_open = open
+
+    class Gated:
+        def __init__(self, f):
+            self.f, self.reads = f, 0
+
+        def __enter__(self):
+            self.f.__enter__()
+            return self
+
+        def __exit__(self, *a):
+            return self.f.__exit__(*a)
+
+        def read(self, n):
+            self.reads += 1
+            if self.reads == 2:
+                # Timeout so a bug fails the test instead of hanging the suite.
+                assert release.wait(10)
+            return self.f.read(n)
+
+    def gated_open(path, mode="r", *a, **k):
+        f = real_open(path, mode, *a, **k)
+        return Gated(f) if mode == "rb" else f
+
+    monkeypatch.setattr(video_import, "open", gated_open, raising=False)
+    return release
+
+
 def test_cancel_mid_copy_keeps_old_video_source_and_leaves_no_temp(
     lecture, src, monkeypatch
 ):
@@ -184,14 +215,7 @@ def test_cancel_mid_copy_keeps_old_video_source_and_leaves_no_temp(
     monkeypatch.setattr(video_import, "CHUNK", 2)
     monkeypatch.setattr(video_import, "PROGRESS_INTERVAL", 0)
     monkeypatch.setattr(database_main, "broadcast_notify", lambda *_: None)
-    # Each chunk takes a beat, so the cancel always lands before the copy ends.
-    real_monotonic = video_import.time.monotonic
-
-    def slow():
-        time.sleep(0.02)
-        return real_monotonic()
-
-    monkeypatch.setattr(video_import.time, "monotonic", slow)
+    release = _gate_second_read(monkeypatch, video_import)
 
     async def go():
         gen = database_main._import_stream(lecture, src.resolve(), "copy")
@@ -199,6 +223,7 @@ def test_cancel_mid_copy_keeps_old_video_source_and_leaves_no_temp(
         assert "copied" in first
         # What Starlette does when the client disconnects.
         await gen.aclose()
+        release.set()
         # The worker stops at its next chunk, on its own thread.
         for _ in range(100):
             if not list(lecture.glob(".video.*.tmp")):
@@ -461,20 +486,14 @@ def test_cancel_into_a_new_lecture_leaves_no_folder(course, src, monkeypatch):
     monkeypatch.setattr(video_import, "CHUNK", 2)
     monkeypatch.setattr(video_import, "PROGRESS_INTERVAL", 0)
     monkeypatch.setattr(database_main, "broadcast_notify", lambda *_: None)
-    # Each chunk takes a beat, so the cancel always lands before the copy ends.
-    real_monotonic = video_import.time.monotonic
-
-    def slow():
-        time.sleep(0.02)
-        return real_monotonic()
-
-    monkeypatch.setattr(video_import.time, "monotonic", slow)
+    release = _gate_second_read(monkeypatch, video_import)
     d, s = video_import.prepare_import("Algo", "Fresh", "lecture", str(src), "copy")
 
     async def go():
         gen = database_main._import_stream(d, s, "copy")
         await gen.__anext__()
         await gen.aclose()
+        release.set()
         for _ in range(100):
             if not d.exists():
                 break
