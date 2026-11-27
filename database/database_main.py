@@ -414,6 +414,12 @@ async def import_video(
 
     try:
         body = await request.json()
+        if not isinstance(body, dict):
+            raise CodedValueError(
+                "body must be a JSON object",
+                "bad_request_body",
+                detail="body must be a JSON object",
+            )
         d, src = video_import.prepare_import(
             course, lecture, kind, body["path"], body["mode"]
         )

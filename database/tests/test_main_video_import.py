@@ -396,3 +396,10 @@ def test_new_lecture_dir_is_made_on_demand_and_recitation_kind_works(
     d = data_root / "Algo" / "Recitations" / "R1"
     assert (d / "video.mp4").read_bytes() == b"new video bytes"
     assert not (d / ".video_source.json").exists()
+
+
+def test_non_object_body_is_bad_request_body(client, lecture):
+    for raw in ("[]", '"x"', "5"):
+        r = client.post(URL, content=raw, headers={"content-type": "application/json"})
+        assert r.status_code == 400
+        assert r.json()["code"] == "bad_request_body"
