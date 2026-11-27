@@ -268,7 +268,7 @@ export default function DownloadsView() {
                 <Trans>A one-time setup of about three minutes.</Trans>
               </div>
               <div className={metaClass(tab === 'manual')}>
-                <Trans>Download any open video on the internet</Trans>
+                <Trans>Download any open video, or add one from your computer.</Trans>
               </div>
               <div className={metaClass(tab === null)}>
                 <Trans>Loading your data…</Trans>

@@ -19,9 +19,11 @@ import {
   mergedBase,
   headingsBase,
 } from '@/shared/utils/url'
-import { createClient } from './http'
+import { ConnectionError, createClient, failureError } from './http'
 import { reportVideoArrived } from './backend'
-import { DATABASE_URL } from './runtime'
+import { reportConnectionError } from './serviceHealth'
+import { DATABASE_URL, secretHeaders } from './runtime'
+import { readImportResult } from '@/shared/utils/videoImportStream'
 
 const database = createClient(DATABASE_URL, 'database service')
 
@@ -158,6 +160,75 @@ export async function createCourse(name: string, source_url?: string | null): Pr
 export async function setCourseSourceUrl(course: string, source_url: string | null): Promise<void> {
   await database.patch(path`/courses/${course}/source_url`, {
     json: { source_url: source_url || null },
+  })
+}
+
+/** Copies or moves a local .mp4 by its path, reading the NDJSON answer for progress; aborting
+ *  `signal` cancels it. The caller reports the video's arrival. */
+export async function importVideo(
+  course: string,
+  lecture: string,
+  request: { path: string; mode: 'copy' | 'move' },
+  kind: Kind,
+  opts: { signal: AbortSignal; onProgress: (copied: number, total: number) => void },
+): Promise<{ originalKept: boolean }> {
+  const res = await database.send(
+    `${lectureBase(course, lecture)}/video/import${kindQuery(kind)}`,
+    'POST',
+    {
+      json: request,
+      signal: opts.signal,
+    },
+  )
+  if (!res.ok) throw await failureError(res)
+  if (!res.body) throw new ConnectionError('database service', DATABASE_URL)
+  try {
+    return await readImportResult(res.body, opts.onProgress)
+  } catch (err) {
+    // A body read that dies mid-stream (service restart) is a lost connection, like a fetch rejection.
+    if (err instanceof TypeError) {
+      const ce = new ConnectionError('database service', DATABASE_URL, err)
+      reportConnectionError()
+      throw ce
+    }
+    throw err
+  }
+}
+
+/** `uploadVideo` over XHR for real upload progress (fetch has none), mapping errors as the http
+ *  client does. The caller reports the video's arrival. */
+export function uploadVideoWithProgress(
+  course: string,
+  lecture: string,
+  file: File,
+  kind: Kind,
+  opts: { signal: AbortSignal; onProgress: (loaded: number, total: number) => void },
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('PUT', database.url(`${lectureBase(course, lecture)}/video${kindQuery(kind)}`))
+    xhr.setRequestHeader('Content-Type', 'video/mp4')
+    for (const [name, value] of Object.entries(secretHeaders())) xhr.setRequestHeader(name, value)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) opts.onProgress(e.loaded, e.total)
+    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve()
+        return
+      }
+      const res = new Response(xhr.responseText, { status: xhr.status, statusText: xhr.statusText })
+      failureError(res).then(reject, reject)
+    }
+    xhr.onerror = () => {
+      const err = new ConnectionError('database service', DATABASE_URL)
+      reportConnectionError()
+      reject(err)
+    }
+    xhr.onabort = () => reject(new DOMException('Aborted', 'AbortError'))
+    opts.signal.addEventListener('abort', () => xhr.abort(), { once: true })
+    if (opts.signal.aborted) xhr.abort()
+    else xhr.send(file)
   })
 }
 

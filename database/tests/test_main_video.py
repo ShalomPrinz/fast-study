@@ -1,5 +1,10 @@
 """HTTP-level checks for the video upload route: bytes on disk, 204 on success, 400 on failure."""
 
+import errno
+import os
+import shutil
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -76,3 +81,284 @@ def test_put_video_creates_a_missing_lecture_in_an_existing_course(
 
     assert r.status_code == 204
     assert (data_root / "Algo" / rel / "video.mp4").read_bytes() == b"\x00mp4"
+
+
+def _chunks(n, size):
+    """Yield n chunks of size bytes, the body of a streamed upload."""
+
+    for _ in range(n):
+        yield b"x" * size
+
+
+def test_put_video_streams_the_body_in_bounded_writes(client, data_root, monkeypatch):
+    import fs.paths as paths
+
+    sizes = []
+    real = paths.new_video_tmp
+
+    class Recorder:
+        """File wrapper recording each write's size."""
+
+        def __init__(self, f):
+            self.f = f
+
+        def write(self, b):
+            sizes.append(len(b))
+            return self.f.write(b)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            self.f.close()
+
+    import builtins
+
+    real_open = builtins.open
+
+    def spy_open(file, mode="r", *a, **k):
+        f = real_open(file, mode, *a, **k)
+        return Recorder(f) if str(file).endswith(".tmp") and "w" in mode else f
+
+    monkeypatch.setattr("database_main.open", spy_open, raising=False)
+
+    # TestClient hands the app one coalesced body, so feed the route the chunk stream a real server delivers.
+    async def stream(self):
+        for c in _chunks(256, 64 * 1024):
+            yield c
+
+    monkeypatch.setattr("starlette.requests.Request.stream", stream)
+    assert real  # new_video_tmp stays the shared helper
+    (data_root / "Algo").mkdir()
+    r = client.put("/courses/Algo/lectures/L1/video", content=_chunks(256, 64 * 1024))
+    assert r.status_code == 204
+    assert sum(sizes) == 256 * 64 * 1024
+    assert len(sizes) > 1 and max(sizes) < sum(sizes) / 2
+    assert (data_root / "Algo" / "L1" / "video.mp4").stat().st_size == 256 * 64 * 1024
+    assert not list((data_root / "Algo" / "L1").glob(".video.*.tmp"))
+
+
+def test_put_video_disconnect_mid_body_leaves_the_lecture_untouched(
+    client, data_root, monkeypatch
+):
+    from starlette.requests import ClientDisconnect, Request
+
+    d = data_root / "Algo" / "L1"
+    d.mkdir(parents=True)
+    (d / "video.mp4").write_bytes(b"old")
+    (d / "summary.md").write_text("keep")
+
+    async def broken(self):
+        yield b"partial"
+        raise ClientDisconnect()
+
+    monkeypatch.setattr(Request, "stream", broken)
+    client.put("/courses/Algo/lectures/L1/video", content=b"new")
+    assert (d / "video.mp4").read_bytes() == b"old"
+    assert (d / "summary.md").read_text() == "keep"
+    assert [p.name for p in d.iterdir()] == ["video.mp4", "summary.md"] or sorted(
+        p.name for p in d.iterdir()
+    ) == ["summary.md", "video.mp4"]
+
+
+def test_put_video_disconnect_on_a_new_lecture_leaves_no_dir(
+    client, data_root, monkeypatch
+):
+    from starlette.requests import ClientDisconnect, Request
+
+    (data_root / "Algo").mkdir()
+
+    async def broken(self):
+        raise ClientDisconnect()
+        yield b""
+
+    monkeypatch.setattr(Request, "stream", broken)
+    client.put("/courses/Algo/lectures/New/video", content=b"new")
+    assert not (data_root / "Algo" / "New").exists()
+
+
+def test_put_video_locked_wipe_target_is_423_and_removes_the_temp(
+    client, data_root, monkeypatch
+):
+    from fs import crud
+    from fs.paths import FileLocked
+
+    d = data_root / "Algo" / "L1"
+    d.mkdir(parents=True)
+    (d / "video.mp4").write_bytes(b"old")
+    calls = {"n": 0}
+
+    def locked_late(_d):
+        calls["n"] += 1
+        if calls["n"] > 1:
+            raise FileLocked("summary.pdf")
+
+    monkeypatch.setattr(crud, "check_none_locked", lambda *_: None)
+    monkeypatch.setattr(crud, "check_video_wipe_unlocked", lambda _d: None)
+    monkeypatch.setattr(
+        crud,
+        "wipe_for_new_video",
+        lambda *_a, **_k: locked_late(None) or locked_late(None),
+    )
+    r = client.put("/courses/Algo/lectures/L1/video", content=b"new")
+    assert r.status_code == 423
+    assert (d / "video.mp4").read_bytes() == b"old"
+    assert not list(d.glob(".video.*.tmp"))
+
+
+def test_put_video_success_on_a_new_lecture_logs_no_warning(client, data_root, caplog):
+    (data_root / "Algo").mkdir()
+    with caplog.at_level("WARNING"):
+        r = client.put("/courses/Algo/lectures/New/video", content=b"\x00mp4")
+    assert r.status_code == 204
+    assert "cleanup failed" not in caplog.text
+    assert sorted(p.name for p in (data_root / "Algo").iterdir()) == ["New"]
+
+
+def test_put_video_disconnect_never_creates_the_lecture_dir(
+    client, data_root, monkeypatch
+):
+    from starlette.requests import ClientDisconnect, Request
+
+    (data_root / "Algo").mkdir()
+
+    async def broken(self):
+        yield b"partial"
+        raise ClientDisconnect()
+
+    monkeypatch.setattr(Request, "stream", broken)
+    r = client.put("/courses/Algo/lectures/New/video", content=b"new")
+    # Nothing exists for a concurrent import to race with, and the temp is gone.
+    assert list((data_root / "Algo").iterdir()) == []
+    assert r.json()["code"] == "file_write_failed"
+
+
+def test_put_video_refusal_drains_the_body_before_answering(
+    client, data_root, monkeypatch
+):
+    from starlette.requests import Request
+
+    read = []
+    real = Request.stream
+
+    async def spy(self):
+        async for c in real(self):
+            read.append(len(c))
+            yield c
+
+    monkeypatch.setattr(Request, "stream", spy)
+    r = client.put("/courses/Algo/lectures/L1/video", content=b"x" * 1000)
+    assert r.status_code == 404
+    assert r.json()["code"] == "course_not_found"
+    assert sum(read) == 1000
+    assert list(data_root.iterdir()) == []
+
+
+def test_put_video_leaves_no_temp_when_the_course_is_renamed_mid_stream(
+    client, data_root
+):
+    (data_root / "Algo").mkdir()
+
+    def body():
+        yield b"\x00mp4"
+        (data_root / "Algo").rename(data_root / "Renamed")
+        yield b"more"
+
+    r = client.put("/courses/Algo/lectures/Lecture 1/video", content=body())
+
+    assert r.status_code == 404
+    assert sorted(p.name for p in data_root.rglob("*")) == ["Renamed"]
+
+
+def _force_exdev(monkeypatch, data_root):
+    """Make the DATA_ROOT-staged temp look like it is on another volume than the lecture dir."""
+
+    real = os.replace
+
+    def replace(src, dst):
+        if Path(src).parent == data_root:
+            raise OSError(errno.EXDEV, "cross-device")
+        return real(src, dst)
+
+    monkeypatch.setattr(os, "replace", replace)
+
+
+def test_put_video_across_volumes_copies_then_renames(client, data_root, monkeypatch):
+    (data_root / "Algo").mkdir()
+    _force_exdev(monkeypatch, data_root)
+
+    r = client.put("/courses/Algo/lectures/L1/video", content=b"\x00mp4")
+
+    assert r.status_code == 204
+    assert (data_root / "Algo" / "L1" / "video.mp4").read_bytes() == b"\x00mp4"
+    assert not list(data_root.rglob(".video.*.tmp"))
+
+
+def test_put_video_across_volumes_failed_copy_keeps_old_video(
+    client, data_root, monkeypatch
+):
+    lec = data_root / "Algo" / "L1"
+    lec.mkdir(parents=True)
+    (lec / "video.mp4").write_bytes(b"old")
+    (lec / "transcript.txt").write_text("keep me")
+    _force_exdev(monkeypatch, data_root)
+
+    def boom(src, dst):
+        Path(dst).write_bytes(b"par")
+        raise OSError(errno.ENOSPC, "no space")
+
+    monkeypatch.setattr(shutil, "copyfile", boom)
+
+    r = client.put("/courses/Algo/lectures/L1/video", content=b"\x00mp4")
+
+    assert r.status_code >= 400
+    assert (lec / "video.mp4").read_bytes() == b"old"
+    assert (lec / "transcript.txt").read_text() == "keep me"
+    assert not list(data_root.rglob(".video.*.tmp"))
+
+
+def test_put_video_survives_a_locked_source_temp_after_placement(
+    client, data_root, monkeypatch
+):
+    (data_root / "Algo").mkdir()
+    _force_exdev(monkeypatch, data_root)
+    real = Path.unlink
+    attempts = []
+
+    def unlink(self, missing_ok=False):
+        if self.parent == data_root and self.name.startswith(".video."):
+            attempts.append(self)
+            # Locked for place_video's try, released by the handler's retry.
+            if len(attempts) == 1:
+                raise PermissionError(13, "locked")
+        return real(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", unlink)
+
+    r = client.put("/courses/Algo/lectures/L1/video", content=b"\x00mp4")
+
+    assert r.status_code == 204
+    assert (data_root / "Algo" / "L1" / "video.mp4").read_bytes() == b"\x00mp4"
+    assert len(attempts) == 2
+    assert not list(data_root.rglob(".video.*.tmp"))
+
+
+def test_put_video_wipe_failure_across_volumes_keeps_old_video(
+    client, data_root, monkeypatch
+):
+    lec = data_root / "Algo" / "L1"
+    lec.mkdir(parents=True)
+    (lec / "video.mp4").write_bytes(b"old")
+    _force_exdev(monkeypatch, data_root)
+    import fs.crud as crud
+
+    def boom(d, on_start=None):
+        raise OSError(errno.EIO, "wipe failed")
+
+    monkeypatch.setattr(crud, "wipe_for_new_video", boom)
+
+    r = client.put("/courses/Algo/lectures/L1/video", content=b"\x00mp4")
+
+    assert r.status_code >= 400
+    assert (lec / "video.mp4").read_bytes() == b"old"
+    assert not list(data_root.rglob(".video.*.tmp"))

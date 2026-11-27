@@ -1,6 +1,7 @@
 """Lecture-dir file deletion: the render markers that may never outlive their PDF."""
 
 import pytest
+from fastapi.testclient import TestClient
 from fs import crud
 from fs.paths import FIGURES_PENDING_MARKER, PDF_BUILD_TEX_MARKER, PDF_WARNING_MARKER
 
@@ -64,6 +65,11 @@ class TestFiguresPending:
     def test_video_wipe_drops_the_marker(self, lecture):
         (lecture / FIGURES_PENDING_MARKER).write_bytes(b"")
 
-        crud.write_video("Algo", "L1", "lecture", b"mp4")
+        import database_main
+
+        r = TestClient(database_main.app).put(
+            "/courses/Algo/lectures/L1/video", content=b"mp4"
+        )
+        assert r.status_code == 204
 
         assert not (lecture / FIGURES_PENDING_MARKER).exists()

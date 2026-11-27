@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { Kind } from '@/types'
 import type { UrlDownload } from '@/features/downloads/services/downloadServer'
 import type { StoredTarget } from '@/features/downloads/utils/manualDownload'
+import { readSource, writeSource, type ManualSource } from '@/features/downloads/utils/manualSource'
 
 // One manual download this session: the body a retry re-posts, the job it currently follows, and
 // where the server stored it. `key` is stable across retries, which swap in a new job.
@@ -56,16 +57,25 @@ export function useManualEntries(): readonly ManualEntry[] {
   return useSyncExternalStore(subscribe, manualEntries)
 }
 
-// The form's half-typed fields for this app session, so leaving the page and coming back restores
-// them. Null course/name follow the first course and the suggestion, untouched until edited.
+// The form's half-typed fields for this session, restored on return; null course/name follow the
+// first course and the suggestion. `file` is lost on restart; `source` is remembered across restarts.
 export interface ManualDraft {
+  source: ManualSource
+  file: File | null
   url: string
   course: string | null
   kind: Kind
   name: string | null
 }
 
-let draft: ManualDraft = { url: '', course: null, kind: 'lecture', name: null }
+let draft: ManualDraft = {
+  source: readSource(),
+  file: null,
+  url: '',
+  course: null,
+  kind: 'lecture',
+  name: null,
+}
 const draftListeners = new Set<() => void>()
 
 function subscribeDraft(listener: () => void): () => void {
@@ -75,6 +85,7 @@ function subscribeDraft(listener: () => void): () => void {
 
 export function updateManualDraft(patch: Partial<ManualDraft>) {
   draft = { ...draft, ...patch }
+  if (patch.source) writeSource(patch.source)
   for (const listener of draftListeners) listener()
 }
 

@@ -1,5 +1,9 @@
+import errno
+import logging
 import os
+import shutil
 import sys
+import threading
 from pathlib import Path
 
 from .figures import figure_files, wipe_figures
@@ -30,10 +34,12 @@ from .paths import (
     course_dir,
     lecture_dir,
     material_index,
+    new_video_tmp,
     reject_if_locked,
     safe_name,
 )
-from .sources import write_video_source
+
+log = logging.getLogger("db")
 
 # Course-level folders the tree skips as lectures; casefolded because NTFS matches names case-insensitively.
 _RESERVED_LECTURE_NAMES = {
@@ -51,6 +57,39 @@ def _mkdir_new(d: Path) -> None:
     except FileExistsError:
         # The sanitized folder name, not the typed one: that is what the user will find in the tree.
         raise NameTaken(f"'{d.name}' already exists", name=d.name) from None
+
+
+# Lecture dirs an import made and may still drop; the lock makes "exists?" + mkdir + registry one step.
+_fresh_lock = threading.Lock()
+_fresh: set[str] = set()
+
+
+def make_lecture_dir(d: Path, droppable: bool) -> bool:
+    """Create the lecture dir and return whether this call made it; only a droppable creation is registered as removable."""
+
+    key = os.path.normcase(str(d))
+    with _fresh_lock:
+        created = not d.exists()
+        d.mkdir(parents=True, exist_ok=True)
+        if droppable and created:
+            _fresh.add(key)
+        else:
+            _fresh.discard(key)
+    return created
+
+
+def drop_if_fresh(d: Path) -> None:
+    """Rmdir a dir an import made if nobody adopted it since and it is still empty, so a failed import leaves no ghost row."""
+
+    key = os.path.normcase(str(d))
+    with _fresh_lock:
+        if key in _fresh:
+            _fresh.discard(key)
+            try:
+                d.rmdir()
+            except OSError:
+                # Not empty (a stranded source or a placed video) or already gone.
+                pass
 
 
 def _rename_dir(old: Path, new: Path, old_name: str) -> None:
@@ -145,7 +184,10 @@ def create_lecture(course: str, name: str, kind: str) -> str:
     if kind == "recitation":
         (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
     target = lecture_dir(course, name, kind)
-    _mkdir_new(target)
+    # Under the lock and un-registered first, so an in-flight import's failure cannot remove this lecture.
+    with _fresh_lock:
+        _fresh.discard(os.path.normcase(str(target)))
+        _mkdir_new(target)
     return target.name
 
 
@@ -158,19 +200,28 @@ def rename_lecture(course: str, old: str, new: str, kind: str) -> str:
     return target.name
 
 
-def write_video(
-    course: str, lecture: str, kind: str, data: bytes, source: str | None = None
-) -> None:
-    """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source, and record its discovery ref (the old one is always dropped)."""
+def check_video_target(course: str, lecture: str, kind: str) -> Path:
+    """Validate the target of a fresh video and return its lecture dir path, creating nothing."""
 
     # The downloader uploads here for brand-new lectures, so the create path's name check applies.
     check_not_reserved(lecture)
-    # The lecture dir is made on demand, the course never: an upload still in flight when its course
-    # was renamed would otherwise recreate the old name as a ghost course.
+    # An upload still in flight when its course was renamed would otherwise recreate the old name as a ghost course.
     if not course_dir(course).is_dir():
         raise CourseNotFound(f"course not found: {course}", course=course)
-    d = lecture_dir(course, lecture, kind)
-    d.mkdir(parents=True, exist_ok=True)
+    return lecture_dir(course, lecture, kind)
+
+
+def prepare_video_dir(course: str, lecture: str, kind: str) -> Path:
+    """Validate the target of a fresh video and return its lecture dir, made on demand (the course never)."""
+
+    d = check_video_target(course, lecture, kind)
+    make_lecture_dir(d, False)
+    return d
+
+
+def _video_wipe_set(d: Path) -> tuple[list[Path], list[Path]]:
+    """List the derived files and the figures a fresh video erases; materials and .done stay."""
+
     # Materials stay: they are attached by hand or by the downloader, not derived from the video.
     # The summary snapshot goes, or "Restore original" would bring back the old video's summary.
     wipe = [
@@ -187,10 +238,24 @@ def write_video(
             VIDEO_SOURCE_MARKER,
         )
     ]
-    # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
-    # half-wiped with the new video never written.
-    figures = figure_files(d)
+    return wipe, figure_files(d)
+
+
+def check_video_wipe_unlocked(d: Path) -> None:
+    """Raise FileLocked if any file a fresh video would wipe is held open; touches nothing."""
+
+    wipe, figures = _video_wipe_set(d)
     check_none_locked([*wipe, *figures])
+
+
+def wipe_for_new_video(d: Path, on_start=None) -> None:
+    """Erase everything derived from the old video, all-or-nothing on locks; on_start fires once the lock probe passed, before the first unlink."""
+
+    # A lock hit mid-loop would leave the lecture half-wiped with the new video never written.
+    wipe, figures = _video_wipe_set(d)
+    check_none_locked([*wipe, *figures])
+    if on_start:
+        on_start()
     for p in wipe:
         if p.exists():
             try:
@@ -200,9 +265,49 @@ def write_video(
                 raise
     # Figures were cropped from the old video's slides-summary, so they go with it (already probed above).
     wipe_figures(d, probed=True)
-    (d / "video.mp4").write_bytes(data)
-    if source:
-        write_video_source(d, source)
+
+
+def _drop_quietly(p: Path) -> None:
+    """Best-effort unlink on a failure path, so a locked leftover never replaces the real error."""
+
+    try:
+        p.unlink(missing_ok=True)
+    except OSError:
+        log.warning("could not remove %s", p.name)
+
+
+def place_video(d: Path, tmp: Path, on_wipe_start=None) -> None:
+    """Wipe the old video's derived files, then rename a finished temp file to video.mp4. on_wipe_start fires when the lecture first changes."""
+
+    target = d / "video.mp4"
+    staged = None
+    if tmp.parent != d:
+        # Staged into the lecture dir before the wipe (rename, else copy on EXDEV), so the final rename cannot fail after the old video is gone.
+        staged = new_video_tmp(d)
+        try:
+            try:
+                os.replace(tmp, staged)
+            except OSError as e:
+                if e.errno != errno.EXDEV:
+                    raise
+                shutil.copyfile(tmp, staged)
+        except BaseException:
+            _drop_quietly(staged)
+            raise
+    try:
+        # The source is complete before the wipe, so a failure or a cancel up to here never costs the old video.
+        wipe_for_new_video(d, on_wipe_start)
+        os.replace(staged or tmp, target)
+    except BaseException:
+        if staged:
+            _drop_quietly(staged)
+        raise
+    if staged:
+        try:
+            tmp.unlink(missing_ok=True)
+        except OSError as e:
+            # Best-effort: video.mp4 is in place, so a locked source temp must not fail the upload; put_video's finally retries.
+            log.warning("could not remove upload temp %s: %s", tmp.name, e)
 
 
 def delete_file(course: str, lecture: str, file: str, kind: str) -> None:

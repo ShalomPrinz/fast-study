@@ -1,7 +1,10 @@
+import asyncio
+import json
 import logging
 import mimetypes
 import os
 import signal
+import threading
 from contextlib import asynccontextmanager
 from json import JSONDecodeError
 
@@ -13,7 +16,17 @@ from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fs import assignments, crud, figures, materials, merged, overview, paths, tree
+from fs import (
+    assignments,
+    crud,
+    figures,
+    materials,
+    merged,
+    overview,
+    paths,
+    tree,
+    video_import,
+)
 from fs import sources as skips
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
@@ -37,6 +50,7 @@ from fs.paths import (
 )
 from logging_setup import setup_logging
 from sentry_sdk.transport import HttpTransport
+from starlette.concurrency import run_in_threadpool
 
 setup_logging()
 log = logging.getLogger("db")
@@ -297,14 +311,140 @@ async def put_video(
     kind: str = Query("lecture"),
     source: str | None = Query(None),
 ):
-    """Upload video.mp4 from a raw body, wiping derived artifacts (materials stay); ?source= records its discovery ref."""
+    """Upload video.mp4 from a raw body streamed to a temp file, wiping derived artifacts (materials stay); ?source= records its discovery ref."""
 
+    tmp = None
     try:
-        data = await request.body()
-        crud.write_video(course, lecture, kind, data, source)
+        try:
+            # Refused before the first body byte, so a doomed upload fails fast; the wipe re-probes after the body.
+            d = crud.check_video_target(course, lecture, kind)
+            crud.check_video_wipe_unlocked(d)
+        except Exception as refusal:
+            # Unread body at close makes h11 reset the connection and the coded reply is lost, so discard it first.
+            async for _ in request.stream():
+                pass
+            return _failure(refusal, 400, "file_write_failed", {"file": "video.mp4"})
+        # Staged in DATA_ROOT, not the course, so a course rename mid-stream cannot strand it, and no lecture dir exists to clean up.
+        tmp = paths.new_video_tmp(paths.data_root())
+        with open(tmp, "wb") as out:
+            async for chunk in request.stream():
+                # Off the loop per chunk, so a multi-GB body never stalls other requests.
+                await run_in_threadpool(out.write, chunk)
+        d = await run_in_threadpool(crud.prepare_video_dir, course, lecture, kind)
+        await run_in_threadpool(crud.place_video, d, tmp)
+        if source:
+            skips.write_video_source(d, source)
         return Response(status_code=204)
     except Exception as e:
+        # A mid-body disconnect lands here too; the peer is gone, so the coded body is for the log and tests only.
         return _failure(e, 400, "file_write_failed", {"file": "video.mp4"})
+    finally:
+        # Cleanup never replaces the real outcome; after a placement it retries the unlink place_video could not do.
+        if tmp is not None:
+            try:
+                tmp.unlink(missing_ok=True)
+            except OSError:
+                log.warning("video upload: temp cleanup failed")
+
+
+def _ndjson(obj: dict) -> str:
+    """Encode one NDJSON line of the import stream."""
+
+    return json.dumps(obj, ensure_ascii=False) + "\n"
+
+
+def _import_error_line(exc: Exception) -> str:
+    """Build the stream's final error line; the user's source path never reaches params, message or log."""
+
+    if isinstance(exc, CodedError):
+        code, params, message = exc.code, exc.params, str(exc)
+    else:
+        # OSError's str() embeds the source path; strerror is the OS text alone.
+        detail = getattr(exc, "strerror", None) or type(exc).__name__
+        code, params = "video_import_failed", {"file": "video.mp4", "detail": detail}
+        message = f"importing the video failed: {detail}"
+    log.warning("video import failed: %s", code)
+    return _ndjson({"error": {"code": code, "params": params, "message": message}})
+
+
+# Strong refs: the loop holds tasks weakly, and an unread response must not lose its worker.
+_import_tasks: set = set()
+
+
+def _import_stream(d, src, mode):
+    """Start the import worker now, return the NDJSON stream of its progress; the worker is not tied to the stream starting, so a response nobody reads still releases the claimed dir."""
+
+    loop = asyncio.get_running_loop()
+    queue: asyncio.Queue = asyncio.Queue()
+    cancelled = threading.Event()
+
+    def progress(copied: int, total: int):
+        loop.call_soon_threadsafe(queue.put_nowait, {"copied": copied, "total": total})
+
+    touched = threading.Event()
+    task = asyncio.ensure_future(
+        asyncio.to_thread(
+            video_import.run_import,
+            d,
+            src,
+            mode,
+            progress,
+            cancelled,
+            touched,
+        )
+    )
+
+    def finished(_t):
+        # Owned by the worker's task, not the stream: a cancel from any direction still tags a lecture the wipe changed, success or failure.
+        if touched.is_set():
+            broadcast_notify("tree")
+        if not _t.cancelled():
+            _t.exception()  # marks it retrieved; the stream reports it
+        queue.put_nowait(None)
+
+    task.add_done_callback(finished)
+    _import_tasks.add(task)
+    task.add_done_callback(_import_tasks.discard)
+    return _drain_import(task, queue, cancelled)
+
+
+async def _drain_import(task, queue, cancelled):
+    """Yield the worker's queued lines as NDJSON, then its verdict; cancel the worker if the client leaves."""
+
+    try:
+        while (item := await queue.get()) is not None:
+            yield _ndjson(item)
+        yield _ndjson({"done": True, "originalKept": task.result()})
+    except Exception as e:
+        yield _import_error_line(e)
+    finally:
+        # A disconnect closes the generator here: the worker stops at its next chunk and deletes its temp file.
+        if not task.done():
+            cancelled.set()
+
+
+@app.post("/courses/{course}/lectures/{lecture}/video/import")
+async def import_video(
+    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+):
+    """Copy or move a local .mp4 (body {path, mode}) in as video.mp4, streaming NDJSON progress; same wipe as PUT …/video."""
+
+    try:
+        body = await request.json()
+        if not isinstance(body, dict):
+            raise CodedValueError(
+                "body must be a JSON object",
+                "bad_request_body",
+                detail="body must be a JSON object",
+            )
+        d, src = video_import.prepare_import(
+            course, lecture, kind, body["path"], body["mode"]
+        )
+    except Exception as e:
+        return _failure(e, 400, "video_import_failed", {"file": "video.mp4"})
+    return StreamingResponse(
+        _import_stream(d, src, body["mode"]), media_type="application/x-ndjson"
+    )
 
 
 @app.get("/courses/{course}/lectures/{lecture}/materials")

@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 // Synchronous: the frontend reads URLs and secret at module scope. IPC, not `additionalArguments`,
 // keeps the secret off the command line — see docs/RENDERER.md.
@@ -37,7 +37,7 @@ const api = {
       return result;
     },
   },
-  // Identifiers, never a path, for a file; http(s) only for a link. Each resolves empty or rejects.
+  // Identifiers, never a path, go page -> main for a file; http(s) only for a link. Each resolves empty or rejects.
   open: {
     file: action('faststudy:open-file'),
     fileWith: action('faststudy:open-file-with'),
@@ -46,6 +46,15 @@ const api = {
   },
   // The OS folder dialog, raising the window first; resolves to an absolute path, or `null` on cancel.
   pickFolder: (defaultPath) => ipcRenderer.invoke('faststudy:pick-folder', defaultPath),
+  // A picked or dropped File's absolute path, `''` when it has none or on any error. Page-ward only: the
+  // page hands it to the database's import route, and no path ever travels from the page into main.
+  pathForFile: (file) => {
+    try {
+      return webUtils.getPathForFile(file) || '';
+    } catch {
+      return '';
+    }
+  },
   // The app's update row: `'downloading' | 'downloaded' | null`, pushed on every check. `restart()`
   // installs a downloaded update and relaunches, or rejects — see docs/UPDATES.md.
   updates: {

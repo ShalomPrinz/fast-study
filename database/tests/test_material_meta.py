@@ -4,7 +4,6 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
-from fs import crud
 from fs.materials import list_materials, write_material
 
 URL = "/courses/Algo/lectures/Lecture 1/materials"
@@ -69,9 +68,10 @@ def test_delete_drops_the_entry(client, lecture):
     assert not (lecture / ".materials.json").exists()
 
 
-def test_video_wipe_keeps_the_sidecar(lecture):
+def test_video_wipe_keeps_the_sidecar(lecture, client):
     write_material("Algo", "Lecture 1", "lecture", b"a", "ref-A")
-    crud.write_video("Algo", "Lecture 1", "lecture", b"vid")
+    r = client.put("/courses/Algo/lectures/Lecture 1/video", content=b"vid")
+    assert r.status_code == 204
     assert _sidecar(lecture) == {"material.pdf": {"source": "ref-A"}}
     assert list_materials(lecture)[0]["source"] == "ref-A"
 

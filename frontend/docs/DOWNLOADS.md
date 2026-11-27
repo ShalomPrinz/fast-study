@@ -109,6 +109,16 @@ only those containing the text (`filterOptions`); arrows move, Enter or a click 
 The form is a two-column grid in reading order: link and course a full row each, kind beside name, then
 the wide Download button centred; its text and controls are one type step above the page's other forms.
 
+A light segmented switch above the source row (`Link | File from computer`, `ManualFileSource`) swaps only that
+row; the choice is remembered in `localStorage` (`manualSource.ts`, Link by default) and the link warning shows in
+Link mode only. File mode is a dashed drop zone ("Drop an .mp4 here, or Choose file"), then one line with the name
+and size and Change / remove once a file is chosen; the chosen `File` lives in the same draft store as the link.
+The whole tab body is a drop target (accent-dashed veil while dragging): one `.mp4` is taken (`classifyDrop`), several
+files or another type toast and change nothing. Copy and Move replace Download in File mode and start an import
+([JOBS.md](JOBS.md) §Manual jobs). Move is disabled with "Moving needs the desktop app" in a plain browser,
+where a `File` has no path to move; Copy there uploads the bytes. A running import into the same lecture (same course and kind, names casefolded and trimmed) disables Copy, Move and Download with "An import into this lecture is already running"; a finished import counts as holding a video until the course tree next refreshes (then the tree is the truth), so it triggers the overwrite confirm (`importsInto`). Course, kind, name and the overwrite confirm are
+the link form's.
+
 ## Auth
 
 `AuthStatusProvider` sits in `Layout` so the header chip and every course row read one state: the

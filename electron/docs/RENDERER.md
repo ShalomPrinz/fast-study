@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, platform, updates, power, services, open, pickFolder, extension, boot }` through `contextBridge.executeInMainWorld`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, packaged, platform, updates, power, services, open, pickFolder, pathForFile, extension, boot }` through `contextBridge.executeInMainWorld`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -113,6 +113,11 @@ It restores, shows and focuses the window first (topmost for an instant, past Wi
 rule), since an extension-triggered pick finds it behind Chrome or minimized. It is the one path the
 renderer gets back from main, and main neither creates nor validates it — the folder is only a proposal
 until the service that owns it accepts it.
+
+**`pathForFile(file)`** is `webUtils.getPathForFile` wrapped to never throw: the picked or dropped
+File's absolute path, `''` when it has none (built in memory) or on any error. A page cannot learn it
+otherwise, and the database's import route copies or moves the file by that path instead of receiving
+bytes. The path crosses page-ward only; no path ever travels from the page into main.
 
 **Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
 child window itself with this window's security `webPreferences` — the preload, and so the launch

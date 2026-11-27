@@ -2,7 +2,6 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from fs import crud
 from fs.materials import list_materials, write_material
 from fs.paths import lecture_dir
 
@@ -153,11 +152,12 @@ def test_delete_leaves_the_others_unrenamed(client, lecture):
     assert (lecture / "material.3.pdf").read_bytes() == b"c"
 
 
-def test_write_video_keeps_every_material(lecture):
+def test_put_video_keeps_every_material(lecture, client):
     # A handout attached before its recording arrives must survive that recording's upload.
     for data in (b"a", b"b", b"c"):
         write_material("Algo", "Lecture 1", "lecture", data)
-    crud.write_video("Algo", "Lecture 1", "lecture", b"vid")
+    r = client.put("/courses/Algo/lectures/Lecture 1/video", content=b"vid")
+    assert r.status_code == 204
     assert [e["name"] for e in list_materials(lecture)] == [
         "material.pdf",
         "material.2.pdf",

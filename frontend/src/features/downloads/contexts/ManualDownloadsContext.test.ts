@@ -32,15 +32,33 @@ describe('the manual downloads store', () => {
 
 describe('the manual form draft', () => {
   it('starts empty and merges each edit, leaving the other fields as they were', () => {
-    expect(manualDraft()).toEqual({ url: '', course: null, kind: 'lecture', name: null })
+    expect(manualDraft()).toEqual({
+      source: 'link',
+      file: null,
+      url: '',
+      course: null,
+      kind: 'lecture',
+      name: null,
+    })
     updateManualDraft({ url: 'https://x.test/v', course: 'New course' })
     updateManualDraft({ kind: 'recitation', name: 'Recitation 2' })
     updateManualDraft({ name: null })
     expect(manualDraft()).toEqual({
+      source: 'link',
+      file: null,
       url: 'https://x.test/v',
       course: 'New course',
       kind: 'recitation',
       name: null,
     })
+  })
+
+  it('keeps the chosen file and source across edits to other fields', () => {
+    const file = new File(['x'], 'lecture.mp4')
+    updateManualDraft({ source: 'file', file })
+    updateManualDraft({ name: 'Lecture 1' })
+    expect(manualDraft()).toMatchObject({ source: 'file', file, name: 'Lecture 1' })
+    updateManualDraft({ file: null, source: 'link' })
+    expect(manualDraft().file).toBeNull()
   })
 })
