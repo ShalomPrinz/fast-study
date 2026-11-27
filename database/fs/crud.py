@@ -1,4 +1,7 @@
+import errno
+import logging
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -30,9 +33,12 @@ from .paths import (
     course_dir,
     lecture_dir,
     material_index,
+    new_video_tmp,
     reject_if_locked,
     safe_name,
 )
+
+log = logging.getLogger("db")
 
 # Course-level folders the tree skips as lectures; casefolded because NTFS matches names case-insensitively.
 _RESERVED_LECTURE_NAMES = {
@@ -224,13 +230,47 @@ def wipe_for_new_video(d: Path, on_start=None) -> None:
     wipe_figures(d, probed=True)
 
 
+def _drop_quietly(p: Path) -> None:
+    """Best-effort unlink on a failure path, so a locked leftover never replaces the real error."""
+
+    try:
+        p.unlink(missing_ok=True)
+    except OSError:
+        log.warning("could not remove %s", p.name)
+
+
 def place_video(d: Path, tmp: Path, on_wipe_start=None) -> None:
-    """Wipe the old video's derived files, then rename a finished temp file in the lecture dir to video.mp4; on_wipe_start fires when the lecture first changes."""
+    """Wipe the old video's derived files, then rename a finished temp file to video.mp4. on_wipe_start fires when the lecture first changes."""
 
-    # The temp file is complete before the wipe, so a failed copy or a cancel never costs the old video.
-    wipe_for_new_video(d, on_wipe_start)
-    os.replace(tmp, d / "video.mp4")
-
+    target = d / "video.mp4"
+    staged = None
+    if tmp.parent != d:
+        # Staged into the lecture dir before the wipe (rename, else copy on EXDEV), so the final rename cannot fail after the old video is gone.
+        staged = new_video_tmp(d)
+        try:
+            try:
+                os.replace(tmp, staged)
+            except OSError as e:
+                if e.errno != errno.EXDEV:
+                    raise
+                shutil.copyfile(tmp, staged)
+        except BaseException:
+            _drop_quietly(staged)
+            raise
+    try:
+        # The source is complete before the wipe, so a failure or a cancel up to here never costs the old video.
+        wipe_for_new_video(d, on_wipe_start)
+        os.replace(staged or tmp, target)
+    except BaseException:
+        if staged:
+            _drop_quietly(staged)
+        raise
+    if staged:
+        try:
+            tmp.unlink(missing_ok=True)
+        except OSError as e:
+            # Best-effort: video.mp4 is in place, so a locked source temp must not fail the upload; put_video's finally retries.
+            log.warning("could not remove upload temp %s: %s", tmp.name, e)
 
 
 def delete_file(course: str, lecture: str, file: str, kind: str) -> None:

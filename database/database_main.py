@@ -324,15 +324,14 @@ async def put_video(
             async for _ in request.stream():
                 pass
             return _failure(refusal, 400, "file_write_failed", {"file": "video.mp4"})
-        # Staged beside the lecture, not in it, so an upload that never completes creates no lecture dir to clean up or race.
-        tmp = paths.new_video_tmp(paths.course_dir(course))
+        # Staged in DATA_ROOT, not the course, so a course rename mid-stream cannot strand it, and no lecture dir exists to clean up.
+        tmp = paths.new_video_tmp(paths.data_root())
         with open(tmp, "wb") as out:
             async for chunk in request.stream():
                 # Off the loop per chunk, so a multi-GB body never stalls other requests.
                 await run_in_threadpool(out.write, chunk)
         d = await run_in_threadpool(crud.prepare_video_dir, course, lecture, kind)
         await run_in_threadpool(crud.place_video, d, tmp)
-        tmp = None
         if source:
             skips.write_video_source(d, source)
         return Response(status_code=204)
@@ -340,7 +339,7 @@ async def put_video(
         # A mid-body disconnect lands here too; the peer is gone, so the coded body is for the log and tests only.
         return _failure(e, 400, "file_write_failed", {"file": "video.mp4"})
     finally:
-        # Cleanup never replaces the real outcome.
+        # Cleanup never replaces the real outcome; after a placement it retries the unlink place_video could not do.
         if tmp is not None:
             try:
                 tmp.unlink(missing_ok=True)

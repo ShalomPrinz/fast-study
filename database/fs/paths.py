@@ -43,7 +43,7 @@ VIDEO_SOURCE_MARKER = ".video_source.json"
 
 
 def new_video_tmp(d: Path) -> Path:
-    """Return a unique hidden temp path in the lecture dir, `.video.<random>.tmp`, for a video being placed before it is renamed to video.mp4."""
+    """Return a unique hidden temp path in the given dir, `.video.<random>.tmp`, for a video being placed before it is renamed to video.mp4."""
 
     # Unique so two concurrent placements in one lecture never share a file; nothing ever deletes a stray one blindly.
     return d / f".video.{secrets.token_hex(6)}.tmp"
