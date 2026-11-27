@@ -93,7 +93,11 @@ function ImportRow({ entry }: { entry: ImportEntry }) {
             </span>
             <Tooltip
               content={
-                cancellable ? undefined : t`Can't cancel: the file is already copied, finishing up`
+                cancelling
+                  ? t`Cancelling...`
+                  : cancellable
+                    ? undefined
+                    : t`Can't cancel: the file is already copied, finishing up`
               }
             >
               <button

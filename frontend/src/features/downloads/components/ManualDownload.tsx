@@ -187,7 +187,9 @@ function ManualForm() {
         ? t`Enter a name first`
         : locked
           ? moodleBusyMessage()
-          : undefined
+          : pending
+            ? t`Starting the download...`
+            : undefined
 
   async function submit() {
     const request = { url: url.trim(), course, lecture: lecture.trim(), kind }
@@ -332,7 +334,7 @@ function ManualForm() {
       </div>
       {source === 'file' ? (
         <div className="manual-download-actions">
-          <Tooltip content={blockerText(blockerFor('copy'))}>
+          <Tooltip content={pending ? t`Importing the file...` : blockerText(blockerFor('copy'))}>
             <button
               className="btn btn--primary"
               onClick={() => onImport('copy')}
@@ -341,7 +343,7 @@ function ManualForm() {
               {pending ? <span className="recording-spinner" /> : t`Copy`}
             </button>
           </Tooltip>
-          <Tooltip content={blockerText(blockerFor('move'))}>
+          <Tooltip content={pending ? t`Importing the file...` : blockerText(blockerFor('move'))}>
             <button
               className="btn btn--secondary"
               onClick={() => onImport('move')}
@@ -467,7 +469,11 @@ function ManualJobRow({ entry }: { entry: ManualEntry }) {
           </span>
         )}
         {status === 'error' && (
-          <Tooltip content={locked ? moodleBusyMessage() : undefined}>
+          <Tooltip
+            content={
+              locked ? moodleBusyMessage() : retrying ? t`Retrying the download...` : undefined
+            }
+          >
             <button
               className="btn btn--ghost recording-download-btn"
               onClick={() => void retry()}
