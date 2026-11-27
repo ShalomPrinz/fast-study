@@ -29,10 +29,11 @@ const sha256 = (file) =>
   });
 
 /** A real .mp4 (the tone video) followed by a top-level `free` atom of zeros, so the file is a valid
- *  container the size of a lecture. The atom opens with `label`, so no two sources hash alike. */
-async function makeSource(dir, label) {
+ *  container the size of a lecture. The atom opens with `label`, so no two sources hash alike; `name`
+ *  is the file name when it should differ from `label` (a Hebrew one, with a space and a hyphen). */
+async function makeSource(dir, label, name = `${label}.mp4`) {
   fs.mkdirSync(dir, { recursive: true });
-  const file = path.join(dir, `${label}.mp4`);
+  const file = path.join(dir, name);
   const head = Buffer.alloc(8 + 64);
   head.writeUInt32BE(PADDING_BYTES, 0);
   head.write('free', 4, 'ascii');
@@ -92,7 +93,8 @@ async function runLeg({ label, mode, source, lecture, waitMs = DONE_TIMEOUT_MS }
   await byTestId(page, 'manual-file-input').setInputFiles(source.file, act);
   await expect
     .poll(() => page.evaluate(() => window.__smokePicked), {
-      message: 'the preload bridge gave no path for the chosen File (webUtils.getPathForFile)',
+      message:
+        'no file was chosen or the preload bridge gave no path for it (setInputFiles may have ignored a non-ASCII path, or webUtils.getPathForFile failed)',
     })
     .toBeTruthy();
   seen.picked = await page.evaluate(() => window.__smokePicked);
@@ -173,7 +175,7 @@ const describe = (seen) =>
   ].join('\n');
 
 /** Downloads → Manual → File from computer, by path through the packaged preload and the frozen database:
- *  Copy, Move on the data root's volume, Move from another volume. `guard` (macOS) puts the first source
+ *  Copy and Move from another volume (Hebrew source names), Move on the data root's volume (ASCII). `guard` (macOS) puts the first source
  *  where a privacy prompt may stand and records what the read did, retrying from a neutral folder. */
 export async function manualImport({ guard } = {}) {
   const { api } = services;
@@ -187,7 +189,8 @@ export async function manualImport({ guard } = {}) {
   if (guard) dirs.push(sameDir);
   try {
     // 1. Copy.
-    let source = await makeSource(sameDir, 'copy');
+    const hebrewCopy = 'הרצאה 5 - הקלטה.mp4';
+    let source = await makeSource(sameDir, 'copy', hebrewCopy);
     let leg = await runLeg({
       label: 'copy',
       mode: 'copy',
@@ -210,9 +213,9 @@ export async function manualImport({ guard } = {}) {
       );
       if (verdict !== 'read without a prompt') {
         if (verdict === 'prompted') await guard.desktop();
-        // A blocked read can freeze the database (check_source runs on its event loop), so the legs after it are not guaranteed.
+        // The import's source read runs off the database's event loop, so a stuck leg times out alone and the database keeps answering.
         sameDir = neutral;
-        source = await makeSource(sameDir, 'copy-neutral');
+        source = await makeSource(sameDir, 'copy-neutral', hebrewCopy);
         leg = await runLeg({
           label: 'copy-neutral',
           mode: 'copy',
@@ -242,16 +245,17 @@ export async function manualImport({ guard } = {}) {
     // 3. Move from another volume: the copy-then-unlink fallback.
     const other = await otherVolume(paths.workDir());
     dirs.push(other.dir);
-    source = await makeSource(other.dir, 'move-other');
+    const hebrewLecture = 'הרצאה 7';
+    source = await makeSource(other.dir, 'move-other', 'העברה 7 - הקלטה.mp4');
     notes.push(`other volume: ${other.dir}`);
     leg = await runLeg({
       label: 'move-other-volume',
       mode: 'move',
       source,
-      lecture: 'Import Move Other Volume',
+      lecture: hebrewLecture,
     });
     notes.push(describe(leg));
-    await expectImported(leg, source, 'Import Move Other Volume', { sameVolume: false });
+    await expectImported(leg, source, hebrewLecture, { sameVolume: false });
   } finally {
     evidence('manual import by path', notes.join('\n'));
     await releaseOtherVolume();
