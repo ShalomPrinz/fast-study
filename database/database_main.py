@@ -367,8 +367,12 @@ def _import_error_line(exc: Exception) -> str:
     return _ndjson({"error": {"code": code, "params": params, "message": message}})
 
 
-async def _import_stream(d, src, mode):
-    """Run the import in a worker thread, streaming its progress as NDJSON and cancelling it if the client leaves."""
+# Strong refs: the loop holds tasks weakly, and an unread response must not lose its worker.
+_import_tasks: set = set()
+
+
+def _import_stream(d, src, mode):
+    """Start the import worker now, return the NDJSON stream of its progress; the worker is not tied to the stream starting, so a response nobody reads still releases the claimed dir."""
 
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue()
@@ -380,7 +384,13 @@ async def _import_stream(d, src, mode):
     touched = threading.Event()
     task = asyncio.ensure_future(
         asyncio.to_thread(
-            video_import.run_import, d, src, mode, progress, cancelled, touched
+            video_import.run_import,
+            d,
+            src,
+            mode,
+            progress,
+            cancelled,
+            touched,
         )
     )
 
@@ -393,6 +403,14 @@ async def _import_stream(d, src, mode):
         queue.put_nowait(None)
 
     task.add_done_callback(finished)
+    _import_tasks.add(task)
+    task.add_done_callback(_import_tasks.discard)
+    return _drain_import(task, queue, cancelled)
+
+
+async def _drain_import(task, queue, cancelled):
+    """Yield the worker's queued lines as NDJSON, then its verdict; cancel the worker if the client leaves."""
+
     try:
         while (item := await queue.get()) is not None:
             yield _ndjson(item)

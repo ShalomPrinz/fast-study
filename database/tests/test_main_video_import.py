@@ -3,6 +3,8 @@
 import asyncio
 import json
 import os
+import threading
+import time
 
 import pytest
 from fastapi.testclient import TestClient
@@ -182,6 +184,14 @@ def test_cancel_mid_copy_keeps_old_video_source_and_leaves_no_temp(
     monkeypatch.setattr(video_import, "CHUNK", 2)
     monkeypatch.setattr(video_import, "PROGRESS_INTERVAL", 0)
     monkeypatch.setattr(database_main, "broadcast_notify", lambda *_: None)
+    # Each chunk takes a beat, so the cancel always lands before the copy ends.
+    real_monotonic = video_import.time.monotonic
+
+    def slow():
+        time.sleep(0.02)
+        return real_monotonic()
+
+    monkeypatch.setattr(video_import.time, "monotonic", slow)
 
     async def go():
         gen = database_main._import_stream(lecture, src.resolve(), "copy")
@@ -403,3 +413,155 @@ def test_non_object_body_is_bad_request_body(client, lecture):
         r = client.post(URL, content=raw, headers={"content-type": "application/json"})
         assert r.status_code == 400
         assert r.json()["code"] == "bad_request_body"
+
+
+NEW = "/courses/Algo/lectures/Fresh/video/import"
+
+
+@pytest.fixture
+def course(data_root):
+    """A course with no lectures."""
+
+    (data_root / "Algo").mkdir()
+    return data_root / "Algo"
+
+
+def test_failed_import_into_a_new_lecture_leaves_no_folder(
+    client, course, src, monkeypatch
+):
+    def boom(*_a):
+        raise PermissionError(13, "Permission denied")
+
+    monkeypatch.setattr("fs.crud.wipe_for_new_video", boom)
+
+    out = lines(post(client, src, "copy", NEW))
+
+    assert out[-1]["error"]["code"] == "video_import_failed"
+    assert list(course.iterdir()) == []
+
+
+def test_failed_import_keeps_a_preexisting_empty_lecture(
+    client, course, src, monkeypatch
+):
+    (course / "Fresh").mkdir()
+
+    def boom(*_a):
+        raise PermissionError(13, "Permission denied")
+
+    monkeypatch.setattr("fs.crud.wipe_for_new_video", boom)
+    post(client, src, "copy", NEW)
+
+    assert (course / "Fresh").is_dir()
+
+
+def test_cancel_into_a_new_lecture_leaves_no_folder(course, src, monkeypatch):
+    import database_main
+    from fs import video_import
+
+    monkeypatch.setattr(video_import, "CHUNK", 2)
+    monkeypatch.setattr(video_import, "PROGRESS_INTERVAL", 0)
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *_: None)
+    # Each chunk takes a beat, so the cancel always lands before the copy ends.
+    real_monotonic = video_import.time.monotonic
+
+    def slow():
+        time.sleep(0.02)
+        return real_monotonic()
+
+    monkeypatch.setattr(video_import.time, "monotonic", slow)
+    d, s = video_import.prepare_import("Algo", "Fresh", "lecture", str(src), "copy")
+
+    async def go():
+        gen = database_main._import_stream(d, s, "copy")
+        await gen.__anext__()
+        await gen.aclose()
+        for _ in range(100):
+            if not d.exists():
+                break
+            await asyncio.sleep(0.02)
+
+    asyncio.run(go())
+
+    assert not d.exists()
+
+
+def _cancelled_run(d, s):
+    """Run an import that is already cancelled, so it fails before placing anything."""
+
+    from fs import video_import
+
+    ev = threading.Event()
+    ev.set()
+    with pytest.raises(video_import.ImportCancelled):
+        video_import.run_import(d, s, "copy", lambda *_: None, ev, threading.Event())
+
+
+def test_put_adopts_a_dir_an_import_made(course, src):
+    from fs import crud, video_import
+
+    d, s = video_import.prepare_import("Algo", "Fresh", "lecture", str(src), "copy")
+    assert crud.prepare_video_dir("Algo", "Fresh", "lecture") == d
+    _cancelled_run(d, s)
+
+    assert d.is_dir()
+
+
+def test_create_lecture_adopts_a_dir_an_import_made(course, src):
+    from fs import crud, video_import
+    from fs.paths import NameTaken
+
+    d, s = video_import.prepare_import("Algo", "Fresh", "lecture", str(src), "copy")
+    with pytest.raises(NameTaken):
+        crud.create_lecture("Algo", "Fresh", "lecture")
+    _cancelled_run(d, s)
+
+    assert d.is_dir()
+
+
+def test_second_import_survives_the_first_failing(course, src, monkeypatch):
+    from fs import video_import
+
+    monkeypatch.setattr("fs.crud.wipe_for_new_video", lambda *_a, **_k: None)
+    d, s = video_import.prepare_import("Algo", "Fresh", "lecture", str(src), "copy")
+    d2, s2 = video_import.prepare_import("Algo", "Fresh", "lecture", str(src), "copy")
+    _cancelled_run(d, s)
+    assert d.is_dir()
+
+    video_import.run_import(
+        d2, s2, "copy", lambda *_: None, threading.Event(), threading.Event()
+    )
+
+    assert (d / "video.mp4").is_file()
+
+
+def test_lone_failed_import_removes_its_new_folder(course, src):
+    from fs import video_import
+
+    d, s = video_import.prepare_import("Algo", "Fresh", "lecture", str(src), "copy")
+    _cancelled_run(d, s)
+
+    assert not d.exists()
+
+
+def test_response_never_iterated_still_drops_the_claimed_dir(course, src, monkeypatch):
+    import database_main
+    from fs import crud, video_import
+
+    monkeypatch.setattr(database_main, "broadcast_notify", lambda *_: None)
+
+    def fail(*_a):
+        raise OSError(5, "boom")
+
+    monkeypatch.setattr(video_import, "_place", fail)
+    d, s = video_import.prepare_import("Algo", "Fresh", "lecture", str(src), "copy")
+
+    async def go():
+        # The response is built but the client leaves before the first iteration.
+        database_main._import_stream(d, s, "copy")
+        while database_main._import_tasks:
+            await asyncio.sleep(0.01)
+
+    asyncio.run(go())
+
+    assert not d.exists()
+    assert not crud._fresh

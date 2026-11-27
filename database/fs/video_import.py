@@ -5,9 +5,11 @@ import time
 from pathlib import Path
 
 from .crud import (
+    check_video_target,
     check_video_wipe_unlocked,
+    drop_if_fresh,
+    make_lecture_dir,
     place_video,
-    prepare_video_dir,
 )
 from .paths import CodedError, CodedValueError, new_video_tmp
 
@@ -63,16 +65,21 @@ def prepare_import(
     """Run every refusal that needs no byte moved; return (lecture dir, source) ready for run_import."""
 
     src = check_source(raw_path, mode)
-    d = prepare_video_dir(course, lecture, kind)
-    target = d / "video.mp4"
-    if target.exists() and os.path.samefile(src, target):
-        raise CodedValueError(
-            "the file already is this lecture's video",
-            "import_source_is_target",
-            file=src.name,
-        )
-    # Probed before the first byte, so a locked old video refuses without copying gigabytes.
-    check_video_wipe_unlocked(d)
+    d = check_video_target(course, lecture, kind)
+    make_lecture_dir(d, True)
+    try:
+        target = d / "video.mp4"
+        if target.exists() and os.path.samefile(src, target):
+            raise CodedValueError(
+                "the file already is this lecture's video",
+                "import_source_is_target",
+                file=src.name,
+            )
+        # Probed before the first byte, so a locked old video refuses without copying gigabytes.
+        check_video_wipe_unlocked(d)
+    except BaseException:
+        drop_if_fresh(d)
+        raise
     return d, src
 
 
@@ -116,10 +123,17 @@ def run_import(
     cancelled: threading.Event,
     touched: threading.Event,
 ) -> bool:
-    """Place src as the lecture's video.mp4 (blocking, run in a thread); return originalKept.
+    """Place src as the lecture's video.mp4 (blocking, run in a thread); return originalKept; a failure drops a dir it made and nobody adopted."""
 
-    A failure or cancel leaves the source and the lecture as they were unless `touched` is set (the wipe started); the source is never lost.
-    """
+    try:
+        return _place(d, src, mode, progress, cancelled, touched)
+    finally:
+        # On success the dir holds the video, so the rmdir fails and only clears the registry entry.
+        drop_if_fresh(d)
+
+
+def _place(d, src, mode, progress, cancelled, touched) -> bool:
+    """Copy or move src into d as video.mp4; a failure or cancel leaves the source and lecture as they were unless `touched` is set."""
 
     tmp = new_video_tmp(d)
     if mode == "move" and _rename_into(src, tmp):

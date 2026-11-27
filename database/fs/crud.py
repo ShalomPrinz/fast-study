@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import sys
+import threading
 from pathlib import Path
 
 from .figures import figure_files, wipe_figures
@@ -56,6 +57,39 @@ def _mkdir_new(d: Path) -> None:
     except FileExistsError:
         # The sanitized folder name, not the typed one: that is what the user will find in the tree.
         raise NameTaken(f"'{d.name}' already exists", name=d.name) from None
+
+
+# Lecture dirs an import made and may still drop; the lock makes "exists?" + mkdir + registry one step.
+_fresh_lock = threading.Lock()
+_fresh: set[str] = set()
+
+
+def make_lecture_dir(d: Path, droppable: bool) -> bool:
+    """Create the lecture dir and return whether this call made it; only a droppable creation is registered as removable."""
+
+    key = os.path.normcase(str(d))
+    with _fresh_lock:
+        created = not d.exists()
+        d.mkdir(parents=True, exist_ok=True)
+        if droppable and created:
+            _fresh.add(key)
+        else:
+            _fresh.discard(key)
+    return created
+
+
+def drop_if_fresh(d: Path) -> None:
+    """Rmdir a dir an import made if nobody adopted it since and it is still empty, so a failed import leaves no ghost row."""
+
+    key = os.path.normcase(str(d))
+    with _fresh_lock:
+        if key in _fresh:
+            _fresh.discard(key)
+            try:
+                d.rmdir()
+            except OSError:
+                # Not empty (a stranded source or a placed video) or already gone.
+                pass
 
 
 def _rename_dir(old: Path, new: Path, old_name: str) -> None:
@@ -150,7 +184,10 @@ def create_lecture(course: str, name: str, kind: str) -> str:
     if kind == "recitation":
         (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
     target = lecture_dir(course, name, kind)
-    _mkdir_new(target)
+    # Under the lock and un-registered first, so an in-flight import's failure cannot remove this lecture.
+    with _fresh_lock:
+        _fresh.discard(os.path.normcase(str(target)))
+        _mkdir_new(target)
     return target.name
 
 
@@ -178,7 +215,7 @@ def prepare_video_dir(course: str, lecture: str, kind: str) -> Path:
     """Validate the target of a fresh video and return its lecture dir, made on demand (the course never)."""
 
     d = check_video_target(course, lecture, kind)
-    d.mkdir(parents=True, exist_ok=True)
+    make_lecture_dir(d, False)
     return d
 
 
