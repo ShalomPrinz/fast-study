@@ -4,11 +4,11 @@
 against the uploaded installer — as `build.yml`'s `smoke-win` job, or by `smoke.yml` against an earlier run's
 ([RELEASE.md](RELEASE.md#build-test-publish)). One ordered
 file on one worker, since each check builds on the machine state the last one left: install, the
-installed tree's DLL imports, boot, first run, the pipeline, the open-PDF control, drive off, a yt-dlp download, quit, a launcher crash, a backend death and restart, the tools under a Hebrew temp
+installed tree's DLL imports, boot, first run, the pipeline, the open-PDF control, drive off, a yt-dlp download, a manual file import by path, quit, a launcher crash, a backend death and restart, the tools under a Hebrew temp
 path, the browser chain, an in-place update. It needs an installed Windows build, so off the runner
 only `npx playwright test --list` works — it is never "passed" from WSL.
 
-`release.spec.js` is the one file Playwright loads: it holds the serial mode, the hooks and the 16
+`release.spec.js` is the one file Playwright loads: it holds the serial mode, the hooks and the 17
 `test()` lines in order, each given the body `tests/NN-<name>.js` exports. What two or more tests
 share lives in `lib/` — the running app in `lib/session.js`, whose `session` and `services` importers
 read as live bindings and only its own functions reassign; a helper or constant one test uses stays
@@ -22,10 +22,10 @@ The suite asks one question: did build, freeze, stage and install produce the ap
 proved? It never asserts flow behaviour — UI wording, step order, how an error code renders — which
 the app-harness E2E specs own ([`.claude/harness/README.md`](../../.claude/harness/README.md)); a step
 status, an error code or a provider's verbatim text (test 5's `lecture-error-message`) is read only as
-evidence of a packaging fact. Two flow checks stay here only because no harness spec covers them yet,
-both in `lib/firstRun.js`: the privacy gate — the wall's first save opens the policy, and Confirm stays
-disabled until `.privacy-body` is scrolled to its end (test 4, and test 16 when the policy opens) — and a canceled folder dialog
-keeping the launcher's default (test 4). The boundary is the
+evidence of a packaging fact. Flow checks stay here only because no harness spec covers them yet,
+two in `lib/firstRun.js`: the privacy gate — the wall's first save opens the policy, and Confirm stays
+disabled until `.privacy-body` is scrolled to its end (test 4, and test 17 when the policy opens) — and a canceled folder dialog
+keeping the launcher's default (test 4). A third, the manual import (test 11, macOS 14), holds the Downloads → Manual → File from computer flow too, since the harness has no Electron and so no bridge path or Move; the same is true of the zoom test below. The boundary is the
 root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 
 | Test                    | The failure only packaging can cause                                                                                                 | Harness flow side                                  |
@@ -40,12 +40,13 @@ root [`CLAUDE.md`](../../CLAUDE.md#test-boundaries)'s test boundaries.
 | 8. drive off            | a fresh install's defaults run a step past the PDF or upload to Drive                                                                | —                                                  |
 | 9. opening a PDF        | `open-pdf` fails through the preload bridge and `shell.openPath`; a real Windows exclusive handle is not reported as `file_locked`   | `locked-file.spec.mjs`                             |
 | 10. yt-dlp download     | yt-dlp cannot find the bundled ffmpeg to merge DASH, the state root's yt-dlp copy is not seeded, `/video-arrived` is never reported  | `download-all.spec.mjs`                            |
-| 11. quit, no orphans    | a frozen process or port outlives the launcher's teardown; settings do not persist across a relaunch                                 | —                                                  |
-| 12. launcher crash      | a `taskkill /F` of main alone (no `/T`) leaves a frozen service, a Node service, or an `ffmpeg`/`pandoc`/`tectonic` the backend's job holds running | —                                                  |
-| 13. backend death       | the frozen backend's ctypes Job Object call fails on real Windows, so a killed backend leaves its `ffmpeg` running; a tool or service outlives the restart's teardown, an old port is held by anything but a new service, the reboot runs other than four service processes, `bridge.json` keeps the old `server` port | `service-banner.spec.mjs`                          |
-| 14. Hebrew temp path    | a bundled tool breaks under a non-ASCII `TEMP`; the frozen services do not write UTF-8 to `launch.log`                               | —                                                  |
-| 15. the browser chain   | the prerequisite misresolves installed Chrome or Edge; the PDF step depends on a browser                                             | —                                                  |
-| 16. an in-place update  | the updater fails to replace `resources/` from a feed, or loses the keys, the yt-dlp copy or the new `.fmt`                          | —                                                  |
+| 11. manual import by path | the packaged sandboxed preload's `webUtils.getPathForFile` gives no path for a chosen file (Move stays disabled), the frozen database's import route fails, or its cross-volume Move does not copy then unlink: Copy keeps the source, Move on the data root's volume and Move from the runner's other drive remove it, each leaving a `video.mp4` of the source's size and hash | `manual-file-import.spec.mjs` (plain-browser upload only) |
+| 12. quit, no orphans    | a frozen process or port outlives the launcher's teardown; settings do not persist across a relaunch                                 | —                                                  |
+| 13. launcher crash      | a `taskkill /F` of main alone (no `/T`) leaves a frozen service, a Node service, or an `ffmpeg`/`pandoc`/`tectonic` the backend's job holds running | —                                                  |
+| 14. backend death       | the frozen backend's ctypes Job Object call fails on real Windows, so a killed backend leaves its `ffmpeg` running; a tool or service outlives the restart's teardown, an old port is held by anything but a new service, the reboot runs other than four service processes, `bridge.json` keeps the old `server` port | `service-banner.spec.mjs`                          |
+| 15. Hebrew temp path    | a bundled tool breaks under a non-ASCII `TEMP`; the frozen services do not write UTF-8 to `launch.log`                               | —                                                  |
+| 16. the browser chain   | the prerequisite misresolves installed Chrome or Edge; the PDF step depends on a browser                                             | —                                                  |
+| 17. an in-place update  | the updater fails to replace `resources/` from a feed, or loses the keys, the yt-dlp copy or the new `.fmt`                          | —                                                  |
 
 A new smoke test adds its row here, its file under `tests/` and its line in `release.spec.js`; a test with no packaging-only failure belongs in the harness or a unit test.
 
@@ -101,10 +102,10 @@ A new smoke test adds its row here, its file under `tests/` and its line in `rel
   the first poll. Forensics print the raw observed value even where the comparison normalizes it:
   rcedit stamps a four-component ProductVersion, and the `0.1.0.0` a tidied line would hide is what
   names the defect.
-- **A kill lands mid-`ffmpeg`.** Tests 12 and 13 start the audio step on a six-hour tone and kill
+- **A kill lands mid-`ffmpeg`.** Tests 13 and 14 start the audio step on a six-hour tone and kill
   only once its `ffmpeg` runs under the backend; an `audio.mp3` afterwards means it ended first, which
   fails the check as vacuous. The job's tools seen before the kill, by pid and start time, must be
-  gone within 5 s of it — before test 12 drops the app or test 13 restarts — since an orphan exits by
+  gone within 5 s of it — before test 13 drops the app or test 14 restarts — since an orphan exits by
   itself once its encode ends; only the services get a 30 s teardown. Only `faststudy-services.exe`, the Node services and the backend job's
   tools are asserted — `yt-dlp`, `curl` and Chromium outliving a dead Node service is an accepted gap.
 - **The launch secret is enforced**: every service answers 401 without it.
@@ -123,7 +124,7 @@ A new smoke test adds its row here, its file under `tests/` and its line in `rel
 ## The macOS suite
 
 `mac.spec.js`, run by `smoke-suite-mac.yml`'s `smoke-mac` job with `playwright.mac.config.js`, holds
-20 tests on one worker, in order, each building on the state the last left. Mac-only bodies are in
+21 tests on one worker, in order, each building on the state the last left. Mac-only bodies are in
 `tests/mac/`; the rest of the Windows suite's bodies run here unchanged from `tests/`, either
 directly (live SSE, drive off, quit, launcher crash, backend death) or wrapped by a `tests/mac/` file
 that adds evidence (first run, provider steps, the PDF, open PDF, yt-dlp, Hebrew temp, browser chain).
@@ -147,6 +148,7 @@ its own; the OS keeps it offline, below.
 | drive off | shared `tests/08-drive-off.js`: a fresh install's defaults run a step past the PDF or upload to Drive (a `drive_url.txt`, a Drive consent modal). It reads only the service API and `database/`'s routes, so it needs no Mac bundle path for the Google client JSON. It reuses the complete PDF lecture and changes no file in it |
 | open PDF | the open-control half of shared `tests/09-open-pdf.js`: `open-pdf` fails through the preload bridge and `shell.openPath` (error toast), or Preview never ends up holding `summary.pdf`. LaunchServices starts Preview under launchd, so it is neither the app's child nor in `no_inet`, and hands the document over by Apple Event, not argv; the observation is `lsof -c Preview` listing the PDF's real path, which needs no TCC consent (`osascript`/System Events would). Preview is killed before and after. The Windows half, a `file_locked` for an exclusively held PDF, has no Mac counterpart: macOS holds no mandatory file locks. Evidence is the path and the PDFs Preview held |
 | yt-dlp download | shared `tests/10-ytdlp-download.js`: yt-dlp does not merge the DASH fixture's streams, or the state root's yt-dlp copy is not seeded. Homebrew's ffmpeg is on this runner's PATH, so a merge alone does not show the bundled one ran: the process table sampled during the download must show yt-dlp handed `--ffmpeg-location` at `Contents/Resources/bin/ffmpeg` and no other ffmpeg running. Evidence is the arguments seen, the ffmpeg processes seen (sampled, may miss a short merge) and `video.mp4`'s size and stream dump |
+| manual import | shared `tests/17-manual-import.js` through `tests/mac/16-manual-import.js`: as on Windows, with Move from another volume run from a temporary APFS disk image (`hdiutil create`/`attach -nobrowse` at a mountpoint, detached in `finally` and `afterAll`). The first source sits in `~/Downloads/faststudy-smoke-import`; the read is recorded as `read without a prompt`, `prompted` (no end within 45 s, desktop screenshot) or `refused` (the card's `data-code`) in the evidence file — evidence only, since a runner's TCC is not a user's Mac — and a prompted or refused Copy is retried from a neutral temp folder, which the Moves then use, so the Moves do not read from `~/Downloads`. Known risk: the database runs the import's `check_source` on its event loop (`database/database_main.py`, `database/fs/video_import.py`), so a read blocked on a TCC prompt freezes the whole database for the rest of the run and the later legs cannot be trusted to pass or fail on their own merits |
 | quit | shared `tests/11-quit.js`: after the window closes, a process under the bundle or the state root, or a service port, outlives the app (the process group teardown of `electron/teardown.js`); a relaunch does not show the init wall again |
 | backend death | shared `tests/13-backend-death.js`: a hard-killed backend leaves its ffmpeg running (main's group `SIGKILL` on a child's exit), or the restart does not reboot four services on fresh ports and rewrite `bridge.json` |
 | Mach-O linkage | a Mach-O in the bundle (frozen Python, ffmpeg, pandoc, tectonic, Electron) has a load command or `LC_RPATH` that does not resolve inside the bundle or to `/usr/lib/`, `/System/` — a Homebrew link loads on this runner and nowhere else. Read in-process by `lib/linkage.js`; evidence is the count, link roots, rpaths and offender list |
@@ -158,6 +160,17 @@ its own; the OS keeps it offline, below.
 - **The zoom test also holds a flow check.** Hiding the zoom browser and `show()` are `downloader/auto`
   behaviour, kept here because no harness spec can cover them: the harness runs on Linux and
   `auto`'s unit tests fake the `osascript` call. Its packaging fact is the first clause alone.
+- **The manual import test's legs.** Each picks the source with `setInputFiles` on `manual-file-input`, asserts
+  `window.faststudy.pathForFile` (read in a capture-phase `change` listener, since the page clears the input)
+  answers the source's real path and `manual-import-start[data-mode=move]` is enabled, starts Copy or Move, and follows
+  `manual-import` to `done`. Sources are the tone video plus a 96 MiB `free` atom. Afterwards, through `database/`
+  only: `video.mp4` has the source's size and sha256, a Copy has `data-original-kept=true` and its source, a Move
+  `false` and none. The same-volume legs also need the file's `dev` to equal the source's, the other-volume leg's to
+  differ. Full-window screenshots (file chosen, running, done) land in `test-results/import-screenshots/`; the running one
+  is best effort, since a local copy may end first. They ride the logs artifact on macOS, and `smoke-import-screenshots` on Windows
+  with a run-summary listing, on success too. The macOS evidence file names them.
+- **Another volume.** Windows: the first of `C:` to `H:` whose `dev` differs from the data root's (the runner's
+  `RUNNER_TEMP` is on `D:`, the OS on `C:`). macOS: the disk image above.
 - **Offline at the OS, by group.** `smoke-suite-mac.yml` creates group `no_inet` and loads a pf anchor,
   `block return out quick proto { tcp udp } from any to any group no_inet`, under a main ruleset
   that opens with `set skip on lo0`. Every suite-driven launch of the app, every `ELECTRON_RUN_AS_NODE` probe and
@@ -229,6 +242,8 @@ value it cannot read is `null` with a warning, never a failure.
 
 ## Unproven until a macOS run
 
+That `webUtils.getPathForFile` answers a path for a file Playwright's `setInputFiles` set, in the packaged sandboxed preload (both OSes); that `hdiutil create`/`attach -nobrowse` mounts an APFS image with no prompt and the app may read it; that the app reading `~/Downloads` raises (or not) a Files-and-Folders prompt and what the import's error code then is (`import_source_unreadable` assumed); that `~/Downloads` and `RUNNER_TEMP` share a volume.
+
 That `ps -o comm=` prints the full executable path (so `exe` matches `appExe()` and `toolPath()`), that
 the frozen backend's ffmpeg is a direct child of the pid listening on its port, that `lsof` shows the
 runner's listeners, that a service killed leaves main's group `SIGKILL` reaping its ffmpeg inside
@@ -245,6 +260,8 @@ for `safeStorage`; both Chrome and Edge in `/Applications` and a GUI session `NS
 read; that App Management (TCC) lets the plain `runner` rename a signed third-party `.app` there, which the browser chain needs; `/Applications` being writable to the runner's user, which the updater's stage step requires.
 
 ## Unproven until a Windows run
+
+That the runner has a second writable drive (`C:` and `D:` assumed, `dev` telling them apart) and `webUtils` answers a path for Playwright's `setInputFiles` in the packaged exe.
 
 Each assumption only the runner can prove — the silent per-user install, Playwright attaching to the
 packaged exe, the loopback exemption, a renamed browser dir reading as uninstalled, libuv's kill-on-close job taking main's services with it and the backend's own job taking its tools, the blocked yt-dlp copy reaching a loopback server, an unsigned

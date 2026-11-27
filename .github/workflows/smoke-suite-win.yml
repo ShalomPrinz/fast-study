@@ -73,6 +73,22 @@ jobs:
           if-no-files-found: ignore
           retention-days: 90
 
+      # The manual import test's screenshots of the real app, kept on success too.
+      - name: List the import screenshots
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo '### Manual import screenshots (artifact `smoke-import-screenshots`)'
+            ls delivery/smoke/test-results/import-screenshots 2>/dev/null | sed 's/^/- /' || true
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-import-screenshots
+          path: delivery/smoke/test-results/import-screenshots/
+          if-no-files-found: ignore
+
       # The suite copies each launch's launch.log as it quits; this catches the one a crash left.
       - name: Collect the state root's logs
         if: failure()

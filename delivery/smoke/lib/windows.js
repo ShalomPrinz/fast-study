@@ -210,3 +210,36 @@ export async function renameAside(dir) {
   }
   throw new Error(`could not rename ${dir} aside: ${lastError.message}`);
 }
+
+const OTHER_VOLUME = 'faststudy-smoke-other-volume';
+
+/** A writable folder on a fixed drive other than the one holding `reference` (the data root's tree):
+ *  `{ dir }`. Throws, naming the assumption, when the runner has no second drive. */
+export async function otherVolume(reference) {
+  const here = fs.statSync(reference).dev;
+  for (const letter of 'CDEFGH') {
+    const root = `${letter}:\\`;
+    try {
+      if (fs.statSync(root).dev === here) continue;
+      const dir = path.join(root, OTHER_VOLUME);
+      fs.mkdirSync(dir, { recursive: true });
+      return { dir };
+    } catch {
+      // No such drive, or not writable: the next letter.
+    }
+  }
+  throw new Error(
+    `assumption failed: the runner has a second writable drive besides the one holding ${reference}`,
+  );
+}
+
+/** Drop what `otherVolume` made; never throws, so a cleanup cannot mask a failure. */
+export async function releaseOtherVolume() {
+  for (const letter of 'CDEFGH') {
+    try {
+      fs.rmSync(path.join(`${letter}:\\`, OTHER_VOLUME), { recursive: true, force: true });
+    } catch {
+      // Best effort.
+    }
+  }
+}

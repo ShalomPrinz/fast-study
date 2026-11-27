@@ -22,3 +22,5 @@ export const holdExclusive = need('holdExclusive');
 export const renameAside = need('renameAside');
 export const forceKill = need('forceKill');
 export const evidence = need('evidence');
+export const otherVolume = need('otherVolume');
+export const releaseOtherVolume = need('releaseOtherVolume');

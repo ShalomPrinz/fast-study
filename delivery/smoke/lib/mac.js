@@ -208,3 +208,41 @@ export async function forceKill(pid) {
     return { code: 1, output: error.message };
   }
 }
+
+/** A second APFS volume: a temporary disk image attached `-nobrowse` at a mountpoint of its own, so no
+ *  Finder window or removable-volume prompt is involved. Answers `{ dir }`, the mountpoint. */
+export async function otherVolume() {
+  const image = path.join(workDir(), 'other-volume.dmg');
+  const dir = path.join(workDir(), 'other-volume');
+  await releaseOtherVolume();
+  fs.mkdirSync(dir, { recursive: true });
+  const created = await run(
+    '/usr/bin/hdiutil',
+    ['create', '-size', '400m', '-fs', 'APFS', '-volname', 'FastStudyOther', '-ov', image],
+    { timeoutMs: 120_000 },
+  );
+  if (created.code !== 0)
+    throw new Error(`hdiutil create failed: ${created.stdout}${created.stderr}`);
+  const attached = await run(
+    '/usr/bin/hdiutil',
+    ['attach', image, '-nobrowse', '-noverify', '-mountpoint', dir],
+    { timeoutMs: 120_000 },
+  );
+  if (attached.code !== 0) {
+    throw new Error(`hdiutil attach failed: ${attached.stdout}${attached.stderr}`);
+  }
+  return { dir };
+}
+
+/** Detach and delete the image `otherVolume` made; never throws, since it also runs from `afterAll`. */
+export async function releaseOtherVolume() {
+  const image = path.join(workDir(), 'other-volume.dmg');
+  const dir = path.join(workDir(), 'other-volume');
+  await run('/usr/bin/hdiutil', ['detach', dir, '-force'], { timeoutMs: 60_000 }).catch(() => {});
+  fs.rmSync(image, { force: true });
+  try {
+    fs.rmdirSync(dir);
+  } catch {
+    // Absent, or still mounted: the runner is thrown away.
+  }
+}
