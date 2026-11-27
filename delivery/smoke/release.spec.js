@@ -1,6 +1,7 @@
 import { test } from '@playwright/test';
 import { abandon } from './lib/app.js';
 import { restoreBrowsers } from './lib/browsers.js';
+import { releaseOtherVolume } from './lib/windows.js';
 import { forget, session } from './lib/session.js';
 import freshInstall from './tests/01-fresh-install.js';
 import dllImports from './tests/02-dll-imports.js';
@@ -12,6 +13,7 @@ import liveSseUpdate from './tests/07-live-sse.js';
 import driveOff from './tests/08-drive-off.js';
 import openingPdf from './tests/09-open-pdf.js';
 import ytdlpDownload from './tests/10-ytdlp-download.js';
+import manualImport from './tests/17-manual-import.js';
 import quitNoOrphans from './tests/11-quit.js';
 import launcherCrash from './tests/12-launcher-crash.js';
 import backendDeath from './tests/13-backend-death.js';
@@ -32,6 +34,7 @@ test.afterAll(async () => {
   await abandon(session);
   forget();
   restoreBrowsers();
+  await releaseOtherVolume();
 });
 
 // Each body is a file in tests/; every test builds on the machine state the ones before it left.
@@ -45,9 +48,13 @@ test('7. a live SSE update', liveSseUpdate);
 test('8. drive off', driveOff);
 test('9. opening a PDF', openingPdf);
 test('10. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlpDownload);
-test('11. quit, no orphans', quitNoOrphans);
-test('12. a launcher crash leaves no service or tool behind', launcherCrash);
-test('13. a backend death leaves no tool behind, and the restart works', backendDeath);
-test('14. the tools run under a Hebrew temp path', hebrewTemp);
-test('15. the browser chain, both ends', browserChain);
-test('16. an in-place update', inPlaceUpdate);
+test(
+  '11. the manual import by path: Copy, Move on the data volume, Move from another volume',
+  manualImport,
+);
+test('12. quit, no orphans', quitNoOrphans);
+test('13. a launcher crash leaves no service or tool behind', launcherCrash);
+test('14. a backend death leaves no tool behind, and the restart works', backendDeath);
+test('15. the tools run under a Hebrew temp path', hebrewTemp);
+test('16. the browser chain, both ends', browserChain);
+test('17. an in-place update', inPlaceUpdate);

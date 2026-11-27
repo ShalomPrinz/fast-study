@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { abandon } from './lib/app.js';
 import { restoreBrowsers } from './lib/browsers.js';
-import { run, screenshot } from './lib/mac.js';
+import { releaseOtherVolume, run, screenshot } from './lib/mac.js';
 import * as paths from './lib/paths.js';
 import { forget, session } from './lib/session.js';
 import liveSse from './tests/07-live-sse.js';
@@ -22,6 +22,7 @@ import pdf from './tests/mac/08-pdf.js';
 import linkage from './tests/mac/09-linkage.js';
 import firstRun from './tests/mac/10-first-run.js';
 import providerSteps from './tests/mac/11-provider-steps.js';
+import manualImport from './tests/mac/16-manual-import.js';
 import hebrewTempMac from './tests/mac/15-hebrew-temp.js';
 import update from './tests/mac/99-update.js';
 
@@ -38,6 +39,8 @@ test.afterAll(async () => {
   await abandon(session);
   forget();
   restoreBrowsers();
+  // A timed-out import test never reaches its own cleanup.
+  await releaseOtherVolume();
   await run('/usr/bin/pkill', ['-KILL', '-f', paths.macBundle()]);
 });
 
@@ -58,12 +61,16 @@ test('10. a live SSE update flips the audio step to done with no reload', liveSs
 test('11. drive off: a fresh install runs nothing past the PDF and uploads nothing', driveOff);
 test('12. opening the PDF launches Preview on it', openPdf);
 test('13. a yt-dlp download merges its streams with the bundled ffmpeg', ytdlp);
-test('14. quitting leaves no process or port behind', quit);
-test('15. a backend death leaves no tool behind, and the restart works', backendDeath);
-test('16. every Mach-O links only inside the bundle or the system', linkage);
-test('17. the tools run under a Hebrew temp path', hebrewTempMac);
-test('18. the browser chain, both ends', browserChain);
+test(
+  '14. the manual import by path: Copy, Move on the data volume, Move from another volume',
+  manualImport,
+);
+test('15. quitting leaves no process or port behind', quit);
+test('16. a backend death leaves no tool behind, and the restart works', backendDeath);
+test('17. every Mach-O links only inside the bundle or the system', linkage);
+test('18. the tools run under a Hebrew temp path', hebrewTempMac);
+test('19. the browser chain, both ends', browserChain);
 // Ported tests go above this one: it is expected to fail until electron/ stops detaching services, and a failure skips what follows.
-test('19. a launcher crash leaves no service or tool behind', launcherCrash);
+test('20. a launcher crash leaves no service or tool behind', launcherCrash);
 // Last, as on Windows: it wipes the bundle and the state root. Ported tests go above it.
-test('20. the updater swaps a previous build for the candidate and relaunches', update);
+test('21. the updater swaps a previous build for the candidate and relaunches', update);

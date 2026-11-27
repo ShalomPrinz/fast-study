@@ -23,6 +23,8 @@ export default function DownloadsTabs({ tab, onSelect }: Props) {
         <button
           key={id}
           role="tab"
+          data-testid="downloads-tab"
+          data-tab={id}
           aria-selected={tab === id}
           className={`mode-toggle-btn${tab === id ? ' active' : ''}`}
           onClick={() => onSelect(id)}

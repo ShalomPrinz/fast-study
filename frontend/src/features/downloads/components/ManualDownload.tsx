@@ -270,12 +270,16 @@ function ManualForm() {
       <div className="manual-download-field manual-download-source" role="group">
         <div className="mode-toggle mode-toggle--light">
           <button
+            data-testid="manual-source"
+            data-source="link"
             className={source === 'link' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
             onClick={() => updateManualDraft({ source: 'link' })}
           >
             <Trans>Link</Trans>
           </button>
           <button
+            data-testid="manual-source"
+            data-source="file"
             className={source === 'file' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
             onClick={() => updateManualDraft({ source: 'file' })}
           >
@@ -309,6 +313,7 @@ function ManualForm() {
         {/* Free text with the courses as suggestions: a name none of them has is a new course. */}
         <Combobox
           id={`${id}-course`}
+          testId="manual-course-input"
           inputClassName="source-row-input"
           value={courseText}
           options={courses.map((c) => c.name)}
@@ -323,12 +328,16 @@ function ManualForm() {
           </span>
           <div className="mode-toggle mode-toggle--light">
             <button
+              data-testid="manual-kind"
+              data-kind="lecture"
               className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
               onClick={() => updateManualDraft({ kind: 'lecture' })}
             >
               <Trans>Lecture</Trans>
             </button>
             <button
+              data-testid="manual-kind"
+              data-kind="recitation"
               className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
               onClick={() => updateManualDraft({ kind: 'recitation' })}
             >
@@ -343,6 +352,7 @@ function ManualForm() {
         </label>
         <input
           id={`${id}-name`}
+          data-testid="manual-name-input"
           className="source-row-input"
           value={lecture}
           onChange={(e) => updateManualDraft({ name: e.target.value })}
@@ -353,6 +363,8 @@ function ManualForm() {
         <div className="manual-download-actions">
           <Tooltip content={pending ? t`Importing the file...` : blockerText(blockerFor('copy'))}>
             <button
+              data-testid="manual-import-start"
+              data-mode="copy"
               className="btn btn--primary"
               onClick={() => onImport('copy')}
               disabled={pending || !!blockerFor('copy')}
@@ -362,6 +374,8 @@ function ManualForm() {
           </Tooltip>
           <Tooltip content={pending ? t`Importing the file...` : blockerText(blockerFor('move'))}>
             <button
+              data-testid="manual-import-start"
+              data-mode="move"
               className="btn btn--secondary"
               onClick={() => onImport('move')}
               disabled={pending || !!blockerFor('move')}

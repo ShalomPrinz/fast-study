@@ -437,8 +437,14 @@ async def import_video(
                 "bad_request_body",
                 detail="body must be a JSON object",
             )
-        d, src = video_import.prepare_import(
-            course, lecture, kind, body["path"], body["mode"]
+        # Off the loop: stat-ing the user's source can hang (a macOS privacy prompt) and must not freeze other routes.
+        d, src = await run_in_threadpool(
+            video_import.prepare_import,
+            course,
+            lecture,
+            kind,
+            body["path"],
+            body["mode"],
         )
     except Exception as e:
         return _failure(e, 400, "video_import_failed", {"file": "video.mp4"})

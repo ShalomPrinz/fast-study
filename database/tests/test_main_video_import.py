@@ -644,3 +644,47 @@ def test_response_never_iterated_still_drops_the_claimed_dir(course, src, monkey
 
     assert not d.exists()
     assert not crud._fresh
+
+
+def test_blocked_source_check_does_not_freeze_the_loop(
+    data_root, lecture, src, monkeypatch
+):
+    """/health answers while the source check is stuck; only then is the check released."""
+
+    import database_main
+    import httpx
+    from fs import video_import
+
+    entered, release = threading.Event(), threading.Event()
+    released_by_test = []
+    real = video_import.check_source
+
+    def slow(raw, mode):
+        """Block like a TCC-gated stat until the test releases it (bounded, so a frozen loop fails instead of hanging)."""
+
+        entered.set()
+        released_by_test.append(release.wait(5))
+        return real(raw, mode)
+
+    monkeypatch.setattr(video_import, "check_source", slow)
+
+    async def run():
+        """Start the import, probe /health while the check is still blocked, then release it."""
+
+        transport = httpx.ASGITransport(app=database_main.app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+            imp = asyncio.ensure_future(
+                c.post(URL, json={"path": str(src), "mode": "copy"})
+            )
+            reached = await asyncio.to_thread(entered.wait, 5)
+            assert reached, "route never reached check_source"
+            health = await asyncio.wait_for(c.get("/health"), 2)
+            assert not release.is_set()
+            release.set()
+            return health, await asyncio.wait_for(imp, 10)
+
+    health, r = asyncio.run(run())
+    assert released_by_test == [True], "check timed out: the loop was frozen"
+    assert health.status_code == 200
+    assert r.status_code == 200
+    assert lines(r)[-1]["done"] is True
