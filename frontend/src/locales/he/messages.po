@@ -796,10 +796,6 @@ msgstr "דפדפן להורדת הקלטות"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "בניית ה-PDF נמשכה יותר מדי זמן ונעצרה אחרי {seconds} שניות."
 
-#: src/features/downloads/components/ManualImportList.tsx:100
-msgid "Can't cancel: the file is already copied, finishing up"
-msgstr "אי אפשר לבטל: הקובץ כבר הועתק, מסיימים"
-
 #: src/features/downloads/components/RecordingRow.tsx:149
 msgid "Can't change while downloading"
 msgstr "לא ניתן לשנות בזמן הורדה"
@@ -826,7 +822,7 @@ msgid "Can't rename while something in this course is being processed, downloade
 msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הורדה או יצירה של תוכן בו"
 
 #: src/features/downloads/components/ManualDownload.tsx:177
-#: src/features/downloads/components/ManualImportList.tsx:130
+#: src/features/downloads/components/ManualImportList.tsx:129
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:39
 #: src/features/lectures/sidebar/tree/LectureItem.tsx:71
 msgid "Can't replace the video while it's being processed or waiting in line"
@@ -837,7 +833,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 #: src/features/downloads/components/CoursePicker.tsx:174
 #: src/features/downloads/components/CourseUrlPaste.tsx:69
 #: src/features/downloads/components/FolderJobList.tsx:102
-#: src/features/downloads/components/ManualImportList.tsx:111
+#: src/features/downloads/components/ManualImportList.tsx:110
 #: src/features/downloads/components/PasscodePrompt.tsx:79
 #: src/features/lectures/components/AssignmentDocCard.tsx:207
 #: src/features/merged-pdfs/components/OutdatedChip.tsx:60
@@ -851,14 +847,14 @@ msgstr "ביטול ניסיון חוזר"
 
 #: src/features/downloads/components/FolderJobList.tsx:93
 #: src/features/downloads/components/ManualDownload.tsx:468
-#: src/features/downloads/components/ManualImportList.tsx:123
+#: src/features/downloads/components/ManualImportList.tsx:122
 #: src/features/downloads/components/RecordingJobList.tsx:63
 #: src/features/downloads/components/RecordingRow.tsx:306
 #: src/features/downloads/components/RecordingRow.tsx:346
 msgid "Cancelled"
 msgstr "בוטל"
 
-#: src/features/downloads/components/ManualImportList.tsx:97
+#: src/features/downloads/components/ManualImportList.tsx:96
 msgid "Cancelling..."
 msgstr "מבטל..."
 
@@ -1141,7 +1137,7 @@ msgstr "העתקת פרטים"
 msgid "Copy path"
 msgstr "העתקת הנתיב"
 
-#: src/features/downloads/components/ManualImportList.tsx:92
+#: src/features/downloads/components/ManualImportList.tsx:91
 msgid "Copying"
 msgstr "מעתיק"
 
@@ -1241,7 +1237,7 @@ msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastS
 msgid "Couldn't reach Google Drive."
 msgstr "לא הצלחנו להתחבר ל-Google Drive."
 
-#: src/features/downloads/components/ManualImportList.tsx:153
+#: src/features/downloads/components/ManualImportList.tsx:157
 msgid "Couldn't remove the original file. It's still in its folder."
 msgstr "לא הצלחנו להסיר את קובץ המקור. הוא עדיין בתיקייה שלו."
 
@@ -1980,7 +1976,7 @@ msgstr "אם Edge מציג את FastStudy עם שגיאה, פתח את <0>{url}<
 msgid "Imported {name}"
 msgstr "{name} יובא"
 
-#: src/features/downloads/components/ManualImportList.tsx:118
+#: src/features/downloads/components/ManualImportList.tsx:117
 msgid "Imported ✓"
 msgstr "יובא ✓"
 
@@ -2229,7 +2225,7 @@ msgstr "הזז למטה"
 msgid "Move up"
 msgstr "הזז למעלה"
 
-#: src/features/downloads/components/ManualImportList.tsx:92
+#: src/features/downloads/components/ManualImportList.tsx:91
 msgid "Moving"
 msgstr "מעביר"
 
@@ -2945,7 +2941,7 @@ msgid "Retry"
 msgstr "ניסיון חוזר"
 
 #: src/features/downloads/components/ManualDownload.tsx:482
-#: src/features/downloads/components/ManualImportList.tsx:142
+#: src/features/downloads/components/ManualImportList.tsx:141
 #: src/features/downloads/components/RecordingJobList.tsx:75
 #: src/features/downloads/components/RecordingRow.tsx:366
 msgid "Retry ✗"
@@ -3795,6 +3791,14 @@ msgstr "כותרת"
 #: src/features/merged-pdfs/components/MergedOrder.tsx:193
 msgid "To pick up a part, press Space. Use the arrow keys to move it, Space to drop it, or Escape to cancel."
 msgstr "כדי להרים פריט, לחץ על רווח. הזז אותו במקשי החצים, הנח אותו ברווח, או בטל ב-Escape."
+
+#: src/features/downloads/components/ManualImportList.tsx:152
+msgid "Too late to cancel, finishing…"
+msgstr "מאוחר מדי לבטל, מסיימים…"
+
+#: src/features/downloads/components/ManualImportList.tsx:98
+msgid "Too late to cancel: the file is already copied, finishing up"
+msgstr "מאוחר מדי לבטל: הקובץ כבר הועתק, מסיימים"
 
 #: src/features/course-overview/constants/overview.ts:28
 msgid "Topics"

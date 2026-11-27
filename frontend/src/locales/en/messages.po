@@ -796,10 +796,6 @@ msgstr "Browser for downloading recordings"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "Building the PDF took too long and was stopped after {seconds} seconds."
 
-#: src/features/downloads/components/ManualImportList.tsx:100
-msgid "Can't cancel: the file is already copied, finishing up"
-msgstr "Can't cancel: the file is already copied, finishing up"
-
 #: src/features/downloads/components/RecordingRow.tsx:149
 msgid "Can't change while downloading"
 msgstr "Can't change while downloading"
@@ -826,7 +822,7 @@ msgid "Can't rename while something in this course is being processed, downloade
 msgstr "Can't rename while something in this course is being processed, downloaded or generated"
 
 #: src/features/downloads/components/ManualDownload.tsx:177
-#: src/features/downloads/components/ManualImportList.tsx:130
+#: src/features/downloads/components/ManualImportList.tsx:129
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:39
 #: src/features/lectures/sidebar/tree/LectureItem.tsx:71
 msgid "Can't replace the video while it's being processed or waiting in line"
@@ -837,7 +833,7 @@ msgstr "Can't replace the video while it's being processed or waiting in line"
 #: src/features/downloads/components/CoursePicker.tsx:174
 #: src/features/downloads/components/CourseUrlPaste.tsx:69
 #: src/features/downloads/components/FolderJobList.tsx:102
-#: src/features/downloads/components/ManualImportList.tsx:111
+#: src/features/downloads/components/ManualImportList.tsx:110
 #: src/features/downloads/components/PasscodePrompt.tsx:79
 #: src/features/lectures/components/AssignmentDocCard.tsx:207
 #: src/features/merged-pdfs/components/OutdatedChip.tsx:60
@@ -851,14 +847,14 @@ msgstr "Cancel retry"
 
 #: src/features/downloads/components/FolderJobList.tsx:93
 #: src/features/downloads/components/ManualDownload.tsx:468
-#: src/features/downloads/components/ManualImportList.tsx:123
+#: src/features/downloads/components/ManualImportList.tsx:122
 #: src/features/downloads/components/RecordingJobList.tsx:63
 #: src/features/downloads/components/RecordingRow.tsx:306
 #: src/features/downloads/components/RecordingRow.tsx:346
 msgid "Cancelled"
 msgstr "Cancelled"
 
-#: src/features/downloads/components/ManualImportList.tsx:97
+#: src/features/downloads/components/ManualImportList.tsx:96
 msgid "Cancelling..."
 msgstr "Cancelling..."
 
@@ -1141,7 +1137,7 @@ msgstr "Copy details"
 msgid "Copy path"
 msgstr "Copy path"
 
-#: src/features/downloads/components/ManualImportList.tsx:92
+#: src/features/downloads/components/ManualImportList.tsx:91
 msgid "Copying"
 msgstr "Copying"
 
@@ -1241,7 +1237,7 @@ msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 msgid "Couldn't reach Google Drive."
 msgstr "Couldn't reach Google Drive."
 
-#: src/features/downloads/components/ManualImportList.tsx:153
+#: src/features/downloads/components/ManualImportList.tsx:157
 msgid "Couldn't remove the original file. It's still in its folder."
 msgstr "Couldn't remove the original file. It's still in its folder."
 
@@ -1980,7 +1976,7 @@ msgstr "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Rel
 msgid "Imported {name}"
 msgstr "Imported {name}"
 
-#: src/features/downloads/components/ManualImportList.tsx:118
+#: src/features/downloads/components/ManualImportList.tsx:117
 msgid "Imported ✓"
 msgstr "Imported ✓"
 
@@ -2229,7 +2225,7 @@ msgstr "Move down"
 msgid "Move up"
 msgstr "Move up"
 
-#: src/features/downloads/components/ManualImportList.tsx:92
+#: src/features/downloads/components/ManualImportList.tsx:91
 msgid "Moving"
 msgstr "Moving"
 
@@ -2945,7 +2941,7 @@ msgid "Retry"
 msgstr "Retry"
 
 #: src/features/downloads/components/ManualDownload.tsx:482
-#: src/features/downloads/components/ManualImportList.tsx:142
+#: src/features/downloads/components/ManualImportList.tsx:141
 #: src/features/downloads/components/RecordingJobList.tsx:75
 #: src/features/downloads/components/RecordingRow.tsx:366
 msgid "Retry ✗"
@@ -3795,6 +3791,14 @@ msgstr "Title"
 #: src/features/merged-pdfs/components/MergedOrder.tsx:193
 msgid "To pick up a part, press Space. Use the arrow keys to move it, Space to drop it, or Escape to cancel."
 msgstr "To pick up a part, press Space. Use the arrow keys to move it, Space to drop it, or Escape to cancel."
+
+#: src/features/downloads/components/ManualImportList.tsx:152
+msgid "Too late to cancel, finishing…"
+msgstr "Too late to cancel, finishing…"
+
+#: src/features/downloads/components/ManualImportList.tsx:98
+msgid "Too late to cancel: the file is already copied, finishing up"
+msgstr "Too late to cancel: the file is already copied, finishing up"
 
 #: src/features/course-overview/constants/overview.ts:28
 msgid "Topics"

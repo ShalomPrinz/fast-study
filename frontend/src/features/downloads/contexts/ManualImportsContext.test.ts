@@ -115,6 +115,30 @@ describe('the import store', () => {
     expect(reportVideoArrived).not.toHaveBeenCalled()
   })
 
+  it('a Cancel after the copy finished does not abort and the entry ends on its real outcome', async () => {
+    let progress: (c: number, t: number) => void = () => {}
+    let finish: () => void = () => {}
+    let signal: AbortSignal | undefined
+    uploadVideoWithProgress.mockImplementation(
+      (_c, _l, _f, _k, o) =>
+        new Promise<void>((resolve) => {
+          progress = o.onProgress
+          signal = o.signal
+          finish = resolve
+        }),
+    )
+    const key = startImport(request)
+    await settle()
+    progress(4, 4)
+    cancelImport(key)
+    expect(signal?.aborted).toBe(false)
+    expect(entry(key)).toMatchObject({ status: 'running', lateCancel: true })
+    finish()
+    await settle()
+    expect(entry(key).status).toBe('done')
+    expect(reportVideoArrived).toHaveBeenCalled()
+  })
+
   it('claims the names of running and done imports only', async () => {
     uploadVideoWithProgress.mockRejectedValue(new Error('x'))
     const failed = startImport({ ...request, lecture: 'Failed' })

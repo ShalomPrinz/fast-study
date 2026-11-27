@@ -5,7 +5,12 @@ import { reportVideoArrived } from '@/services/backend'
 import { runtimeBridge } from '@/services/runtime'
 import { failureOf } from '@/shared/utils/failure'
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
-import { importRoute, pathOf, type ImportMode } from '@/features/downloads/utils/fileImport'
+import {
+  canCancelImport,
+  importRoute,
+  pathOf,
+  type ImportMode,
+} from '@/features/downloads/utils/fileImport'
 
 // One local-file import this session. `key` is stable across retries; `file` stays for Retry.
 export interface ImportEntry {
@@ -19,6 +24,8 @@ export interface ImportEntry {
   copied: number
   total: number
   originalKept: boolean
+  // Cancel clicked after the copy finished: the import runs on and ends on its real outcome.
+  lateCancel: boolean
   failure: ServiceFailure | null
 }
 
@@ -59,6 +66,7 @@ async function run(key: number) {
     copied: 0,
     total: file.size,
     originalKept: false,
+    lateCancel: false,
     failure: null,
   })
   const onProgress = (copied: number, total: number) => patch(key, { copied, total })
@@ -97,6 +105,7 @@ export function startImport(request: ImportRequest): number {
       copied: 0,
       total: request.file.size,
       originalKept: false,
+      lateCancel: false,
       failure: null,
     },
     ...entries,
@@ -110,8 +119,12 @@ export function retryImport(key: number) {
   void run(key)
 }
 
+// Past the point of no return the database places the file regardless, so an abort would only hide the outcome.
 export function cancelImport(key: number) {
-  controllers.get(key)?.abort()
+  const entry = entries.find((e) => e.key === key)
+  if (!entry || entry.status !== 'running') return
+  if (canCancelImport(entry.copied, entry.total)) controllers.get(key)?.abort()
+  else patch(key, { lateCancel: true })
 }
 
 export function importEntries(): readonly ImportEntry[] {

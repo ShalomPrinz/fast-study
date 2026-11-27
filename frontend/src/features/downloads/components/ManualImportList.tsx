@@ -65,7 +65,6 @@ function ImportRow({ entry }: { entry: ImportEntry }) {
   const { status: runner } = useRunnerStatus()
   const [cancelling, setCancelling] = useState(false)
   const { lecture, course, kind, mode, status, file } = entry
-  const cancellable = canCancelImport(entry.copied, entry.total)
   const busy = isLectureRenameLocked(runner, course, lecture, kind)
   return (
     <div
@@ -95,16 +94,16 @@ function ImportRow({ entry }: { entry: ImportEntry }) {
               content={
                 cancelling
                   ? t`Cancelling...`
-                  : cancellable
-                    ? undefined
-                    : t`Can't cancel: the file is already copied, finishing up`
+                  : entry.lateCancel
+                    ? t`Too late to cancel: the file is already copied, finishing up`
+                    : undefined
               }
             >
               <button
                 className="btn btn--ghost"
-                disabled={cancelling || !cancellable}
+                disabled={cancelling || entry.lateCancel}
                 onClick={() => {
-                  setCancelling(true)
+                  if (canCancelImport(entry.copied, entry.total)) setCancelling(true)
                   cancelImport(entry.key)
                 }}
               >
@@ -148,6 +147,11 @@ function ImportRow({ entry }: { entry: ImportEntry }) {
         {file.name}
       </div>
       {status === 'running' && <ImportProgress copied={entry.copied} total={entry.total} />}
+      {status === 'running' && entry.lateCancel && (
+        <div className="manual-download-note">
+          <Trans>Too late to cancel, finishing…</Trans>
+        </div>
+      )}
       {status === 'done' && entry.originalKept && (
         <div className="manual-download-note">
           <Trans>Couldn't remove the original file. It's still in its folder.</Trans>
