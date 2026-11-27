@@ -5,6 +5,7 @@ import {
   classifyDrop,
   formatBytes,
   importBlocker,
+  importsInto,
   importAnnouncement,
   importRoute,
   isMp4,
@@ -47,7 +48,14 @@ describe('the import route', () => {
 })
 
 describe('importBlocker', () => {
-  const ready = { hasFile: true, course: 'Algo', name: 'L1', busy: false, route: 'path' as const }
+  const ready = {
+    hasFile: true,
+    course: 'Algo',
+    name: 'L1',
+    busy: false,
+    importing: false,
+    route: 'path' as const,
+  }
   it('names the first unmet requirement in order', () => {
     expect(importBlocker({ ...ready, hasFile: false, course: '', name: '', busy: true })).toBe(
       'no-file',
@@ -55,6 +63,7 @@ describe('importBlocker', () => {
     expect(importBlocker({ ...ready, course: '', name: '', busy: true })).toBe('no-course')
     expect(importBlocker({ ...ready, name: ' ', busy: true })).toBe('no-name')
     expect(importBlocker({ ...ready, busy: true, route: 'unavailable' })).toBe('busy')
+    expect(importBlocker({ ...ready, importing: true, route: 'unavailable' })).toBe('importing')
     expect(importBlocker({ ...ready, route: 'unavailable' })).toBe('desktop-only')
     expect(importBlocker(ready)).toBeNull()
   })
@@ -101,5 +110,31 @@ describe('seenAtMount', () => {
     expect(importAnnouncement(seen.get(2), 'running')).toBeNull()
     expect(importAnnouncement(seen.get(2), 'done')).toBe('done')
     expect(importAnnouncement(seen.get(3), 'running')).toBe('start')
+  })
+})
+
+describe('importsInto', () => {
+  const e = (status: 'running' | 'done', over = {}) => ({
+    course: 'Algo',
+    lecture: 'L1',
+    kind: 'lecture',
+    status,
+    doneAt: status === 'done' ? 100 : null,
+    ...over,
+  })
+  it('matches the status, course and kind, casefolded and trimmed', () => {
+    const target = { course: ' algo ', lecture: 'l1 ', kind: 'lecture' }
+    expect(importsInto([e('running')], target, 'running')).toBe(true)
+    expect(importsInto([e('done')], target, 'running')).toBe(false)
+    expect(importsInto([e('done')], target, 'done')).toBe(true)
+    expect(importsInto([e('running', { kind: 'recitation' })], target, 'running')).toBe(false)
+    expect(importsInto([e('running', { course: 'Other' })], target, 'running')).toBe(false)
+    expect(importsInto([e('running', { lecture: 'L2' })], target, 'running')).toBe(false)
+  })
+  it('counts a done import only until the tree refreshes after it finished', () => {
+    const target = { course: 'Algo', lecture: 'L1', kind: 'lecture' }
+    expect(importsInto([e('done')], target, 'done', 50)).toBe(true)
+    expect(importsInto([e('done')], target, 'done', 100)).toBe(false)
+    expect(importsInto([e('done')], target, 'done', 200)).toBe(false)
   })
 })

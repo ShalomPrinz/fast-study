@@ -26,6 +26,8 @@ export interface ImportEntry {
   originalKept: boolean
   // Cancel clicked after the copy finished: the import runs on and ends on its real outcome.
   lateCancel: boolean
+  // When the import finished, for `importsInto`'s "not in the tree yet" window; null until then.
+  doneAt: number | null
   failure: ServiceFailure | null
 }
 
@@ -67,6 +69,7 @@ async function run(key: number) {
     total: file.size,
     originalKept: false,
     lateCancel: false,
+    doneAt: null,
     failure: null,
   })
   const onProgress = (copied: number, total: number) => patch(key, { copied, total })
@@ -85,7 +88,13 @@ async function run(key: number) {
     } catch (err) {
       console.error('failed to report video arrival', err)
     }
-    patch(key, { status: 'done', copied: file.size, total: file.size, originalKept })
+    patch(key, {
+      status: 'done',
+      copied: file.size,
+      total: file.size,
+      originalKept,
+      doneAt: Date.now(),
+    })
   } catch (err) {
     if (isAbort(err) || controller.signal.aborted) patch(key, { status: 'cancelled' })
     else patch(key, { status: 'error', failure: failureOf(err) })
@@ -106,6 +115,7 @@ export function startImport(request: ImportRequest): number {
       total: request.file.size,
       originalKept: false,
       lateCancel: false,
+      doneAt: null,
       failure: null,
     },
     ...entries,

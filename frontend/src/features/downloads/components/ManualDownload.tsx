@@ -26,6 +26,7 @@ import {
   classifyDrop,
   importBlocker,
   importRoute,
+  importsInto,
   pathOf,
   type ImportBlocker,
   type ImportMode,
@@ -157,13 +158,21 @@ function ManualForm() {
   const locked = source === 'link' && lockedFor(url)
   // The File's absolute path through the desktop bridge; '' in a plain browser.
   const path = useMemo(() => (file ? pathOf(file, runtimeBridge()) : ''), [file])
+  // When the tree last changed; a done import older than that is in it or was removed from it.
+  const treeAt = useRef(0)
+  useEffect(() => {
+    treeAt.current = Date.now()
+  }, [courses])
   const importBusy = isLectureRenameLocked(runner, course, lecture.trim(), kind)
+  const target = { course, lecture, kind }
+  const importing = importsInto(imports, target, 'running')
   const blockerFor = (mode: ImportMode) =>
     importBlocker({
       hasFile: !!file,
       course,
       name: lecture,
       busy: importBusy,
+      importing,
       route: importRoute(mode, path),
     })
   const blockerText = (b: ImportBlocker | null) =>
@@ -175,10 +184,12 @@ function ManualForm() {
           ? t`Enter a name first`
           : b === 'busy'
             ? t`Can't replace the video while it's being processed or waiting in line`
-            : b === 'desktop-only'
-              ? t`Moving needs the desktop app`
-              : undefined
-  const ready = !!url.trim() && !!course && !!lecture.trim() && !pending && !locked
+            : b === 'importing'
+              ? t`An import into this lecture is already running`
+              : b === 'desktop-only'
+                ? t`Moving needs the desktop app`
+                : undefined
+  const ready = !!url.trim() && !!course && !!lecture.trim() && !pending && !locked && !importing
   const downloadBlocker = !url.trim()
     ? t`Paste a video link first`
     : !course
@@ -187,9 +198,11 @@ function ManualForm() {
         ? t`Enter a name first`
         : locked
           ? moodleBusyMessage()
-          : pending
-            ? t`Starting the download...`
-            : undefined
+          : importing
+            ? t`An import into this lecture is already running`
+            : pending
+              ? t`Starting the download...`
+              : undefined
 
   async function submit() {
     const request = { url: url.trim(), course, lecture: lecture.trim(), kind }
@@ -236,7 +249,11 @@ function ManualForm() {
   function onImport(mode: ImportMode) {
     if (pending || blockerFor(mode)) return
     const name = lecture.trim()
-    if (overwritesVideo({ media: 'video' }, name, kind, courses, course)) {
+    // A finished import counts as holding a video until the tree next refreshes.
+    const taken =
+      overwritesVideo({ media: 'video' }, name, kind, courses, course) ||
+      importsInto(imports, { course, lecture: name, kind }, 'done', treeAt.current)
+    if (taken) {
       setImportConfirm({ mode, lecture: name })
     } else void submitImport(mode, name)
   }

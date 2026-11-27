@@ -32,7 +32,33 @@ export function pathOf(
   return bridge?.pathForFile?.(file) ?? ''
 }
 
-export type ImportBlocker = 'no-file' | 'no-course' | 'no-name' | 'busy' | 'desktop-only'
+export type ImportBlocker =
+  'no-file' | 'no-course' | 'no-name' | 'busy' | 'importing' | 'desktop-only'
+
+// Whether an import of this status already targets the lecture; names compare casefolded and trimmed.
+// A done import counts only if it finished after `treeAt`: once the tree has refreshed, the tree is the truth.
+export function importsInto(
+  list: readonly {
+    course: string
+    lecture: string
+    kind: string
+    status: ImportStatus
+    doneAt: number | null
+  }[],
+  target: { course: string; lecture: string; kind: string },
+  status: ImportStatus,
+  treeAt = 0,
+): boolean {
+  const norm = (s: string) => s.trim().toLowerCase()
+  return list.some(
+    (e) =>
+      e.status === status &&
+      (status !== 'done' || (e.doneAt ?? 0) > treeAt) &&
+      e.kind === target.kind &&
+      norm(e.course) === norm(target.course) &&
+      norm(e.lecture) === norm(target.lecture),
+  )
+}
 
 // The first reason Copy or Move is disabled, in the order the user can fix them; null when ready.
 export function importBlocker(s: {
@@ -40,12 +66,14 @@ export function importBlocker(s: {
   course: string
   name: string
   busy: boolean
+  importing: boolean
   route: ImportRoute
 }): ImportBlocker | null {
   if (!s.hasFile) return 'no-file'
   if (!s.course) return 'no-course'
   if (!s.name.trim()) return 'no-name'
   if (s.busy) return 'busy'
+  if (s.importing) return 'importing'
   if (s.route === 'unavailable') return 'desktop-only'
   return null
 }

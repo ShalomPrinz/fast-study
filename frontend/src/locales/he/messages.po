@@ -300,7 +300,7 @@ msgstr "{input} הוסר"
 msgid "{kind, select, recitation {The recitation \"{name}\" has no summary PDF to merge.} other {The lecture \"{name}\" has no summary PDF to merge.}}"
 msgstr "{kind, select, recitation {אין סיכום PDF לאיחוד בתרגול \"{name}\".} other {אין סיכום PDF לאיחוד בהרצאה \"{name}\".}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:379
+#: src/features/downloads/components/ManualDownload.tsx:396
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -658,6 +658,11 @@ msgstr "כבר נוצר."
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
+#: src/features/downloads/components/ManualDownload.tsx:188
+#: src/features/downloads/components/ManualDownload.tsx:202
+msgid "An import into this lecture is already running"
+msgstr "ייבוא לשיעור הזה כבר רץ"
+
 #: src/features/course-overview/constants/overview.ts:17
 msgid "Analyze"
 msgstr "ניתוח"
@@ -821,7 +826,7 @@ msgstr "אי אפשר לשנות את השם בזמן עיבוד או המתנה
 msgid "Can't rename while something in this course is being processed, downloaded or generated"
 msgstr "אי אפשר לשנות את שם הקורס בזמן עיבוד, הורדה או יצירה של תוכן בו"
 
-#: src/features/downloads/components/ManualDownload.tsx:177
+#: src/features/downloads/components/ManualDownload.tsx:186
 #: src/features/downloads/components/ManualImportList.tsx:129
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:39
 #: src/features/lectures/sidebar/tree/LectureItem.tsx:71
@@ -846,7 +851,7 @@ msgid "Cancel retry"
 msgstr "ביטול ניסיון חוזר"
 
 #: src/features/downloads/components/FolderJobList.tsx:93
-#: src/features/downloads/components/ManualDownload.tsx:468
+#: src/features/downloads/components/ManualDownload.tsx:485
 #: src/features/downloads/components/ManualImportList.tsx:122
 #: src/features/downloads/components/RecordingJobList.tsx:63
 #: src/features/downloads/components/RecordingRow.tsx:306
@@ -901,8 +906,8 @@ msgid "Checking…"
 msgstr "בודק…"
 
 #: src/features/downloads/components/CourseSourceBar.tsx:50
-#: src/features/downloads/components/ManualDownload.tsx:173
-#: src/features/downloads/components/ManualDownload.tsx:185
+#: src/features/downloads/components/ManualDownload.tsx:182
+#: src/features/downloads/components/ManualDownload.tsx:196
 msgid "Choose a course first"
 msgstr "בחר קורס קודם"
 
@@ -923,7 +928,7 @@ msgstr "בחר שם להקלטה והורד אותה."
 msgid "Choose AI provider"
 msgstr "בחירת ספק AI"
 
-#: src/features/downloads/components/ManualDownload.tsx:171
+#: src/features/downloads/components/ManualDownload.tsx:180
 msgid "Choose an .mp4 file first"
 msgstr "בחר קובץ mp4 קודם"
 
@@ -1121,7 +1126,7 @@ msgstr "הועתק!"
 msgid "Copies the chosen summaries and the generated guides, then opens {provider}."
 msgstr "מעתיק את הסיכומים שנבחרו ואת המדריכים שנוצרו, ופותח את {provider}."
 
-#: src/features/downloads/components/ManualDownload.tsx:343
+#: src/features/downloads/components/ManualDownload.tsx:360
 msgid "Copy"
 msgstr "העתקה"
 
@@ -1199,7 +1204,7 @@ msgstr "לא הצלחנו להעתיק את חומר המטלה. נסה שוב."
 msgid "Couldn't copy the summary. Try again."
 msgstr "לא הצלחנו להעתיק את הסיכום. נסה שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:504
+#: src/features/downloads/components/ManualDownload.tsx:521
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "לא ניתן להוריד את \"{lecture}\". נסה שוב."
 
@@ -1253,7 +1258,7 @@ msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נס�
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "לא הצלחנו לזהות מאיפה להוריד את הקובץ. נסה שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:290
+#: src/features/downloads/components/ManualDownload.tsx:307
 #: src/features/search/SearchView.tsx:176
 msgid "Course"
 msgstr "קורס"
@@ -1415,7 +1420,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "הושלם"
 
-#: src/features/downloads/components/ManualDownload.tsx:359
+#: src/features/downloads/components/ManualDownload.tsx:376
 #: src/features/downloads/components/RecordingJobList.tsx:77
 #: src/features/downloads/components/RecordingRow.tsx:370
 msgid "Download"
@@ -1460,7 +1465,7 @@ msgid "Download selected ({0})"
 msgstr "הורדת הנבחרים ({0})"
 
 #: src/features/downloads/components/FolderJobList.tsx:88
-#: src/features/downloads/components/ManualDownload.tsx:463
+#: src/features/downloads/components/ManualDownload.tsx:480
 #: src/features/downloads/components/RecordingRow.tsx:307
 #: src/features/downloads/components/RecordingRow.tsx:368
 msgid "Downloaded ✓"
@@ -1471,7 +1476,7 @@ msgid "Downloaded recordings appear on the Lectures page."
 msgstr "את ההקלטות שהורדו ניתן לראות בעמוד ההרצאות."
 
 #: src/features/downloads/components/FolderJobList.tsx:83
-#: src/features/downloads/components/ManualDownload.tsx:458
+#: src/features/downloads/components/ManualDownload.tsx:475
 #: src/features/downloads/components/RecordingRow.tsx:312
 msgid "Downloading"
 msgstr "מוריד"
@@ -1539,7 +1544,7 @@ msgstr "גרור לכאן קובץ mp4 או <0>בחר קובץ</0>"
 msgid "Drop one file at a time"
 msgstr "גרור קובץ אחד בכל פעם"
 
-#: src/features/downloads/components/ManualDownload.tsx:121
+#: src/features/downloads/components/ManualDownload.tsx:122
 msgid "Drop the .mp4 to upload it"
 msgstr "שחרר את קובץ ה-mp4 כדי להעלות אותו"
 
@@ -1573,8 +1578,8 @@ msgstr "עריכת סיכום"
 msgid "Enter a course name first"
 msgstr "הזן קודם שם קורס"
 
-#: src/features/downloads/components/ManualDownload.tsx:175
-#: src/features/downloads/components/ManualDownload.tsx:187
+#: src/features/downloads/components/ManualDownload.tsx:184
+#: src/features/downloads/components/ManualDownload.tsx:198
 msgid "Enter a name first"
 msgstr "הזן קודם שם"
 
@@ -1734,7 +1739,7 @@ msgstr "FastStudy משתמשת בשני שירותים חינמיים: אחד ה
 msgid "FastStudy's use and transfer of information received from Google APIs will adhere to the <0>Google API Services User Data Policy</0>, including the Limited Use requirements."
 msgstr "השימוש של FastStudy במידע שמתקבל מ-Google APIs והעברתו יעמדו ב<0>מדיניות נתוני המשתמש של Google API Services</0>, כולל דרישות השימוש המוגבל (⁨Limited Use⁩)."
 
-#: src/features/downloads/components/ManualDownload.tsx:265
+#: src/features/downloads/components/ManualDownload.tsx:282
 msgid "File from computer"
 msgstr "קובץ מהמחשב"
 
@@ -1988,8 +1993,8 @@ msgstr "מייבא את {name}"
 msgid "Importing {name} failed"
 msgstr "הייבוא של {name} נכשל"
 
-#: src/features/downloads/components/ManualDownload.tsx:337
-#: src/features/downloads/components/ManualDownload.tsx:346
+#: src/features/downloads/components/ManualDownload.tsx:354
+#: src/features/downloads/components/ManualDownload.tsx:363
 msgid "Importing the file..."
 msgstr "מייבא את הקובץ..."
 
@@ -2055,7 +2060,7 @@ msgstr "עודכן לאחרונה ב-Moodle"
 msgid "lecture"
 msgstr "הרצאה"
 
-#: src/features/downloads/components/ManualDownload.tsx:312
+#: src/features/downloads/components/ManualDownload.tsx:329
 #: src/features/downloads/components/RecordingRow.tsx:253
 #: src/features/lectures/components/CourseMaterialBox.tsx:80
 msgid "Lecture"
@@ -2123,7 +2128,7 @@ msgstr "למדה מגיבה לאט. הורדה מחדש יכולה לעזור."
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
-#: src/features/downloads/components/ManualDownload.tsx:259
+#: src/features/downloads/components/ManualDownload.tsx:276
 msgid "Link"
 msgstr "קישור"
 
@@ -2213,7 +2218,7 @@ msgstr "Moodle דחה את הבקשה."
 msgid "More actions"
 msgstr "פעולות נוספות"
 
-#: src/features/downloads/components/ManualDownload.tsx:352
+#: src/features/downloads/components/ManualDownload.tsx:369
 msgid "Move"
 msgstr "העברה"
 
@@ -2229,7 +2234,7 @@ msgstr "הזז למעלה"
 msgid "Moving"
 msgstr "מעביר"
 
-#: src/features/downloads/components/ManualDownload.tsx:179
+#: src/features/downloads/components/ManualDownload.tsx:190
 msgid "Moving needs the desktop app"
 msgstr "העברה דורשת את אפליקציית שולחן העבודה"
 
@@ -2237,7 +2242,7 @@ msgstr "העברה דורשת את אפליקציית שולחן העבודה"
 msgid "Moving the video failed. The original is kept in the lecture's folder as “{kept}”."
 msgstr "העברת הווידאו נכשלה. המקור נשמר בתיקיית ההרצאה בשם “{kept}”."
 
-#: src/features/downloads/components/ManualDownload.tsx:325
+#: src/features/downloads/components/ManualDownload.tsx:342
 msgid "Name in the course"
 msgstr "השם בקורס"
 
@@ -2440,7 +2445,7 @@ msgstr "לא נשלח ל-Gemini"
 msgid "Not used — tap to add"
 msgstr "לא בשימוש — לחצו כדי להוסיף"
 
-#: src/features/downloads/components/ManualDownload.tsx:367
+#: src/features/downloads/components/ManualDownload.tsx:384
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:64
 msgid "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 msgstr "שים לב: הפעולה הזו תמחק את השמע, התמלול, הסיכום וה-PDF של ההרצאה. החומרים יישמרו."
@@ -2660,7 +2665,7 @@ msgstr "קוד גישה"
 msgid "Paste a URL instead"
 msgstr "הדבקת כתובת במקום"
 
-#: src/features/downloads/components/ManualDownload.tsx:183
+#: src/features/downloads/components/ManualDownload.tsx:194
 msgid "Paste a video link first"
 msgstr "הדבק קודם קישור לוידאו"
 
@@ -2732,7 +2737,7 @@ msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPri
 msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-GitHub: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
 #: src/features/downloads/components/FolderJobList.tsx:78
-#: src/features/downloads/components/ManualDownload.tsx:453
+#: src/features/downloads/components/ManualDownload.tsx:470
 #: src/features/runner/RunnerView.tsx:390
 msgid "Queued"
 msgstr "בתור"
@@ -2763,7 +2768,7 @@ msgstr "מוכן"
 msgid "recitation"
 msgstr "תרגול"
 
-#: src/features/downloads/components/ManualDownload.tsx:318
+#: src/features/downloads/components/ManualDownload.tsx:335
 #: src/features/downloads/components/RecordingRow.tsx:260
 #: src/features/lectures/components/CourseMaterialBox.tsx:80
 #: src/features/merged-pdfs/components/MergedOrder.tsx:53
@@ -2885,7 +2890,7 @@ msgstr "החלפה"
 
 #. placeholder {0}: importConfirm.lecture
 #. placeholder {0}: pending.lecture
-#: src/features/downloads/components/ManualDownload.tsx:366
+#: src/features/downloads/components/ManualDownload.tsx:383
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:63
 msgid "Replace the existing video in \"{0}\"?"
 msgstr "להחליף את הווידאו הקיים ב\"{0}\"?"
@@ -2940,7 +2945,7 @@ msgstr "תוצאות"
 msgid "Retry"
 msgstr "ניסיון חוזר"
 
-#: src/features/downloads/components/ManualDownload.tsx:482
+#: src/features/downloads/components/ManualDownload.tsx:499
 #: src/features/downloads/components/ManualImportList.tsx:141
 #: src/features/downloads/components/RecordingJobList.tsx:75
 #: src/features/downloads/components/RecordingRow.tsx:366
@@ -2955,7 +2960,7 @@ msgstr "נסה שוב אוטומטית כש-Gemini עמוס או לא זמין"
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "ניסיון חוזר בעוד {time} (ניסיון {attempt}/{of})"
 
-#: src/features/downloads/components/ManualDownload.tsx:474
+#: src/features/downloads/components/ManualDownload.tsx:491
 msgid "Retrying the download..."
 msgstr "מנסה שוב את ההורדה..."
 
@@ -3192,7 +3197,7 @@ msgstr "כתובת מקור (לא חובה)…"
 msgid "Start using FastStudy"
 msgstr "להתחיל להשתמש ב-FastStudy"
 
-#: src/features/downloads/components/ManualDownload.tsx:191
+#: src/features/downloads/components/ManualDownload.tsx:204
 msgid "Starting the download..."
 msgstr "מתחיל את ההורדה..."
 
@@ -3842,7 +3847,7 @@ msgstr "כדי לבחור באפשרות הזו, הפעל למעלה את ההע
 msgid "Tutorial"
 msgstr "מדריך"
 
-#: src/features/downloads/components/ManualDownload.tsx:305
+#: src/features/downloads/components/ManualDownload.tsx:322
 msgid "Type"
 msgstr "סוג"
 
@@ -3942,7 +3947,7 @@ msgstr "וידאו ושמע"
 msgid "Video file"
 msgstr "קובץ וידאו"
 
-#: src/features/downloads/components/ManualDownload.tsx:274
+#: src/features/downloads/components/ManualDownload.tsx:291
 msgid "Video link"
 msgstr "קישור לווידאו"
 
@@ -4019,7 +4024,7 @@ msgstr "עבודה שרצה כעת תיעצר."
 msgid "Work in progress will stop. Restart anyway?"
 msgstr "עבודה שבתהליך תיעצר. להפעיל מחדש בכל זאת?"
 
-#: src/features/downloads/components/ManualDownload.tsx:112
+#: src/features/downloads/components/ManualDownload.tsx:113
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "עובד רק עבור קישורי וידאו, ורק אם הם נגישים ללא פרטי התחברות."
 
