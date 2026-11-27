@@ -33,7 +33,6 @@ from .paths import (
     reject_if_locked,
     safe_name,
 )
-from .sources import write_video_source
 
 # Course-level folders the tree skips as lectures; casefolded because NTFS matches names case-insensitively.
 _RESERVED_LECTURE_NAMES = {
@@ -232,17 +231,6 @@ def place_video(d: Path, tmp: Path, on_wipe_start=None) -> None:
     wipe_for_new_video(d, on_wipe_start)
     os.replace(tmp, d / "video.mp4")
 
-
-def write_video(
-    course: str, lecture: str, kind: str, data: bytes, source: str | None = None
-) -> None:
-    """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source, and record its discovery ref (the old one is always dropped)."""
-
-    d = prepare_video_dir(course, lecture, kind)
-    wipe_for_new_video(d)
-    (d / "video.mp4").write_bytes(data)
-    if source:
-        write_video_source(d, source)
 
 
 def delete_file(course: str, lecture: str, file: str, kind: str) -> None:

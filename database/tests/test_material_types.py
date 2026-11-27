@@ -4,7 +4,6 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
-from fs import crud
 from fs.materials import list_materials, material_names
 from fs.paths import material_index, material_name
 
@@ -203,7 +202,7 @@ def test_summary_materials_lifetime(client, lecture):
     client.delete(f"{URL}/files/summary.md")
     assert _tree_summary_materials(client) is None
     client.put(f"{URL}/summary-materials", json={"materials": ["material.pdf"]})
-    crud.write_video("Algo", "L1", "lecture", b"vid")
+    assert client.put(f"{URL}/video", content=b"vid").status_code == 204
     assert _tree_summary_materials(client) is None
 
 

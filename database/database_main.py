@@ -334,7 +334,7 @@ async def put_video(
         await run_in_threadpool(crud.place_video, d, tmp)
         tmp = None
         if source:
-            crud.write_video_source(d, source)
+            skips.write_video_source(d, source)
         return Response(status_code=204)
     except Exception as e:
         # A mid-body disconnect lands here too; the peer is gone, so the coded body is for the log and tests only.
