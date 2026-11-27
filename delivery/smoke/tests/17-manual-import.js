@@ -152,11 +152,12 @@ async function expectImported(seen, source, lecture, { sameVolume }) {
     `the source ${sameVolume ? 'is not' : 'is'} on the data root's volume`,
   ).toBe(sameVolume);
   if (seen.mode === 'copy') {
-    expect(seen.kept, 'a Copy must report the original kept').toBe('true');
+    // original-kept is true only when a Move could not delete its source; a Copy never raises it.
+    expect(seen.kept, 'a Copy must raise no original-kept notice').toBe('false');
     expect(fs.existsSync(source.file), 'a Copy removed its source').toBe(true);
     expect(fs.statSync(source.file).size, 'a Copy changed its source').toBe(source.size);
   } else {
-    expect(seen.kept, 'a Move must report the original removed').toBe('false');
+    expect(seen.kept, 'a Move must not report a source it failed to remove').toBe('false');
     expect(fs.existsSync(source.file), 'a Move left its source behind').toBe(false);
   }
 }
@@ -165,7 +166,7 @@ const describe = (seen) =>
   [
     `${seen.label}: ${seen.mode} → ${seen.lecture}: ${seen.status}` +
       (seen.code ? ` (code ${seen.code})` : '') +
-      (seen.kept ? `, original kept ${seen.kept}` : ''),
+      (seen.kept ? `, original-kept notice ${seen.kept}` : ''),
     `  bridge path: ${seen.picked ?? 'none'}`,
     `  video.mp4: ${seen.dest ?? 'none'}`,
     `  screenshots${seen.running ? '' : ' (finished before the running one could be taken)'}: ${seen.shots.join(', ') || 'none'}`,

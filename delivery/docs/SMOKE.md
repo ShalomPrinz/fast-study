@@ -164,8 +164,8 @@ its own; the OS keeps it offline, below.
   `window.faststudy.pathForFile` (read in a capture-phase `change` listener, since the page clears the input)
   answers the source's real path and `manual-import-start[data-mode=move]` is enabled, starts Copy or Move, and follows
   `manual-import` to `done`. Sources are the tone video plus a 96 MiB `free` atom. Afterwards, through `database/`
-  only: `video.mp4` has the source's size and sha256, a Copy has `data-original-kept=true` and its source, a Move
-  `false` and none. The same-volume legs also need the file's `dev` to equal the source's, the other-volume leg's to
+  only: `video.mp4` has the source's size and sha256, a Copy leaves its source in place at its size, a Move removes it, and both
+  report `data-original-kept=false` (it is true only when a Move could not delete its source). The same-volume legs also need the file's `dev` to equal the source's, the other-volume leg's to
   differ. Full-window screenshots (file chosen, running, done) land in `test-results/import-screenshots/`; the running one
   is best effort, since a local copy may end first. They ride the logs artifact on macOS, and `smoke-import-screenshots` on Windows
   with a run-summary listing, on success too. The macOS evidence file names them.
