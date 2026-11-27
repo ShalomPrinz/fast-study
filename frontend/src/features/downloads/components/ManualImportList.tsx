@@ -68,6 +68,13 @@ function ImportRow({ entry }: { entry: ImportEntry }) {
   const busy = isLectureRenameLocked(runner, course, lecture, kind)
   return (
     <div
+      data-testid="manual-import"
+      data-course={course}
+      data-lecture={lecture}
+      data-mode={mode}
+      data-status={status}
+      data-original-kept={status === 'done' ? String(entry.originalKept) : undefined}
+      data-code={status === 'error' ? (entry.failure?.code ?? undefined) : undefined}
       className={[
         'recording-card',
         status === 'running' && 'recording-card--downloading',

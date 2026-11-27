@@ -244,3 +244,11 @@ inline and the menu is absent; below, `open-pdf` appears only once the ⋮ menu 
 | `pipeline-steps-modal` | — | `features/lectures/components/PipelineStepsModal.tsx` | the steps modal's panel |
 | `pipeline-steps-close` | — | `features/lectures/components/PipelineStepsModal.tsx` | the steps modal's floating Close |
 | `drive-consent-modal`         | —                                                                                                                        | `app/DriveConsentPrompt.tsx`                      | the Drive consent modal's body                  |
+| `downloads-tab` | `data-tab`: `university` \| `extension` \| `manual` | `features/downloads/components/DownloadsTabs.tsx` | one tab trigger |
+| `manual-source` | `data-source`: `link` \| `file` | `features/downloads/components/ManualDownload.tsx` | the Link / File from computer switch |
+| `manual-file-input` | — | `features/downloads/components/ManualFileSource.tsx` | the hidden file input (`setInputFiles`), present in File mode while no file is chosen |
+| `manual-course-input` | — | `features/downloads/components/ManualDownload.tsx` | the course combobox's input; `fill` commits a typed name (a new or existing course), no Enter needed |
+| `manual-kind` | `data-kind`: `lecture` \| `recitation` | `features/downloads/components/ManualDownload.tsx` | the Type buttons, absent while only lectures are allowed |
+| `manual-name-input` | — | `features/downloads/components/ManualDownload.tsx` | the lecture name input |
+| `manual-import-start` | `data-mode`: `copy` \| `move` | `features/downloads/components/ManualDownload.tsx` | the Copy / Move buttons (`disabled` with a tooltip until startable) |
+| `manual-import` | `data-course`, `data-lecture`, `data-mode`; `data-status`: `running` \| `done` \| `error` \| `cancelled`; `data-original-kept`: `true` \| `false`, only when done; `data-code`: the failure's code, only when error | `features/downloads/components/ManualImportList.tsx` | one local-file import card |

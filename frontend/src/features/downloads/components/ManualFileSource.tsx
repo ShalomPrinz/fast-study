@@ -47,6 +47,7 @@ export default function ManualFileSource({
       <input
         ref={input}
         type="file"
+        data-testid="manual-file-input"
         accept=".mp4,video/mp4"
         hidden
         onChange={(e) => onChosen(e.target.files)}
