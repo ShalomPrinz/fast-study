@@ -99,10 +99,23 @@ def test_copy_streams_throttled_progress(client, lecture, src, monkeypatch):
     assert out[-1] == {"done": True, "originalKept": False}
 
 
-def test_same_volume_move_emits_only_the_final_line(client, lecture, src, notifies):
+def test_short_copy_emits_the_final_progress_line_before_done(client, lecture, src):
+    # One chunk and the default throttle: only the point-of-no-return line can appear.
+    assert lines(post(client, src)) == [
+        {"copied": 15, "total": 15},
+        {"done": True, "originalKept": False},
+    ]
+
+
+def test_same_volume_move_emits_the_final_line_then_done(
+    client, lecture, src, notifies
+):
     r = post(client, src, "move")
 
-    assert lines(r) == [{"done": True, "originalKept": False}]
+    assert lines(r) == [
+        {"copied": 15, "total": 15},
+        {"done": True, "originalKept": False},
+    ]
     assert_imported(lecture)
     assert not src.exists()
     assert notifies == [("tree",)]
@@ -174,6 +187,39 @@ def test_wipe_failing_after_a_same_volume_move_puts_the_source_back(
     assert not list(lecture.glob(".video.*.tmp"))
 
 
+def test_cancel_before_the_rename_commits_leaves_source_and_lecture(
+    lecture, src, monkeypatch
+):
+    from fs import video_import
+
+    cancelled, touched, sent = threading.Event(), threading.Event(), []
+    real = video_import._rename_into
+
+    def rename_then_cancel(s, t):
+        ok = real(s, t)
+        cancelled.set()
+        return ok
+
+    monkeypatch.setattr(video_import, "_rename_into", rename_then_cancel)
+
+    with pytest.raises(video_import.ImportCancelled):
+        video_import._place(
+            lecture,
+            src.resolve(),
+            "move",
+            lambda *a: sent.append(a),
+            cancelled,
+            touched,
+        )
+
+    assert sent == []
+    assert not touched.is_set()
+    assert src.read_bytes() == b"new video bytes"
+    assert (lecture / "video.mp4").read_bytes() == b"old"
+    assert (lecture / "summary.md").exists()
+    assert not list(lecture.glob(".video.*.tmp"))
+
+
 def _gate_second_read(monkeypatch, video_import):
     """Block the copy worker at its second source read until the returned event is set, so a cancel always lands mid-copy."""
 
@@ -194,7 +240,7 @@ def _gate_second_read(monkeypatch, video_import):
         def read(self, n):
             self.reads += 1
             if self.reads == 2:
-                # Timeout so a bug fails the test instead of hanging the suite.
+                # The timeout only stops a failing test from hanging on the blocked worker.
                 assert release.wait(10)
             return self.f.read(n)
 
@@ -243,15 +289,29 @@ def test_task_cancel_after_placement_still_notifies_tree(lecture, src, monkeypat
 
     calls = []
     monkeypatch.setattr(database_main, "broadcast_notify", lambda *t: calls.append(t))
+    from fs import video_import
+
+    entered, release = threading.Event(), threading.Event()
+    real_place = video_import.place_video
+
+    def gated_place(*a):
+        # Held at the point of no return so the cancel always lands after the last cancelled check.
+        entered.set()
+        assert release.wait(10)
+        return real_place(*a)
+
+    monkeypatch.setattr(video_import, "place_video", gated_place)
 
     async def go():
         gen = database_main._import_stream(lecture, src.resolve(), "move")
         consumer = asyncio.ensure_future(gen.__anext__())
-        # Starlette on ASGI 2.3 cancels the task group, so the consumer dies at queue.get().
-        await asyncio.sleep(0)
+        # The final progress line is queued before place_video is entered, so the consumer has it by now.
+        # Cancelling only once the worker is inside place_video is provably past the last check.
+        assert await asyncio.to_thread(entered.wait, 10)
         consumer.cancel()
         await asyncio.gather(consumer, return_exceptions=True)
         await gen.aclose()
+        release.set()
         await asyncio.sleep(0.5)
 
     asyncio.run(go())

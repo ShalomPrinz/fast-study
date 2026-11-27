@@ -138,6 +138,9 @@ def _place(d, src, mode, progress, cancelled, touched) -> bool:
     tmp = new_video_tmp(d)
     if mode == "move" and _rename_into(src, tmp):
         try:
+            if cancelled.is_set():
+                raise ImportCancelled
+            progress(tmp.stat().st_size, tmp.stat().st_size)
             place_video(d, tmp, touched.set)
         except BaseException as e:
             try:
@@ -154,6 +157,9 @@ def _place(d, src, mode, progress, cancelled, touched) -> bool:
         return False
     try:
         _copy(src, tmp, progress, cancelled)
+        # Point of no return: the client's cancel is ignored from this line on, so it is sent unthrottled.
+        size = tmp.stat().st_size
+        progress(size, size)
         place_video(d, tmp, touched.set)
     except BaseException:
         tmp.unlink(missing_ok=True)
