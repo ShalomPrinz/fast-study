@@ -20,9 +20,11 @@ export default function ManualImportAnnouncer() {
       const said = importAnnouncement(seen.current.get(e.key), e.status)
       seen.current.set(e.key, e.status)
       const name = e.lecture
-      if (said === 'start') setText(t`Importing ${name}`)
-      else if (said === 'done') setText(t`Imported ${name}`)
-      else if (said === 'error') setText(t`Importing ${name} failed`)
+      const move = e.mode === 'move'
+      if (said === 'start') setText(move ? t`Moving ${name}` : t`Copying ${name}`)
+      else if (said === 'done') setText(move ? t`Moved ${name}` : t`Copied ${name}`)
+      else if (said === 'error')
+        setText(move ? t`Moving ${name} failed` : t`Copying ${name} failed`)
     }
   }, [entries, t])
 

@@ -44,7 +44,7 @@ test('a chosen .mp4 is copied by upload; Move is off without the desktop app', a
 
   await page.getByRole('button', { name: 'Copy', exact: true }).click();
   const card = page.locator('.recording-card').filter({ hasText: LECTURE });
-  await expect(card.locator('.chip--ok')).toHaveText('Imported ✓', { timeout: 30_000 });
+  await expect(card.locator('.chip--ok')).toHaveText('Copied ✓', { timeout: 30_000 });
 
   const response = await fetch(lectureFile(COURSE, LECTURE, 'video.mp4'));
   expect(response.status).toBe(200);

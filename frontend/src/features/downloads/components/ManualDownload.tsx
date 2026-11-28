@@ -360,30 +360,38 @@ function ManualForm() {
         />
       </div>
       {source === 'file' ? (
-        <div className="manual-download-actions">
-          <Tooltip content={pending ? t`Importing the file...` : blockerText(blockerFor('copy'))}>
-            <button
-              data-testid="manual-import-start"
-              data-mode="copy"
-              className="btn btn--primary"
-              onClick={() => onImport('copy')}
-              disabled={pending || !!blockerFor('copy')}
-            >
-              {pending ? <span className="recording-spinner" /> : t`Copy`}
-            </button>
-          </Tooltip>
-          <Tooltip content={pending ? t`Importing the file...` : blockerText(blockerFor('move'))}>
-            <button
-              data-testid="manual-import-start"
-              data-mode="move"
-              className="btn btn--secondary"
-              onClick={() => onImport('move')}
-              disabled={pending || !!blockerFor('move')}
-            >
-              <Trans>Move</Trans>
-            </button>
-          </Tooltip>
-        </div>
+        <>
+          <div className="manual-download-note manual-download-hint">
+            <Trans>
+              Copy keeps the original file where it is. Move transfers it into FastStudy and removes
+              it from its folder.
+            </Trans>
+          </div>
+          <div className="manual-download-actions">
+            <Tooltip content={pending ? t`Importing the file...` : blockerText(blockerFor('copy'))}>
+              <button
+                data-testid="manual-import-start"
+                data-mode="copy"
+                className="btn btn--primary"
+                onClick={() => onImport('copy')}
+                disabled={pending || !!blockerFor('copy')}
+              >
+                {pending ? <span className="recording-spinner" /> : t`Copy`}
+              </button>
+            </Tooltip>
+            <Tooltip content={pending ? t`Importing the file...` : blockerText(blockerFor('move'))}>
+              <button
+                data-testid="manual-import-start"
+                data-mode="move"
+                className="btn btn--secondary"
+                onClick={() => onImport('move')}
+                disabled={pending || !!blockerFor('move')}
+              >
+                <Trans>Move</Trans>
+              </button>
+            </Tooltip>
+          </div>
+        </>
       ) : (
         <Tooltip content={downloadBlocker}>
           <button className="btn btn--primary" onClick={onDownload} disabled={!ready}>

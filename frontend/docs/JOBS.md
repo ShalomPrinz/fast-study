@@ -108,8 +108,8 @@ first refetch, or done once its video is in the tree — a `done` job is evicted
 A local-file import is not a job: `ManualImportsContext` is a module store of this session's imports (`running`,
 `done`, `error`, `cancelled`), so one runs on while the user is on other pages, and `ManualImportList` renders them
 newest first beside the download cards. A running card shows `<name> · <course>`, the Copying/Moving chip, the file
-name, a determinate bar with "45% · 540 MB of 1.2 GB" and a ghost Cancel (aborts the request while bytes are still moving; once copied == total it stays enabled but a click only sets `lateCancel`: no abort, a "Too late to cancel, finishing…" note, button disabled with a tooltip, and the card ends on the real Imported / error outcome); done is the
-`Imported ✓` chip, plus a notice when a Move could not remove the original; failed is a `ServiceError` and Retry,
+name, a determinate bar with "45% · 540 MB of 1.2 GB" and a ghost Cancel (aborts the request while bytes are still moving; once copied == total it stays enabled but a click only sets `lateCancel`: no abort, a "Too late to cancel, finishing…" note, button disabled with a tooltip, and the card ends on the real Copied / Moved / error outcome); done is the
+`Copied ✓` / `Moved ✓` chip (by mode), plus a notice when a Move could not remove the original; failed is a `ServiceError` and Retry,
 which re-runs the same entry. `importRoute` picks the transport: with a path off the bridge, `importVideo` (by path,
 progress from the NDJSON answer); without one, Copy goes through `uploadVideoWithProgress`. Either way the arrival
 is reported to the backend afterwards, and running and done imports claim their names for `suggestManualName`.
