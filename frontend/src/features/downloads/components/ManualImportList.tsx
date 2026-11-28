@@ -121,7 +121,7 @@ function ImportRow({ entry }: { entry: ImportEntry }) {
         )}
         {status === 'done' && (
           <span className="chip chip--ok">
-            <Trans>Imported ✓</Trans>
+            {mode === 'move' ? <Trans>Moved ✓</Trans> : <Trans>Copied ✓</Trans>}
           </span>
         )}
         {status === 'cancelled' && (

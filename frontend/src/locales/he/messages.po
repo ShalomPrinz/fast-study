@@ -300,7 +300,7 @@ msgstr "{input} הוסר"
 msgid "{kind, select, recitation {The recitation \"{name}\" has no summary PDF to merge.} other {The lecture \"{name}\" has no summary PDF to merge.}}"
 msgstr "{kind, select, recitation {אין סיכום PDF לאיחוד בתרגול \"{name}\".} other {אין סיכום PDF לאיחוד בהרצאה \"{name}\".}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:410
+#: src/features/downloads/components/ManualDownload.tsx:418
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -851,7 +851,7 @@ msgid "Cancel retry"
 msgstr "ביטול ניסיון חוזר"
 
 #: src/features/downloads/components/FolderJobList.tsx:93
-#: src/features/downloads/components/ManualDownload.tsx:499
+#: src/features/downloads/components/ManualDownload.tsx:507
 #: src/features/downloads/components/ManualImportList.tsx:129
 #: src/features/downloads/components/RecordingJobList.tsx:63
 #: src/features/downloads/components/RecordingRow.tsx:306
@@ -1117,6 +1117,14 @@ msgstr "המשך יצירה"
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:25
+msgid "Copied {name}"
+msgstr "{name} הועתק"
+
+#: src/features/downloads/components/ManualImportList.tsx:124
+msgid "Copied ✓"
+msgstr "הועתק ✓"
+
 #: src/app/ErrorBoundary.tsx:37
 #: src/features/extension/ExtensionGuide.tsx:38
 msgid "Copied!"
@@ -1126,7 +1134,7 @@ msgstr "הועתק!"
 msgid "Copies the chosen summaries and the generated guides, then opens {provider}."
 msgstr "מעתיק את הסיכומים שנבחרו ואת המדריכים שנוצרו, ופותח את {provider}."
 
-#: src/features/downloads/components/ManualDownload.tsx:372
+#: src/features/downloads/components/ManualDownload.tsx:379
 msgid "Copy"
 msgstr "העתקה"
 
@@ -1138,6 +1146,10 @@ msgstr "העתקת הכתובת"
 msgid "Copy details"
 msgstr "העתקת פרטים"
 
+#: src/features/downloads/components/ManualDownload.tsx:365
+msgid "Copy keeps the original file where it is. Move transfers it into FastStudy and removes it from its folder."
+msgstr "העתקה משאירה את הקובץ המקורי במקומו. העברה מעבירה אותו ל-FastStudy ומוחקת אותו מהתיקייה שלו."
+
 #: src/features/extension/ExtensionGuide.tsx:59
 msgid "Copy path"
 msgstr "העתקת הנתיב"
@@ -1145,6 +1157,14 @@ msgstr "העתקת הנתיב"
 #: src/features/downloads/components/ManualImportList.tsx:98
 msgid "Copying"
 msgstr "מעתיק"
+
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:24
+msgid "Copying {name}"
+msgstr "מעתיק את {name}"
+
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:27
+msgid "Copying {name} failed"
+msgstr "ההעתקה של {name} נכשלה"
 
 #: src/shared/i18n/serviceErrors.ts:109
 msgid "Could not convert the summary for printing."
@@ -1204,7 +1224,7 @@ msgstr "לא הצלחנו להעתיק את חומר המטלה. נסה שוב."
 msgid "Couldn't copy the summary. Try again."
 msgstr "לא הצלחנו להעתיק את הסיכום. נסה שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:535
+#: src/features/downloads/components/ManualDownload.tsx:543
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "לא ניתן להוריד את \"{lecture}\". נסה שוב."
 
@@ -1420,7 +1440,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "הושלם"
 
-#: src/features/downloads/components/ManualDownload.tsx:390
+#: src/features/downloads/components/ManualDownload.tsx:398
 #: src/features/downloads/components/RecordingJobList.tsx:77
 #: src/features/downloads/components/RecordingRow.tsx:370
 msgid "Download"
@@ -1465,7 +1485,7 @@ msgid "Download selected ({0})"
 msgstr "הורדת הנבחרים ({0})"
 
 #: src/features/downloads/components/FolderJobList.tsx:88
-#: src/features/downloads/components/ManualDownload.tsx:494
+#: src/features/downloads/components/ManualDownload.tsx:502
 #: src/features/downloads/components/RecordingRow.tsx:307
 #: src/features/downloads/components/RecordingRow.tsx:368
 msgid "Downloaded ✓"
@@ -1476,7 +1496,7 @@ msgid "Downloaded recordings appear on the Lectures page."
 msgstr "את ההקלטות שהורדו ניתן לראות בעמוד ההרצאות."
 
 #: src/features/downloads/components/FolderJobList.tsx:83
-#: src/features/downloads/components/ManualDownload.tsx:489
+#: src/features/downloads/components/ManualDownload.tsx:497
 #: src/features/downloads/components/RecordingRow.tsx:312
 msgid "Downloading"
 msgstr "מוריד"
@@ -1977,24 +1997,8 @@ msgstr "אם Chrome מציג את FastStudy עם שגיאה, פתח את <0>{url
 msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 msgstr "אם Edge מציג את FastStudy עם שגיאה, פתח את <0>{url}</0> ולחץ על \"טעינה מחדש\" בכרטיס של FastStudy."
 
-#: src/features/downloads/components/ManualImportAnnouncer.tsx:24
-msgid "Imported {name}"
-msgstr "{name} יובא"
-
-#: src/features/downloads/components/ManualImportList.tsx:124
-msgid "Imported ✓"
-msgstr "יובא ✓"
-
-#: src/features/downloads/components/ManualImportAnnouncer.tsx:23
-msgid "Importing {name}"
-msgstr "מייבא את {name}"
-
-#: src/features/downloads/components/ManualImportAnnouncer.tsx:25
-msgid "Importing {name} failed"
-msgstr "הייבוא של {name} נכשל"
-
-#: src/features/downloads/components/ManualDownload.tsx:364
-#: src/features/downloads/components/ManualDownload.tsx:375
+#: src/features/downloads/components/ManualDownload.tsx:371
+#: src/features/downloads/components/ManualDownload.tsx:382
 msgid "Importing the file..."
 msgstr "מייבא את הקובץ..."
 
@@ -2218,7 +2222,7 @@ msgstr "Moodle דחה את הבקשה."
 msgid "More actions"
 msgstr "פעולות נוספות"
 
-#: src/features/downloads/components/ManualDownload.tsx:383
+#: src/features/downloads/components/ManualDownload.tsx:390
 msgid "Move"
 msgstr "העברה"
 
@@ -2230,9 +2234,25 @@ msgstr "הזז למטה"
 msgid "Move up"
 msgstr "הזז למעלה"
 
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:25
+msgid "Moved {name}"
+msgstr "{name} הועבר"
+
+#: src/features/downloads/components/ManualImportList.tsx:124
+msgid "Moved ✓"
+msgstr "הועבר ✓"
+
 #: src/features/downloads/components/ManualImportList.tsx:98
 msgid "Moving"
 msgstr "מעביר"
+
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:24
+msgid "Moving {name}"
+msgstr "מעביר את {name}"
+
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:27
+msgid "Moving {name} failed"
+msgstr "ההעברה של {name} נכשלה"
 
 #: src/features/downloads/components/ManualDownload.tsx:190
 msgid "Moving needs the desktop app"
@@ -2445,7 +2465,7 @@ msgstr "לא נשלח ל-Gemini"
 msgid "Not used — tap to add"
 msgstr "לא בשימוש — לחצו כדי להוסיף"
 
-#: src/features/downloads/components/ManualDownload.tsx:398
+#: src/features/downloads/components/ManualDownload.tsx:406
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:64
 msgid "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 msgstr "שים לב: הפעולה הזו תמחק את השמע, התמלול, הסיכום וה-PDF של ההרצאה. החומרים יישמרו."
@@ -2737,7 +2757,7 @@ msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPri
 msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-GitHub: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
 #: src/features/downloads/components/FolderJobList.tsx:78
-#: src/features/downloads/components/ManualDownload.tsx:484
+#: src/features/downloads/components/ManualDownload.tsx:492
 #: src/features/runner/RunnerView.tsx:390
 msgid "Queued"
 msgstr "בתור"
@@ -2890,7 +2910,7 @@ msgstr "החלפה"
 
 #. placeholder {0}: importConfirm.lecture
 #. placeholder {0}: pending.lecture
-#: src/features/downloads/components/ManualDownload.tsx:397
+#: src/features/downloads/components/ManualDownload.tsx:405
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:63
 msgid "Replace the existing video in \"{0}\"?"
 msgstr "להחליף את הווידאו הקיים ב\"{0}\"?"
@@ -2945,7 +2965,7 @@ msgstr "תוצאות"
 msgid "Retry"
 msgstr "ניסיון חוזר"
 
-#: src/features/downloads/components/ManualDownload.tsx:513
+#: src/features/downloads/components/ManualDownload.tsx:521
 #: src/features/downloads/components/ManualImportList.tsx:148
 #: src/features/downloads/components/RecordingJobList.tsx:75
 #: src/features/downloads/components/RecordingRow.tsx:366
@@ -2960,7 +2980,7 @@ msgstr "נסה שוב אוטומטית כש-Gemini עמוס או לא זמין"
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "ניסיון חוזר בעוד {time} (ניסיון {attempt}/{of})"
 
-#: src/features/downloads/components/ManualDownload.tsx:505
+#: src/features/downloads/components/ManualDownload.tsx:513
 msgid "Retrying the download..."
 msgstr "מנסה שוב את ההורדה..."
 

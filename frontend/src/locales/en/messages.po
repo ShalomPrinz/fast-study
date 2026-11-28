@@ -300,7 +300,7 @@ msgstr "{input} was removed"
 msgid "{kind, select, recitation {The recitation \"{name}\" has no summary PDF to merge.} other {The lecture \"{name}\" has no summary PDF to merge.}}"
 msgstr "{kind, select, recitation {The recitation \"{name}\" has no summary PDF to merge.} other {The lecture \"{name}\" has no summary PDF to merge.}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:410
+#: src/features/downloads/components/ManualDownload.tsx:418
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
@@ -851,7 +851,7 @@ msgid "Cancel retry"
 msgstr "Cancel retry"
 
 #: src/features/downloads/components/FolderJobList.tsx:93
-#: src/features/downloads/components/ManualDownload.tsx:499
+#: src/features/downloads/components/ManualDownload.tsx:507
 #: src/features/downloads/components/ManualImportList.tsx:129
 #: src/features/downloads/components/RecordingJobList.tsx:63
 #: src/features/downloads/components/RecordingRow.tsx:306
@@ -1117,6 +1117,14 @@ msgstr "Continue Generating"
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:25
+msgid "Copied {name}"
+msgstr "Copied {name}"
+
+#: src/features/downloads/components/ManualImportList.tsx:124
+msgid "Copied ✓"
+msgstr "Copied ✓"
+
 #: src/app/ErrorBoundary.tsx:37
 #: src/features/extension/ExtensionGuide.tsx:38
 msgid "Copied!"
@@ -1126,7 +1134,7 @@ msgstr "Copied!"
 msgid "Copies the chosen summaries and the generated guides, then opens {provider}."
 msgstr "Copies the chosen summaries and the generated guides, then opens {provider}."
 
-#: src/features/downloads/components/ManualDownload.tsx:372
+#: src/features/downloads/components/ManualDownload.tsx:379
 msgid "Copy"
 msgstr "Copy"
 
@@ -1138,6 +1146,10 @@ msgstr "Copy address"
 msgid "Copy details"
 msgstr "Copy details"
 
+#: src/features/downloads/components/ManualDownload.tsx:365
+msgid "Copy keeps the original file where it is. Move transfers it into FastStudy and removes it from its folder."
+msgstr "Copy keeps the original file where it is. Move transfers it into FastStudy and removes it from its folder."
+
 #: src/features/extension/ExtensionGuide.tsx:59
 msgid "Copy path"
 msgstr "Copy path"
@@ -1145,6 +1157,14 @@ msgstr "Copy path"
 #: src/features/downloads/components/ManualImportList.tsx:98
 msgid "Copying"
 msgstr "Copying"
+
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:24
+msgid "Copying {name}"
+msgstr "Copying {name}"
+
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:27
+msgid "Copying {name} failed"
+msgstr "Copying {name} failed"
 
 #: src/shared/i18n/serviceErrors.ts:109
 msgid "Could not convert the summary for printing."
@@ -1204,7 +1224,7 @@ msgstr "Couldn't copy the assignment material. Try again."
 msgid "Couldn't copy the summary. Try again."
 msgstr "Couldn't copy the summary. Try again."
 
-#: src/features/downloads/components/ManualDownload.tsx:535
+#: src/features/downloads/components/ManualDownload.tsx:543
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
@@ -1420,7 +1440,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/ManualDownload.tsx:390
+#: src/features/downloads/components/ManualDownload.tsx:398
 #: src/features/downloads/components/RecordingJobList.tsx:77
 #: src/features/downloads/components/RecordingRow.tsx:370
 msgid "Download"
@@ -1465,7 +1485,7 @@ msgid "Download selected ({0})"
 msgstr "Download selected ({0})"
 
 #: src/features/downloads/components/FolderJobList.tsx:88
-#: src/features/downloads/components/ManualDownload.tsx:494
+#: src/features/downloads/components/ManualDownload.tsx:502
 #: src/features/downloads/components/RecordingRow.tsx:307
 #: src/features/downloads/components/RecordingRow.tsx:368
 msgid "Downloaded ✓"
@@ -1476,7 +1496,7 @@ msgid "Downloaded recordings appear on the Lectures page."
 msgstr "Downloaded recordings appear on the Lectures page."
 
 #: src/features/downloads/components/FolderJobList.tsx:83
-#: src/features/downloads/components/ManualDownload.tsx:489
+#: src/features/downloads/components/ManualDownload.tsx:497
 #: src/features/downloads/components/RecordingRow.tsx:312
 msgid "Downloading"
 msgstr "Downloading"
@@ -1977,24 +1997,8 @@ msgstr "If Chrome shows FastStudy with an error, open <0>{url}</0> and click the
 msgid "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 msgstr "If Edge shows FastStudy with an error, open <0>{url}</0> and click \"Reload\" on the FastStudy card."
 
-#: src/features/downloads/components/ManualImportAnnouncer.tsx:24
-msgid "Imported {name}"
-msgstr "Imported {name}"
-
-#: src/features/downloads/components/ManualImportList.tsx:124
-msgid "Imported ✓"
-msgstr "Imported ✓"
-
-#: src/features/downloads/components/ManualImportAnnouncer.tsx:23
-msgid "Importing {name}"
-msgstr "Importing {name}"
-
-#: src/features/downloads/components/ManualImportAnnouncer.tsx:25
-msgid "Importing {name} failed"
-msgstr "Importing {name} failed"
-
-#: src/features/downloads/components/ManualDownload.tsx:364
-#: src/features/downloads/components/ManualDownload.tsx:375
+#: src/features/downloads/components/ManualDownload.tsx:371
+#: src/features/downloads/components/ManualDownload.tsx:382
 msgid "Importing the file..."
 msgstr "Importing the file..."
 
@@ -2218,7 +2222,7 @@ msgstr "Moodle refused the request."
 msgid "More actions"
 msgstr "More actions"
 
-#: src/features/downloads/components/ManualDownload.tsx:383
+#: src/features/downloads/components/ManualDownload.tsx:390
 msgid "Move"
 msgstr "Move"
 
@@ -2230,9 +2234,25 @@ msgstr "Move down"
 msgid "Move up"
 msgstr "Move up"
 
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:25
+msgid "Moved {name}"
+msgstr "Moved {name}"
+
+#: src/features/downloads/components/ManualImportList.tsx:124
+msgid "Moved ✓"
+msgstr "Moved ✓"
+
 #: src/features/downloads/components/ManualImportList.tsx:98
 msgid "Moving"
 msgstr "Moving"
+
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:24
+msgid "Moving {name}"
+msgstr "Moving {name}"
+
+#: src/features/downloads/components/ManualImportAnnouncer.tsx:27
+msgid "Moving {name} failed"
+msgstr "Moving {name} failed"
 
 #: src/features/downloads/components/ManualDownload.tsx:190
 msgid "Moving needs the desktop app"
@@ -2445,7 +2465,7 @@ msgstr "Not sent to Gemini"
 msgid "Not used — tap to add"
 msgstr "Not used — tap to add"
 
-#: src/features/downloads/components/ManualDownload.tsx:398
+#: src/features/downloads/components/ManualDownload.tsx:406
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:64
 msgid "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 msgstr "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
@@ -2737,7 +2757,7 @@ msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPri
 msgstr "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
 #: src/features/downloads/components/FolderJobList.tsx:78
-#: src/features/downloads/components/ManualDownload.tsx:484
+#: src/features/downloads/components/ManualDownload.tsx:492
 #: src/features/runner/RunnerView.tsx:390
 msgid "Queued"
 msgstr "Queued"
@@ -2890,7 +2910,7 @@ msgstr "Replace"
 
 #. placeholder {0}: importConfirm.lecture
 #. placeholder {0}: pending.lecture
-#: src/features/downloads/components/ManualDownload.tsx:397
+#: src/features/downloads/components/ManualDownload.tsx:405
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:63
 msgid "Replace the existing video in \"{0}\"?"
 msgstr "Replace the existing video in \"{0}\"?"
@@ -2945,7 +2965,7 @@ msgstr "Results"
 msgid "Retry"
 msgstr "Retry"
 
-#: src/features/downloads/components/ManualDownload.tsx:513
+#: src/features/downloads/components/ManualDownload.tsx:521
 #: src/features/downloads/components/ManualImportList.tsx:148
 #: src/features/downloads/components/RecordingJobList.tsx:75
 #: src/features/downloads/components/RecordingRow.tsx:366
@@ -2960,7 +2980,7 @@ msgstr "Retry automatically when Gemini is busy or unreachable"
 msgid "Retrying in {time} (attempt {attempt}/{of})"
 msgstr "Retrying in {time} (attempt {attempt}/{of})"
 
-#: src/features/downloads/components/ManualDownload.tsx:505
+#: src/features/downloads/components/ManualDownload.tsx:513
 msgid "Retrying the download..."
 msgstr "Retrying the download..."
 

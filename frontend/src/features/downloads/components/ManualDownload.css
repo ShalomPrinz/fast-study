@@ -73,6 +73,11 @@
   font-size: var(--fs-row);
 }
 
+.manual-download-hint {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
 .manual-download-jobs {
   display: flex;
   flex-direction: column;
