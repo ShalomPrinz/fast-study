@@ -20,12 +20,12 @@ env:
   # table API is what text_direction.lua reads, so the three only ever move together.
   TECTONIC_VERSION: '0.17.0'
   PANDOC_VERSION: '3.13'
-  FFMPEG_VERSION: '9.0.2'
+  FFMPEG_VERSION: '9.1'
   # Pinned so the bootloader check below compares against the same version's stock wheel.
   PYINSTALLER_VERSION: '6.22.3'
   # The macOS ffmpeg is built from source at FFMPEG_VERSION with this LAME, both tarballs pinned by
   # sha256 — delivery/docs/RELEASE.md#the-macos-ffmpeg.
-  FFMPEG_SHA256: 8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e
+  FFMPEG_SHA256: 1a4d394ae63d190a526cd052eb4415c156b5c5e2df37efab41a7de0b8fde2433
   LAME_VERSION: '3.100'
   LAME_SHA256: ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e
   STAGE: delivery/stage

@@ -188,7 +188,7 @@ moving one re-opens that measurement, so surface it rather than bump it:
   both move together ([`backend/docs/PDF.md`](../../backend/docs/PDF.md#the-pandoc-pin-and-the-template));
   a move also re-opens the sink ([LATEX.md](LATEX.md#kitchen-sinkmd)). Its `pandoc.exe` is 239MB
   unpacked; pinning 3.13 over 2.9 makes the installer 14MB larger.
-- **ffmpeg 9.0.2** — pinned only so a build is reproducible; bump it for upstream security fixes.
+- **ffmpeg 9.1** — pinned only so a build is reproducible; bump it for upstream security fixes.
 - **PyInstaller 6.22.3** — installed from its sdist with the bootloader compiled by MSVC on the
   runner, because Defender quarantines the stock prebuilt one, which malware shares. The sdist
   still carries the stock `run.exe`, so the freeze step fails if ours hashes equal to the

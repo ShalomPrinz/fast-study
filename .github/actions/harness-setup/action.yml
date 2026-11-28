@@ -7,7 +7,7 @@ inputs:
     default: '0.17.0'
   ffmpeg-version:
     description: ffmpeg release branch to install; keep it on the major.minor build.yml ships.
-    default: '9.0'
+    default: '9.1'
 
 runs:
   using: composite
